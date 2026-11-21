@@ -440,13 +440,55 @@ void VersionManager::unwindDownloadBatch(const QString &reason) {
 }
 
 bool VersionManager::canCancelDownload() const {
-    return downloadManager->isBusy() || (m_modpackInstall.active() && m_modpackOverridesWork.isRunning());
+    if (downloadManager->isBusy() ||
+        (m_modpackInstall.active() && m_modpackOverridesWork.isRunning())) {
+        return true;
+    }
+    // 加载器安装的“拉版本表 / 找安装器 / 等原版 json”这几段没有下载批次，但
+    // 还停在网络请求上，用户点取消完全可以停下。真正不能停的只有安装器进程
+    // （ProbingInstallerOptions / RunningInstaller）和写 json 那一下。
+    if (m_loaderInstall.active()) {
+        switch (m_loaderInstall.phase) {
+        case LoaderInstall::Phase::FetchingList:
+        case LoaderInstall::Phase::FetchingProfile:
+        case LoaderInstall::Phase::FetchingInstallerList:
+        case LoaderInstall::Phase::FetchingInstallerToken:
+        case LoaderInstall::Phase::WaitingInstallerJar:
+        case LoaderInstall::Phase::WaitingParentJson:
+        case LoaderInstall::Phase::WaitingParentBefore:
+        case LoaderInstall::Phase::WaitingParentFiles:
+        case LoaderInstall::Phase::WaitingLoaderFiles:
+            return true;
+        default:
+            break;
+        }
+    }
+    return false;
 }
 
 bool VersionManager::cancelActiveDownload() {
     if (m_modpackInstall.active() && m_modpackOverridesWork.isRunning()) {
         failModpackImport(tr("已取消最终解压或校验。已安装文件保留，实例仍未完成。"));
         return true;
+    }
+    if (!downloadManager->isBusy() && m_loaderInstall.active()) {
+        switch (m_loaderInstall.phase) {
+        case LoaderInstall::Phase::FetchingList:
+        case LoaderInstall::Phase::FetchingProfile:
+        case LoaderInstall::Phase::FetchingInstallerList:
+        case LoaderInstall::Phase::FetchingInstallerToken:
+        case LoaderInstall::Phase::WaitingInstallerJar:
+        case LoaderInstall::Phase::WaitingParentJson:
+        case LoaderInstall::Phase::WaitingParentBefore:
+        case LoaderInstall::Phase::WaitingParentFiles:
+        case LoaderInstall::Phase::WaitingLoaderFiles: {
+            const QString loaderName = m_loaderInstall.loaderName;
+            failLoaderInstall(tr("已取消安装 %1。").arg(loaderName));
+            return true;
+        }
+        default:
+            break;
+        }
     }
     if (!downloadManager->isBusy()) {
         return false;
