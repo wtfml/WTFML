@@ -77,6 +77,11 @@ int UiInstanceSnapshotsChecks() {
                       + QStringLiteral(" / ")
                       + (integrity != nullptr ? kindOf(integrity)
                                               : QStringLiteral("<没找到>")));
+            auto *resetPlayTime = byName(QStringLiteral("instancePlayTimeReset"));
+            check(resetPlayTime != nullptr &&
+                      resetPlayTime->text() == QStringLiteral("重置") &&
+                      kindOf(resetPlayTime) == Theme::buttonKindKey(Theme::ButtonKind::Danger),
+                  "U30.2 游玩时长重置是红的那一档（会清掉记录，不可恢复）");
 
             // ---- 四颗按钮**不在同一条线上** ----
             //

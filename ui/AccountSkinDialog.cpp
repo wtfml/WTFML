@@ -1056,6 +1056,17 @@ QString AccountSkinDialog::selectedCapeId() const {
     return item == nullptr ? QString() : item->data(Qt::UserRole).toString();
 }
 
+QString AccountSkinDialog::capeUrl(const QString &capeId) const {
+    if (capeId.isEmpty()) return QString();
+    for (int i = 0; i < m_capeList->count(); ++i) {
+        const QListWidgetItem *item = m_capeList->item(i);
+        if (item->data(Qt::UserRole).toString() == capeId) {
+            return item->data(Qt::UserRole + 2).toString();
+        }
+    }
+    return QString();
+}
+
 QString AccountSkinDialog::selectedVariant() const {
     const QString value = m_variantCombo->currentData().toString();
     return value.isEmpty() ? variantClassicValue() : value;

@@ -360,7 +360,7 @@ void InstanceSettingsDialog::setupOverviewPage(const QString &instanceId) {
         auto *resetPlayTime = new QPushButton(tr("重置"), this);
         resetPlayTime->setObjectName(QStringLiteral("instancePlayTimeReset"));
         resetPlayTime->setToolTip(tr("清掉这个实例已记录的累计游玩时间和上次游玩时长。"));
-        Theme::markButton(resetPlayTime, Theme::ButtonKind::Ghost);
+        Theme::markButton(resetPlayTime, Theme::ButtonKind::Danger);
         connect(resetPlayTime, &QPushButton::clicked, this,
                 &InstanceSettingsDialog::resetPlayTimeRequested);
         grid->addWidget(MainWindowPageLayout::makeSettingRow(this, m_playTimeLabel, QString(), resetPlayTime),

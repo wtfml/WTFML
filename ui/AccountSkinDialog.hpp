@@ -124,6 +124,8 @@ public:
     QString selectedUuid() const;
     /// 披风列表里选中那一件的 id（没选中返回空串）。
     QString selectedCapeId() const;
+    /// 披风列表里这个 id 的贴图地址（列表还没有它时回空串）。
+    QString capeUrl(const QString &capeId) const;
 
     /// 让 3D 预览立即跟着「显示 / 隐藏」走，不等下一次资料刷新。
     void updatePreviewCape(bool wearing, bool turnToBack = false);

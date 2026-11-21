@@ -1,4 +1,5 @@
 #include "Support.hpp"
+#include "controllers/PlayerSkinController.hpp"
 int MwPlayerSkinChecks(MainWindow &window) {
     // 全程离线：贴图是测试自己写进沙盒的两张 PNG，走 applyPlayerSkin() 直接喂进去
     // （**不经过** PlayerSkinStore，所以既不联网也不依赖任何人的账号）。这一段是"界面
@@ -191,6 +192,25 @@ int MwPlayerSkinChecks(MainWindow &window) {
                 check(hint->text() == MainWindowUI::skinHintLoadedText(x5Name, false),
                       "X6 那句话回到不带「含披风」的那一档", hint->text());
 
+                // ---- X6b 换披风成功后，按新地址**立即**换图 ----
+                // 不等下一次档案请求：换披风接口返回成功时这张图已经在披风列表里了。
+                auto *controller = window.findChild<PlayerSkinController *>();
+                const QString newCapeUrl =
+                    QStringLiteral("https://textures.minecraft.net/texture/x6b-new-cape");
+                const QString newCapeCached = PlayerSkinStore::cachePathForUrl(newCapeUrl);
+                QImage newCape(64, 32, QImage::Format_ARGB32_Premultiplied);
+                newCape.fill(QColor(30, 60, 220));
+                check(controller != nullptr && newCape.save(newCapeCached),
+                      "X6b 准备一张新披风贴图");
+                if (controller != nullptr) {
+                    controller->setCapeUrl(newCapeUrl);
+                    QApplication::processEvents();
+                }
+                check(!viewer->cape().isNull() && viewer->cape().pixelColor(0, 0) == QColor(30, 60, 220),
+                      "X6b setCapeUrl 立即把主页披风换成新地址那张",
+                      viewer->cape().isNull() ? QStringLiteral("<无披风>")
+                                              : viewer->cape().pixelColor(0, 0).name());
+                QFile::remove(newCapeCached);
                 QFile::remove(skinCached);
                 QFile::remove(capeCached);
                 QFile::remove(x5SkinPath);

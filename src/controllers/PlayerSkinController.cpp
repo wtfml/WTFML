@@ -344,7 +344,16 @@ void PlayerSkinController::applyPlayerSkin(const QString &skinPath, const QStrin
 
 void PlayerSkinController::setCapeUrl(const QString &capeUrl) {
     const QString uuid = PlayerSkinStore::uuidKey(m_auth->playerUuid());
-    if (uuid.isEmpty() || m_skinProfile.capeUrl == capeUrl) {
+    if (uuid.isEmpty()) {
+        return;
+    }
+    if (m_skinProfile.capeUrl == capeUrl) {
+        if (!m_skinPath.isEmpty()) {
+            const QString cached = PlayerSkinStore::cachePathForUrl(capeUrl);
+            if (!capeUrl.isEmpty() && QFile::exists(cached)) {
+                applyPlayerSkin(m_skinPath, cached, m_skinProfile.variant == QStringLiteral("slim"));
+            }
+        }
         return;
     }
     const bool hasProfile = !m_skinProfile.skinUrl.isEmpty();

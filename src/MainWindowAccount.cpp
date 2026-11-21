@@ -637,18 +637,21 @@ void MainWindow::changeCape(const QString &capeId) {
         m_skinApi->updateCachedCape(uuid, capeId);
         // 接口写成功不等于档案请求马上能拿到新地址（Mojang 那边有传播延迟）。先把
         // 列表里这一件的地址按当前档案落下来，主页和预览立即换图，不等下一次刷新。
-        QString capeUrl;
-        if (!hide) {
+        QString capeUrl = hide ? QString() : m_accountSkinDialog->capeUrl(capeId);
+        bool capeFound = hide || !capeUrl.isEmpty();
+        if (!hide && !capeFound) {
+            // 列表还没拿到地址时退回缓存列表，两条来源看的是同一批披风。
             if (const auto *capes = m_skinApi->cachedCapes(uuid)) {
                 for (const OwnedCape &cape : *capes) {
                     if (cape.id == capeId) {
                         capeUrl = cape.url;
+                        capeFound = true;
                         break;
                     }
                 }
             }
         }
-        m_playerSkin->setCapeUrl(capeUrl);
+        if (capeFound) m_playerSkin->setCapeUrl(capeUrl);
         appendLog(hide ? tr("已取消披风（不显示）。") : tr("已更换披风。"));
     }
     if (AccountStore::activeUuid() != uuid || m_authManager->loginInFlight()) {
@@ -661,7 +664,8 @@ void MainWindow::changeCape(const QString &capeId) {
     m_accountSkinDialog->setCapeLoading({});
     m_accountSkinDialog->setStatusError({});
     applyCachedCapes(uuid);
-    startPlayerSkinLoad();
+    // 这里**不再** `startPlayerSkinLoad()`：换披风已经按 selected cape 的地址直接换了图，
+    // 再 reload 一次会先摆回默认外观、再去读档案，旧披风有可能在中间被重新画出来。
 }
 
 void MainWindow::onLoginStarted() {

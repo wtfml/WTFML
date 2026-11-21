@@ -585,6 +585,13 @@ void InstanceDialogController::open(const QString &versionId, const QString &pag
                        LaunchHistory::playTimeText(playTime.lastMs));
     connect(dialogPtr, &InstanceSettingsDialog::resetPlayTimeRequested, dialogPtr,
             [this, dialogPtr, versionId]() {
+                const auto answer = InlineMessage::question(
+                    m_owner->m_ui->overlay(), tr("重置游玩时间"),
+                    tr("将清掉这个实例已记录的累计游玩时间和上次游玩时长，且不能恢复。确认重置？"),
+                    tr("重置"), tr("取消"), false);
+                if (!answer) {
+                    return;
+                }
                 const QString stableId = m_owner->m_versionManager->instanceId(versionId);
                 if (!m_owner->m_launchHistory->resetCompletedPlayTime(stableId)) {
                     return;
