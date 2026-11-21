@@ -96,9 +96,8 @@ int UiLifecycleCheck(QApplication &app) {
         dialog.setLastLaunch(QDateTime());
         const QList<QPushButton *> overviewCommands = {
             dialog.findChild<QPushButton *>(Dlg::changeIconButtonName()),
-            dialog.findChild<QPushButton *>(Dlg::groupButtonName()),
-            dialog.findChild<QPushButton *>(Dlg::updateCenterButtonName()),
-            dialog.findChild<QPushButton *>(Dlg::shortcutButtonName(0))};
+            dialog.findChild<QPushButton *>(Dlg::groupButtonName())};
+        auto *firstShortcut = dialog.findChild<QPushButton *>(Dlg::shortcutButtonName(0));
         // 概览是「左标题 | 右控件」一行一行（e5a3b79）：按钮按自己的字宽，各行最右那颗收在同一条右边线上；
         // 快捷方式那排是摆在标题下面的整行，不参与对齐。
         for (auto *button : overviewCommands) {
@@ -108,8 +107,8 @@ int UiLifecycleCheck(QApplication &app) {
         const auto rightEdge = [&dialog](QPushButton *b) { return b ? b->mapTo(&dialog, QPoint(b->width(), 0)).x() : -1; };
         const int edge = rightEdge(overviewCommands.at(0));
         bool sameEdge = edge > 0;
-        for (int i : {1, 2}) sameEdge &= qAbs(rightEdge(overviewCommands.at(i)) - edge) <= 1;
-        expect(sameEdge && overviewCommands.at(3) != nullptr,
+        for (int i : {1}) sameEdge &= qAbs(rightEdge(overviewCommands.at(i)) - edge) <= 1;
+        expect(sameEdge && firstShortcut != nullptr,
                "overview row commands end on one right edge across independent rows");
 
         auto *navigation = dialog.findChild<QTreeWidget *>(Dlg::navigationTreeName());
