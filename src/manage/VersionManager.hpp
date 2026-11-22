@@ -596,6 +596,10 @@ public:
                        const QString &installerJavaPath = QString(),
                        const QString &manifestFingerprint = QString());
 
+    /// 「有文件需要补齐」里用户选了「继续安装其余内容」：允许本次导入按缺件提交。
+    /// 没有经过这个确认的调用（含测试）仍然按失败收尾，不会悄悄放过缺件。
+    void allowPartialModpackImport();
+
     /**
      * @brief 整合包依赖表里那个加载器的键 -> LoaderKind（**纯函数**）。
      * @return 认得返回 true；Quilt 和没见过的键返回 false。
@@ -1529,6 +1533,9 @@ private:
         /// 落进 `wtfml.importing` 标记：同名的下一次导入靠它认"是不是同一个包"。
         QString manifestFingerprint;
         int extractedEntries = 0; ///< 解开了几个覆盖文件（收尾那句话要说出来）
+    /// 用户在「有文件需要补齐」的提示里选了「继续安装其余内容」。只有这一条路允许
+    /// 缺件提交；直接调用导入流程（没有经过用户确认）仍按失败收尾。
+    bool allowPartial = false;
 
         bool active() const { return phase != Phase::Idle; }
         // 收尾（成功、失败都走这里）：回到 Idle，也就是"这件事结束了"。

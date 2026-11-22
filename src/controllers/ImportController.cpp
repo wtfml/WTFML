@@ -797,6 +797,7 @@ void ImportController::importModpackOneClick(const QString &zipPath,
         return;
     }
 
+
     QString installerJava;
     bool javaCancelled = false;
     QString javaReason;
@@ -820,6 +821,12 @@ void ImportController::importModpackOneClick(const QString &zipPath,
     }
     const bool started = applyResolvedModpackImport(
         prepared.sourceZip, name, prepared.pack, prepared.manifestFingerprint, installerJava);
+    if (started) {
+        // 走到这里已经过了「继续安装其余内容」那一问；只对本趟导入放开缺件提交。
+        if (!prepared.pack.fileIssues.isEmpty()) {
+            m_owner->m_versionManager->allowPartialModpackImport();
+        }
+    }
     if (started && !prepared.tempArchive.isEmpty()) {
         // 同 importModpackFromFile()：移交给 versionDownloadFinished 清理。
         prepared.releaseTempArchive();

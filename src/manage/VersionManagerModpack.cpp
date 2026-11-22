@@ -92,6 +92,10 @@ bool VersionManager::loaderKindForDependencyKey(const QString &key, LoaderKind *
     return false;
 }
 
+void VersionManager::allowPartialModpackImport() {
+    if (m_modpackInstall.active()) m_modpackInstall.allowPartial = true;
+}
+
 void VersionManager::importModpack(const QString &zipPath, const QString &instanceId,
                                    const ModpackImport::Pack &pack,
                                    const QString &installerJavaPath,
@@ -425,10 +429,16 @@ void VersionManager::commitModpackImport(const QList<ModpackImport::FileIssue> &
         failModpackImport(tr("无法保存导入结果，保留未完成状态：%1").arg(reportProblem));
         return;
     }
-    // 少数文件在 CurseForge 上被标记为不可用 / 接口不返回时，不再让整包停在半成品：
-    // 其余文件已经校验通过，先把实例按“缺件”完成，报告仍保留 complete=false。
-    // 用户可以直接启动，报告里再补齐；这和 PCL / HMCL 的做法一致 —— 它们也不会因为
-    // 一两个拿不到的文件把几百个已下好的文件全扣住。
+    if (!complete && !m_modpackInstall.allowPartial) {
+        QStringList details;
+        for (const auto &issue : issues) details.append(ModpackInstallReport::description(issue));
+        failModpackImport(tr("整合包安装尚未完成。已下载的文件和已应用的覆盖文件均已保留。\n\n%1\n\n逐项清单：%2\n补齐后可在报告中选择「完成安装」。如果旧安装缺少有效的安装记录，请用原整合包和原实例名称继续导入。")
+            .arg(details.join(QStringLiteral("\n\n")),
+                 QDir::toNativeSeparators(AppPaths::versionDir(id) + QStringLiteral("/wtfml.import-report.json"))));
+        return;
+    }
+    // 用户已经在「有文件需要补齐」里选了「继续安装其余内容」：其余文件校验通过后
+    // 先把实例按“缺件”完成，报告仍保留 complete=false。用户可以启动，报告里再补齐。
 
     // 自检：装完的东西得真的能被列表认出来。判据用**读侧那一份**（InstanceFiles::
     // resolveInstance），不自己再判一遍 —— "装是装了、列表里看不见"这个症状这个项目已经

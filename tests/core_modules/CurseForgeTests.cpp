@@ -396,34 +396,36 @@ void runCurseForgeTests() {
                                                      {999, 555}};  // 最后一个查不到
         const ModpackImport::CurseForgeFiles parsed =
             ModpackImport::parseCurseForgeFileInfo(reply, asked);
-        check(parsed.problem.isEmpty() && parsed.resolved.size() == 1 &&
-                  parsed.notDistributable == 1 && parsed.missing == 1,
-              "ZG3 三条问出去：换到 1 条、1 条平台标记不可用、1 条查不到（三类分得开）",
+        check(parsed.problem.isEmpty() && parsed.resolved.size() == 2 &&
+                  parsed.notDistributable == 0 && parsed.missing == 1,
+              "ZG3 三条问出去：两条都拿到 CDN 候选、1 条查不到（不可用标记不再直接丢弃）",
               parsed.problem.isEmpty()
                   ? QStringLiteral("换到 %1 / 不可用 %2 / 查不到 %3")
                         .arg(parsed.resolved.size())
                         .arg(parsed.notDistributable)
                         .arg(parsed.missing)
                   : parsed.problem);
-        check(parsed.issues.size() == 2 && parsed.issues.first().ref.fileId == 1000001 &&
-                  parsed.issues.last().ref.fileId == 555,
-              "ZG3 不可用与接口未返回的条目保留原清单编号，不只统计数量");
-        if (parsed.resolved.size() == 1) {
-            const ModpackImport::CurseForgeFile &file = parsed.resolved.first();
+        check(parsed.issues.size() == 1 && parsed.issues.first().ref.fileId == 555,
+              "ZG3 接口未返回的条目保留原清单编号，不只统计数量");
+        const auto aFile = std::find_if(parsed.resolved.cbegin(), parsed.resolved.cend(),
+                                        [](const ModpackImport::CurseForgeFile &file) {
+                                            return file.file.path == QStringLiteral("a.jar");
+                                        });
+        if (aFile != parsed.resolved.cend()) {
             // **这一条是这一节里最值钱的**：正文的次序和问的次序相反，按位置取会把
             // a.jar 的地址安到 b.jar 上（症状是"装完有几个 mod 是错的"，比少装可怕）。
-            check(file.file.path == QStringLiteral("a.jar") && file.modId == 238222 &&
-                      file.file.size == 1024 &&
-                      file.file.urls.value(0).contains(QStringLiteral("a.jar")),
+            check(aFile->modId == 238222 && aFile->file.size == 1024 &&
+                      aFile->file.urls.value(0).contains(QStringLiteral("a.jar")),
                   "ZG3 答复的次序被打乱也认得出哪条是哪条（按 fileId 归档，不按位置）",
-                  file.file.path + QStringLiteral(" / ") + file.file.urls.join(QStringLiteral(",")));
+                  aFile->file.path + QStringLiteral(" / ") + aFile->file.urls.join(QStringLiteral(",")));
             // `hashes` 里 algo==1 那条才是 sha1；拿 hashes[0] 的话这一条拿到的是 md5
             // （下载完每一条都会被判成"校验不过"，而字节数是对的 —— 极难查）。
-            check(file.file.sha1 == QStringLiteral("aaaa"),
-                  "ZG3 sha1 取的是 algo==1 那一条，不是数组的第 0 条", file.file.sha1);
+            check(aFile->file.sha1 == QStringLiteral("aaaa"),
+                  "ZG3 sha1 取的是 algo==1 那一条，不是数组的第 0 条", aFile->file.sha1);
         }
-        check(parsed.projectIds.size() == 1 && parsed.projectIds.value(0) == 238222,
-              "ZG3 只有换到了的才需要去问类目（不可用 / 查不到的那两个不用问）",
+        check(parsed.projectIds.size() == 3 && parsed.projectIds.contains(238222) &&
+                  parsed.projectIds.contains(306612) && parsed.projectIds.contains(999),
+              "ZG3 所有被引用的项目都问类目/项目页（含不可用和查不到的）",
               QStringLiteral("%1 个").arg(parsed.projectIds.size()));
 
         const auto fallback = ModpackImport::parseCurseForgeFileInfo(
@@ -712,10 +714,10 @@ void runCurseForgeTests() {
                 pack.format = ModpackImport::Format::CurseForge;
                 pack.pendingRefs = {{101,55}};
                 const auto problem = manager.resolveCurseForgeFiles(&pack);
-                check(problem.isEmpty() && pack.fileIssues.size() == 1 &&
-                      ModpackImport::curseForgeFileWebUrl(pack.fileIssues.first()) ==
-                          QStringLiteral("https://www.curseforge.com/minecraft/texture-packs/example/files/55"),
-                      "CF 真实解析接线将平台项目网页传到不可用文件缺项", problem);
+                check(problem.isEmpty() && pack.fileIssues.isEmpty() && pack.files.size() == 1 &&
+                      pack.files.first().urls.value(0) ==
+                          QStringLiteral("https://edge.forgecdn.net/files/0/55/pack.zip"),
+                      "CF 真实解析接线对 isAvailable=false 仍构造 CDN 候选", problem);
             }
         }
         check(api.start(), "ZG7 本机假接口起来了（起不来这一节就没意义，直接算失败）");
