@@ -282,6 +282,10 @@
         <source>离线账号名称不能含空格或控制字符。</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>离线账号名称须为 3 至 16 个字符，只能使用英文字母、数字和下划线。</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ActivityCenterController</name>
@@ -15243,7 +15247,7 @@ Minecraft %2 / %3 %4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>获取皮肤失败，已显示默认外观。</source>
+        <source>获取皮肤失败，已显示默认外观（%1）。</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

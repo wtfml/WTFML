@@ -294,6 +294,10 @@ Select “Log out” to try again.</translation>
             <source>离线账号名称不能含空格或控制字符。</source>
             <translation>Offline account names cannot contain spaces or control characters.</translation>
         </message>
+        <message>
+            <source>离线账号名称须为 3 至 16 个字符，只能使用英文字母、数字和下划线。</source>
+            <translation>Use 3 to 16 letters (A–Z), digits, or underscores for the offline profile name.</translation>
+        </message>
     </context>
     <context>
         <name>ActivityCenterController</name>
@@ -15700,8 +15704,8 @@ It will not restart automatically when stopped manually or exited normally.</tra
             <translation>%1's authentic appearance</translation>
         </message>
         <message>
-            <source>获取皮肤失败，已显示默认外观。</source>
-            <translation>Failed to obtain skin, default appearance has been displayed.</translation>
+            <source>获取皮肤失败，已显示默认外观（%1）。</source>
+            <translation>Could not load %1's skin; showing the default look.</translation>
         </message>
         <message>
             <source>正在启动 %1…</source>

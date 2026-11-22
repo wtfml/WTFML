@@ -131,6 +131,9 @@ void runPlayerSkinTests(const QString &sandbox) {
               "T4 带横线的 uuid 归一成 32 位无横线（URL 和文件名共用这一个形式）");
         check(PlayerSkinStore::uuidKey(uuidPlain.toUpper()) == uuidPlain,
               "T4 大写也归一成小写（官方一律小写，大写进去查不到人）");
+        const QUrl profileUrl = PlayerSkinStore::profileRequestUrl(PlayerSkinStore::uuidKey(uuid));
+        check(profileUrl == QUrl(QStringLiteral("https://sessionserver.mojang.com/session/minecraft/profile/") + uuidPlain),
+              "T4 官方档案请求路径包含玩家 UUID", profileUrl.toString());
         check(PlayerSkinStore::uuidKey(QStringLiteral("不是 uuid")).isEmpty(),
               "T4 认不出来 → 空串（不去拼一个野路径）");
         check(PlayerSkinStore::cachedProfilePath(QStringLiteral("不是 uuid")).isEmpty(),

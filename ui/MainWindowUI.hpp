@@ -3380,7 +3380,7 @@ public:
     /// 要不到。**不弹窗**（这是可选的外观功能，见 MainWindow.cpp 里的说明），
     /// 但也不能一声不吭 —— 用户会觉得是画错了。
     static QString skinHintFailedText(const QString &name) {
-        return QCoreApplication::translate("MainWindowUI", "获取皮肤失败，已显示默认外观。").arg(name);
+        return QCoreApplication::translate("MainWindowUI", "获取皮肤失败，已显示默认外观（%1）。").arg(name);
     }
 
     // ---------- 选项卡下标 ----------
