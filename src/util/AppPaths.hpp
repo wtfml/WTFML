@@ -35,7 +35,7 @@ namespace AppPaths {
 /// 它是「游戏文件夹」列表里永远排第一、也删不掉的那一项（见 FolderManager）：别的
 /// 目录被挪走、U 盘被拔掉的时候，启动器总得有一个能落的根目录。
 inline QString defaultMinecraftDir() {
-    // 测试入口可在创建任何控制器之前注入独立根；正式入口不设置此属性。
+    // 测试入口在创建控制器之前注入独立根目录。
     const auto app = QCoreApplication::instance();
     const QString isolated = app ? app->property("wtfml.testDefaultMinecraftDir").toString() : QString();
     if (!isolated.isEmpty()) return isolated;
@@ -219,8 +219,7 @@ inline QString installerCacheDir() {
 /// NOTE: 挂在**数据根目录**下（和 cache/installers、cache/modpacks 一样），不挂 %APPDATA%：
 /// "整个启动器连带数据可以整体拷走"这条在这里同样适用。代价是换一份 .minecraft
 /// 就重新攒一份图标 —— 和 skinsDir() 那段是同一个取舍，理由也一样。
-/// NOTE: 没人会去清它，清掉也不影响正确性（下一次进那一页重新攒）。过期/读坏的那些
-/// 由 ResourceStore 自己换掉或删掉。
+/// 设置页可清除这一目录；过期或损坏的条目由 ResourceStore 单独更新。
 inline QString iconCacheDir() {
     return minecraftDir() + QStringLiteral("/cache/icons");
 }
@@ -246,8 +245,7 @@ inline QString modpackCacheDir() {
 /// 答案不会一秒一变"。
 ///
 /// NOTE: 同样挂在**数据根目录**下（和 cache/ 里那几位一样），不挂 %APPDATA% ——
-/// "整个启动器连带数据可以整体拷走"这条在这里同样适用。没人会去清它，清掉也不影响
-/// 正确性（下一次测速重新攒）。
+/// "整个启动器连带数据可以整体拷走"这条在这里同样适用。清除后由下次测速重新生成。
 inline QString serverCacheDir() {
     return minecraftDir() + QStringLiteral("/cache/servers");
 }
@@ -369,8 +367,7 @@ inline QString backupDir() {
 ///
 /// NOTE: 挂**数据根目录**下（和 cache/ 里那几位一样，见 iconCacheDir() 那段），不挂
 /// %APPDATA% —— "整个启动器连带数据可以整体拷走"这条在这里同样适用。
-/// NOTE: 没人会去清它，清掉也不影响正确性（下一次进那一页重新攒）；键里带着大小和修改
-/// 时间，所以**换了文件自然作废**。
+/// 清除后重新扫描实例会生成新缓存。键里的文件大小和修改时间用于识别已更新的模组。
 inline QString instanceIconCacheDir() {
     return minecraftDir() + QStringLiteral("/cache/instance-icons");
 }

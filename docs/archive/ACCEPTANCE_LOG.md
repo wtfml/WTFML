@@ -262,3 +262,8 @@ python tools/acceptance_directory_boundary.py --exe <WTFMinecraftLauncher.exe> -
 2026-11-21｜启动、任务中心、实例列表和资源选择器修复｜`core`、`activity-selection`、`instance-upgrade`、`ui`、`ui-refresh`、`launch-card`、`main-window` 通过；主页跨文件夹切换与游玩时长断言通过；选择器深浅色样张在 `build/tmp-WTFML-issues-picker-shots-f79e`｜`instance-upgrade` 单独复跑通过，首轮与 `main-window` 并行时出现过一次临时目录相关失败。
 2026-11-22｜版本列表、依赖选择、离线名称、搜索排序、自动内存、Forge 原版补全和卷根目录保护｜核心回归 5/5，资源搜索和依赖下载专项通过，`verify_install vm-batch` 验证 Forge 下载前修复原版 JAR 与 JSON，并核对卷根目录映射｜Forge 回归使用本地文件模拟，在启动外部安装器之前取消。
 2026-11-22｜修复外观请求、加载器换源、资源筛选与下载日志｜启动器构建成功，核心回归 5/5，筛选、资源来源、资源详情和下载重试专项通过｜DNS 换源用模拟回复验证，正版账号与真实上游待复测。
+2026-11-22｜设置页清除缓存与首次使用测试｜启动器构建、双窗口档案隔离、缓存确认与数据保留、智能体凭据和窗口框架检查通过｜主窗口套件的披风刷新期间可应用断言失败，新增缓存断言通过。
+2026-11-22｜任务中心下载字节与步骤进度、长报告预览、版本检查排队与 CurseForge 无首字节重试｜启动器构建，`core-downloads`、`core-activity`、`core-resources`、`ui-refresh` 通过｜重试使用模拟回复验证，RLCraft 实际线路待复测。
+2026-11-22｜任务小窗定位整页任务、整合包下载失败原地续装与跨重启恢复意图｜启动器构建，`core-resources` 和 `ui-refresh` 通过，模拟下载失败后补齐原实例并完成解压校验｜最新 RLCraft 日志已经完成导入，后续启动停在旧模组下载依赖的 Java 证书校验。
+2026-11-22｜实例启动设置增加本机 Java 选单｜启动器构建，`core-java`、`ui-refresh`、`input-widths` 通过｜同为 Java 8 的两份运行时分别列出，载入清单时保留跟随全局，选中后才保存实例覆盖。
+2026-11-22｜实例 Java 选单合并到原路径输入框｜启动器构建，`ui-refresh` 和 `input-widths` 通过｜检测结果到达时保留框内路径。使用日志里的 Java 8u51 直接请求同一依赖可复现证书校验错误。

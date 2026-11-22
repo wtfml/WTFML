@@ -1960,7 +1960,7 @@ TaskCenterPanel *MainWindowUI::taskCenterPanel() const {
         bottomBar != nullptr ? bottomBar->findChild<QWidget *>(taskCenterPanelName()) : nullptr);
 }
 
-void MainWindowUI::openTaskCenterPanel() {
+void MainWindowUI::openTaskCenterPanel(const QString &taskKey) {
     if (bottomBar == nullptr || taskSummaryButton == nullptr || overlayHost == nullptr) {
         return;
     }
@@ -1973,11 +1973,12 @@ void MainWindowUI::openTaskCenterPanel() {
         const bool open = overlayHost->isOpen() && (panel->isVisible() || overlayHost->parked());
         if (open) {
             if (panel->isVisible()) {
-                overlayHost->dismiss();
+                if (taskKey.isEmpty()) overlayHost->dismiss();
+                else panel->revealTask(taskKey);
                 return;
             }
             if (overlayHost->evict()) {
-                QTimer::singleShot(0, taskSummaryButton, [this]() { openTaskCenterPanel(); });
+                QTimer::singleShot(0, taskSummaryButton, [this, taskKey] { openTaskCenterPanel(taskKey); });
             }
             return;
         }
@@ -2004,7 +2005,7 @@ void MainWindowUI::openTaskCenterPanel() {
     if (overlayHost->isOpen()) {
         // 覆盖页开着（实例设置等）时**不挤掉它**：任务中心作为提示层叠在上面，
         // 关掉就回原页，背景不重开、不播换页动画。
-        const auto openOverPage = [this, onOutsidePress] {
+        const auto openOverPage = [this, onOutsidePress, taskKey] {
         QWidget *content = overlayHost->openPrompt(true, /*fullSize=*/true);
         if (content == nullptr) return;
         auto *promptLayout = qobject_cast<QVBoxLayout *>(content->layout());
@@ -2057,11 +2058,12 @@ void MainWindowUI::openTaskCenterPanel() {
             }, false, tabWidget->geometry());
         }, Qt::SingleShotConnection);
         panel->showEmbedded();
+        if (!taskKey.isEmpty()) panel->revealTask(taskKey);
         };
         Anim::layoutTransition(overlayHost->parentWidget(), openOverPage, true, tabWidget->geometry());
         return;
     }
-    const auto openNow = [this, onOutsidePress]() {
+    const auto openNow = [this, onOutsidePress, taskKey]() {
     QWidget *page = overlayHost->openPage(QCoreApplication::translate("MainWindowPanels", "任务中心"));
     if (page == nullptr) {
         return;
@@ -2090,6 +2092,7 @@ void MainWindowUI::openTaskCenterPanel() {
     });
     overlayHost->setPageHeaderWidget(panel->headerActions());
     panel->showEmbedded();
+    if (!taskKey.isEmpty()) panel->revealTask(taskKey);
     };
         Anim::layoutTransition(overlayHost->parentWidget(), openNow, true, tabWidget->geometry());
 }
@@ -2271,7 +2274,7 @@ void MainWindowUI::setBottomBarTaskSummary(const BottomBarTaskSummary &summary) 
         }
     }
     // 收起时那颗角标：同一个信号、同一颗点，只在图标轨上露（展开时标题前那颗管）。
-    // 未读失败在账本里一定占着这一格（优先级 1，不受「刚完成」时间窗限制），所以环一直在。
+    // 有可测的下载时环显示进度，未读失败继续在右上角显示红点。
     if (taskFailureBadge != nullptr) {
         taskFailureBadge->setPixmap(VersionIcons::runStateMark(
             MainWindowUI::taskCenterPanelFailureDotSize(), folderDangerColor(textPalette)));
@@ -2357,7 +2360,7 @@ void MainWindowUI::toggleActivityPopover() {
     handlers.items = m_taskCenterProvider;
     handlers.rowAction = m_taskCenterRowAction;
     handlers.clearFinished = m_taskCenterClearHandler;
-    handlers.rowActivated = m_taskCenterRowActivated;
+    handlers.rowActivated = [this](const QString &key) { openTaskCenterPanel(key); };
     handlers.openAll = [this] { openTaskCenterPanel(); };
     auto *popover = new ActivityPopover(taskSummaryButton, handlers);
     popover->popUp();

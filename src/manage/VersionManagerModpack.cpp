@@ -147,6 +147,9 @@ void VersionManager::importModpack(const QString &zipPath, const QString &instan
 
     m_modpackInstall = ModpackInstall();
     m_modpackInstall.zipPath = zipPath;
+    const QFileInfo archive(zipPath);
+    m_modpackInstall.archiveSize = archive.size();
+    m_modpackInstall.archiveModifiedMs = archive.lastModified().toMSecsSinceEpoch();
     m_modpackInstall.instanceId = instanceId;
     m_modpackInstall.pack = pack;
     m_modpackInstall.manifestFingerprint = manifestFingerprint;
@@ -413,25 +416,19 @@ void VersionManager::commitModpackImport(const QList<ModpackImport::FileIssue> &
     const ModpackImport::Pack pack = m_modpackInstall.pack;
     const int skipped = pack.filesSkipped;
     const int notDistributable = pack.filesNotDistributable;
-    const int missing = pack.filesMissing;
     const int extracted = m_modpackInstall.extractedEntries;
     const QString archivePath = m_modpackInstall.zipPath;
 
-    const bool complete = issues.isEmpty() && notDistributable + missing <= pack.fileIssues.size();
+    const bool complete = issues.isEmpty();
     QString reportProblem;
     if (!ModpackInstallReport::write(AppPaths::versionDir(id), pack, issues, complete, &reportProblem)) {
         failModpackImport(tr("无法保存导入结果，保留未完成状态：%1").arg(reportProblem));
         return;
     }
-    if (!complete) {
-        // 必须在写 meta、移除 importing 标记之前终止，否则缺文件也会变成正常实例。
-        QStringList details;
-        for (const auto &issue : issues) details.append(ModpackInstallReport::description(issue));
-        failModpackImport(tr("整合包安装尚未完成。已下载的文件和已应用的覆盖文件均已保留。\n\n%1\n\n逐项清单：%2\n补齐后可在报告中选择「完成安装」。如果旧安装缺少有效的安装记录，请用原整合包和原实例名称继续导入。")
-            .arg(details.join(QStringLiteral("\n\n")),
-                 QDir::toNativeSeparators(AppPaths::versionDir(id) + QStringLiteral("/wtfml.import-report.json"))));
-        return;
-    }
+    // 少数文件在 CurseForge 上被标记为不可用 / 接口不返回时，不再让整包停在半成品：
+    // 其余文件已经校验通过，先把实例按“缺件”完成，报告仍保留 complete=false。
+    // 用户可以直接启动，报告里再补齐；这和 PCL / HMCL 的做法一致 —— 它们也不会因为
+    // 一两个拿不到的文件把几百个已下好的文件全扣住。
 
     // 自检：装完的东西得真的能被列表认出来。判据用**读侧那一份**（InstanceFiles::
     // resolveInstance），不自己再判一遍 —— "装是装了、列表里看不见"这个症状这个项目已经
@@ -490,6 +487,23 @@ void VersionManager::commitModpackImport(const QList<ModpackImport::FileIssue> &
     if (notDistributable > 0) {
         extra += tr("\n\n已校验通过 %1 个本地手动补齐文件。").arg(notDistributable);
     }
+    if (!complete) {
+        QStringList names;
+        for (const auto &issue : issues) {
+            if (names.size() >= 6) break;
+            const QString project = issue.projectWebUrl.section(QLatin1Char('/'), -1);
+            names.append(!issue.fileName.isEmpty()
+                             ? issue.fileName
+                             : (project.isEmpty() ? tr("项目 %1").arg(issue.ref.projectId)
+                                                  : project));
+        }
+        QString listed = names.join(QStringLiteral("、") // i18n-ignore
+        );
+        if (issues.size() > names.size()) listed += tr(" 等");
+        extra += tr("\n\n有 %1 个文件未能自动取得：%2。实例已按缺件状态完成导入，可以先启动；补齐这些文件后在导入报告里选择「完成安装」。")
+                     .arg(issues.size())
+                     .arg(listed);
+    }
     // 这一种格式自带的话：MultiMC 实例导入了什么、没导入什么，lwjgl3ify 为什么会起不来。
     // 这条必须落在**终态**里 —— 用户装完就往下走，不会再翻日志。
     if (!pack.supportNote.isEmpty()) {
@@ -519,11 +533,24 @@ void VersionManager::failModpackImport(const QString &reason) {
 
     const QString id = m_modpackInstall.instanceId;
     QString finalReason = reason;
+    if (retryModpackInstance() == id) {
+        finalReason += QStringLiteral("\n\n") + tr("在任务中心选择「重试」可继续安装此实例。");
+    }
     if (QFileInfo::exists(InstanceFiles::importMarkerPath(id))) {
         QList<ModpackImport::FileIssue> candidates = m_modpackInstall.pack.fileIssues;
-        for (const auto &file : m_modpackInstall.pack.files) candidates.append({
-            {file.curseForgeProjectId, file.curseForgeFileId}, QFileInfo(file.path).fileName(),
-            file.path, file.sha1, file.size, tr("下载未完成或文件校验未通过")});
+        // 只把**看起来就不在盘上 / 大小不对**的文件列进报告。失败路径刻意不在 UI 线程
+        // 哈希几 GB 文件，但也不能把已经下好的 433 个文件全当成“下载未完成”摆给用户 ——
+        // 那会变成一份要人逐个点进去下载的假清单。大小对得上的留给后台“重新校验”确认。
+        const QString instanceRoot = AppPaths::versionDir(id);
+        for (const auto &file : m_modpackInstall.pack.files) {
+            const QFileInfo onDisk(QDir(instanceRoot).filePath(file.path));
+            const bool present = onDisk.exists() &&
+                                 (file.size < 0 || onDisk.size() == file.size);
+            if (present) continue;
+            candidates.append({
+                {file.curseForgeProjectId, file.curseForgeFileId}, QFileInfo(file.path).fileName(),
+                file.path, file.sha1, file.size, tr("下载未完成或文件校验未通过")});
+        }
         // 失败路径不再在 UI 线程哈希几 GB 文件；报告保留候选，后台“重新校验”确认哪些已在盘上。
         const auto issues = candidates;
         QString reportProblem;

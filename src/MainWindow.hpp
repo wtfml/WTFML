@@ -1917,6 +1917,8 @@ private:
     void onLauncherBehaviourChanged();
     /// 「语言」那一格（界面语言）：落盘 + 提示重启 + 可选「立即重启」。
     void onLanguageChanged();
+    void onClearLauncherCache();
+    void onOpenFirstRunTest();
     void onDownloadSourceChanged();
     /// 「下载源」那一组里那颗「并发数」下拉框。
     void onDownloadConcurrencyChanged();
@@ -2912,15 +2914,12 @@ private:
     /// 实例里了」而**实际没装**。按 label 键控之后，"这一单是不是在等导入的那一单"
     /// 才是个能判的问题。
     ///
-    /// NOTE: 光键控还不够，还有**登记时机**这一半：记录只在 `downloadResourceFiles()`
-    /// 回答"开起来了"之后才写（见 downloadResourceVersion）。被拒绝的那一发会带着
-    /// **同一个 label** 发一个假失败 —— 双击那一行的第二下正是这样。两半都要，
-    /// 少一半就还是会被吃掉。
-    /// 顺带的好处：两个整合包前后脚开始下也各自记得住（键不同，take() 各取各的）。
+    /// 记录在开启批次前登记，覆盖命中缓存时同步完成的路径。收尾同时核对任务号，重试接管原记录。
     struct PendingModpackImport {
         QString path;
         QString instanceName;
         Tasks::TaskId taskId = Tasks::invalidTaskId();
+        QString gameRoot;
     };
     QHash<QString, PendingModpackImport> m_pendingModpackImports;
     QSet<QString> m_oneClickModpackIds;

@@ -7,6 +7,7 @@
  */
 
 #include "DownloadManager.hpp"
+#include <limits>
 #include <QCoreApplication>
 #include "DownloadCheckpoint.hpp"
 #include "DownloadCache.hpp"
@@ -222,6 +223,13 @@ QString downloadTiming(QNetworkReply *reply, qint64 elapsedMs) {
         .arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt())
         .arg(int(reply->error()))
         .arg(DownloadDiag::safeUrl(requestUrl), DownloadDiag::safeUrl(reply->url()));
+}
+
+bool isForgeCdnRedirect(const QNetworkReply *reply) {
+    const QUrl entry(reply->property("wtfmlEntryUrl").toString());
+    const QUrl landed = reply->url();
+    return entry.scheme() == QLatin1String("https") && landed.scheme() == QLatin1String("https") &&
+           entry.host() == QLatin1String("edge.forgecdn.net") && landed.host() == QLatin1String("mediafilez.forgecdn.net");
 }
 
 }  // namespace
@@ -656,6 +664,7 @@ void DownloadManager::beginBatch() {
     ++m_batchGeneration;
     m_totalJobs = 0;
     m_doneJobs = 0;
+    m_batchFileBytes.clear();
     m_failedJobs = 0;
     m_skippedJobs = 0;
     // 上一批的借文件作业跟着这一批作废（见 clearReuseJobs()）。新一批从 0 开始数。
@@ -827,6 +836,32 @@ DownloadStats DownloadManager::stats() const {
     return s;
 }
 
+QPair<qint64, qint64> DownloadManager::batchByteProgress() const {
+    qint64 received = 0;
+    qint64 total = 0;
+    bool known = !m_batchOpen && m_totalJobs > 0 && m_batchFileBytes.size() == m_totalJobs &&
+                 m_precheckActive == 0 && m_precheckQueue.isEmpty() &&
+                 m_reuseActive == 0 && m_reuseQueue.isEmpty();
+    constexpr qint64 limit = std::numeric_limits<qint64>::max();
+    for (const FileByteProgress &file : m_batchFileBytes) {
+        received += qMin(file.received, limit - received);
+        if (file.size < 0 || file.size > limit - total) {
+            known = false;
+        } else {
+            total += file.size;
+        }
+    }
+    return {received, known ? total : -1};
+}
+
+void DownloadManager::updateBatchFileBytes(const QString &path, qint64 received, qint64 size) {
+    const auto file = m_batchFileBytes.find(path);
+    if (file == m_batchFileBytes.end()) return;
+    if (size >= 0) file->size = size;
+    file->received = qMax<qint64>(0, received);
+    if (file->size >= 0) file->received = qMin(file->received, file->size);
+}
+
 bool DownloadManager::fileAlreadyValid(const QString &path, const QString &expectedSha1,
                                        qint64 expectedSize, VerifyMode mode) {
     // 体检点过名的那几条：不看盘上这份，直接当"要下"（见 setFlaggedPaths 的说明）。
@@ -974,6 +1009,7 @@ void DownloadManager::queueNetworkJob(const QString &url, const QString &destina
                                       const QString &expectedSha1, qint64 expectedSize,
                                       const QString &officialUrl, const DownloadRange &range) {
     m_totalJobs++;
+    m_batchFileBytes.insert(destinationPath, FileByteProgress{0, expectedSize});
     // 排进队列之后立刻试着发一次：队列是空的、连接也有富余的时候，这一句就把它发出去了
     // （所以"只下一两个文件"的那些调用点感觉不到队列存在）。
     const bool segmented = m_segmentEnabled && (!m_checkpoint || !expectedSha1.isEmpty())
@@ -2248,6 +2284,10 @@ void DownloadManager::onDownloadReplyFinished() {
                 .arg(stale ? QStringLiteral("yes") : QStringLiteral("no"), rangeText,
                      diagReplyFacts(reply)));
     }
+    if (!stale) {
+        if (success) updateBatchFileBytes(destPath, stream->bytes, stream->bytes);
+        else updateBatchFileBytes(destPath, 0);
+    }
     if (success) {
         const qint64 elapsedMs = diagElapsedMs(reply, m_clock.elapsed());
         if (!stale && elapsedMs >= 60000) {
@@ -2334,7 +2374,7 @@ void DownloadManager::onStallWatchdogTick() {
     // 就地处理会同步触发 finished（abort 那条路就是这么走的）、进而改这几张表，
     // 所以先把要动的攒起来。
     QList<QNetworkReply *> stalled;  // 走镜像、有退路、太慢 -> abort 它换官方那条
-    QList<QNetworkReply *> wedged;   // 发出去之后一点动静都没有 -> 判失败
+    QList<QPair<QNetworkReply *, qint64>> wedged;
     for (auto it = m_stallMeters.begin(); it != m_stallMeters.end(); ++it) {
         QNetworkReply *reply = it.key();
         StallMeter &meter = it.value();
@@ -2384,8 +2424,10 @@ void DownloadManager::onStallWatchdogTick() {
         // (1) 卡死兜底。**不看有没有退路** —— 没有退路的回复一旦永远不结束，
         // pendingDownloads 就永远归不了零：整批永不收尾、界面永远停在"下载中"、
         // 连个错误都没有（进度条停在 1%，用户只能重启）。
-        if (now - meter.lastSignOfLifeMs > m_noProgressGiveUpMs) {
-            wedged.append(reply);
+        const qint64 giveUpMs = meter.bytesSeen == 0 && isForgeCdnRedirect(reply)
+            ? qMin<qint64>(m_noProgressGiveUpMs, 30000) : m_noProgressGiveUpMs;
+        if (now - meter.lastSignOfLifeMs > giveUpMs) {
+            wedged.append({reply, giveUpMs});
             continue;
         }
         // (2) 慢镜像那条只对"有退路"的回复成立：abort 掉它 = 换一条路再试；没有退路的
@@ -2481,17 +2523,17 @@ void DownloadManager::onStallWatchdogTick() {
             reply->abort();
         }
     }
-    for (QNetworkReply *reply : wedged) {
-        qWarning() << "No data for" << (m_noProgressGiveUpMs / 1000) << "seconds:"
+    for (const auto &[reply, giveUpMs] : wedged) {
+        qWarning() << "No data for" << (giveUpMs / 1000) << "seconds:"
                    << jobLabel(reply);
         if (DownloadDiag::enabled()) {
             DownloadDiag::line(QStringLiteral("watchdog: wedged job=%1 url=%2 giveUp=%3ms %4")
                                    .arg(jobLabel(reply),
                                         DownloadDiag::safeUrl(reply->request().url()))
-                                   .arg(m_noProgressGiveUpMs)
+                                   .arg(giveUpMs)
                                    .arg(diagReplyFacts(reply)));
         }
-        failWedgedDownload(reply);
+        failWedgedDownload(reply, giveUpMs);
     }
     pumpDownloadQueue();
 }
@@ -2503,7 +2545,7 @@ QString DownloadManager::jobLabel(QNetworkReply *reply) const {
     return activeDownloads.value(reply);
 }
 
-void DownloadManager::failWedgedDownload(QNetworkReply *reply) {
+void DownloadManager::failWedgedDownload(QNetworkReply *reply, qint64 giveUpMs) {
     // 元数据作业要单独收：它没进过 pendingDownloads / m_totalJobs / m_doneJobs（见
     // fetchVersionManifest()），走下面那一套会凭空少算一个正在飞的文件作业，让
     // checkAllDownloadsFinished() 提前宣布整批下完 —— 界面报"下载完成"的时候文件还在路上。
@@ -2545,11 +2587,12 @@ void DownloadManager::failWedgedDownload(QNetworkReply *reply) {
     // 一个真死的入口必须能停下来，不然整批永远收不了尾。
     const int wedgedAttempts = reply->property("wtfmlRetryAttempts").toInt();
     const int wedgedDelay = DownloadRetryPolicy::delayMs(wedgedAttempts, {});
-    // 只重排**走镜像、身上有备用地址**的那一类：它们的地址
-    // 是 BMCLAPI 入口，重发一次会重新挑一台落点。官方直连的作业没有"换一台落点"这回事，
-    // 重发同一条死链路只是把失败往后拖 3 倍 —— 那种照旧到点判失败（V6i 钉着）。
+    // BMCLAPI 入口可重选节点。CurseForge 从入口跳转后一直没收到数据时也重试一次入口。
     const bool mirrorJob = m_officialFallbacks.contains(reply);
-    if (mirrorJob && !m_shuttingDown && wedgedDelay >= 0 && replyIsFromCurrentBatch(reply)) {
+    const bool retryCdnEntry = wedgedAttempts == 0 && isForgeCdnRedirect(reply) &&
+                               m_stallMeters.value(reply).bytesSeen == 0;
+    if ((mirrorJob || retryCdnEntry) && !m_shuttingDown && wedgedDelay >= 0 && replyIsFromCurrentBatch(reply)) {
+        updateBatchFileBytes(destPath, 0);
         const QString retryUrl = reply->request().url().toString();
         requeueDownloadJob(PendingJob{retryUrl, destPath, expectedSha1s.value(reply),
                                          expectedSizes.value(reply, -1),
@@ -2573,7 +2616,7 @@ void DownloadManager::failWedgedDownload(QNetworkReply *reply) {
             checkAllDownloadsFinished();
         });
         wakeup->start(wedgedDelay);
-        qWarning() << "No data for" << (m_noProgressGiveUpMs / 1000) << "seconds; retrying"
+        qWarning() << "No data for" << (giveUpMs / 1000) << "seconds; retrying"
                    << (wedgedAttempts + 1) << "of 3 in" << wedgedDelay << "ms:" << jobLabel(reply);
         if (DownloadDiag::enabled()) {
             DownloadDiag::line(QStringLiteral("watchdog: wedged retry attempt=%1 delay=%2ms job=%3 url=%4 giveUp=%5ms %6")
@@ -2581,7 +2624,7 @@ void DownloadManager::failWedgedDownload(QNetworkReply *reply) {
                                    .arg(wedgedDelay)
                                    .arg(jobLabel(reply),
                                         DownloadDiag::safeUrl(reply->request().url()))
-                                   .arg(m_noProgressGiveUpMs)
+                                   .arg(giveUpMs)
                                    .arg(diagReplyFacts(reply)));
         }
         // 作业回队列了：连接收干净、计数还回去，但**不算完成、也不进失败清单**（和
@@ -2611,7 +2654,7 @@ void DownloadManager::failWedgedDownload(QNetworkReply *reply) {
     // 那两个处理函数开头也会把"没登记的回复"直接忽略掉 —— 不会重复计数。
     handleDownloadError(reply,
                         QStringLiteral("No data received within %1 s, gave up")
-                            .arg(m_noProgressGiveUpMs / 1000));
+                            .arg(giveUpMs / 1000));
     // 问代次**必须在摘表之前**：摘完之后查不到记录，默认值就是"当前这一批"，那就等于没判。
     const bool currentBatch = replyIsFromCurrentBatch(reply);
     activeDownloads.remove(reply);
@@ -2634,6 +2677,7 @@ void DownloadManager::failWedgedDownload(QNetworkReply *reply) {
     // 属于已经放弃的那一批：连接照样收干净，但计数和进度不碰（handleDownloadError 那头已经
     // 只留了一行日志，见 m_batchGeneration）。
     if (currentBatch) {
+        updateBatchFileBytes(destPath, 0);
         m_doneJobs++;
         emitBatchProgress(destPath);
     }
@@ -2648,10 +2692,8 @@ void DownloadManager::onDownloadReplyProgress(qint64 bytesReceived, qint64 bytes
     // 在看门狗眼皮底下的回复要记两笔：累计字节（判"太慢"用）和"现在还有动静"（判"卡死"
     // 用）。**只有** startDownload()/downloadAssets()/retryWithOfficialUrl() 里登记过的
     // 回复会进这张表。
-    if (auto meter = m_stallMeters.find(reply); meter != m_stallMeters.end()) {
-        // 取大的那个：正常情况下两个口径一样，但看门狗那一跳是从 bytesAvailable() 取的高水位
-        // （理由见 onStallWatchdogTick 的 (0)），别让它被一次迟到的小数字往回拨。
-        meter->bytesSeen = qMax(meter->bytesSeen, bytesReceived);
+    if (auto meter = m_stallMeters.find(reply); meter != m_stallMeters.end() && bytesReceived > meter->bytesSeen) {
+        meter->bytesSeen = bytesReceived;
         // 收到字节就是把"卡死"的倒计时清零 —— 一条细水长流、但一直在掉字节的下载（镜像那种
         // 每秒几 KB 的链子）不该被这条兜底掐掉，它该由"太慢"那条判据管。
         meter->lastSignOfLifeMs = m_clock.elapsed();
@@ -2668,6 +2710,10 @@ void DownloadManager::onDownloadReplyProgress(qint64 bytesReceived, qint64 bytes
     }
 
     QString destPath = activeDownloads.value(reply);
+    const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (status == 200 || status == 206) {
+        updateBatchFileBytes(destPath, bytesReceived, bytesTotal);
+    }
     const qint64 previous = reply->property("wtfmlTransferBytes").toLongLong();
     if (bytesReceived > previous) {
         reply->setProperty("wtfmlTransferBytes", bytesReceived);

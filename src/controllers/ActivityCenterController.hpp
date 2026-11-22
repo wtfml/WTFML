@@ -50,7 +50,7 @@ public:
     void setTransferSpeed(Tasks::TaskId id, qint64 bytesPerSecond);
     qint64 transferSpeed(Tasks::TaskId id) const { return m_transferSpeeds.value(id, -1); }
     bool retryWouldWork(const Tasks::TaskSnapshot &task, bool retryPayloadAvailable) const;
-    void markRetryConsumed();
+    void markRetryConsumed(Tasks::TaskId id);
 
     TaskCenter::Item item(const Tasks::TaskSnapshot &task, bool cancelAvailable,
                           bool retryPayloadAvailable, bool crashRecordAvailable) const;

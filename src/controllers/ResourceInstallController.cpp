@@ -548,13 +548,12 @@ void ResourceInstallController::installNow(ResourceCatalog::Kind kind, const QSt
     // 「已经装进实例里了」。而失败那一支**不** take 记录，只有成功那一支才取
     // （见 `onResourceDownloadFinished()` 里那段 ★），所以提前登记不会漏。
     if (!modpackPath.isEmpty()) {
-        owner.m_pendingModpackImports.insert(label, {modpackPath, confirmedName, task});
+        owner.m_pendingModpackImports.insert(label, {modpackPath, confirmedName, task, AppPaths::minecraftDir()});
     }
     const bool started =
         owner.m_versionManager->downloadResourceFiles(destinationDir, instanceId, label, files);
     if (started) {
-        // 只有真开起来了才算"这一批的主人"（被拒那一发或已命中缓存的同步完成可能在
-        // `downloadResourceFiles()` 返回前已经收过尾并清空 Ledger，故仅在仍是当前任务时更新）。
+        // 已命中缓存的批次可能在返回前同步收尾。
         if (owner.m_downloadTaskLedger->task() == task) {
             owner.m_downloadTaskLedger->setOwner(task);
             owner.m_activityCenter->tasks()->setProgress(task, 0, 0);

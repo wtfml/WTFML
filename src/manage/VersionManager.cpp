@@ -81,8 +81,21 @@
 using namespace VersionManagerInternals;
 
 QJsonObject VersionManager::downloadContinuation() const {
-    if (!m_ownBatchOpen || m_resourceDownload.running || m_modpackInstall.active()) return {}; // Import reports own their continuation.
+    if (!m_ownBatchOpen || m_resourceDownload.running) return {};
     QJsonObject intent{{"root", AppPaths::minecraftDir()}};
+    if (m_modpackInstall.active()) {
+        intent.insert("kind", "modpack");
+        intent.insert("instance", m_modpackInstall.instanceId);
+        intent.insert("archive", QFileInfo(m_modpackInstall.zipPath).absoluteFilePath());
+        intent.insert("archiveSize", QString::number(m_modpackInstall.archiveSize));
+        intent.insert("archiveModifiedMs", QString::number(m_modpackInstall.archiveModifiedMs));
+        if (m_modpackInstall.phase == ModpackInstall::Phase::DownloadingFiles) {
+            const auto marker = DownloadCheckpoint::fingerprint(InstanceFiles::importMarkerPath(m_modpackInstall.instanceId));
+            if (!marker.value("exists").toBool()) return {};
+            intent.insert("importMarker", marker);
+        }
+        return intent;
+    }
     QString instance;
     if (m_namedInstance.active()) {
         instance = m_namedInstance.instanceId;
@@ -501,23 +514,54 @@ bool VersionManager::cancelActiveDownload() {
     return true;
 }
 
-bool VersionManager::canRetryDownload() const { return m_failedBatch.valid; }
+bool VersionManager::canRetryDownload() const {
+    return m_failedBatch.valid &&
+           (!m_failedBatch.modpack.active() || m_failedBatch.gameRoot == AppPaths::minecraftDir());
+}
 
 QString VersionManager::retryBatchLabel() const {
     return m_failedBatch.valid ? m_failedBatch.label : QString();
 }
 
-bool VersionManager::retryDownload() {
-    if (!m_failedBatch.valid || m_failedBatch.jobs.isEmpty()) {
+QString VersionManager::retryModpackInstance() const {
+    return m_failedBatch.modpack.instanceId;
+}
+
+QString VersionManager::retryModpackArchive() const {
+    return m_failedBatch.modpack.zipPath;
+}
+
+bool VersionManager::retryDownload(QString *problem) {
+    if (!canRetryDownload() || m_failedBatch.jobs.isEmpty()) {
         return false;
     }
-    if (downloadManager->isBusy()) {
+    if (m_ownBatchOpen || downloadManager->isBusy() || m_loaderInstall.active() ||
+        m_modpackInstall.active() || m_namedInstance.active() || m_resourceDownload.running) {
         // 一次一批（和 downloadVersion / repairVersionFiles / downloadResourceFiles 是同一条
         // 规矩）。硬叠上去的话两份进度会互相盖，而"取消"那一刻也说不清在取消谁。
         qWarning() << "A download batch is already running, refusing to retry.";
         return false;
     }
     const FailedBatch batch = m_failedBatch;
+    if (batch.modpack.active()) {
+        if (!DirectorySessionLock::acquire(batch.gameRoot, problem)) return false;
+        const QFileInfo archive(batch.modpack.zipPath);
+        const auto verdict = InstanceFiles::checkImportTargetName(
+            batch.modpack.instanceId, problem, batch.modpack.manifestFingerprint);
+        if (verdict == InstanceFiles::ImportNameVerdict::Taken) return false;
+        if (batch.modpack.phase == ModpackInstall::Phase::DownloadingFiles &&
+            verdict != InstanceFiles::ImportNameVerdict::OkResume) {
+            if (problem) *problem = tr("原实例的未完成安装记录已不在，请用原整合包重新导入。");
+            return false;
+        }
+        if (!archive.isFile() || archive.size() != batch.modpack.archiveSize ||
+            archive.lastModified().toMSecsSinceEpoch() != batch.modpack.archiveModifiedMs) {
+            if (problem) *problem = tr("原整合包文件已移动或更改，请用原整合包继续安装。");
+            return false;
+        }
+        m_modpackInstall = batch.modpack;
+        m_loaderInstall = batch.loader;
+    }
     m_failedBatch.reset();
 
     // 把"这一批叫什么"照原样摆回去。收尾那一段（`onAllDownloadsFinished()` 的末尾）就是靠
@@ -2238,16 +2282,14 @@ void VersionManager::onAllDownloadsFinished(bool success) {
     // 「失败任务保存失败文件列表和原始 URL 来源，重试只重做失败项」：在这里把那一份
     // 记下来（DownloadManager 那边刚收完尾，失败清单还是这一批的）。
     //
-    // **只有"纯下文件"的批次留**：加载器安装 / 整合包导入 / 带名字的实例那三条路上，
-    // 重下几个文件补不回来（加载器的安装器进程还得再跑一次、导入还得解压覆盖），
-    // 露一颗点了修不好的「重试」比不露更糟。判据问的就是那三个状态机活没活着。
+    // 整合包同时保存安装阶段，使重试后的同一个完成信号继续驱动原来的安装。
     if (success) {
         m_failedBatch.reset();
     } else {
         const bool plainFilesOnly = !m_loaderInstall.active() && !m_modpackInstall.active()
                                     && !m_namedInstance.active();
         m_failedBatch.reset();
-        if (plainFilesOnly) {
+        if (plainFilesOnly || m_modpackInstall.active()) {
             m_failedBatch.jobs = downloadManager->failedJobs();
             // 一个失败作业都没登记上（比如 `scheduleFile()` 那两道"地址是空的"早退）⇒
             // 没有可重做的，别露那颗按钮。
@@ -2255,6 +2297,14 @@ void VersionManager::onAllDownloadsFinished(bool success) {
             m_failedBatch.resource = m_resourceDownload.running;
             m_failedBatch.label = m_resourceDownload.label;
             m_failedBatch.id = m_currentVersionDownloading;
+            if (m_modpackInstall.active() && m_failedBatch.jobs.size() == stats.failed && m_failedBatch.valid) {
+                m_failedBatch.gameRoot = AppPaths::minecraftDir();
+                m_failedBatch.modpack = m_modpackInstall;
+                m_failedBatch.loader = m_loaderInstall;
+                m_failedBatch.loader.listJobs.clear();
+            } else if (!plainFilesOnly) {
+                m_failedBatch.reset();
+            }
         }
     }
 

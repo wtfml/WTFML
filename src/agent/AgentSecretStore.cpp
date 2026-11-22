@@ -34,9 +34,9 @@ bool propertyTrue(const char *name) {
 }
 
 QSettings fallbackSettings() {
-    // 明确的 HKCU 产品位置。测试里 QSettings 的 IniFormat 路径已经被重定向到临时目录，
-    // 所以同一句代码不会写进开发者的真实注册表。
-    return QSettings(QStringLiteral("WTFML"), QStringLiteral("WTFML"));
+    // 显式指定格式，保证隔离档案的后备凭据落在自己的 INI 里。
+    return QSettings(QSettings::defaultFormat(), QSettings::UserScope,
+                     QStringLiteral("WTFML"), QStringLiteral("WTFML"));
 }
 
 QString fallbackKey(const QString &profileId) {
@@ -223,7 +223,7 @@ bool clear(const QString &profileId, QString *problem) {
     QString firstProblem;
 #if defined(Q_OS_WIN)
     QString credProblem;
-    if (!credDelete(credentialTarget(profileId), &credProblem)) {
+    if (credentialManagerAvailable() && !credDelete(credentialTarget(profileId), &credProblem)) {
         ok = false;
         firstProblem = credProblem;
     }

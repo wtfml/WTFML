@@ -257,8 +257,8 @@ bool ActivityCenterController::retryWouldWork(const Tasks::TaskSnapshot &task,
     return Tasks::retryOffered(task, m_retryableTaskId, retryPayloadAvailable);
 }
 
-void ActivityCenterController::markRetryConsumed() {
-    m_retryableTaskId = Tasks::invalidTaskId();
+void ActivityCenterController::markRetryConsumed(Tasks::TaskId id) {
+    if (m_retryableTaskId == id) m_retryableTaskId = Tasks::invalidTaskId();
 }
 
 TaskCenter::State ActivityCenterController::presentationState(Tasks::TaskState state) {
@@ -323,6 +323,8 @@ TaskCenter::Item ActivityCenterController::item(const Tasks::TaskSnapshot &task,
         result.bytesText = tr("已下载 %1 / %2")
                                .arg(InstanceFilesPage::formatSize(task.bytesDone),
                                     InstanceFilesPage::formatSize(task.bytesTotal));
+    } else if (task.bytesDone > 0) {
+        result.bytesText = tr("已下载 %1").arg(InstanceFilesPage::formatSize(task.bytesDone));
     }
     if (task.state == Tasks::TaskState::Running && transferSpeed(task.id) >= 0) {
         if (!result.bytesText.isEmpty()) result.bytesText += QStringLiteral(" / ");
@@ -358,7 +360,7 @@ TaskCenter::Item ActivityCenterController::item(const Tasks::TaskSnapshot &task,
 
     result.steps.reserve(task.steps.size());
     for (const Tasks::TaskStep &step : task.steps) {
-        result.steps.append({step.name, presentationStepState(step.state), displayText(step.note)});
+        result.steps.append({step.name, presentationStepState(step.state), displayText(step.note), step.transferPercent});
     }
     return result;
 }

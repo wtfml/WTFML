@@ -23,6 +23,7 @@
 #include <QProcess>
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
+#include <QSet>
 #include <QSettings>
 #include <QStandardPaths>
 #include <QTemporaryFile>
@@ -343,6 +344,15 @@ struct VanillaRuntime {
     QString exe;
     int majorVersion = -1;
 };
+
+QStringList javaPathsInRuntimeDir(const QString &root) {
+    QDir dir(root);
+    QStringList paths;
+    for (const QString &subdir : dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        paths.append(dir.absoluteFilePath(subdir + QStringLiteral("/bin/java.exe")));
+    }
+    return paths;
+}
 
 /**
  * @brief 扫描原版启动器已经下载好的运行时目录。
@@ -1159,16 +1169,9 @@ QMap<int, QString> GlobalJavaSettings::scanLocalJavaVersions(const QString &java
     // 扫的是这台机器上有什么，不读也不写这个对象的任何状态。
     QMap<int, QString> versions;
 
-    QDir dir(javaDir);
-    if (dir.exists()) {
-        const QStringList subdirs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-        for (const QString &subdir : subdirs) {
-            const QString javaExe = dir.absoluteFilePath(subdir + "/bin/java.exe");
-            const int majorVersion = GlobalJavaSettings::probeJavaMajorVersion(javaExe);
-            if (majorVersion > 0) {
-                versions[majorVersion] = javaExe;
-            }
-        }
+    for (const QString &javaExe : javaPathsInRuntimeDir(javaDir)) {
+        const int majorVersion = probeJavaMajorVersion(javaExe);
+        if (majorVersion > 0) versions[majorVersion] = javaExe;
     }
 
     // 原版启动器已经下载好的运行时（jre-legacy / java-runtime-*）同样可以复用，
@@ -1183,6 +1186,33 @@ QMap<int, QString> GlobalJavaSettings::scanLocalJavaVersions(const QString &java
         }
     }
 
+    return versions;
+}
+
+QMap<int, QStringList> GlobalJavaSettings::scanAvailableJavaPaths(const QString &javaDir) {
+    QMap<int, QStringList> versions;
+    QSet<QString> seen;
+    const auto add = [&](const QString &path, int knownMajor = -1) {
+        if (path.isEmpty()) return;
+        const QFileInfo file(path);
+        QString key = file.canonicalFilePath();
+        if (key.isEmpty()) return;
+#ifdef Q_OS_WIN
+        key = key.toCaseFolded();
+#endif
+        if (seen.contains(key)) return;
+        seen.insert(key);
+        const int major = knownMajor > 0 ? knownMajor : probeJavaMajorVersion(path);
+        if (major > 0) versions[major].append(file.absoluteFilePath());
+    };
+    for (const QString &path : javaPathsInRuntimeDir(javaDir)) add(path);
+    const auto vanilla = scanVanillaRuntimeComponents();
+    for (const VanillaRuntime &runtime : vanilla) add(runtime.exe, runtime.majorVersion);
+    for (const char *variable : {"JAVA_HOME", "JDK_HOME"}) {
+        const QString home = qEnvironmentVariable(variable);
+        if (!home.isEmpty()) add(QDir(home).absoluteFilePath(QStringLiteral("bin/java.exe")));
+    }
+    add(QStandardPaths::findExecutable(QStringLiteral("java")));
     return versions;
 }
 

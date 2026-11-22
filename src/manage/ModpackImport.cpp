@@ -1518,6 +1518,13 @@ CurseForgeFiles parseCurseForgeFileInfo(const QByteArray &json, const QList<Pack
     QList<int> projectIds;
     QSet<int> seenProjects;
     for (const PackRef &ref : asked) {
+        // 项目表要把**所有**清单引用都问一遍，不能只问已经解析出文件的那些：
+        // 接口没返回的文件（例如 ATM9 的 JEI 7037120）正是最需要项目页来告诉用户
+        // “缺的是哪个模组”的那一条。漏掉它，后面的 issue 就只剩一个光秃秃的项目号。
+        if (ref.projectId > 0 && !seenProjects.contains(ref.projectId)) {
+            seenProjects.insert(ref.projectId);
+            projectIds.append(ref.projectId);
+        }
         const auto it = byFileId.constFind(ref.fileId);
         if (it == byFileId.constEnd()) {
             ++out.missing;  // 接口里没有这一条：号写错了 / 已删 / 没过审
@@ -1537,18 +1544,10 @@ CurseForgeFiles parseCurseForgeFileInfo(const QByteArray &json, const QList<Pack
             continue;
         }
 
-        // 空链接不单独推断作者意图；明确不可用则不构造候选，更不伪报已下载。
-        if (entry.value(QStringLiteral("isAvailable")).isBool() &&
-            !entry.value(QStringLiteral("isAvailable")).toBool()) {
-            ++out.notDistributable;
-            const QJsonValue size = entry.value(QStringLiteral("fileLength"));
-            const double length = size.toDouble(-1);
-            out.issues.append({ref, fileName, {},
-                sha1FromCurseForgeHashes(entry.value(QStringLiteral("hashes")).toArray()),
-                length >= 0 && length < 9223372036854775808.0 ? static_cast<qint64>(length) : -1,
-                QObject::tr("平台将文件标记为不可用")});
-            continue;
-        }
+        // 接口的 `isAvailable=false` 不等于 CDN 一定没有文件：它只表示这家不给
+        // “第三方分发授权”或接口暂时标了不可用。文件名和文件号还在时仍按标准 CDN
+        // 坐标试一次（`edge.forgecdn.net/files/<id/1000>/<id%1000>/<文件名>`）——
+        // PCL / HMCL 也是这么做的。真下不到会在下载阶段留下失败记录，不会静默。
         const QString url = curseForgeDownloadUrl(ref.fileId, fileName,
             entry.value(QStringLiteral("downloadUrl")).toString());
         if (url.isEmpty()) {

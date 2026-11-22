@@ -3,6 +3,7 @@
  * @brief ResourceStore 的实现。发请求、认钥匙、把正文交给 ResourceCatalog 那一层去读。
  */
 #include "ResourceStore.hpp"
+#include "DownloadRetryPolicy.hpp"
 #include <QCoreApplication>
 
 #include <QDateTime>
@@ -299,13 +300,15 @@ QString ResourceStore::failureText(QNetworkReply *reply, const QByteArray &body,
     /// 镜像，它限流了、停了、或者官方那边改了规矩，用户在设置里填一份自己的 key 就能绕过去。
     /// 措辞和 VersionManager::resolveCurseForgeFiles 那条路对齐（同一个来源、同一个出口）。
     QString hint;
-    if (source == ResourceCatalog::Source::CurseForge) {
+    if (source == ResourceCatalog::Source::CurseForge &&
+        (status == 401 || status == 403 || (!hasKey && status == 429))) {
         hint = !hasKey
                    ? QCoreApplication::translate("ResourceStore", "\n\n公共接口连接受限。可在设置页「下载」中配置个人 CurseForge API Key。")
                    : QCoreApplication::translate("ResourceStore", "\n\nCurseForge API Key 无效或已过期，请重新配置。");
     }
 
-    if (status > 0) {
+    if (status > 0 && !okStatus(status) &&
+        !reply->property(RequestBudget::kDeadlineExpiredProperty).toBool()) {
         if (!description.isEmpty()) {
             return QCoreApplication::translate("ResourceStore", "%1失败（HTTP %2）：%3%4")
                 .arg(what)
@@ -314,8 +317,10 @@ QString ResourceStore::failureText(QNetworkReply *reply, const QByteArray &body,
         }
         return QCoreApplication::translate("ResourceStore", "%1失败（HTTP %2）%3").arg(what).arg(status).arg(hint);
     }
-    // 压根没连上（断网、DNS、超时）。errorString() 是 Qt 给的那句英文，带上比不带强。
-    return QCoreApplication::translate("ResourceStore", "%1失败：%2%3").arg(what, reply->errorString(), hint);
+    const auto error = reply->property(RequestBudget::kDeadlineExpiredProperty).toBool()
+        ? QNetworkReply::TimeoutError : reply->error();
+    return QCoreApplication::translate("ResourceStore", "%1失败：%2%3")
+        .arg(what, DownloadRetryPolicy::displayError(error, reply->errorString()), hint);
 }
 
 void ResourceStore::search(const QString &requestKey, ResourceCatalog::Kind kind,
@@ -573,7 +578,7 @@ void ResourceStore::fetchVersions(const QString &requestKey, const QString &proj
                                   HttpClient::throttledText(what));
             return;
         }
-        if (!okStatus(status)) {
+        if (!okStatus(status) || reply->error() != QNetworkReply::NoError) {
             emit versionsFinished(requestKey, QList<ResourceCatalog::VersionEntry>(),
                                   failureText(reply, body, what, source,
                                               !m_curseForgeApiKey.isEmpty()));

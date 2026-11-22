@@ -42,6 +42,7 @@
 #include <QIcon>  // ServerRowStatus 里那一枚（服务器图标）
 #include <QImage>  // 截图缩略图缓存（m_lifecycleThumbCache）
 #include <QJsonObject>  // pageChoices() / setPageChoices()（"藏起来的那几页"）
+#include <QMap>
 #include <QList>
 #include <QPair>
 #include <QPixmap>
@@ -971,6 +972,8 @@ public:
     static QString windowHeightField() { return QStringLiteral("windowHeight"); }
 
     static QString javaPathEditName() { return QStringLiteral("instanceJavaPathEdit"); }
+    static QString javaRuntimeComboName() { return QStringLiteral("instanceJavaRuntimeCombo"); }
+    void setJavaRuntimeChoices(const QMap<int, QStringList> &choices);
     static QString browseJavaButtonName() {
         return QStringLiteral("instanceBrowseJavaButton");
     }
@@ -1584,6 +1587,7 @@ protected:
     void dropEvent(QDropEvent *event) override;
 
 signals:
+    void javaRuntimeChoicesRequested();
     /// @p key 那一页**刚建出来**（第一次切过去，见 ensurePage()）。
     ///
     /// 给"要在某一页的控件上接线"的调用方用：页是懒建的，开页那一刻 `findChild()` 摸到的
@@ -2433,6 +2437,7 @@ private:
     /// —— 见 .hpp 里 setPinned() 那段。
     QString m_pinnedGroupId;
     QLineEdit *m_javaPathEdit = nullptr;
+    QComboBox *m_javaRuntimeCombo = nullptr;
     QSpinBox *m_memoryMaxSpin = nullptr;
     MemorySlider *m_memoryMaxSlider = nullptr;
     QSpinBox *m_memoryMinSpin = nullptr;

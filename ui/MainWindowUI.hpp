@@ -3702,6 +3702,8 @@ public:
     QComboBox *getLauncherBehaviourCombo() const { return launcherBehaviourCombo; }
     QPlainTextEdit *getExtraJvmArgsEdit() const { return extraJvmArgsEdit; }
     QComboBox *getDownloadSourceCombo() const { return downloadSourceCombo; }
+    QPushButton *getClearLauncherCacheButton() const { return clearLauncherCacheButton; }
+    QPushButton *getFirstRunTestButton() const { return firstRunTestButton; }
     QComboBox *getDownloadConcurrencyCombo() const { return downloadConcurrencyCombo; }
     QComboBox *getDownloadSpeedLimitCombo() const { return downloadSpeedLimitCombo; }
     QComboBox *getDownloadProxyCombo() const { return downloadProxyCombo; }
@@ -3908,7 +3910,7 @@ private:
     /// 这个函数只负责开，不管现在开着什么。
     void openBottomBarPanel(const BottomBarAnchor &anchor);
     /// 开任务中心那一块（整页：筛选 / 搜索 / 历史 / 详情；浮动面板「全部任务」进这里）。
-    void openTaskCenterPanel();
+    void openTaskCenterPanel(const QString &taskKey = {});
     /// 任务摘要那一格：开 / 收任务中心浮动面板（ui/ActivityPopover，设计稿 panels-tasks）。
     void toggleActivityPopover();
     /// 现在开着的任务中心面板（没开着 = nullptr）。它是个 Qt::Popup 窗口，close() 之后
@@ -4093,6 +4095,8 @@ private:
     QCheckBox *showGameLogCheck = nullptr;
     /// 「下载」栏里那个勾选框。
     QCheckBox *downloadAutoIntoInstanceCheck = nullptr;
+    QPushButton *clearLauncherCacheButton = nullptr;
+    QPushButton *firstRunTestButton = nullptr;
     /// 同一栏里「缺失前置提醒」那个勾选框。
     QCheckBox *warnMissingDependenciesCheck = nullptr;
     QCheckBox *warnDuplicateLaunchCheck = nullptr;

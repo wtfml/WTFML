@@ -263,10 +263,15 @@ public:
 
         // ---------- 第二行：小字（"已下载 12 / 40  文件名"；收了尾的写原因 / 结局） ----------
         if (!item.detail.isEmpty()) {
-            ElidedLabel *detail =
-                makeTextLabel(this, MainWindowUI::taskCenterPanelRowDetailName(index));
-            detail->setText(item.detail);
+            auto *detail = new QLabel(item.detail.section(QLatin1Char('\n'), 0, 0), this);
+            detail->setObjectName(MainWindowUI::taskCenterPanelRowDetailName(index));
+            detail->setTextFormat(Qt::PlainText);
+            detail->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+            detail->setWordWrap(true);
+            detail->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+            detail->setToolTip(item.detail);
             applyMutedFont(detail, -1);
+            detail->setMaximumHeight(3 * detail->fontMetrics().lineSpacing());
             column->addWidget(detail);
         } else if (!active) {
             ElidedLabel *subtitle = makeTextLabel(this, QStringLiteral("taskCenterPanelRowSubtitle_%1").arg(index));
@@ -280,6 +285,13 @@ public:
                 subtitle->setPalette(colors);
             }
             column->addWidget(subtitle);
+        }
+        if (active && !item.bytesText.isEmpty()) {
+            auto *bytes = makeTextLabel(this, QStringLiteral("taskCenterRowBytes_%1").arg(index));
+            bytes->setText(item.bytesText);
+            bytes->setToolTip(item.bytesText);
+            applyMutedFont(bytes, -1);
+            column->addWidget(bytes);
         }
 
         // ---------- 第三样：进度条（只在**测得出百分比**时才有；测不出就看 detail 那句） ----------
@@ -318,6 +330,7 @@ public:
             m_parentPalette != parentWidget()->palette() || m_parentFont != parentWidget()->font() ||
             m_item.key != item.key || m_item.title != item.title || m_item.detail != item.detail ||
             m_item.state != item.state || m_item.percent != item.percent ||
+            (isActive(item.state) && m_item.bytesText != item.bytesText) ||
             m_item.unreadFailure != item.unreadFailure || m_item.finishedAt != item.finishedAt ||
             m_item.queueGroup != item.queueGroup || m_item.capabilities.cancel != item.capabilities.cancel ||
             m_item.steps.size() != item.steps.size()) return false;
@@ -1021,6 +1034,22 @@ void TaskCenterPanel::acknowledgeVisibleFailures() {
     }
 }
 
+void TaskCenterPanel::revealTask(const QString &key) {
+    if (key.isEmpty()) return;
+    const QSignalBlocker filterSignals(m_filter);
+    const QSignalBlocker searchSignals(m_search);
+    m_filter->setCurrentIndex(0);
+    m_search->clear();
+    rebuild();
+    for (QWidget *row : m_content->findChildren<QWidget *>(QString(), Qt::FindDirectChildrenOnly)) {
+        if (row->property(MainWindowUI::taskCenterPanelRowKeyProperty()).toString() != key) continue;
+        m_content->layout()->activate();
+        m_scroll->ensureWidgetVisible(row, 0, 8);
+        selectTask(key);
+        return;
+    }
+}
+
 void TaskCenterPanel::selectTask(const QString &key) {
     if (key.isEmpty() && m_selectedKey.isEmpty()) {
         return;
@@ -1288,7 +1317,7 @@ void TaskCenterPanel::rebuildDetail(const QList<TaskCenter::Item> &items) {
                 step.note.isEmpty() ? step.name : step.name + QStringLiteral(" / ") + step.note, row);
             name->setObjectName(QStringLiteral("taskCenterFlowStepName_%1").arg(index));
             name->shown = step.name;
-            name->note = step.note;
+            if (step.percent >= 0) name->note = MainWindowUI::taskCenterPercentText(step.percent);
             const TaskVisuals::Glyph glyph = TaskVisuals::stepGlyph(step.state, palette());
             name->glyph = glyph.name;
             name->glyphColor = glyph.color;
@@ -1315,12 +1344,21 @@ void TaskCenterPanel::rebuildDetail(const QList<TaskCenter::Item> &items) {
                 break;
             }
             name->setFont(font);
-            if (step.note.length() > 18) name->setToolTip(step.note);
             rowLayout->addWidget(name);
+            if (!step.note.isEmpty()) {
+                auto *note = new QLabel(step.note, row);
+                note->setTextFormat(Qt::PlainText);
+                note->setWordWrap(true);
+                note->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+                note->setContentsMargins(42, 0, 12, 6);
+                applyMutedFont(note, -1);
+                rowLayout->addWidget(note);
+            }
             if (step.state == TaskCenter::StepState::Running && isActive(item.state)) {
                 auto *progress = new TaskProgressBar(row);
                 progress->setObjectName(QStringLiteral("taskCenterFlowProgress"));
-                progress->setRange(0, 0); // 阶段没有独立百分比，不借用整个任务的百分比。
+                progress->setRange(0, step.percent < 0 ? 0 : 100);
+                if (step.percent >= 0) progress->setValue(step.percent);
                 progress->setFixedHeight(MainWindowUI::taskCenterPanelBarHeight());
                 auto *barBox = new QHBoxLayout;
                 barBox->setContentsMargins(42, 4, 12, 6);

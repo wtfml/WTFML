@@ -3,6 +3,7 @@
 #include <QComboBox>
 #include <QLineEdit>
 #include <QSignalBlocker>
+#include <QStackedWidget>
 #include <QTreeWidget>
 #include "MainWindow.hpp"
 #include "MainWindowUI.hpp"
@@ -51,6 +52,15 @@ void DownloadFilterController::ensureResourcePageLoaded(ResourceCatalog::Kind ki
 
 void DownloadFilterController::refreshDownloadCategory(int row) {
     const QStringList keys = MainWindowUI::downloadCategoryKeys();
+    if (row < 0) {
+        // 左栏那份分类列表现在收着，chip 才是用户看到的那一排。某些路径下
+        // `currentRow()` 会短暂变成 -1（页面已经切过去、列表还没跟上）；只看它就会
+        // 直接 return，表现是“点刷新没反应”。页栈的 currentIndex 是同一份分类顺序，
+        // 用可见页面兜底。
+        if (QStackedWidget *stack = m_owner.m_ui->getDownloadStack()) {
+            row = stack->currentIndex();
+        }
+    }
     if (row < 0 || row >= keys.size()) {
         // 过滤器交上来的行号理论上一定在表里（那一行是 MainWindowUI 按这张表建出来的），
         // 越界只可能是"表和列表对不上了"那种时候 —— 什么都不做比按错一页去做强。

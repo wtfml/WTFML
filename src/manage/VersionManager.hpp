@@ -278,11 +278,13 @@ public:
     /// 失败清单整个吃掉，之后就没有地方再问得到这个名字了；而重试也要在任务中心里挂
     /// 一件任务、收尾时按名字认领那一发 `resourceDownloadFinished(label, …)`。
     QString retryBatchLabel() const;
+    QString retryModpackInstance() const;
+    QString retryModpackArchive() const;
 
-    /// 重做上一次失败的那几个文件（**只重做失败项**，见 .cpp）。
+    /// 重做上一次失败的文件，整合包批次成功后接续原安装阶段。
     ///
     /// @return false = 没有可重做的，或者这会儿正有一批在跑（一次只有一批，见 .cpp）。
-    bool retryDownload();
+    bool retryDownload(QString *problem = nullptr);
 
     /**
      * @brief 给一个**已经装好的**实例做体检：扫一遍它该有的文件，**只报不装**。
@@ -1518,6 +1520,8 @@ private:
 
         Phase phase = Phase::Idle;
         QString zipPath;    ///< 用户选的那个整合包文件
+        qint64 archiveSize = -1;
+        qint64 archiveModifiedMs = 0;
         QString instanceId; ///< 落地的实例名（= versions/<id> 那个目录名）
         QString loaderId;   ///< 实例的父版本：加载器那个目录（纯原版包就是原版号）
         ModpackImport::Pack pack;
@@ -1801,9 +1805,7 @@ private:
 
     /// 上一次**失败**的那一批里，失败的那几个文件（「重试只重做失败项」）。
     ///
-    /// `valid` = 这一批**值得**重试。只有"纯下文件"的批次才算数：加载器安装、整合包导入、
-    /// 带名字的实例那三条路上，重下几个文件补不回来（加载器的安装器得再跑一次、导入还得解压
-    /// 覆盖），露一颗点了也修不好的「重试」比不露更糟。
+    /// 整合包保留下载所处的阶段，补齐该批后继续安装原实例。
     struct FailedBatch {
         bool valid = false;
         /// 是下载页那几类资源那一批 —— 收尾那一段靠它决定发 `resourceDownloadFinished`
@@ -1811,6 +1813,9 @@ private:
         bool resource = false;
         QString id;
         QString label;
+        QString gameRoot;
+        ModpackInstall modpack;
+        LoaderInstall loader;
         QList<DownloadManager::FailedJob> jobs;
         void reset() { *this = FailedBatch(); }
     };

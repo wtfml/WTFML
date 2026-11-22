@@ -1,7 +1,9 @@
 #pragma once
 
+#include <QMap>
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <QVariantMap>
 
 #include <atomic>
@@ -191,6 +193,8 @@ public:
     static QMap<int, QString> scanLocalJavaVersions();
     /// 显式扫描根，供后台任务使用；不在工作线程读取可切换的 AppPaths 根。
     static QMap<int, QString> scanLocalJavaVersions(const QString &javaDir);
+    /// 实例选单保留同一主版本下的所有已发现路径。
+    static QMap<int, QStringList> scanAvailableJavaPaths(const QString &javaDir);
 
     /**
      * @brief 从 JDK/JRE 根目录那个 release 文件的内容里读出主版本。

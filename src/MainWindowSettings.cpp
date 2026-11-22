@@ -35,15 +35,20 @@
 #include "settings/LauncherSettings.hpp"
 #include "util/AppPaths.hpp"
 #include "util/DirectorySessionLock.hpp"
+#include "util/IsolatedProfile.hpp"
 
 #include <QComboBox>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
+#include <QFutureWatcher>
 #include <QJsonObject>
 #include <QProcess>
 #include <QLocale>
+#include <QRegularExpression>
 #include <QSettings>
 #include <QSignalBlocker>
+#include <QtConcurrent/QtConcurrentRun>
 
 using namespace MainWindowViewData;
 
@@ -427,6 +432,71 @@ void MainWindow::onLanguageChanged() {
     // 新进程已经在路上了，这一份退出。走 quit() 而不是 close()：关窗那一套会问
     // 「游戏还在跑，要不要收起启动器」，而这里不是那道问句的场合。
     QCoreApplication::quit();
+}
+
+void MainWindow::onClearLauncherCache() {
+    const QStringList cacheDirs{AppPaths::iconCacheDir(), AppPaths::instanceIconCacheDir(),
+                                AppPaths::serverCacheDir()};
+    const QString skinsDir = AppPaths::skinsDir();
+    const int choice = InlineMessage::ask(
+        m_ui->overlay(), MessageKind::Question, tr("清除缓存"),
+        tr("清除以下游戏目录中的外观、图标和服务器状态缓存？账号、存档、备份和手动导入的皮肤会保留。\n\n%1")
+            .arg(QDir::toNativeSeparators(AppPaths::minecraftDir())),
+        {tr("清除缓存"), tr("取消")}, 1);
+    if (choice != 0) return;
+
+    auto *button = m_ui->getClearLauncherCacheButton();
+    button->setEnabled(false);
+    auto *watcher = new QFutureWatcher<QStringList>(this);
+    connect(watcher, &QFutureWatcher<QStringList>::finished, this, [this, button, watcher] {
+        const QStringList failed = watcher->result();
+        watcher->deleteLater();
+        button->setEnabled(true);
+        if (!failed.isEmpty()) {
+            InlineMessage::warning(m_ui->overlay(), tr("部分缓存未清除"),
+                                   tr("以下缓存目录无法清理。请检查目录权限和链接后重试。\n\n%1")
+                                       .arg(failed.join(QLatin1Char('\n'))));
+            return;
+        }
+        InlineMessage::information(m_ui->overlay(), tr("缓存已清除"),
+                                   tr("磁盘缓存已清除。重启后会重新加载外观、图标和服务器状态。"));
+    });
+    watcher->setFuture(QtConcurrent::run([cacheDirs, skinsDir] {
+        QStringList failed;
+        for (const QString &path : cacheDirs) {
+            if (!IsolatedProfile::safeDirectoryPath(path) || !removeTreeWithoutFollowingLinks(path)) {
+                failed.append(QDir::toNativeSeparators(path));
+            }
+        }
+
+        // 手动导入与联网缓存共用 skins 目录。只认启动器生成的文件名。
+        static const QRegularExpression cachedSkin(
+            QStringLiteral(R"(\A(?:[0-9a-f]{40}\.png|profile-[0-9a-f]{32}\.json|default-[0-9a-f]{32}-.+\.png)\z)"));
+        if (!IsolatedProfile::safeDirectoryPath(skinsDir)) {
+            failed.append(QDir::toNativeSeparators(skinsDir));
+            return failed;
+        }
+        const QDir skins(skinsDir);
+        bool skinsCleared = true;
+        for (const QFileInfo &skin : skins.entryInfoList(QDir::Files | QDir::Hidden | QDir::NoSymLinks)) {
+            const QString path = skin.absoluteFilePath();
+            if (cachedSkin.match(skin.fileName()).hasMatch() && !QFile::remove(path) && QFileInfo::exists(path)) {
+                skinsCleared = false;
+            }
+        }
+        if (!skinsCleared) failed.append(QDir::toNativeSeparators(skinsDir));
+        return failed;
+    }));
+}
+
+void MainWindow::onOpenFirstRunTest() {
+    const QString profile = IsolatedProfile::launchFirstRun();
+    if (profile.isEmpty()) {
+        InlineMessage::warning(m_ui->overlay(), tr("无法打开测试窗口"),
+                               tr("请检查系统临时目录是否允许写入，并确认启动器可以再次运行。"));
+        return;
+    }
+    appendLog(tr("首次使用测试目录：%1").arg(QDir::toNativeSeparators(profile)));
 }
 
 void MainWindow::onDownloadSourceChanged() {

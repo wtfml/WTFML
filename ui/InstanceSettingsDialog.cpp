@@ -2243,6 +2243,7 @@ void InstanceSettingsDialog::watchPage(QWidget *page) {
     // —— 无害：那个函数按 `valueSignature()` 去重，而那几个值不在签名里，所以一次盘都
     // 不会写。按"这一页上的哪些下拉框"去筛是**多一条会过期的名单**，不值当。
     for (QComboBox *combo : page->findChildren<QComboBox *>()) {
+        if (combo == m_javaRuntimeCombo) continue;  // Java 路径在选中或编辑完成时保存。
         connect(combo, &QComboBox::currentIndexChanged, this,
                 &InstanceSettingsDialog::notifyEdited, Qt::UniqueConnection);
     }

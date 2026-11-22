@@ -795,7 +795,12 @@ MainWindow::MainWindow(QWidget *parent)
                 if (ok && m_toolboxController && m_toolboxController->ownsDownloadTask(id)) {
                     m_toolboxController->resumeDownloadTask(id); return;
                 }
-                if (ok && m_downloadBatches && m_downloadBatches->owns(id)) { m_downloadBatches->resume(id); return; }
+                if (ok && m_downloadBatches && m_downloadBatches->owns(id)) {
+                    const auto task = m_activityCenter->tasks()->snapshot(id);
+                    if (task.kind == Tasks::TaskKind::Import && retryWouldWork(task)) retryTaskFromDetail(key);
+                    else m_downloadBatches->resume(id);
+                    return;
+                }
                 if (ok && m_presetController && m_presetController->ownsModTask(id)) { m_presetController->resumeModDownload(id); return; }
                 if (!ok || m_fileRecovery == nullptr) return;
                 const Tasks::TaskSnapshot task = m_activityCenter->tasks()->snapshot(id);

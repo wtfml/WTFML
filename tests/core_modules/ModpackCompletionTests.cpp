@@ -233,5 +233,69 @@ void runModpackCompletionTests(const QString &sandbox) {
         check(QFileInfo::exists(dir + "/mods/manual.jar") && QFileInfo::exists(dir + "/config/test.txt"),
               "ZG8 提交失败不删除已补齐文件和覆盖内容");
     }
+    {
+        FakeIconServer server;
+        server.status = 404;
+        server.body = modBytes;
+        server.headers = QByteArrayLiteral("Connection: close\r\n");
+        const bool listening = server.start();
+        check(listening, "ZG11 模拟整合包文件下载服务");
+        if (listening) {
+            const QString id = QStringLiteral("retry-in-place");
+            const QString instancePath = AppPaths::versionDir(id);
+            ModpackImport::Pack retryPack = pack;
+            retryPack.filesNotDistributable = 0;
+            retryPack.fileIssues.clear();
+            const QString url = QStringLiteral("http://127.0.0.1:%1/file").arg(server.server.serverPort());
+            retryPack.files = {{QStringLiteral("mods/retry-file.bin"), {url}, hash(modBytes), modBytes.size()}};
+            VersionManager manager;
+            manager.setUseMirror(false);
+            manager.setVersionManifestUrlOverride(QUrl::fromLocalFile(root + "/index.json").toString());
+            QJsonObject manifestContinuation;
+            QObject::connect(manager.downloads(), &DownloadManager::batchStarted, &manager, [&] {
+                const QJsonObject intent = manager.downloadContinuation();
+                if (intent.contains("importMarker")) manifestContinuation = intent;
+            });
+            QString resultText;
+            const auto waitForImport = [&](const std::function<void()> &start, bool expected) {
+                QEventLoop loop;
+                int terminals = 0;
+                bool success = false;
+                QObject::connect(&manager, &VersionManager::versionDownloadFinished, &loop,
+                    [&](const QString &finished, bool ok, const QString &message) {
+                        if (finished != id) return;
+                        ++terminals;
+                        success = ok;
+                        resultText = message;
+                        loop.quit();
+                    });
+                QTimer::singleShot(10000, &loop, &QEventLoop::quit);
+                QTimer::singleShot(0, &loop, start);
+                loop.exec();
+                return terminals == 1 && success == expected;
+            };
+            check(waitForImport([&] { manager.importModpack(archive, id, retryPack, {}, fingerprint); }, false) &&
+                      manager.canRetryDownload() && manager.retryModpackInstance() == id &&
+                      InstanceFiles::isUnfinishedImport(id) && !QFileInfo::exists(instancePath + "/config/test.txt"),
+                  "ZG11 清单下载失败保留原安装，且尚未解压覆盖文件");
+            check(manifestContinuation.value("kind") == "modpack" &&
+                      manifestContinuation.value("instance") == id && manifestContinuation.value("root") == root &&
+                      manifestContinuation.value("archive") == archive &&
+                      manifestContinuation.value("importMarker").toObject().value("exists").toBool(),
+                  "ZG11 下载恢复记录关联原整合包、实例、游戏目录及未完成标记");
+            AppPaths::setMinecraftDir(root + QStringLiteral("/other-game-root"));
+            check(!manager.canRetryDownload() && !manager.retryDownload(), "ZG11 切换游戏目录后拒绝继续旧安装");
+            AppPaths::setMinecraftDir(root);
+            server.status = 200;
+            bool started = false;
+            const bool complete = waitForImport([&] { started = manager.retryDownload(&error); }, true);
+            check(complete && started && server.requests == 2 &&
+                      !manager.canRetryDownload() && !InstanceFiles::isUnfinishedImport(id) &&
+                      QFileInfo::exists(instancePath + "/mods/retry-file.bin") &&
+                      QFileInfo::exists(instancePath + "/config/test.txt"),
+                  "ZG11 只重试失败文件，随后在同一实例解压并提交完整安装",
+                  QStringLiteral("requests=%1; %2 %3").arg(server.requests).arg(resultText, error));
+        }
+    }
     AppPaths::setMinecraftDir(previousRoot);
 }
