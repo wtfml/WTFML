@@ -29,12 +29,14 @@ void FolderController::add() {
     const QString folder = QFileDialog::getExistingDirectory(
         m_dialogParent, tr("选择 Minecraft 游戏目录"), QDir::homePath());
     if (folder.isEmpty()) return;
+    const QString gameFolder = FolderManager::gameFolderPathForSelection(folder);
     if (!m_folders->addFolder(folder)) {
         InlineMessage::warning(m_ui->overlay(), tr("添加文件夹失败"),
-                               tr("「%1」不是一个存在的目录。").arg(folder));
+                               tr("无法使用游戏目录「%1」。请检查目录是否存在并允许写入。")
+                                   .arg(QDir::toNativeSeparators(gameFolder.isEmpty() ? folder : gameFolder)));
         return;
     }
-    log(tr("已添加文件夹：%1").arg(folder));
+    log(tr("已添加文件夹：%1").arg(QDir::toNativeSeparators(gameFolder)));
     m_folders->setCurrentFolder(folder);
 }
 

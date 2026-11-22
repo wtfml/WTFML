@@ -4713,6 +4713,10 @@
         <source>已删除游戏目录：%1</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>无法使用游戏目录「%1」。请检查目录是否存在并允许写入。</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>FolderManager</name>

@@ -4793,6 +4793,10 @@ To remove only from the list, please use the "Remove" operation, the disk file w
             <source>已删除游戏目录：%1</source>
             <translation>Deleted game directory: %1</translation>
         </message>
+        <message>
+            <source>无法使用游戏目录「%1」。请检查目录是否存在并允许写入。</source>
+            <translation>Could not use game directory “%1”. Check that it exists and allows writes.</translation>
+        </message>
     </context>
     <context>
         <name>FolderManager</name>

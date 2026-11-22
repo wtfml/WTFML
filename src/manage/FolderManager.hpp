@@ -116,6 +116,9 @@ public:
      */
     static QString defaultFolder();
 
+    /// 用户选中卷根目录时，将游戏数据放在它的 .minecraft 子目录中。
+    static QString gameFolderPathForSelection(const QString &path);
+
     /**
      * @brief 判断某个路径是不是自带的那一份。
      * @param path 待判定的路径（内部会先归一化，所以写法不同也能认出来）。
@@ -160,6 +163,7 @@ public:
     /**
      * @brief 添加一个根目录。
      * @param path 目录路径。
+     * 选中卷根目录时创建或复用其 .minecraft 子目录。
      * @return 路径是个存在的目录（或本来就等于自带那份）时返回 true。
      * **已经在列表里时同样返回 true**（不重复追加）—— 返回值表达的是
      * "这条路径现在在列表里"，不是"这次新加进去了"。
