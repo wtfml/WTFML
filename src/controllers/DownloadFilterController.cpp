@@ -176,15 +176,15 @@ void DownloadFilterController::refreshDownloadFilterOptions(ResourceCatalog::Kin
 
     // 「模组加载器」那一栏（**只有模组页有**，别的页 getDownloadFilterLoaderCombo 回空指针）。
     if (QComboBox *loaderCombo = m_owner.m_ui->getDownloadFilterLoaderCombo(key)) {
+        const QString previousLabel = loaderCombo->currentText();
         const QSignalBlocker blocker(loaderCombo);
         loaderCombo->clear();
         for (const ResourceCatalog::FilterOption &option : ResourceCatalog::loaderOptions(source)) {
             loaderCombo->addItem(option.label, option.key);
         }
-        // 换来源之后退回「全部」（= 第一项）。两边的键根本不是一套（Modrinth 的 `fabric`
-        // 对 CurseForge 的 `4`），留着上一个来源选中那一项，就是拿 A 家的号去问 B 家 ——
-        // 而且它不报错，只会搜出来一片空。
-        loaderCombo->setCurrentIndex(0);
+        // 两边展示同一个加载器名称，各用自己的筛选键。
+        const int previousIndex = loaderCombo->findText(previousLabel);
+        loaderCombo->setCurrentIndex(previousIndex >= 0 ? previousIndex : 0);
     }
 
     // 「类型」那一栏。**回空表就把整个小组藏起来**（连标签一起，见 MainWindowUI 里那段）：

@@ -203,6 +203,8 @@ bool resolveDependency(const ResourceCatalog::Dependency &dependency,
 struct Plan {
     /// 要下的（每条一版一文件）。
     QList<Resolved> downloads;
+    /// 可选版本按项目号存放，首项为默认下载，作者指定的版本只有一项。
+    QHash<QString, QList<Resolved>> choices;
     /// 解不开的那些，**一条一句中文**（每句都带上是哪个前置 —— 只说"有一个前置没找到"
     /// 等于没说，用户手上没有任何线索）。
     QStringList unresolved;

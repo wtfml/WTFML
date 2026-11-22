@@ -2,6 +2,7 @@
 #include "ui_check/modules/UiInstanceFilesTestHelpers.hpp"
 
 #include <algorithm>
+#include <QScopeGuard>
 void runDependencyAndBatchTests() {
     // 那两项设置在盘上的名字。和 T25 一个规矩：这一节量的是"盘上那个键"，
     // 而 `LauncherSettings` 里那两个常量在匿名命名空间里、外面看不见，所以字面量写这儿。
@@ -138,10 +139,14 @@ void runDependencyAndBatchTests() {
                                       "\"dependency_type\":\"required\"},"
                                       "{\"project_id\":\"DEPPROJB\",\"version_id\":null,"
                                       "\"dependency_type\":\"required\"}]")));
-    api.modrinthVersionListByProject.insert(
-        depProject,
-        versionJson(QStringLiteral("D1"), QStringLiteral("2.0.0"), QStringLiteral("前置乙.jar"),
-                    depFileUrl, QByteArrayLiteral("[]")));
+    const QByteArray newestDependency = versionJson(
+        QStringLiteral("D2"), QStringLiteral("2.1.0"), QStringLiteral("前置乙-新版.jar"),
+        apiRoot + QStringLiteral("/dep-b-latest.jar"), QByteArrayLiteral("[]"));
+    const QByteArray olderDependency = versionJson(
+        QStringLiteral("D1"), QStringLiteral("2.0.0"), QStringLiteral("前置乙.jar"),
+        depFileUrl, QByteArrayLiteral("[]"));
+    api.modrinthVersionListByProject.insert(depProject,
+        newestDependency.chopped(1) + ',' + olderDependency.mid(1));
     // 兜底：别的项目号来问版本就是空表（这一节只会问上面那两个，写这个是防"某一条走岔了
     // 却拿到别人的版本"那种最难查的夹具事故）。
     api.modrinthVersionListReply = QByteArrayLiteral("[]");
@@ -271,6 +276,18 @@ void runDependencyAndBatchTests() {
             auto *installed = w.ui()->getInstalledVersionCombo();
             installed->setCurrentIndex(installed->findData(idV));
             PromptAnswerer answerer(expectDepPrompt ? QList<int>{1, 0} : QList<int>{0});
+            struct DependencyPicker final : QObject {
+                bool eventFilter(QObject *watched, QEvent *event) override {
+                    if (event->type() != QEvent::Show) return false;
+                    auto *box = qobject_cast<InlineMessageBox *>(watched);
+                    auto *select = box ? box->findChild<QComboBox *>() : nullptr;
+                    if (select && select->count() == 2 && select->currentText() == QStringLiteral("2.1.0"))
+                        select->setCurrentText(QStringLiteral("2.0.0"));
+                    return false;
+                }
+            } dependencyPicker;
+            qApp->installEventFilter(&dependencyPicker);
+            const auto removePicker = qScopeGuard([&] { qApp->removeEventFilter(&dependencyPicker); });
             QTimer pickerAnswerer;
             QObject::connect(&pickerAnswerer, &QTimer::timeout, [&] {
                 auto *box = currentPrompt();
@@ -416,6 +433,7 @@ void runDependencyAndBatchTests() {
         // 「一起下载」按下去之后：前置那一份**真的被排进了这一批**（它的地址出现在请求里）。
         bool askedDepProject = false;
         bool gotDepFile = false;
+        bool gotLatestDependency = false;
         bool gotModFile = false;
         for (const QString &line : on.newRequests) {
             if (line.contains(QStringLiteral("/v2/projects?")) && line.contains(depProject)) {
@@ -424,10 +442,13 @@ void runDependencyAndBatchTests() {
             if (line.contains(QStringLiteral("/dep-b.jar"))) {
                 gotDepFile = true;
             }
+            if (line.contains(QStringLiteral("/dep-b-latest.jar"))) gotLatestDependency = true;
             if (line.contains(QStringLiteral("/mod-c.jar"))) {
                 gotModFile = true;
             }
         }
+        check(gotDepFile && !gotLatestDependency,
+              "前置版本下拉框选了 2.0.0 后，实际下载选中的文件");
         check(askedDepProject,
               "★★ T31.1 点完那一版之后，产品**真的去问过**那条前置「你有哪些版本」"
               "（`GET /v2/projects?ids=DEPPROJB`）—— 这一发是「要不要一起下」那条路的第一步",

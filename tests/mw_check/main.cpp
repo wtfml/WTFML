@@ -332,6 +332,15 @@ int main(int argc, char *argv[]) {
     if (app.arguments().contains(QStringLiteral("resource-detail-check"))) {
         runResourceDetailPageTests();
         runInstanceFileResourceTests();
+        runDependencyAndBatchTests();
+        return g_fail == 0 ? 0 : 1;
+    }
+    if (app.arguments().contains(QStringLiteral("resource-source-check"))) {
+        runResourceSourceTests();
+        return g_fail == 0 ? 0 : 1;
+    }
+    if (app.arguments().contains(QStringLiteral("download-filter-check"))) {
+        runDownloadFilterTests();
         return g_fail == 0 ? 0 : 1;
     }
     if (app.arguments().contains(QStringLiteral("folder-switching-check"))) {

@@ -18,6 +18,7 @@
 #include <QUrl>
 #include <QRegularExpression>
 
+#include <algorithm>
 #include <utility>
 
 #include "manage/ModpackImport.hpp"  // curseForgeApiBase() —— 那条接口根地址的唯一出处
@@ -335,15 +336,27 @@ void ResourceStore::search(const QString &requestKey, ResourceCatalog::Kind kind
     // 接口根地址**两条路都递**：CurseForge 那一侧 key 空不空、走镜像还是
     // 官方，都在 curseForgeApiBase() 里一处判；Modrinth 那一侧就是我们手上这一份 override
     // （空 = 官方那一份，见 setModrinthApiBaseOverride）。
+    QString searchText = query.trimmed();
+    QString searchVersion = gameVersion;
+    static const QRegularExpression versionPrefix(
+        QStringLiteral(R"(\A(\d+\.\d+(?:\.\d+)?)\s+(\S.*)\z)"));
+    const auto prefix = versionPrefix.match(searchText);
+    if (prefix.hasMatch() && (searchVersion.isEmpty() || prefix.captured(1) == searchVersion)) {
+        searchVersion = prefix.captured(1);
+        searchText = prefix.captured(2);
+    }
+    if (kind == ResourceCatalog::Kind::Mod && searchText == QStringLiteral("机械动力")) { // i18n-ignore
+        searchText = QStringLiteral("create");
+    }
     const QString url = ResourceCatalog::searchUrl(
-        kind, query, 0, kSearchPageSize, gameVersion, loader, source, category,
+        kind, searchText, 0, kSearchPageSize, searchVersion, loader, source, category,
         isCurseForge ? curseForgeApiBase() : m_modrinthApiBaseOverride);
     auto *job = RequestBudget::ControlGet::start(
         this, m_net,
         resourceRequest(url, isCurseForge ? apiKeyHeaders(m_curseForgeApiKey)
                                           : QList<QPair<QByteArray, QByteArray>>()),
         HttpClient::kDefaultTimeoutMs,
-        [this, requestKey, source](QNetworkReply *reply, const QString &jobError) {
+        [this, requestKey, source, searchText](QNetworkReply *reply, const QString &jobError) {
             // 先把钥匙摘掉再发信号：接的人可能立刻又搜一次，那时候这一格归他不归我。
             m_replies.remove(requestKey);
 
@@ -367,6 +380,12 @@ void ResourceStore::search(const QString &requestKey, ResourceCatalog::Kind kind
                 result = source == ResourceCatalog::Source::CurseForge
                              ? ResourceCatalog::parseCurseForgeSearch(body)
                              : ResourceCatalog::parseSearch(body);
+                if (!searchText.isEmpty()) {
+                    std::stable_partition(result.hits.begin(), result.hits.end(), [&searchText](const auto &hit) {
+                        return hit.title.compare(searchText, Qt::CaseInsensitive) == 0 ||
+                               hit.slug.compare(searchText, Qt::CaseInsensitive) == 0;
+                    });
+                }
             } else {
                 result.problem = failureText(reply, body, QCoreApplication::translate("ResourceStore", "搜索"), source,
                                              !m_curseForgeApiKey.isEmpty());

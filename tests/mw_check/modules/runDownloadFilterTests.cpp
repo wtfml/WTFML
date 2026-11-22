@@ -97,6 +97,7 @@ void runDownloadFilterTests() {
         check(cfIndex >= 0, "ZI2 来源框里找得到 CurseForge 那一项");
         api.requests.clear();
         const int searchesBeforeSource = searchLogs();
+        loaderCombo->setCurrentIndex(loaderCombo->findData(QStringLiteral("forge")));
         sourceCombo->setCurrentIndex(cfIndex);
         QApplication::processEvents();
         const QList<ResourceCatalog::FilterOption> cfLoaders =
@@ -117,8 +118,8 @@ void runDownloadFilterTests() {
         }
         check(typesSwapped, "ZI2 「类型」那几项也跟着换（Modrinth 是 slug、CF 是类目号）",
               QStringLiteral("框里 %1 项").arg(typeCombo->count()));
-        check(loaderCombo->currentIndex() == 0 && typeCombo->currentIndex() == 0,
-              "ZI2 两项都退回「全部」（拿 A 家的号去问 B 家会搜出个空的，而且不报错）");
+        check(loaderCombo->currentData().toString() == QStringLiteral("1") && typeCombo->currentIndex() == 0,
+              "ZI2 保留 Forge 并换用 CurseForge 的筛选键，类型回到「全部」");
         // NOTE: 这一下是**程序**改的（`setCurrentIndex`），不是用户在框里挑的。用户真挑一项时
         // Qt 还会再发一发 `activated`，而那一发**要搜**（见 ZI10）——
         // 所以这一条量的是"中间态不搜"，不是"换来源不搜"。
@@ -406,14 +407,18 @@ void runDownloadFilterTests() {
                   .arg(searchLogs() - searchesBefore)
                   .arg(api.requests.join(QStringLiteral("|"))));
 
-        // 来源这一格：挑**当前**那一项（CurseForge）—— 换到 Modrinth 那一项的地址是写死的真
-        // 外网，这一趟是离线量。用户在下拉里点已经选中的那一项，Qt 照样发 activated。
+        // 先切到 Modrinth 的选项，再模拟用户切回本地假接口上的 CurseForge。
+        sourceCombo->setCurrentIndex(sourceCombo->findData(
+            ResourceCatalog::sourceKey(ResourceCatalog::Source::Modrinth)));
+        loaderCombo->setCurrentIndex(loaderCombo->findData(QStringLiteral("forge")));
         searchesBefore = searchLogs();
         api.requests.clear();
         pickFromCombo(sourceCombo, cfIndex);
         const bool sourcePicked = pumpUntil([&api] { return !api.requests.isEmpty(); }, 10000);
-        check(sourcePicked && searchLogs() - searchesBefore == 1,
-              "ZI10 挑一项「来源」也立刻搜一发（挑的还是当前那一项时也算）",
+        check(sourcePicked && searchLogs() - searchesBefore == 1 &&
+                  api.lastRequest().contains(QStringLiteral("modLoaderType=1")) &&
+                  api.lastRequest().contains(QStringLiteral("gameVersion=26.9")),
+              "ZI10 切换来源只搜一发，保留 Forge 和游戏版本",
               QStringLiteral("搜了 %1 发：%2")
                   .arg(searchLogs() - searchesBefore)
                   .arg(api.requests.join(QStringLiteral("|"))));

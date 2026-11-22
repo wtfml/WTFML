@@ -61,6 +61,23 @@ void runResourceSourceTests() {
 
     // ---- ZH2. 填了 key：这一发就带上，**而且是当场读的那份** -------------------
     {
+        const auto savedBody = api.searchBody;
+        api.searchBody = QByteArrayLiteral(R"({"data":[{"id":101,"name":"Create Addon","slug":"create-addon"},{"id":102,"name":"Create","slug":"create"}]})");
+        ResourceCatalog::SearchResult found;
+        const QString key = ResourceCatalog::searchRequestKey(ResourceCatalog::Kind::Mod,
+                                                               ResourceCatalog::Source::CurseForge);
+        store.search(key, ResourceCatalog::Kind::Mod, ResourceCatalog::Source::CurseForge,
+                     QStringLiteral("1.21.1 机械动力"), QStringLiteral("1.21.1"), QStringLiteral("1"), {});
+        check(waitForSearch(store, key, &found) &&
+                  api.lastRequest().contains(QStringLiteral("gameVersion=1.21.1")) &&
+                  api.lastRequest().contains(QStringLiteral("modLoaderType=1")) &&
+                  api.lastRequest().contains(QStringLiteral("searchFilter=create")) &&
+                  found.hits.size() == 2 && found.hits.first().slug == QStringLiteral("create"),
+              "版本和加载器保留在筛选条件，精确匹配 Create 排在扩展模组前");
+        api.searchBody = savedBody;
+    }
+
+    {
         api.requests.clear();
         api.apiKeys.clear();
         store.setCurseForgeApiKey(QStringLiteral("  一份自己填的 key  "));

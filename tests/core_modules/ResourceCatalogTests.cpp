@@ -790,6 +790,26 @@ void runResourceCatalogTests() {
                   plan.downloads.isEmpty() ? QString() : plan.downloads.first().title);
 
             // ③ 名字取不到时退成项目号（列出来总比"有一个前置没找到"强）。
+            auto older = sodium;
+            older.id = QStringLiteral("older");
+            older.versionNumber = QStringLiteral("0.6.12");
+            older.files.first().filename = QStringLiteral("sodium-0.6.12.jar");
+            auto unavailable = older;
+            unavailable.files.first().url.clear();
+            auto loose = missing.first();
+            loose.dependency.versionId.clear();
+            const auto selectable = ModDependencies::buildPlan({loose}, {{key, {unavailable, sodium, older}}});
+            const auto choices = selectable.choices.value(loose.dependency.projectId);
+            check(choices.size() == 2 && choices.first().version.id == sodium.id &&
+                      choices.last().version.id == older.id,
+                  "未指定依赖版本时默认最新可下载版本，并保留其他候选");
+            auto pinned = loose;
+            pinned.dependency.versionId = older.id;
+            const auto pinnedPlan = ModDependencies::buildPlan({pinned}, {{key, {sodium, older}}});
+            const auto fixed = pinnedPlan.choices.value(pinned.dependency.projectId);
+            check(fixed.size() == 1 && fixed.first().version.id == older.id,
+                  "指定的依赖版本不能被候选列表覆盖");
+
             const ModDependencies::Plan unnamed = ModDependencies::buildPlan(missing, {});
             check(unnamed.unresolved.size() == 1 &&
                       unnamed.unresolved.first().startsWith(QStringLiteral("AANobbMI")),

@@ -2,8 +2,11 @@
 #include <QCoreApplication>
 
 #include <QDir>
+#include <QComboBox>
 #include <QFileDialog>
+#include <QFormLayout>
 #include <QScopedValueRollback>
+#include <QScrollArea>
 #include <QSet>
 #include <QStringList>
 #include <algorithm>
@@ -22,6 +25,7 @@
 #include "tasks/TaskManager.hpp"
 #include "InlineMessage.hpp"
 #include "MainWindowUI.hpp"
+#include "OverlayHost.hpp"
 #include "util/AppPaths.hpp"
 
 using MainWindowViewData::loaderGroupKey;
@@ -288,17 +292,41 @@ void ResourceInstallController::finishDependencyCheck() {
         if (!note.isEmpty()) {
             text += QStringLiteral("\n\n") + note;
         }
-        // 两颗按钮：左「只下这个」（**默认那颗** —— 误按回车不该替用户多做一件事），
-        // 右「一起下载」。
-        // NOTE: 必须用 `ask()`：`question()` 带不了那行灰字（没有 note 这一格）。
-        const int choice = InlineMessage::ask(
-            owner.m_ui->overlay(), MessageKind::Question,
-            ModDependencies::dependencyPromptTitle(), text,
-            {ModDependencies::dependencyOnlyThisButtonText(),
-             ModDependencies::dependencyAllButtonText()},
-            0, -1, false, ModDependencies::dependencyPromptNoteText());
-        if (choice == 1) {
-            extras = plan.downloads;
+        InlineMessageBox prompt(MessageKind::Question, ModDependencies::dependencyPromptTitle(), text,
+                                {ModDependencies::dependencyOnlyThisButtonText(),
+                                 ModDependencies::dependencyAllButtonText()}, 0, -1);
+        prompt.setNote(ModDependencies::dependencyPromptNoteText());
+        auto *scroll = new QScrollArea(&prompt);
+        scroll->setWidgetResizable(true);
+        scroll->setFrameShape(QFrame::NoFrame);
+        auto *form = new QWidget(scroll);
+        auto *rows = new QFormLayout(form);
+        rows->setContentsMargins(0, 0, 0, 0);
+        QList<QComboBox *> selectors;
+        for (const auto &resolved : plan.downloads) {
+            const auto &versions = plan.choices[resolved.dependency.projectId];
+            auto *selector = new QComboBox(form);
+            selector->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+            selector->setMinimumContentsLength(12);
+            for (const auto &option : versions) {
+                const auto &version = option.version;
+                const QString label = version.versionNumber.isEmpty() ? version.name : version.versionNumber;
+                selector->addItem(label.isEmpty() ? option.file.filename : label);
+                selector->setItemData(selector->count() - 1, option.file.filename, Qt::ToolTipRole);
+            }
+            selector->setEnabled(versions.size() > 1);
+            rows->addRow(resolved.title, selector);
+            selectors.append(selector);
+        }
+        scroll->setWidget(form);
+        scroll->setFixedHeight(qMin(form->sizeHint().height() + 4, 170));
+        prompt.setContent(scroll);
+        owner.m_ui->overlay()->execPrompt(&prompt);
+        if (prompt.clickedIndex() == 1) {
+            for (qsizetype i = 0; i < selectors.size(); ++i) {
+                const auto &resolved = plan.downloads.at(i);
+                extras.append(plan.choices[resolved.dependency.projectId].at(selectors.at(i)->currentIndex()));
+            }
         }
     }
 
