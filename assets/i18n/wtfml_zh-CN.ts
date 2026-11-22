@@ -28252,6 +28252,14 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         <source>写 %1 的时候失败了（%2）。</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>镜像源版本列表未找到适用于 %2 的 %1，已切换至官方源。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>无法连接 %1 官方源（%2），已切换至镜像源。</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>VersionTreeDelegate</name>

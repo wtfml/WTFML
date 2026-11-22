@@ -260,3 +260,5 @@ python tools/acceptance_directory_boundary.py --exe <WTFMinecraftLauncher.exe> -
 2026-11-19｜智能体 Stage 3（联网 + 固定诊断命令）交付待人工验收｜`verify_agent` 749/749、`ui_check_agent` 75/75、`mw_check_agent` 76/76；G3 真网/代理/证书项未做｜搜索只支持 SearXNG；诊断命令只在 PATH 上找可执行文件；`command.run` 未开放。
 2026-11-19｜智能体 Stage 4 收口：回归、性能基线、发布检查、文档｜core 15/15、window 3/3、network 6/6、ci-ui 23/23；`verify_agent` 767、`ui_check_agent` 77、`mw_check_agent` 76；`check-agent-release.ps1` PASS；智能体页 2000 条消息重摆 3820 ms、会话 2000 条加密往返 91 ms｜首轮 core 红的 `core-resources` 是工作区里 `known-sets.json` 被检出成 CRLF（仓库为 LF），恢复后通过；视觉套件未跑。
 2026-11-21｜启动、任务中心、实例列表和资源选择器修复｜`core`、`activity-selection`、`instance-upgrade`、`ui`、`ui-refresh`、`launch-card`、`main-window` 通过；主页跨文件夹切换与游玩时长断言通过；选择器深浅色样张在 `build/tmp-WTFML-issues-picker-shots-f79e`｜`instance-upgrade` 单独复跑通过，首轮与 `main-window` 并行时出现过一次临时目录相关失败。
+2026-11-22｜版本列表、依赖选择、离线名称、搜索排序、自动内存、Forge 原版补全和卷根目录保护｜核心回归 5/5，资源搜索和依赖下载专项通过，`verify_install vm-batch` 验证 Forge 下载前修复原版 JAR 与 JSON，并核对卷根目录映射｜Forge 回归使用本地文件模拟，在启动外部安装器之前取消。
+2026-11-22｜修复外观请求、加载器换源、资源筛选与下载日志｜启动器构建成功，核心回归 5/5，筛选、资源来源、资源详情和下载重试专项通过｜DNS 换源用模拟回复验证，正版账号与真实上游待复测。

@@ -210,8 +210,18 @@ QString diagReplyFacts(QNetworkReply *reply) {
 
 /// 一条回复从发出到现在多久（毫秒）。没登记过起点就回 -1。
 qint64 diagElapsedMs(QNetworkReply *reply, qint64 now) {
-    const qint64 start = reply->property("wtfmlStartMs").toLongLong();
-    return start > 0 ? now - start : -1;
+    const QVariant start = reply->property("wtfmlStartMs");
+    return start.isValid() ? now - start.toLongLong() : -1;
+}
+
+QString downloadTiming(QNetworkReply *reply, qint64 elapsedMs) {
+    const QString entry = reply->property("wtfmlEntryUrl").toString();
+    const QUrl requestUrl = entry.isEmpty() ? reply->request().url() : QUrl(entry);
+    return QStringLiteral("elapsed=%1ms http=%2 error=%3 request=%4 final=%5")
+        .arg(elapsedMs)
+        .arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt())
+        .arg(int(reply->error()))
+        .arg(DownloadDiag::safeUrl(requestUrl), DownloadDiag::safeUrl(reply->url()));
 }
 
 }  // namespace
@@ -1403,7 +1413,8 @@ void DownloadManager::handleDownloadError(QNetworkReply *reply, const QString &e
                      replyIsFromCurrentBatch(reply) ? QStringLiteral("no") : QStringLiteral("yes"),
                      DownloadDiag::safeUrl(reply->request().url()), diagReplyFacts(reply)));
     }
-    qWarning() << "Download failed:" << destPath << errorMessage;
+    qWarning() << "Download failed:" << destPath << errorMessage
+               << downloadTiming(reply, diagElapsedMs(reply, m_clock.elapsed()));
     // 属于**已经被放弃的那一批**：只留上面那行日志，不进当前批的失败计数、也不往失败清单
     // 里塞（那两样都是给界面上"这一批下完没有"看的，见 m_batchGeneration）。
     if (!replyIsFromCurrentBatch(reply)) {
@@ -1743,10 +1754,13 @@ void DownloadManager::onAssetIndexDownloaded() {
 bool DownloadManager::retryStalledFromMirror(QNetworkReply *reply,
                                              const QString &destinationPath) {
     if (!replyIsFromCurrentBatch(reply) || m_shuttingDown || m_batchEmitted) return false;
-    // 只认**看门狗 abort 掉的**那条：error 是 Operation canceled，而不是 HTTP 失败。
-    if (reply->error() != QNetworkReply::OperationCanceledError) return false;
+    const auto error = reply->error();
+    if (error != QNetworkReply::OperationCanceledError &&
+        error != QNetworkReply::HostNotFoundError) return false;
     const QUrl mirrorEntry = reply->request().url();
     const QUrl landed = reply->url();
+    if (error == QNetworkReply::HostNotFoundError &&
+        mirrorEntry.host() != QUrl(mirrorMavenRootUrl()).host()) return false;
     // 只有 302 转手过的那一类才值得回入口重挑落点；没转手的 abort 是看门狗对"慢镜像"
     // 那一档做的，它本来就该按原来的顺序退官方。
     // 判"转没转手"用**主机 + 端口** —— 同一主机换端口的落点也算换了一台
@@ -1772,8 +1786,8 @@ bool DownloadManager::retryStalledFromMirror(QNetworkReply *reply,
                                      m_segmentEnabled && segmentedEligible(
                                          mirrorUrl, expectedSha1s.value(reply),
                                          expectedSizes.value(reply, -1), rangeOf(reply))});
-    qInfo() << "Retrying a stalled mirror download from the mirror entry (it may pick another"
-            << "backend this time):" << mirrorUrl;
+    qInfo() << "Retrying a failed mirror redirect from its entry:"
+            << downloadTiming(reply, diagElapsedMs(reply, m_clock.elapsed()));
     if (DownloadDiag::enabled()) {
         DownloadDiag::line(QStringLiteral("mirror retry after 302 stall dest=%1 url=%2 %3")
                                .arg(QDir::toNativeSeparators(destinationPath),
@@ -1844,15 +1858,14 @@ bool DownloadManager::retryWithOfficialUrl(QNetworkReply *reply, const QString &
                                    .arg(activeDownloads.size())
                                    .arg(m_pendingJobs.size()));
         }
-        qInfo() << "The fallback host is busy; this retry waits in our own queue instead:"
-                << officialUrl;
         return true;
     }
     // 清理掉的原因得说清楚：这一步走的是"换一条路再试"，不是"这次作业失败"。
     // 所以 pendingDownloads **不加也不减**（作业一直只有一个，只是换了条连接），
     // m_doneJobs / m_failedJobs 也都不动 —— 都由重发出去的那一次说了算。
     // NOTE: 新那条回复**不登记**备用地址（take 已经把它拿走了），所以不会来回退。
-    qInfo() << "Mirror download failed, retrying from the official url:" << officialUrl;
+    qInfo() << "Download source failed; trying the alternate URL:" << DownloadDiag::safeUrl(officialUrl)
+            << downloadTiming(reply, diagElapsedMs(reply, m_clock.elapsed()));
     const QUrl url(officialUrl);
     QNetworkRequest request(url);
     configureHttp1(request);
@@ -2146,7 +2159,7 @@ bool DownloadManager::requeueTransientFailure(QNetworkReply *reply, const QStrin
     });
     wakeup->start(delay);
     qInfo() << "Temporary download failure; retry" << attempts + 1 << "of 3 in" << delay << "ms:"
-            << QUrl(url).adjusted(QUrl::RemoveUserInfo | QUrl::RemoveQuery | QUrl::RemoveFragment);
+            << downloadTiming(reply, diagElapsedMs(reply, m_clock.elapsed()));
     if (DownloadDiag::enabled()) {
         DownloadDiag::line(QStringLiteral("transient retry dest=%1 attempt=%2 delay=%3ms status=%4 retryAfter=%5 %6")
                                .arg(QDir::toNativeSeparators(destinationPath))
@@ -2236,6 +2249,11 @@ void DownloadManager::onDownloadReplyFinished() {
                      diagReplyFacts(reply)));
     }
     if (success) {
+        const qint64 elapsedMs = diagElapsedMs(reply, m_clock.elapsed());
+        if (!stale && elapsedMs >= 60000) {
+            qInfo() << "Slow download completed:" << downloadTiming(reply, elapsedMs)
+                    << "bytes=" << stream->bytes;
+        }
         noteReroutedReplyOutcome(reply, true);
         if (!stale && m_checkpoint && stream) {
             const auto it = m_checkpoint->indexes.constFind(QDir::cleanPath(destPath).toCaseFolded());

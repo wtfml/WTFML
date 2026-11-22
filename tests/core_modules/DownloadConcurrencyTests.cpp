@@ -18,6 +18,12 @@ public:
             if (isFinished()) return;
             if (m_body == QByteArray("NETWORK_FAILURE"))
                 setError(QNetworkReply::UnknownNetworkError, QStringLiteral("controlled failure"));
+            if (m_body == QByteArray("REDIRECT_DNS_FAILURE")) {
+                const QUrl target(QStringLiteral("https://mirror-node.invalid/file"));
+                emit redirected(target);
+                setUrl(target);
+                setError(QNetworkReply::HostNotFoundError, QStringLiteral("controlled DNS failure"));
+            }
             setFinished(true); emit readyRead(); emit finished();
         });
     }
@@ -199,7 +205,28 @@ void runDownloadConcurrencyTests() {
               network->urls.value(1) == QUrl(DownloadManager::mirrorClientJarUrl(QStringLiteral("1.21.1"))) && opened && file.readAll() == QByteArray("verified-client"),
               "official-priority client download falls back to domestic source and still verifies its hash");
     }
-
+    {
+        QTemporaryDir directory;
+        ManifestRaceNetwork *network = nullptr;
+        DownloadManager manager(nullptr, [&](QObject *owner) {
+            network = new ManifestRaceNetwork(owner, [](const QUrl &, int number) {
+                return qMakePair(number < 3 ? QByteArray("REDIRECT_DNS_FAILURE") : QByteArray("ok"), 5);
+            });
+            return network;
+        });
+        const QString official = QStringLiteral("https://maven.neoforged.net/releases/net/neoforged/neoforge/21.1.234/file");
+        const QString mirror = DownloadManager::mirrorUrl(official);
+        bool succeeded = false;
+        QEventLoop loop;
+        QObject::connect(&manager, &DownloadManager::downloadFinished, &loop,
+            [&](const QString &, bool ok, const QString &) { succeeded = ok; loop.quit(); });
+        manager.downloadFile(mirror, directory.filePath(QStringLiteral("download")), {}, -1,
+                             VerifyMode::ExistsOnly, official);
+        QTimer::singleShot(2000, &loop, &QEventLoop::quit);
+        loop.exec();
+        check(succeeded && network->urls == QList<QUrl>{QUrl(mirror), QUrl(mirror), QUrl(official)},
+              "镜像落点 DNS 失败后从入口重试一次，再换到同一文件的官方地址");
+    }
 
 }
 

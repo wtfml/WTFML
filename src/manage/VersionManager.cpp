@@ -1995,14 +1995,9 @@ void VersionManager::onVersionJsonFetched(const QJsonObject &versionJson) {
                                 [this, versionJson] { writeLegacyProfile(versionJson); });
                 return;
             }
-            // OptiFine 这一路是"**装之前**先把原版下全"（它的安装器要拿原版的客户端 jar 当
-            // 输入），所以它用另一个 phase 记着：那一批结束时该起安装器，而不是收尾。
-            // 另外三个都是"装完再补原版"，走 WaitingParentFiles。
-            const bool beforeOptifineInstaller = m_loaderInstall.kind == LoaderKind::OptiFine &&
-                                                 m_loaderInstall.loaderId.isEmpty();
             const LoaderInstall::Phase parentPhase =
-                beforeOptifineInstaller ? LoaderInstall::Phase::WaitingParentBefore
-                                        : LoaderInstall::Phase::WaitingParentFiles;
+                m_loaderInstall.preparingInstallerParent ? LoaderInstall::Phase::WaitingParentBefore
+                                                        : LoaderInstall::Phase::WaitingParentFiles;
             m_loaderInstall.phase = parentPhase;
             // 这批原版文件是从"刚收到原版那份 json"的这条栈上起的（上面那条信号链一路都是
             // 同步的）：排到下一轮再起。相位上面已经定好了，守卫要认的就是它。
@@ -2286,9 +2281,7 @@ void VersionManager::onAllDownloadsFinished(bool success) {
             return;
         }
 
-        // OptiFine 独有的一段：这一批是"装之前先把原版下全"那一次，下完才轮到安装器
-        // （它的安装器要拿原版的客户端 jar 当输入）。Forge/NeoForge 那边原版是**最后**
-        // 补的，所以它们永远走不到这里。
+        // 原版文件校验通过后才下载并运行外部安装器。
         if (m_loaderInstall.phase == LoaderInstall::Phase::WaitingParentBefore) {
             if (!success) {
                 failLoaderInstall(tr("原版 %1 文件不完整，未安装 %2。请先补齐原版文件再重试。\n%3")
@@ -2299,6 +2292,7 @@ void VersionManager::onAllDownloadsFinished(bool success) {
             emit loaderInstallMessage(tr("原版 %1 已就绪，正在启动 %2 安装器…")
                                           .arg(m_loaderInstall.gameVersion,
                                                m_loaderInstall.loaderName));
+            m_loaderInstall.preparingInstallerParent = false;
             deferLoaderStep(LoaderInstall::Phase::WaitingParentBefore,
                             [this] { startInstallerDownload(); });
             return;

@@ -768,6 +768,6 @@ void VersionManager::adoptInstallerVersion(const QString &version) {
         QFileInfo(QUrl(m_loaderInstall.installerUrl).path()).fileName();
 
     deferLoaderStep(LoaderInstall::Phase::FetchingInstallerList,
-                    [this] { startInstallerDownload(); });
+                    [this] { prepareInstallerParent(); });
 }
 

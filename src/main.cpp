@@ -43,18 +43,23 @@ class TimingApplication final : public QApplication {
 public:
     using QApplication::QApplication;
     bool notify(QObject *receiver, QEvent *event) override {
-        if (QThread::currentThread() != thread()) return QApplication::notify(receiver, event);
+        if (!m_traceUiEvents || QThread::currentThread() != thread()) {
+            return QApplication::notify(receiver, event);
+        }
         const QPointer<QObject> guard(receiver);
         const int kind = int(event->type());
         QElapsedTimer elapsed;
         elapsed.start();
         const bool result = QApplication::notify(receiver, event);
         const qint64 ms = elapsed.elapsed();
-        if (ms > 8) qInfo() << "[UI event]" << kind << ms << "ms"
+        if (ms >= 50) qInfo() << "[UI event]" << kind << ms << "ms"
                            << (guard ? guard->metaObject()->className() : "deleted")
                            << (guard ? guard->objectName() : QString());
         return result;
     }
+
+private:
+    const bool m_traceUiEvents = qEnvironmentVariableIntValue("WTFML_UI_EVENT_TRACE") == 1;
 };
 
 /// 这一次启动的日志文件。**它开没开就是唯一那份状态**：没开 = 还早，先攒着（见下面那段
