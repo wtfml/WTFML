@@ -280,6 +280,9 @@ int main(int argc, char *argv[]) {
     if (!processSandbox.isValid()) return 2;
     app.setProperty("wtfml.testDefaultMinecraftDir", processSandbox.filePath(QStringLiteral(".minecraft")));
     app.setProperty("wtfml.testAgentDataDir", processSandbox.filePath(QStringLiteral("agent")));
+    // 集成验证会故意制造崩溃，但不会去点那张给人看的崩溃卡片。
+    qputenv("WTFML_SUPPRESS_CRASH_DIALOG", QByteArrayLiteral("1"));
+    app.setProperty("wtfml.suppressCrashDialog", true);
     AppPaths::setMinecraftDir(QString());
     const QDir root(processSandbox.path());
     const QString settingsDir = root.filePath(QStringLiteral("check-settings"));

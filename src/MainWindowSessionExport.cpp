@@ -27,7 +27,9 @@
 #include "TextMarks.hpp"
 #include "..\ui\GameLogWindow.hpp"
 #include "..\ui\InlineMessage.hpp"
+#include "..\ui\MainWindowUI.hpp"
 #include "auth/AuthManager.hpp"
+#include "controllers/AgentController.hpp"
 #include "controllers/CrashReportController.hpp"
 #include "controllers/GameSessionController.hpp"
 #include "controllers/ModpackExportController.hpp"
@@ -141,6 +143,14 @@ void MainWindow::reportGameCrash(int sessionId, int exitCode, bool crashed) {
         all = m_gameSessionController->sessionLogTail(sessionId);
     }
     m_crashReports->report(sessionId, exitCode, crashed, facts, errors, all);
+}
+
+void MainWindow::askAgentAboutCrash(const QString &context) {
+    if (m_agentController == nullptr || m_ui->getTabWidget() == nullptr) {
+        return;
+    }
+    m_ui->getTabWidget()->setCurrentIndex(MainWindowUI::agentTabIndex());
+    m_agentController->askAboutCrash(context);
 }
 
 void MainWindow::exportCrashReport(const QString &key) {

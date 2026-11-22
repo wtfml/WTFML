@@ -3087,6 +3087,9 @@ private:
     /// 异常退出了 → 账本上补一项，并留一份 `CrashRecord`。
     void reportGameCrash(int sessionId, int exitCode, bool crashed);
 
+    /// 崩溃卡片上的「使用智能体询问」：带着崩溃摘要切到智能体页并发问。
+    void askAgentAboutCrash(const QString &context);
+
     void exportCrashReport(const QString &key);
     void openCrashReportsDir(const QString &key);
 };

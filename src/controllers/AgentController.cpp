@@ -613,6 +613,18 @@ void AgentController::onNewSession() {
     refreshApiState();
 }
 
+void AgentController::askAboutCrash(const QString &context) {
+    if (m_page == nullptr || m_page->composer() == nullptr) {
+        return;
+    }
+    const QString prompt =
+        tr("游戏刚刚异常退出，请结合下面的信息帮我判断可能的原因，并给出按顺序可执行的排查步骤。\n\n%1")
+            .arg(context.left(6000));
+    m_page->composer()->setPlainText(prompt);
+    m_page->composer()->setFocus(Qt::OtherFocusReason);
+    onSend(prompt);
+}
+
 void AgentController::onSend(const QString &text) {
     if (m_loop->busy()) return;
     const QString trimmed = text.trimmed();

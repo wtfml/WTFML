@@ -82,6 +82,10 @@ public:
 
     /// 测试专用：换掉真实网络客户端（不转移所有权；调用方负责活得比控制器久）。
     void setModelClientForTest(AgentModelClient *client);
+    /// 崩溃卡片上的「使用智能体询问」：把崩溃摘要填进输入框并发出去。
+    /// 没配置模型时走正常的设置页提示，不在这里偷偷替用户配一个。
+    void askAboutCrash(const QString &context);
+
     /// 测试专用：不经过设置页直接摆一份可用的 profile/key。
     void applyProfileForTest(const AgentProviderProfile &profile, const QString &apiKey);
     void cancelForTest() { onStop(); }
