@@ -11185,6 +11185,18 @@ Click Launch again.</translation>
 
 The game was not launched. You can set the Java path manually in Instance Settings.</translation>
         </message>
+        <message>
+            <source>本次启动最多分配 %1 MB 堆内存，系统当前可用约 %2 MB。</source>
+            <translation>This launch allows up to %1 MB of heap memory. About %2 MB is currently available.</translation>
+        </message>
+        <message>
+            <source>其他运行中的实例最多分配 %1 MB 堆内存。</source>
+            <translation>Other running instances allow up to %1 MB of heap memory in total.</translation>
+        </message>
+        <message>
+            <source>继续启动可能导致卡顿。可关闭其他程序或调低内存分配。确认启动？</source>
+            <translation>Continuing may cause stuttering. Close other apps or lower the memory allocation. Launch anyway?</translation>
+        </message>
     </context>
     <context>
         <name>LaunchHistory</name>

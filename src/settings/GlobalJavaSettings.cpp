@@ -1094,9 +1094,6 @@ int GlobalJavaSettings::suggestXmxMb(qint64 totalMb, qint64 availableMb, int mod
     // 整合包规模那一档加在**基准**上（第 1 步），不是加在最后的结果上 —— 见上面
     // kAutoXmxModsPerStep 那段：加成抬的是目标值，机器侧那两条硬顶照旧说了算。
     qint64 budget = totalMb / 4 + modCountBonusMb(modCount);
-    if (availableMb > 0) {
-        budget = qMin(budget, availableMb / 2);
-    }
     // 先在"体面范围"里夹一次。三个参数都写成 qint64：常量是 int，混着传会让 qBound 的
     // 重载解析变成二义的。
     budget = qBound(qint64(kAutoXmxMinMb), budget, qint64(kAutoXmxMaxMb));
@@ -1104,6 +1101,10 @@ int GlobalJavaSettings::suggestXmxMb(qint64 totalMb, qint64 availableMb, int mod
     // （2 GB 的机器给 1024 已经是一半了，1 GB 的机器只该给 512）—— 在一条本来就紧张的
     // 机器上按"最少 1 GB"硬凑，只会让 JVM 连堆都开不起来，比给个小值更糟。
     budget = qMin(budget, totalMb / 2);
+    if (availableMb > 0) {
+        // 低可用内存也可以压过常规下限；末尾仍保留 JVM 能接受的最小值。
+        budget = qMin(budget, availableMb / 2);
+    }
     // 但绝不小于 JVM 侧的下限（setXmx 会钳到 256）：返回一个会被 setter 悄悄改掉的值，
     // 就是"界面显示的和实际用的不一致"。
     return qMax(roundDownToStep(budget), 256);

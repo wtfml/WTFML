@@ -10883,6 +10883,18 @@ Minecraft %2 / %3 %4</source>
 请在「实例设置」中手动指定路径，再启动游戏。</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>本次启动最多分配 %1 MB 堆内存，系统当前可用约 %2 MB。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>其他运行中的实例最多分配 %1 MB 堆内存。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>继续启动可能导致卡顿。可关闭其他程序或调低内存分配。确认启动？</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>LaunchHistory</name>
