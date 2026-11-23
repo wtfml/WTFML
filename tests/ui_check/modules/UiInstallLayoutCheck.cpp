@@ -4,6 +4,9 @@
 #include "NewServerPage.hpp"
 #include <QDoubleSpinBox>
 #include <QKeyEvent>
+#include <QPainter>
+#include <QSpinBox>
+#include <QStyleOptionViewItem>
 #include "PresetInstallPicker.hpp"
 #include "LoadingState.hpp"
 #include <QJsonArray>
@@ -346,6 +349,34 @@ int UiInstallLayoutCheck(QApplication &app) {
                 for (int row=0;row<table->rowCount();++row) if (table->item(row,0)->text()==key) return row;
                 return -1;
             };
+            const int fov = rowFor(QStringLiteral("fov"));
+            if (fov >= 0) {
+                auto *value = table->item(fov, 1);
+                const QModelIndex index = table->indexFromItem(value);
+                const auto paintCell = [&](bool selected) {
+                    QImage image(210, 48, QImage::Format_ARGB32_Premultiplied);
+                    image.fill(Qt::transparent);
+                    QStyleOptionViewItem option;
+                    option.initFrom(table);
+                    option.widget = table;
+                    option.rect = image.rect();
+                    option.state.setFlag(QStyle::State_Selected, selected);
+                    QPainter painter(&image);
+                    table->itemDelegate()->paint(&painter, option, index);
+                    painter.end();
+                    return image;
+                };
+                const QString raw = value->text();
+                const QImage normal = paintCell(false);
+                const QImage selected = paintCell(true);
+                value->setText(QString());
+                const bool valueIsNotPainted = paintCell(false) == normal && paintCell(true) == selected;
+                value->setText(raw);
+                auto *angle = qobject_cast<QSpinBox *>(table->cellWidget(fov, 1));
+                expect(raw == QStringLiteral("0.0") && angle && angle->text() == QStringLiteral("70°") &&
+                           valueIsNotPainted && normal != selected,
+                       "preset value editor draws the formatted value without the raw value underneath");
+            } else expect(false, "field of view option exists");
             const int gamma = rowFor("gamma");
             auto *brightness = detailed.findChild<QDoubleSpinBox *>("presetValue_gamma");
             expect(gamma>=0 && brightness && !brightness->isEnabled(), "unselected settings cannot be edited accidentally");
