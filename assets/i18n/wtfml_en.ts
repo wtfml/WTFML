@@ -682,6 +682,13 @@ Select “Log out” to try again.</translation>
         </message>
     </context>
     <context>
+        <name>AgentLauncherHostImpl</name>
+        <message>
+            <source>找不到日志文件（实例目录的 logs/latest.log 或数据根的 logs/latest.log、logs/wtfml.log）。</source>
+            <translation>No log file was found. Look for logs/latest.log in the instance folder, or logs/latest.log and logs/wtfml.log in the data folder.</translation>
+        </message>
+    </context>
+    <context>
         <name>AgentPage</name>
         <message>
             <source>会话</source>

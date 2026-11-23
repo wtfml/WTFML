@@ -670,6 +670,13 @@
     </message>
 </context>
 <context>
+    <name>AgentLauncherHostImpl</name>
+    <message>
+        <source>找不到日志文件（实例目录的 logs/latest.log 或数据根的 logs/latest.log、logs/wtfml.log）。</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AgentPage</name>
     <message>
         <source>会话</source>
