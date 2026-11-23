@@ -386,10 +386,25 @@ void ResourceStore::search(const QString &requestKey, ResourceCatalog::Kind kind
                              ? ResourceCatalog::parseCurseForgeSearch(body)
                              : ResourceCatalog::parseSearch(body);
                 if (!searchText.isEmpty()) {
-                    std::stable_partition(result.hits.begin(), result.hits.end(), [&searchText](const auto &hit) {
+                    const auto exactMatch = [&searchText](const ResourceCatalog::Hit &hit) {
                         return hit.title.compare(searchText, Qt::CaseInsensitive) == 0 ||
                                hit.slug.compare(searchText, Qt::CaseInsensitive) == 0;
-                    });
+                    };
+                    const auto firstPartial = std::stable_partition(
+                        result.hits.begin(), result.hits.end(), exactMatch);
+                    if (source == ResourceCatalog::Source::CurseForge) {
+                        // CurseForge 的接口排序不提供相关度。同一匹配档内保留平台返回的顺序。
+                        const auto firstNonPrefix = std::stable_partition(
+                            firstPartial, result.hits.end(), [&searchText](const ResourceCatalog::Hit &hit) {
+                                return hit.title.startsWith(searchText, Qt::CaseInsensitive) ||
+                                       hit.slug.startsWith(searchText, Qt::CaseInsensitive);
+                            });
+                        std::stable_partition(
+                            firstNonPrefix, result.hits.end(), [&searchText](const ResourceCatalog::Hit &hit) {
+                                return hit.title.contains(searchText, Qt::CaseInsensitive) ||
+                                       hit.slug.contains(searchText, Qt::CaseInsensitive);
+                            });
+                    }
                 }
             } else {
                 result.problem = failureText(reply, body, QCoreApplication::translate("ResourceStore", "搜索"), source,

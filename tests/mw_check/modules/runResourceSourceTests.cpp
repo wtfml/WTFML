@@ -59,21 +59,41 @@ void runResourceSourceTests() {
               "ZH1 图标地址也是那一条路给的（不是 Modrinth 那个自己拼的）");
     }
 
-    // ---- ZH2. 填了 key：这一发就带上，**而且是当场读的那份** -------------------
+    // ---- ZH2. 搜索排序和自定义 key --------------------------------------------
     {
         const auto savedBody = api.searchBody;
-        api.searchBody = QByteArrayLiteral(R"({"data":[{"id":101,"name":"Create Addon","slug":"create-addon"},{"id":102,"name":"Create","slug":"create"}]})");
+        api.searchBody = QByteArrayLiteral(R"({"data":[
+            {"id":101,"name":"Xaero's Minimap","slug":"xaeros-minimap","downloadCount":260000000},
+            {"id":102,"name":"Extras for Create","slug":"extras","downloadCount":45000},
+            {"id":103,"name":"Create Addon","slug":"addon","downloadCount":40000},
+            {"id":104,"name":"Workshop","slug":"create-workshop","downloadCount":30000},
+            {"id":105,"name":"Tools","slug":"tools-create","downloadCount":20000},
+            {"id":106,"name":"CREATE","slug":"create","downloadCount":10000}
+        ]})");
         ResourceCatalog::SearchResult found;
         const QString key = ResourceCatalog::searchRequestKey(ResourceCatalog::Kind::Mod,
-                                                               ResourceCatalog::Source::CurseForge);
+                                                                ResourceCatalog::Source::CurseForge);
         store.search(key, ResourceCatalog::Kind::Mod, ResourceCatalog::Source::CurseForge,
                      QStringLiteral("1.21.1 机械动力"), QStringLiteral("1.21.1"), QStringLiteral("1"), {});
         check(waitForSearch(store, key, &found) &&
                   api.lastRequest().contains(QStringLiteral("gameVersion=1.21.1")) &&
                   api.lastRequest().contains(QStringLiteral("modLoaderType=1")) &&
-                  api.lastRequest().contains(QStringLiteral("searchFilter=create")) &&
-                  found.hits.size() == 2 && found.hits.first().slug == QStringLiteral("create"),
-              "版本和加载器保留在筛选条件，精确匹配 Create 排在扩展模组前");
+                  api.lastRequest().contains(QStringLiteral("searchFilter=create")),
+              "ZH2 版本和加载器筛选保留，机械动力使用 create 搜索");
+        QStringList order;
+        for (const auto &hit : found.hits) {
+            order.append(hit.projectId);
+        }
+        check(order.join(QLatin1Char(',')) == QStringLiteral("106,103,104,102,105,101"),
+              "ZH2 名称或短名按精确、前缀、包含匹配排序，同档保留来源顺序",
+              order.join(QLatin1Char(',')));
+
+        store.search(key, ResourceCatalog::Kind::Mod, ResourceCatalog::Source::CurseForge,
+                     QStringLiteral("  "), QStringLiteral("1.21.1"), QStringLiteral("1"), {});
+        check(waitForSearch(store, key, &found) && found.hits.size() == 6 &&
+                  found.hits.first().projectId == QStringLiteral("101") &&
+                  api.lastRequest().contains(QStringLiteral("sortField=6&sortOrder=desc")),
+              "ZH2 空白搜索词按平台下载量顺序浏览");
         api.searchBody = savedBody;
     }
 

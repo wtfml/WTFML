@@ -98,7 +98,7 @@ QString modrinthApiRoot();
 // | 筛游戏版本 | facets `versions:1.21.1` | 查询参数 `gameVersion=1.21.1` |
 // | 筛加载器 | facets `categories:fabric`（**不是** `loaders:`） | `modLoaderType=1`（**数字**） |
 // | 筛类型 | facets `categories:optimization` | `categoryId=6814`（**数字**） |
-// | 排序 | `index=relevance` / `downloads` | `sortField=6`（**两边都只用它**，见 searchUrl） |
+// | 接口排序 | `index=relevance` / `downloads` | `sortField=6&sortOrder=desc`，关键词结果由 ResourceStore 按匹配度分组 |
 // | 要不要 key | 不要 | 官方那份要（默认走一台不要 key 的社区镜像，见 curseForgeApiBase） |
 // | 答复根 | `{"hits":[…]}` | `{"data":[…],"pagination":{…}}` |
 //
