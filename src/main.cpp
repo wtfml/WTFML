@@ -31,6 +31,7 @@
 #include "../ui/AppIcon.hpp" // 窗口 / 任务栏图标（自绘标题栏里不画，见那个文件头）
 #include "../ui/Theme.hpp"   // 主题从盘上读回来、铺开（见下面那段 NOTE）
 #include "../ui/UiLanguage.hpp" // 界面语言：解析设置值、装翻译（见下面那段）
+#include "agent/AgentPaths.hpp"
 #include "util/AppPaths.hpp"
 #include "util/SecretRedactor.hpp"
 #include "util/DownloadDiagnostics.hpp"
@@ -341,6 +342,15 @@ int main(int argc, char *argv[]) {
     // 下拉框、数字框没有焦点时不认滚轮（全局，一处处理）。
     WheelFocusFilter::install(app);
 
+
+    // 旧版把智能体与下载缓存放在 `<LOCALAPPDATA>/WTFML/WTFML/...` 三层下面；启动时搬一次到
+    // `<LOCALAPPDATA>/WTFML/agent`、`/cache`。搬不动只记一句，不挡启动。
+    {
+        QString migrateProblem;
+        if (AgentPaths::migrateLegacyDataDir(&migrateProblem) && !migrateProblem.isEmpty()) {
+            qWarning().noquote() << migrateProblem;
+        }
+    }
 
     MainWindow window;
     if (!firstRunRoot.isEmpty()) {

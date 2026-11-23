@@ -22,6 +22,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QLatin1Char>
+#include <QStandardPaths>
 #include <QString>
 #include <QVariant>
 
@@ -41,6 +42,42 @@ inline QString defaultMinecraftDir() {
     if (!isolated.isEmpty()) return isolated;
     return QCoreApplication::applicationDirPath() + QStringLiteral("/.minecraft");
 }
+
+/// 启动器自己的**本地数据根**：`%LOCALAPPDATA%\WTFML`。唯一出处。
+///
+/// 之前智能体数据用 `QStandardPaths::AppLocalDataLocation`（= `<LOCALAPPDATA>/<组织>/<程序>`）
+/// 再拼一层 `/WTFML`，而组织名和程序名都叫 WTFML —— 于是变成
+/// `%LOCALAPPDATA%\WTFML\WTFML\WTFML\agent`。这里改成只认 `%LOCALAPPDATA%` 这一层：
+/// `%LOCALAPPDATA%\WTFML\agent`、`%LOCALAPPDATA%\WTFML\cache`。
+///
+/// 测试用 `setLocalDataRootOverride()` 注入临时根；产品代码不许自己拼 `LOCALAPPDATA`。
+inline QString &localDataRootOverride() {
+    static QString dir;
+    return dir;
+}
+
+inline void setLocalDataRootOverride(const QString &dir) {
+    localDataRootOverride() = dir.isEmpty() ? QString() : QDir::cleanPath(dir);
+}
+
+inline QString localDataRoot() {
+    const QString override = localDataRootOverride();
+    if (!override.isEmpty()) return override;
+    QString base = qEnvironmentVariable("LOCALAPPDATA");
+    if (base.isEmpty()) {
+        base = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+    }
+    if (base.isEmpty()) base = QCoreApplication::applicationDirPath();
+    return QDir::cleanPath(base + QStringLiteral("/WTFML"));
+}
+
+/// 启动器自己的本地缓存根：`%LOCALAPPDATA%\WTFML\cache`（断点续传的 range-downloads 在这里）。
+inline QString localCacheRoot() { return localDataRoot() + QStringLiteral("/cache"); }
+
+/// 旧版（三层 WTFML）里智能体数据与缓存的位置。**只给一次性迁移用**，别在新代码里用。
+inline QString legacyLocalDataRoot() { return localDataRoot() + QStringLiteral("/WTFML"); }
+inline QString legacyAgentDataDir() { return legacyLocalDataRoot() + QStringLiteral("/WTFML/agent"); }
+inline QString legacyLocalCacheRoot() { return legacyLocalDataRoot() + QStringLiteral("/cache"); }
 
 /// 数据根目录的可写覆盖。空串 = 用默认那份（defaultMinecraftDir()）。
 ///
