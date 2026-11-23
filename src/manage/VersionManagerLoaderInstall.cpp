@@ -188,8 +188,7 @@ void VersionManager::requestLoaderVersions(const QString &gameVersion, LoaderKin
         return;
     }
 
-    // Forge 版本选择器使用官方清单，NeoForge 同时查询两个入口。OptiFine 优先使用设置中的源，
-    // 每条回复按其来源选择 JSON 或 HTML 解析器。
+    // NeoForge 和 OptiFine 同时查询两个入口。OptiFine 按设置的优先顺序排队，回复按各自格式解析。
     QString url;
     // "这一发走没走镜像"**只在这里读一次**，然后一路带到解析那一步去（同一次读的结果）：
     // 解析那边若再读一遍 downloadManager->useMirror()，两次之间用户点一下开关就会出现
@@ -214,10 +213,13 @@ void VersionManager::requestLoaderVersions(const QString &gameVersion, LoaderKin
                          : LoaderMeta::optifineDownloadsPageUrl();
         break;
     }
-    const QString mirrorUrl = loaderVersionsMirrorFallback(kind, url);
-    slot.pending = mirrorUrl.isEmpty() ? 1 : 2;
-    fetchLoaderVersions(kind, url, fromMirror, kind == LoaderKind::OptiFine);
-    if (!mirrorUrl.isEmpty()) fetchLoaderVersions(kind, mirrorUrl, true);
+    const QString alternateUrl = kind == LoaderKind::OptiFine
+        ? (fromMirror ? LoaderMeta::optifineDownloadsPageUrl()
+                      : LoaderMeta::optifineMirrorListUrl(wanted))
+        : loaderVersionsMirrorFallback(kind, url);
+    slot.pending = alternateUrl.isEmpty() ? 1 : 2;
+    fetchLoaderVersions(kind, url, fromMirror);
+    if (!alternateUrl.isEmpty()) fetchLoaderVersions(kind, alternateUrl, !fromMirror);
 }
 
 QString VersionManager::loaderVersionsMirrorFallback(LoaderKind kind,
@@ -245,20 +247,20 @@ QNetworkAccessManager *VersionManager::loaderNetworkManager() {
 }
 
 void VersionManager::fetchLoaderVersions(LoaderKind kind, const QString &url, bool fromMirror,
-                                         bool canRetryOptifine, bool canRetryRedirect) {
+                                         bool canRetryRedirect) {
     QNetworkRequest request{QUrl(url)};
     auto &slot = m_loaderVersionRequests[int(kind)];
     const auto generation = slot.generation;
     const auto index = slot.jobs.size();
     slot.jobs.append(RequestBudget::ControlGet::start(this, loaderNetworkManager(), request, 30000,
-        [this, kind, generation, index, url, fromMirror, canRetryOptifine, canRetryRedirect](
+        [this, kind, generation, index, url, fromMirror, canRetryRedirect](
             QNetworkReply *reply, const QString &error) {
             auto &current = m_loaderVersionRequests[int(kind)];
             if (current.generation != generation) return;
             current.jobs[index] = nullptr;
             if (kind == LoaderKind::NeoForge && fromMirror && canRetryRedirect &&
                 failedMirrorRedirect(reply, QUrl(url))) {
-                fetchLoaderVersions(kind, url, true, false, false);
+                fetchLoaderVersions(kind, url, true, false);
                 return;
             }
             --current.pending;
@@ -277,13 +279,6 @@ void VersionManager::fetchLoaderVersions(LoaderKind kind, const QString &url, bo
                     .arg(loaderDisplayName(kind), gameVersion, replyReason(reply, error));
             }
             if (!parsed.error.isEmpty() && (!fromMirror || current.error.isEmpty())) current.error = parsed.error;
-            if (canRetryOptifine && parsed.versions.isEmpty()) {
-                ++current.pending;
-                fetchLoaderVersions(kind, fromMirror ? LoaderMeta::optifineDownloadsPageUrl()
-                                                     : LoaderMeta::optifineMirrorListUrl(gameVersion),
-                                    !fromMirror);
-                return;
-            }
             if (parsed.versions.isEmpty() && current.pending > 0) return;
 
             // 空镜像列表不能抢在官方的完整列表前结束这一轮。
@@ -327,6 +322,10 @@ VersionManager::LoaderVersionParse VersionManager::parseLoaderVersions(
         entries = LoaderMeta::listForgeVersions(body, gameVersion);
         break;
     case LoaderKind::NeoForge:
+        if (!LoaderMeta::isMavenVersionMetadata(body)) {
+            result.error = tr("NeoForge 的版本列表无法解析。");
+            return result;
+        }
         entries = LoaderMeta::listNeoForgeVersions(body, gameVersion);
         break;
     case LoaderKind::OptiFine:
@@ -342,8 +341,12 @@ VersionManager::LoaderVersionParse VersionManager::parseLoaderVersions(
             }
             entries = LoaderMeta::listOptifineVersionsFromMirror(doc.array(), gameVersion);
         } else {
-            entries = LoaderMeta::listOptifineVersionsFromDownloadsPage(QString::fromUtf8(body),
-                                                                       gameVersion);
+            const QString html = QString::fromUtf8(body);
+            if (!LoaderMeta::isOptifineDownloadsPage(html)) {
+                result.error = tr("OptiFine 的下载页无法解析。");
+                return result;
+            }
+            entries = LoaderMeta::listOptifineVersionsFromDownloadsPage(html, gameVersion);
         }
         break;
     }

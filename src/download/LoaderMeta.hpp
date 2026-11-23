@@ -34,6 +34,7 @@
 #include <QSet>
 #include <QString>
 #include <QStringList>
+#include <QXmlStreamReader>
 
 #include <algorithm>
 #include <limits>
@@ -669,6 +670,27 @@ inline void sortLoaderVersionsNewestFirst(LoaderVersionList &entries) {
     }
 }
 
+/// Maven 元数据中的版本容器也用于区分空列表、错误页和截断回复。
+inline bool isMavenVersionMetadata(const QByteArray &body) {
+    QXmlStreamReader xml(body);
+    if (!xml.readNextStartElement() || xml.name() != QLatin1String("metadata")) {
+        return false;
+    }
+    bool hasVersions = false;
+    while (xml.readNextStartElement()) {
+        if (xml.name() == QLatin1String("versioning")) {
+            while (xml.readNextStartElement()) {
+                hasVersions |= xml.name() == QLatin1String("versions");
+                xml.skipCurrentElement();
+            }
+        } else {
+            xml.skipCurrentElement();
+        }
+    }
+    while (!xml.atEnd()) xml.readNext();
+    return hasVersions && !xml.hasError();
+}
+
 /// neoforge 的 maven-metadata.xml -> 这个游戏版本能用的**全部** NeoForge 版本（新到旧）。
 /// @param mavenMetadata XML 原文（原样，这里只扫 `<version>...</version>`）。
 /// @param gameVersion 原版版本号。
@@ -1008,11 +1030,20 @@ inline OptiFineMirrorPath optifineMirrorPathFromEdition(const QString &edition) 
 ///
 /// NOTE: 那一节的边界靠**下一个 `<h2>`** 划。页面上 `<h2>` 只用来分游戏版本，所以这是稳的；
 /// 也正因为如此，找不到小节时要如实返回空，而不是"从整页里随便挑一个"。
-inline QString optifineDownloadsSection(const QString &html, const QString &gameVersion) {
+inline const QRegularExpression &optifineDownloadsHeading() {
     static const QRegularExpression heading(
         QStringLiteral("<h2>\\s*Minecraft\\s+([^<]+?)\\s*</h2>"),
         QRegularExpression::CaseInsensitiveOption);
-    QRegularExpressionMatchIterator headings = heading.globalMatch(html);
+    return heading;
+}
+
+inline bool isOptifineDownloadsPage(const QString &html) {
+    return optifineDownloadsHeading().match(html).hasMatch() &&
+           html.contains(QLatin1String("downloadLineMain"), Qt::CaseInsensitive);
+}
+
+inline QString optifineDownloadsSection(const QString &html, const QString &gameVersion) {
+    QRegularExpressionMatchIterator headings = optifineDownloadsHeading().globalMatch(html);
     while (headings.hasNext()) {
         const QRegularExpressionMatch match = headings.next();
         if (match.captured(1).trimmed() != gameVersion) {

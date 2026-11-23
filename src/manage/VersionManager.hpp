@@ -1877,7 +1877,7 @@ private:
     QString loaderVersionsMirrorFallback(LoaderKind kind, const QString &officialUrl) const;
     // @p fromMirror 决定这条回复的解析格式。
     void fetchLoaderVersions(LoaderKind kind, const QString &url, bool fromMirror,
-                             bool canRetryOptifine = false, bool canRetryRedirect = true);
+                             bool canRetryRedirect = true);
     // 按加载器把这一份回复解析成"能挑的版本"。失败时 returned.error 非空（是给用户看的话）。
     struct LoaderVersionParse {
         LoaderMeta::LoaderVersionList versions;
