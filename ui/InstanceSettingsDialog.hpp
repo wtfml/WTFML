@@ -1663,7 +1663,10 @@ signals:
     void exportPresetRequested();
 
     /**
-     * @brief 用户点了概览那一栏的「检查更新」。
+     * @brief 用户切进「模组」页时触发资源更新检查。
+     *
+     * 打开设置时默认停在概览，构造期不会发；只有真正进入「模组」页才发。
+     * 概览页没有「检查更新」按钮。
      *
      * NOTE: **不传实例 id** —— 这一页就是某个实例的设置页（`setInstanceDir()` / 那一份
      * wtfml.meta 都是它的），接的人从自己那边认（MainWindow 在 openInstanceSettings
