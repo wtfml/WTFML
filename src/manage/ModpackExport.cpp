@@ -468,6 +468,7 @@ QString instanceExclusionReason(const QString &relativePath, const QString &inst
         // 是唯一出处（见下面那一条现算的判据）。表是静态初始化的，改文件名时它不跟着动，
         // 而漏掉的症状是"导出整合包时那份实例设置没被排除"——不报错、也看不出来。
         {"icon.png", QT_TRANSLATE_NOOP("ModpackExport", "启动器保存的实例图标")},
+        {InstanceFiles::kModpackCoverFileName, QT_TRANSLATE_NOOP("ModpackExport", "启动器保存的实例图标")},
         {"launcher_accounts.json", QT_TRANSLATE_NOOP("ModpackExport", "登录凭据")},
         {"launcher_msa_credentials.bin", QT_TRANSLATE_NOOP("ModpackExport", "登录凭据")},
         {"launcher_profiles.json", QT_TRANSLATE_NOOP("ModpackExport", "其他启动器的账号状态")},

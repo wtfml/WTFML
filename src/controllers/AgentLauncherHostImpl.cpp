@@ -22,6 +22,7 @@
 #include "util/AppPaths.hpp"
 #include "util/SystemMemory.hpp"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QDirIterator>
 #include <QElapsedTimer>
@@ -236,8 +237,8 @@ bool AgentLauncherHostImpl::logTail(const QString &instanceId, int lines, QStrin
     }
     if (raw.isEmpty()) {
         if (problem != nullptr) {
-            *problem = QStringLiteral("找不到日志文件（实例目录的 logs/latest.log 或数据根的 "
-                                      "logs/latest.log、logs/wtfml.log）。");
+            *problem =
+                QCoreApplication::translate("AgentLauncherHostImpl", "找不到日志文件（实例目录的 logs/latest.log 或数据根的 logs/latest.log、logs/wtfml.log）。");
         }
         return false;
     }

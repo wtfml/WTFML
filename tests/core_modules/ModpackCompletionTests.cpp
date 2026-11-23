@@ -31,7 +31,11 @@ void runModpackCompletionTests(const QString &sandbox) {
     writeFileAt(root + "/config.txt", "keep-config");
     QString error;
     const QString archive = root + "/pack.zip";
-    check(ZipUtil::createZip(archive, {{"overrides/config/test.txt", root + "/config.txt"}}, &error),
+    const QString coverFixture = root + "/cover.png";
+    QImage cover(16, 16, QImage::Format_ARGB32);
+    cover.fill(Qt::blue);
+    check(cover.save(coverFixture) && ZipUtil::createZip(archive, {
+              {"overrides/config/test.txt", root + "/config.txt"}, {"overrides/icon.png", coverFixture}}, &error),
           "ZG8 准备覆盖内容测试包", error);
     ModpackImport::Pack pack;
     pack.format = ModpackImport::Format::CurseForge;
@@ -74,6 +78,10 @@ void runModpackCompletionTests(const QString &sandbox) {
                 VersionManager::ModpackStage::Verifying};
             check(stages == expectedStages,
                   "ZG8 导入期间按顺序发出原版加载器/清单文件/解压覆盖/校验收尾四个阶段信号");
+            const QImage importedCover(InstanceFiles::modpackCoverPath(QStringLiteral("completion-test")));
+            check(!importedCover.isNull() && importedCover.pixelColor(8, 8) == Qt::blue &&
+                      !QFileInfo::exists(AppPaths::versionIconPath(QStringLiteral("completion-test"))),
+                  "ZG8 导入自动使用包内封面，独立于用户选的图标");
         }
         QFile report(target + QStringLiteral("/wtfml.import-report.json"));
         check(report.open(QIODevice::ReadOnly), "ZG8 每次收尾都有持久报告");

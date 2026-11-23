@@ -711,7 +711,7 @@ bool ImportController::resolveInstallerJavaForPack(const ModpackImport::Pack &pa
 
 void ImportController::importModpackOneClick(const QString &zipPath,
                                              const QString &confirmedInstanceName,
-                                             Tasks::TaskId taskId, bool allowRename) {
+                                             Tasks::TaskId taskId, bool allowRename, const QString &coverCacheId) {
     // 同 importModpackFromFile() 那两道闸（m_downloadInFlight / m_importFlow），见那里。
     if (m_owner->m_downloadInFlight) {
         const QString reason = tr("已有下载或导入任务正在进行，等它结束之后再试。");
@@ -816,6 +816,7 @@ void ImportController::importModpackOneClick(const QString &zipPath,
     }
 
     m_owner->markOneClickModpack(name);
+    prepared.pack.coverCacheId = coverCacheId;
     if (!prepared.tempArchive.isEmpty()) {
         m_tempArchives.insert(prepared.tempArchive);
     }

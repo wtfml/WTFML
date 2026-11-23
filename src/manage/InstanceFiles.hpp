@@ -33,6 +33,9 @@
 #pragma once
 
 #include <QByteArray>
+#include <QImage>
+#include <QList>
+#include <QPair>
 #include <QString>
 #include <QStringList>
 
@@ -164,6 +167,15 @@ QString jsonName(const QString &versionId);
  * @param versionId 实例 id（= 目录名）。
  */
 QString jarPath(const QString &versionId);
+
+/// 从本地客户端 JAR 批量读取一组原版物品贴图。
+QList<QPair<QString, QImage>> readGameItemIcons(const QStringList &jars);
+
+inline constexpr auto kModpackCoverFileName = "wtfml.cover.png";
+QString modpackCoverPath(const QString &versionId);
+
+/// 将已解码的图标原子写入由启动器指定的实例路径。
+bool saveIconImage(const QString &path, const QImage &image, QString *errorOut = nullptr);
 
 /**
  * @brief 客户端 jar 相对 <数据目录> 的路径（`versions/<主人>/<文件名>`），拼 classpath 用。

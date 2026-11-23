@@ -469,7 +469,7 @@ void ResourcePageController::downloadVersion(const QString &versionId) {
             // 和树上点第三层那一下**是同一件事**（选哪个实例、落到哪个目录、加载器那道闸、
             // 整合包下完接导入，全在那边那一个函数里）。
             m_owner.installResourceVersion(m_state.kind, m_state.title, entry,
-                                   m_state.source);
+                                   m_state.source, m_state.iconKey);
             return;
         }
     }
@@ -539,7 +539,7 @@ void ResourcePageController::onDownloadFinished(const QString &label, bool succe
         // deferXxxStep 是同一个理由）。
         m_owner.beginFolderSwitchHold();
         QTimer::singleShot(0, this, [this, pending, activeTask] {
-            m_owner.importModpackOneClick(pending.path, pending.instanceName, activeTask);
+            m_owner.importModpackOneClick(pending.path, pending.instanceName, activeTask, pending.coverCacheId);
             m_owner.endFolderSwitchHold();
         });
         return;

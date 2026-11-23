@@ -1200,7 +1200,7 @@ private slots:
     /// 下载页整合包一键安装入口：整合包压缩包已在缓存目录就绪、实例名也已在点击时确认，
     /// 直接沿用现有的 @p taskId 推进任务中心步骤并进入导入。
     void importModpackOneClick(const QString &zipPath, const QString &confirmedInstanceName,
-                               Tasks::TaskId taskId = Tasks::invalidTaskId());
+                               Tasks::TaskId taskId = Tasks::invalidTaskId(), const QString &coverCacheId = {});
 
     void markOneClickModpack(const QString &instanceId) { m_oneClickModpackIds.insert(instanceId); }
     bool takeOneClickModpack(const QString &instanceId) { return m_oneClickModpackIds.remove(instanceId); }
@@ -1457,7 +1457,7 @@ private:
     /// 不是一套）。★ 来源必须跟着走：前置要问"那个号叫什么、有哪些版本"。
     void installResourceVersion(ResourceCatalog::Kind kind, const QString &displayTitle,
                                 ResourceCatalog::VersionEntry version,
-                                ResourceCatalog::Source source);
+                                ResourceCatalog::Source source, const QString &projectIconId = {});
 
     // ---------- 资源详情页----------
     //
@@ -2874,9 +2874,13 @@ private:
     /// —— 安装完、下载完、改名、换文件夹…都走那条路，所以这份缓存
     /// 不会比屏幕上那一棵树更旧。
     QList<VersionDisplayParts> m_instancePageParts;
+    /// 同步缓存客户端列表文案，筛选和运行态刷新直接复用已解析的版本信息。
+    QHash<QString, InstanceListRowText> m_instancePageRowTexts;
     /// 和上面那份**一一对应**的行首图标（`instanceRowMark()` 的成品）。缓存它是因为算一张
     /// 要读版本 json，而且它是"行前面那张图"，筛选前后**同一行画的还是同一张**。
     QHash<QString, QIcon> m_instancePageMarks;
+    /// 左侧封面预先解码，搜索筛选只读取已算好的图标。
+    QHash<QString, QIcon> m_instancePageCovers;
     /// 「从资源详情页返回时，那一页停在哪儿」—— 一趟性的来路（见 `NavigationReturn`）。
     ///
     /// 要保留从资源详情页退出时的滚动位置。为什么得由这一层带着走：回来时那一页是
@@ -2918,6 +2922,7 @@ private:
         QString instanceName;
         Tasks::TaskId taskId = Tasks::invalidTaskId();
         QString gameRoot;
+        QString coverCacheId;
     };
     QHash<QString, PendingModpackImport> m_pendingModpackImports;
     QSet<QString> m_oneClickModpackIds;

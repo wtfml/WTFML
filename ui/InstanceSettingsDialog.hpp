@@ -900,6 +900,8 @@ public:
     /// 那一段）。这一层碰不了盘（ui/ 够不着 AppPaths），也**不该**碰：它手上的是
     /// "用户挑了这张"，"这张要不要真的占住那个文件名"是落盘那一侧的决定。
     QString pickedIconPath() const;
+    const QImage &pickedIconImage() const { return m_pickedIconImage; }
+    void setGameIconChoices(const QList<QPair<QString, QImage>> &choices);
 
     /// 用户挑的那张图**已经真的落进实例目录了**（由调用方在写盘成功之后叫）。
     ///
@@ -1587,6 +1589,7 @@ protected:
     void dropEvent(QDropEvent *event) override;
 
 signals:
+    void gameIconChoicesRequested();
     void javaRuntimeChoicesRequested();
     /// @p key 那一页**刚建出来**（第一次切过去，见 ensurePage()）。
     ///
@@ -2410,6 +2413,10 @@ private:
     QString m_iconChoice;
     /// 用户刚挑的那张图在盘上的原处（没挑过 = 空）。拷进实例目录是调用方的事。
     QString m_pickedIconPath;
+    QImage m_pickedIconImage;
+    QGridLayout *m_gameIconGrid = nullptr;
+    QLabel *m_gameIconStatus = nullptr;
+    bool m_gameIconsLoading = false;
     /// 「默认」和「本地那张」两档画什么。setIcon() 灌进来，之后不变。
     QPixmap m_defaultIconMark;
     QPixmap m_localIconMark;

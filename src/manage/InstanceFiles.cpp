@@ -15,11 +15,14 @@
 #include <QJsonObject>
 #include <QJsonParseError>
 #include <QLatin1Char>
+#include <QSaveFile>
 #include <QSet>
 #include <iterator>
 
 #include "../launcher/VersionInheritance.hpp"
 #include "../util/AppPaths.hpp"
+#include "../util/ImageDecode.hpp"
+#include "../util/WriteDirectoryGuard.hpp"
 #include "../util/ZipUtil.hpp"
 
 #if defined(Q_OS_WIN)
@@ -526,6 +529,60 @@ QString jsonName(const QString &versionId) {
 
 QString jarPath(const QString &versionId) {
     return AppPaths::versionDir(jarOwnerId(versionId)) + QLatin1Char('/') + jarName(versionId);
+}
+
+QList<QPair<QString, QImage>> readGameItemIcons(const QStringList &jars) {
+    static const struct { const char *id; const char *legacyId; const char *label; } items[] = {
+        {"diamond", "diamond", QT_TRANSLATE_NOOP("InstanceSettingsDialog", "钻石")},
+        {"emerald", "emerald", QT_TRANSLATE_NOOP("InstanceSettingsDialog", "绿宝石")},
+        {"apple", "apple", QT_TRANSLATE_NOOP("InstanceSettingsDialog", "苹果")},
+        {"compass_00", "compass_00", QT_TRANSLATE_NOOP("InstanceSettingsDialog", "指南针")},
+        {"book", "book_normal", QT_TRANSLATE_NOOP("InstanceSettingsDialog", "书")},
+        {"ender_pearl", "ender_pearl", QT_TRANSLATE_NOOP("InstanceSettingsDialog", "末影珍珠")},
+        {"iron_ingot", "iron_ingot", QT_TRANSLATE_NOOP("InstanceSettingsDialog", "铁锭")},
+        {"redstone", "redstone_dust", QT_TRANSLATE_NOOP("InstanceSettingsDialog", "红石粉")},
+    };
+    const QString modern = QStringLiteral("assets/minecraft/textures/item/%1.png");
+    const QString legacy = QStringLiteral("assets/minecraft/textures/items/%1.png");
+    QStringList paths;
+    for (const auto &item : items) {
+        paths << modern.arg(QLatin1String(item.id)) << legacy.arg(QLatin1String(item.legacyId));
+    }
+    const auto metadata = ZipUtil::readMetadataBatch(jars, paths);
+    QList<QPair<QString, QImage>> choices;
+    for (const auto &item : items) {
+        const QString modernPath = modern.arg(QLatin1String(item.id));
+        const QString legacyPath = legacy.arg(QLatin1String(item.legacyId));
+        for (const QString &jar : jars) {
+            const auto archive = metadata.constFind(jar);
+            if (archive == metadata.cend()) continue;
+            auto image = ImageDecode::decode(archive->entries.value(modernPath), {256, 65536});
+            if (image.isNull()) image = ImageDecode::decode(archive->entries.value(legacyPath), {256, 65536});
+            if (image.isNull()) continue;
+            // 像素对齐放大保存，使小图在列表中仍保持原版纹理的边缘。
+            choices.append({QCoreApplication::translate("InstanceSettingsDialog", item.label),
+                            image.scaled(128, 128, Qt::KeepAspectRatio, Qt::FastTransformation)});
+            break;
+        }
+    }
+    return choices;
+}
+
+QString modpackCoverPath(const QString &versionId) {
+    return AppPaths::versionDir(versionId) + QLatin1Char('/') + QLatin1String(kModpackCoverFileName);
+}
+
+bool saveIconImage(const QString &path, const QImage &image, QString *errorOut) {
+    if (!WriteDirectoryGuard::acquire(QFileInfo(path).absolutePath(), errorOut)) return false;
+    QSaveFile file(path);
+    if (!file.open(QIODevice::WriteOnly) || !image.save(&file, "PNG") || !file.commit()) {
+        if (errorOut != nullptr) {
+            *errorOut = QCoreApplication::translate("InstanceFiles", "无法保存图标到 %1：%2")
+                            .arg(QDir::toNativeSeparators(path), file.errorString());
+        }
+        return false;
+    }
+    return true;
 }
 
 QString jarRelativePath(const QString &versionId) {

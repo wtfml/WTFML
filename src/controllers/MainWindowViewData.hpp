@@ -13,7 +13,7 @@
  * 【边界】
  *
  * · 在：版本下拉框（`fillVersionCombo`）、实例树两层结构（`fillInstanceTree` /
- *   `instanceIdOf` / `instanceTreeItemText`）、分组行（`groupRowsForMenu` / `groupRowFor`）、
+ *   `instanceIdOf`）、分组行（`groupRowsForMenu` / `groupRowFor`）、
  *   底栏两块上拉面板的行（`runningGamePanelRows` / `recentAccountPanelRows`）、以及
  *   "默认该落哪个组"那几条判据（`defaultGroupIdFor` / `homeGroupIdOf`）。
  * · 不在：任何 `MainWindow` 成员、任何落盘、任何问话。要问用户、要写盘的一律留在上层。
@@ -120,9 +120,7 @@ QList<Tasks::TaskStep> taskStepsFromNames(const QStringList &names, int runningI
 QList<Tasks::TaskStep> modpackOneClickSteps();
 void fillVersionCombo(QComboBox *combo, const QList<VersionDisplayParts> &parts);
 QString instanceIdOf(const QTreeWidgetItem *item);
-QString instanceTreeItemText(const VersionDisplayParts &part, bool running);
 void fillInstanceTree(QTreeWidget *tree, const QList<InstanceGroupBucket> &buckets,
-                      const QSet<QString> &runningIds,
                       const QHash<QString, QIcon> &marks, const QString &pinnedGroupId,
                       const QSet<QString> &pinnedInstanceIds);
 void syncTreeToCombo(const QComboBox *combo, QTreeWidget *tree);
@@ -144,6 +142,7 @@ QString instanceLoaderName(const VersionDisplayParts &parts, const VersionManage
                            QString *versionOut = nullptr);
 QString loaderGroupKey(const QString &loaderName);
 QPixmap instanceRowMark(const VersionDisplayParts &part, const VersionManager *versions, int size);
+QPixmap instanceCoverMark(const VersionDisplayParts &part, int size);
 QSet<QString> knownGroupIdsOf(const InstanceGroupStore *groups);
 QString defaultGroupIdFor(const VersionDisplayParts &part, const VersionManager *versions,
                           const QSet<QString> &known);
