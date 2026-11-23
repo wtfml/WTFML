@@ -41,7 +41,7 @@ bool migrateLegacyDataDir(QString *problem) {
     if (!QFileInfo::exists(agentTarget) && QFileInfo(legacyAgent).isDir()) {
         moved = QDir().rename(legacyAgent, agentTarget) || moved;
         if (!moved && problem != nullptr) {
-            *problem = QStringLiteral("旧版智能体数据搬不动：%1").arg(legacyAgent);
+            *problem = QStringLiteral("旧版智能体数据搬不动：%1").arg(legacyAgent);  // i18n-ignore
         }
     }
     const QString cacheTarget = root + QStringLiteral("/cache");
