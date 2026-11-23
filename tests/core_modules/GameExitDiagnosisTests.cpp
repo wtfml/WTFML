@@ -159,6 +159,21 @@ void runGameExitDiagnosisTests() {
               || missingHints.first().contains(QStringLiteral("哪一个")),
           "ZP5 ④不编一个数出来");
 
+    // ⓪ 手动调试崩溃（F3+C）：日志里那句原文认得出，提示要说清"不是游戏/模组坏了"。
+    check(GameExitDiagnosis::logShowsManualDebugCrash(
+              QStringLiteral("java.lang.Throwable: Manually triggered debug crash")),
+          "ZP5 ⓪ 日志里认得出 F3+C 的 manually triggered debug crash");
+    GameExitDiagnosis::Facts manualDebug;
+    manualDebug.crashed = true;
+    manualDebug.exitCode = -1;
+    manualDebug.sawManualDebugCrash = true;
+    manualDebug.logCaptured = true;
+    const QStringList manualHints = GameExitDiagnosis::hints(manualDebug);
+    check(manualHints.size() == 1 && manualHints.first().contains(QStringLiteral("F3+C"))
+              && manualHints.first().contains(QStringLiteral("不代表")),
+          "★ ZP5 ⓪ 手动调试崩溃单独说清是玩家自己触发的",
+          manualHints.join(QStringLiteral(" | ")));
+
     // ⑤ 崩的方式：同一句"坏内存"，**原版和装了加载器的口风不一样**。
     GameExitDiagnosis::Facts vanillaCrash;
     vanillaCrash.crashed = true;

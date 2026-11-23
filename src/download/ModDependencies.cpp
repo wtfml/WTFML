@@ -362,14 +362,28 @@ Plan buildPlan(const QList<Lookup> &lookups,
             continue;
         }
 
-        Resolved resolved;
+        QList<Resolved> choices;
         QString why;
-        if (!resolveDependency(lookup.dependency, answersIt.value(), &resolved, &why)) {
+        const auto &versions = answersIt.value();
+        if (lookup.dependency.versionId.isEmpty()) {
+            for (const auto &version : versions) {
+                const auto *file = version.primaryFile();
+                if (file && !file->url.isEmpty()) choices.append({lookup.dependency, version, *file, label});
+            }
+        }
+        if (choices.isEmpty()) {
+            Resolved resolved;
+            if (resolveDependency(lookup.dependency, versions, &resolved, &why)) {
+                resolved.title = label;
+                choices.append(resolved);
+            }
+        }
+        if (choices.isEmpty()) {
             plan.unresolved.append(QCoreApplication::translate("ModDependencies", "%1：%2").arg(label, why));
             continue;
         }
-        resolved.title = label;
-        plan.downloads.append(resolved);
+        plan.downloads.append(choices.first());
+        plan.choices.insert(projectId, choices);
     }
     return plan;
 }

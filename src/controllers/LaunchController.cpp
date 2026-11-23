@@ -770,12 +770,17 @@ void LaunchController::onStartButtonClicked() {
             alreadyRunningMb += qMax(0, session.xmxMb);
         }
         if (MemoryBudget::lowMemoryFor(javaSettings.xmx, alreadyRunningMb, availableMb)) {
+            QString memoryDetails = tr("本次启动最多分配 %1 MB 堆内存，系统当前可用约 %2 MB。")
+                                        .arg(javaSettings.xmx)
+                                        .arg(availableMb);
+            if (alreadyRunningMb > 0) {
+                memoryDetails += QLatin1Char('\n') +
+                    tr("其他运行中的实例最多分配 %1 MB 堆内存。").arg(alreadyRunningMb);
+            }
             if (!InlineMessage::question(
                     m_owner->m_ui->overlay(), tr("可用内存不足"),
-                    tr("此实例需要 %1 MB 堆内存，运行中的实例共分配 %3 MB。系统可用物理内存约 %2 MB。\n\n继续启动可能导致卡顿。可关闭其他程序或调低内存分配。确认启动？")
-                        .arg(javaSettings.xmx)
-                        .arg(availableMb)
-                        .arg(alreadyRunningMb),
+                    memoryDetails + QStringLiteral("\n\n") +
+                        tr("继续启动可能导致卡顿。可关闭其他程序或调低内存分配。确认启动？"),
                     tr("仍要启动"), tr("取消"), false)) {
                 return;
             }

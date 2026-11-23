@@ -39,6 +39,7 @@
 #include "controllers/ServerRunController.hpp"
 #include "controllers/ServerWorkspaceController.hpp"
 #include "launcher/LauncherManager.hpp"
+#include "manage/VersionManager.hpp"
 #include "server/ServerProcess.hpp"
 #include "server/ServerRegistry.hpp"
 #include "tasks/TaskSnapshot.hpp"
@@ -353,25 +354,27 @@ void MainWindow::updateDownloadProgressUi(int done, int total, int failed,
     // 标题下面那行小字。**没报过总数时只说"已下载多少"，不许编一个百分比出来**。
     // `total <= 0` 在这里是"这一批还没报过总数"（版本 json 还在路上、
     // 或者加载器安装器那类还算不出要下几个文件）——不是"这一批下了 0 个"。
+    const int downloaded = qMax(0, done - failed);
     QString detail;
     if (total <= 0) {
-        detail = done > 0 ? tr("已下载 %1 个文件").arg(done) : tr("正在准备下载…");
+        detail = downloaded > 0 ? tr("已下载 %1 个文件").arg(downloaded) : tr("正在准备下载…");
     } else {
-        detail = tr("已下载 %1 / %2").arg(done).arg(total);
+        // 计数单独占第一行：任务中心那一行只画 detail 的第一行，文件名跟在后面时
+        // 宽一点的文件名会把“已下载 12 / 432 个文件”挤出去，用户只看见文件名在跳。
+        detail = tr("已下载 %1 / %2 个文件").arg(downloaded).arg(total);
         if (failed > 0) {
             detail += tr("，失败 %1").arg(failed);
         }
         if (!currentFile.isEmpty()) {
-            // 路径可能很长（asset 目录层级深），只显示文件名
-            detail += QStringLiteral("  ") + QFileInfo(currentFile).fileName();
+            // 路径可能很长（asset 目录层级深），只显示文件名。
+            detail += QLatin1Char('\n') + QFileInfo(currentFile).fileName();
         }
     }
 
     if (task != Tasks::invalidTaskId() && m_activityCenter->tasks()->has(task)) {
-        // 两样都记：数量那半边决定百分比（条子画多长），文字那半边是"现在在干什么"。
-        // NOTE: `total <= 0` 原样传给账本（它是"不可测"的判据，见 Tasks::percentOf()）——
-        // 上面那句文案里的 done/total 是**说给人听**的，不要把 0 也传进去。
-        m_activityCenter->tasks()->setProgress(task, done > 0 ? done : 0, total > 0 ? total : 0);
+        // 文件总字节已知时按字节画进度，其余情况由账本按已处理文件数计算。
+        const auto [bytesDone, bytesTotal] = m_versionManager->downloads()->batchByteProgress();
+        m_activityCenter->tasks()->setBatchTransfer(task, done, total, bytesDone, bytesTotal);
         m_activityCenter->tasks()->setDetail(task, detail);
         // ⚠ 这一段里**不要**再自己写进度条和状态栏。它们由 `taskChanged` → 底栏重画那一发
         // 统一摆（`Anim::smoothProgress()` 也在那条路上）——两处各写一次，用户看到的是
@@ -389,10 +392,8 @@ void MainWindow::onVersionDownloadStats(int done, int total, int failed,
                                         const QString &currentFile) {
     // 前缘节流：200 ms 内的后续更新直接丢掉。不这么做的话，5000 多个 asset 会疯狂重排
     // 状态栏，界面反而卡住。
-    // NOTE: 丢掉的那些**没有**"结束时补刷"这回事 —— 底栏那一格停在上一次越过阈值的
-    // 那一帧，最多比真实进度旧 200 ms。整批结束由 setDownloadUiBusy(false) 把那一件
-    // 任务收掉（收尾之后那一格换成"（已完成）"，停在哪一帧都看不出来了）。
-    if (!m_downloadTaskLedger->takeProgressTick()) {
+    // 最后一帧直接发布，保留该批的最终字节数与文件数。
+    if (!m_downloadTaskLedger->takeProgressTick() && (total <= 0 || done < total)) {
         return;
     }
     updateDownloadProgressUi(done, total, failed, currentFile);

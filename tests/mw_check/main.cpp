@@ -280,6 +280,9 @@ int main(int argc, char *argv[]) {
     if (!processSandbox.isValid()) return 2;
     app.setProperty("wtfml.testDefaultMinecraftDir", processSandbox.filePath(QStringLiteral(".minecraft")));
     app.setProperty("wtfml.testAgentDataDir", processSandbox.filePath(QStringLiteral("agent")));
+    // 集成验证会故意制造崩溃，但不会去点那张给人看的崩溃卡片。
+    qputenv("WTFML_SUPPRESS_CRASH_DIALOG", QByteArrayLiteral("1"));
+    app.setProperty("wtfml.suppressCrashDialog", true);
     AppPaths::setMinecraftDir(QString());
     const QDir root(processSandbox.path());
     const QString settingsDir = root.filePath(QStringLiteral("check-settings"));
@@ -332,6 +335,15 @@ int main(int argc, char *argv[]) {
     if (app.arguments().contains(QStringLiteral("resource-detail-check"))) {
         runResourceDetailPageTests();
         runInstanceFileResourceTests();
+        runDependencyAndBatchTests();
+        return g_fail == 0 ? 0 : 1;
+    }
+    if (app.arguments().contains(QStringLiteral("resource-source-check"))) {
+        runResourceSourceTests();
+        return g_fail == 0 ? 0 : 1;
+    }
+    if (app.arguments().contains(QStringLiteral("download-filter-check"))) {
+        runDownloadFilterTests();
         return g_fail == 0 ? 0 : 1;
     }
     if (app.arguments().contains(QStringLiteral("folder-switching-check"))) {

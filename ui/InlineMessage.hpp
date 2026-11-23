@@ -72,6 +72,10 @@ public:
     /// 被点中的按钮下标。**关掉 / 按 Esc / 点外面都停在 -1**（= 什么都没选）。
     int clickedIndex() const { return m_clicked; }
 
+    /// 这一窗到底摆上屏幕过没有。覆盖层正忙、`execPrompt()` 直接拒绝时是 false ——
+    /// 那种情况不能当成"用户按了取消"（见 ImportController 的导入补齐提示）。
+    bool wasShown() const { return m_shown; }
+
     /// 这一句是哪一类。**给验证工程用的**：验证想知道"这是出错还是一句报信"，读的就是
     /// 这一格 —— 只占一行的公开访问器，比让测试去猜标题的颜色结实。
     MessageKind kind() const { return m_kind; }
@@ -268,6 +272,7 @@ private:
     void relinkTabOrder();
 
     int m_clicked = -1;
+    bool m_shown = false;
     MessageKind m_kind = MessageKind::Information;
     QLabel *m_titleLabel = nullptr;
     QHBoxLayout *m_header = nullptr;

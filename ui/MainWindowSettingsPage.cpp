@@ -482,6 +482,16 @@ void MainWindowUI::setupSettingsLaunchPanel(QStackedWidget *stack) {
     extraJvmArgsCommit = new SettingsParts::CommitOnFocusOut(extraJvmArgsEdit);
     addRow(jvm, QCoreApplication::translate("MainWindowSettingsPage", "全局额外参数"), extraJvmArgsEdit, Placement::Wide,
            QCoreApplication::translate("MainWindowSettingsPage", "实例参数优先于全局。"));
+
+    SettingsGroup *data = addGroup(panel, QCoreApplication::translate("MainWindowSettingsPage", "启动器数据"));
+    clearLauncherCacheButton = new QPushButton(QCoreApplication::translate("MainWindowSettingsPage", "清除缓存…"), form);
+    clearLauncherCacheButton->setObjectName(QStringLiteral("clearLauncherCacheButton"));
+    addRow(data, QCoreApplication::translate("MainWindowSettingsPage", "本地缓存"), clearLauncherCacheButton,
+           Placement::Natural, QCoreApplication::translate("MainWindowSettingsPage", "清除外观、图标和服务器状态的缓存。"));
+    firstRunTestButton = new QPushButton(QCoreApplication::translate("MainWindowSettingsPage", "打开测试窗口"), form);
+    firstRunTestButton->setObjectName(QStringLiteral("firstRunTestButton"));
+    addRow(data, QCoreApplication::translate("MainWindowSettingsPage", "首次使用测试"), firstRunTestButton,
+           Placement::Natural, QCoreApplication::translate("MainWindowSettingsPage", "在独立窗口中使用空白设置、账号和游戏目录。"));
     panel.layout->addStretch(1);
 }
 

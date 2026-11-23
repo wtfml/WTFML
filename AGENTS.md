@@ -19,6 +19,7 @@ WTFML 是 C++23 + Qt 6 Widgets 写的 Minecraft 启动器，目前只有 Windows
   - `docs/archive/`：历史流水与一次性记录，文件名可带日期后缀，其余目录不行。
   - `docs/` 顶层只有 `README.md`、`FEATURES.md`、`ROADMAP.md`。
 - 机器检查：`pwsh tools/check-repo-layout.ps1`，规则同上，CI 里会跑。
+- 构建日志、测试输出、探针实例和截图一律写到自己仓库或工作树的 `build/` 下，不写到仓库外；输出路径不用 `..` 跳出仓库。
 
 ## 文档规则
 

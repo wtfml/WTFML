@@ -294,6 +294,10 @@ Select “Log out” to try again.</translation>
             <source>离线账号名称不能含空格或控制字符。</source>
             <translation>Offline account names cannot contain spaces or control characters.</translation>
         </message>
+        <message>
+            <source>离线账号名称须为 3 至 16 个字符，只能使用英文字母、数字和下划线。</source>
+            <translation>Use 3 to 16 letters (A–Z), digits, or underscores for the offline profile name.</translation>
+        </message>
     </context>
     <context>
         <name>ActivityCenterController</name>
@@ -316,6 +320,10 @@ Select “Log out” to try again.</translation>
         <message>
             <source>已下载 %1 / %2</source>
             <translation>Downloaded %1 / %2</translation>
+        </message>
+        <message>
+            <source>已下载 %1</source>
+            <translation>Downloaded %1</translation>
         </message>
         <message>
             <source>当前步骤无法安全中止。请在此步骤完成后取消。</source>
@@ -4793,6 +4801,10 @@ To remove only from the list, please use the "Remove" operation, the disk file w
             <source>已删除游戏目录：%1</source>
             <translation>Deleted game directory: %1</translation>
         </message>
+        <message>
+            <source>无法使用游戏目录「%1」。请检查目录是否存在并允许写入。</source>
+            <translation>Could not use game directory “%1”. Check that it exists and allows writes.</translation>
+        </message>
     </context>
     <context>
         <name>FolderManager</name>
@@ -8402,6 +8414,18 @@ Discard changes?</translation>
     <context>
         <name>InstanceSettingsDialog</name>
         <message>
+            <source>选择本机 Java</source>
+            <translation>Select a local Java runtime</translation>
+        </message>
+        <message>
+            <source>正在检测 Java…</source>
+            <translation>Detecting Java…</translation>
+        </message>
+        <message>
+            <source>未检测到本机 Java</source>
+            <translation>No local Java runtimes found</translation>
+        </message>
+        <message>
             <source>实例设置</source>
             <translation>Instance settings</translation>
         </message>
@@ -11177,6 +11201,18 @@ Click Launch again.</translation>
 
 The game was not launched. You can set the Java path manually in Instance Settings.</translation>
         </message>
+        <message>
+            <source>本次启动最多分配 %1 MB 堆内存，系统当前可用约 %2 MB。</source>
+            <translation>This launch allows up to %1 MB of heap memory. About %2 MB is currently available.</translation>
+        </message>
+        <message>
+            <source>其他运行中的实例最多分配 %1 MB 堆内存。</source>
+            <translation>Other running instances allow up to %1 MB of heap memory in total.</translation>
+        </message>
+        <message>
+            <source>继续启动可能导致卡顿。可关闭其他程序或调低内存分配。确认启动？</source>
+            <translation>Continuing may cause stuttering. Close other apps or lower the memory allocation. Launch anyway?</translation>
+        </message>
     </context>
     <context>
         <name>LaunchHistory</name>
@@ -11408,6 +11444,58 @@ The game was not launched. You can set the Java path manually in Instance Settin
     </context>
     <context>
         <name>MainWindow</name>
+        <message>
+            <source>请切回原游戏文件夹再重试这次安装。</source>
+            <translation>Switch back to the original game folder and retry the installation.</translation>
+        </message>
+        <message>
+            <source>WTFML · 首次使用测试</source>
+            <translation>WTFML · First-run Test</translation>
+        </message>
+        <message>
+            <source>清除缓存</source>
+            <translation>Clear Cache</translation>
+        </message>
+        <message>
+            <source>清除以下游戏目录中的外观、图标和服务器状态缓存？账号、存档、备份和手动导入的皮肤会保留。
+
+%1</source>
+            <translation>Clear cached appearances, icons, and server status for this game folder? Accounts, worlds, backups, and manually imported skins will be kept.
+
+%1</translation>
+        </message>
+        <message>
+            <source>部分缓存未清除</source>
+            <translation>Some Cache Files Could Not Be Cleared</translation>
+        </message>
+        <message>
+            <source>以下缓存目录无法清理。请检查目录权限和链接后重试。
+
+%1</source>
+            <translation>These cache folders could not be cleared. Check their permissions and links, then try again.
+
+%1</translation>
+        </message>
+        <message>
+            <source>缓存已清除</source>
+            <translation>Cache Cleared</translation>
+        </message>
+        <message>
+            <source>磁盘缓存已清除。重启后会重新加载外观、图标和服务器状态。</source>
+            <translation>The disk cache was cleared. Appearances, icons, and server status will reload after you restart.</translation>
+        </message>
+        <message>
+            <source>无法打开测试窗口</source>
+            <translation>Could Not Open the Test Window</translation>
+        </message>
+        <message>
+            <source>请检查系统临时目录是否允许写入，并确认启动器可以再次运行。</source>
+            <translation>Check that the system temporary folder is writable and that another copy of the launcher can run.</translation>
+        </message>
+        <message>
+            <source>首次使用测试目录：%1</source>
+            <translation>First-run test folder: %1</translation>
+        </message>
         <message>
             <source>游玩 %1</source>
             <translation>Played %1</translation>
@@ -13945,6 +14033,34 @@ Are you sure to delete?</translation>
     <context>
         <name>MainWindowSettingsPage</name>
         <message>
+            <source>启动器数据</source>
+            <translation>Launcher Data</translation>
+        </message>
+        <message>
+            <source>清除缓存…</source>
+            <translation>Clear Cache…</translation>
+        </message>
+        <message>
+            <source>本地缓存</source>
+            <translation>Local Cache</translation>
+        </message>
+        <message>
+            <source>清除外观、图标和服务器状态的缓存。</source>
+            <translation>Clear cached appearances, icons, and server status.</translation>
+        </message>
+        <message>
+            <source>打开测试窗口</source>
+            <translation>Open Test Window</translation>
+        </message>
+        <message>
+            <source>首次使用测试</source>
+            <translation>First-run Test</translation>
+        </message>
+        <message>
+            <source>在独立窗口中使用空白设置、账号和游戏目录。</source>
+            <translation>Open a separate window with fresh settings, accounts, and a game folder.</translation>
+        </message>
+        <message>
             <source>数量较多时，放不下的卡片只显示图标和启动按钮。</source>
             <translation>When space is limited, extra cards show only an icon and a launch button.</translation>
         </message>
@@ -15696,8 +15812,8 @@ It will not restart automatically when stopped manually or exited normally.</tra
             <translation>%1's authentic appearance</translation>
         </message>
         <message>
-            <source>获取皮肤失败，已显示默认外观。</source>
-            <translation>Failed to obtain skin, default appearance has been displayed.</translation>
+            <source>获取皮肤失败，已显示默认外观（%1）。</source>
+            <translation>Could not load %1's skin; showing the default look.</translation>
         </message>
         <message>
             <source>正在启动 %1…</source>
@@ -27737,6 +27853,18 @@ The changes you made yourself will not be retained.</translation>
     <context>
         <name>VersionManager</name>
         <message>
+            <source>原实例的未完成安装记录已不在，请用原整合包重新导入。</source>
+            <translation>The unfinished installation record is missing. Import the original modpack again.</translation>
+        </message>
+        <message>
+            <source>原整合包文件已移动或更改，请用原整合包继续安装。</source>
+            <translation>The modpack archive has moved or changed. Use the original archive to continue.</translation>
+        </message>
+        <message>
+            <source>在任务中心选择「重试」可继续安装此实例。</source>
+            <translation>Select Retry in the Task Center to continue installing this instance.</translation>
+        </message>
+        <message>
             <source>目录 %1 中的整合包尚未导入完成，缺少客户端 JAR，暂不显示在启动列表中。使用相同名称重新导入可延续下载。</source>
             <translation>The directory %1 is the integration package that was not imported last time (without the top-level jar), so it is not listed in the startup list; re-import the same integration package and use the same name to continue.</translation>
         </message>
@@ -28858,6 +28986,14 @@ Itemized list: %2
         <message>
             <source>写 %1 的时候失败了（%2）。</source>
             <translation>Failed while writing %1 (%2).</translation>
+        </message>
+        <message>
+            <source>镜像源版本列表未找到适用于 %2 的 %1，已切换至官方源。</source>
+            <translation>The mirror did not list %1 for %2. Switched to the official source.</translation>
+        </message>
+        <message>
+            <source>无法连接 %1 官方源（%2），已切换至镜像源。</source>
+            <translation>The official %1 source was unreachable (%2). Switched to the mirror.</translation>
         </message>
     </context>
     <context>

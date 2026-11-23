@@ -48,16 +48,18 @@
 #include <memory>
 
 ImportController::ImportController(MainWindow *owner) : QObject(owner), m_owner(owner) {
-    // PCL 那种"压缩包里套一份 .mrpack"解出来的临时包：导入整段（成功、失败、取消）结束时
-    // 删掉，判据就是那个唯一的终态信号。提前退出那些路自己删（见 importModpackFromFile
-    // 里那个守卫），不会登记到这里。
+    // 保留仍需重试的临时内包，其他临时内包在导入结束时清理。
     if (owner != nullptr && owner->m_versionManager != nullptr) {
         connect(owner->m_versionManager, &VersionManager::versionDownloadFinished, this,
                 [this](const QString &versionId, bool ok, const QString &) {
-                    const QString temp = m_tempArchives.take(versionId);
-                    if (!temp.isEmpty()) {
-                        QFile::remove(temp);
+                    if (m_owner->m_versionManager->isModpackImporting()) return;
+                    const QString retryArchive = m_owner->m_versionManager->retryModpackArchive();
+                    for (auto it = m_tempArchives.begin(); it != m_tempArchives.end();) {
+                        if (*it == retryArchive) { ++it; continue; }
+                        QFile::remove(*it);
+                        it = m_tempArchives.erase(it);
                     }
+                    if (!ok && versionId == m_owner->m_versionManager->retryModpackInstance()) return;
                     const QString special = m_specialPackSources.take(versionId);
                     if (ok && !special.isEmpty()) {
                         preservePackSource(versionId, special);
@@ -158,6 +160,24 @@ void ImportController::finishAbortedImportTask(Tasks::TaskId taskId, bool cancel
     }
     Tasks::TaskManager *tasks = m_owner->m_activityCenter->tasks();
     if (cancelled) {
+        // 取消也要把“此刻正在干什么”收掉：否则任务已经是终态，详情却还停在
+        // 「正在解析整合包清单…」和一条 Running 步骤上，看起来像界面卡死。
+        QList<Tasks::TaskStep> steps = tasks->snapshot(taskId).steps;
+        bool changed = false;
+        for (Tasks::TaskStep &step : steps) {
+            if (step.state == Tasks::TaskStepState::Running) {
+                step.state = Tasks::TaskStepState::Pending;
+                step.note = tr("已取消");
+                changed = true;
+            } else if (step.state == Tasks::TaskStepState::Pending && !step.note.isEmpty()) {
+                step.note.clear();
+                changed = true;
+            }
+        }
+        if (changed) tasks->setSteps(taskId, steps);
+        tasks->setDetail(taskId, QString());
+        m_owner->appendLog(tr("整合包导入已取消：%1")
+                               .arg(reason.isEmpty() ? tr("用户取消了导入") : reason));
         tasks->cancel(taskId);
         m_owner->m_downloadTaskLedger->clearOwnerIf(taskId);
         return;
@@ -521,17 +541,17 @@ bool ImportController::promptCurseForgeFileIssuesIfNeeded(const ModpackImport::P
     }
     QStringList entries;
     for (const auto &issue : pack.fileIssues) {
-        entries.append(QStringLiteral("%1 — %2").arg(
-            issue.fileName.isEmpty() ? tr("文件 %1").arg(issue.ref.fileId)
-                                     : issue.fileName.simplified(),
-            issue.reason.simplified()));
+        const QString project = issue.projectWebUrl.section(QLatin1Char('/'), -1);
+        const QString name = !issue.fileName.isEmpty()
+                                 ? issue.fileName.simplified()
+                                 : (project.isEmpty() ? tr("项目 %1").arg(issue.ref.projectId)
+                                                      : tr("%1（文件名未返回）").arg(project));
+        entries.append(QStringLiteral("%1 — %2").arg(name, issue.reason.simplified()));
     }
     int selected = 0;
     for (;;) {
         InlineMessageBox box(MessageKind::Warning, tr("有文件需要补齐"),
-            tr("选中文件可打开对应网页。可以先安装其余内容，但文件未补齐时不会标记为成功。"
-                "\n补齐位置：%1\n重新导入同一个包和实例名可重新校验。").arg(
-                QDir::toNativeSeparators(AppPaths::versionDir(instanceName))),
+            tr("每一条会列出模组/项目名、项目编号、文件编号和项目页。选中一条后，下方会显示具体文件名、补齐位置和补法。\n\n可以先安装其余内容；缺的文件会保留在导入报告里，之后可以再补。\n实例目录：%1").arg(QDir::toNativeSeparators(AppPaths::versionDir(instanceName))),
             {tr("继续安装其余内容"), tr("打开所选文件网页"), tr("取消")},
             2, -1);
         auto *list = box.setList(entries, selected);
@@ -545,16 +565,29 @@ bool ImportController::promptCurseForgeFileIssuesIfNeeded(const ModpackImport::P
         updateDetails(selected);
         QObject::connect(list, &QListWidget::currentRowChanged, &box, updateDetails);
         m_owner->m_ui->overlay()->execPrompt(&box);
+        if (!box.wasShown()) {
+            // 覆盖层正忙（例如任务中心还开着），提示根本没摆出来。以前这里会把
+            // `clickedIndex() == -1` 当成用户点了「取消」，于是任务静默变成 cancelled，
+            // 界面上什么提示都没有。现在按「继续安装其余内容」处理，缺件留给报告。
+            m_owner->appendLog(tr("补齐提示未能展开（界面被占用），继续安装其余内容；缺件已记录在导入报告中。"));
+            return true;
+        }
         selected = box.listRow();
         if (box.clickedIndex() == 0) return true;
         if (box.clickedIndex() != 1) return false;
         if (selected < 0 || selected >= pack.fileIssues.size()) continue;
-        const auto url = ModpackImport::curseForgeFileWebUrl(pack.fileIssues.at(selected));
+        const auto &issue = pack.fileIssues.at(selected);
+        // 文件名都没返回时，文件页大概率是 404；这种情况下项目页才是能用的入口。
+        QString url = issue.fileName.isEmpty()
+                          ? issue.projectWebUrl
+                          : ModpackImport::curseForgeFileWebUrl(issue);
+        if (url.isEmpty()) url = issue.projectWebUrl;
         if (!url.isEmpty()) {
             QDesktopServices::openUrl(QUrl(url));
         } else {
-            InlineMessage::information(m_owner->m_ui->overlay(), tr("没有文件网页"),
-                tr("平台未提供规范项目网址，无法可靠打开文件页。请按报告中的项目和文件编号手动查找；这不代表文件已下架。"));
+            InlineMessage::information(m_owner->m_ui->overlay(), tr("没有项目网页"),
+                tr("平台没有返回可用的项目页。请按项目/文件编号在 CurseForge 搜索；"
+                   "项目编号和文件编号已写在报告里，不代表文件一定下架。"));
         }
     }
 }
@@ -678,7 +711,7 @@ bool ImportController::resolveInstallerJavaForPack(const ModpackImport::Pack &pa
 
 void ImportController::importModpackOneClick(const QString &zipPath,
                                              const QString &confirmedInstanceName,
-                                             Tasks::TaskId taskId) {
+                                             Tasks::TaskId taskId, bool allowRename) {
     // 同 importModpackFromFile() 那两道闸（m_downloadInFlight / m_importFlow），见那里。
     if (m_owner->m_downloadInFlight) {
         const QString reason = tr("已有下载或导入任务正在进行，等它结束之后再试。");
@@ -720,6 +753,10 @@ void ImportController::importModpackOneClick(const QString &zipPath,
     InstanceFiles::ImportNameVerdict verdict =
         InstanceFiles::checkImportTargetName(name, &nameProblem, prepared.manifestFingerprint);
     if (verdict == InstanceFiles::ImportNameVerdict::Taken) {
+        if (!allowRename) {
+            finishAbortedImportTask(taskId, false, nameProblem);
+            return;
+        }
         QString candidate = ModpackImport::suggestUniqueInstanceName(
             name.isEmpty() ? prepared.pack.name : name);
         const QString conflictPrompt =
@@ -733,7 +770,7 @@ void ImportController::importModpackOneClick(const QString &zipPath,
             const QString input = InlineMessage::getText(
                 m_owner->m_ui->overlay(), tr("换个名字"), conflictPrompt, candidate, &ok);
             if (!ok) {
-                finishAbortedImportTask(taskId, true, QString());
+                finishAbortedImportTask(taskId, true, tr("名称冲突提示被取消"));
                 return;
             }
             candidate = input.trimmed();
@@ -756,15 +793,17 @@ void ImportController::importModpackOneClick(const QString &zipPath,
     }
 
     if (!promptCurseForgeFileIssuesIfNeeded(prepared.pack, name)) {
-        finishAbortedImportTask(taskId, true, QString());
+        finishAbortedImportTask(taskId, true, tr("文件补齐提示被取消"));
         return;
     }
+
 
     QString installerJava;
     bool javaCancelled = false;
     QString javaReason;
     if (!resolveInstallerJavaForPack(prepared.pack, true, &installerJava, &javaCancelled, &javaReason)) {
-        finishAbortedImportTask(taskId, javaCancelled, javaReason);
+        finishAbortedImportTask(taskId, javaCancelled,
+                                javaCancelled && javaReason.isEmpty() ? tr("Java 选择被取消") : javaReason);
         return;
     }
 
@@ -778,15 +817,21 @@ void ImportController::importModpackOneClick(const QString &zipPath,
 
     m_owner->markOneClickModpack(name);
     if (!prepared.tempArchive.isEmpty()) {
-        m_tempArchives.insert(name, prepared.tempArchive);
+        m_tempArchives.insert(prepared.tempArchive);
     }
     const bool started = applyResolvedModpackImport(
         prepared.sourceZip, name, prepared.pack, prepared.manifestFingerprint, installerJava);
+    if (started) {
+        // 走到这里已经过了「继续安装其余内容」那一问；只对本趟导入放开缺件提交。
+        if (!prepared.pack.fileIssues.isEmpty()) {
+            m_owner->m_versionManager->allowPartialModpackImport();
+        }
+    }
     if (started && !prepared.tempArchive.isEmpty()) {
         // 同 importModpackFromFile()：移交给 versionDownloadFinished 清理。
         prepared.releaseTempArchive();
     } else if (!started) {
-        m_tempArchives.remove(name);
+        m_tempArchives.remove(prepared.tempArchive);
         m_owner->takeOneClickModpack(name);
         if (m_owner->m_downloadTaskLedger->task() == taskId) {
             m_owner->m_downloadTaskLedger->clear();
@@ -942,7 +987,7 @@ void ImportController::importModpackFromFile(const QString &zipPath, const QStri
     }
 
     if (!prepared.tempArchive.isEmpty()) {
-        m_tempArchives.insert(name, prepared.tempArchive);
+        m_tempArchives.insert(prepared.tempArchive);
     }
     const bool started = applyResolvedModpackImport(sourceZip, name, pack, manifestFingerprint);
     if (started && !prepared.tempArchive.isEmpty()) {
@@ -950,7 +995,7 @@ void ImportController::importModpackFromFile(const QString &zipPath, const QStri
         // 谁删：构造函数里接的 versionDownloadFinished（见 .hpp）。
         prepared.releaseTempArchive();
     } else if (!started) {
-        m_tempArchives.remove(name);
+        m_tempArchives.remove(prepared.tempArchive);
     }
 }
 

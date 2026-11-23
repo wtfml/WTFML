@@ -42,6 +42,7 @@
 #include <QIcon>  // ServerRowStatus 里那一枚（服务器图标）
 #include <QImage>  // 截图缩略图缓存（m_lifecycleThumbCache）
 #include <QJsonObject>  // pageChoices() / setPageChoices()（"藏起来的那几页"）
+#include <QMap>
 #include <QList>
 #include <QPair>
 #include <QPixmap>
@@ -971,6 +972,8 @@ public:
     static QString windowHeightField() { return QStringLiteral("windowHeight"); }
 
     static QString javaPathEditName() { return QStringLiteral("instanceJavaPathEdit"); }
+    static QString javaRuntimeComboName() { return QStringLiteral("instanceJavaRuntimeCombo"); }
+    void setJavaRuntimeChoices(const QMap<int, QStringList> &choices);
     static QString browseJavaButtonName() {
         return QStringLiteral("instanceBrowseJavaButton");
     }
@@ -1584,6 +1587,7 @@ protected:
     void dropEvent(QDropEvent *event) override;
 
 signals:
+    void javaRuntimeChoicesRequested();
     /// @p key 那一页**刚建出来**（第一次切过去，见 ensurePage()）。
     ///
     /// 给"要在某一页的控件上接线"的调用方用：页是懒建的，开页那一刻 `findChild()` 摸到的
@@ -1659,7 +1663,10 @@ signals:
     void exportPresetRequested();
 
     /**
-     * @brief 用户点了概览那一栏的「检查更新」。
+     * @brief 用户切进「模组」页时触发资源更新检查。
+     *
+     * 打开设置时默认停在概览，构造期不会发；只有真正进入「模组」页才发。
+     * 概览页没有「检查更新」按钮。
      *
      * NOTE: **不传实例 id** —— 这一页就是某个实例的设置页（`setInstanceDir()` / 那一份
      * wtfml.meta 都是它的），接的人从自己那边认（MainWindow 在 openInstanceSettings
@@ -2197,6 +2204,9 @@ private:
     // / 左栏**唯一**那一列。当前行 = 界面上当前摆着的那一页。
     QListWidget *m_pageList = nullptr;
     QTreeWidget *m_navigationTree = nullptr;
+    /// 构造期把默认页（概览）摆好之前不许自动跑全量更新检查；之后用户切到「模组」
+    /// 才发。只在构造末尾置真。
+    bool m_autoCheckArmed = false;
     QHash<QString, QListWidget *> m_lifecycleLists;
     /// 「Replay」/「结构」选中一行之后底下那一格（键 → 标签），以及它现在讲的是哪一条。
     /// @see lifecycleFileInfoLabelName() / setLifecycleInfoText()
@@ -2433,6 +2443,7 @@ private:
     /// —— 见 .hpp 里 setPinned() 那段。
     QString m_pinnedGroupId;
     QLineEdit *m_javaPathEdit = nullptr;
+    QComboBox *m_javaRuntimeCombo = nullptr;
     QSpinBox *m_memoryMaxSpin = nullptr;
     MemorySlider *m_memoryMaxSlider = nullptr;
     QSpinBox *m_memoryMinSpin = nullptr;

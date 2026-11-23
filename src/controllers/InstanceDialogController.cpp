@@ -578,6 +578,17 @@ void InstanceDialogController::open(const QString &versionId, const QString &pag
     qInfo() << "[UI timing] settings dialog ctor" << settingsClock.elapsed() << "ms";
     session->setParent(dialogPtr);
     InstanceSettingsDialog &dialog = *dialogPtr;
+    connect(dialogPtr, &InstanceSettingsDialog::javaRuntimeChoicesRequested, dialogPtr, [dialogPtr] {
+        const QString javaDir = AppPaths::javaDir();
+        auto *watcher = new QFutureWatcher<QMap<int, QStringList>>(dialogPtr);
+        connect(watcher, &QFutureWatcher<QMap<int, QStringList>>::finished, dialogPtr, [dialogPtr, watcher] {
+            dialogPtr->setJavaRuntimeChoices(watcher->result());
+            watcher->deleteLater();
+        });
+        watcher->setFuture(QtConcurrent::run([javaDir] {
+            return GlobalJavaSettings::scanAvailableJavaPaths(javaDir);
+        }));
+    });
     dialog.setLastLaunch(LaunchHistory::lastStartedAt(m_owner->m_launchHistory->records(), versionId));
     const auto playTime = m_owner->m_launchHistory->completedPlayTime(
         m_owner->m_versionManager->instanceId(versionId));
@@ -676,6 +687,13 @@ void InstanceDialogController::open(const QString &versionId, const QString &pag
     // 这一位在会话里（不是栈上）：收页之后那些接线还得读它，见 InstanceSettingsSession。
     QString &targetId = session->targetId;
     session->refreshInstanceDirs = [this, &dialog, &targetId](const QString &id) {
+        // 实例可能在设置页开着的时候被删掉（管理页的行尾删除、另一个入口的删除）。
+        // 这时别再拿旧 id 去算目录并 set 回对话框 —— 更不能让后面的「打开目录」用
+        // `mkpath()` 把它重新建出来。直接把这一页收掉。
+        if (!QFileInfo(AppPaths::versionDir(id)).isDir()) {
+            m_owner->m_ui->overlay()->dismiss();
+            return;
+        }
         QElapsedTimer dirClock;
         dirClock.start();
         // 这一段"算"的活全在 `InstancePagesController` 里（哪几页用得上、
@@ -1791,8 +1809,18 @@ void InstanceDialogController::open(const QString &versionId, const QString &pag
                 m_owner->m_gameSessionController->openLogFile(path);
             });
     connect(&dialog, &InstanceSettingsDialog::openInstanceFolderRequested, m_owner,
-            [this](const QString &path) {
+            [this, &targetId](const QString &path) {
                 if (path.isEmpty()) {
+                    return;
+                }
+                // 先认实例根目录，再决定要不要建快捷目录：实例已经被删掉、页面却还留着时，
+                // 直接 `mkpath(path)` 会把 `versions/<旧实例>/saves` 这类空壳目录重新建出来，
+                // 首页就多出一个“删不掉的空实例”。根目录不在就只报一句，绝不落盘。
+                const QString instanceRoot = AppPaths::versionDir(targetId);
+                if (!QFileInfo(instanceRoot).isDir()) {
+                    InlineMessage::warning(m_owner->m_ui->overlay(), tr("实例已不存在"),
+                                           tr("这个实例的目录已经不在盘上了，无法打开或创建它的文件夹。请刷新实例列表。"));
+                    m_owner->m_ui->overlay()->dismiss();
                     return;
                 }
                 // 先建出来再开：新实例的 saves/ screenshots/ 多半还不存在，而这九颗按钮

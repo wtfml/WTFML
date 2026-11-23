@@ -13,6 +13,7 @@ int main(int argc, char **argv) {
  const QString metaDir=QStringLiteral(REPO_ROOT_PATH)+"/tests/meta";
     // vm-batch / vm-fetch-fail remain explicit offline diagnostic modes of verify;
     // splitting tests must not silently add their timeout probes to routine CI.
+    if (app.arguments().contains(QStringLiteral("vm-batch"))) return runVersionManagerBatch(app, sandbox);
     runLoaderInheritanceTests(sandbox);
     runLoaderInstallTests();
  out()<<"install: "<<g_checks-g_failures<<"/"<<g_checks<<"\n"; return g_failures==0 && moduleStatus==0 ? 0 : 1;

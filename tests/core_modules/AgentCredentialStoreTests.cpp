@@ -28,15 +28,13 @@ void runAgentCredentialStoreTests() {
           "凭据：后备往返一致", read.problem);
     check(!AgentSecretStore::backendKey(read.backend).isEmpty(), "凭据：backend 有稳定字符串");
 
-    // 后备值在盘上必须是密文（不能直接搜到明文）。
-    bool sawPlaintext = false;
-    QSettings fallback(QStringLiteral("WTFML"), QStringLiteral("WTFML"));
-    for (const QString &key : fallback.allKeys()) {
-        if (fallback.value(key).toString().contains(QStringLiteral("sk-test-1234567890abcdef"))) {
-            sawPlaintext = true;
-        }
-    }
-    check(!sawPlaintext, "凭据：DPAPI 后备盘上不含明文 key");
+    // 隔离档案必须在自己的 INI 中保存 DPAPI 密文。
+    QSettings fallback(QSettings::IniFormat, QSettings::UserScope,
+                       QStringLiteral("WTFML"), QStringLiteral("WTFML"));
+    const QString key = QStringLiteral("Agent/Secrets/") + profileId;
+    const QString stored = fallback.value(key).toString();
+    check(!stored.isEmpty() && !stored.contains(QStringLiteral("sk-test-1234567890abcdef")),
+          "凭据：隔离 INI 中保存 DPAPI 密文");
 
     // 覆盖写只保留新值。
     check(AgentSecretStore::write(profileId, QStringLiteral("sk-new-abcdefghijklmnop"), &backend,
@@ -57,6 +55,8 @@ void runAgentCredentialStoreTests() {
 
     check(AgentSecretStore::clear(profileId, &problem), "凭据：清除成功", problem);
     check(!AgentSecretStore::read(profileId).ok, "凭据：清除后读不到");
+    fallback.sync();
+    check(!fallback.contains(key), "凭据：清除后隔离 INI 中没有密文");
 
     QCoreApplication::instance()->setProperty("wtfml.testAgentDisableCredentialManager", false);
 

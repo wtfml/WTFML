@@ -3,6 +3,7 @@
  * @brief ResourceStore 的实现。发请求、认钥匙、把正文交给 ResourceCatalog 那一层去读。
  */
 #include "ResourceStore.hpp"
+#include "DownloadRetryPolicy.hpp"
 #include <QCoreApplication>
 
 #include <QDateTime>
@@ -18,6 +19,7 @@
 #include <QUrl>
 #include <QRegularExpression>
 
+#include <algorithm>
 #include <utility>
 
 #include "manage/ModpackImport.hpp"  // curseForgeApiBase() —— 那条接口根地址的唯一出处
@@ -298,13 +300,15 @@ QString ResourceStore::failureText(QNetworkReply *reply, const QByteArray &body,
     /// 镜像，它限流了、停了、或者官方那边改了规矩，用户在设置里填一份自己的 key 就能绕过去。
     /// 措辞和 VersionManager::resolveCurseForgeFiles 那条路对齐（同一个来源、同一个出口）。
     QString hint;
-    if (source == ResourceCatalog::Source::CurseForge) {
+    if (source == ResourceCatalog::Source::CurseForge &&
+        (status == 401 || status == 403 || (!hasKey && status == 429))) {
         hint = !hasKey
                    ? QCoreApplication::translate("ResourceStore", "\n\n公共接口连接受限。可在设置页「下载」中配置个人 CurseForge API Key。")
                    : QCoreApplication::translate("ResourceStore", "\n\nCurseForge API Key 无效或已过期，请重新配置。");
     }
 
-    if (status > 0) {
+    if (status > 0 && !okStatus(status) &&
+        !reply->property(RequestBudget::kDeadlineExpiredProperty).toBool()) {
         if (!description.isEmpty()) {
             return QCoreApplication::translate("ResourceStore", "%1失败（HTTP %2）：%3%4")
                 .arg(what)
@@ -313,8 +317,10 @@ QString ResourceStore::failureText(QNetworkReply *reply, const QByteArray &body,
         }
         return QCoreApplication::translate("ResourceStore", "%1失败（HTTP %2）%3").arg(what).arg(status).arg(hint);
     }
-    // 压根没连上（断网、DNS、超时）。errorString() 是 Qt 给的那句英文，带上比不带强。
-    return QCoreApplication::translate("ResourceStore", "%1失败：%2%3").arg(what, reply->errorString(), hint);
+    const auto error = reply->property(RequestBudget::kDeadlineExpiredProperty).toBool()
+        ? QNetworkReply::TimeoutError : reply->error();
+    return QCoreApplication::translate("ResourceStore", "%1失败：%2%3")
+        .arg(what, DownloadRetryPolicy::displayError(error, reply->errorString()), hint);
 }
 
 void ResourceStore::search(const QString &requestKey, ResourceCatalog::Kind kind,
@@ -335,15 +341,27 @@ void ResourceStore::search(const QString &requestKey, ResourceCatalog::Kind kind
     // 接口根地址**两条路都递**：CurseForge 那一侧 key 空不空、走镜像还是
     // 官方，都在 curseForgeApiBase() 里一处判；Modrinth 那一侧就是我们手上这一份 override
     // （空 = 官方那一份，见 setModrinthApiBaseOverride）。
+    QString searchText = query.trimmed();
+    QString searchVersion = gameVersion;
+    static const QRegularExpression versionPrefix(
+        QStringLiteral(R"(\A(\d+\.\d+(?:\.\d+)?)\s+(\S.*)\z)"));
+    const auto prefix = versionPrefix.match(searchText);
+    if (prefix.hasMatch() && (searchVersion.isEmpty() || prefix.captured(1) == searchVersion)) {
+        searchVersion = prefix.captured(1);
+        searchText = prefix.captured(2);
+    }
+    if (kind == ResourceCatalog::Kind::Mod && searchText == QStringLiteral("机械动力")) { // i18n-ignore
+        searchText = QStringLiteral("create");
+    }
     const QString url = ResourceCatalog::searchUrl(
-        kind, query, 0, kSearchPageSize, gameVersion, loader, source, category,
+        kind, searchText, 0, kSearchPageSize, searchVersion, loader, source, category,
         isCurseForge ? curseForgeApiBase() : m_modrinthApiBaseOverride);
     auto *job = RequestBudget::ControlGet::start(
         this, m_net,
         resourceRequest(url, isCurseForge ? apiKeyHeaders(m_curseForgeApiKey)
                                           : QList<QPair<QByteArray, QByteArray>>()),
         HttpClient::kDefaultTimeoutMs,
-        [this, requestKey, source](QNetworkReply *reply, const QString &jobError) {
+        [this, requestKey, source, searchText](QNetworkReply *reply, const QString &jobError) {
             // 先把钥匙摘掉再发信号：接的人可能立刻又搜一次，那时候这一格归他不归我。
             m_replies.remove(requestKey);
 
@@ -367,6 +385,27 @@ void ResourceStore::search(const QString &requestKey, ResourceCatalog::Kind kind
                 result = source == ResourceCatalog::Source::CurseForge
                              ? ResourceCatalog::parseCurseForgeSearch(body)
                              : ResourceCatalog::parseSearch(body);
+                if (!searchText.isEmpty()) {
+                    const auto exactMatch = [&searchText](const ResourceCatalog::Hit &hit) {
+                        return hit.title.compare(searchText, Qt::CaseInsensitive) == 0 ||
+                               hit.slug.compare(searchText, Qt::CaseInsensitive) == 0;
+                    };
+                    const auto firstPartial = std::stable_partition(
+                        result.hits.begin(), result.hits.end(), exactMatch);
+                    if (source == ResourceCatalog::Source::CurseForge) {
+                        // CurseForge 的接口排序不提供相关度。同一匹配档内保留平台返回的顺序。
+                        const auto firstNonPrefix = std::stable_partition(
+                            firstPartial, result.hits.end(), [&searchText](const ResourceCatalog::Hit &hit) {
+                                return hit.title.startsWith(searchText, Qt::CaseInsensitive) ||
+                                       hit.slug.startsWith(searchText, Qt::CaseInsensitive);
+                            });
+                        std::stable_partition(
+                            firstNonPrefix, result.hits.end(), [&searchText](const ResourceCatalog::Hit &hit) {
+                                return hit.title.contains(searchText, Qt::CaseInsensitive) ||
+                                       hit.slug.contains(searchText, Qt::CaseInsensitive);
+                            });
+                    }
+                }
             } else {
                 result.problem = failureText(reply, body, QCoreApplication::translate("ResourceStore", "搜索"), source,
                                              !m_curseForgeApiKey.isEmpty());
@@ -554,7 +593,7 @@ void ResourceStore::fetchVersions(const QString &requestKey, const QString &proj
                                   HttpClient::throttledText(what));
             return;
         }
-        if (!okStatus(status)) {
+        if (!okStatus(status) || reply->error() != QNetworkReply::NoError) {
             emit versionsFinished(requestKey, QList<ResourceCatalog::VersionEntry>(),
                                   failureText(reply, body, what, source,
                                               !m_curseForgeApiKey.isEmpty()));

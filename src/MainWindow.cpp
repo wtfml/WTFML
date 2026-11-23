@@ -494,7 +494,10 @@ MainWindow::MainWindow(QWidget *parent)
         this);
     m_crashReports = new CrashReportController(
         m_activityCenter, m_ui->overlay(), this,
-        CrashReportController::Host{[this](const QString &text) { appendLog(text); }}, this);
+        CrashReportController::Host{
+            [this](const QString &text) { appendLog(text); },
+            [this](const QString &context) { askAgentAboutCrash(context); }},
+        this);
     // 工具箱那九件小工具：页面、算术、线程全在那个 controller 里，这儿只有
     // "建它"和"把导航轨底部那颗『工具箱』接到它身上"两句话。
     m_toolboxController = new ToolboxController(
@@ -795,7 +798,12 @@ MainWindow::MainWindow(QWidget *parent)
                 if (ok && m_toolboxController && m_toolboxController->ownsDownloadTask(id)) {
                     m_toolboxController->resumeDownloadTask(id); return;
                 }
-                if (ok && m_downloadBatches && m_downloadBatches->owns(id)) { m_downloadBatches->resume(id); return; }
+                if (ok && m_downloadBatches && m_downloadBatches->owns(id)) {
+                    const auto task = m_activityCenter->tasks()->snapshot(id);
+                    if (task.kind == Tasks::TaskKind::Import && retryWouldWork(task)) retryTaskFromDetail(key);
+                    else m_downloadBatches->resume(id);
+                    return;
+                }
                 if (ok && m_presetController && m_presetController->ownsModTask(id)) { m_presetController->resumeModDownload(id); return; }
                 if (!ok || m_fileRecovery == nullptr) return;
                 const Tasks::TaskSnapshot task = m_activityCenter->tasks()->snapshot(id);

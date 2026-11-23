@@ -282,6 +282,10 @@
         <source>离线账号名称不能含空格或控制字符。</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>离线账号名称须为 3 至 16 个字符，只能使用英文字母、数字和下划线。</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ActivityCenterController</name>
@@ -303,6 +307,10 @@
     </message>
     <message>
         <source>已下载 %1 / %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>已下载 %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4713,6 +4721,10 @@
         <source>已删除游戏目录：%1</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>无法使用游戏目录「%1」。请检查目录是否存在并允许写入。</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>FolderManager</name>
@@ -8161,6 +8173,18 @@ Minecraft %2 / %3 %4</source>
 <context>
     <name>InstanceSettingsDialog</name>
     <message>
+        <source>选择本机 Java</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>正在检测 Java…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>未检测到本机 Java</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>实例设置</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10875,6 +10899,18 @@ Minecraft %2 / %3 %4</source>
 请在「实例设置」中手动指定路径，再启动游戏。</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>本次启动最多分配 %1 MB 堆内存，系统当前可用约 %2 MB。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>其他运行中的实例最多分配 %1 MB 堆内存。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>继续启动可能导致卡顿。可关闭其他程序或调低内存分配。确认启动？</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>LaunchHistory</name>
@@ -11105,6 +11141,54 @@ Minecraft %2 / %3 %4</source>
 </context>
 <context>
     <name>MainWindow</name>
+    <message>
+        <source>请切回原游戏文件夹再重试这次安装。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WTFML · 首次使用测试</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>清除缓存</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>清除以下游戏目录中的外观、图标和服务器状态缓存？账号、存档、备份和手动导入的皮肤会保留。
+
+%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>部分缓存未清除</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>以下缓存目录无法清理。请检查目录权限和链接后重试。
+
+%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>缓存已清除</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>磁盘缓存已清除。重启后会重新加载外观、图标和服务器状态。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>无法打开测试窗口</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>请检查系统临时目录是否允许写入，并确认启动器可以再次运行。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>首次使用测试目录：%1</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>应用实例预设</source>
         <translation type="unfinished"></translation>
@@ -13506,6 +13590,34 @@ Minecraft %2 / %3 %4</source>
 <context>
     <name>MainWindowSettingsPage</name>
     <message>
+        <source>启动器数据</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>清除缓存…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>本地缓存</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>清除外观、图标和服务器状态的缓存。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>打开测试窗口</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>首次使用测试</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>在独立窗口中使用空白设置、账号和游戏目录。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>搜索设置</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15239,7 +15351,7 @@ Minecraft %2 / %3 %4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>获取皮肤失败，已显示默认外观。</source>
+        <source>获取皮肤失败，已显示默认外观（%1）。</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -27175,6 +27287,18 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
 <context>
     <name>VersionManager</name>
     <message>
+        <source>原实例的未完成安装记录已不在，请用原整合包重新导入。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>原整合包文件已移动或更改，请用原整合包继续安装。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>在任务中心选择「重试」可继续安装此实例。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>目录 %1 中的整合包尚未导入完成，缺少客户端 JAR，暂不显示在启动列表中。使用相同名称重新导入可延续下载。</source>
         <translation type="unfinished"></translation>
     </message>
@@ -28230,6 +28354,14 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
     </message>
     <message>
         <source>写 %1 的时候失败了（%2）。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>镜像源版本列表未找到适用于 %2 的 %1，已切换至官方源。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>无法连接 %1 官方源（%2），已切换至镜像源。</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

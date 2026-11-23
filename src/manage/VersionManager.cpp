@@ -81,8 +81,21 @@
 using namespace VersionManagerInternals;
 
 QJsonObject VersionManager::downloadContinuation() const {
-    if (!m_ownBatchOpen || m_resourceDownload.running || m_modpackInstall.active()) return {}; // Import reports own their continuation.
+    if (!m_ownBatchOpen || m_resourceDownload.running) return {};
     QJsonObject intent{{"root", AppPaths::minecraftDir()}};
+    if (m_modpackInstall.active()) {
+        intent.insert("kind", "modpack");
+        intent.insert("instance", m_modpackInstall.instanceId);
+        intent.insert("archive", QFileInfo(m_modpackInstall.zipPath).absoluteFilePath());
+        intent.insert("archiveSize", QString::number(m_modpackInstall.archiveSize));
+        intent.insert("archiveModifiedMs", QString::number(m_modpackInstall.archiveModifiedMs));
+        if (m_modpackInstall.phase == ModpackInstall::Phase::DownloadingFiles) {
+            const auto marker = DownloadCheckpoint::fingerprint(InstanceFiles::importMarkerPath(m_modpackInstall.instanceId));
+            if (!marker.value("exists").toBool()) return {};
+            intent.insert("importMarker", marker);
+        }
+        return intent;
+    }
     QString instance;
     if (m_namedInstance.active()) {
         instance = m_namedInstance.instanceId;
@@ -440,13 +453,55 @@ void VersionManager::unwindDownloadBatch(const QString &reason) {
 }
 
 bool VersionManager::canCancelDownload() const {
-    return downloadManager->isBusy() || (m_modpackInstall.active() && m_modpackOverridesWork.isRunning());
+    if (downloadManager->isBusy() ||
+        (m_modpackInstall.active() && m_modpackOverridesWork.isRunning())) {
+        return true;
+    }
+    // 加载器安装的“拉版本表 / 找安装器 / 等原版 json”这几段没有下载批次，但
+    // 还停在网络请求上，用户点取消完全可以停下。真正不能停的只有安装器进程
+    // （ProbingInstallerOptions / RunningInstaller）和写 json 那一下。
+    if (m_loaderInstall.active()) {
+        switch (m_loaderInstall.phase) {
+        case LoaderInstall::Phase::FetchingList:
+        case LoaderInstall::Phase::FetchingProfile:
+        case LoaderInstall::Phase::FetchingInstallerList:
+        case LoaderInstall::Phase::FetchingInstallerToken:
+        case LoaderInstall::Phase::WaitingInstallerJar:
+        case LoaderInstall::Phase::WaitingParentJson:
+        case LoaderInstall::Phase::WaitingParentBefore:
+        case LoaderInstall::Phase::WaitingParentFiles:
+        case LoaderInstall::Phase::WaitingLoaderFiles:
+            return true;
+        default:
+            break;
+        }
+    }
+    return false;
 }
 
 bool VersionManager::cancelActiveDownload() {
     if (m_modpackInstall.active() && m_modpackOverridesWork.isRunning()) {
         failModpackImport(tr("已取消最终解压或校验。已安装文件保留，实例仍未完成。"));
         return true;
+    }
+    if (!downloadManager->isBusy() && m_loaderInstall.active()) {
+        switch (m_loaderInstall.phase) {
+        case LoaderInstall::Phase::FetchingList:
+        case LoaderInstall::Phase::FetchingProfile:
+        case LoaderInstall::Phase::FetchingInstallerList:
+        case LoaderInstall::Phase::FetchingInstallerToken:
+        case LoaderInstall::Phase::WaitingInstallerJar:
+        case LoaderInstall::Phase::WaitingParentJson:
+        case LoaderInstall::Phase::WaitingParentBefore:
+        case LoaderInstall::Phase::WaitingParentFiles:
+        case LoaderInstall::Phase::WaitingLoaderFiles: {
+            const QString loaderName = m_loaderInstall.loaderName;
+            failLoaderInstall(tr("已取消安装 %1。").arg(loaderName));
+            return true;
+        }
+        default:
+            break;
+        }
     }
     if (!downloadManager->isBusy()) {
         return false;
@@ -459,23 +514,54 @@ bool VersionManager::cancelActiveDownload() {
     return true;
 }
 
-bool VersionManager::canRetryDownload() const { return m_failedBatch.valid; }
+bool VersionManager::canRetryDownload() const {
+    return m_failedBatch.valid &&
+           (!m_failedBatch.modpack.active() || m_failedBatch.gameRoot == AppPaths::minecraftDir());
+}
 
 QString VersionManager::retryBatchLabel() const {
     return m_failedBatch.valid ? m_failedBatch.label : QString();
 }
 
-bool VersionManager::retryDownload() {
-    if (!m_failedBatch.valid || m_failedBatch.jobs.isEmpty()) {
+QString VersionManager::retryModpackInstance() const {
+    return m_failedBatch.modpack.instanceId;
+}
+
+QString VersionManager::retryModpackArchive() const {
+    return m_failedBatch.modpack.zipPath;
+}
+
+bool VersionManager::retryDownload(QString *problem) {
+    if (!canRetryDownload() || m_failedBatch.jobs.isEmpty()) {
         return false;
     }
-    if (downloadManager->isBusy()) {
+    if (m_ownBatchOpen || downloadManager->isBusy() || m_loaderInstall.active() ||
+        m_modpackInstall.active() || m_namedInstance.active() || m_resourceDownload.running) {
         // 一次一批（和 downloadVersion / repairVersionFiles / downloadResourceFiles 是同一条
         // 规矩）。硬叠上去的话两份进度会互相盖，而"取消"那一刻也说不清在取消谁。
         qWarning() << "A download batch is already running, refusing to retry.";
         return false;
     }
     const FailedBatch batch = m_failedBatch;
+    if (batch.modpack.active()) {
+        if (!DirectorySessionLock::acquire(batch.gameRoot, problem)) return false;
+        const QFileInfo archive(batch.modpack.zipPath);
+        const auto verdict = InstanceFiles::checkImportTargetName(
+            batch.modpack.instanceId, problem, batch.modpack.manifestFingerprint);
+        if (verdict == InstanceFiles::ImportNameVerdict::Taken) return false;
+        if (batch.modpack.phase == ModpackInstall::Phase::DownloadingFiles &&
+            verdict != InstanceFiles::ImportNameVerdict::OkResume) {
+            if (problem) *problem = tr("原实例的未完成安装记录已不在，请用原整合包重新导入。");
+            return false;
+        }
+        if (!archive.isFile() || archive.size() != batch.modpack.archiveSize ||
+            archive.lastModified().toMSecsSinceEpoch() != batch.modpack.archiveModifiedMs) {
+            if (problem) *problem = tr("原整合包文件已移动或更改，请用原整合包继续安装。");
+            return false;
+        }
+        m_modpackInstall = batch.modpack;
+        m_loaderInstall = batch.loader;
+    }
     m_failedBatch.reset();
 
     // 把"这一批叫什么"照原样摆回去。收尾那一段（`onAllDownloadsFinished()` 的末尾）就是靠
@@ -1953,14 +2039,9 @@ void VersionManager::onVersionJsonFetched(const QJsonObject &versionJson) {
                                 [this, versionJson] { writeLegacyProfile(versionJson); });
                 return;
             }
-            // OptiFine 这一路是"**装之前**先把原版下全"（它的安装器要拿原版的客户端 jar 当
-            // 输入），所以它用另一个 phase 记着：那一批结束时该起安装器，而不是收尾。
-            // 另外三个都是"装完再补原版"，走 WaitingParentFiles。
-            const bool beforeOptifineInstaller = m_loaderInstall.kind == LoaderKind::OptiFine &&
-                                                 m_loaderInstall.loaderId.isEmpty();
             const LoaderInstall::Phase parentPhase =
-                beforeOptifineInstaller ? LoaderInstall::Phase::WaitingParentBefore
-                                        : LoaderInstall::Phase::WaitingParentFiles;
+                m_loaderInstall.preparingInstallerParent ? LoaderInstall::Phase::WaitingParentBefore
+                                                        : LoaderInstall::Phase::WaitingParentFiles;
             m_loaderInstall.phase = parentPhase;
             // 这批原版文件是从"刚收到原版那份 json"的这条栈上起的（上面那条信号链一路都是
             // 同步的）：排到下一轮再起。相位上面已经定好了，守卫要认的就是它。
@@ -2201,16 +2282,14 @@ void VersionManager::onAllDownloadsFinished(bool success) {
     // 「失败任务保存失败文件列表和原始 URL 来源，重试只重做失败项」：在这里把那一份
     // 记下来（DownloadManager 那边刚收完尾，失败清单还是这一批的）。
     //
-    // **只有"纯下文件"的批次留**：加载器安装 / 整合包导入 / 带名字的实例那三条路上，
-    // 重下几个文件补不回来（加载器的安装器进程还得再跑一次、导入还得解压覆盖），
-    // 露一颗点了修不好的「重试」比不露更糟。判据问的就是那三个状态机活没活着。
+    // 整合包同时保存安装阶段，使重试后的同一个完成信号继续驱动原来的安装。
     if (success) {
         m_failedBatch.reset();
     } else {
         const bool plainFilesOnly = !m_loaderInstall.active() && !m_modpackInstall.active()
                                     && !m_namedInstance.active();
         m_failedBatch.reset();
-        if (plainFilesOnly) {
+        if (plainFilesOnly || m_modpackInstall.active()) {
             m_failedBatch.jobs = downloadManager->failedJobs();
             // 一个失败作业都没登记上（比如 `scheduleFile()` 那两道"地址是空的"早退）⇒
             // 没有可重做的，别露那颗按钮。
@@ -2218,6 +2297,14 @@ void VersionManager::onAllDownloadsFinished(bool success) {
             m_failedBatch.resource = m_resourceDownload.running;
             m_failedBatch.label = m_resourceDownload.label;
             m_failedBatch.id = m_currentVersionDownloading;
+            if (m_modpackInstall.active() && m_failedBatch.jobs.size() == stats.failed && m_failedBatch.valid) {
+                m_failedBatch.gameRoot = AppPaths::minecraftDir();
+                m_failedBatch.modpack = m_modpackInstall;
+                m_failedBatch.loader = m_loaderInstall;
+                m_failedBatch.loader.listJobs.clear();
+            } else if (!plainFilesOnly) {
+                m_failedBatch.reset();
+            }
         }
     }
 
@@ -2244,9 +2331,7 @@ void VersionManager::onAllDownloadsFinished(bool success) {
             return;
         }
 
-        // OptiFine 独有的一段：这一批是"装之前先把原版下全"那一次，下完才轮到安装器
-        // （它的安装器要拿原版的客户端 jar 当输入）。Forge/NeoForge 那边原版是**最后**
-        // 补的，所以它们永远走不到这里。
+        // 原版文件校验通过后才下载并运行外部安装器。
         if (m_loaderInstall.phase == LoaderInstall::Phase::WaitingParentBefore) {
             if (!success) {
                 failLoaderInstall(tr("原版 %1 文件不完整，未安装 %2。请先补齐原版文件再重试。\n%3")
@@ -2257,6 +2342,7 @@ void VersionManager::onAllDownloadsFinished(bool success) {
             emit loaderInstallMessage(tr("原版 %1 已就绪，正在启动 %2 安装器…")
                                           .arg(m_loaderInstall.gameVersion,
                                                m_loaderInstall.loaderName));
+            m_loaderInstall.preparingInstallerParent = false;
             deferLoaderStep(LoaderInstall::Phase::WaitingParentBefore,
                             [this] { startInstallerDownload(); });
             return;

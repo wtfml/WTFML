@@ -3,6 +3,7 @@
 #include <QComboBox>
 #include <QLineEdit>
 #include <QSignalBlocker>
+#include <QStackedWidget>
 #include <QTreeWidget>
 #include "MainWindow.hpp"
 #include "MainWindowUI.hpp"
@@ -51,6 +52,15 @@ void DownloadFilterController::ensureResourcePageLoaded(ResourceCatalog::Kind ki
 
 void DownloadFilterController::refreshDownloadCategory(int row) {
     const QStringList keys = MainWindowUI::downloadCategoryKeys();
+    if (row < 0) {
+        // 左栏那份分类列表现在收着，chip 才是用户看到的那一排。某些路径下
+        // `currentRow()` 会短暂变成 -1（页面已经切过去、列表还没跟上）；只看它就会
+        // 直接 return，表现是“点刷新没反应”。页栈的 currentIndex 是同一份分类顺序，
+        // 用可见页面兜底。
+        if (QStackedWidget *stack = m_owner.m_ui->getDownloadStack()) {
+            row = stack->currentIndex();
+        }
+    }
     if (row < 0 || row >= keys.size()) {
         // 过滤器交上来的行号理论上一定在表里（那一行是 MainWindowUI 按这张表建出来的），
         // 越界只可能是"表和列表对不上了"那种时候 —— 什么都不做比按错一页去做强。
@@ -176,15 +186,15 @@ void DownloadFilterController::refreshDownloadFilterOptions(ResourceCatalog::Kin
 
     // 「模组加载器」那一栏（**只有模组页有**，别的页 getDownloadFilterLoaderCombo 回空指针）。
     if (QComboBox *loaderCombo = m_owner.m_ui->getDownloadFilterLoaderCombo(key)) {
+        const QString previousLabel = loaderCombo->currentText();
         const QSignalBlocker blocker(loaderCombo);
         loaderCombo->clear();
         for (const ResourceCatalog::FilterOption &option : ResourceCatalog::loaderOptions(source)) {
             loaderCombo->addItem(option.label, option.key);
         }
-        // 换来源之后退回「全部」（= 第一项）。两边的键根本不是一套（Modrinth 的 `fabric`
-        // 对 CurseForge 的 `4`），留着上一个来源选中那一项，就是拿 A 家的号去问 B 家 ——
-        // 而且它不报错，只会搜出来一片空。
-        loaderCombo->setCurrentIndex(0);
+        // 两边展示同一个加载器名称，各用自己的筛选键。
+        const int previousIndex = loaderCombo->findText(previousLabel);
+        loaderCombo->setCurrentIndex(previousIndex >= 0 ? previousIndex : 0);
     }
 
     // 「类型」那一栏。**回空表就把整个小组藏起来**（连标签一起，见 MainWindowUI 里那段）：

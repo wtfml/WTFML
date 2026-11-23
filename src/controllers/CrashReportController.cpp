@@ -3,6 +3,7 @@
 
 #include "controllers/ActivityCenterController.hpp"
 #include "InlineMessage.hpp"
+#include "OverlayHost.hpp"
 #include "util/AppPaths.hpp"
 #include "util/ErrorReport.hpp"
 #include "util/SystemMemory.hpp"
@@ -11,9 +12,11 @@
 #include <QCoreApplication>
 #include <QDesktopServices>
 #include <QDir>
+#include <QFile>
 #include <QFileDialog>
 #include <QSaveFile>
 #include <QStandardPaths>
+#include <QTimer>
 #include <QUrl>
 
 #include <utility>
@@ -67,6 +70,9 @@ CrashReportController::Record CrashReportController::buildRecord(
     record.totalLines = lineCount(fullLog);
     record.errorExcerpt = lastLines(errorLog, GameExitDiagnosis::kExcerptLineLimit);
     record.logTail = lastLines(fullLog, GameExitDiagnosis::kLogTailLineLimit);
+    // 「导出完整日志」要的是整份，不是末尾 500 行；会话结束后日志窗和 LauncherManager
+    // 的记录都不在了，只能在这里留一份。只在崩溃/GUI 退出时留，数量很小。
+    record.fullLog = fullLog;
     record.facts.errorLineCount = record.errorLines;
     record.facts.logCaptured = !record.logTail.isEmpty();
     // 这两样用**整份日志**判，不用截过的 `logTail`。日志前部（加载器列前置、
@@ -75,6 +81,7 @@ CrashReportController::Record CrashReportController::buildRecord(
     // 报告的「可能的原因」里却一条都不提"。展示可以截，判据不能截。
     record.facts.sawOutOfMemory = GameExitDiagnosis::logShowsOutOfMemory(fullLog);
     record.facts.sawMissingDependency = GameExitDiagnosis::logShowsMissingDependency(fullLog);
+    record.facts.sawManualDebugCrash = GameExitDiagnosis::logShowsManualDebugCrash(fullLog);
     return record;
 }
 
@@ -103,6 +110,9 @@ Tasks::TaskId CrashReportController::report(int sessionId, int exitCode, bool cr
     QString summary = GameExitDiagnosis::summary(record.facts);
     if (!hints.isEmpty()) summary += QStringLiteral("\n\n") + hints.join(QLatin1Char('\n'));
     m_activity->finish(id, false, summary, false);
+    // 账本里那一条照旧记着；这里再给一张人可以直接读的卡片。排到下一轮，
+    // 不在游戏进程 finished 的信号栈里开嵌套事件循环。
+    QTimer::singleShot(0, this, [this, id] { showCrashDialog(id); });
     return id;
 }
 
@@ -154,6 +164,115 @@ QString CrashReportController::writeExportFile(const QString &path, const QStrin
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) return file.errorString();
     if (file.write(bytes) != bytes.size() || !file.commit()) return file.errorString();
     return {};
+}
+
+void CrashReportController::showCrashDialog(Tasks::TaskId id, int overlayRetry) {
+    // 验证工程会主动制造崩溃；那里只量账本，不等人点卡片。
+    if (qEnvironmentVariableIntValue("WTFML_SUPPRESS_CRASH_DIALOG") == 1
+        || (QCoreApplication::instance() != nullptr
+            && QCoreApplication::instance()->property("wtfml.suppressCrashDialog").toBool())) {
+        return;
+    }
+    const auto found = m_records.constFind(id);
+    if (found == m_records.cend()) {
+        return;
+    }
+    // 崩溃时用户可能正停在任务中心/实例设置上。提示不能叠在整页上，也不能因此丢掉；
+    // 等覆盖层空出来再摆（最多约 10 秒，之后照旧记在任务账本里）。
+    if (m_overlay != nullptr && m_overlay->isOpen()) {
+        if (overlayRetry < 40) {
+            QTimer::singleShot(250, this, [this, id, overlayRetry] {
+                showCrashDialog(id, overlayRetry + 1);
+            });
+        }
+        return;
+    }
+    const Record record = found.value();
+    const QString where = record.facts.instanceName.isEmpty()
+                              ? record.facts.instanceId
+                              : record.facts.instanceName;
+    const QStringList hints = GameExitDiagnosis::hints(record.facts);
+    QString text = tr("「%1」异常退出：%2。")
+                       .arg(where, GameExitDiagnosis::exitDescription(record.facts.exitCode));
+    if (hints.isEmpty()) {
+        text += tr("\n\n没有从退出码或日志里识别出明确原因。可以导出报告，或把日志交给智能体一起看。");
+    } else {
+        text += tr("\n\n可能的原因与建议：");
+        for (const QString &hint : hints) {
+            text += QStringLiteral("\n• ") + hint;
+        }
+    }
+    text += tr("\n\n如果只是偶发，可以先重启游戏；反复出现时，建议先按上面的提示处理，再导出报告或完整日志。");
+
+    QString context = tr("实例：%1\n退出码：%2\n\n").arg(where, GameExitDiagnosis::exitDescription(record.facts.exitCode));
+    context += hints.isEmpty() ? tr("日志中没有识别出明确原因。") : hints.join(QLatin1Char('\n'));
+    if (context.size() > 6000) context = context.left(6000) + tr("\n…（已截断）");
+
+    for (;;) {
+        InlineMessageBox box(MessageKind::Warning, tr("游戏崩溃了"), text,
+                             {tr("我知道了"), tr("导出错误报告"), tr("导出完整日志"),
+                              tr("使用智能体询问")},
+                             0, -1);
+        m_overlay->execPrompt(&box);
+        const int clicked = box.clickedIndex();
+        if (clicked <= 0) return;
+        if (clicked == 1) {
+            exportReport(QString::number(id));
+            continue;
+        }
+        if (clicked == 2) {
+            exportFullLog(QString::number(id));
+            continue;
+        }
+        if (clicked == 3) {
+            if (m_host.askAgent) m_host.askAgent(context);
+            return;
+        }
+    }
+}
+
+void CrashReportController::exportFullLog(const QString &key) {
+    bool parsed = false;
+    const Tasks::TaskId id = key.toULongLong(&parsed);
+    const auto found = parsed ? m_records.constFind(id) : m_records.cend();
+    if (found == m_records.cend()) {
+        InlineMessage::warning(m_overlay, tr("没有完整日志"),
+                               tr("这次退出没有留下可导出的完整日志。"));
+        return;
+    }
+    const Record record = found.value();
+    // 真正完整的那一份在实例目录的 logs/latest.log；进程刚退出时优先拿它。
+    // 拿不到（日志关着 / 被移到别处 / 实例已删）才退回会话期间留在内存里的全文。
+    QString completeLog = record.fullLog;
+    const QString latestLog = QDir(AppPaths::versionDir(record.facts.instanceId))
+                                  .filePath(QStringLiteral("logs/latest.log"));
+    QFile gameLog(latestLog);
+    if (gameLog.open(QIODevice::ReadOnly) && gameLog.size() > 0) {
+        const QByteArray bytes = gameLog.readAll();
+        if (!bytes.isEmpty()) completeLog = QString::fromUtf8(bytes);
+    }
+    if (completeLog.isEmpty()) {
+        InlineMessage::warning(m_overlay, tr("没有完整日志"),
+                               tr("这次退出没有留下可导出的完整日志。"));
+        return;
+    }
+    const QDateTime now = QDateTime::currentDateTime();
+    const QString suggested = QDir(exportDirectory())
+                                  .filePath(ErrorReport::suggestedLogFileName(
+                                      record.facts.instanceName, now));
+    const QString path = QFileDialog::getSaveFileName(
+        m_dialogParent, tr("导出完整日志"), suggested,
+        tr("日志文件 (*.log *.txt);;所有文件 (*)"));
+    if (path.isEmpty()) return;
+    const QString error = writeExportFile(path, completeLog);
+    if (!error.isEmpty()) {
+        log(tr("导出完整日志失败：%1").arg(error));
+        InlineMessage::warning(m_overlay, tr("导出失败"),
+                               tr("无法写入文件（%1）：\n%2")
+                                   .arg(QDir::toNativeSeparators(path), error));
+        return;
+    }
+    log(TextMarks::done(tr("完整日志已导出：%1").arg(QDir::toNativeSeparators(path))));
 }
 
 void CrashReportController::exportReport(const QString &key) {

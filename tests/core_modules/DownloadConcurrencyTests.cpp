@@ -18,6 +18,20 @@ public:
             if (isFinished()) return;
             if (m_body == QByteArray("NETWORK_FAILURE"))
                 setError(QNetworkReply::UnknownNetworkError, QStringLiteral("controlled failure"));
+            if (m_body == QByteArray("FORGE_REDIRECT_STALL")) {
+                const QUrl target(QStringLiteral("https://mediafilez.forgecdn.net/files/test"));
+                m_body.clear();
+                emit redirected(target);
+                setUrl(target);
+                setAttribute(QNetworkRequest::HttpStatusCodeAttribute, 302);
+                return;
+            }
+            if (m_body == QByteArray("REDIRECT_DNS_FAILURE")) {
+                const QUrl target(QStringLiteral("https://mirror-node.invalid/file"));
+                emit redirected(target);
+                setUrl(target);
+                setError(QNetworkReply::HostNotFoundError, QStringLiteral("controlled DNS failure"));
+            }
             setFinished(true); emit readyRead(); emit finished();
         });
     }
@@ -198,8 +212,59 @@ void runDownloadConcurrencyTests() {
         check(completions == 1 && succeeded && network->requests == 2 &&
               network->urls.value(1) == QUrl(DownloadManager::mirrorClientJarUrl(QStringLiteral("1.21.1"))) && opened && file.readAll() == QByteArray("verified-client"),
               "official-priority client download falls back to domestic source and still verifies its hash");
+        const auto [received, total] = manager.batchByteProgress();
+        check(received == 15 && total == 15,
+              "a failed attempt does not add its bytes to the completed file's batch progress");
     }
-
+    {
+        QTemporaryDir directory;
+        ManifestRaceNetwork *network = nullptr;
+        DownloadManager manager(nullptr, [&](QObject *owner) {
+            network = new ManifestRaceNetwork(owner, [](const QUrl &, int number) {
+                return qMakePair(number < 3 ? QByteArray("REDIRECT_DNS_FAILURE") : QByteArray("ok"), 5);
+            });
+            return network;
+        });
+        const QString official = QStringLiteral("https://maven.neoforged.net/releases/net/neoforged/neoforge/21.1.234/file");
+        const QString mirror = DownloadManager::mirrorUrl(official);
+        bool succeeded = false;
+        QEventLoop loop;
+        QObject::connect(&manager, &DownloadManager::downloadFinished, &loop,
+            [&](const QString &, bool ok, const QString &) { succeeded = ok; loop.quit(); });
+        manager.downloadFile(mirror, directory.filePath(QStringLiteral("download")), {}, -1,
+                             VerifyMode::ExistsOnly, official);
+        QTimer::singleShot(2000, &loop, &QEventLoop::quit);
+        loop.exec();
+        check(succeeded && network->urls == QList<QUrl>{QUrl(mirror), QUrl(mirror), QUrl(official)},
+              "镜像落点 DNS 失败后从入口重试一次，再换到同一文件的官方地址");
+    }
+    {
+        QTemporaryDir directory;
+        ManifestRaceNetwork *network = nullptr;
+        DownloadManager manager(nullptr, [&](QObject *owner) {
+            network = new ManifestRaceNetwork(owner, [](const QUrl &, int number) {
+                return qMakePair(number == 1 ? QByteArray("FORGE_REDIRECT_STALL") : QByteArray("ok"), 5);
+            });
+            return network;
+        });
+        manager.setNoProgressGiveUpMs(20);
+        const QUrl entry(QStringLiteral("https://edge.forgecdn.net/files/test"));
+        bool succeeded = false;
+        QEventLoop loop;
+        QObject::connect(&manager, &DownloadManager::downloadFinished, &loop,
+            [&](const QString &, bool ok, const QString &) { succeeded = ok; loop.quit(); });
+        QTimer watchdog;
+        QObject::connect(&watchdog, &QTimer::timeout, &manager, [&manager] {
+            QMetaObject::invokeMethod(&manager, "onStallWatchdogTick");
+        });
+        watchdog.start(25);
+        manager.downloadFile(entry.toString(), directory.filePath(QStringLiteral("download")), {}, 2,
+                             VerifyMode::ExistsOnly);
+        QTimer::singleShot(2000, &loop, &QEventLoop::quit);
+        loop.exec();
+        check(succeeded && network->urls == QList<QUrl>{entry, entry},
+              "CurseForge 跳转后未收到正文时从原入口重试");
+    }
 
 }
 

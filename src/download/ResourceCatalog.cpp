@@ -677,9 +677,7 @@ QString searchUrl(Kind kind, const QString &query, int offset, int limit,
         }
         params.append(QStringLiteral("index=") + QString::number(qMax(0, offset)));
         params.append(QStringLiteral("pageSize=") + QString::number(qBound(1, limit, 50)));
-        // 排序：按**总下载量**倒序（界面那一页默认搜的就是「最热门」，两处口径要一致）。
-        // `sortOrder=desc` 不能省 —— 这一家的默认方向是 asc，那样头一条会变成"这一类里
-        // 最没人用的"。
+        // 先按总下载量倒序取一页。有搜索词时 ResourceStore 再按名称和项目短名分组。
         params.append(QStringLiteral("sortField=6"));
         params.append(QStringLiteral("sortOrder=desc"));
 

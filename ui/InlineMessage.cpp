@@ -534,6 +534,7 @@ QWidget *InlineMessageBox::setContent(QWidget *content, int preferredWidth) {
 
 void InlineMessageBox::showEvent(QShowEvent *event) {
     QDialog::showEvent(event);
+    m_shown = true;
     if (m_lineEdit == nullptr) {
         // `setContent()` 那一档：那块东西里**第一个输入框**接着这一下（同一条规矩、
         // 同一个理由 —— 用户点开"挑一个颜色"，直接打字就该进那一格）。
