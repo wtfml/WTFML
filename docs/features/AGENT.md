@@ -249,6 +249,8 @@ Base URL 只接受 `https://`；loopback `http://` 需显式勾选并持续提�
 
 默认 `%LOCALAPPDATA%\WTFML\agent`。会话、artifacts、维护备份、MCP 配置分目录；测试用 `wtfml.testAgentDataDir` 隔离。
 
+限制：旧版把数据放在 `%LOCALAPPDATA%\WTFML\WTFML\WTFML\agent`（三层 WTFML）与 `%LOCALAPPDATA%\WTFML\WTFML\cache`。启动时搬一次到新位置：新位置已有内容就不动，旧目录只在搬空后 rmdir；搬不动只记一句警告，不挡启动。
+
 ### 6.2 元数据与消息记录
 
 `<uuid>.meta.json` 存标题、时间、固定、加密、skill、provider、instanceLock、messageCount、bodySha256、deletionState；`<uuid>.json` / `.enc` 存消息、summary、usage、pendingApproval。消息状态：`complete/streaming/interrupted/error/tool_pending/awaiting_approval`。

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AppPaths.hpp"
 #include "manage/InstanceFiles.hpp"
 #include <QCryptographicHash>
 #include <QDir>
@@ -8,7 +9,6 @@
 #include <QLockFile>
 #include <QMutex>
 #include <QMutexLocker>
-#include <QStandardPaths>
 #include <QThread>
 #include <memory>
 
@@ -45,8 +45,9 @@ inline QString lockDirectory() {
     if (tempInfo.isDir() && tempInfo.isWritable()) {
         return temp;
     }
-    const QString fallback =
-        QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    // 落到启动器自己的缓存根（`%LOCALAPPDATA%\WTFML\cache`），不再用 AppLocalDataLocation
+    // 拼出 `<LOCALAPPDATA>/WTFML/WTFML` 这种第二层。
+    const QString fallback = AppPaths::localCacheRoot();
     if (!fallback.isEmpty() && QDir().mkpath(fallback)) {
         const QFileInfo fallbackInfo(fallback);
         if (fallbackInfo.isDir() && fallbackInfo.isWritable()) {
