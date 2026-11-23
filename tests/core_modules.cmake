@@ -260,6 +260,7 @@ add_library(core_cases_agent OBJECT
  core_modules/AgentWebToolsTests.cpp
  core_modules/AgentCommandToolsTests.cpp
  core_modules/AgentPerformanceTests.cpp
+ core_modules/AgentInstancePathTests.cpp
 )
 wtfml_core_compile(core_cases_agent)
 list(APPEND WTFML_CORE_CASE_OBJECTS $<TARGET_OBJECTS:core_cases_agent>)

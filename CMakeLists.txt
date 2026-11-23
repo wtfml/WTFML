@@ -228,6 +228,7 @@ set(HEADER_FILES
     src/agent/McpClient.hpp
     src/agent/McpManager.hpp
     src/agent/AgentMcpToolEngine.hpp
+    src/agent/AgentInstancePaths.hpp
     src/agent/AgentWebPolicy.hpp
     src/agent/AgentWebTransport.hpp
     src/agent/QtAgentWebTransport.hpp
@@ -569,6 +570,7 @@ set(SOURCE_FILES
     src/agent/McpClient.cpp
     src/agent/McpManager.cpp
     src/agent/AgentMcpToolEngine.cpp
+    src/agent/AgentInstancePaths.cpp
     src/agent/AgentWebPolicy.cpp
     src/agent/QtAgentWebTransport.cpp
     src/agent/AgentWebTools.cpp

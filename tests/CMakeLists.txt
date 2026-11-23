@@ -174,6 +174,8 @@ set(PROJECT_SOURCES
     ${REPO_ROOT}/src/agent/McpManager.hpp
     ${REPO_ROOT}/src/agent/AgentMcpToolEngine.cpp
     ${REPO_ROOT}/src/agent/AgentMcpToolEngine.hpp
+    ${REPO_ROOT}/src/agent/AgentInstancePaths.cpp
+    ${REPO_ROOT}/src/agent/AgentInstancePaths.hpp
     ${REPO_ROOT}/src/agent/AgentWebPolicy.cpp
     ${REPO_ROOT}/src/agent/AgentWebPolicy.hpp
     ${REPO_ROOT}/src/agent/AgentWebTransport.hpp
