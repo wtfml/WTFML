@@ -267,3 +267,4 @@ python tools/acceptance_directory_boundary.py --exe <WTFMinecraftLauncher.exe> -
 2026-11-22｜任务小窗定位整页任务、整合包下载失败原地续装与跨重启恢复意图｜启动器构建，`core-resources` 和 `ui-refresh` 通过，模拟下载失败后补齐原实例并完成解压校验｜最新 RLCraft 日志已经完成导入，后续启动停在旧模组下载依赖的 Java 证书校验。
 2026-11-22｜实例启动设置增加本机 Java 选单｜启动器构建，`core-java`、`ui-refresh`、`input-widths` 通过｜同为 Java 8 的两份运行时分别列出，载入清单时保留跟随全局，选中后才保存实例覆盖。
 2026-11-22｜实例 Java 选单合并到原路径输入框｜启动器构建，`ui-refresh` 和 `input-widths` 通过｜检测结果到达时保留框内路径。使用日志里的 Java 8u51 直接请求同一依赖可复现证书校验错误。
+2026-11-22｜修复智能体读不到崩溃报告/游戏日志（查的是数据根，实际在实例目录）｜`logs.tail` 与 `crash.list` 改为实例目录优先、数据根兜底、同名去重；`diagnostics.startup` 的 crashDir 与 `diagnostics.crash` 的日志来源同规则；新增 `AgentInstancePathTests`（16 条）与 mw_check 真窗口用例（7 条）；`verify_agent` 783/783、`mw_check_agent` 83/83｜路径判据收进 `AgentInstancePaths`，以后改 `--gameDir` 规则只改这一处。

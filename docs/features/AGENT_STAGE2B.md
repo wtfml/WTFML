@@ -30,8 +30,8 @@
 - `instance.context`：锁定实例的元数据白名单；未锁定回 `needsInstanceLock`。
 - `diagnostics.startup`：调 `StartupDiagnosis::analyze()`，结果经 `AgentDiagnosticProjection::startup()` 投影。
 - `diagnostics.crash`：`GameExitDiagnosis` 事实 + 规则提示，经 `crash()` 投影。
-- `logs.tail`：`logs/latest.log`（缺失时 `logs/wtfml.log`）末尾，最多 500 行、读盘上限 256 KB；本机路径替换成 `<path>`，凭据形态内容遮挡。
-- `crash.list`：默认只给条数与最新一份概况；`detail=full` 列文件名，逐次确认。
+- `logs.tail`：按 `versions/<id>/logs/latest.log` → 数据根 `logs/latest.log` → 数据根 `logs/wtfml.log` 的顺序取第一份存在的，最多 500 行、读盘上限 256 KB；本机路径替换成 `<path>`，凭据形态内容遮挡。
+- `crash.list`：默认只给条数与最新一份概况；`detail=full` 列文件名，逐次确认。崩溃报告从**实例目录**的 `crash-reports/` 读（游戏以 `--gameDir versions/<id>` 启动），数据根那一份作为兜底，同名文件只取实例目录那一份。
 - `instance.integrity`：`VersionManager::integrityPlan()` + `VersionIntegrity::check()`，8 秒时间预算，只给分组计数，不给路径。
 - `mods.list`：默认只给数量与启停统计；`detail=full` 列完整文件名，逐次确认。
 - `settings.get`：只返回白名单键的非路径字段（`java.path` 只写不读）。
@@ -132,6 +132,7 @@ agent/backups/maintenance/<backupId>/
 - `tests/core_modules/AgentLauncherToolsTests.cpp`：19 个工具的分派、审批与拒绝；`instance.list` 默认不带名称；`settings.get` 不含 `java.path`；`mods.setEnabled`/`settings.set`/`backup.create`/`backup.restore` 拒绝时宿主没被调用；模型传入 `instanceId` 被 schema 拒绝。
 - `tests/core_modules/AgentWorkflowTests.cpp`：计划字段/工具/只读/验证步/步数校验；计划卡拒绝后作废；计划外写工具被拦；跳步被拦；某步失败后阶段 `Failed` 且写工具全锁；完成闸缺证据/缺必需工具时拒绝。
 - `tests/core_modules/AgentBackupLifecycleTests.cpp`：多文件备份往返（文本 + 二进制）、`readFiles` 兼容单文件备份。
+- `tests/core_modules/AgentInstancePathTests.cpp`：日志/崩溃报告目录查找（实例目录优先、数据根兜底、同名去重、上限、标签不含盘符）。
 - `tests/ui_check/modules/UiAgentCheck.cpp`：模式胶囊按 id 摆出、选中态跟模式走、状态行空串收起。
 - `tests/mw_check/modules/MwAgentCheck.cpp`：真 MainWindow 里切模式并写入会话、只读模式拒绝写工具且不动盘、`mods.list` 走真宿主只给数量。
 
