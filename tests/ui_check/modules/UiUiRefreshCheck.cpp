@@ -26,6 +26,28 @@ int UiUiRefreshCheck(QApplication &app) {
             if (!ok) ++failures;
         };
         {
+            using Dialog = InstanceSettingsDialog;
+            Dialog dialog(QStringLiteral("Cover"), QStringLiteral("cover"), Dialog::Override{}, {}, {}, true);
+            QImage gameIcon(16, 16, QImage::Format_ARGB32);
+            gameIcon.fill(Qt::green);
+            const QString name = QStringLiteral("Fixture item");
+            dialog.setGameIconChoices({{name, gameIcon}});
+            QToolButton *itemButton = nullptr;
+            if (auto *menu = dialog.findChild<QWidget *>(Dialog::iconMenuName())) {
+                for (auto *button : menu->findChildren<QToolButton *>()) {
+                    if (button->text() == name) itemButton = button;
+                }
+            }
+            if (itemButton != nullptr) itemButton->click();
+            expect(itemButton != nullptr && dialog.iconChoice() == Dialog::localIconValue() &&
+                       dialog.pickedIconImage() == gameIcon && dialog.pickedIconPath().isEmpty(),
+                   "game item selection submits the decoded texture");
+            dialog.markPickedIconSaved();
+            auto *iconPreview = dialog.findChild<QLabel *>(Dialog::iconPreviewName());
+            expect(dialog.pickedIconImage().isNull() && iconPreview && !iconPreview->pixmap().isNull(),
+                   "saving the game item cover clears pending data and keeps the preview");
+        }
+        {
             ResourceDetailPage detail(&preview);
             detail.setModSettingsSlot(true);
             detail.setShowSnapshots(false);

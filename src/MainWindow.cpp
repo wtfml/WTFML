@@ -1387,10 +1387,10 @@ void MainWindow::downloadResourceVersion(QTreeWidgetItem *item) {
 
 void MainWindow::installResourceVersion(ResourceCatalog::Kind kind, const QString &displayTitle,
                                         ResourceCatalog::VersionEntry version,
-                                        ResourceCatalog::Source source) {
+                                        ResourceCatalog::Source source, const QString &projectIconId) {
     // 薄壳：缺前置那一趟、以及"下到哪儿"全在 `ResourceInstallController`（见那边头文件
     // 第一段 —— 这一趟的形状和每一条判断的理由都写在那儿）。
-    m_resourceInstall->install(kind, displayTitle, version, source);
+    m_resourceInstall->install(kind, displayTitle, version, source, projectIconId);
 }
 
 // ---------- 装前置时"装进哪个实例、按哪个版本筛" ----------

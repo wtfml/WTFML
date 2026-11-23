@@ -41,8 +41,9 @@ namespace {
 /// NOTE: 这是这一层里**唯一**一处直接造中文的地方，理由和 `VersionManager::renameInstance()`
 /// 那个 `error` 出参一样：它是**数据层的错**（读不出图 / 写不进去 / 提交失败），
 /// 是"事实"本身、不是"该怎么说"那一层。调用方原样转述给用户，不加工。
-bool writeInstanceIcon(const QString &versionId, const QString &sourcePath, QString *errorOut) {
-    const QImage source(sourcePath);
+bool writeInstanceIcon(const QString &versionId, const QString &sourcePath, const QImage &pickedImage,
+                       QString *errorOut) {
+    const QImage source = pickedImage.isNull() ? QImage(sourcePath) : pickedImage;
     if (source.isNull()) {
         if (errorOut != nullptr) {
             *errorOut = QObject::tr("无法读取图片：%1\n\n请确认文件存在且格式受支持。")
@@ -50,28 +51,7 @@ bool writeInstanceIcon(const QString &versionId, const QString &sourcePath, QStr
         }
         return false;
     }
-    QString lockProblem;
-    if (!WriteDirectoryGuard::acquire(AppPaths::versionDir(versionId), &lockProblem)) {
-        if (errorOut != nullptr) *errorOut = lockProblem;
-        return false;
-    }
-    QSaveFile file(AppPaths::versionIconPath(versionId));
-    if (!file.open(QIODevice::WriteOnly)) {
-        if (errorOut != nullptr) {
-            *errorOut = QObject::tr("无法保存图标：%1").arg(file.errorString());
-        }
-        return false;
-    }
-    // QSaveFile 的 commit() 失败时自己会把临时文件撤掉，所以这两句之间不用再清理一遍。
-    if (!source.save(&file, "PNG") || !file.commit()) {
-        if (errorOut != nullptr) {
-            *errorOut = QObject::tr("无法将图标写入 %1：%2")
-                            .arg(QDir::toNativeSeparators(AppPaths::versionIconPath(versionId)),
-                                 file.errorString());
-        }
-        return false;
-    }
-    return true;
+    return InstanceFiles::saveIconImage(AppPaths::versionIconPath(versionId), source, errorOut);
 }
 
 }  // namespace
@@ -340,7 +320,7 @@ bool InstanceSettingsController::apply(const QString &versionId, const Edit &edi
     QByteArray iconBackup;
     bool iconBackupValid = false;
     bool iconWritten = false;
-    if (!edit.pickedIconPath.isEmpty()) {
+    if (!edit.pickedIconPath.isEmpty() || !edit.pickedIconImage.isNull()) {
         QFile existing(iconPath);
         // 上限 8 MB：icon.png 正常只有几十 KB，读不进去/大得离谱的就当"原来没有"——
         // 那种情况下退回去的动作是删掉新图。
@@ -349,10 +329,8 @@ bool InstanceSettingsController::apply(const QString &versionId, const Edit &edi
             iconBackup = existing.readAll();
             iconBackupValid = iconBackup.size() > 0 && existing.error() == QFileDevice::NoError;
         }
-    }
-    if (!edit.pickedIconPath.isEmpty()) {
         QString iconError;
-        if (writeInstanceIcon(versionId, edit.pickedIconPath, &iconError)) {
+        if (writeInstanceIcon(versionId, edit.pickedIconPath, edit.pickedIconImage, &iconError)) {
             iconValue = edit.localIconValue;
             iconWritten = true;
         } else {

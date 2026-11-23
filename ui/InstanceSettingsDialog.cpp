@@ -1555,6 +1555,7 @@ void InstanceSettingsDialog::setIcon(const QString &icon, const QPixmap &default
     // 初值不是"本地那张"就把那一份丢掉：留着它只会让人以为挑过了。
     if (m_iconChoice != localIconValue()) {
         m_pickedIconPath.clear();
+        m_pickedIconImage = QImage();
     }
     refreshIconRow();
 }
@@ -1691,16 +1692,18 @@ QString InstanceSettingsDialog::iconChoice() const { return m_iconChoice; }
 QString InstanceSettingsDialog::pickedIconPath() const { return m_pickedIconPath; }
 
 void InstanceSettingsDialog::markPickedIconSaved() {
-    if (m_pickedIconPath.isEmpty()) {
+    if (m_pickedIconPath.isEmpty() && m_pickedIconImage.isNull()) {
         return;
     }
     // 那一份字节现在就是实例目录里的图标 ⇒ 它成了「本地那张」的画法。不换的话，这一格
     // 下一次重画会退回**上一张**本地图（`m_localIconMark` 是 setIcon() 灌的旧值）。
-    const QPixmap picked(m_pickedIconPath);
+    const QPixmap picked = m_pickedIconImage.isNull() ? QPixmap(m_pickedIconPath)
+                                                      : QPixmap::fromImage(m_pickedIconImage);
     if (!picked.isNull()) {
         m_localIconMark = picked;
     }
     m_pickedIconPath.clear();
+    m_pickedIconImage = QImage();
     // 签名跟着挪到"本地那张"这一档，否则下一次任何改动都会拿 `local` 去和
     // `local|源路径` 比，白触发一次写盘（内容其实一模一样）。
     m_lastSignature = valueSignature();
@@ -1736,8 +1739,8 @@ void InstanceSettingsDialog::refreshIconRow() {
     // ② 内置候选 → 那一张。
     // ③ 本地那一档 → 调用方解好的那张；它要是空的（文件没了）→ 退回默认那张。
     // ④ 默认 → 调用方算好的 defaultMark。
-    QPixmap mark;
-    if (!m_pickedIconPath.isEmpty()) {
+    QPixmap mark = QPixmap::fromImage(m_pickedIconImage);
+    if (mark.isNull() && !m_pickedIconPath.isEmpty()) {
         const QPixmap picked(m_pickedIconPath);
         if (!picked.isNull()) {
             mark = picked;
@@ -2292,6 +2295,9 @@ QStringList InstanceSettingsDialog::valueSignature() const {
     inputs.iconSignature = m_pickedIconPath.isEmpty()
                                ? iconChoice()
                                : localIconValue() + QLatin1Char('|') + m_pickedIconPath;
+    if (!m_pickedIconImage.isNull()) {
+        inputs.iconSignature += QLatin1Char('|') + QString::number(m_pickedIconImage.cacheKey());
+    }
     // 「显示哪些页」按 optionalPageKeys() 的**顺序**摆（不能按 QHash 的遍历顺序）。
     for (const QString &key : optionalPageKeys()) {
         const QCheckBox *check = m_pageChecks.value(key);

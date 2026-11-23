@@ -76,6 +76,14 @@ struct VersionDisplayParts {
  */
 QString formatVersionName(const VersionDisplayParts &parts);
 
+struct InstanceListRowText {
+    QString title;
+    QString subtitle;
+};
+
+/// 客户端实例列表的两行文字。调用方先解析真实版本与加载器。
+InstanceListRowText formatInstanceListRow(const VersionDisplayParts &parts);
+
 /**
  * @brief 底栏左下角「启动中」那句里的实例名 —— **不受显示名拼法影响**的写法。
  * @param parts 版本的各个组成部分（和 formatVersionName() 同一份来源）。

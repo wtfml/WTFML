@@ -1550,7 +1550,7 @@ private:
     void extractModpackOverrides();
     /// 成功收尾：写 wtfml.meta + 发**唯一**那个终态信号。
     void finishModpackImport();
-    void commitModpackImport(const QList<ModpackImport::FileIssue> &issues);
+    void commitModpackImport(const QList<ModpackImport::FileIssue> &issues, const QImage &cover);
     /// 失败收尾。会把还在跑的加载器安装一起收掉（导入失败 = 整件事结束）。
     void failModpackImport(const QString &reason);
 

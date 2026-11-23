@@ -556,6 +556,7 @@ void ResourceSearchController::downloadResourceVersion(QTreeWidgetItem *item) {
     }
     // 剩下的（选哪个实例、落到哪个目录、文件清单、加载器那道闸）详情页那条路也要走一遍，
     // 全在 installResourceVersion 里 —— **这一条路不自己再算一份**。
-    m_owner.installResourceVersion(kind, resourceItem->text(column), *chosen, source);
+    const QString projectIconId = resourceItem->data(column, MainWindowUI::resourceIconIdRole()).toString();
+    m_owner.installResourceVersion(kind, resourceItem->text(column), *chosen, source, projectIconId);
 }
 

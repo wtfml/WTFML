@@ -61,7 +61,8 @@ public:
 
     /// 标题和版本按值收，选目标时的嵌套事件循环可能关闭详情页或刷新版本清单。
     void install(ResourceCatalog::Kind kind, QString displayTitle,
-                 ResourceCatalog::VersionEntry version, ResourceCatalog::Source source);
+                 ResourceCatalog::VersionEntry version, ResourceCatalog::Source source,
+                 const QString &projectIconId = {});
 
     /// 名字那一发回来了（`ResourceStore::projectsFinished`）。
     void onProjectsFinished(const QString &requestKey, const QList<ResourceCatalog::Hit> &hits,
@@ -83,7 +84,8 @@ private:
     bool targetStillAvailable(const InstallTarget &target);
     void installNow(ResourceCatalog::Kind kind, const QString &displayTitle,
                     const ResourceCatalog::VersionEntry &version,
-                    const QList<ModDependencies::Resolved> &extras, const InstallTarget &target);
+                    const QList<ModDependencies::Resolved> &extras, const InstallTarget &target,
+                    const QString &projectIconId = {});
 
     /// 正在跑的这一趟前置检查（**只有一趟**：用户连点两下"下载"时第二下不该再起一趟 ——
     /// 两趟会各问一遍、各弹一个框，而第一趟已经弹着的那个框正转着嵌套事件循环）。

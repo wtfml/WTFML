@@ -96,7 +96,7 @@ bool ResourceInstallController::targetStillAvailable(const InstallTarget &target
 
 void ResourceInstallController::install(ResourceCatalog::Kind kind, QString displayTitle,
                                         ResourceCatalog::VersionEntry version,
-                                        ResourceCatalog::Source source) {
+                                        ResourceCatalog::Source source, const QString &projectIconId) {
     if (m_installing || m_check.active) {
         return;
     }
@@ -136,7 +136,7 @@ void ResourceInstallController::install(ResourceCatalog::Kind kind, QString disp
         // 设置里关着 / 不知道装进哪个实例 / 光影已经能用 / 没有缺的：交给下面那一句，
         // 它的判断和话术一个字都不变（关掉 = 只下他点的那一版）。
     }
-    installNow(kind, displayTitle, version, {}, *destination);
+    installNow(kind, displayTitle, version, {}, *destination, projectIconId);
 }
 
 void ResourceInstallController::startDependencyCheck(ResourceCatalog::Kind kind,
@@ -349,7 +349,7 @@ void ResourceInstallController::finishDependencyCheck() {
 void ResourceInstallController::installNow(ResourceCatalog::Kind kind, const QString &displayTitle,
                                           const ResourceCatalog::VersionEntry &version,
                                           const QList<ModDependencies::Resolved> &extras,
-                                          const InstallTarget &target) {
+                                          const InstallTarget &target, const QString &projectIconId) {
     MainWindow &owner = m_owner;
     const bool isModpack = kind == ResourceCatalog::Kind::Modpack;
     const QString &instanceId = target.instanceId;
@@ -561,7 +561,10 @@ void ResourceInstallController::installNow(ResourceCatalog::Kind kind, const QSt
     // 「已经装进实例里了」。而失败那一支**不** take 记录，只有成功那一支才取
     // （见 `onResourceDownloadFinished()` 里那段 ★），所以提前登记不会漏。
     if (!modpackPath.isEmpty()) {
-        owner.m_pendingModpackImports.insert(label, {modpackPath, confirmedName, task, AppPaths::minecraftDir()});
+        const auto hit = owner.m_resourceHits.constFind(projectIconId);
+        if (hit != owner.m_resourceHits.cend()) owner.m_resourceStore->requestIcon(hit.value());
+        owner.m_pendingModpackImports.insert(label, {modpackPath, confirmedName, task, AppPaths::minecraftDir(),
+                                                     projectIconId});
     }
     const bool started =
         owner.m_versionManager->downloadResourceFiles(destinationDir, instanceId, label, files);

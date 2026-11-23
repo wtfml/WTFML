@@ -152,7 +152,6 @@ QString instanceIdOf(const QTreeWidgetItem *item) {
  * @brief 按分组把实例灌进实例页那张树。
  * @param tree 目标树。
  * @param buckets 组（含虚拟的「未分组」，见 InstanceGroupBucket）。
- * @param runningIds 此刻在跑的那些实例 id（显示名后面那句「（运行中）」）。
  * @param marks 每个实例行前面那个小图标（`id -> QIcon`，由 instanceRowMark() 算好）。
  * 缺一个不画图标，不影响别的（验证工程直接摆一张只有几个键的表也能灌）。
  * @param pinnedGroupId **置顶组**是哪一个（InstanceGroupStore::pinnedGroupId()）。空串 =
@@ -177,22 +176,9 @@ QString instanceIdOf(const QTreeWidgetItem *item) {
  * 含这些藏着的，见 MainWindowUI::openGroupPicker()）。
  *
  * NOTE: 灌完**不动选中项**（和 fillVersionList 一致），收尾由调用方 syncTreeToCombo()。
- * NOTE: 每个实例条目的 tooltip 是**目录的完整路径**。显示名和目录名可能不一样
- * （自定义名、拼进去的加载器名、或者用户在资源管理器里改过目录名），而
- * "这个实例到底在哪个目录"是排查问题时唯一要问的东西。
+ * 实例标题、副标题和悬停提示由主窗口填入。
  */
-/// 一个实例在树里那一行该写什么：显示名（后面缀上"（运行中）"当它真的在跑时）。
-///
-/// **唯一一处**拼这一行 —— 灌树（fillInstanceTree）和游戏起落时那次局部刷新
-/// （MainWindow::updateInstanceTreeRunState）都走它。分开写的话，游戏起来那一刻
-/// 后缀会跟灌树时那版慢慢漂开。
-QString instanceTreeItemText(const VersionDisplayParts &part, bool running) {
-    const QString base = formatVersionName(part);
-    return running ? base + MainWindowUI::instanceRunningSuffixText() : base;
-}
-
 void fillInstanceTree(QTreeWidget *tree, const QList<InstanceGroupBucket> &buckets,
-                      const QSet<QString> &runningIds,
                       const QHash<QString, QIcon> &marks, const QString &pinnedGroupId,
                       const QSet<QString> &pinnedInstanceIds) {
     const QSignalBlocker blocker(tree);
@@ -236,9 +222,7 @@ void fillInstanceTree(QTreeWidget *tree, const QList<InstanceGroupBucket> &bucke
         QTreeWidgetItem *holder = parent != nullptr ? parent : tree->invisibleRootItem();
         for (const VersionDisplayParts &part : bucket.parts) {
             auto *item = new QTreeWidgetItem(holder);
-            item->setText(0, instanceTreeItemText(part, runningIds.contains(part.id)));
             item->setData(0, MainWindowUI::instanceIdRole(), part.id);
-            item->setToolTip(0, QDir::toNativeSeparators(AppPaths::versionDir(part.id)));
             // 行前面那个小图标（原版草方块 / Forge 铁砧…）。谁画的、怎么认出来的
             // 见 instanceRowMark() 那段 —— 这一层只负责把它挂上去。
             const auto mark = marks.constFind(part.id);
@@ -751,7 +735,7 @@ QPixmap defaultInstanceMark(const VersionDisplayParts &part, const VersionManage
 /// NOTE: 本地那张走 VersionIcons::fileMark()（按路径 + 修改时间缓存）。**不在这儿直接
 /// QPixmap(path)**：这个函数实例树每一行都要问一次，而每刷新一次整棵树重建一遍，
 /// 用户挑的那张 1024×1024 的图会被解上成百遍。
-QPixmap instanceRowMark(const VersionDisplayParts &part, const VersionManager *versions, int size) {
+static QPixmap customInstanceMark(const VersionDisplayParts &part, int size) {
     const QString iconKey = VersionIcons::iconKeyFromValue(part.icon);
     if (!iconKey.isEmpty()) {
         const QPixmap mark = VersionIcons::iconMarkForKey(iconKey, size);
@@ -765,7 +749,19 @@ QPixmap instanceRowMark(const VersionDisplayParts &part, const VersionManager *v
             return mark;
         }
     }
-    return defaultInstanceMark(part, versions, size);
+    return {};
+}
+
+QPixmap instanceRowMark(const VersionDisplayParts &part, const VersionManager *versions, int size) {
+    const QPixmap custom = customInstanceMark(part, size);
+    return custom.isNull() ? defaultInstanceMark(part, versions, size) : custom;
+}
+
+QPixmap instanceCoverMark(const VersionDisplayParts &part, int size) {
+    const QPixmap custom = customInstanceMark(part, size);
+    if (!custom.isNull()) return custom;
+    const QPixmap cover = VersionIcons::fileMark(InstanceFiles::modpackCoverPath(part.id), size);
+    return cover.isNull() ? VersionIcons::isoBlock(VersionIcons::isoBlockKindFor(part.id), size) : cover;
 }
 
 /// 这一份 .minecraft 里**现在真的还在**的那些组 id。默认组被用户删掉之后它就不在里面了，

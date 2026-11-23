@@ -4,6 +4,7 @@
 #include "InstanceDialogController.hpp"
 #include "UpgradeAssessment.hpp"
 #include "InstanceUpdateFlow.hpp"
+#include "MainWindowViewData.hpp"
 #include "download/ResourceStore.hpp"
 
 #include "MainWindow.hpp"
@@ -269,24 +270,6 @@ VersionCategory::Channel versionChannelOf(const VersionManager *versions,
     }
     return VersionCategory::channelFor(versionId,
                                        type.isEmpty() ? QStringLiteral("release") : type);
-}
-
-QPixmap defaultInstanceMark(const VersionDisplayParts &part, const VersionManager *versions,
-                            int size) {
-    const QString loader = InstancePagesController::loaderName(part, versions);
-    if (!loader.isEmpty()) {
-        for (int index = 0; index < MainWindowUI::modLoaderNoneIndex(); ++index) {
-            VersionManager::LoaderKind kind;
-            if (VersionManager::loaderKindFromIndex(index, &kind)
-                && VersionManager::loaderDisplayName(kind) == loader) {
-                return VersionIcons::loaderMark(index, size);
-            }
-        }
-        return VersionIcons::grassBlock(size);
-    }
-    return VersionIcons::versionChannelMark(VersionCategory::channelIndex(
-                                                versionChannelOf(versions, part.id)),
-                                            size);
 }
 
 QSet<QString> knownGroupIdsOf(const InstanceGroupStore *groups) {
@@ -629,7 +612,9 @@ void InstanceDialogController::open(const QString &versionId, const QString &pag
     if (parts.icon == InstanceSettingsDialog::localIconValue()) {
         localIcon = VersionIcons::fileMark(AppPaths::versionIconPath(versionId), previewSize);
     }
-    dialog.setIcon(parts.icon, defaultInstanceMark(parts, m_owner->m_versionManager, previewSize), localIcon);
+    VersionDisplayParts defaultCover = parts;
+    defaultCover.icon.clear();
+    dialog.setIcon(parts.icon, MainWindowViewData::instanceCoverMark(defaultCover, previewSize), localIcon);
     {
         const QString game = parts.realVersion.isEmpty() ? parts.id : parts.realVersion;
         // 加载器名走 `InstancePagesController::loaderName()`，**不直接读 `parts.loaderName`**：
@@ -2750,6 +2735,24 @@ void InstanceDialogController::open(const QString &versionId, const QString &pag
     // 一份 wtfml.meta 的空壳实例。
     connect(&dialog, &InstanceSettingsDialog::settingsEdited, m_owner,
             [this, &dialog, &targetId]() { m_owner->applyInstanceSettings(targetId, dialog); });
+    connect(&dialog, &InstanceSettingsDialog::gameIconChoicesRequested, &dialog,
+            [this, &dialog, &targetId] {
+        QStringList jars;
+        const QString gameVersion = m_owner->m_versionManager->instanceGameVersion(targetId);
+        if (!gameVersion.isEmpty() && QFileInfo::exists(AppPaths::versionJarPath(gameVersion))) {
+            jars.append(AppPaths::versionJarPath(gameVersion));
+        }
+        const QString instanceJar = InstanceFiles::jarPath(targetId);
+        if (QFileInfo::exists(instanceJar) && !jars.contains(instanceJar)) jars.append(instanceJar);
+        using Choices = QList<QPair<QString, QImage>>;
+        auto *watcher = new QFutureWatcher<Choices>(&dialog);
+        connect(watcher, &QFutureWatcher<Choices>::finished, &dialog, [&dialog, watcher] {
+            const auto choices = watcher->result();
+            watcher->deleteLater();
+            dialog.setGameIconChoices(choices);
+        });
+        watcher->setFuture(QtConcurrent::run([jars] { return InstanceFiles::readGameItemIcons(jars); }));
+    });
 
     // 改名：**排在写设置之外自己一条**。
     // 两件事不能合成一条 —— 改名的副作用是**整个实例换了个目录**，写设置必须发生在它

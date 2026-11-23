@@ -23,6 +23,8 @@
 #include "VersionManager.hpp"
 #include <QCoreApplication>
 #include "VersionManagerInternals.hpp"
+#include "download/ResourceStore.hpp"
+#include "util/ImageDecode.hpp"
 
 #include <QDateTime>
 #include <QDebug>
@@ -338,7 +340,9 @@ void VersionManager::extractModpackOverrides() {
     const auto result = std::make_shared<Result>();
     const QString archive = m_modpackInstall.zipPath;
     const QString destination = AppPaths::versionDir(id);
-    const QStringList excludes = m_modpackInstall.pack.extractExcludes;
+    QStringList excludes = m_modpackInstall.pack.extractExcludes;
+    excludes.append(QStringLiteral("icon.png"));
+    excludes.append(QLatin1String(InstanceFiles::kModpackCoverFileName));
     m_modpackOverridesFailure.clear();
     auto *watcher = new QFutureWatcher<void>(this);
     connect(watcher, &QFutureWatcher<void>::finished, this,
@@ -371,12 +375,46 @@ void VersionManager::extractModpackOverrides() {
     watcher->setFuture(m_modpackOverridesWork);
 }
 
+namespace {
+
+QImage readModpackCover(const QString &archive, const ModpackImport::Pack &pack,
+                        const std::function<bool()> &cancelled) {
+    QStringList roots{QString()};
+    if (!pack.overridesDir.isEmpty()) roots.append(pack.overridesDir + QLatin1Char('/'));
+    if (!pack.clientOverridesDir.isEmpty()) roots.append(pack.clientOverridesDir + QLatin1Char('/'));
+    if (pack.overridesDir.endsWith(QLatin1String("/.minecraft"))) {
+        roots.append(pack.overridesDir.section(QLatin1Char('/'), 0, -2) + QLatin1Char('/'));
+    }
+    QStringList paths;
+    for (const QString &root : roots) {
+        for (const QString &name : {QStringLiteral("icon.png"), QStringLiteral("cover.png"),
+                                    QStringLiteral("pack.png"), QStringLiteral("logo.png")}) {
+            paths.append(root + name);
+        }
+    }
+    const auto files = ZipUtil::readMetadataBatch({archive}, paths, nullptr, cancelled).value(archive).entries;
+    for (const QString &path : paths) {
+        const QImage image = ImageDecode::decode(files.value(path), {1024, 1024 * 1024});
+        if (!image.isNull()) return image;
+    }
+
+    if (pack.coverCacheId.isEmpty() || cancelled()) return {};
+    const QString cachePath = ResourceStore::iconCachePath(pack.coverCacheId);
+    QFile cache(cachePath);
+    if (cachePath.isEmpty() || !cache.open(QIODevice::ReadOnly) || cache.size() > 1024 * 1024) return {};
+    return ImageDecode::decode(cache.read(1024 * 1024), {1024, 1024 * 1024});
+}
+
+}  // namespace
+
 void VersionManager::finishModpackImport() {
     const QString id = m_modpackInstall.instanceId;
     const auto pack = m_modpackInstall.pack;
     const auto fingerprint = m_modpackInstall.manifestFingerprint;
     const auto destination = AppPaths::versionDir(id);
     const auto dataRoot = AppPaths::minecraftDir();
+    const auto archive = m_modpackInstall.zipPath;
+    const bool needsCover = !QFileInfo::exists(InstanceFiles::modpackCoverPath(id));
     QString planError;
     const auto core = integrityPlan(id, &planError);
     m_modpackInstall.phase = ModpackInstall::Phase::VerifyingCompletion;
@@ -384,7 +422,7 @@ void VersionManager::finishModpackImport() {
     m_modpackOverridesCancelled = std::make_shared<std::atomic_bool>(false);
     m_modpackOverridesFailure.clear();
     const auto cancelled = m_modpackOverridesCancelled;
-    struct Result { QList<ModpackImport::FileIssue> issues; QString error; };
+    struct Result { QList<ModpackImport::FileIssue> issues; QImage cover; QString error; };
     const auto result = std::make_shared<Result>();
     emit modpackImportMessage(tr("正在校验文件并保存安装记录（可取消，最长 900 秒）…"));
     auto *watcher = new QFutureWatcher<void>(this);
@@ -396,7 +434,7 @@ void VersionManager::finishModpackImport() {
             failModpackImport(reason); return;
         }
         if (!result->error.isEmpty()) { failModpackImport(result->error); return; }
-        commitModpackImport(result->issues);
+        commitModpackImport(result->issues, result->cover);
     });
     m_modpackOverridesWork = QtConcurrent::run([=] {
         QElapsedTimer timer; timer.start();
@@ -410,11 +448,12 @@ void VersionManager::finishModpackImport() {
         if (checked.cancelled || stop()) { result->error = tr("最终校验已取消或超时，安装保持未完成"); return; }
         for (const auto &issue : pack.fileIssues)
             if (!checked.suppliedPaths.contains(issue.path)) result->issues.append(issue);
+        if (needsCover && !stop()) result->cover = readModpackCover(archive, pack, stop);
     });
     watcher->setFuture(m_modpackOverridesWork);
 }
 
-void VersionManager::commitModpackImport(const QList<ModpackImport::FileIssue> &issues) {
+void VersionManager::commitModpackImport(const QList<ModpackImport::FileIssue> &issues, const QImage &cover) {
     // 要用的字段先取出来：reset() 会把它们一起清掉（忘了取的表现是那句话里名字变空的）。
     const QString id = m_modpackInstall.instanceId;
     const ModpackImport::Pack pack = m_modpackInstall.pack;
@@ -428,6 +467,11 @@ void VersionManager::commitModpackImport(const QList<ModpackImport::FileIssue> &
     if (!ModpackInstallReport::write(AppPaths::versionDir(id), pack, issues, complete, &reportProblem)) {
         failModpackImport(tr("无法保存导入结果，保留未完成状态：%1").arg(reportProblem));
         return;
+    }
+    const QString coverPath = InstanceFiles::modpackCoverPath(id);
+    if (!cover.isNull() && !QFileInfo::exists(coverPath)) {
+        QString coverError;
+        if (!InstanceFiles::saveIconImage(coverPath, cover, &coverError)) emit modpackImportMessage(coverError);
     }
     if (!complete && !m_modpackInstall.allowPartial) {
         QStringList details;

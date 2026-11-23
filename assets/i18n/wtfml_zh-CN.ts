@@ -7675,6 +7675,10 @@ Minecraft %2 / %3 %4</source>
 <context>
     <name>InstanceFiles</name>
     <message>
+        <source>无法保存图标到 %1：%2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>名字不能是空的。</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8183,6 +8187,46 @@ Minecraft %2 / %3 %4</source>
 </context>
 <context>
     <name>InstanceSettingsDialog</name>
+    <message>
+        <source>钻石</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>绿宝石</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>苹果</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>指南针</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>书</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>末影珍珠</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>铁锭</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>红石粉</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>正在读取游戏物品图标…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>客户端文件中没有可用的物品图标。</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>选择本机 Java</source>
         <translation type="unfinished"></translation>
