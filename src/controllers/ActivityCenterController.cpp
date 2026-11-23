@@ -311,7 +311,7 @@ TaskCenter::Item ActivityCenterController::item(const Tasks::TaskSnapshot &task,
     result.finishedAt = task.finishedAt;
     result.startedAt = task.startedAt;
     result.errorSummary = displayText(task.errorSummary);
-    if (task.title == tr("资源更新检查") && task.state == Tasks::TaskState::Failed) {
+    if (task.title.startsWith(tr("资源更新检查")) && task.state == Tasks::TaskState::Failed) {
         const QString summary = tr("更新检查结果可能不完整");
         if (result.detail.isEmpty()) {
             result.detail = result.errorSummary.startsWith(summary + QLatin1Char('\n'))

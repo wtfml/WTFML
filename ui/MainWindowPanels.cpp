@@ -2318,6 +2318,9 @@ void MainWindowUI::setBottomBarTaskSummary(const BottomBarTaskSummary &summary) 
         // 测不出总量（同步等待那几段、启动那一段、以及"刚点下载、清单还在路上"）：
         // 不确定态的滚动条 —— 绝不编一个百分比出来。数没有真值 ⇒ 那一格收起。
         progressBar->setRange(0, 0);
+        // `setRange(0,0)` 不保证触发一次重绘；没有重绘就进不了 paintEvent 里的
+        // syncBusyTimer()，那一截带子会停在上一帧的位置。显式踢一帧。
+        progressBar->update();
         if (taskPercentLabel != nullptr) {
             taskPercentLabel->clear();
             taskPercentLabel->hide();

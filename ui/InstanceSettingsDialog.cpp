@@ -283,6 +283,7 @@ InstanceSettingsDialog::InstanceSettingsDialog(const QString &instanceName,
                 if (item != nullptr && !item->data(0, Qt::UserRole).toString().isEmpty())
                     showPage(item->data(0, Qt::UserRole).toString());
             });
+
     m_navigationTree->installEventFilter(this);
     // 组头那几行（「内容管理」「世界与联机」「创作工具」「维护」）：**整行**点下去就是
     // 展开 / 收起。原来只有最左边那颗小箭头管用 —— 组头不可选中、整行又没有别的动作，
@@ -388,6 +389,8 @@ InstanceSettingsDialog::InstanceSettingsDialog(const QString &instanceName,
     // 左栏那一列灌第一遍（内容和第一页都归它管）。**排在 watchEditors() 之后**：它会在
     // 那一列上挑一条（程序化 setCurrentRow()），接上接线之后才走"选中 → 换页"那条正常路。
     rebuildEntryList();
+    // 默认页（概览）已经摆完。之后用户/调用方切到「模组」才允许自动检查更新。
+    m_autoCheckArmed = true;
     // 起点 = 现在这一份（灌值那一串 setChecked/setText 都已经跑完）。不记这一笔的话，
     // 打开页面之后的第一次交互会把"整份值"当成一次改动写一遍盘。
     m_lastSignature = valueSignature();
@@ -786,12 +789,9 @@ void InstanceSettingsDialog::applyPageKey(const QString &requestedKey) {
     if (InstanceFilesPage *page = m_filesPages.value(key)) {
         page->refresh();
     }
-    // 点进去就自动测速。**排在 refresh() 之后**：这一页刚露出来
-    // 时先有那张表（表里那几行是这一页本来就有的东西），再谈"连上去问一遍"。
-    //
-    // NOTE: 这一发走的是**键**不是行号 ⇒ 左栏那一列怎么变（勾掉一条、可用性变了）都不影响
-    // 它：只要有人摆到「服务器列表」那一页上，它就该发。
-    if (key == QStringLiteral("mod") && !alreadyHere) {
+    // 构造期先把默认页摆好（m_autoCheckArmed 还是 false），这一步可能经过「模组」页，
+    // 但那时不跑全量检查；构造结束之后用户真正切到「模组」才发。
+    if (key == QStringLiteral("mod") && !alreadyHere && m_autoCheckArmed) {
         QTimer::singleShot(0, this, [this] { emit checkUpdatesRequested(); });
     }
     if (key == serverPageKey() && !alreadyHere) {

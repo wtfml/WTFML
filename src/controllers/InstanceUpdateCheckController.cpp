@@ -489,8 +489,10 @@ void InstanceUpdateCheckController::finishUpdateCheck(QString instanceId) {
         const QString details = problems.join(QLatin1Char('\n'));
         if (m_lastIncompleteReports.value(instanceId) == details) return;
         m_lastIncompleteReports.insert(instanceId, details);
-        const auto task = m_owner.m_activityCenter->begin(Tasks::TaskKind::Other,
-            MainWindow::tr("资源更新检查"), instanceId);
+        const auto task = m_owner.m_activityCenter->begin(
+            Tasks::TaskKind::Other,
+            MainWindow::tr("资源更新检查 / %1").arg(m_owner.instanceDisplayName(instanceId)),
+            instanceId);
         m_owner.m_activityCenter->finish(task, false,
             MainWindow::tr("更新检查结果可能不完整") + QLatin1Char('\n') + summary + QLatin1Char('\n') + details, false);
     } else {

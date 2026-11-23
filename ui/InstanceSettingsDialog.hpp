@@ -2201,6 +2201,9 @@ private:
     // / 左栏**唯一**那一列。当前行 = 界面上当前摆着的那一页。
     QListWidget *m_pageList = nullptr;
     QTreeWidget *m_navigationTree = nullptr;
+    /// 构造期把默认页（概览）摆好之前不许自动跑全量更新检查；之后用户切到「模组」
+    /// 才发。只在构造末尾置真。
+    bool m_autoCheckArmed = false;
     QHash<QString, QListWidget *> m_lifecycleLists;
     /// 「Replay」/「结构」选中一行之后底下那一格（键 → 标签），以及它现在讲的是哪一条。
     /// @see lifecycleFileInfoLabelName() / setLifecycleInfoText()
