@@ -297,10 +297,7 @@ bool resolveDependency(const ResourceCatalog::Dependency &dependency,
     };
 
     if (versions.isEmpty()) {
-        // 空的两种（那一发失败 / 这个项目在这个游戏版本+加载器下没有版本）在这一层分不开
-        // —— 分得开的那一位在调用方手上（那一发有没有报错）。**这句话两边都说得通**，
-        // 所以就把两边都说清楚，别替另一件下结论。
-        return fail(QCoreApplication::translate("ModDependencies", "无法获取兼容版本，请检查网络连接及目标版本支持情况。"));
+        return fail(QCoreApplication::translate("ModDependencies", "所选实例的游戏版本和加载器没有兼容的前置版本。"));
     }
 
     const ResourceCatalog::VersionEntry *picked = nullptr;
@@ -563,7 +560,7 @@ QString unresolvedNoteText(const QStringList &lines) {
     if (lines.isEmpty()) {
         return QString();
     }
-    return QCoreApplication::translate("ModDependencies", "以下依赖缺少兼容版本：\n\n%1\n\n其余文件已下载。可在对应项目页面查找并手动安装依赖。")
+    return QCoreApplication::translate("ModDependencies", "以下前置无法一并下载：\n\n%1")
         .arg(lines.join(QLatin1Char('\n')));
 }
 

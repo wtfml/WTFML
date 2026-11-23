@@ -229,7 +229,22 @@ void ResourceInstallController::onVersionsFinished(
     // 失败时**不往 answers 里放空表**：`buildPlan` 那边"钥匙缺席"和"回来了但是空的"
     // 是两句不同的话（"没问到"和"它就是没有版本"）—— 放空表等于把前者说成后者。
     if (problem.isEmpty()) {
-        m_check.answers.insert(requestKey, versions);
+        auto compatible = versions;
+        const auto &target = m_check.target;
+        const QString loader = ResourceCatalog::loaderRequestValue(target.loader, target.source);
+        compatible.removeIf([&](const ResourceCatalog::VersionEntry &entry) {
+            if (!target.gameVersion.isEmpty() && !entry.gameVersions.isEmpty() &&
+                !entry.gameVersions.contains(target.gameVersion)) {
+                return true;
+            }
+            return !loader.isEmpty() && !entry.loaders.isEmpty() &&
+                   std::none_of(entry.loaders.cbegin(), entry.loaders.cend(), [&](const QString &name) {
+                       return ResourceCatalog::loaderRequestValue(name, target.source) == loader;
+                   });
+        });
+        m_check.answers.insert(requestKey, std::move(compatible));
+    } else {
+        m_owner.appendLog(MainWindow::tr("前置版本列表没取到：%1").arg(problem));
     }
     if (m_check.pendingKeys.isEmpty()) {
         finishDependencyCheck();
@@ -272,19 +287,13 @@ void ResourceInstallController::finishDependencyCheck() {
     const QString note = ModDependencies::unresolvedNoteText(plan.unresolved);
     QList<ModDependencies::Resolved> extras;
     if (plan.downloads.isEmpty()) {
-        // 一条都没解开：**照样把这个模组装上**，但得如实说一句"前置一条都没找到"。
-        // 不说的话，用户点完下载看到的就是"下好了"，而进游戏那一下就崩。
-        //
-        // NOTE: 这一档走 `ask()` 而不是 `warning()`：只有 `ask()` 带得了那行**灰字**
-        // （那行灰字写的是"可以在设置里关掉"）。一颗「知道了」按下去就走。
-        QString text = ModDependencies::dependencyPromptText(check.kind, names);
-        if (!note.isEmpty()) {
-            text += QStringLiteral("\n\n") + note;
+        const int choice = InlineMessage::ask(
+            owner.m_ui->overlay(), MessageKind::Warning, ModDependencies::dependencyPromptTitle(), note,
+            {MainWindow::tr("取消"), ModDependencies::dependencyOnlyThisButtonText()}, 0, -1, false,
+            ModDependencies::dependencyPromptNoteText());
+        if (choice != 1) {
+            return;
         }
-        InlineMessage::ask(owner.m_ui->overlay(), MessageKind::Warning,
-                           ModDependencies::dependencyPromptTitle(), text,
-                           {MainWindow::tr("知道了")}, 0, -1, false,
-                           ModDependencies::dependencyPromptNoteText());
     } else {
         QString text = installedKnown
                            ? ModDependencies::dependencyPromptText(check.kind, names)
@@ -294,7 +303,8 @@ void ResourceInstallController::finishDependencyCheck() {
         }
         InlineMessageBox prompt(MessageKind::Question, ModDependencies::dependencyPromptTitle(), text,
                                 {ModDependencies::dependencyOnlyThisButtonText(),
-                                 ModDependencies::dependencyAllButtonText()}, 0, -1);
+                                 plan.unresolved.isEmpty() ? ModDependencies::dependencyAllButtonText()
+                                                           : MainWindow::tr("下载可用前置")}, 0, -1);
         prompt.setNote(ModDependencies::dependencyPromptNoteText());
         auto *scroll = new QScrollArea(&prompt);
         scroll->setWidgetResizable(true);
@@ -322,6 +332,9 @@ void ResourceInstallController::finishDependencyCheck() {
         scroll->setFixedHeight(qMin(form->sizeHint().height() + 4, 170));
         prompt.setContent(scroll);
         owner.m_ui->overlay()->execPrompt(&prompt);
+        if (prompt.clickedIndex() < 0) {
+            return;
+        }
         if (prompt.clickedIndex() == 1) {
             for (qsizetype i = 0; i < selectors.size(); ++i) {
                 const auto &resolved = plan.downloads.at(i);

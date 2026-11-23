@@ -226,7 +226,8 @@ void runDependencyAndBatchTests() {
         // @param tag 这一趟的标签（断言里那句人话的前缀）。
         // @param expectDepPrompt 这一趟期不期待那个前置弹窗（决定脚本点哪一颗按钮）。
         // @param expectedPrompts 这一趟一共该弹几条（等不到就超时，断言自己会红）。
-        const auto runPass = [&](const QString &tag, bool expectDepPrompt, int expectedPrompts) {
+        const auto runPass = [&](const QString &tag, bool expectDepPrompt, int expectedPrompts,
+                                 int dependencyButton = 1) {
             PassResult r;
             const QStringList requestsBefore = api.requests;
             // 上一趟收掉的那一页是 `deleteLater()` 走的（`DeferredDelete`），
@@ -275,7 +276,7 @@ void runDependencyAndBatchTests() {
             // 404 是必然的）点「确定」。第二趟（开关关掉）只会弹后者。
             auto *installed = w.ui()->getInstalledVersionCombo();
             installed->setCurrentIndex(installed->findData(idV));
-            PromptAnswerer answerer(expectDepPrompt ? QList<int>{1, 0} : QList<int>{0});
+            PromptAnswerer answerer(expectDepPrompt ? QList<int>{dependencyButton, 0} : QList<int>{0});
             struct DependencyPicker final : QObject {
                 bool eventFilter(QObject *watched, QEvent *event) override {
                     if (event->type() != QEvent::Show) return false;
@@ -472,6 +473,22 @@ void runDependencyAndBatchTests() {
               "★★ T31.1 而且下进的是**这个实例的 mods/**（日志里那行带着它的绝对路径），"
               "前置也落在同一个目录",
               destNative);
+
+        QByteArray wrongLoader = newestDependency;
+        wrongLoader.replace("\"fabric\"", "\"forge\"");
+        const QByteArray savedDependencies = api.modrinthVersionListByProject.value(depProject);
+        api.modrinthVersionListByProject.insert(depProject, wrongLoader);
+        api.requests.clear();
+        const PassResult missing = runPass(QStringLiteral("T31.1b"), true, 1, 0);
+        check(missing.depPromptButtons == QStringList{QStringLiteral("取消"),
+                                                    ModDependencies::dependencyOnlyThisButtonText()} &&
+                  missing.depPromptText.contains(QStringLiteral("没有兼容的前置版本")) &&
+                  !missing.depPromptText.contains(QStringLiteral("已下载")),
+              "T31.1b 接口返回其他加载器的文件时提示无兼容前置，下载前只提供取消和仅下载主模组");
+        check(std::none_of(missing.newRequests.cbegin(), missing.newRequests.cend(), [](const auto &line) {
+                  return line.contains(QStringLiteral(".jar"));
+              }), "T31.1b 取消后主模组和前置都未发下载请求");
+        api.modrinthVersionListByProject.insert(depProject, savedDependencies);
 
         // ================= 第二趟：设置里关掉之后 =================
         //
