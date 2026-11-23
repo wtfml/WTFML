@@ -4179,6 +4179,10 @@ The instance is ready, but some presets could not be applied:
     <context>
         <name>DownloadFilterController</name>
         <message>
+            <source>全部来源</source>
+            <translation>All sources</translation>
+        </message>
+        <message>
             <source>正在重新获取游戏版本列表…</source>
             <translation>Retrieving game version list...</translation>
         </message>
@@ -11901,6 +11905,14 @@ Verify and repair missing or damaged files?</translation>
             <translation>The name of the pre-mod was not found: %1</translation>
         </message>
         <message>
+            <source>前置版本列表没取到：%1</source>
+            <translation>Could not retrieve dependency versions: %1</translation>
+        </message>
+        <message>
+            <source>下载可用前置</source>
+            <translation>Download available dependencies</translation>
+        </message>
+        <message>
             <source>知道了</source>
             <translation>Knew</translation>
         </message>
@@ -16004,8 +16016,8 @@ It will not restart automatically when stopped manually or exited normally.</tra
             <translation>Only based on valid cache and identified data; unidentified items still need to be confirmed by yourself. It is not a full solver, is not guaranteed to be startable, and does not modify files.</translation>
         </message>
         <message>
-            <source>无法获取兼容版本，请检查网络连接及目标版本支持情况。</source>
-            <translation>Could not find a compatible version. Check your connection and whether the target version is supported.</translation>
+            <source>所选实例的游戏版本和加载器没有兼容的前置版本。</source>
+            <translation>No dependency version supports the selected instance’s game version and loader.</translation>
         </message>
         <message>
             <source>指定版本（%1）不在目标实例的兼容版本列表中。</source>
@@ -16096,16 +16108,12 @@ It will not restart automatically when stopped manually or exited normally.</tra
             <translation>Only place this one</translation>
         </message>
         <message>
-            <source>以下依赖缺少兼容版本：
+            <source>以下前置无法一并下载：
 
-%1
+%1</source>
+            <translation>The following dependencies cannot be downloaded together:
 
-其余文件已下载。可在对应项目页面查找并手动安装依赖。</source>
-            <translation>There are several pre-installed versions that cannot be found: 
-
-%1
-
- Some dependencies failed to download, and the remaining files have been completed. It can be downloaded manually from the project homepage.</translation>
+%1</translation>
         </message>
         <message>
             <source>正在查询 %1 个前置模组的可用版本…</source>
@@ -27852,6 +27860,14 @@ The changes you made yourself will not be retained.</translation>
     </context>
     <context>
         <name>VersionManager</name>
+        <message>
+            <source>NeoForge 的版本列表无法解析。</source>
+            <translation>Could not read the NeoForge version list.</translation>
+        </message>
+        <message>
+            <source>OptiFine 的下载页无法解析。</source>
+            <translation>Could not read the OptiFine downloads page.</translation>
+        </message>
         <message>
             <source>原实例的未完成安装记录已不在，请用原整合包重新导入。</source>
             <translation>The unfinished installation record is missing. Import the original modpack again.</translation>

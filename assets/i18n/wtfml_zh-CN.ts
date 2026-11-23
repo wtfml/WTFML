@@ -4107,6 +4107,10 @@
 <context>
     <name>DownloadFilterController</name>
     <message>
+        <source>全部来源</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>正在重新获取游戏版本列表…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11564,6 +11568,14 @@ Minecraft %2 / %3 %4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>前置版本列表没取到：%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>下载可用前置</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>知道了</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15543,7 +15555,7 @@ Minecraft %2 / %3 %4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>无法获取兼容版本，请检查网络连接及目标版本支持情况。</source>
+        <source>所选实例的游戏版本和加载器没有兼容的前置版本。</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -15627,11 +15639,9 @@ Minecraft %2 / %3 %4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>以下依赖缺少兼容版本：
+        <source>以下前置无法一并下载：
 
-%1
-
-其余文件已下载。可在对应项目页面查找并手动安装依赖。</source>
+%1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -27286,6 +27296,14 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
 </context>
 <context>
     <name>VersionManager</name>
+    <message>
+        <source>NeoForge 的版本列表无法解析。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OptiFine 的下载页无法解析。</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>原实例的未完成安装记录已不在，请用原整合包重新导入。</source>
         <translation type="unfinished"></translation>
