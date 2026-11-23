@@ -1743,9 +1743,7 @@ private:
     ///
     /// NOTE: 它**自己不搜索**（这一层只管把选项换一份）。"换完就按新来源搜一发"接在
     /// 构造函数里那条 `activated` 上 —— 「下拉即搜」这条规矩在那一处收口。
-    /// NOTE: 换来源会把这一页的加载器/类型两项**退回「全部」**：两边的键根本不是一套
-    /// （Modrinth 的 `fabric` vs CurseForge 的 `4`），留着上一个来源的选中项就是
-    /// 拿 A 家的号去问 B 家 —— 而且它不报错，只会搜出个空的。
+    /// 切换来源时按名称保留加载器，重置站点分类。全部来源模式隐藏站点分类。
     void refreshDownloadFilterOptions(ResourceCatalog::Kind kind);
     /// 把那一份**在线版本清单**灌进五页的「版本」框（构造时一次、清单一到又一次）。
     ///
@@ -1753,7 +1751,7 @@ private:
     /// 清单是异步回来的，把它当成"重新填一遍"就会清掉他刚打的版本号。
     void fillDownloadFilterVersionOptions();
     /// 这一页现在选的来源（框里没有值 / 认不出来 = Modrinth，和"没这一栏"时一致）。
-    ResourceCatalog::Source downloadFilterSource(ResourceCatalog::Kind kind) const;
+    QList<ResourceCatalog::Source> downloadFilterSources(ResourceCatalog::Kind kind) const;
     /// 这一页现在选的游戏版本（**框里的字**：这一格是可输入的，用户自己打的版本号
     /// 不在列表里，读 `currentData()` 会读到一个空 —— 那正是"看着筛了、实际没筛"）。
     /// 空串 = 不筛。

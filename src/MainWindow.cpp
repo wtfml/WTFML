@@ -1314,8 +1314,8 @@ void MainWindow::refreshDownloadCategory(int row) {
     m_downloadFilter->refreshDownloadCategory(row);
 }
 
-ResourceCatalog::Source MainWindow::downloadFilterSource(ResourceCatalog::Kind kind) const {
-    return m_downloadFilter->downloadFilterSource(kind);
+QList<ResourceCatalog::Source> MainWindow::downloadFilterSources(ResourceCatalog::Kind kind) const {
+    return m_downloadFilter->downloadFilterSources(kind);
 }
 
 QString MainWindow::downloadFilterGameVersion(ResourceCatalog::Kind kind) const {

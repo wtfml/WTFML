@@ -323,6 +323,10 @@ QString ResourceStore::failureText(QNetworkReply *reply, const QByteArray &body,
         .arg(what, DownloadRetryPolicy::displayError(error, reply->errorString()), hint);
 }
 
+void ResourceStore::cancelSearch(ResourceCatalog::Kind kind, ResourceCatalog::Source source) {
+    delete m_replies.take(ResourceCatalog::searchRequestKey(kind, source));
+}
+
 void ResourceStore::search(const QString &requestKey, ResourceCatalog::Kind kind,
                            ResourceCatalog::Source source, const QString &query,
                            const QString &gameVersion, const QString &loader,

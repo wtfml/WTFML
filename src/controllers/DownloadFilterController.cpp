@@ -10,6 +10,10 @@
 #include "LoadingState.hpp"
 #include "manage/VersionManager.hpp"
 
+namespace {
+const auto kAllResourceSources = QLatin1String("all");
+}
+
 DownloadFilterController::DownloadFilterController(MainWindow *owner) : QObject(owner), m_owner(*owner) {}
 
 bool DownloadFilterController::kindForSearchRequestKey(const QString &key, ResourceCatalog::Kind *out,
@@ -128,15 +132,15 @@ void DownloadFilterController::refreshDownloadCategory(int row) {
 // 访问器读。谁要是绕开它们自己去 `combo->currentText()`，症状是"界面上筛了、请求里没筛"
 // —— 不报错、也看不出哪儿不对。
 
-ResourceCatalog::Source DownloadFilterController::downloadFilterSource(ResourceCatalog::Kind kind) const {
+QList<ResourceCatalog::Source> DownloadFilterController::downloadFilterSources(ResourceCatalog::Kind kind) const {
     ResourceCatalog::Source source = ResourceCatalog::Source::Modrinth;
     QComboBox *combo = m_owner.m_ui->getDownloadFilterSourceCombo(ResourceCatalog::kindKey(kind));
     if (combo != nullptr) {
-        // 认不出来（框是空的 / 里面不是我们灌的那个键）就停在 Modrinth —— 和"这一页
-        // 没有来源框"是同一个结果，也正是没有来源框时该有的行为。
-        ResourceCatalog::sourceFromKey(combo->currentData().toString(), &source);
+        const QString key = combo->currentData().toString();
+        if (key == kAllResourceSources) return ResourceCatalog::allSources();
+        ResourceCatalog::sourceFromKey(key, &source);
     }
-    return source;
+    return {source};
 }
 
 QString DownloadFilterController::downloadFilterGameVersion(ResourceCatalog::Kind kind) const {
@@ -182,7 +186,8 @@ void DownloadFilterController::fillDownloadFilterVersionOptions() {
 
 void DownloadFilterController::refreshDownloadFilterOptions(ResourceCatalog::Kind kind) {
     const QString key = ResourceCatalog::kindKey(kind);
-    const ResourceCatalog::Source source = downloadFilterSource(kind);
+    const auto sources = downloadFilterSources(kind);
+    const ResourceCatalog::Source source = sources.first();
 
     // 「模组加载器」那一栏（**只有模组页有**，别的页 getDownloadFilterLoaderCombo 回空指针）。
     if (QComboBox *loaderCombo = m_owner.m_ui->getDownloadFilterLoaderCombo(key)) {
@@ -205,9 +210,10 @@ void DownloadFilterController::refreshDownloadFilterOptions(ResourceCatalog::Kin
         const QSignalBlocker blocker(typeCombo);
         typeCombo->clear();
         // 「全部」那一项是 categoryOptions() 自己带的第一项，这里不补也不动顺序。
-        for (const ResourceCatalog::FilterOption &option :
-             ResourceCatalog::categoryOptions(source, kind)) {
-            typeCombo->addItem(option.label, option.key);
+        if (sources.size() == 1) {
+            for (const ResourceCatalog::FilterOption &option : ResourceCatalog::categoryOptions(source, kind)) {
+                typeCombo->addItem(option.label, option.key);
+            }
         }
         typeCombo->setCurrentIndex(typeCombo->count() > 0 ? 0 : -1);
     }
@@ -219,9 +225,7 @@ void DownloadFilterController::refreshDownloadFilterOptions(ResourceCatalog::Kin
 void DownloadFilterController::fillDownloadFilters() {
     for (ResourceCatalog::Kind kind : ResourceCatalog::allKinds()) {
         const QString key = ResourceCatalog::kindKey(kind);
-        // 来源那一格：两项，顺序照 allSources()（Modrinth 在前：它是不要 key 的那个）。
-        // **没有「全部」这一项** —— 一个页面上同时只搜一个
-        // 来源，那是这一格的语义。
+        // 默认用 Modrinth，也可选择同时搜索支持的来源。
         if (QComboBox *sourceCombo = m_owner.m_ui->getDownloadFilterSourceCombo(key)) {
             const QSignalBlocker blocker(sourceCombo);
             sourceCombo->clear();
@@ -229,6 +233,7 @@ void DownloadFilterController::fillDownloadFilters() {
                 sourceCombo->addItem(ResourceCatalog::sourceLabel(source),
                                      ResourceCatalog::sourceKey(source));
             }
+            sourceCombo->addItem(tr("全部来源"), QString(kAllResourceSources));
             sourceCombo->setCurrentIndex(0);
         }
         // 加载器 / 类型那两项跟着来源走，所以灌法是"按当前来源算一遍"。

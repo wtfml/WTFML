@@ -43,7 +43,7 @@ public:
     /// 左栏那一列分类里某一行被点了。
     void refreshDownloadCategory(int row);
 
-    ResourceCatalog::Source downloadFilterSource(ResourceCatalog::Kind kind) const;
+    QList<ResourceCatalog::Source> downloadFilterSources(ResourceCatalog::Kind kind) const;
     QString downloadFilterGameVersion(ResourceCatalog::Kind kind) const;
     QString downloadFilterLoader(ResourceCatalog::Kind kind) const;
     QString downloadFilterCategory(ResourceCatalog::Kind kind) const;

@@ -14,9 +14,11 @@
 #include <QLineEdit>
 #include <QSet>
 #include <QTreeWidget>
+#include <utility>
 
 namespace {
 constexpr int kVersionsRequestKeyRole = Qt::UserRole + 41;
+constexpr int kSearchSourceRankRole = Qt::UserRole + 42;
 
 /// 新版本号（26.1 / 26.2 …）在下载树里归成 `26.x` 一行；1.21 这类旧写法保持原样。
 QString downloadVersionRowKey(const QString &version)
@@ -58,15 +60,13 @@ void ResourceSearchController::startResourceSearch(ResourceCatalog::Kind kind) {
     LoadingState::begin(tree, query.isEmpty()
                                   ? MainWindow::tr("正在获取最热门的%1…").arg(ResourceCatalog::kindLabel(kind))
                                   : MainWindow::tr("正在搜索「%1」…").arg(query));
-    // 记下**这一发真的问了什么**：回来时那句「没有搜到「xx」」里的 xx 要是那一次的词。
-    // 读编辑框里现在的字是错的 —— 用户完全可能在等结果的时候又敲了几个字（那几下还没发出去，
-    // 回车才算一发）。
-    m_resourceQueries.insert(key, query);
-
-    // 另外四个筛子（版本 / 加载器 / 类型 / 来源）在这儿一次读完。读法全在 downloadFilterXxx()
-    // 那四个访问器里（**唯一出处**），这里只负责把它们递给 store —— 空串一律 = 不筛，
-    // 所以"没选"和"没有这一栏"在这里是同一件事，不用分岔。
-    const ResourceCatalog::Source source = m_owner.downloadFilterSource(kind);
+    const auto sources = m_owner.downloadFilterSources(kind);
+    const bool combined = sources.size() > 1;
+    SearchBatch batch;
+    batch.query = query;
+    batch.combined = combined;
+    batch.pending = QSet<ResourceCatalog::Source>(sources.cbegin(), sources.cend());
+    m_searchBatches.insert(key, std::move(batch));
     const QString gameVersion = m_owner.downloadFilterGameVersion(kind);
     const QString loader = m_owner.downloadFilterLoader(kind);
     const QString category = m_owner.downloadFilterCategory(kind);
@@ -78,7 +78,9 @@ void ResourceSearchController::startResourceSearch(ResourceCatalog::Kind kind) {
     // CurseForge 的类型键是 `6814` 这种号，写进日志没人看得懂）。搜出来"怎么是这么几条"，
     // 十有八九就是某个筛子在起作用；不写下来的话只能对着结果猜。
     QStringList conditions;
-    conditions.append(MainWindow::tr("来源 %1").arg(ResourceCatalog::sourceLabel(source)));
+    QStringList sourceLabels;
+    for (const auto source : sources) sourceLabels.append(ResourceCatalog::sourceLabel(source));
+    conditions.append(MainWindow::tr("来源 %1").arg(sourceLabels.join(QStringLiteral(" / "))));
     if (!gameVersion.isEmpty()) {
         conditions.append(MainWindow::tr("版本 %1").arg(gameVersion));
     }
@@ -94,20 +96,40 @@ void ResourceSearchController::startResourceSearch(ResourceCatalog::Kind kind) {
     }
     m_owner.appendLog(MainWindow::tr("搜索条件：%1").arg(conditions.join(QStringLiteral(" / "))));
 
-    // 钥匙里要带来源（见 ResourceCatalog::searchRequestKey 那段）：用户刚点完 Modrinth 又
-    // 切成 CurseForge 时，前一趟回来的结果不该被当成"我现在等的那一发"填进树里。
-    m_owner.m_resourceStore->search(ResourceCatalog::searchRequestKey(kind, source), kind, source, query,
-                            gameVersion, loader, category);
+    const QString loaderName = loader.isEmpty() ? QString()
+        : shownText(m_owner.m_ui->getDownloadFilterLoaderCombo(key));
+    for (const auto source : ResourceCatalog::allSources()) {
+        if (!sources.contains(source)) {
+            m_owner.m_resourceStore->cancelSearch(kind, source);
+            continue;
+        }
+        const QString sourceLoader = combined ? ResourceCatalog::loaderRequestValue(loaderName, source) : loader;
+        m_owner.m_resourceStore->search(ResourceCatalog::searchRequestKey(kind, source), kind, source,
+                                       query, gameVersion, sourceLoader, category);
+    }
 }
 
 void ResourceSearchController::fillResourceHitRows(QTreeWidget *tree, ResourceCatalog::Kind kind,
-                                     const ResourceCatalog::SearchResult &result) {
+                                      const ResourceCatalog::SearchResult &result, bool combined) {
     if (tree == nullptr) {
         return;
     }
     const int column = MainWindowUI::versionTreeKeyColumn();
+    int rank = 0;
+    int position = 0;
     for (const ResourceCatalog::Hit &hit : result.hits) {
-        auto *item = new QTreeWidgetItem(tree);
+        auto *item = new QTreeWidgetItem;
+        if (combined) {
+            // 交错摆放两站同名次的结果，保留先显示的行及其展开状态。
+            while (position < tree->topLevelItemCount() &&
+                   tree->topLevelItem(position)->data(column, kSearchSourceRankRole).toInt() <= rank) {
+                ++position;
+            }
+            item->setData(column, kSearchSourceRankRole, rank++);
+            tree->insertTopLevelItem(position++, item);
+        } else {
+            tree->addTopLevelItem(item);
+        }
         // 身份 = project_id：图标回来时按它在树里找回这一行、点开游戏版本时按它拼版本请求。
         item->setData(column, Qt::UserRole, hit.projectId);
         // 这一条是哪一类。点最底下那一层要按它算"下到哪儿去"（见 resourceKindRole()）——
@@ -124,6 +146,7 @@ void ResourceSearchController::fillResourceHitRows(QTreeWidget *tree, ResourceCa
         // 第二行小字：「作者 · 下载量」。下载量那串字只有一处出处（formatDownloads），
         // 界面上别处显示下载量也要读它。作者缺了就少一段。
         QStringList bits;
+        if (combined) bits.append(ResourceCatalog::sourceLabel(hit.source));
         if (!hit.author.isEmpty()) {
             bits.append(hit.author);
         }
@@ -178,48 +201,55 @@ void ResourceSearchController::onResourceSearchFinished(const QString &requestKe
         // 不是我们认得的那几页发的（别的东西也用这个 store 时才会走到）。
         return;
     }
-    // 这一发回来的时候，用户可能已经把来源换成另一个了 —— 两个来源的请求是**各自飞的**
-    // （钥匙不同，store 不会互相掐掉）。不是这一页**现在**选的那个来源就丢掉：留着会把
-    // 上一家那批结果摆在一个写着另一家的页面上，而页面上那句"来源 CurseForge"就成了假话。
-    if (fromSource != m_owner.downloadFilterSource(kind)) {
+    const QString key = ResourceCatalog::kindKey(kind);
+    auto batch = m_searchBatches.find(key);
+    if (batch == m_searchBatches.end() || !batch->pending.remove(fromSource) ||
+        !m_owner.downloadFilterSources(kind).contains(fromSource)) {
         return;
     }
-    const QString key = ResourceCatalog::kindKey(kind);
     QTreeWidget *tree = m_owner.m_ui->getDownloadResourceTree(key);
     if (tree == nullptr) {
+        m_searchBatches.erase(batch);
         return;
     }
-    // 「正在搜索…」那一行先撤掉（下面每一条分支都会摆上自己那一行/那一批）。
-    tree->clear();
-
     if (!result.ok) {
-        // 「没搜成」和「没搜到」是**两句不同的话**（加载器树那边「无可用版本」和
-        // 「列表没取到」也是这么分的）。这里说的是前一句。
-        //
-        // NOTE: 这里**不弹窗**。产品那条"错误要弹窗"管的是"必须让用户看见的东西不能只写
-        // 日志"（日志面板不存在，写进去等于没写）；这一句**不是**那种：那一行就
-        // 摆在用户刚点的那一页上、就是他正在看的地方，而且话是接口/网络自己说的
-        // （超时 / 连不上 / 还是"你问得太勤了，过一分钟再试" —— 最后那种正是最该
-        // 看清、又最不该用一个模态框打断他的）。回车再按一次就是重试。
-        // 这一条和加载器树那条「列表没取到」是同一种形状，所以做法也一样。
-        // 真要弹窗的是那些**没有别的地方能显示**的错（见 onResourceDownloadFinished）。
-        m_owner.appendLog(TextMarks::failed(tr("搜索%1失败：%2").arg(ResourceCatalog::kindLabel(kind), result.problem)));
-        LoadingState::fail(tree, result.problem, [this, kind] { startResourceSearch(kind); });
+        const QString problem = batch->combined
+            ? QStringLiteral("%1: %2").arg(ResourceCatalog::sourceLabel(fromSource), result.problem)
+            : result.problem;
+        batch->problems.append(problem);
+        m_owner.appendLog(TextMarks::failed(tr("搜索%1失败：%2").arg(ResourceCatalog::kindLabel(kind), problem)));
+    } else if (!result.hits.isEmpty()) {
+        LoadingState::finish(tree);
+        batch->hasHits = true;
+        fillResourceHitRows(tree, kind, result, batch->combined);
+    }
+    if (!batch->pending.isEmpty()) return;
+
+    const SearchBatch completed = batch.value();
+    m_searchBatches.erase(batch);
+    if (!completed.problems.isEmpty()) {
+        const QString problem = completed.problems.join(QLatin1Char('\n'));
+        const auto retry = [this, kind] { startResourceSearch(kind); };
+        if (completed.hasHits) {
+            auto *row = m_owner.addResourcePlaceholderRow(tree, problem);
+            LoadingState::failRow(row, problem, retry);
+        } else {
+            LoadingState::fail(tree, problem, retry);
+        }
         return;
     }
+
     LoadingState::finish(tree);
-    if (result.hits.isEmpty()) {
+    if (!completed.hasHits) {
         // **问到了、就是没有** —— 不算错，也**不弹窗**（一个"什么都没发生"的弹窗比没有
         // 更烦人）。用记下来的那个搜索词，别读编辑框里现在的字（理由见 startResourceSearch）。
-        const QString query = m_resourceQueries.value(key);
+        const QString &query = completed.query;
         m_owner.appendLog(MainWindow::tr("%1 一条也没有搜到（%2）。")
                       .arg(ResourceCatalog::kindLabel(kind), query.isEmpty() ? MainWindow::tr("空搜索词") : query));
         m_owner.addResourcePlaceholderRow(tree, query.isEmpty()
                                             ? MainWindow::tr("这一类里一条都没有。")
                                             : MainWindow::tr("没有搜到「%1」。").arg(query));
-        return;
     }
-    fillResourceHitRows(tree, kind, result);
 }
 
 void ResourceSearchController::onResourceIconReady(const QString &iconId, const QPixmap &icon) {
