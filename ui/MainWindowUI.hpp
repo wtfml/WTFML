@@ -3572,6 +3572,7 @@ public:
     void showInstanceFolderText();
     /// 预设那一档的副标题（「N 份预设」）。只在预设模式写进页头；其余时候先记着。
     void setPresetSubtitle(const QString &text);
+    void setPresetDetailVisible(bool visible);
 
     /// 让它露面/收起来。**收起时连位置都不占**（`setVisible(false)`，不是 `setEnabled`）。
     void setDownloadBackVisible(bool visible) {
@@ -3969,6 +3970,7 @@ private:
     QString instanceFolderText;
     QString serverFolderText;
     QString presetSubtitleText;
+    bool presetDetailVisible = false;
     /// 现在停在哪一档（`setInstanceMode()` 写；上面那两份底稿按它挑一份写进页头）。
     InstanceMode instanceMode = InstanceMode::Client;
     /// 实例页那一行搜索与筛选：一个搜索框 + 四颗 chip，摆进正文面里

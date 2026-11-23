@@ -17824,6 +17824,10 @@ Minecraft %2 / %3 %4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>基本设置</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>勾选要收的几样</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17853,6 +17857,10 @@ Minecraft %2 / %3 %4</source>
     </message>
     <message>
         <source>预设名称</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>预设详情</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

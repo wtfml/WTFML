@@ -276,3 +276,7 @@ python tools/acceptance_directory_boundary.py --exe <WTFMinecraftLauncher.exe> -
 2026-11-23｜统一本地数据路径到 `%LOCALAPPDATA%\WTFML` 一层（智能体 `agent/`、断点续传 `cache/`），不再出现三层 WTFML｜新增 `AppPaths::localDataRoot()` 作为唯一出处，`AgentPaths::dataDir()` 与 `DownloadCache::root()` 改走它；启动时一次性迁移旧的三层目录；新增 `AgentPathLayoutTests` 22 条；`verify_agent` 806/806｜旧目录只在搬空后 rmdir，新位置已有内容时不动旧的；测试隔离（`wtfml.testAgentDataDir`）下不迁移。
 
 2026-11-23｜修复游戏设置预设编辑器右栏文字重影｜修复前新增断言复现，修复后 `install-layout`、`design-defaults`、Windows x64 构建与隔离启动通过｜透明输入控件下方的表格代理曾重复绘制原始值。
+
+2026-11-23｜预设详情左栏直接显示编辑标签｜`install-layout`、`preset-install`、Windows x64 构建与隔离启动通过｜编辑标签共用一份文档，取消离开时恢复原标签。
+
+2026-11-23｜预设详情与实例设置统一页头和左右栏布局｜`install-layout`、`lifecycle`、`preset-install`、Windows x64 构建与隔离启动通过｜返回预设列表时恢复文件夹路径和模式切换。

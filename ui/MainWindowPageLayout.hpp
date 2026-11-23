@@ -5,9 +5,20 @@
 #include <QVBoxLayout>
 #include <QGridLayout>
 
+class ElidedLabel;
+
 namespace MainWindowPageLayout {
 QLabel *makeHomeTitle(const QString &text, QWidget *parent);
 QLabel *makeHomeHint(const QString &text, QWidget *parent);
+
+struct DetailHeader {
+    QWidget *widget;
+    QHBoxLayout *line;
+    QLabel *icon;
+    ElidedLabel *title;
+    QLabel *meta;
+};
+DetailHeader makeDetailHeader(QWidget *parent);
 /// 每个选项卡页面共用的边距：贴着选项卡内容区留一圈呼吸空间。
 /// **值本身在 MainWindowUI::pageMargin()** —— 内容区那个覆盖层（OverlayHost）也是一整个
 /// "页面"，它留白得和别的页面一样，所以那一边读的是同一个出处。

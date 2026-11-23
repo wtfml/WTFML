@@ -60,6 +60,30 @@ QLabel *makeHomeHint(const QString &text, QWidget *parent) {
     label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     return label;
 }
+
+DetailHeader makeDetailHeader(QWidget *parent) {
+    auto *header = new QWidget(parent);
+    auto *line = new QHBoxLayout(header);
+    line->setContentsMargins(4, 0, 4, 4);
+    line->setSpacing(14);
+    auto *icon = new QLabel(header);
+    icon->setFixedSize(48, 48);
+    line->addWidget(icon);
+
+    auto *text = new QVBoxLayout;
+    text->setSpacing(2);
+    auto *title = new ElidedLabel(header);
+    Theme::markDisplay(title, Theme::textFont(title->font(), Theme::TextRole::Display));
+    title->setFitPixelRange(Theme::textSize(Theme::TextRole::Display), 20);
+    text->addWidget(title);
+    auto *meta = new QLabel(header);
+    QPalette palette = meta->palette();
+    palette.setColor(QPalette::WindowText, Theme::tokens().secondary);
+    meta->setPalette(palette);
+    text->addWidget(meta);
+    line->addLayout(text, 1);
+    return {header, line, icon, title, meta};
+}
 // Always reserve the scrollbar gutter: expanding a category must not move the
 // right-aligned arrow/clear targets or change the width available to row text.
 void stabilizeDownloadTree(QTreeWidget *tree) {

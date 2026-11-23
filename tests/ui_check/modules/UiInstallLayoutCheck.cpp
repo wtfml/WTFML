@@ -1,5 +1,6 @@
 #include "Support.hpp"
 #include "PresetEditorPage.hpp"
+#include "PresetManagePage.hpp"
 #include "PresetOptionsEditor.hpp"
 #include "NewServerPage.hpp"
 #include <QDoubleSpinBox>
@@ -142,6 +143,62 @@ int UiInstallLayoutCheck(QApplication &app) {
                 QDir().mkpath(QStringLiteral("build/install-previews"));
                 window.grab().save(QStringLiteral("build/install-previews/install-%1.png").arg(size.width()));
             }
+        }
+        {
+            const bool preview = app.arguments().contains(QStringLiteral("--install-layout-preview"));
+            ui.getTabWidget()->setCurrentIndex(MainWindowUI::instancesTabIndex());
+            ui.setInstanceMode(MainWindowUI::InstanceMode::Preset);
+            window.resize(1150, 720);
+            auto *host = ui.getInstancePresetPage();
+            PresetManagePage details(host);
+            details.setWindowFlags(Qt::Widget);
+            host->layout()->addWidget(&details);
+            QObject::connect(&details, &PresetManagePage::detailVisibilityChanged, &details,
+                             [&ui](bool visible) { ui.setPresetDetailVisible(visible); });
+            details.enableEditorTabs();
+            PresetManagePage::PresetItem preset;
+            preset.id = QStringLiteral("layout-test");
+            preset.name = QStringLiteral("Test preset");
+            details.setPresets({preset}, {}, preset.id);
+            details.showPreset(preset.id, preset.name, {}, QStringLiteral("Game settings"), {});
+            auto *presets = details.findChild<QTreeWidget *>(PresetManagePage::presetListName());
+            auto *instancePage = ui.getTabWidget()->widget(MainWindowUI::instancesTabIndex());
+            auto *catalogHeader = instancePage->findChild<QWidget *>(MainWindowUI::pageHeaderName(QStringLiteral("instance")));
+            auto *catalogModes = instancePage->findChild<QWidget *>(MainWindowUI::instanceModeRowName());
+            presets->itemClicked(presets->currentItem(), 0);
+            details.show();
+            app.processEvents();
+            auto *nav = details.findChild<QListWidget *>("presetDetailNav");
+            auto *header = details.findChild<QWidget *>("presetDetailHeader");
+            auto *action = details.findChild<QPushButton *>(PresetManagePage::applyButtonName());
+            auto *title = details.findChild<QLabel *>("presetDetailTitle");
+            expect(catalogHeader && catalogHeader->isHidden() && catalogModes && catalogModes->isHidden(),
+                   "preset details replace the catalog heading and mode switches");
+            expect(header && action && header->isAncestorOf(action) && title && title->text() == preset.name &&
+                       nav && nav->width() == InstanceSettingsDialog::navigationTreeWidth(),
+                   "preset details put the preset name and apply action above an instance-width sidebar");
+            if (preview) {
+                QDir().mkpath("build/install-previews");
+                expect(window.grab().save("build/install-previews/preset-detail-overview.png"),
+                       "preset detail overview preview saved");
+            }
+            QObject::connect(&details, &PresetManagePage::editSectionRequested, &details,
+                             [&details, &preset](const QString &id, int section) {
+                auto *editor = new PresetEditorPage({{"id", id}, {"name", preset.name}}, &details,
+                                                    PresetEditorPage::Presentation::Embedded);
+                editor->selectSection(section);
+                details.embedEditor(editor);
+            });
+            if (preview && nav) {
+                nav->setCurrentRow(2);
+                app.processEvents();
+                expect(window.grab().save("build/install-previews/preset-detail-editor.png"),
+                       "embedded preset editor preview saved");
+                details.removeEmbeddedEditor();
+            }
+            details.findChild<QPushButton *>("presetBackButton")->click();
+            expect(catalogHeader && !catalogHeader->isHidden() && catalogModes && !catalogModes->isHidden(),
+                   "returning from preset details restores the complete catalog heading");
         }
         {
             ui.setInstanceMode(MainWindowUI::InstanceMode::Preset);

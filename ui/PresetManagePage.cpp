@@ -6,20 +6,22 @@
  *   第 0 页（列表）= 和「客户端实例」「服务端」同一页形 —— 顶上一整条搜索框 + 下面一排
  *     类别 chip（类别多，挤在一行会把搜索框压没），中间一整棵不画外框的树（行高 58、
  *     行首图标 26、按类别分组），最底下那颗建东西的主操作。
- *   第 1 页（细节）= 和实例设置那一页同一页形 —— 顶上一行「← 返回」+ 这是哪一份，下面
- *     整片底色上是"图标 + 名字 + 说明"和几小节（预设内容 / 从实例提取 / 应用到实例），
- *     主操作浮在底下正中间。
+ *   第 1 页（详情）沿用实例设置的面包屑与身份页眉，主要操作在页眉右侧，正文按左栏切换。
  */
 
 #include "PresetManagePage.hpp"
 #include <QCoreApplication>
 #include "InputSizing.hpp"
+#include "ElidedLabel.hpp"
+#include "InstanceSettingsDialog.hpp"
 #include "LoadingState.hpp"
 #include "TextMarks.hpp"
 #include "Animations.hpp"
 #include "InstanceGroupDelegate.hpp"
 #include "MainWindowPageLayout.hpp"
 #include "MainWindowUI.hpp"
+#include "OverlayHost.hpp"
+#include "PresetEditorPage.hpp"
 #include "Theme.hpp"
 #include "VersionIcons.hpp"
 
@@ -40,6 +42,7 @@
 #include <QPixmap>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QSignalBlocker>
 #include <QStackedWidget>
 #include <functional>
 #include <QTimer>
@@ -57,11 +60,9 @@ constexpr int kDialogHeight = 640;
 /// 段表 / 计划表的高度：三四行可见，再多就滚。
 constexpr int kSectionListHeight = 118;
 constexpr int kPlanListHeight = 132;
-/// 身份区那颗图标（实例设置页顶上那颗就是这个尺寸）。
-constexpr int kIdentityIconSize = 48;
-/// 细节页左边那条导航（实例设置页左栏也是这一档宽）。
-constexpr int kDetailNavWidth = 220;
-constexpr int kDetailNavRowHeight = 44;
+constexpr int kDetailNavRowHeight = 32;
+constexpr int kDetailPageRole = Qt::UserRole;
+constexpr int kEditorSectionRole = Qt::UserRole + 1;
 /// 预设行上那三个数据槽（外面喂进来的值，页面里只用不翻）。
 ///
 /// ★ 号码从 `Qt::UserRole + 20` 起，别往 +1 / +2 上挪：`MainWindowUI::groupIdRole()`
@@ -270,86 +271,85 @@ void PresetManagePage::buildListLayer() {
 
 /// 第 1 层：选中那一份的细节（内容 / 从实例提取 / 应用到实例）。
 ///
-/// 形状照搬**实例设置**那一页：顶上一行「← 返回 + 这是哪一份」，下面是左导航 + 右页表
-///（概览 / 从实例提取 / 应用到实例），主动作「应用」在左栏底下。
+/// 和实例设置共用面包屑与身份页眉，下方是左导航和右栏正文。
 void PresetManagePage::buildDetailLayer() {
     m_detailLayer = new QWidget(m_layers);
     m_detailLayer->setObjectName(QStringLiteral("presetDetailPage"));
     auto *layout = new QVBoxLayout(m_detailLayer);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(10);
+    layout->setSpacing(0);
 
-    // ---- 顶上那一行：回得去 + 这一份叫什么 + 右端那一颗 ----
-    auto *top = new QHBoxLayout;
-    top->setSpacing(8);
-    m_backButton = new QPushButton(tr("← 返回"), m_detailLayer);
+    const auto breadcrumb = OverlayHost::makePageBreadcrumb(m_detailLayer);
+    breadcrumb.title->setText(tr("预设详情"));
+    m_backButton = breadcrumb.back;
     m_backButton->setObjectName(QStringLiteral("presetBackButton"));
-    Theme::markButton(m_backButton, Theme::ButtonKind::Neutral);
-    m_backButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    top->addWidget(m_backButton);
-    // 这一行是"上一层的说明"，平着写（不加粗、不放大）—— 安装页顶上那句
-    // 「将基于原版 26.3 安装」也是这一档；页面上唯一的粗标题是小节卡片的那几条。
-    m_detailTitle = new QLabel(m_detailLayer);
+    layout->addWidget(breadcrumb.widget);
+
+    auto *body = new QVBoxLayout;
+    body->setContentsMargins(0, 16, 0, 0);
+    body->setSpacing(10);
+    layout->addLayout(body, 1);
+    const auto identity = makeDetailHeader(m_detailLayer);
+    identity.widget->setObjectName(QStringLiteral("presetDetailHeader"));
+    m_identityIcon = identity.icon;
+    m_identityIcon->setObjectName(QStringLiteral("presetDetailIcon"));
+    m_detailTitle = identity.title;
     m_detailTitle->setObjectName(QStringLiteral("presetDetailTitle"));
-    top->addWidget(m_detailTitle);
-    top->addStretch(1);
-    // 「保存」（内嵌时由控制器换成「编辑预设」）：名字框里打完字顺手回车是最常见的
-    // 动作，所以它长在名字框那一行的尾巴上。
-    m_saveDetailsButton = new QPushButton(QCoreApplication::translate("PresetManagePage", "保存"), m_detailLayer);
+    m_presetMeta = identity.meta;
+    m_presetMeta->setObjectName(QStringLiteral("presetMetaLabel"));
+    body->addWidget(identity.widget);
+
+    // 单独打开时保存名称和说明。内嵌到实例管理时由详情左栏提供编辑入口。
+    m_saveDetailsButton = new QPushButton(QCoreApplication::translate("PresetManagePage", "保存"), identity.widget);
     m_saveDetailsButton->setObjectName(saveDetailsButtonName());
     m_saveDetailsButton->setAutoDefault(false);
     Theme::markButton(m_saveDetailsButton, Theme::ButtonKind::Neutral);
-    top->addWidget(m_saveDetailsButton);
-    layout->addLayout(top);
-    connect(m_backButton, &QPushButton::clicked, this, [this] { showDetailLayer(false); });
+    identity.line->addWidget(m_saveDetailsButton);
+    connect(m_backButton, &QPushButton::clicked, this, [this] {
+        if (m_embeddedEditor) m_embeddedEditor->reject();
+        else showDetailLayer(false);
+    });
     connect(m_saveDetailsButton, &QPushButton::clicked, this, [this] {
         const QString id = currentPresetId();
         if (id.isEmpty()) return;
         emit detailsEdited(id, m_nameEdit->text(), m_descriptionEdit->text());
     });
 
-    // ---- 下面两栏：左边是**这一份自己的导航**，右边是选中的那一页 ----
-    //
-    // 和实例设置那一页同一个分工：左边一条竖着的页表 + 底下那颗主动作（实例那边是
-    // 「启动实例」，这边是「应用」），右边是当前这一页的内容，摊在页面底色上。
     auto *columns = new QHBoxLayout;
     columns->setContentsMargins(0, 0, 0, 0);
-    columns->setSpacing(18);
-    layout->addLayout(columns, 1);
+    columns->setSpacing(kColumnSpacing);
+    body->addLayout(columns, 1);
 
-    auto *navPanel = new QFrame(m_detailLayer);
-    navPanel->setObjectName(QStringLiteral("presetDetailNavPanel"));
-    markSurface(navPanel, Theme::sectionSurfaceValue());
-    navPanel->setFixedWidth(kDetailNavWidth);
-    auto *navLayout = new QVBoxLayout(navPanel);
-    navLayout->setContentsMargins(10, 10, 10, 12);
-    navLayout->setSpacing(10);
-    m_detailNav = new QListWidget(navPanel);
+    m_detailNav = new QListWidget(m_detailLayer);
     m_detailNav->setObjectName(QStringLiteral("presetDetailNav"));
+    m_detailNav->setFixedWidth(InstanceSettingsDialog::navigationTreeWidth());
     m_detailNav->setFrameShape(QFrame::NoFrame);
-    m_detailNav->setStyleSheet(QStringLiteral("QListWidget{background:transparent;border:none;}"));
+    // 留出实例设置导航树的分支缩进，让选中块和文字也对齐。
+    m_detailNav->setStyleSheet(QStringLiteral("QListWidget{background:transparent;border:none;padding-left:16px;}"));
+    m_detailNav->viewport()->setAutoFillBackground(false);
+    m_detailNav->setMouseTracking(true);
+    QFont navFont = Theme::textFont(m_detailNav->font(), Theme::TextRole::Body);
+    navFont.setBold(true);
+    m_detailNav->setFont(navFont);
     m_detailNav->setSelectionMode(QAbstractItemView::SingleSelection);
     m_detailNav->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_detailNav->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_detailNav->setFocusPolicy(Qt::NoFocus);
+    int pageIndex = 0;
     for (const QString &text : {QCoreApplication::translate("PresetManagePage", "概览"), QCoreApplication::translate("PresetManagePage", "从实例提取"),
                                 QCoreApplication::translate("PresetManagePage", "应用到实例")}) {
         auto *item = new QListWidgetItem(text, m_detailNav);
         item->setSizeHint(QSize(0, kDetailNavRowHeight));
+        item->setData(kDetailPageRole, pageIndex++);
     }
     m_detailNav->setCurrentRow(0);
-    navLayout->addWidget(m_detailNav, 1);
-    m_applyButton = new QPushButton(QCoreApplication::translate("PresetManagePage", "应用"), navPanel);
+    columns->addWidget(m_detailNav);
+    m_applyButton = new QPushButton(QCoreApplication::translate("PresetManagePage", "应用"), identity.widget);
     m_applyButton->setObjectName(applyButtonName());
     m_applyButton->setAutoDefault(false);
     Theme::markButton(m_applyButton, Theme::ButtonKind::Primary);
-    QFont applyFont = m_applyButton->font();
-    applyFont = Theme::textFont(applyFont, Theme::TextRole::Body);  // 按钮一律正文 14 系统字（tokens-r2 §1）
-    applyFont.setWeight(QFont::Medium);
-    m_applyButton->setFont(applyFont);
-    m_applyButton->setMinimumHeight(48);
-    navLayout->addWidget(m_applyButton);
-    columns->addWidget(navPanel);
+    m_applyButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    identity.line->addWidget(m_applyButton);
 
     // 右边：三页叠着一个栈（和实例设置页右栏那一个用法相同）。
     m_detailPages = new QStackedWidget(m_detailLayer);
@@ -368,7 +368,7 @@ void PresetManagePage::buildDetailLayer() {
         return scroll;
     };
     m_detailPages->addWidget(makePage([this](QVBoxLayout *body) {
-        body->addWidget(buildIdentityBlock(body->parentWidget()));
+        body->addWidget(buildDetailsFields(body->parentWidget()));
         body->addWidget(buildPresetContentSection(body->parentWidget()));
         body->addStretch(1);
     }));
@@ -381,8 +381,25 @@ void PresetManagePage::buildDetailLayer() {
         body->addStretch(1);
     }));
     columns->addWidget(m_detailPages, 1);
-    connect(m_detailNav, &QListWidget::currentRowChanged, m_detailPages,
-            &QStackedWidget::setCurrentIndex);
+    connect(m_detailNav, &QListWidget::currentItemChanged, this,
+            [this](QListWidgetItem *item, QListWidgetItem *previous) {
+        if (!item) return;
+        const QVariant section = item->data(kEditorSectionRole);
+        if (section.isValid()) {
+            if (m_embeddedEditor) m_embeddedEditor->selectSection(section.toInt());
+            else emit editSectionRequested(currentPresetId(), section.toInt());
+            if (m_embeddedEditor) return;
+        } else {
+            if (m_embeddedEditor) m_embeddedEditor->reject();
+            if (!m_embeddedEditor) {
+                m_detailPages->setCurrentIndex(item->data(kDetailPageRole).toInt());
+                return;
+            }
+        }
+        // 读取失败或用户取消离开时，左栏回到右侧仍在显示的标签。
+        const QSignalBlocker blocker(m_detailNav);
+        m_detailNav->setCurrentItem(previous);
+    });
     connect(m_applyButton, &QPushButton::clicked, this, [this] {
         if (!m_planCanApply || m_busy) return;
         const QString presetId = currentPresetId();
@@ -400,22 +417,49 @@ void PresetManagePage::buildDetailLayer() {
     m_layers->addWidget(m_detailLayer);
 }
 
+void PresetManagePage::enableEditorTabs() {
+    m_saveDetailsButton->hide();
+    m_nameEdit->hide();
+    m_nameEdit->parentWidget()->hide();
+    m_detailNav->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_detailNav->setFocusPolicy(Qt::StrongFocus);
+    auto titles = PresetEditorPage::sectionTitles();
+    titles[0] = QCoreApplication::translate("PresetManagePage", "基本设置");
+    for (int section = 0; section < titles.size(); ++section) {
+        auto *item = new QListWidgetItem(titles.at(section));
+        item->setSizeHint(QSize(0, kDetailNavRowHeight));
+        item->setData(kEditorSectionRole, section);
+        m_detailNav->insertItem(section + 1, item);
+    }
+    refreshActions();
+}
+
+void PresetManagePage::embedEditor(PresetEditorPage *editor) {
+    m_embeddedEditor = editor;
+    m_detailPages->addWidget(editor);
+    m_detailPages->setCurrentWidget(editor);
+    m_applyButton->hide();
+}
+
+void PresetManagePage::removeEmbeddedEditor() {
+    auto *editor = m_embeddedEditor;
+    m_embeddedEditor = nullptr;
+    m_detailPages->removeWidget(editor);
+    const QSignalBlocker blocker(m_detailNav);
+    auto *active = m_detailNav->currentItem();
+    if (!active || active->data(kEditorSectionRole).isValid()) {
+        m_detailNav->setCurrentRow(0);
+        active = m_detailNav->currentItem();
+    }
+    m_detailPages->setCurrentIndex(active->data(kDetailPageRole).toInt());
+    m_applyButton->show();
+}
+
 /// 顶上那块"图标 + 名字 + 说明 + 一行小字"，和实例设置页那一排同一个位置、同一个配方：
 /// 左边一格大图标，右边一整条名字框；小字（类别 / 段数）在框下面，平着写。
-QWidget *PresetManagePage::buildIdentityBlock(QWidget *parent) {
+QWidget *PresetManagePage::buildDetailsFields(QWidget *parent) {
     auto *block = new QWidget(parent);
-    auto *layout = new QHBoxLayout(block);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(14);
-
-    m_identityIcon = new QLabel(block);
-    m_identityIcon->setObjectName(QStringLiteral("presetDetailIcon"));
-    m_identityIcon->setFixedSize(kIdentityIconSize, kIdentityIconSize);
-    m_identityIcon->setPixmap(VersionIcons::puzzleMark(
-        kIdentityIconSize, palette().color(QPalette::WindowText)));
-    layout->addWidget(m_identityIcon, 0, Qt::AlignTop);
-
-    auto *fields = new QVBoxLayout;
+    auto *fields = new QVBoxLayout(block);
     fields->setContentsMargins(0, 0, 0, 0);
     fields->setSpacing(8);
     m_nameEdit = new QLineEdit(block);
@@ -428,11 +472,6 @@ QWidget *PresetManagePage::buildIdentityBlock(QWidget *parent) {
     m_descriptionEdit->setPlaceholderText(QCoreApplication::translate("PresetManagePage", "说明（可选）"));
     InputSizing::longValue(m_descriptionEdit, QCoreApplication::translate("PresetManagePage", "预设说明：一两句话，长度不定"));
     fields->addWidget(m_descriptionEdit);
-    m_presetMeta = new QLabel(block);
-    m_presetMeta->setObjectName(QStringLiteral("presetMetaLabel"));
-    applyHintStyle(m_presetMeta);
-    fields->addWidget(m_presetMeta);
-    layout->addLayout(fields, 1);
 
     // Enter 也算「保存」（名字框里打完字顺手回车是最常见的动作）。
     connect(m_nameEdit, &QLineEdit::returnPressed, m_saveDetailsButton, &QPushButton::click);
@@ -776,14 +815,17 @@ void PresetManagePage::showDetailLayer(bool detail) {
             QPixmap pixmap(iconPath);
             if (pixmap.isNull()) {
                 pixmap = VersionIcons::puzzleMark(
-                    kIdentityIconSize, palette().color(QPalette::WindowText));
+                    m_identityIcon->width(), palette().color(QPalette::WindowText));
             }
-            m_identityIcon->setPixmap(pixmap.scaled(kIdentityIconSize, kIdentityIconSize,
+            m_identityIcon->setPixmap(pixmap.scaled(m_identityIcon->size(),
                                                     Qt::KeepAspectRatio,
                                                     Qt::SmoothTransformation));
         }
     }
-    m_layers->setCurrentWidget(detail ? m_detailLayer : m_listLayer);
+    auto *next = detail ? m_detailLayer : m_listLayer;
+    if (next == m_layers->currentWidget()) return;
+    emit detailVisibilityChanged(detail);
+    m_layers->setCurrentWidget(next);
 }
 
 // ---------------------------------------------------------------------------
@@ -1147,6 +1189,7 @@ void PresetManagePage::showPreset(const QString &id, const QString &name,
     LoadingState::finish(m_sectionList);
     m_nameEdit->setText(name);
     m_descriptionEdit->setText(description);
+    m_nameEdit->parentWidget()->setVisible(!m_nameEdit->isHidden() || !description.isEmpty());
     // 细节那一层顶上的标题就是这一份的名字（外面改了名之后这一发跟着换）。
     if (m_detailTitle != nullptr) {
         m_detailTitle->setText(name);
@@ -1343,6 +1386,7 @@ void PresetManagePage::showPresetLoading(const QString &id) {
     m_currentId = id;
     m_nameEdit->clear();
     m_descriptionEdit->clear();
+    if (m_nameEdit->isHidden()) m_nameEdit->parentWidget()->hide();
     m_sectionList->clear();
     m_presetMeta->clear();  // 读取中只看正中那一个加载态，这行不再重复一遍
     LoadingState::begin(m_sectionList, tr("正在读取预设…"));
@@ -1413,7 +1457,13 @@ void PresetManagePage::refreshActions() {
     m_defaultButton->setToolTip(defaultAppliesToSelection() || !valid
                                     ? QString()
                                     : QCoreApplication::translate("PresetManagePage", "综合预设和旧版混合预设不设默认：默认只对四类预设生效。"));
-    m_saveDetailsButton->setEnabled(editable);
+    m_saveDetailsButton->setEnabled(editable && !m_saveDetailsButton->isHidden());
+    for (int row = 0; row < m_detailNav->count(); ++row) {
+        auto *item = m_detailNav->item(row);
+        if (item->data(kEditorSectionRole).isValid()) {
+            item->setFlags(editable ? Qt::ItemIsEnabled | Qt::ItemIsSelectable : Qt::NoItemFlags);
+        }
+    }
     m_nameEdit->setEnabled(editable);
     m_descriptionEdit->setEnabled(editable);
 

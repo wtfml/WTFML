@@ -18318,6 +18318,10 @@ Not supported by this preset category: %1.</translation>
             <translation>Extract from instance</translation>
         </message>
         <message>
+            <source>基本设置</source>
+            <translation>General</translation>
+        </message>
+        <message>
             <source>勾选要收的几样</source>
             <translation>Check the items you want to collect</translation>
         </message>
@@ -18348,6 +18352,10 @@ Not supported by this preset category: %1.</translation>
         <message>
             <source>预设名称</source>
             <translation>Default name</translation>
+        </message>
+        <message>
+            <source>预设详情</source>
+            <translation>Preset Details</translation>
         </message>
         <message>
             <source>说明（可选）</source>

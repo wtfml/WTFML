@@ -2238,6 +2238,24 @@ void MainWindowUI::setPresetSubtitle(const QString &text) {
     showInstanceFolderText();
 }
 
+void MainWindowUI::setPresetDetailVisible(bool visible) {
+    presetDetailVisible = visible;
+    if (!instanceModeStack) return;
+    auto *page = tabWidget->widget(instancesTabIndex());
+    if (!page) return;
+    const bool detail = instanceMode == InstanceMode::Preset && visible;
+    if (auto *header = page->findChild<QWidget *>(pageHeaderName(QStringLiteral("instance"))))
+        header->setVisible(!detail);
+    if (auto *modes = page->findChild<QWidget *>(instanceModeRowName()))
+        modes->setVisible(!detail);
+
+    auto *workspace = instanceModeStack->parentWidget()->layout();
+    workspace->setContentsMargins(kSurfacePadding, detail ? 0 : kSurfacePadding,
+                                  kSurfacePadding, kSurfacePadding);
+    page->layout()->setContentsMargins(kPageMargin, detail ? 0 : kPageMargin,
+                                       kPageMargin, kPageMargin);
+}
+
 void MainWindowUI::setServerFormIntro(const QString &text) {
     if (serverFormIntroLabel != nullptr) {
         serverFormIntroLabel->setText(text);
@@ -2267,6 +2285,7 @@ void MainWindowUI::setInstanceMode(InstanceMode mode) {
     // 导入整合包只在客户端 / 服务端标签露面，预设标签收起。
     if (importModpackButton) importModpackButton->setVisible(mode != InstanceMode::Preset);
     instanceMode = mode;
+    setPresetDetailVisible(presetDetailVisible);
     // 页头路径行三个标签都有：换档只是换一份底稿。
     showInstanceFolderText();
     for (int i = 0; i < instanceModeButtons.size(); ++i) {

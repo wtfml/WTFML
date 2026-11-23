@@ -478,7 +478,8 @@ MainWindow::MainWindow(QWidget *parent)
             },
             // 页头那句「N 份预设」：和「当前文件夹：…（N 个实例）」是页头同一格，
             // 换档时由 MainWindowUI 自己换着写（见 setInstanceMode）。
-            [this](const QString &text) { m_ui->setPresetSubtitle(text); }},
+            [this](const QString &text) { m_ui->setPresetSubtitle(text); },
+            [this](bool visible) { m_ui->setPresetDetailVisible(visible); }},
         this);
     m_presetController->setEditorPrompt([this](const QString &title, const QString &text, const QStringList &buttons) {
         return InlineMessage::ask(m_ui->overlay(), MessageKind::Question, title, text, buttons, buttons.size()-1, buttons.size()-1);
