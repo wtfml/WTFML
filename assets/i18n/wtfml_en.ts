@@ -15925,7 +15925,7 @@ Server is running; changes take effect after a restart.</translation>
         <message>
             <source>玩家</source>
             <comment>table column</comment>
-            <translation>Players</translation>
+            <translation>Player</translation>
         </message>
         <message>
             <source>封禁 IP…</source>
