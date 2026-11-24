@@ -565,12 +565,12 @@ void runServerSettingsTests() {
         // 没装好那一条：不再往下报 EULA / 世界 / 备份那几条 —— 那些本来就没到那一步。
         ServerCheck::Facts fresh;
         fresh.installed = false;
-        fresh.installedNote = QStringLiteral("入口文件不在这个目录里。");
+        fresh.installedNote = QStringLiteral("入口文件不在当前目录中。");
         const QList<ServerCheck::Finding> one = ServerCheck::inspect(fresh);
         check(one.size() == 1 && one.first().action == ServerCheck::Action::Reinstall,
               "★★ ZV5 没装好 ⇒ **只报一条**（「还没装好」），并指向「修复」",
               QString::number(one.size()));
-        check(one.first().detail.contains(QStringLiteral("入口文件不在这个目录里")),
+        check(one.first().detail.contains(QStringLiteral("入口文件不在当前目录中")),
               "★ ZV5 那一条把 `Entry::note` 原话带上（「缺什么」是那一层说的）", one.first().detail);
 
         // 世界还没生成（新装的、没跑过）：说一声就好，不是错。

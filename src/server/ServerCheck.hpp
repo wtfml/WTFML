@@ -199,10 +199,10 @@ inline QList<Finding> inspect(const Facts &facts) {
     if (!facts.installed) {
         QString detail = facts.installedNote;
         if (detail.isEmpty()) {
-            detail = QCoreApplication::translate("ServerCheck", "入口文件不在这个目录里。");
+            detail = QCoreApplication::translate("ServerCheck", "入口文件不在当前目录中。");
         }
-        detail += QCoreApplication::translate("ServerCheck", "\n点「修复（重新安装）」下载缺失文件。");
-        findings.append(Finding{Severity::Problem, QCoreApplication::translate("ServerCheck", "这个服务端尚未安装完成"), detail,
+        detail += QCoreApplication::translate("ServerCheck", "\n点击「修复（重新安装）」下载缺失文件。");
+        findings.append(Finding{Severity::Problem, QCoreApplication::translate("ServerCheck", "此服务端尚未安装完成"), detail,
                                 Action::Reinstall});
     } else {
         // 装好了才有"记的那一份说不说得清"这一说（没装好那一条已经把话说了）。
@@ -217,7 +217,7 @@ inline QList<Finding> inspect(const Facts &facts) {
                 (facts.launchProblem.isEmpty()
                      ? QCoreApplication::translate("ServerCheck", "安装记录缺少启动所需的版本信息。")
                      : facts.launchProblem)
-                    + QCoreApplication::translate("ServerCheck", "\n点「修复（重新安装）」按记录的来源完整重装。"),
+                    + QCoreApplication::translate("ServerCheck", "\n点击「修复（重新安装）」按记录的来源完整重装。"),
                 Action::Reinstall});
         }
     }
@@ -234,7 +234,7 @@ inline QList<Finding> inspect(const Facts &facts) {
             Severity::Problem,
             QCoreApplication::translate("ServerCheck", "「%1」的值无效").arg(problem.label),
             QCoreApplication::translate("ServerCheck", "当前值：%1。%2\n可恢复默认值，" "或在「常用设置」中修改。")
-                .arg(problem.value.isEmpty() ? QCoreApplication::translate("ServerCheck", "（空的）") : problem.value,
+                .arg(problem.value.isEmpty() ? QCoreApplication::translate("ServerCheck", "（空）") : problem.value,
                      problem.problem),
             Action::FixValues});
     }
@@ -295,7 +295,7 @@ inline QList<Finding> inspect(const Facts &facts) {
     if (!facts.unknownKeys.isEmpty()) {
         findings.append(Finding{
             Severity::Info,
-            QCoreApplication::translate("ServerCheck", "配置包含 %1 项未提供表单编辑的设置")
+            QCoreApplication::translate("ServerCheck", "配置包含 %1 项无法通过表单编辑的设置")
                 .arg(facts.unknownKeys.size()),
             QCoreApplication::translate("ServerCheck", "以下设置（%1）可在「原始文本」中编辑。" "保存表单时将保留其原值。")
                 .arg(facts.unknownKeys.mid(0, 6).join(QCoreApplication::translate("ServerCheck", "、"))),
