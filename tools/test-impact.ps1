@@ -111,11 +111,12 @@ function Get-TestImpact([string[]]$Paths, [bool]$ForceFull = $false) {
             # 首启资源的已知集合清单与它的生成脚本：改的是 core-resources 那一套断言
             # （清单校验/嵌入字节一致）。不加这一条会落进 default ⇒ 整个 full。
             '^assets/assetdirector/|^tools/assetdirector-knownset\.py$' { @('core-resources'); break }
+            '^assets/agent/' { @('core-agent'); break }
             '^assets/i18n/' { @('ui-history'); break }
             '^(src/download/|tools/network_diag/)|(?i:Download|RangeChecks|SegmentInstall)' { @('core','network','presets'); break }
             '^(tools/.*\.ps1|tests/test_runner/)' { @('runner'); break }
             '^ui/Agent' { @('ui-agent'); break }
-            '^src/controllers/AgentController|^src/controllers/AgentLauncherHostImpl' { @('agent-window','window'); break }
+            '^src/controllers/(AgentController|AgentLauncherHostImpl|AgentTestLaunchRunner)' { @('agent-window','window'); break }
             '^ui/Popups\.(cpp|hpp)$' { @('ui','theme','window','popups'); break }
             '^ui/' { @('ui','theme','window'); break }
             default { @() }

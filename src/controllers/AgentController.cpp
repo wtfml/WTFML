@@ -12,6 +12,10 @@
 #include "agent/AgentRedaction.hpp"
 #include "agent/AgentSecretStore.hpp"
 #include "agent/AgentSkill.hpp"
+#include "agent/AgentLaunchHost.hpp"
+#include "agent/AgentTestLaunchToolEngine.hpp"
+#include "agent/AgentRepairHost.hpp"
+#include "agent/AgentRepairToolEngine.hpp"
 #include "agent/McpTypes.hpp"
 
 #include "AgentMcpPage.hpp"
@@ -138,6 +142,21 @@ AgentProviderProfile coreProfile(const AgentView::ProviderDraft &draft) {
     return profile;
 }
 
+/// 会话里记着的模式若不存在或提示词资源不可用（打包漏文件/编码坏），退回自由对话；
+/// 自由对话自己也坏时返回同一个坏技能，由 onSend 拦住并报错。
+AgentSkill usableSkill(const QString &id) {
+    AgentSkill skill = AgentSkillRegistry::find(id);
+    if (skill.id.isEmpty() || !skill.promptAvailable()) {
+        skill = AgentSkillRegistry::find(QStringLiteral("general"));
+    }
+    return skill;
+}
+
+QString promptProblemText(const AgentSkill &skill) {
+    if (!skill.promptProblem.isEmpty()) return skill.promptProblem;
+    return QCoreApplication::translate("AgentController", "提示词为空。");
+}
+
 }  // namespace
 
 AgentController::AgentController(AgentPage *page, OverlayHost *overlay, QObject *parent)
@@ -160,10 +179,14 @@ AgentController::AgentController(AgentPage *page, OverlayHost *overlay, QObject 
     m_toolEngine->setStrictEgress(AgentSettings::strictEgress());
     // Stage 2：文件工具 + 启动器工具 + 工作流工具合成一个引擎交给 Loop。技能白名单与
     // “写步骤必须在已批准计划里”这两道闸在复合层，子引擎不知道当前是哪个模式。
-    m_workflow.setSkill(AgentSkillRegistry::find(QStringLiteral("general")));
+    m_workflow.setSkill(usableSkill(QStringLiteral("general")));
     m_launcherTools = new AgentLauncherTools(
         nullptr, [this](QString *problem) { return toolContext(problem); });
     m_launcherTools->setStrictEgress(AgentSettings::strictEgress());
+    m_testLaunchTools = new AgentTestLaunchToolEngine(
+        nullptr, [this](QString *problem) { return toolContext(problem); });
+    m_repairTools = new AgentRepairToolEngine(
+        nullptr, nullptr, [this](QString *problem) { return toolContext(problem); });
     m_workflowEngine = new AgentWorkflowEngine(&m_workflow);
     // Stage 2A：MCP。确认闸在 McpTrustStore，生命周期在 McpManager；这里的引擎只管
     // 逐次审批与异步交付。配置读不出来就当作没有服务器，不阻断其它功能。
@@ -183,6 +206,8 @@ AgentController::AgentController(AgentPage *page, OverlayHost *overlay, QObject 
     m_compositeEngine = new AgentCompositeToolEngine;
     m_compositeEngine->addEngine(m_toolEngine);
     m_compositeEngine->addEngine(m_launcherTools);
+    m_compositeEngine->addEngine(m_testLaunchTools);
+    m_compositeEngine->addEngine(m_repairTools);
     m_compositeEngine->addEngine(m_workflowEngine);
     m_compositeEngine->addEngine(m_mcpTools);
     m_compositeEngine->addEngine(m_webTools);
@@ -492,7 +517,7 @@ void AgentController::selectSession(const QString &sessionId) {
     m_saveTimer->stop();
     updateHeader();
     // 会话里记着它上一轮用哪个模式；换会话时工作流从头开始，旧计划不留。
-    m_workflow.setSkill(AgentSkillRegistry::find(m_session.meta.skill));
+    m_workflow.setSkill(usableSkill(m_session.meta.skill));
     refreshSkillUi();
 }
 
@@ -635,6 +660,13 @@ void AgentController::onSend(const QString &text) {
     if (!problem.isEmpty()) {
         if (m_page != nullptr) m_page->showNotice(problem);
         openSettings();
+        return;
+    }
+    if (!m_workflow.skill().promptAvailable()) {
+        if (m_page != nullptr) {
+            m_page->showNotice(QCoreApplication::translate("AgentController", "当前模式的提示词不可用：%1")
+                                   .arg(promptProblemText(m_workflow.skill())));
+        }
         return;
     }
     if (m_session.meta.id.isEmpty()) {
@@ -896,6 +928,7 @@ AgentToolContext AgentController::toolContext(QString *problem) {
     }
     context.instanceId = m_session.meta.instanceLock.id;
     context.instanceName = m_session.meta.instanceLock.name;
+    m_workflow.setInstanceId(context.instanceId);
     context.gameRootId = m_session.meta.instanceLock.gameRootId;
     context.rootPath = m_useTestInstance ? m_testRootPath : AppPaths::versionDir(context.instanceId);
     if (!QFileInfo::exists(context.rootPath)) {
@@ -1250,6 +1283,13 @@ void AgentController::openMcpSettings() {
 void AgentController::setLauncherHost(AgentLauncherHost *host) {
     m_launcherHost = host;
     if (m_launcherTools != nullptr) m_launcherTools->setHost(host);
+    if (m_testLaunchTools != nullptr) {
+        m_testLaunchTools->setHost(dynamic_cast<AgentLaunchHost *>(host));
+    }
+    if (m_repairTools != nullptr) {
+        m_repairTools->setHosts(dynamic_cast<AgentRepairHost *>(host),
+                                dynamic_cast<AgentLaunchHost *>(host));
+    }
 }
 
 void AgentController::applySkillToLoop() {
@@ -1270,7 +1310,7 @@ void AgentController::refreshSkillUi() {
     QList<AgentView::SkillOption> options;
     for (const QString &id : AgentSkillRegistry::orderedIds()) {
         const AgentSkill skill = AgentSkillRegistry::find(id);
-        if (skill.id.isEmpty()) continue;
+        if (skill.id.isEmpty() || !skill.promptAvailable()) continue;
         options.append(AgentView::SkillOption{skill.id, skill.name, skill.description});
     }
     m_page->setSkills(options, m_workflow.skill().id);
@@ -1279,6 +1319,13 @@ void AgentController::refreshSkillUi() {
 void AgentController::onSkillChosen(const QString &skillId) {
     const AgentSkill skill = AgentSkillRegistry::find(skillId);
     if (skill.id.isEmpty()) return;
+    if (!skill.promptAvailable()) {
+        if (m_page != nullptr) {
+            m_page->showNotice(QCoreApplication::translate("AgentController", "模式「%1」不可用：%2")
+                                   .arg(skill.name, promptProblemText(skill)));
+        }
+        return;
+    }
     if (m_loop->busy()) {
         if (m_page != nullptr) m_page->showNotice(QStringLiteral("先停止当前回复再切换模式。"));
         return;

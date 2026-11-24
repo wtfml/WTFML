@@ -464,6 +464,10 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>当前模式的提示词不可用：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>检测到疑似凭据（%1），已在本机遮挡后再发送。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -509,6 +513,10 @@
         </message>
         <message>
             <source>无可用的 API Key，请先在设置中配置。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>提示词为空。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -585,6 +593,10 @@
         </message>
         <message>
             <source>无法写入 %1：%2。请更换位置后重试。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模式「%1」不可用：%2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -837,6 +849,41 @@
         </message>
         <message>
             <source>删除</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentPromptLibrary</name>
+        <message>
+            <source>提示词 id 不合法：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>找不到技能提示词资源：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>技能提示词超过 %1 字节：%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>技能提示词不是有效 UTF-8：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>技能提示词为空：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>技能提示词 id 不合法：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>技能提示词不可用（%1）：%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>技能提示词组合后超过 %1 字节</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
