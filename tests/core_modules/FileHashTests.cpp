@@ -155,7 +155,7 @@ void runFileHashTests() {
               "★ ZAC4 结论里带着「已知值点的是哪一档」（比不同档的摘要没有意义，界面要拿它提示）");
         const FileHash::Verdict noExpected = FileHash::compare(
             FileHash::digestOf(QByteArray("abc"), FileHash::Algorithm::Sha256), FileHash::Expected{});
-        check(!noExpected.valid && noExpected.text == QStringLiteral("没有已知值可比。"),
+        check(!noExpected.valid && noExpected.text == QStringLiteral("无已知值可比。"),
               "ZAC4 没给已知值 ⇒ 只说「没得比」，不当成「不一致」", noExpected.text);
     }
 

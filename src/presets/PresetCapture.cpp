@@ -74,7 +74,7 @@ bool captureFileGroup(const CaptureRequest &request, FileGroup group,
     QStringList refused;
     QString why;
     if (!scanFileGroup(request.instanceRoot, group, &items, &refused, &why)) {
-        report->problems.append(QCoreApplication::translate("Presets", "%1 读不了：%2")
+        report->problems.append(QCoreApplication::translate("Presets", "%1 无法读取：%2")
                                     .arg(groupDisplayName(group), why));
         return false;
     }

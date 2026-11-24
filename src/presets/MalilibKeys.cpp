@@ -121,7 +121,7 @@ bool isCategoryValue(const QJsonValue &value) { return value.isObject(); }
 bool readWholeFile(const QString &path, QByteArray *out, QString *problemOut) {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        failWith(problemOut, QCoreApplication::translate("Presets", "读不了「%1」：%2").arg(path, file.errorString()));
+        failWith(problemOut, QCoreApplication::translate("Presets", "无法读取「%1」：%2").arg(path, file.errorString()));
         return false;
     }
     if (out != nullptr) {
@@ -1002,7 +1002,7 @@ MalilibTarget malilibReadTarget(const QString &instanceRoot, const QStringList &
     if (instanceRoot.trimmed().isEmpty()) {
         // 没给实例目录就往下走的话，`config/x.json` 会变成一个**相对路径** —— 读的是当前
         // 目录、写的也是当前目录。这一条必须是"整趟不办"，不是"那几份当作不存在"。
-        failWith(problemOut, QCoreApplication::translate("Presets", "没给实例目录，读不了目标上的配置。"));
+        failWith(problemOut, QCoreApplication::translate("Presets", "未指定实例目录，无法读取目标配置。"));
         return target;
     }
     for (const QString &modId : modIds) {

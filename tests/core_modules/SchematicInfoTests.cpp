@@ -180,7 +180,7 @@ void runSchematicInfoTests() {
         check(other.contains(TextMarks::warning()) && other.contains(QStringLiteral("1.18.2")),
               "★ SG1 换到 1.18.2 ⇒ 明说「来自哪一版、实例是哪一版」，不把话说死",
               other);
-        check(SchematicInfo::topBlocksText(info).contains(QStringLiteral("最多的方块："))
+        check(SchematicInfo::topBlocksText(info).contains(QStringLiteral("数量最多的方块："))
                   && SchematicInfo::topBlocksText(info).contains(QStringLiteral("minecraft:oak_planks：3")),
               "SG1 悬停提示里的方块排行",
               SchematicInfo::topBlocksText(info));
