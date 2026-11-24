@@ -109,11 +109,11 @@ public:
     /// 往后要 `count` 个字节（不取，只判够不够）。
     bool need(qint64 count) {
         if (count < 0) {
-            fail(QCoreApplication::translate("NbtTree", "长度是负的"));
+            fail(QCoreApplication::translate("NbtTree", "长度值为负数"));
             return false;
         }
         if (remaining() < count) {
-            fail(QCoreApplication::translate("NbtTree", "文件在这里就断了（还要 %1 个字节，只剩 %2 个）")
+            fail(QCoreApplication::translate("NbtTree", "文件在此处中断：需要 %1 个字节，剩余 %2 个")
                      .arg(count)
                      .arg(remaining()));
             return false;
@@ -192,7 +192,7 @@ public:
     /// 的最后一道闸 —— 列表那条"最少一个字节"的检查挡不住 List(Compound)）。
     bool claimNode() {
         if (++m_nodes > kMaxNodes) {
-            fail(QCoreApplication::translate("NbtTree", "元素太多（超过 %1 个）").arg(kMaxNodes));
+            fail(QCoreApplication::translate("NbtTree", "元素数量超过上限 %1").arg(kMaxNodes));
             return false;
         }
         return true;
@@ -316,7 +316,7 @@ QByteArray encodeModifiedUtf8(const QString &text) {
 bool toType(quint8 raw, Type *out, QString *problemOut) {
     if (raw > static_cast<quint8>(Type::LongArray)) {
         if (problemOut != nullptr) {
-            *problemOut = QCoreApplication::translate("NbtTree", "不认识的标签类型 %1").arg(raw);
+            *problemOut = QCoreApplication::translate("NbtTree", "未知的标签类型 %1").arg(raw);
         }
         return false;
     }
@@ -343,7 +343,7 @@ bool readNamedFromType(Reader &reader, quint8 rawType, Field *out, int depth);
 /// 读一格**不带名字的**载荷（List 的元素就是它）。
 bool readPayload(Reader &reader, Type type, Node *out, int depth) {
     if (depth > kMaxDepth) {
-        reader.fail(QCoreApplication::translate("NbtTree", "嵌套太深（超过 %1 层）").arg(kMaxDepth));
+        reader.fail(QCoreApplication::translate("NbtTree", "嵌套层级超过上限 %1").arg(kMaxDepth));
         return false;
     }
     if (!reader.claimNode()) {
@@ -353,7 +353,7 @@ bool readPayload(Reader &reader, Type type, Node *out, int depth) {
     switch (type) {
     case Type::End:
         // 只有"空 List"和"复合标签的结束"会走到这儿 —— 单独一格 End 是错的。
-        reader.fail(QCoreApplication::translate("NbtTree", "这里不该出现结束标签"));
+        reader.fail(QCoreApplication::translate("NbtTree", "此处不应出现结束标签"));
         return false;
     case Type::Byte:
         node.number = static_cast<qint8>(reader.readU8());
@@ -392,7 +392,7 @@ bool readPayload(Reader &reader, Type type, Node *out, int depth) {
         rawItemType = reader.readU8();
         Type itemType = Type::End;
         if (!toType(rawItemType, &itemType, nullptr)) {
-            reader.fail(QCoreApplication::translate("NbtTree", "列表里写着不认识的元素类型 %1").arg(rawItemType));
+            reader.fail(QCoreApplication::translate("NbtTree", "列表包含未知的元素类型 %1").arg(rawItemType));
             return false;
         }
         const qint32 count = reader.readI32();
@@ -400,20 +400,20 @@ bool readPayload(Reader &reader, Type type, Node *out, int depth) {
             return false;
         }
         if (count < 0) {
-            reader.fail(QCoreApplication::translate("NbtTree", "列表的项数是负的"));
+            reader.fail(QCoreApplication::translate("NbtTree", "列表的项数为负数"));
             return false;
         }
         // 空表（`itemType == End`）只能有 0 项 —— 有项就表示"每个元素的类型都读不出来"，
         // 后面按 End 读第一格就报错；这里先一句话说清楚，也避开下面那个除以 0。
         if (itemType == Type::End && count != 0) {
-            reader.fail(QCoreApplication::translate("NbtTree", "列表的元素类型是空的、却写着 %1 项").arg(count));
+            reader.fail(QCoreApplication::translate("NbtTree", "列表的元素类型为空，但项数为 %1").arg(count));
             return false;
         }
         // 每一项**最少**占 `minItemBytes` 个字节 ⇒ 项数比"剩余字节数 / 最少字节"还大
         // 必然是坏的。这一下既挡"按 count 一个个读成几百万次的循环"，也挡"按 count
         // 直接 reserve 一大片"（List(Byte) 的项数可以接近文件字节数）。
         if (count > reader.remaining() / minItemBytes(itemType)) {
-            reader.fail(QCoreApplication::translate("NbtTree", "列表的项数 %1 比文件剩下的字节还多").arg(count));
+            reader.fail(QCoreApplication::translate("NbtTree", "列表项数 %1 超过文件剩余字节数").arg(count));
             return false;
         }
         node.itemType = itemType;
@@ -432,7 +432,7 @@ bool readPayload(Reader &reader, Type type, Node *out, int depth) {
             // 收尾那一格是 `TAG_End`，**不带名字**（它只占一个字节）—— 所以这里先自己读
             // 那个类型字节，读到 0 才是收尾，否则连着名字一起交给 readNamedFromType()。
             if (reader.remaining() < 1) {
-                reader.fail(QCoreApplication::translate("NbtTree", "复合标签没有收尾"));
+                reader.fail(QCoreApplication::translate("NbtTree", "复合标签缺少结束标记"));
                 return false;
             }
             const quint8 rawType = reader.readU8();
@@ -450,7 +450,7 @@ bool readPayload(Reader &reader, Type type, Node *out, int depth) {
         const qint32 count = reader.readI32();
         if (!reader.ok() || count < 0) {
             if (reader.ok()) {
-                reader.fail(QCoreApplication::translate("NbtTree", "整数数组的长度是负的"));
+                reader.fail(QCoreApplication::translate("NbtTree", "整数数组的长度为负数"));
             }
             return false;
         }
@@ -467,7 +467,7 @@ bool readPayload(Reader &reader, Type type, Node *out, int depth) {
         const qint32 count = reader.readI32();
         if (!reader.ok() || count < 0) {
             if (reader.ok()) {
-                reader.fail(QCoreApplication::translate("NbtTree", "长整数数组的长度是负的"));
+                reader.fail(QCoreApplication::translate("NbtTree", "长整数数组的长度为负数"));
             }
             return false;
         }
@@ -490,16 +490,16 @@ bool readPayload(Reader &reader, Type type, Node *out, int depth) {
 
 bool readNamedFromType(Reader &reader, quint8 rawType, Field *out, int depth) {
     if (depth > kMaxDepth) {
-        reader.fail(QCoreApplication::translate("NbtTree", "嵌套太深（超过 %1 层）").arg(kMaxDepth));
+        reader.fail(QCoreApplication::translate("NbtTree", "嵌套层级超过上限 %1").arg(kMaxDepth));
         return false;
     }
     Type type = Type::End;
     if (!toType(rawType, &type, nullptr)) {
-        reader.fail(QCoreApplication::translate("NbtTree", "不认识的标签类型 %1").arg(rawType));
+        reader.fail(QCoreApplication::translate("NbtTree", "未知的标签类型 %1").arg(rawType));
         return false;
     }
     if (type == Type::End) {
-        reader.fail(QCoreApplication::translate("NbtTree", "这里不该出现结束标签"));
+        reader.fail(QCoreApplication::translate("NbtTree", "此处不应出现结束标签"));
         return false;
     }
     QString name;
@@ -681,7 +681,7 @@ QString typeName(Type type) {
     case Type::ByteArray:
         return QCoreApplication::translate("NbtTree", "字节数组");
     case Type::String:
-        return QCoreApplication::translate("NbtTree", "文字");
+        return QCoreApplication::translate("NbtTree", "字符串");
     case Type::List:
         return QCoreApplication::translate("NbtTree", "列表");
     case Type::Compound:
@@ -691,7 +691,7 @@ QString typeName(Type type) {
     case Type::LongArray:
         return QCoreApplication::translate("NbtTree", "长整数数组");
     }
-    return QCoreApplication::translate("NbtTree", "不认识");
+    return QCoreApplication::translate("NbtTree", "未知");
 }
 
 bool isFloatingPoint(Type type) {
@@ -871,7 +871,7 @@ bool parse(const QByteArray &raw, Document *out, QString *problemOut) {
     }
     if (raw.size() > kMaxSize) {
         if (problemOut != nullptr) {
-            *problemOut = QCoreApplication::translate("NbtTree", "这份文件太大了（%1 字节）").arg(raw.size());
+            *problemOut = QCoreApplication::translate("NbtTree", "文件过大（%1 字节）").arg(raw.size());
         }
         return false;
     }
@@ -890,7 +890,7 @@ bool parse(const QByteArray &raw, Document *out, QString *problemOut) {
     // 被人塞进去的东西，认了它就是认了一份我们不认识的文件）。
     if (!reader.atEnd()) {
         if (problemOut != nullptr) {
-            *problemOut = QCoreApplication::translate("NbtTree", "末尾还多着 %1 个字节").arg(reader.remaining());
+            *problemOut = QCoreApplication::translate("NbtTree", "文件末尾多出 %1 个字节").arg(reader.remaining());
         }
         return false;
     }
@@ -933,7 +933,7 @@ QString valueKindName(ValueKind kind) {
     case ValueKind::Int:
         return QCoreApplication::translate("NbtTree", "整数");
     case ValueKind::Text:
-        return QCoreApplication::translate("NbtTree", "文字");
+        return QCoreApplication::translate("NbtTree", "文本");
     }
     return QString();
 }
@@ -1030,7 +1030,7 @@ bool setGameRule(Node *root, const QString &name, const QString &value, QString 
             continue;
         }
         if (item.second.type != Type::String) {
-            return missing(QCoreApplication::translate("NbtTree", "规则「%1」的值不是文本，已跳过。")
+            return missing(QCoreApplication::translate("NbtTree", "规则「%1」的值不是字符串，已跳过。")
                                .arg(name));
         }
         if (encodeModifiedUtf8(value).size() > 0xFFFF) {
@@ -1055,7 +1055,7 @@ bool setGameRule(Node *root, const QString &name, const QString &value, QString 
     }
     // 默认那一档：不发明新规则（理由见 .hpp 里那一段）。
     return missing(QCoreApplication::translate(
-        "NbtTree", "此存档中没有规则「%1」。可编辑已存在的规则。")
+        "NbtTree", "此存档中无规则「%1」。仅可编辑已有规则。")
                        .arg(name));
 }
 

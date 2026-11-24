@@ -473,13 +473,13 @@ bool readBytes(const QString &path, QByteArray *out, QString *problem) {
     const QFileInfo info(path);
     if (!info.exists() || !info.isFile()) {
         if (problem != nullptr) {
-            *problem = QCoreApplication::translate("SchematicInfo", "找不到这个文件。");
+            *problem = QCoreApplication::translate("SchematicInfo", "未找到文件。");
         }
         return false;
     }
     if (info.size() <= 0) {
         if (problem != nullptr) {
-            *problem = QCoreApplication::translate("SchematicInfo", "这个文件是空的。");
+            *problem = QCoreApplication::translate("SchematicInfo", "文件为空。");
         }
         return false;
     }
@@ -518,7 +518,7 @@ bool readBytes(const QString &path, QByteArray *out, QString *problem) {
     QTemporaryDir temp;
     if (!temp.isValid()) {
         if (problem != nullptr) {
-            *problem = QCoreApplication::translate("SchematicInfo", "解压这一步腾不出临时目录。");
+            *problem = QCoreApplication::translate("SchematicInfo", "无法创建临时目录。");
         }
         return false;
     }
@@ -539,7 +539,7 @@ bool readBytes(const QString &path, QByteArray *out, QString *problem) {
     }
     if (plainInfo.size() > kMaxUncompressedBytes) {
         if (problem != nullptr) {
-            *problem = QCoreApplication::translate("SchematicInfo", "解压之后太大了（超过 %1 MB），这一页不展开读。")
+            *problem = QCoreApplication::translate("SchematicInfo", "解压后大小超过 %1 MB，不展开读取。")
                            .arg(kMaxUncompressedBytes / (1024 * 1024));
         }
         return false;
@@ -766,7 +766,7 @@ QString topBlocksText(const Info &info, const QJsonObject &language) {
         return QString();
     }
     QStringList lines;
-    lines.append(QCoreApplication::translate("SchematicInfo", "最多的方块："));
+    lines.append(QCoreApplication::translate("SchematicInfo", "数量最多的方块："));
     for (const BlockCount &block : info.topBlocks) {
         const QString name = chineseBlockName(language, block.id);
         lines.append(QCoreApplication::translate("SchematicInfo", "  %1：%2")
