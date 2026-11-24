@@ -53,7 +53,8 @@ QStringList repairTools() {
             QStringLiteral("repair.verify"),
             QStringLiteral("repair.finish"),
             QStringLiteral("mods.installFix"),
-            QStringLiteral("instance.repairCore")};
+            QStringLiteral("instance.repairCore"),
+            QStringLiteral("mods.bisect")};
 }
 
 AgentSkill make(const QString &id, const QString &name, const QString &description,
@@ -121,7 +122,7 @@ QList<AgentSkill> AgentSkillRegistry::builtins() {
         QStringLiteral("列模组、读声明查兼容/缺前置、启停或备份、按平台记录修复文件；不猜文件名兼容性。"),
         QStringLiteral("mods"), true, QStringList(readOnlyTools() + repairTools()), false, true,
         {QStringLiteral("mods.list")},
-        QStringLiteral("模组清单有证据；每个改动都有结果；不确定项写明。"), 2));
+        QStringLiteral("模组清单有证据；每个改动都有结果；不确定项写明。"), 3));
 
     return list;
 }

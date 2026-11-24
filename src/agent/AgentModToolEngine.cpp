@@ -139,6 +139,27 @@ QList<AgentToolSpec> AgentModToolEngine::specs() {
                       {QStringLiteral("workspaceId"), stringField(QStringLiteral("string"), 80)},
                       {QStringLiteral("installDependencies"), boolField()}})));
     list.append(spec(
+        QStringLiteral("mods.bisect"),
+        QCoreApplication::translate("AgentModToolEngine", "依赖感知二分"),
+        QStringLiteral("在事务工作区里反复启停模组并启动游戏，用 delta debugging 找出"  // i18n-ignore
+                       "哪些模组一起启用才崩；必需前置始终启用，结束后工作区恢复基线。"),  // i18n-ignore
+        AgentRisk::Command,
+        objectSchema({QStringLiteral("workspaceId")},
+                     {{QStringLiteral("workspaceId"), stringField(QStringLiteral("string"), 80)},
+                      {QStringLiteral("prioritizedCandidates"),
+                       QJsonObject{{QStringLiteral("type"), QStringLiteral("array")},
+                                   {QStringLiteral("maxItems"), 50}}},
+                      {QStringLiteral("maxLaunches"),
+                       QJsonObject{{QStringLiteral("type"), QStringLiteral("integer")},
+                                   {QStringLiteral("maximum"), AgentModBisect::Bisect::maxLaunchesLimit()}}},
+                      {QStringLiteral("repeatPerCandidate"),
+                       QJsonObject{{QStringLiteral("type"), QStringLiteral("integer")},
+                                   {QStringLiteral("maximum"), AgentModBisect::Bisect::maxRepeatLimit()}}},
+                      {QStringLiteral("timeoutSeconds"),
+                       QJsonObject{{QStringLiteral("type"), QStringLiteral("integer")},
+                                   {QStringLiteral("maximum"), 600}}},
+                      {QStringLiteral("respectDependencies"), boolField()}})));
+    list.append(spec(
         QStringLiteral("instance.repairCore"), QStringLiteral("修复游戏核心文件"),  // i18n-ignore
         QStringLiteral("按实例声明的官方大小与 SHA-1 重下客户端 jar、库和资源索引；"  // i18n-ignore
                        "每次审批，事务活动期间拒绝。"),  // i18n-ignore
@@ -147,9 +168,11 @@ QList<AgentToolSpec> AgentModToolEngine::specs() {
 }
 
 AgentModToolEngine::AgentModToolEngine(AgentLauncherHost *launcherHost, AgentModHost *modHost,
-                                       ContextProvider provider, QObject *dispatcher)
+                                       ContextProvider provider, QObject *dispatcher,
+                                       AgentLaunchHost *launchHost)
     : m_launcherHost(launcherHost),
       m_modHost(modHost),
+      m_launchHost(launchHost),
       m_provider(std::move(provider)),
       m_dispatcher(dispatcher) {}
 
@@ -348,6 +371,74 @@ AgentToolResult AgentModToolEngine::invoke(const Agent::ToolCall &call) {
                                     externalSendEgress(reason, pending.mods.size()));
         }
         return startAnalyzeOrVerify(pending);
+    }
+
+    if (internal == QStringLiteral("mods.bisect")) {
+        const QString workspaceId = call.arguments.value(QStringLiteral("workspaceId")).toString();
+        AgentWorkspaceStore workspaces;
+        AgentWorkspaceRecord workspace;
+        if (!workspaces.load(workspaceId, &workspace, &problem)) {
+            return errorResult(Agent::ErrorKind::ToolError,
+                               problem.isEmpty() ? QCoreApplication::translate("AgentModToolEngine", "没有这个工作区。") : problem);  // i18n-ignore
+        }
+        if (workspace.sourceInstanceId != context.instanceId) {
+            return errorResult(Agent::ErrorKind::ToolError,
+                               QCoreApplication::translate("AgentModToolEngine", "工作区不属于当前锁定的实例。"));  // i18n-ignore
+        }
+        const QString root = QDir(workspaces.workspacesRoot()).absolutePath();
+        if (!QDir::cleanPath(workspace.rootPath).startsWith(root + QLatin1Char('/'))) {
+            return errorResult(Agent::ErrorKind::ToolError,
+                               QCoreApplication::translate("AgentModToolEngine", "工作区路径不在登记目录下，拒绝执行。"));  // i18n-ignore
+        }
+        AgentRepairTransactionStore transactions;
+        AgentRepairTransactionRecord record;
+        if (!transactions.loadByWorkspace(workspaceId, &record, &problem) || !record.active()) {
+            return errorResult(Agent::ErrorKind::ToolError,
+                               QCoreApplication::translate("AgentModToolEngine", "二分只从事务工作区：先 repair.begin，再带 workspaceId 调这里。"));  // i18n-ignore
+        }
+        if (m_launchHost == nullptr) {
+            return errorResult(Agent::ErrorKind::ToolError,
+                               QCoreApplication::translate("AgentModToolEngine", "测试启动宿主未接入。"));  // i18n-ignore
+        }
+        pending.job = Job::Bisect;
+        pending.workspace = workspace;
+        pending.transactionId = record.id;
+        pending.respectDependencies = call.arguments.value(QStringLiteral("respectDependencies")).toBool(true);
+        pending.maxLaunches = call.arguments.value(QStringLiteral("maxLaunches")).toInt(8);
+        pending.maxLaunches = qBound(1, pending.maxLaunches, AgentModBisect::Bisect::maxLaunchesLimit());
+        pending.repeatPerCandidate =
+            call.arguments.value(QStringLiteral("repeatPerCandidate")).toInt(2);
+        pending.repeatPerCandidate =
+            qBound(1, pending.repeatPerCandidate, AgentModBisect::Bisect::maxRepeatLimit());
+        pending.timeoutSeconds = call.arguments.value(QStringLiteral("timeoutSeconds")).toInt(120);
+        pending.timeoutSeconds = qBound(10, pending.timeoutSeconds, 600);
+        for (const QJsonValue &value :
+             call.arguments.value(QStringLiteral("prioritizedCandidates")).toArray()) {
+            if (!value.isString()) continue;
+            const QString token = value.toString().trimmed();
+            if (token.isEmpty() || token.size() > 200) continue;
+            if (pending.prioritizedCandidates.size() >= 50) break;
+            pending.prioritizedCandidates.append(token);
+        }
+        const QString summary =
+            QCoreApplication::translate("AgentModToolEngine",
+                                        "在事务工作区 %1 里二分：最多 %2 次启动、每次最多 %3 秒。")  // i18n-ignore
+                .arg(workspaceId)
+                .arg(pending.maxLaunches)
+                .arg(pending.timeoutSeconds);
+        const QString preview =
+            QCoreApplication::translate("AgentModToolEngine",
+                                        "反复启用/停用工作区 mods/ 并启动游戏，每轮把 config/ 与 options.txt "  // i18n-ignore
+                                        "重置到二分开始时的快照；不写原实例、不下载、不改世界。结束后把 "  // i18n-ignore
+                                        "mods/、config/、options.txt 恢复成二分前的样子。");  // i18n-ignore
+        return approvalRequired(pending,
+                                QCoreApplication::translate("AgentModToolEngine", "依赖感知二分"),
+                                summary, preview,
+                                QCoreApplication::translate("AgentModToolEngine", "只启动隔离工作区里的游戏；进程用 Job Object 清理。"),  // i18n-ignore
+                                QJsonObject{{QStringLiteral("kind"), QStringLiteral("local")},
+                                            {QStringLiteral("decision"), QStringLiteral("auto")},
+                                            {QStringLiteral("reason"), QCoreApplication::translate("AgentModToolEngine", "只在本机工作区启动")},  // i18n-ignore
+                                            {QStringLiteral("redactionHits"), 0}});
     }
 
     if (internal == QStringLiteral("mods.installFix")) {
@@ -915,6 +1006,347 @@ void AgentModToolEngine::startRepairCore(const Pending &pending) {
     }
 }
 
+// ---------------------------------------------------------------- 依赖感知二分
+
+namespace {
+
+/// 有界递归复制（config/ 这种小目录）；超出上限就失败，不半截继续。
+bool copyTree(const QString &from, const QString &to, int *filesLeft, qint64 *bytesLeft,
+              QString *problem) {
+    QDir source(from);
+    if (!source.exists()) return true;
+    if (!QDir().mkpath(to)) {
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentModToolEngine", "建不出快照目录。");  // i18n-ignore
+        return false;
+    }
+    const QFileInfoList entries =
+        source.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+    for (const QFileInfo &entry : entries) {
+        if (entry.isSymLink() || entry.isJunction()) continue;
+        const QString target = to + QLatin1Char('/') + entry.fileName();
+        if (entry.isDir()) {
+            if (!copyTree(entry.absoluteFilePath(), target, filesLeft, bytesLeft, problem)) {
+                return false;
+            }
+            continue;
+        }
+        if (*filesLeft <= 0 || entry.size() > *bytesLeft) {
+            if (problem != nullptr) {
+                *problem = QCoreApplication::translate("AgentModToolEngine", "config/ 超过快照上限（5000 个文件 / 200 MB）。");  // i18n-ignore
+            }
+            return false;
+        }
+        --(*filesLeft);
+        *bytesLeft -= entry.size();
+        if (!QFile::copy(entry.absoluteFilePath(), target)) {
+            if (problem != nullptr) *problem = QCoreApplication::translate("AgentModToolEngine", "复制 config/ 失败。");  // i18n-ignore
+            return false;
+        }
+    }
+    return true;
+}
+
+}  // namespace
+
+void AgentModToolEngine::startBisect(const Pending &pending) {
+    if (m_active) return;
+    if (m_launchHost == nullptr) {
+        m_run.pending = pending;
+        m_active = true;
+        finishWithError(m_run, Agent::ErrorKind::ToolError,
+                        QCoreApplication::translate("AgentModToolEngine", "测试启动宿主未接入。"));  // i18n-ignore
+        return;
+    }
+    m_active = true;
+    m_generation += 1;
+    m_run = Run{};
+    m_run.pending = pending;
+    m_run.generation = m_generation;
+    m_bisect.reset();
+    m_bisectState = BisectState{};
+    m_bisectState.timer.start();
+    const AgentWorkspaceRecord &workspace = pending.workspace;
+    m_bisectState.versionDir = workspace.rootPath + QStringLiteral("/versions/") + workspace.versionId;
+    m_bisectState.modsDir = m_bisectState.versionDir + QStringLiteral("/mods");
+    m_bisectState.configDir = m_bisectState.versionDir + QStringLiteral("/config");
+    m_bisectState.optionsPath = m_bisectState.versionDir + QStringLiteral("/options.txt");
+    m_bisectState.stagingDir = AgentPaths::modStagingDir() + QStringLiteral("/bisect-") +
+                               pending.transactionId + QLatin1Char('-') +
+                               QUuid::createUuid().toString(QUuid::WithoutBraces);
+
+    // 1) 清点工作区的模组（同一基名只认启用的那份）。
+    QList<AgentModBisect::Mod> mods;
+    QList<QPair<int, QString>> archives;  // mod 下标 → 本地路径
+    QDir modsDir(m_bisectState.modsDir);
+    const QFileInfoList files = modsDir.entryInfoList(
+        {QStringLiteral("*.jar"), QStringLiteral("*.jar.disabled")}, QDir::Files, QDir::Name);
+    QSet<QString> seenBase;
+    QStringList archivePaths;
+    for (const QFileInfo &file : files) {
+        QString base = file.fileName();
+        const bool enabled = base.endsWith(QStringLiteral(".jar"));
+        if (!enabled) base.chop(QStringLiteral(".disabled").size());
+        if (seenBase.contains(base)) continue;  // 同名两份：先到的是启用那份
+        seenBase.insert(base);
+        AgentModBisect::Mod mod;
+        mod.fileName = base;
+        mod.initiallyEnabled = enabled;
+        mod.modifiedMs = file.lastModified().toMSecsSinceEpoch();
+        mods.append(mod);
+        archives.append({int(mods.size()) - 1, file.absoluteFilePath()});
+        archivePaths.append(file.absoluteFilePath());
+    }
+    if (!archivePaths.isEmpty()) {
+        QString batchProblem;
+        const QHash<QString, ZipUtil::ArchiveMetadata> metadata = ZipUtil::readMetadataBatch(
+            archivePaths, ModDeclarations::metadataEntries(), &batchProblem);
+        for (const auto &item : archives) {
+            const auto record = metadata.constFind(item.second);
+            if (record == metadata.constEnd()) continue;
+            ModDeclarations::Mod parsed;
+            ModDeclarations::parse(QFileInfo(item.second).fileName(), record->entries,
+                                   record->entryProblems, &parsed);
+            mods[item.first].modId = parsed.modId;
+            mods[item.first].requiredModIds = parsed.requiredModIds;
+        }
+    }
+    for (const AgentModBisect::Mod &mod : mods) {
+        m_bisectState.initialEnabled.insert(mod.fileName, mod.initiallyEnabled);
+        m_bisectState.installedBaseNames.append(mod.fileName);
+    }
+
+    // 2) config/ 与 options.txt 的快照（每轮启动前恢复它）。
+    int filesLeft = 5000;
+    qint64 bytesLeft = 200ll * 1024 * 1024;
+    QString snapshotProblem;
+    const bool snapshotOk =
+        QDir().mkpath(m_bisectState.stagingDir) &&
+        copyTree(m_bisectState.configDir, m_bisectState.stagingDir + QStringLiteral("/config"),
+                 &filesLeft, &bytesLeft, &snapshotProblem);
+    m_bisectState.optionsExisted = QFileInfo(m_bisectState.optionsPath).isFile();
+    if (snapshotOk && m_bisectState.optionsExisted &&
+        !QFile::copy(m_bisectState.optionsPath,
+                     m_bisectState.stagingDir + QStringLiteral("/options.txt"))) {
+        finishWithError(m_run, Agent::ErrorKind::ToolError,
+                        QCoreApplication::translate("AgentModToolEngine", "复制 options.txt 快照失败，未开始二分。"));  // i18n-ignore
+        return;
+    }
+    if (!snapshotOk) {
+        finishWithError(m_run, Agent::ErrorKind::ToolError,
+                        snapshotProblem.isEmpty()
+                            ? QCoreApplication::translate("AgentModToolEngine", "准备快照目录失败，未开始二分。")  // i18n-ignore
+                            : snapshotProblem);
+        return;
+    }
+
+    // 3) 规划器。
+    AgentModBisect::Options options;
+    options.maxLaunches = pending.maxLaunches;
+    options.repeatPerCandidate = pending.repeatPerCandidate;
+    options.maxMinutes = AgentModBisect::Bisect::maxMinutesLimit();
+    options.respectDependencies = pending.respectDependencies;
+    options.prioritizedCandidates = pending.prioritizedCandidates;
+    m_bisect = std::make_unique<AgentModBisect::Bisect>(mods, options);
+    bisectNext();
+}
+
+void AgentModToolEngine::clearBisectLogs() {
+    QDir(m_bisectState.versionDir + QStringLiteral("/logs")).removeRecursively();
+    QDir(m_bisectState.versionDir + QStringLiteral("/crash-reports")).removeRecursively();
+    const QFileInfoList crashes = QDir(m_bisectState.versionDir).entryInfoList(
+        {QStringLiteral("hs_err_pid*")}, QDir::Files);
+    for (const QFileInfo &file : crashes) QFile::remove(file.absoluteFilePath());
+}
+
+bool AgentModToolEngine::applyBisectEnabledSet(const QStringList &enabledFiles) {
+    QDir modsDir(m_bisectState.modsDir);
+    const QSet<QString> desired(enabledFiles.cbegin(), enabledFiles.cend());
+    const QFileInfoList files = modsDir.entryInfoList(
+        {QStringLiteral("*.jar"), QStringLiteral("*.jar.disabled")}, QDir::Files, QDir::Name);
+    QSet<QString> seen;
+    for (const QFileInfo &file : files) {
+        QString base = file.fileName();
+        if (!base.endsWith(QStringLiteral(".jar"))) base.chop(QStringLiteral(".disabled").size());
+        if (seen.contains(base)) continue;
+        seen.insert(base);
+        // base 是**启用形态**（`x.jar`）；停用形态是在后面加 `.disabled`。
+        const QString target = desired.contains(base) ? base
+                                                      : base + QStringLiteral(".disabled");
+        if (file.fileName() == target) continue;
+        const QString targetPath = m_bisectState.modsDir + QLatin1Char('/') + target;
+        if (QFileInfo::exists(targetPath)) {
+            m_bisectState.problem = QCoreApplication::translate("AgentModToolEngine", "工作区里有重名文件：%1").arg(target);  // i18n-ignore
+            return false;
+        }
+        if (!QFile::rename(file.absoluteFilePath(), targetPath)) {
+            m_bisectState.problem = QCoreApplication::translate("AgentModToolEngine", "改不了模组文件名：%1").arg(base);  // i18n-ignore
+            return false;
+        }
+    }
+    for (const QString &base : desired) {
+        if (!seen.contains(base)) {
+            m_bisectState.problem = QCoreApplication::translate("AgentModToolEngine", "工作区里找不到模组：%1").arg(base);  // i18n-ignore
+            return false;
+        }
+    }
+    return true;
+}
+
+bool AgentModToolEngine::resetBisectWorkspace() {
+    int filesLeft = 5000;
+    qint64 bytesLeft = 200ll * 1024 * 1024;
+    QString problem;
+    QDir(m_bisectState.configDir).removeRecursively();
+    if (!copyTree(m_bisectState.stagingDir + QStringLiteral("/config"), m_bisectState.configDir,
+                  &filesLeft, &bytesLeft, &problem)) {
+        m_bisectState.problem = problem;
+        return false;
+    }
+    QFile::remove(m_bisectState.optionsPath);
+    if (m_bisectState.optionsExisted &&
+        !QFile::copy(m_bisectState.stagingDir + QStringLiteral("/options.txt"),
+                     m_bisectState.optionsPath)) {
+        m_bisectState.problem = QCoreApplication::translate("AgentModToolEngine", "恢复 options.txt 失败。");  // i18n-ignore
+        return false;
+    }
+    clearBisectLogs();
+    return true;
+}
+
+void AgentModToolEngine::bisectNext() {
+    if (!m_active || !m_bisect) return;
+    const AgentModBisect::Step step = m_bisect->step();
+    if (step.kind == AgentModBisect::Step::Kind::Finished) {
+        finishBisect();
+        return;
+    }
+    m_bisectState.problem.clear();
+    bool prepared = applyBisectEnabledSet(step.enabledFiles);
+    if (prepared) prepared = resetBisectWorkspace();
+    if (!prepared) {
+        AgentModBisect::LaunchOutcome failure;
+        failure.completed = false;
+        failure.detail = m_bisectState.problem;
+        m_bisect->report(failure, m_bisectState.timer.elapsed());
+        bisectNext();
+        return;
+    }
+    QJsonObject record{{QStringLiteral("index"), ++m_bisectState.launchIndex},
+                       {QStringLiteral("purpose"), step.purpose},
+                       {QStringLiteral("enabled"), int(step.enabledFiles.size())}};
+    m_bisectState.evidence.append(record);
+
+    AgentTestLaunchOptions options;
+    options.timeoutSeconds = m_run.pending.timeoutSeconds;
+    options.settleSeconds = 5;
+    options.milestone = QStringLiteral("main_menu");
+    options.repeat = 1;
+    options.captureLogs = true;
+    options.expectCrash = false;
+    const int generation = m_generation;
+    QString startProblem;
+    const bool started = m_launchHost->startTestLaunch(
+        m_run.pending.context.instanceId, m_run.pending.workspace.id, options,
+        [this, generation](const AgentTestLaunchSummary &summary) {
+            post([this, generation, summary] {
+                if (!m_active || generation != m_generation) return;
+                onBisectLaunchDone(summary, QString());
+            });
+        },
+        &startProblem);
+    if (!started) {
+        onBisectLaunchDone(AgentTestLaunchSummary{}, startProblem);
+    }
+}
+
+void AgentModToolEngine::onBisectLaunchDone(const AgentTestLaunchSummary &summary,
+                                            const QString &problem) {
+    if (!m_active || !m_bisect) return;
+    AgentModBisect::LaunchOutcome outcome;
+    QString detail;
+    if (!problem.isEmpty() || summary.runs.isEmpty()) {
+        outcome.completed = false;
+        detail = problem.isEmpty()
+                     ? QCoreApplication::translate("AgentModToolEngine", "测试启动没有开始")  // i18n-ignore
+                     : problem;
+    } else {
+        const AgentTestLaunchRunResult &run = summary.runs.constFirst();
+        outcome.completed = run.processStarted;
+        outcome.crashed = run.crashed || run.newCrashReport;
+        detail = run.detail;
+        if (!outcome.completed) {
+            detail = run.detail.isEmpty()
+                         ? QCoreApplication::translate("AgentModToolEngine", "进程没有起来")  // i18n-ignore
+                         : run.detail;
+        }
+    }
+    outcome.detail = detail.left(200);
+    if (!m_bisectState.evidence.isEmpty()) {
+        QJsonObject record = m_bisectState.evidence.last().toObject();
+        record.insert(QStringLiteral("completed"), outcome.completed);
+        record.insert(QStringLiteral("crashed"), outcome.crashed);
+        if (!outcome.detail.isEmpty()) record.insert(QStringLiteral("detail"), outcome.detail);
+        m_bisectState.evidence.replace(m_bisectState.evidence.size() - 1, record);
+    }
+    m_bisect->report(outcome, m_bisectState.timer.elapsed());
+    bisectNext();
+}
+
+void AgentModToolEngine::restoreBisectBaseline() {
+    QStringList enabled;
+    for (auto it = m_bisectState.initialEnabled.constBegin();
+         it != m_bisectState.initialEnabled.constEnd(); ++it) {
+        if (it.value()) enabled.append(it.key());
+    }
+    applyBisectEnabledSet(enabled);
+    resetBisectWorkspace();
+}
+
+void AgentModToolEngine::finishBisect() {
+    if (!m_bisect) return;
+    const AgentModBisect::Result result = m_bisect->result();
+    const bool restored = applyBisectEnabledSet([this] {
+        QStringList enabled;
+        for (auto it = m_bisectState.initialEnabled.constBegin();
+             it != m_bisectState.initialEnabled.constEnd(); ++it) {
+            if (it.value()) enabled.append(it.key());
+        }
+        return enabled;
+    }());
+    const bool reset = resetBisectWorkspace();
+    const bool workspaceRestored = restored && reset;
+    if (!m_bisectState.stagingDir.isEmpty()) QDir(m_bisectState.stagingDir).removeRecursively();
+    QJsonArray culprits;
+    for (const QString &culprit : result.culprits) culprits.append(culprit);
+    QJsonArray minimal;
+    for (const QString &file : result.minimalSet) minimal.append(file);
+    QJsonArray notes;
+    for (const QString &note : result.notes) notes.append(note);
+    const QJsonObject data{
+        {QStringLiteral("result"), result.result},
+        {QStringLiteral("culprits"), culprits},
+        {QStringLiteral("minimalSet"), minimal},
+        {QStringLiteral("launches"), result.launches},
+        {QStringLiteral("budgetExhausted"), result.budgetExhausted},
+        {QStringLiteral("flaky"), result.flaky},
+        {QStringLiteral("notes"), notes},
+        {QStringLiteral("evidence"), m_bisectState.evidence},
+        {QStringLiteral("workspaceRestored"), workspaceRestored},
+        {QStringLiteral("transactionId"), m_run.pending.transactionId},
+        {QStringLiteral("workspaceId"), m_run.pending.workspace.id},
+        {QStringLiteral("limits"),
+         QJsonObject{{QStringLiteral("maxLaunches"), m_run.pending.maxLaunches},
+                     {QStringLiteral("repeatPerCandidate"), m_run.pending.repeatPerCandidate},
+                     {QStringLiteral("timeoutSeconds"), m_run.pending.timeoutSeconds}}}};
+    const QString summary =
+        QCoreApplication::translate("AgentModToolEngine", "二分结果：%1（%2 次启动）")  // i18n-ignore
+            .arg(result.result)
+            .arg(result.launches);
+    m_bisect.reset();
+    m_bisectState = BisectState{};
+    finishWithData(m_run, data, summary);
+}
+
 AgentToolResult AgentModToolEngine::resolveApproval(const QString &approvalId, bool approved) {
     if (!m_pending.contains(approvalId)) {
         return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentModToolEngine", "审批请求已失效。"));
@@ -932,6 +1364,13 @@ AgentToolResult AgentModToolEngine::resolveApproval(const QString &approvalId, b
             m_platformApproved.insert(pending.context.instanceId);
         }
         return startAnalyzeOrVerify(pending);
+    }
+    if (pending.job == Job::Bisect) {
+        startBisect(pending);
+        AgentToolResult result;
+        result.status = AgentToolResult::Status::Pending;
+        result.summary = QCoreApplication::translate("AgentModToolEngine", "正在准备二分…");  // i18n-ignore
+        return result;
     }
     if (pending.job == Job::Install) {
         startInstall(pending);
@@ -951,8 +1390,18 @@ void AgentModToolEngine::cancelPending() {
     m_pending.clear();
     const bool wasActive = m_active;
     const Agent::ToolCall call = m_run.pending.call;
+    const bool wasBisect = m_bisect != nullptr;
     m_active = false;
     ++m_generation;
+    if (wasBisect) {
+        if (m_launchHost != nullptr) m_launchHost->cancelTestLaunch();
+        restoreBisectBaseline();
+        if (!m_bisectState.stagingDir.isEmpty()) {
+            QDir(m_bisectState.stagingDir).removeRecursively();
+        }
+        m_bisect.reset();
+        m_bisectState = BisectState{};
+    }
     if (wasActive && m_sink && !call.name.isEmpty()) {
         cleanupStaging(m_run.stagingDir);
         m_sink(call, errorResult(Agent::ErrorKind::Cancelled, QCoreApplication::translate("AgentModToolEngine", "这次模组任务已取消。")));

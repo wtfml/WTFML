@@ -13,18 +13,23 @@
 
 #pragma once
 
+#include "AgentLaunchHost.hpp"
 #include "AgentLauncherHost.hpp"
+#include "AgentModBisect.hpp"
 #include "AgentModHost.hpp"
 #include "AgentTool.hpp"
 #include "AgentWorkspaceStore.hpp"
 
+#include <QElapsedTimer>
 #include <QHash>
+#include <QJsonArray>
 #include <QJsonObject>
 #include <QPointer>
 #include <QSet>
 #include <QString>
 
 #include <functional>
+#include <memory>
 
 class AgentModToolEngine : public AgentToolEngine {
 public:
@@ -33,7 +38,8 @@ public:
     /// @param dispatcher 回到主线程用的上下文对象（`AgentController`）；测试可传 `nullptr`，
     ///        那时回调在调用线程上直接执行。
     AgentModToolEngine(AgentLauncherHost *launcherHost, AgentModHost *modHost,
-                       ContextProvider provider, QObject *dispatcher = nullptr);
+                       ContextProvider provider, QObject *dispatcher = nullptr,
+                       AgentLaunchHost *launchHost = nullptr);
 
     static QList<AgentToolSpec> specs();
 
@@ -44,9 +50,11 @@ public:
     bool handles(const QString &internalName) const override;
     void setCompletionSink(AgentToolSink sink) override { m_sink = std::move(sink); }
 
-    void setHosts(AgentLauncherHost *launcherHost, AgentModHost *modHost) {
+    void setHosts(AgentLauncherHost *launcherHost, AgentModHost *modHost,
+                  AgentLaunchHost *launchHost = nullptr) {
         m_launcherHost = launcherHost;
         m_modHost = modHost;
+        m_launchHost = launchHost;
     }
 
     /// 本地扫描结果：测试直接喂临时 `mods/` 目录。
@@ -65,7 +73,7 @@ public:
     static int platformHashLimit();
 
 private:
-    enum class Job { Analyze, Verify, Install, RepairCore };
+    enum class Job { Analyze, Verify, Install, RepairCore, Bisect };
 
     struct Pending {
         Job job = Job::Analyze;
@@ -84,6 +92,28 @@ private:
         QString versionId;
         QString expectedSha1;
         QStringList flaggedPaths;
+        // mods.bisect
+        QStringList prioritizedCandidates;
+        int maxLaunches = 8;
+        int repeatPerCandidate = 2;
+        int timeoutSeconds = 120;
+        bool respectDependencies = true;
+    };
+
+    /// 二分的现场：工作区路径、快照、初始启停状态与每一步的证据。
+    struct BisectState {
+        QString versionDir;
+        QString modsDir;
+        QString configDir;
+        QString optionsPath;
+        QString stagingDir;
+        bool optionsExisted = false;
+        QHash<QString, bool> initialEnabled;  ///< 文件基名 → 初始是否启用
+        QStringList installedBaseNames;
+        QElapsedTimer timer;
+        QJsonArray evidence;
+        int launchIndex = 0;
+        QString problem;
     };
 
     /// 一次已开始的作业（同时最多一个）。
@@ -110,6 +140,14 @@ private:
     AgentToolResult startAnalyzeOrVerify(const Pending &pending);
     void startInstall(const Pending &pending);
     void startRepairCore(const Pending &pending);
+    void startBisect(const Pending &pending);
+    void bisectNext();
+    void onBisectLaunchDone(const AgentTestLaunchSummary &summary, const QString &problem);
+    void finishBisect();
+    bool applyBisectEnabledSet(const QStringList &enabledFiles);
+    bool resetBisectWorkspace();
+    void restoreBisectBaseline();
+    void clearBisectLogs();
 
     void beginPlatformLookup(Run run, const LocalScan &scan);
     void finishAnalyze(Run run, const LocalScan &scan,
@@ -135,6 +173,9 @@ private:
 
     AgentLauncherHost *m_launcherHost = nullptr;
     AgentModHost *m_modHost = nullptr;
+    AgentLaunchHost *m_launchHost = nullptr;
+    std::unique_ptr<AgentModBisect::Bisect> m_bisect;
+    BisectState m_bisectState;
     ContextProvider m_provider;
     QPointer<QObject> m_dispatcher;
     AgentToolSink m_sink;

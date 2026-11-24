@@ -425,6 +425,16 @@ int MwAgentChecks(QApplication &app) {
         check(installResult.status == AgentToolResult::Status::Error,
               "真窗口：没有工作区时拒绝 mods.installFix", installResult.summary);
 
+        Agent::ToolCall bisectCall;
+        bisectCall.id = QStringLiteral("mw-mod-2");
+        bisectCall.name = QStringLiteral("mods.bisect");
+        bisectCall.arguments = QJsonObject{
+            {QStringLiteral("workspaceId"), QStringLiteral("ws-unknown")}};
+        const AgentToolResult bisectResult =
+            controller->compositeEngine()->invoke(bisectCall);
+        check(bisectResult.status == AgentToolResult::Status::Error,
+              "真窗口：没有事务工作区时拒绝 mods.bisect", bisectResult.summary);
+
         Agent::ToolCall repairCall;
         repairCall.id = QStringLiteral("mw-core-1");
         repairCall.name = QStringLiteral("instance.repairCore");

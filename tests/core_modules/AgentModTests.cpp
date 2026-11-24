@@ -332,6 +332,60 @@ public:
     }
 };
 
+/// 假测试启动：崩不崩由工作区里当时启用的 `bad.jar` 决定；顺手把 config 弄脏，
+/// 用来验证二分每轮会重置、结束后会恢复基线。
+class FakeLaunchHost final : public AgentLaunchHost {
+public:
+    int launches = 0;
+    QString lastWorkspaceId;
+    QList<QStringList> enabledHistory;
+
+    bool startTestLaunch(const QString &instanceId, const QString &workspaceId,
+                         const AgentTestLaunchOptions &options, const Completion &done,
+                         QString *problem) override {
+        Q_UNUSED(instanceId);
+        Q_UNUSED(options);
+        Q_UNUSED(problem);
+        AgentWorkspaceStore store;
+        AgentWorkspaceRecord record;
+        if (!store.load(workspaceId, &record, nullptr)) return false;
+        ++launches;
+        lastWorkspaceId = workspaceId;
+        const QString moduleRoot = record.rootPath + QStringLiteral("/versions/") +
+                                   record.versionId;
+        QDir mods(moduleRoot + QStringLiteral("/mods"));
+        QStringList enabled;
+        for (const QFileInfo &file : mods.entryInfoList({QStringLiteral("*.jar")}, QDir::Files)) {
+            enabled.append(file.fileName());
+        }
+        enabledHistory.append(enabled);
+        QFile config(moduleRoot + QStringLiteral("/config/a.txt"));
+        if (config.open(QIODevice::WriteOnly)) config.write("dirty-from-game");
+        AgentTestLaunchSummary summary;
+        summary.ok = false;
+        summary.launchId = QStringLiteral("launch-%1").arg(launches);
+        summary.workspaceId = workspaceId;
+        summary.workspaceKept = true;
+        AgentTestLaunchRunResult run;
+        run.processStarted = true;
+        run.crashed = enabled.contains(QStringLiteral("bad.jar"));
+        run.exitCode = run.crashed ? -1 : 0;
+        run.milestoneReached = !run.crashed;
+        run.startupPhase = run.crashed ? QStringLiteral("crashed") : QStringLiteral("main_menu");
+        run.detail = run.crashed ? QStringLiteral("模拟崩溃") : QStringLiteral("到主菜单");
+        summary.runs.append(run);
+        QObject *context = QCoreApplication::instance();
+        if (context != nullptr) {
+            QMetaObject::invokeMethod(context, [done, summary] { done(summary); },
+                                      Qt::QueuedConnection);
+        } else {
+            done(summary);
+        }
+        return true;
+    }
+    void cancelTestLaunch() override {}
+};
+
 AgentToolContext testContext(bool strict = false) {
     AgentToolContext context;
     context.sessionId = QStringLiteral("session-mod");
@@ -387,6 +441,12 @@ void runAgentModTests() {
               "模组工具：分析/校验声明成 NetworkRead（平台查询走工具自己的审批）");
         check(install.risk == AgentRisk::Write, "模组工具：installFix 是写风险");
         check(repair.risk == AgentRisk::Destructive, "模组工具：repairCore 是破坏性风险");
+        const AgentToolSpec bisect = AgentToolRegistry::find(QStringLiteral("mods.bisect"));
+        check(!bisect.name.isEmpty(), "模组工具：mods.bisect 注册了 schema");
+        check(bisect.risk == AgentRisk::Command, "模组工具：bisect 是执行游戏风险");
+        check(AgentApprovalPolicy::decide(QStringLiteral("mods.bisect"), bisect.risk, false) ==
+                  AgentApprovalPolicy::Decision::PerAction,
+              "模组工具：bisect 每次计划审批");
         check(AgentApprovalPolicy::decide(QStringLiteral("mods.installFix"), install.risk, false) ==
                   AgentApprovalPolicy::Decision::PerAction,
               "模组工具：installFix 逐次审批");
@@ -928,6 +988,107 @@ displayName="Forge Example"
     result = engine.invoke(callFor(QStringLiteral("instance.repairCore")));
     check(result.status == AgentToolResult::Status::Error,
           "模组工具：事务活动期间拒绝核心修复", result.summary);
+
+    // ---------------------------------------------------------------- 依赖感知二分
+    {
+        const QString bisectRoot = workspace.rootPath + QStringLiteral("/versions/") +
+                                   workspace.versionId;
+        QDir(bisectRoot + QStringLiteral("/mods")).mkpath(QStringLiteral("."));
+        QDir(bisectRoot + QStringLiteral("/config")).mkpath(QStringLiteral("."));
+        const bool madeGood2 = makeFakeJar(
+            bisectRoot + QStringLiteral("/mods/good.jar"),
+            {{QStringLiteral("fabric.mod.json"),
+              QByteArrayLiteral(R"({"id":"goodmod","version":"1.0.0",
+                                    "depends":{"minecraft":">=1.20"}})")}});
+        const bool madeLib = makeFakeJar(
+            bisectRoot + QStringLiteral("/mods/lib.jar"),
+            {{QStringLiteral("fabric.mod.json"),
+              QByteArrayLiteral(R"({"id":"libmod","version":"1.0.0",
+                                    "depends":{"minecraft":">=1.20"}})")}});
+        const bool madeBad = makeFakeJar(
+            bisectRoot + QStringLiteral("/mods/bad.jar"),
+            {{QStringLiteral("fabric.mod.json"),
+              QByteArrayLiteral(R"({"id":"badjarmod","version":"1.0.0",
+                                    "depends":{"minecraft":">=1.20","libmod":"*"}})")}});
+        check(madeGood2 && madeLib && madeBad, "二分：造出工作区里的测试 JAR");
+        writeFile(bisectRoot + QStringLiteral("/config/a.txt"), QByteArrayLiteral("baseline"));
+        writeFile(bisectRoot + QStringLiteral("/options.txt"), QByteArrayLiteral("fov:70"));
+
+        FakeLaunchHost launchHost;
+        AgentModToolEngine bisectEngine(&launcher, &modHost,
+                                        [](QString *) { return testContext(); },
+                                        QCoreApplication::instance(), &launchHost);
+        Collector bisectCollector;
+        bisectCollector.attach(&bisectEngine);
+        AgentToolResult bisectResult = bisectEngine.invoke(callFor(
+            QStringLiteral("mods.bisect"),
+            QJsonObject{{QStringLiteral("workspaceId"), workspace.id},
+                        {QStringLiteral("prioritizedCandidates"),
+                         QJsonArray{QStringLiteral("badjarmod")}},
+                        {QStringLiteral("maxLaunches"), 8},
+                        {QStringLiteral("repeatPerCandidate"), 2},
+                        {QStringLiteral("timeoutSeconds"), 30}}));
+        check(bisectResult.status == AgentToolResult::Status::ApprovalRequired,
+              "二分工具：每次计划都要审批");
+        const AgentToolResult bisectApproved =
+            bisectEngine.resolveApproval(approvalIdOf(bisectResult), true);
+        check(bisectApproved.status == AgentToolResult::Status::Pending,
+              "二分工具：批准后进入异步二分");
+        check(waitFor(bisectCollector, 30000), "二分工具：在时限内交付");
+        check(bisectCollector.result.status == AgentToolResult::Status::Ok,
+              "二分工具：执行成功", bisectCollector.result.summary);
+        const QJsonObject bisectData = bisectCollector.result.data;
+        check(bisectData.value(QStringLiteral("result")).toString() == QStringLiteral("single"),
+              "二分工具：定位到单个问题模组",
+              bisectData.value(QStringLiteral("result")).toString());
+        const QJsonArray culprits = bisectData.value(QStringLiteral("culprits")).toArray();
+        check(culprits.size() == 1 &&
+                  culprits.first().toString() == QStringLiteral("badjarmod"),
+              "二分工具：culprit 是 badjarmod",
+              QString::fromUtf8(QJsonDocument(culprits).toJson(QJsonDocument::Compact)));
+        const QJsonArray minimal = bisectData.value(QStringLiteral("minimalSet")).toArray();
+        bool minimalHasBad = false;
+        bool minimalHasLib = false;
+        for (const QJsonValue &value : minimal) {
+            if (value.toString() == QStringLiteral("bad.jar")) minimalHasBad = true;
+            if (value.toString() == QStringLiteral("lib.jar")) minimalHasLib = true;
+        }
+        check(minimalHasBad, "二分工具：minimalSet 有 bad.jar");
+        check(minimalHasLib, "二分工具：minimalSet 带着依赖 lib.jar");
+        check(bisectData.value(QStringLiteral("launches")).toInt() <= 8,
+              "二分工具：启动次数在预算内",
+              QString::number(bisectData.value(QStringLiteral("launches")).toInt()));
+        check(launchHost.launches == bisectData.value(QStringLiteral("launches")).toInt() &&
+                  launchHost.launches > 0,
+              "二分工具：宿主真的被要求启动", QString::number(launchHost.launches));
+        check(launchHost.lastWorkspaceId == workspace.id,
+              "二分工具：启动用的是事务工作区");
+        check(bisectData.value(QStringLiteral("workspaceRestored")).toBool(),
+              "二分工具：报告写明工作区已恢复");
+        check(bisectData.value(QStringLiteral("evidence")).toArray().size() ==
+                  bisectData.value(QStringLiteral("launches")).toInt(),
+              "二分工具：每轮启动都有证据");
+        // 结束态：模组名恢复成全部启用，config/options 回到基线，暂存目录不残留。
+        check(QFileInfo::exists(bisectRoot + QStringLiteral("/mods/bad.jar")) &&
+                  QFileInfo::exists(bisectRoot + QStringLiteral("/mods/lib.jar")) &&
+                  QFileInfo::exists(bisectRoot + QStringLiteral("/mods/good.jar")),
+              "二分工具：启停状态恢复成基线");
+        QFile configAfter(bisectRoot + QStringLiteral("/config/a.txt"));
+        check(configAfter.open(QIODevice::ReadOnly) &&
+                  configAfter.readAll() == QByteArrayLiteral("baseline"),
+              "二分工具：config/ 恢复到基线");
+        QFile optionsAfter(bisectRoot + QStringLiteral("/options.txt"));
+        check(optionsAfter.open(QIODevice::ReadOnly) &&
+                  optionsAfter.readAll() == QByteArrayLiteral("fov:70"),
+              "二分工具：options.txt 恢复到基线");
+
+        // 没有工作区时拒绝。
+        bisectResult = bisectEngine.invoke(callFor(
+            QStringLiteral("mods.bisect"),
+            QJsonObject{{QStringLiteral("workspaceId"), QStringLiteral("ws-missing")}}));
+        check(bisectResult.status == AgentToolResult::Status::Error,
+              "二分工具：没有事务工作区时拒绝");
+    }
 
     // 清理：事务标成完成，免得留下活动事务影响后面的用例。
     transactions.updateState(record.id, QStringLiteral("committed"), QString(), &problem);

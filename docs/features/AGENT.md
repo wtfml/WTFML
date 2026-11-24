@@ -190,7 +190,7 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 
 路径校验是字符串拒绝（绝对路径、`..`、盘符、UNC、ADS、保留名、尾点/空格）+ Win32 句柄级最终路径/文件 ID/reparse 核对；受保护目录（`versions/libraries/assets/java/servers`）原始写一律拒绝。
 
-### 9.4 启动器工具（27 个，均经 `AgentLauncherHost` / `AgentModHost`）
+### 9.4 启动器工具（28 个，均经 `AgentLauncherHost` / `AgentModHost` / `AgentLaunchHost`）
 
 只读自动：
 
@@ -225,6 +225,7 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 | `backup.restore` | 恢复前先做快照；路径越界/绝对路径拒绝；只恢复 `owner=agent` |
 | `mods.installFix` | 只接受 `projectId`/`versionId`/`expectedSha1`；先在暂存目录下载并校验大小与 SHA-1，全部通过才写进事务工作区；可补齐版本声明的必需前置；没有活动事务时拒绝 |
 | `instance.repairCore` | 复用 `VersionManager::repairVersionFiles()` 重下客户端 jar、库和资源索引；每次审批；事务活动期间拒绝 |
+| `mods.bisect` | 在事务工作区里反复启停模组并启动游戏，做依赖感知 delta debugging；默认 8 次启动（最多 20）、45 分钟；结束后恢复 mods/config/options 基线 |
 
 只开页面：`upgrade.openWizard`、`launcher.openPage`（实例设置 / 日志 / 备份 / 完整性）。
 
@@ -314,6 +315,24 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 
 限制：平台只覆盖 Modrinth 上认得出的文件；`repairCore` 不保留旧副本，失败按官方哈希重下恢复。
 
+#### 9.4.6 依赖感知二分（Stage 5.5）
+
+`mods.bisect` 在工具内部完成多轮启动，不让模型逐步调 `mods.setEnabled` / `instance.testLaunch`（也绕开单轮 8 次工具调用）。纯状态机在 `src/agent/AgentModBisect`，启动、重置工作区与清理在现场层（`AgentModToolEngine`）。
+
+| 项 | 行为 |
+| --- | --- |
+| 前置 | 必须有活动事务与登记工作区；没有就拒绝。每次计划单独审批 |
+| 候选 | 工作区 `mods/` 里启用的模组；加载器/API 前置（`fabric-api`、`forge`、`neoforge`、`quilt_loader` 等）始终启用，任何被保留模组的 required 前置跟着启用（`respectDependencies=false` 可关） |
+| 优先 | `prioritizedCandidates`（一般来自 `diagnostics.crashSnapshot` 的嫌疑）排最前，先单独试一轮；其余按最近修改时间、文件名排序 |
+| 每轮 | 按集合改 `.jar` ↔ `.jar.disabled`、把 `config/` 与 `options.txt` 恢复到二分开始时的快照、清掉 `logs/`、`crash-reports/`、`hs_err_pid*`，再启动一次（里程碑 `main_menu`，超时 10–600 s） |
+| 判定 | 进程崩溃或出现新崩溃报告算"复现"；到主菜单算"不复现"；进程没起来算基础设施失败，连续 3 次就停 |
+| 结果 | `single` / `pair` / `set` / `not_found`（停用全部候选仍崩）/ `not_reproducible`（基线不崩）/ `inconclusive`（确认不一致或连续启动失败）；`culprits` 只列责任模组，`minimalSet` 含被依赖带进来的前置 |
+| 收尾 | 恢复模组启停与 `config/`、`options.txt`，删掉快照目录；只留每轮证据（目的、启用数、是否崩溃）与结果 |
+
+上限：默认 8 次、最多 20 次启动；默认 45 分钟；每次启动 10–600 s；`repeatPerCandidate` 1–3。启动次数或时间用完就停在当前最小集合并标 `budgetExhausted`。二分不下载、不改世界、不写原实例。
+
+限制：二分只判断"哪些模组一起启用会崩"，不做修复；确认阶段出现不一致时最多加跑一轮，仍不一致回 `inconclusive`，不猜责任模组。
+
 ### 9.5 联网与固定诊断命令
 
 | 工具 | 审批 | 关键上限 |
@@ -373,7 +392,7 @@ JSON-RPC 2.0、stdio、换行分隔。`initialize`（提议 `2024-11-05`，以�
 - **实例体检**：锁定实例 → 启动诊断 → 日志/模组/完整性 → 分级结论 + 证据 + 下一步选项；不写盘。
 - **崩溃急救**：`diagnostics.crashSnapshot` 拿环境、阶段、异常链与命中规则（需要行号时再 `logs.search`，原文走 `crash.readFull`）→ 按规则分类（OOM、Java 版本不匹配、缺前置、文件损坏、配置错误、Mixin 冲突，不猜具体模组）→ 计划 → `repair.begin` 建事务 → 逐步执行（事务内写工作区、每步单独审批、失败即停）→ `repair.verify` 在隔离工作区验证 → `repair.finish(commit/rollback)` → 报告写回退方式与未解决项。世界问题只在副本世界验证，不打开源存档。
 - **版本升级 / 移植**：`upgrade.inspect` 只读检查 + 解释风险；执行一律打开现有升级向导。
-- **模组维护**：列清单 → `mods.analyzeCompatibility` 读声明查加载器/版本/缺前置/重复 → 需要逐文件哈希时 `mods.verifyFiles` → `repair.begin` → 在工作区启停/备份，或用 `mods.installFix` 按平台记录换掉损坏/不兼容的文件 → `repair.diff`/`repair.verify` → 提交或回滚。核心文件损坏走 `instance.repairCore`。
+- **模组维护**：列清单 → `mods.analyzeCompatibility` 读声明查加载器/版本/缺前置/重复 → 需要逐文件哈希时 `mods.verifyFiles` → `repair.begin` → 在工作区启停/备份，或用 `mods.installFix` 按平台记录换掉损坏/不兼容的文件 → `repair.diff`/`repair.verify` → 提交或回滚。核心文件损坏走 `instance.repairCore`；说不清是哪几个模组时用 `mods.bisect` 在工作区二分（嫌疑来自 `diagnostics.crashSnapshot`）。
 
 ### 11.3 工作流状态机
 
@@ -417,6 +436,7 @@ Collect → AwaitPlanApproval → Execute*（每步审批）→ Verify → Repor
 | 日志检索 | 搜索 ≤200 条 / 结果 ≤24 KB 字符 / 扫描 6 s；按行读取 ≤500 行 / 256 KB |
 | 模组兼容 / 校验 | 2000 个文件、本地 60 s；平台每批 100 个哈希、总 180 s；单文件哈希 512 MB |
 | 模组修复 / 核心修复 | 单文件 100 MB、单事务 500 MB、≤10 个文件；核心修复 10 min |
+| 依赖感知二分 | 默认 8 次、最多 20 次启动；默认 45 min；每次启动 10–600 s；连续 3 次启动失败就停 |
 | 修复事务 | 范围 5 类；基线文件 ≤20000 个、总大小 ≤512 MB；单实例同时 1 个活动事务；提交备份在 `agent/transactions/<id>/backups/` |
 | 目录列表 / `fs.read` / `fs.write` | 2000 项 / 256 KB（最大 1 MB）/ 1 MB |
 | MCP 单行 / 命令输出 | 8 MB / 256 KB |
@@ -438,7 +458,7 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 
 - 协议与客户端：SSE/分块边界、适配枚举、错误体保留、重试/取消、本地假服务器。
 - 会话与凭据：元数据/正文往返、损坏隔离、快照、整会话加密、Credential Manager + DPAPI 后备、脱敏。
-- 工具与安全：路径攻击矩阵、句柄级校验、审批矩阵、D11 边界表、artifact 分离、实例锁、备份生命周期、诊断投影、工作流闸门、MCP 协议/确认闸/假服务器、联网地址策略（假传输）、诊断命令、测试启动参数/审批/里程碑、工作区登记与清理、事务基线/差异/设置增量/审批、崩溃规则加载与坏规则跳过、崩溃报告解析、嫌疑角色与置信度、mixin 配置归属、日志行索引与按行读取、模组声明解析、兼容性判定（加载器/版本/缺前置/重复/损坏/平台结论）、修复工具的审批与失败不改工作区。
+- 工具与安全：路径攻击矩阵、句柄级校验、审批矩阵、D11 边界表、artifact 分离、实例锁、备份生命周期、诊断投影、工作流闸门、MCP 协议/确认闸/假服务器、联网地址策略（假传输）、诊断命令、测试启动参数/审批/里程碑、工作区登记与清理、事务基线/差异/设置增量/审批、崩溃规则加载与坏规则跳过、崩溃报告解析、嫌疑角色与置信度、mixin 配置归属、日志行索引与按行读取、模组声明解析、兼容性判定（加载器/版本/缺前置/重复/损坏/平台结论）、修复工具的审批与失败不改工作区、二分的缩减/依赖保留/组合冲突/不可复现/不一致/预算与工作区恢复。
 - UI/集成：页面几何与状态、模式胶囊、工具卡/审批卡、真窗口里只读模式拒绝写、MCP 管理器接线、实例目录日志/崩溃报告读取。
 - 性能基线：2000 条会话读写/加密、上下文裁剪、智能体页 2000 条消息重摆（数字见 perf-notes）。
 
@@ -458,6 +478,7 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 | A8 | 发布物在干净机器启动；高 DPI 与读屏基础检查 | 智能体页可打开、无重叠、关键控件有名称 |
 | A9 | 真机 1.20.1：`instance.testLaunch` 到主菜单、崩溃复现、超时；源实例文件哈希不变 | 工作区隔离、无孤儿进程、日志可读 |
 | A10 | 真机 1.20.1：`repair.begin` → 工作区改模组/配置 → `repair.verify` → commit/rollback；提交前手改源文件 | 回滚后源文件哈希恢复；源文件被改时拒绝提交；提交中断可恢复 |
+| A11 | 真机 120 模组整合包：`mods.bisect` 在 12 次启动内定位已知问题模组；双模组冲突报 `pair`；取消后无孤儿进程、工作区恢复基线 | 必需前置始终启用；不误报 `not_found` |
 
 限制：A1–A10 需要真机与真实账号/服务，记录写进 [ACCEPTANCE_LOG](../archive/ACCEPTANCE_LOG.md)（一行：日期｜做了什么｜结论｜意外发现）。
 
@@ -477,12 +498,12 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 | Mod 版本冲突 | `mods.analyzeCompatibility` 对照实例的游戏/加载器/Java 范围与平台记录；`mods.installFix` 换掉不兼容的文件 | 没有社区兼容矩阵，不做多模组组合验证（S5.5 二分） |
 | Mod 文件损坏 | `mods.verifyFiles` 查 zip 结构/大小/SHA-1；平台按哈希找回候选；`mods.installFix` 下进工作区 | `instance.integrity` 仍不覆盖 `mods/` |
 | 配置文件错误 | `fs.read` / `fs.write` 白名单 | 不解析配置结构，只能靠备份整体回退 |
-| Mixin 冲突 | `diagnostics.crashSnapshot` 给异常链、mixin 配置归属候选与建议验证；可在工作区复现 | 不能自动二分定位（S5.5） |
+| Mixin 冲突 | `diagnostics.crashSnapshot` 给异常链、mixin 配置归属候选；`mods.bisect` 可在工作区自动二分定位到责任模组（含组合冲突） | 二分不修复；确认不一致时回 `inconclusive` |
 | 游戏库文件损坏 | `instance.repairCore` 走 `VersionManager::repairVersionFiles()` 重下客户端 jar、库和资源索引 | 共享库不保留旧副本，不能回到旧版本 |
 | 显卡 / Native 崩溃 | `diagnostics.crashSnapshot` 认 `hs_err_pid` 与 `EXCEPTION_ACCESS_VIOLATION`，与内存/模组问题分开报；可测试启动复现 | 不解析 native 模块归属，不改驱动或渲染后端 |
-| 世界 / 存档崩溃 | 有限的崩溃诊断；可复制世界到工作区用 `quickPlay` 验证 | 事务不提交世界/存档，也不做原件提交后验证 |
+| 世界 / 存档崩溃 | 有限的崩溃诊断；可复制世界到工作区用 `quickPlay` 验证；可在副本里二分 | 事务不提交世界/存档，也不做原件提交后验证 |
 
-下一阶段的依赖感知二分与 Prompt V2 见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)；实现后行为写回本文 §9 与 §11。提示词外置、隔离测试启动、修复事务、崩溃快照与日志检索、模组兼容与文件修复已于 2026-11-24 完成，见 §11.4、§9.4.2、§9.4.3、§9.4.4、§9.4.5。
+下一阶段的 Prompt V2 与知识分层见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)；实现后行为写回本文 §9 与 §11。提示词外置、隔离测试启动、修复事务、崩溃快照与日志检索、模组兼容与文件修复、依赖感知二分已于 2026-11-24 完成，见 §11.4、§9.4.2、§9.4.3、§9.4.4、§9.4.5、§9.4.6。
 
 未覆盖：
 
@@ -490,6 +511,8 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 | --- | --- |
 | 单会话工具调用总数（设计 40） | 未实现（只有单轮 8 步） |
 | 模组平台查询（CurseForge） | 未实现；S5.4 只接 Modrinth，不按名称/slug 猜项目 |
+| 二分的不一致判定 | 确认阶段出现不一致最多加跑一轮，仍不一致回 `inconclusive`；不做统计意义上的 flaky 概率 |
+| 二分时的世界 | 只按工作区 `quickPlay` 可选进副本世界；不验证存档一致性，也不判断世界崩溃与模组的归属 |
 | `mods.installFix` 的补丁式回滚 | 失败时只撤销本次复制的文件；已完成的事务由 `repair.finish` 回滚 |
 | artifact 单会话配额（设计 64 MB） | 未实现，不拒绝 |
 | 联网工具的"本会话允许" | 审批卡按钮文案有，联网引擎未实现会话放行 |

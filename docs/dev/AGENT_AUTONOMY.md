@@ -305,7 +305,7 @@ assets/agent/
 - `instance.repairCore` 不保留共享库旧副本，失败按官方哈希重下恢复。
 - 平台与下载的真实耗时没量（本机夹具全部走假宿主）。
 
-### S5.5 依赖感知二分（P1）
+### S5.5 依赖感知二分（已完成 2026-11-24）
 
 `mods.bisect` 在工具内部完成多轮启动，不要求模型逐步调 `mods.setEnabled` / `instance.testLaunch`。这也绕开单轮 8 次工具调用的上限。
 
@@ -335,7 +335,21 @@ assets/agent/
 
 返回 `result`（`single` / `pair` / `set` / `not_found` / `not_reproducible` / `inconclusive`）、`culprits`、`minimalSet`、`launches`、`evidence`、`budgetExhausted`、`flaky`。`not_found` 表示基线可复现但候选集合内没缩出责任模组；`not_reproducible` 表示基线本身不崩。二分结束后把工作区恢复到基线，只留日志和结果；修复动作由后续工具显式执行。
 
-验收：120 个模组、已知单个问题模组的夹具在 12 次启动内定位；必需依赖在前置缺失或禁用时被保留；双模组冲突能报 `pair`；不可复现崩溃返回 `not_reproducible`，不返回假阳性；取消后进程树清理，工作区保留现场。
+实现：
+
+- `AgentModBisect`：纯状态机（`step()` / `report()`），不读盘、不启动进程。流程是基线 →（有嫌疑模组时先只启用嫌疑试一轮）→ delta debugging 缩减到 1-minimal → `repeatPerCandidate` 次确认。依赖闭包保证被保留模组的 required 前置始终启用；加载器/API 前置（`fabric-api`、`forge`、`neoforge`、`quilt_loader` 等）不参与候选。
+- 结果分类：`minimalSet` 是仍能复现的启用集合，`culprits` 去掉"只是被别的成员依赖"的那些（`app` 需要 `lib` 时报 `single`，`lib` 不背锅）；按 culprits 数量给 `single` / `pair` / `set`。停用全部候选仍崩 `not_found`；基线不崩 `not_reproducible`；连续 3 次启动失败或确认不一致回 `inconclusive`；启动次数/时间用完标 `budgetExhausted` 并返回当前集合。
+- `mods.bisect` 工具：要求活动事务与登记工作区；每次计划审批；每轮按集合改 `.jar` ↔ `.jar.disabled`、把 `config/` 与 `options.txt` 恢复到二分开始时的快照、清 `logs/`、`crash-reports/`、`hs_err_pid*`，再经 `AgentLaunchHost` 启动一次（里程碑 `main_menu`，10–600 s）；结束后恢复启停与配置并删快照。不下载、不改世界、不写原实例。
+- 假测试启动宿主做集成夹具：工作区里 `bad.jar`（依赖 `lib.jar`）存在就崩；每轮往 `config/a.txt` 写脏数据，验证每轮重置与收尾恢复。
+- 技能：`mods.bisect` 进崩溃急救/模组维护的写集合，`mods.md` 提示词（promptVersion 3）说明何时用它、结果值怎么读。
+
+验收：`verify_agent` 1327/1327（含 `AgentModBisectTests` 与工具级集成夹具）、`mw_check_agent` 94/94、`mw_check` 3192/3192、`verify_launch` 370/370、`ui_check_agent` 77/77；产品目标按 `-Wall -Wextra -Wpedantic -Werror` 编译通过；`check-agent-release.ps1`、`check-i18n.ps1`、`check-test-modules.ps1`、`check-doc-links.ps1`、`check-repo-layout.ps1` PASS。120 模组夹具在给了嫌疑候选时 5 次启动定位；不给嫌疑时用满 20 次上限内的 ddmin。
+
+限制：
+
+- 真机 120 模组整合包、真实游戏崩溃与取消清理仍需复跑（A11）；本机全部用脚本化结果与假启动宿主。
+- 二分只定位不修复；确认阶段不一致最多加一轮，之后回 `inconclusive`。
+- 不改世界、不验证存档一致性；`quickPlay` 进副本世界只是可选参数。
 
 ### S5.6 Prompt V2 与知识分层（P1）
 
@@ -458,11 +472,11 @@ agent/
 | 世界问题提交后验证 | 不做；只在副本世界验证，报告写明未在原件验证 |
 | 显卡/驱动修复 | 只分类和建议，不改驱动、系统设置或渲染后端 |
 | Java 运行时自动下载 | 测试启动不下载；缺 Java 直接报原因，由现有下载入口处理 |
-| 非确定性崩溃 | 重复次数有上限，超限标 `flaky`/`inconclusive` |
+| 非确定性崩溃 | 重复次数有上限，超限标 `flaky`/`inconclusive`（S5.5 已按此实现） |
 | Auto-safe D12 | 需产品确认；未确认前保持 D5 逐次审批 |
 | `instance.repairCore` 回滚 | 共享库不存旧副本；失败不删旧文件，按官方哈希重下恢复，报告写明不能回到旧版本（已按此实现） |
 | 修复病例库 | P2，默认关闭，只在本地参与排序，不把原文发给模型 |
-| 并发 | 每个启动器窗口的测试启动串行；多实例同时二分留到后续评估 |
+| 并发 | 每个启动器窗口的测试启动串行；多实例同时二分留到后续评估（二分本身复用这条串行约束） |
 | 测试启动窗口 | 会打开真实游戏窗口，Windows 下不做无头渲染；抢焦点/最小化留给人工验收 |
 | 工作区复制取消 | 复制阶段只丢弃结果，QtConcurrent 复制继续到结束；关闭启动器会等待当前复制 |
 | 正版登录相关故障 | 测试启动强制离线，依赖正版登录/服务器的模组问题不在自动验证范围 |

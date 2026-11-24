@@ -199,6 +199,8 @@ set(PROJECT_SOURCES
     ${REPO_ROOT}/src/agent/AgentCrashSnapshot.hpp
     ${REPO_ROOT}/src/agent/AgentMixinOwnership.cpp
     ${REPO_ROOT}/src/agent/AgentMixinOwnership.hpp
+    ${REPO_ROOT}/src/agent/AgentModBisect.cpp
+    ${REPO_ROOT}/src/agent/AgentModBisect.hpp
     ${REPO_ROOT}/src/agent/AgentModCompat.cpp
     ${REPO_ROOT}/src/agent/AgentModCompat.hpp
     ${REPO_ROOT}/src/agent/AgentModHost.hpp
