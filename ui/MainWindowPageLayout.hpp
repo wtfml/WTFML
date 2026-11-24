@@ -219,6 +219,9 @@ void markTextRole(QWidget *label, const QString &value);
 
 /// 搜索框左边那枚放大镜（跟着主题重新着色）。
 void addSearchIcon(QLineEdit *edit);
+/// 把搜索框的最小宽取成「占位字实测宽 + 图标与清除钮的留白」，夹在 [lo, hi]：中文占位短，落在 @p lo；
+/// 英文占位长，放宽到放得下（上限 @p hi），不再被省略号截断。
+void fitSearchWidth(QLineEdit *edit, int lo, int hi);
 QLineEdit *makeListFilterSearch(QWidget *parent, const QString &name, const QString &placeholder);
 
 void styleSidebarList(QListWidget *list);

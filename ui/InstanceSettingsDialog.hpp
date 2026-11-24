@@ -361,6 +361,9 @@ public:
     static QString navigationTreeName() { return QStringLiteral("instanceLifecycleTree"); }
     /// 左栏那一列的宽：最长的二级页名（「服务器列表」）加缩进放得下就够，多出来的都从右栏扣（UI问题 #6）。
     static int navigationTreeWidth() { return 152; }
+    /// 按这棵树里每一项的实测宽（缩进 + 字 + 左右留白）取宽：`navigationTreeWidth()` 作下限、240 作上限。
+    /// 中文所有项都比下限窄，所以中文仍是 152；英文长名（「Diagnostics and …」）不再被省略。
+    static int fittedNavigationTreeWidth(const QTreeWidget *tree);
     static QString launchInstanceButtonName() {
         return QStringLiteral("instanceSettingsLaunchInstance");
     }

@@ -44,6 +44,7 @@
 #include <QStyledItemDelegate>
 #include <QTextBlock>
 #include <QTextEdit>
+#include <QTextLayout>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <functional>
@@ -863,15 +864,38 @@ protected:
         QFont summaryFont = font();
         summaryFont.setPixelSize(Theme::textSize(Theme::TextRole::Caption));
         const QFontMetrics nameMetrics(nameFont), summaryMetrics(summaryFont);
-        const int top = (height() - nameMetrics.height() - summaryMetrics.height() - 2) / 2;
+        // 用途句放不下一行时折成两行（第二行省略号收尾）；一行放得下的（中文）与原来一致。
+        QStringList summaryLines;
+        {
+            QTextLayout layout(m_summary, summaryFont);
+            layout.beginLayout();
+            int start = 0;
+            for (int i = 0; i < 2 && start < m_summary.size(); ++i) {
+                QTextLine line = layout.createLine();
+                if (!line.isValid()) break;
+                line.setLineWidth(w);
+                if (i == 1 || line.textStart() + line.textLength() >= m_summary.size()) {
+                    summaryLines << summaryMetrics.elidedText(m_summary.mid(start).trimmed(), Qt::ElideRight, w);
+                    break;
+                }
+                summaryLines << m_summary.mid(start, line.textLength()).trimmed();
+                start += line.textLength();
+            }
+            layout.endLayout();
+        }
+        if (summaryLines.isEmpty()) summaryLines << QString();
+        const int summaryHeight = summaryMetrics.height() * int(summaryLines.size());
+        const int top = (height() - nameMetrics.height() - summaryHeight - 2) / 2;
         p.setFont(nameFont);
         p.setPen(t.text);
         p.drawText(QRect(x, top, w, nameMetrics.height()), Qt::AlignLeft | Qt::AlignVCenter,
                    nameMetrics.elidedText(text(), Qt::ElideRight, w));
         p.setFont(summaryFont);
         p.setPen(t.secondary);
-        p.drawText(QRect(x, top + nameMetrics.height() + 2, w, summaryMetrics.height()), Qt::AlignLeft | Qt::AlignVCenter,
-                   summaryMetrics.elidedText(m_summary, Qt::ElideRight, w));
+        for (int i = 0; i < summaryLines.size(); ++i) {
+            p.drawText(QRect(x, top + nameMetrics.height() + 2 + i * summaryMetrics.height(), w, summaryMetrics.height()),
+                       Qt::AlignLeft | Qt::AlignVCenter, summaryLines.at(i));
+        }
     }
     void focusInEvent(QFocusEvent *event) override {
         QPushButton::focusInEvent(event);

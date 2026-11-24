@@ -44,6 +44,7 @@
 
 namespace {
 
+constexpr int kInstanceChipValueMax = 200;     // 页头实例胶囊里实例名最宽，超出省略号
 constexpr int kColumnMax = 760;              // 对话流与输入岛最宽（样张 .col / .composer）
 constexpr int kGroupHeaderRole = Qt::UserRole + 2;  // 「固定 / 今天 / 更早」小标题行
 constexpr int kTimeRole = Qt::UserRole + 3;         // 会话行右侧的相对时间
@@ -516,7 +517,11 @@ AgentPage::AgentPage(QWidget *parent)
         auto *lbl = new QLabel(QCoreApplication::translate("AgentPage", "实例"), m_instanceChip);
         lbl->setAttribute(Qt::WA_TransparentForMouseEvents);
         lbl->setFont(pxFont(lbl->font(), 13.5));
-        m_instanceValue = new QLabel(QCoreApplication::translate("AgentPage", "无"), m_instanceChip);
+        auto *value = new ElidedLabel(m_instanceChip);  // 实例名太长时省略号收尾，完整名放胶囊悬停提示
+        value->setText(QCoreApplication::translate("AgentPage", "无"));
+        value->setMinimumWidth(1);
+        value->setMaximumWidth(kInstanceChipValueMax);
+        m_instanceValue = value;
         m_instanceValue->setObjectName(QStringLiteral("agentInstanceValue"));
         m_instanceValue->setAttribute(Qt::WA_TransparentForMouseEvents);
         m_instanceValue->setFont(pxFont(m_instanceValue->font(), 13.5, QFont::Medium));
@@ -1008,6 +1013,10 @@ void AgentPage::setModelLabel(const QString &label) {
 
 void AgentPage::setInstanceChip(const QString &text, bool locked) {
     m_instanceValue->setText(text);
+    QString tip = QCoreApplication::translate("AgentPage", "选择本会话关联的实例");
+    if (QFontMetrics(m_instanceValue->font()).horizontalAdvance(text) > kInstanceChipValueMax)
+        tip += QLatin1Char('\n') + text;
+    m_instanceChip->setToolTip(tip);
     // QPushButton 的 sizeHint 只量自己的字（这里是空的），宽度按里面两颗字的布局给。
     m_instanceChip->setMinimumWidth(qMin(260, m_instanceChip->layout()->sizeHint().width()));
     m_instanceChip->setProperty("locked", locked);

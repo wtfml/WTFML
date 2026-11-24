@@ -309,7 +309,9 @@ void NewServerPage::setDefaults(const QString &name, const QString &gameVersion)
         m_loaderEdit->clear(); m_installerEdit->clear(); m_buildEdit->clear();
     }
     m_nameEdit->setText(name);
+    m_nameEdit->setCursorPosition(0);
     m_gameVersionEdit->setText(gameVersion);
+    m_gameVersionEdit->setCursorPosition(0);
 }
 
 void NewServerPage::setTargetDir(const QString &dir) {

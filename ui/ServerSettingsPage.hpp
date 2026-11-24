@@ -395,6 +395,8 @@ private:
 
     /// 「服务器简介」那一格下面那块"游戏里长什么样"（`FieldView::preview` 为真的那一行才有；
     /// 现在只有 `motd` 一行是那样）。**颜色与字形全照 `§` 码来**，见 `MotdText`。
+    /// 表单名字列的宽（`setFields()` 按最长名字实测，见 .cpp）。
+    int m_fieldLabelWidth = 132;
     QLabel *m_motdPreview = nullptr;
     /// 上面那块底下那行小字（"列表里只画两行"）—— 和预览一起摆、一起收。
     QLabel *m_motdPreviewNote = nullptr;

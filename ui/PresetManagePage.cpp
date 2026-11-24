@@ -1149,7 +1149,9 @@ void PresetManagePage::showPreset(const QString &id, const QString &name,
     m_currentId = id;
     LoadingState::finish(m_sectionList);
     m_nameEdit->setText(name);
+    m_nameEdit->setCursorPosition(0);
     m_descriptionEdit->setText(description);
+    m_descriptionEdit->setCursorPosition(0);
     m_nameEdit->parentWidget()->setVisible(!m_nameEdit->isHidden() || !description.isEmpty());
     // 细节那一层顶上的标题就是这一份的名字（外面改了名之后这一发跟着换）。
     if (m_detailTitle != nullptr) {
