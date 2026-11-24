@@ -88,7 +88,7 @@ bool chooseVersion(const QList<ResourceCatalog::VersionEntry> &versions,
                    const QString &gameVersion, const QString &loader,
                    ResourceCatalog::VersionEntry *out, QString *why) {
     if (versions.isEmpty()) {
-        *why = QCoreApplication::translate("Presets", "平台没有给出任何可用的版本。");
+        *why = QCoreApplication::translate("Presets", "平台未提供可用版本。");
         return false;
     }
     bool sawMatch = false;
@@ -100,7 +100,7 @@ bool chooseVersion(const QList<ResourceCatalog::VersionEntry> &versions,
         sawMatch = true;
         const ResourceCatalog::FileEntry *file = version.primaryFile();
         if (file == nullptr) {
-            fileWhy = QCoreApplication::translate("Presets", "这一版没有可下载的文件。");
+            fileWhy = QCoreApplication::translate("Presets", "此版本无可下载的文件。");
             continue;
         }
         if (!file->unavailableNote.trimmed().isEmpty()) {
@@ -108,7 +108,7 @@ bool chooseVersion(const QList<ResourceCatalog::VersionEntry> &versions,
             continue;
         }
         if (file->url.trimmed().isEmpty()) {
-            fileWhy = QCoreApplication::translate("Presets", "这一版的文件没有下载地址。");
+            fileWhy = QCoreApplication::translate("Presets", "此版本的文件无下载地址。");
             continue;
         }
         *out = version;
@@ -119,8 +119,8 @@ bool chooseVersion(const QList<ResourceCatalog::VersionEntry> &versions,
     } else {
         const QString context = contextText(gameVersion, loader);
         *why = context.isEmpty()
-                   ? QCoreApplication::translate("Presets", "版本列表里没有能装进这个实例的发行版。")
-                   : QCoreApplication::translate("Presets", "版本列表里没有匹配「%1」的发行版。").arg(context);
+                   ? QCoreApplication::translate("Presets", "版本列表中无兼容此实例的发行版。")
+                   : QCoreApplication::translate("Presets", "版本列表中无匹配「%1」的发行版。").arg(context);
     }
     return false;
 }
@@ -212,7 +212,7 @@ static ModInstallPlan planModInstallPass(const ModInstallRequest &request) {
                 cut.required = depRef.required;
                 cut.fromDependency = true;
                 cut.status = ModInstallStatus::Unknown;
-                cut.problem = QCoreApplication::translate("Presets", "前置链超过 %1 层，没有继续往下展开。").arg(request.maxDependencyDepth);
+                cut.problem = QCoreApplication::translate("Presets", "前置链超过 %1 层，未继续展开。").arg(request.maxDependencyDepth);
                 plan.rows.append(cut);
                 continue;
             }
@@ -293,7 +293,7 @@ static ModInstallPlan planModInstallPass(const ModInstallRequest &request) {
         if (input->queryFailed) {
             row.status = ModInstallStatus::Unknown;
             row.problem = input->queryProblem.trimmed().isEmpty()
-                              ? QCoreApplication::translate("Presets", "问平台没成（网络或接口没有回答）。")
+                              ? QCoreApplication::translate("Presets", "平台查询失败（网络或接口无响应）。")
                               : input->queryProblem.trimmed();
             plan.rows.append(row);
             return;
@@ -655,7 +655,7 @@ QString modInstallStatusText(ModInstallStatus status) {
     case ModInstallStatus::AlternativeNeedsConfirm:
         return QCoreApplication::translate("Presets", "待确认的替代项目");
     case ModInstallStatus::Blocked:
-        return QCoreApplication::translate("Presets", "做不了");
+        return QCoreApplication::translate("Presets", "无法完成");
     }
     return QString();
 }
@@ -681,14 +681,14 @@ QString modInstallSummaryText(const ModInstallPlan &plan) {
         parts.append(QCoreApplication::translate("Presets", "有 %1 个替代项目待确认").arg(plan.needsConfirm));
     }
     if (plan.blocked > 0) {
-        parts.append(QCoreApplication::translate("Presets", "做不了 %1 个").arg(plan.blocked));
+        parts.append(QCoreApplication::translate("Presets", "无法完成 %1 个").arg(plan.blocked));
     }
     const int required = plan.requiredFailures();
     if (required > 0) {
         parts.append(QCoreApplication::translate("Presets", "其中必要项失败 %1 个").arg(required));
     }
     if (parts.isEmpty()) {
-        return QCoreApplication::translate("Presets", "没有要动的东西。");
+        return QCoreApplication::translate("Presets", "无待处理内容。");
     }
     return parts.join(QCoreApplication::translate("Presets", "，")) + QCoreApplication::translate("Presets", "。");
 }

@@ -47,7 +47,7 @@ void runServerPlayersTests() {
               "★★ ZAE1 读不懂的 JSON ⇒ `ok = false` + 一句毛病（**不是**空名单 —— 那会让"
               "「写回去」把用户手改坏的记录抹掉）", broken.problem);
         check(broken.problem.contains(QStringLiteral("whitelist.json"))
-                  && broken.problem.contains(QStringLiteral("没有改动它")),
+                  && broken.problem.contains(QStringLiteral("未修改该文件")),
               "★ ZAE1 那句毛病点了文件名、并且说清楚**没有改动它**", broken.problem);
         const ServerPlayers::Content notArray =
             ServerPlayers::parse(ServerPlayers::List::Ops, QByteArrayLiteral("{\"a\":1}"));
@@ -298,7 +298,7 @@ void runServerPlayersTests() {
               "★ ZAE7 `forever` 那一句是「永久」", ServerPlayers::expiryText(entry, now));
         entry.expires = QStringLiteral("2026-10-01 00:00:00 +0800");
         const QString expired = ServerPlayers::expiryText(entry, now);
-        check(expired.startsWith(QStringLiteral("已经过期")) && expired.contains(QStringLiteral("2026-10-01")),
+        check(expired.startsWith(QStringLiteral("已过期")) && expired.contains(QStringLiteral("2026-10-01")),
               "★ ZAE7 过期那一句把那一刻也写出来", expired);
         entry.expires = QStringLiteral("看不清");
         check(ServerPlayers::expiryText(entry, now).contains(QStringLiteral("看不清")),

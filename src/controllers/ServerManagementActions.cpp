@@ -71,7 +71,7 @@ void ServerManagementActions::refreshServerPlayers(MainWindow *owner) {
         QStringList notes;
         if (list == ServerPlayers::List::Ops) {
             notes << MainWindow::tr("等级 %1").arg(entry.level);
-            if (entry.bypassesPlayerLimit) notes << MainWindow::tr("可以绕过人数上限");
+            if (entry.bypassesPlayerLimit) notes << MainWindow::tr("可绕过人数上限");
         } else if (list == ServerPlayers::List::BannedPlayers
                    || list == ServerPlayers::List::BannedIps) {
             notes << ServerPlayers::expiryText(entry, now);
@@ -93,7 +93,7 @@ void ServerManagementActions::addServerPlayer(MainWindow *owner) {
     }
     if (!owner->m_serverSettings->editable()) {
         InlineMessage::warning(
-            owner->m_ui->overlay(), MainWindow::tr("现在改不了"),
+            owner->m_ui->overlay(), MainWindow::tr("当前无法修改"),
             MainWindowUI::serverSettingsPlayerNoteText(page->playerList(), true));
         return;
     }
@@ -104,8 +104,8 @@ void ServerManagementActions::addServerPlayer(MainWindow *owner) {
     bool ok = false;
     const QString typed =
         InlineMessage::getText(
-            owner->m_ui->overlay(), MainWindow::tr("加进%1").arg(listTitle),
-            ipList ? MainWindow::tr("要封哪个地址？\n\n只写一个 IPv4 / IPv6 地址（不带端口）。")
+            owner->m_ui->overlay(), MainWindow::tr("添加到%1").arg(listTitle),
+            ipList ? MainWindow::tr("封禁地址\n\n仅填写一个 IPv4 / IPv6 地址（不含端口）。")
                    : MainWindow::tr("输入玩家名称。\n\n离线服务端根据名称计算 UUID。在线服务端请在控制台使用 whitelist add 或 op，以查询玩家的 Mojang UUID。"),
             QString(), &ok)
             .trimmed();
@@ -114,14 +114,14 @@ void ServerManagementActions::addServerPlayer(MainWindow *owner) {
     }
     // 大致的形状闸（真正的判据在服务端那边 —— 这一层只挡明显的手滑）。
     if (ipList && (typed.contains(QLatin1Char('/')) || typed.contains(QLatin1Char(' ')))) {
-        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("加进%1").arg(listTitle),
-                               MainWindow::tr("地址里不该有空格或者斜杠。"));
+        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("添加到%1").arg(listTitle),
+                               MainWindow::tr("地址不能包含空格或斜杠。"));
         return;
     }
     const ServerPlayers::Content content =
         owner->m_serverSettingsController->readPlayers(serverId, list);
     if (!content.ok) {
-        InlineMessage::critical(owner->m_ui->overlay(), MainWindow::tr("加不进%1").arg(listTitle),
+        InlineMessage::critical(owner->m_ui->overlay(), MainWindow::tr("无法添加到%1").arg(listTitle),
                                 content.problem);
         return;
     }
@@ -131,7 +131,7 @@ void ServerManagementActions::addServerPlayer(MainWindow *owner) {
                               ? entry.ip.compare(typed, Qt::CaseInsensitive) == 0
                               : entry.name.compare(typed, Qt::CaseInsensitive) == 0;
         if (same) {
-            InlineMessage::information(owner->m_ui->overlay(), MainWindow::tr("加进%1").arg(listTitle),
+            InlineMessage::information(owner->m_ui->overlay(), MainWindow::tr("添加到%1").arg(listTitle),
                                        MainWindow::tr("「%1」已在名单中。").arg(typed));
             return;
         }
@@ -140,10 +140,11 @@ void ServerManagementActions::addServerPlayer(MainWindow *owner) {
                                             QDateTime::currentDateTime()));
     QString problem;
     if (!owner->m_serverSettingsController->writePlayers(serverId, list, entries, &problem)) {
-        InlineMessage::critical(owner->m_ui->overlay(), MainWindow::tr("加不进%1").arg(listTitle), problem);
+        InlineMessage::critical(owner->m_ui->overlay(), MainWindow::tr("无法添加到%1").arg(listTitle),
+                                problem);
         return;
     }
-    owner->appendLog(MainWindow::tr("服务端 %1 的%2里加上了「%3」。").arg(serverId, listTitle, typed));
+    owner->appendLog(MainWindow::tr("已将「%3」添加到服务端 %1 的%2。").arg(serverId, listTitle, typed));
     owner->refreshServerPlayers();
 }
 
@@ -155,7 +156,7 @@ void ServerManagementActions::removeServerPlayer(MainWindow *owner, const QStrin
     }
     if (!owner->m_serverSettings->editable()) {
         InlineMessage::warning(
-            owner->m_ui->overlay(), MainWindow::tr("现在改不了"),
+            owner->m_ui->overlay(), MainWindow::tr("当前无法修改"),
             MainWindowUI::serverSettingsPlayerNoteText(page->playerList(), true));
         return;
     }
@@ -206,7 +207,7 @@ void ServerManagementActions::pickServerResourcePack(MainWindow *owner) {
         return;
     }
     if (!owner->m_serverSettings->editable()) {
-        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("现在改不了"),
+        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("当前无法修改"),
                                MainWindowUI::serverSettingsRunningNote());
         return;
     }
@@ -214,7 +215,7 @@ void ServerManagementActions::pickServerResourcePack(MainWindow *owner) {
     // 给一个起点）。筛子允许 `.zip` 和 `.jar`：资源包有时候是别人从模组里剥出来的，
     // 扩展名不一定对 —— 真正的判据在 `ServerResourcePack::inspect()` 里（看条目表）。
     const QString chosen = QFileDialog::getOpenFileName(
-        owner, MainWindow::tr("选一份资源包 zip"), QString(),
+        owner, MainWindow::tr("选择资源包 zip"), QString(),
         MainWindow::tr("资源包 (*.zip *.jar);;所有文件 (*.*)"));
     if (chosen.isEmpty()) {
         return;
@@ -222,19 +223,19 @@ void ServerManagementActions::pickServerResourcePack(MainWindow *owner) {
     const ServerResourcePack::Inspect inspect = ServerResourcePack::inspect(chosen);
     if (!inspect.ok) {
         // 选错了 / 包坏了 / pack.mcmeta 套在文件夹里 —— 都要当场说清楚，不能只记日志。
-        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("这个压缩包不能当资源包用"),
+        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("此压缩包不能用作资源包"),
                                inspect.problem);
         return;
     }
     // 填的是**那一格**（算"用户改过"，保存时会写回 `server.properties`）。
     page->setFieldValue(QStringLiteral("resource-pack-sha1"), inspect.sha1);
-    owner->appendLog(MainWindow::tr("从本地资源包算出了 SHA-1：%1（%2，%3 字节）")
+    owner->appendLog(MainWindow::tr("已计算本地资源包的 SHA-1：%1（%2，%3 字节）")
                   .arg(inspect.sha1, ServerResourcePack::fileCountText(inspect),
                        QString::number(inspect.bytes)));
     // ★ 说清两件事：算的是哪一份、以及**地址还得你自己托管** —— 启动器不会把本机路径
     //   填进 `resource-pack`（别人连不到你的硬盘，那会让每个人进来都卡一下）。
     InlineMessage::information(
-        owner->m_ui->overlay(), MainWindow::tr("SHA-1 算好了"),
+        owner->m_ui->overlay(), MainWindow::tr("已计算 SHA-1"),
         MainWindow::tr("已将「%1」的 SHA-1 填入「资源包 SHA-1」字段：\n\n%2\n\n请在「资源包地址」中填写其他玩家可访问的 HTTP(S) 链接。更换 ZIP 文件后需重新计算 SHA-1。设置将在服务端重启后生效。")
             .arg(QFileInfo(chosen).fileName(), inspect.sha1));
 }
@@ -300,13 +301,13 @@ void ServerManagementActions::addServerContent(MainWindow *owner) {
         return;
     }
     if (!owner->m_serverSettings->editable()) {
-        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("现在改不了"),
+        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("当前无法修改"),
                                MainWindowUI::serverSettingsRunningNote());
         return;
     }
     const QString folder = owner->serverContentFolder();
     if (folder.isEmpty()) {
-        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("加不了"),
+        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("无法添加"),
                                MainWindow::tr("无法根据服务端的 level-name 确定世界存档目录。"));
         return;
     }
@@ -323,12 +324,12 @@ void ServerManagementActions::addServerContent(MainWindow *owner) {
     }
     QString lockProblem;
     if (!ServerWriteGuard::acquire(serverId, &lockProblem)) {
-        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("加不了"), lockProblem);
+        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("无法添加"), lockProblem);
         return;
     }
     // 文件夹可能还不存在（服务端还没跑过）—— 这一次"要往里放东西"了，建出来。
     if (!QDir().mkpath(folder)) {
-        InlineMessage::critical(owner->m_ui->overlay(), MainWindow::tr("加不了"),
+        InlineMessage::critical(owner->m_ui->overlay(), MainWindow::tr("无法添加"),
                                 MainWindow::tr("无法创建文件夹：%1").arg(QDir::toNativeSeparators(folder)));
         return;
     }
@@ -344,30 +345,30 @@ void ServerManagementActions::addServerContent(MainWindow *owner) {
         const QString target = QDir(folder).filePath(info.fileName());
         if (QFileInfo::exists(target)) {
             // ★ **重名不覆盖**：用户手上那一份可能正是他调过的。
-            skipped.append(MainWindow::tr("%1（文件夹里已经有一份了）").arg(info.fileName()));
+            skipped.append(MainWindow::tr("%1（文件夹中已存在）").arg(info.fileName()));
             continue;
         }
         if (!QFile::copy(source, target)) {
-            skipped.append(MainWindow::tr("%1（拷不进去）").arg(info.fileName()));
+            skipped.append(MainWindow::tr("%1（无法复制）").arg(info.fileName()));
             continue;
         }
         added.append(info.fileName());
     }
     if (!added.isEmpty()) {
-        owner->appendLog(MainWindow::tr("服务端 %1 的%2里加进了 %3 份：%4")
+        owner->appendLog(MainWindow::tr("已添加 %3 份到服务端 %1 的%2：%4")
                       .arg(serverId, MainWindowUI::serverSettingsContentKindTitle(kindIndex),
                            QString::number(added.size()), added.join(QCoreApplication::translate("ServerManagementActions", "、"))));
         owner->refreshServerContent();
     }
     if (!skipped.isEmpty()) {
         InlineMessage::warning(
-            owner->m_ui->overlay(), MainWindow::tr("有几份没有加进去"),
+            owner->m_ui->overlay(), MainWindow::tr("部分文件未添加"),
             skipped.join(QStringLiteral("\n"))
-                + MainWindow::tr("\n\n同名文件已保留。若要替换，选择「打开文件夹」并移走旧文件。"));
+                + MainWindow::tr("\n\n同名文件已保留。如需替换，请选择「打开文件夹」并移除旧文件。"));
     } else if (!added.isEmpty()) {
         InlineMessage::information(
-            owner->m_ui->overlay(), MainWindow::tr("加好了"),
-            MainWindow::tr("放进去了 %1 份。服务端下一次启动时才会加载它们。").arg(added.size()));
+            owner->m_ui->overlay(), MainWindow::tr("已添加"),
+            MainWindow::tr("已放入 %1 份。服务端将在下次启动时加载。").arg(added.size()));
     }
 }
 
@@ -378,7 +379,7 @@ void ServerManagementActions::toggleServerContent(MainWindow *owner, const QStri
         return;
     }
     if (!owner->m_serverSettings->editable()) {
-        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("现在改不了"),
+        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("当前无法修改"),
                                MainWindowUI::serverSettingsRunningNote());
         return;
     }
@@ -400,24 +401,24 @@ void ServerManagementActions::toggleServerContent(MainWindow *owner, const QStri
     }
     if (QFileInfo::exists(targetPath)) {
         InlineMessage::warning(
-            owner->m_ui->overlay(), MainWindow::tr("改不了"),
+            owner->m_ui->overlay(), MainWindow::tr("无法修改"),
             MainWindow::tr("目标名称「%1」已存在，请选择其他名称。").arg(target));
         return;
     }
     QString lockProblem;
     if (!ServerWriteGuard::acquire(serverId, &lockProblem)) {
-        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("改不了"), lockProblem);
+        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("无法修改"), lockProblem);
         return;
     }
     QFile file(sourcePath);
     // ★ 改名而不是删除 / 移动：文件内容一个字节都不动，用户想恢复就再点一次。
     if (!file.rename(targetPath)) {
-        InlineMessage::critical(owner->m_ui->overlay(), MainWindow::tr("改不了"),
-                                MainWindow::tr("「%1」改不成「%2」：%3")
+        InlineMessage::critical(owner->m_ui->overlay(), MainWindow::tr("无法修改"),
+                                MainWindow::tr("无法将「%1」改为「%2」：%3")
                                     .arg(name, target, file.errorString()));
         return;
     }
-    owner->appendLog(MainWindow::tr("服务端 %1 的「%2」%3了（现在是「%4」）。")
+    owner->appendLog(MainWindow::tr("服务端 %1 的「%2」已%3（当前为「%4」）。")
                   .arg(serverId, name, enable ? MainWindow::tr("启用") : MainWindow::tr("禁用"), target));
     owner->refreshServerContent();
 }
@@ -425,7 +426,7 @@ void ServerManagementActions::toggleServerContent(MainWindow *owner, const QStri
 void ServerManagementActions::openServerContentFolder(MainWindow *owner) {
     const QString folder = owner->serverContentFolder();
     if (folder.isEmpty()) {
-        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("找不到这个文件夹"),
+        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("未找到此文件夹"),
                                MainWindow::tr("无法根据服务端的 level-name 确定世界存档目录。"));
         return;
     }
@@ -434,14 +435,14 @@ void ServerManagementActions::openServerContentFolder(MainWindow *owner) {
         // 别弹一个"打开失败"（`QDesktopServices` 对不存在的路径只会静默不受理）。
         InlineMessage::information(
             owner->m_ui->overlay(), MainWindow::tr("游戏目录尚未创建"),
-            MainWindow::tr("先往里放一份文件（「添加…」），或者自己建一个：\n%1")
+            MainWindow::tr("请先通过「添加…」放入文件，或手动创建该目录：\n%1")
                 .arg(QDir::toNativeSeparators(folder)));
         return;
     }
     // 走 `QDesktopServices`（和"打开实例文件夹"同一条路：验证工程能换掉 url handler 拦下来）。
     if (!QDesktopServices::openUrl(QUrl::fromLocalFile(folder))) {
-        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("打开不了"),
-                               MainWindow::tr("系统没有受理这个文件夹：%1")
+        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("无法打开"),
+                               MainWindow::tr("系统无法处理此文件夹：%1")
                                    .arg(QDir::toNativeSeparators(folder)));
     }
 }
@@ -453,7 +454,7 @@ void ServerManagementActions::kickServerPlayer(MainWindow *owner, const QString 
     }
     ServerRun::ServerProcess *process = owner->m_serverWorkspace->process(serverId);
     if (process == nullptr || !process->isRunning()) {
-        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("没有在跑的服务端"),
+        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("无运行中的服务端"),
                                MainWindow::tr("服务端已停止，无法踢出玩家。启动服务端后再试。"));
         return;
     }
@@ -461,7 +462,7 @@ void ServerManagementActions::kickServerPlayer(MainWindow *owner, const QString 
     // 而且用户会以为人已经踢下去了）。命令和用户自己敲的那一条完全相同。
     const QString command = QStringLiteral("kick ") + name;
     if (!process->sendCommand(command)) {
-        InlineMessage::critical(owner->m_ui->overlay(), MainWindow::tr("命令没有送出去"),
+        InlineMessage::critical(owner->m_ui->overlay(), MainWindow::tr("命令未发送"),
                                 MainWindow::tr("服务端命令输入已关闭。"));
         return;
     }
@@ -470,7 +471,7 @@ void ServerManagementActions::kickServerPlayer(MainWindow *owner, const QString 
     owner->m_serverConsole->appendLine(serverId, QStringLiteral("[wtfml] ") + MainWindow::tr("已发送：%1").arg(command));
     owner->appendLog(MainWindow::tr("服务端 %1：%2").arg(serverId, command));
     InlineMessage::information(
-        owner->m_ui->overlay(), MainWindow::tr("命令送出去了"),
+        owner->m_ui->overlay(), MainWindow::tr("命令已发送"),
         MainWindow::tr("已向服务端发送「%1」。可在控制台查看执行结果。").arg(command));
 }
 
@@ -514,7 +515,7 @@ void ServerManagementActions::runServerCheckAction(MainWindow *owner, const QStr
                 ServerPropertiesForm::fieldFor(problem.key);
             if (field != nullptr) {
                 lines.append(MainWindow::tr("•「%1」：%2 → %3")
-                                 .arg(field->label, problem.value.isEmpty() ? MainWindow::tr("（空的）")
+                                 .arg(field->label, problem.value.isEmpty() ? MainWindow::tr("（空）")
                                                                             : problem.value,
                                       field->fallback));
             }
@@ -530,7 +531,7 @@ void ServerManagementActions::runServerCheckAction(MainWindow *owner, const QStr
             serverId, owner->m_serverSettingsController->readRaw(serverId),
             owner->m_serverSettingsController->fallbackEdits(properties));
         if (!result.ok) {
-            InlineMessage::critical(owner->m_ui->overlay(), MainWindow::tr("改不了"), result.problem);
+            InlineMessage::critical(owner->m_ui->overlay(), MainWindow::tr("无法修改"), result.problem);
             return;
         }
         owner->appendLog(MainWindow::tr("服务端 %1 的 server.properties 已恢复 %2 项默认值。")
@@ -587,7 +588,7 @@ void ServerManagementActions::backupServerWorld(MainWindow *owner, const QString
     if (worldName.isEmpty()) {
         InlineMessage::warning(
             owner->m_ui->overlay(), MainWindow::tr("无法备份"),
-            MainWindow::tr("level-name 无效，无法确定世界目录。哪儿。\n请在「常用设置」中填写有效的世界目录名。"));
+            MainWindow::tr("level-name 无效，无法确定世界目录。\n请在「常用设置」中填写有效的世界目录名。"));
         return;
     }
     if (!QFileInfo(worldDir).isDir()) {
@@ -614,7 +615,7 @@ void ServerManagementActions::backupServerWorld(MainWindow *owner, const QString
     manifest.sourceInstanceName = entry.name.isEmpty() ? serverId : entry.name;
     manifest.gameVersion = entry.gameVersion;
     manifest.createdAt = now;
-    manifest.scope = QStringList{MainWindow::tr("这个服务端的整个世界文件夹")};
+    manifest.scope = QStringList{MainWindow::tr("此服务端的整个世界文件夹")};
 
     const QString dir = BackupFiles::backupDir(BackupFiles::Kind::World);
     const QString zip = QDir(dir).filePath(
@@ -622,7 +623,7 @@ void ServerManagementActions::backupServerWorld(MainWindow *owner, const QString
     // ★ 跑完之后要把这一页的备份那一列**重摆一遍**（多了一份）—— 记下是哪个服务端。
     owner->m_backupController->startWrite(manifest, worldDir, zip,
                                    MainWindow::tr("备份世界「%1」").arg(worldName), entry.dirPath,
-                                   MainWindow::tr("备份完成"), serverId, MainWindow::tr("备份没有完成"));
+                                   MainWindow::tr("备份完成"), serverId, MainWindow::tr("备份未完成"));
 }
 
 void ServerManagementActions::restoreServerWorldBackup(MainWindow *owner, const QString &serverId, const QString &zipPath) {
@@ -658,7 +659,7 @@ void ServerManagementActions::restoreServerWorldBackup(MainWindow *owner, const 
         InlineMessage::warning(
             owner->m_ui->overlay(), MainWindow::tr("备份与当前世界不匹配"),
             readable ? MainWindow::tr("备份世界为「%1」，当前世界为「%2」。为避免覆盖其他世界，已取消恢复。")
-                           .arg(manifest.root.isEmpty() ? MainWindow::tr("（没写）") : manifest.root,
+                           .arg(manifest.root.isEmpty() ? MainWindow::tr("（未填写）") : manifest.root,
                                 worldName.isEmpty() ? serverId : worldName)
                      : MainWindow::tr("无法读取备份清单，已取消恢复。\n\n%1")
                            .arg(problem));
@@ -677,7 +678,7 @@ void ServerManagementActions::restoreServerWorldBackup(MainWindow *owner, const 
     // `root`（zip 里那一层前缀）就是世界目录名 ⇒ 解到**服务端目录**底下正好落回原地。
     owner->m_backupController->startRestore(zipPath, serverDir,
                                      MainWindow::tr("还原世界「%1」").arg(worldName), serverDir,
-                                     MainWindow::tr("还原完成"), serverId, MainWindow::tr("还原没有完成"));
+                                     MainWindow::tr("还原完成"), serverId, MainWindow::tr("还原未完成"));
 }
 
 void ServerManagementActions::deleteServerBackup(MainWindow *owner, const QString &zipPath) {
@@ -686,7 +687,7 @@ void ServerManagementActions::deleteServerBackup(MainWindow *owner, const QStrin
     }
     const QFileInfo info(zipPath);
     if (!info.exists()) {
-        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("删不掉"),
+        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("无法删除"),
                                MainWindow::tr("备份文件已不存在：\n%1")
                                    .arg(QDir::toNativeSeparators(zipPath)));
         owner->m_serverSettings->refresh();
@@ -703,12 +704,12 @@ void ServerManagementActions::deleteServerBackup(MainWindow *owner, const QStrin
     }
     QString lockProblem;
     if (!ServerWriteGuard::acquire(owner->m_serverSettings->serverId(), &lockProblem)) {
-        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("删不掉"), lockProblem);
+        InlineMessage::warning(owner->m_ui->overlay(), MainWindow::tr("无法删除"), lockProblem);
         return;
     }
     QString recycleProblem;
     if (!moveToRecycleBin(zipPath, &recycleProblem)) {
-        InlineMessage::critical(owner->m_ui->overlay(), MainWindow::tr("删不掉"),
+        InlineMessage::critical(owner->m_ui->overlay(), MainWindow::tr("无法删除"),
                                 MainWindow::tr("无法将备份移至回收站：%1\n%2")
                                     .arg(QDir::toNativeSeparators(zipPath), recycleProblem));
         return;

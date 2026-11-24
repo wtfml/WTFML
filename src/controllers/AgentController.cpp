@@ -633,7 +633,7 @@ QString AgentController::configurationProblem() const {
         return problem;
     }
     if (currentApiKey().isEmpty() && m_profile.authMode != QLatin1String("none")) {
-        return QCoreApplication::translate("AgentController", "没有可用的 API Key，请先在设置里配置。");
+        return QCoreApplication::translate("AgentController", "无可用的 API Key，请先在设置中配置。");
     }
     return {};
 }
@@ -812,7 +812,8 @@ void AgentController::onDelete(const QString &sessionId) {
     if (sessionId.isEmpty()) return;
     const int choice = InlineMessage::ask(
         m_overlay, MessageKind::Question, QCoreApplication::translate("AgentController", "删除会话"),
-        QCoreApplication::translate("AgentController", "只会删除会话正文、恢复快照和本会话 artifacts；" "文件维护备份会保留。确定删除吗？"),
+        QCoreApplication::translate("AgentController", "只会删除会话正文、恢复快照和本会话 artifacts；"
+                                                       "文件维护备份会保留。确认删除？"),
         QStringList{QCoreApplication::translate("AgentController", "删除"), QCoreApplication::translate("AgentController", "取消")}, 1, 0);
     if (choice != 0) return;
 
@@ -928,14 +929,17 @@ AgentToolContext AgentController::toolContext(QString *problem) {
     context.providerHost = QUrl(m_profile.baseUrl).host();
     context.strictEgress = AgentSettings::strictEgress();
     if (context.sessionId.isEmpty()) {
-        if (problem != nullptr) *problem = QCoreApplication::translate("AgentController", "先新建会话再使用文件工具。");
+        if (problem != nullptr) {
+            *problem = QCoreApplication::translate("AgentController", "新建会话后再使用文件工具。");
+        }
         return context;
     }
     const AgentInstanceInfo current = homeInstance();
     if (!m_session.meta.instanceLock.isValid()) {
         if (!current.isValid() || !current.exists) {
             if (problem != nullptr) {
-                *problem = QCoreApplication::translate("AgentController", "NeedsInstanceLock：先在主页选择一个实例；不会自动挑一个。");
+                *problem = QCoreApplication::translate("AgentController", "NeedsInstanceLock："
+                                                                          "请先在主页选择实例；不会自动选择。");
             }
             return context;
         }
@@ -1078,7 +1082,8 @@ void AgentController::onExport(const QString &sessionId) {
     if (!file.open(QIODevice::WriteOnly) ||
         file.write(AgentSessionExport::toMarkdown(session).toUtf8()) < 0 || !file.commit()) {
         InlineMessage::warning(m_overlay, QCoreApplication::translate("AgentController", "导出失败"),
-                               QCoreApplication::translate("AgentController", "无法写入 %1：%2。请换一个位置再试。")
+                               QCoreApplication::translate("AgentController", "无法写入 %1：%2。"
+                                                                              "请更换位置后重试。")
                                    .arg(QDir::toNativeSeparators(path), file.errorString()));
         return;
     }
@@ -1610,7 +1615,8 @@ void AgentController::onSettingsTest() {
         key = AgentSecretStore::read(profile.id).secret;
     }
     if (key.isEmpty() && profile.authMode != QLatin1String("none")) {
-        page->setTestResult(QCoreApplication::translate("AgentController", "没有可用的 API Key；先填写或保存后再测试。"), false);
+        page->setTestResult(QCoreApplication::translate("AgentController", "无可用的 API Key；"
+                                                                           "请填写或保存后再测试。"), false);
         return;
     }
     const QString requestId = QStringLiteral("test-") +

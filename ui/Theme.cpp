@@ -788,7 +788,7 @@ struct ImageFitInfo {
 
 const ImageFitInfo kImageFitInfos[] = {
     {"cover", QT_TRANSLATE_NOOP("Theme", "填满并裁剪")},
-    {"contain", QT_TRANSLATE_NOOP("Theme", "完整放下")},
+    {"contain", QT_TRANSLATE_NOOP("Theme", "完整显示")},
     {"stretch", QT_TRANSLATE_NOOP("Theme", "拉伸填满")},
     {"tile", QT_TRANSLATE_NOOP("Theme", "平铺")},
 };
@@ -875,10 +875,10 @@ const RoleInfo kRoleInfos[] = {
     {"window", QT_TRANSLATE_NOOP("Theme", "内容区底色"), QPalette::Window},
     {"base", QT_TRANSLATE_NOOP("Theme", "输入框/列表底色"), QPalette::Base},
     {"alternateBase", QT_TRANSLATE_NOOP("Theme", "隔行底色"), QPalette::AlternateBase},
-    {"text", QT_TRANSLATE_NOOP("Theme", "输入框/列表里的字"), QPalette::Text},
+    {"text", QT_TRANSLATE_NOOP("Theme", "输入框/列表文字"), QPalette::Text},
     {"windowText", QT_TRANSLATE_NOOP("Theme", "正文"), QPalette::WindowText},
     {"button", QT_TRANSLATE_NOOP("Theme", "按钮底色"), QPalette::Button},
-    {"buttonText", QT_TRANSLATE_NOOP("Theme", "按钮上的字"), QPalette::ButtonText},
+    {"buttonText", QT_TRANSLATE_NOOP("Theme", "按钮文字"), QPalette::ButtonText},
     {"highlight", QT_TRANSLATE_NOOP("Theme", "选中/悬停"), QPalette::Highlight},
     {"highlightedText", QT_TRANSLATE_NOOP("Theme", "选中项文字"), QPalette::HighlightedText},
     {"placeholderText", QT_TRANSLATE_NOOP("Theme", "次要文字"), QPalette::PlaceholderText},
@@ -3009,7 +3009,15 @@ void repolishWidgets() {
                 continue;
             }
         }
+        // QStyleSheetStyle::polish() 先 unsetPalette()：把字体还原成样式表**第一次**落字体时存进
+        // 动态属性 `_q_styleSheetWidgetFont` 的那一份 —— 之后控件自己 setFont() 的（按宽度挑的字号、
+        // 手写体、每日一言的字体族）每换一次主题就被冲回去。polish 前后比一下，被冲掉的补回来。
+        // 只在字体真被改了才补：补一次 setFont 会把整份字体记成显式值，别对没事的控件做。
+        const QFont fontBefore = widget->font();
         widget->style()->polish(widget.data());
+        if (!widget.isNull() && widget->font() != fontBefore) {
+            widget->setFont(fontBefore);
+        }
     }
 }
 

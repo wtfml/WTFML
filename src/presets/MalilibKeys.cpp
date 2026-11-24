@@ -83,7 +83,7 @@ QString jsonTypeName(const QJsonValue &value) {
     case QJsonValue::Undefined:
         break;
     }
-    return QCoreApplication::translate("Presets", "没有这一项");
+    return QCoreApplication::translate("Presets", "无此项");
 }
 
 /// `"LEFT_ALT,Z"` → `{"LEFT_ALT", "Z"}`。空串、只有逗号/空白 ⇒ 空绑定。
@@ -121,7 +121,7 @@ bool isCategoryValue(const QJsonValue &value) { return value.isObject(); }
 bool readWholeFile(const QString &path, QByteArray *out, QString *problemOut) {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        failWith(problemOut, QCoreApplication::translate("Presets", "读不了「%1」：%2").arg(path, file.errorString()));
+        failWith(problemOut, QCoreApplication::translate("Presets", "无法读取「%1」：%2").arg(path, file.errorString()));
         return false;
     }
     if (out != nullptr) {
@@ -278,7 +278,7 @@ CellApply applyCell(QJsonObject &root, const MalilibEntry &entry, ApplyMode mode
     // 搬不动（目标上没有的那几格倒进得去，改已有的进不去）。类型对不对这一档自己判。
     if (entry.kind == MalilibEntryKind::Value) {
         if (entry.value.isUndefined()) {
-            details->append(QCoreApplication::translate("Presets", "「%1」：这一项的载荷里没有值，跳过。").arg(entry.label()));
+            details->append(QCoreApplication::translate("Presets", "「%1」：此项载荷无值，已跳过。").arg(entry.label()));
             result.skipped = true;
             return result;
         }
@@ -673,7 +673,7 @@ QString malilibModIdProblem(const QString &modId) {
     // 那一条只有一处实现，不另立一套。
     const QString why = InstanceFiles::validatePathSegment(modId);
     if (!why.isEmpty()) {
-        return QCoreApplication::translate("Presets", "这个模组名当不了文件名：%1").arg(why);
+        return QCoreApplication::translate("Presets", "此模组名称不能作为文件名：%1").arg(why);
     }
     return QString();
 }
@@ -1002,7 +1002,7 @@ MalilibTarget malilibReadTarget(const QString &instanceRoot, const QStringList &
     if (instanceRoot.trimmed().isEmpty()) {
         // 没给实例目录就往下走的话，`config/x.json` 会变成一个**相对路径** —— 读的是当前
         // 目录、写的也是当前目录。这一条必须是"整趟不办"，不是"那几份当作不存在"。
-        failWith(problemOut, QCoreApplication::translate("Presets", "没给实例目录，读不了目标上的配置。"));
+        failWith(problemOut, QCoreApplication::translate("Presets", "未指定实例目录，无法读取目标配置。"));
         return target;
     }
     for (const QString &modId : modIds) {
@@ -1018,7 +1018,7 @@ MalilibTarget malilibReadTarget(const QString &instanceRoot, const QStringList &
         const QString relativePath = malilibConfigRelativePath(modId);
         if (InstanceFiles::pathHasLinkComponent(instanceRoot, relativePath)) {
             file.problem =
-                QCoreApplication::translate("Presets", "「%1」这一条路上有链接目录（junction / 符号链接），不动它。")
+                QCoreApplication::translate("Presets", "「%1」路径包含链接目录（junction / 符号链接），未处理。")
                     .arg(relativePath);
             target.files.append(file);
             continue;
@@ -1086,7 +1086,7 @@ MalilibApplyResult applyMalilibEntries(const QList<MalilibEntry> &entries,
         }
         if (modId.isEmpty()) {
             report.skipped += static_cast<int>(group.size());
-            report.details << QCoreApplication::translate("Presets", "有一条没有模组名，整段跳过。");
+            report.details << QCoreApplication::translate("Presets", "有一条缺少模组名称，整段跳过。");
             continue;
         }
 
@@ -1231,7 +1231,7 @@ MalilibApplyReport applyMalilibToInstance(const QString &instanceRoot,
         }
         if (!out.commit()) {
             report.ok = false;
-            report.problem = QCoreApplication::translate("Presets", "换掉「%1」失败了：%2").arg(path, out.errorString());
+            report.problem = QCoreApplication::translate("Presets", "替换「%1」失败：%2").arg(path, out.errorString());
             return report;
         }
     }
@@ -1270,7 +1270,7 @@ MalilibExtractReport extractMalilibSections(const MalilibExtractRequest &request
         }
         const QString path = QDir(request.instanceRoot).filePath(malilibConfigRelativePath(modId));
         if (!QFileInfo::exists(path)) {
-            report.skipped << QCoreApplication::translate("Presets", "「%1」不在这一份实例里。")
+            report.skipped << QCoreApplication::translate("Presets", "「%1」不在当前实例中。")
                                   .arg(malilibConfigRelativePath(modId));
             continue;
         }
@@ -1287,7 +1287,7 @@ MalilibExtractReport extractMalilibSections(const MalilibExtractRequest &request
             continue;
         }
         if (entries.isEmpty()) {
-            report.skipped << QCoreApplication::translate("Presets", "「%1」这一份里没有可收的东西，跳过了。")
+            report.skipped << QCoreApplication::translate("Presets", "「%1」中无内容可收集，已跳过。")
                                   .arg(malilibConfigRelativePath(modId));
             continue;
         }

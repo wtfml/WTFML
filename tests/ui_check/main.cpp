@@ -401,7 +401,10 @@ int main(int argc, char *argv[]) {
         bool rightStillTalksAboutImport = false;
         if (instanceWorkspace != nullptr) {
             for (const QLabel *l : instanceWorkspace->findChildren<QLabel *>()) {
-                if (l->text().contains(QStringLiteral("导入整合包"))) {
+                // 空状态那句（instanceEmpty）本来就写「可导入整合包」，不在"常驻侧栏说明"之列；
+                // 页头那颗按钮的完整文案带省略号，正文里重复的才是要挡的。
+                if (l->objectName() != MainWindowUI::instanceEmptyLabelName() &&
+                    l->text().contains(QStringLiteral("导入整合包…"))) {
                     rightStillTalksAboutImport = true;
                 }
             }
@@ -2434,7 +2437,7 @@ int main(int argc, char *argv[]) {
                   "（**不是**离线登录 —— 那种状态点开始会被「请先登录」挡回来）",
                   accountType->text());
             // 三种说法本身钉一遍：**三种而不是两种**是这次特意定的（见 .hpp 那段 NOTE）。
-            check(MainWindowUI::accountTypeOnlineText() == QStringLiteral("正版") &&
+            check(MainWindowUI::accountTypeOnlineText() == QStringLiteral("微软") &&
                       MainWindowUI::accountTypeOfflineText() == QStringLiteral("离线") &&
                       MainWindowUI::accountTypeNotLoggedInText() == QStringLiteral("未登录"),
                   "三种说法分别是 正版 / 离线 / 未登录（说明删减清单 §4）");

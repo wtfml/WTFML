@@ -321,6 +321,7 @@ void MainWindowUI::setupDownloadGamePage() {
     versionFilterLayout->addWidget(versionFilterHint);
     // 设计稿 download：搜索框定宽靠左，不再横贯整行。
     versionFilterEdit->setMaximumWidth(360);
+    fitSearchWidth(versionFilterEdit, 0, 360);
     {
         // 分段：全部 / 正式版 / 快照 / 远古版（设计稿 download）。只藏 / 露那几条分类，
         // 和筛选框叠着生效（见 applyVersionFilter()）。各段的版本数在 tooltip 里。
@@ -484,7 +485,7 @@ void MainWindowUI::setupDownloadGamePage() {
     // 那一行本身在下面「顶层五条」之后插（见 `installPresetRowRole()`）。
 
     // 加载器：**一棵树**，和上一页的版本树同一个模式（要求见头文件里那段）：
-    // 界面上是四条加载器（+ 一条预设行）；「不装（纯原版）」只留内部那条（默认值、
+    // 界面上是四条加载器（+ 一条预设行）；「不安装（纯原版）」只留内部那条（默认值、
     // 取消加载器后的落点），不摆成一个重复选项 —— 点一条展开它底下的版本号，
     // 点一个版本号就收起来、把选中的版本号写在那一行的第二行小字上。
     //
@@ -549,9 +550,9 @@ void MainWindowUI::setupDownloadGamePage() {
     loaderTree->setIconSize(QSize(versionTreeIconSize(), versionTreeIconSize()));
     loaderLayout->addWidget(loaderTree);
 
-    // 顶层五条：四个加载器 + 最后那条「不装（纯原版）」。顺序、下标、文案全走
+    // 顶层五条：四个加载器 + 最后那条「不安装（纯原版）」。顺序、下标、文案全走
     // modLoaderOptionNames()/modLoaderOptionTexts() 那两张表（见头文件里那段 NOTE）。
-    // 「不装」那条**建出来但藏起来**：下标 4 仍是内部身份（默认选中、取消加载器后的
+    // 「不安装」那条**建出来但藏起来**：下标 4 仍是内部身份（默认选中、取消加载器后的
     // 落点），只是界面上不长成一个和行尾 × 重复的选项。
     {
         const QStringList texts = modLoaderOptionTexts();
@@ -560,15 +561,15 @@ void MainWindowUI::setupDownloadGamePage() {
             item->setData(loaderTreeKeyColumn(), Qt::UserRole, i);
             item->setText(loaderTreeKeyColumn(), texts.at(i));
             // Preserve the internal vanilla identity/index, but do not render a duplicate choice.
-            // 「不装（纯原版）」只留内部状态（下标 4 仍是默认值、也是取消加载器后的落点），
+            // 「不安装（纯原版）」只留内部状态（下标 4 仍是默认值、也是取消加载器后的落点），
             // 界面上不摆成一条和行尾 × 重复的选项 —— 见上面那段 NOTE。
             if (i == modLoaderNoneIndex()) item->setHidden(true);
             // 每条前面那个标志（Fabric 的织纹 / Forge 的铁砧 / NeoForge 的狐狸 /
-            // OptiFine 的放大镜；「不装」那条是草方块 —— 那条路装出来的就是原版）。
+            // OptiFine 的放大镜；「不安装」那条是草方块 —— 那条路装出来的就是原版）。
             // 画法是 ui/VersionIcons.cpp，那几个图标的画法表和这张表**同序**；
             // 给的是整数下标，越界时它自己会退回草方块。
             item->setIcon(loaderTreeKeyColumn(), QIcon(VersionIcons::loaderMark(i, versionTreeIconSize())));
-            // 「不装（纯原版）」那条**没有**版本可选（原版没有加载器版本），所以它
+            // 「不安装（纯原版）」那条**没有**版本可选（原版没有加载器版本），所以它
             // 底下一直是空的、也不长展开箭头（代理按"有没有孩子"决定画不画）。
             // NOTE: 这一条**不是凑数**：它是"回到装纯原版"那条路，初始选中的就是它。
         }
@@ -576,7 +577,7 @@ void MainWindowUI::setupDownloadGamePage() {
     // 「预设」那一行（在 OptiFine 下面）—— **不是加载器**，是一条开弹窗的行。
     // UserRole 是哨兵（`installPresetRowRole()`）：`loaderItem()` 按加载器下标找条目，
     // 看见这个值就不能把它当成第几条加载器；点它开的是那张四类弹窗。
-    // 插在「不装（纯原版）」**前面**（`modLoaderNoneIndex()` 那个位置）：加载器那五条
+    // 插在「不安装（纯原版）」**前面**（`modLoaderNoneIndex()` 那个位置）：加载器那五条
     // 的 UserRole 一个都不动 —— 界面上多一行，数据层的身份不受影响。
     {
         auto *presetItem = new QTreeWidgetItem();
@@ -705,6 +706,7 @@ void MainWindowUI::setupDownloadServerPage() {
     search->setObjectName(QStringLiteral("serverVersionFilter"));
     search->setPlaceholderText(versionFilterPlaceholderText());
     addSearchIcon(search);
+    fitSearchWidth(search, 0, 360);
     filterLayout->addWidget(search, 1);
     auto *hint = new QLabel(filterBar);
     hint->setObjectName(downloadServerHintName());

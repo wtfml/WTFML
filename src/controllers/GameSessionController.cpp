@@ -164,7 +164,7 @@ void GameSessionController::openLogFile(const QString &path) {
                         && file.write(bytes) == bytes.size() && file.commit();
         if (!ok) {
             InlineMessage::warning(m_ui->overlay(), tr("导出失败"),
-                                   tr("这个文件没能写出来（%1）：\n%2")
+                                   tr("文件写入失败（%1）：\n%2")
                                        .arg(QDir::toNativeSeparators(target), file.errorString()));
         }
     });
@@ -540,7 +540,7 @@ void GameSessionController::onGameFinished(int sessionId, int exitCode, QProcess
         if (launchSucceeded) m_host.launchTaskStepDone(finishingLaunchTask);
         m_host.finishLaunchTask(finishingLaunchTask, launchSucceeded,
                                 outputSeen ? tr("游戏窗口出现前进程就结束了，退出码 %1。").arg(exitCode)
-                                           : tr("游戏进程没等到能打日志就结束了，退出码 %1。").arg(exitCode));
+                                           : tr("游戏进程在生成日志前结束，退出码 %1。").arg(exitCode));
     }
 
     // ---------- 异常退出 → 账本上补一项「游戏异常退出」 ----------
@@ -568,7 +568,7 @@ void GameSessionController::onGameFinished(int sessionId, int exitCode, QProcess
     m_host.updateInstanceTreeRunState();
     m_host.updateBottomBar();
 
-    // 「收起启动器，游戏退出后自动回来」那一档：见 applyLauncherBehaviourAfterLaunch()。
+    // 「隐藏启动器，游戏退出后自动恢复」那一档：见 applyLauncherBehaviourAfterLaunch()。
     // 只有**为了启动游戏才藏起来**的窗口才会被叫回来 —— 用户自己最小化、自己收起来的
     // 窗口不该因为游戏退出就跳出来。
     //
@@ -636,7 +636,7 @@ void GameSessionController::stopGameSession(int sessionId) {
     if (game.sessionId == 0) {
         // 用户看那两眼的时候它自己退出了。**不弹窗**：他什么都没做错，弹一个框只会让他
         // 以为出事了；面板上那一行也确实已经不在了。
-        m_host.log(tr("这个实例刚刚已经结束了。"));
+        m_host.log(tr("此实例已结束。"));
         return;
     }
     if (!confirmStopGame(game.displayName, 1)) {
@@ -647,7 +647,7 @@ void GameSessionController::stopGameSession(int sessionId) {
     if (!m_launcherManager->stopGame(sessionId)) {
         m_userStoppedSessions.remove(sessionId);
         // 上面那一问期间它退出了（游戏自己崩了/被别处停了）。
-        m_host.log(tr("「%1」刚刚已经结束了。").arg(game.displayName));
+        m_host.log(tr("「%1」已结束。").arg(game.displayName));
         return;
     }
     m_host.log(tr("已停止「%1」。").arg(game.displayName));

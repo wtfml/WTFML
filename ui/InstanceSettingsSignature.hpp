@@ -52,7 +52,7 @@ struct Inputs {
     /// 图标那一格：挑本地图时是 `localIconValue() + "|" + pickedPath`（换一张图 = 换一次
     /// 设置），否则是 `iconChoice()` 那一档的键。
     QString iconSignature;
-    /// 左栏「显示哪些页」：**按界面顺序**给的 (页键, 勾没勾)。
+    /// 左栏「显示页面」：**按界面顺序**给的 (页键, 勾没勾)。
     QList<QPair<QString, bool>> pageChecks;
     /// 分组按 **id**（组名会变，id 才是身份）。
     QString groupId;

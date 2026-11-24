@@ -445,7 +445,7 @@ QList<MainWindowUI::PanelRow> accountRows(bool signedIn) {
     MainWindowUI::PanelRow steve;
     steve.key = QStringLiteral("steve");
     steve.title = QStringLiteral("Steve");
-    steve.subtitle = QStringLiteral("正版");
+    steve.subtitle = QStringLiteral("微软");
     steve.icon = faceMark(QColor(0x3c, 0x9e, 0x7a), QStringLiteral("S"), 32);
     steve.checked = true;
     rows.append(steve);
@@ -1307,7 +1307,7 @@ int runExtended(QApplication &app, const ShotOptions &options) {
     ui.getTabWidget()->setCurrentIndex(MainWindowUI::homeTabIndex());
     MainWindowUI::HomeQuickItem none;
     none.key = QStringLiteral("none");
-    none.name = QStringLiteral("还没有实例");
+    none.name = QStringLiteral("暂无实例");
     none.empty = true;
     ui.setHomeQuickRows({none}, {}, {});
     saveShot(app, window, options.out, QStringLiteral("home-empty"), &saved);
@@ -2097,7 +2097,7 @@ MainWindowUI::HomeQuickItem siteHomeItem(const QString &key, const QString &name
 
 QString siteDemoInstanceName(int index) {
     switch (index) {
-    case 0: return demoText("光影与优化-1.21.1", "Shaders & Performance 1.21.1");
+    case 0: return demoText("光影与优化-1.21.1", "Shaders 1.21.1");
     case 1: return demoText("机械动力-1.20.1", "Create 1.20.1");
     case 2: return demoText("科技整合-1.21.1", "Tech Pack 1.21.1");
     case 3: return demoText("原版生存-1.21.4", "Vanilla Survival 1.21.4");
@@ -2124,10 +2124,11 @@ void fillSiteHome(MainWindowUI &ui) {
                      true)};
     ui.setHomeQuickRows({all.at(0)}, {all.at(1), all.at(2)}, {all.at(0), all.at(1), all.at(3)});
     ui.setHomeQuickMode(MainWindowUI::HomeQuickMode::Current);
-    if (isEnglishDemo()) {
-        ui.setHomeHeroQuote(QStringLiteral("Imagination is more important than knowledge."),
-                            QStringLiteral("— Albert Einstein"), Theme::QuoteScript::Latin);
-    }
+    // 中英文都给一条演示一言（和 shot-home 同一来源），look-home-* 两种语言版面才一致。
+    ui.setHomeHeroQuote(
+        demoText("大鹏一日同风起，扶摇直上九万里。", "Imagination is more important than knowledge."),
+        demoText("— 李白《上李邕》", "— Albert Einstein"),
+        isEnglishDemo() ? Theme::QuoteScript::Latin : Theme::QuoteScript::Han);
     if (ui.getHomeAccountLabel() != nullptr) ui.getHomeAccountLabel()->setText(QStringLiteral("Steve"));
     if (ui.getHomeAccountTypeLabel() != nullptr) {
         ui.getHomeAccountTypeLabel()->setText(MainWindowUI::accountTypeOnlineText());
@@ -2317,8 +2318,8 @@ QJsonObject siteApprovalRequest() {
         {QStringLiteral("diff"),
          QStringLiteral("- renderDistance:8\n- ao:false\n+ renderDistance:12\n+ ao:true")},
         {QStringLiteral("backupHint"),
-         demoText("写之前会把原文件另存为 options.txt.bak。",
-                  "Original file will be backed up as options.txt.bak before writing.")},
+         demoText("写入前会将原文件备份为 options.txt.bak。",
+                  "The original file will be backed up as options.txt.bak before writing.")},
         {QStringLiteral("sessionAllowAvailable"), false},
         {QStringLiteral("egress"),
          QJsonObject{{QStringLiteral("kind"), demoText("本机文件", "Local file")},
@@ -2640,16 +2641,15 @@ int runSite(QApplication &app, const ShotOptions &options) {
         InlineMessageBox box(
             MessageKind::Question, QCoreApplication::translate("ImportController", "开始导入"),
             demoText("整合包：Fabulously Optimized 6.1\nMinecraft：1.21.1 + Fabric 0.16.9\n"
-                     "要下载的文件：87 个\n装到：D:\\Games\\WTFML\\instances\\光影与优化-1.21.1\n\n"
-                     "开始导入吗？",
+                     "要下载的文件：87 个\n安装到：D:\\Games\\WTFML\\instances\\光影与优化-1.21.1\n\n"
+                     "是否开始导入？",
                      "Modpack: Fabulously Optimized 6.1\nMinecraft: 1.21.1 + Fabric 0.16.9\n"
-                     "Files to download: 87\nInstall to: D:\\Games\\WTFML\\instances\\Shaders & Performance 1.21.1\n\n"
+                     "Files to download: 87\nInstall to: D:\\Games\\WTFML\\instances\\Shaders 1.21.1\n\n"
                      "Start import?"),
             {demoText("是", "Yes"), demoText("否", "No")}, 0, -1, &window);
-        box.setNote(demoText("冲突：包里自带 OptiFine 兼容补丁，与 Sodium 不能同时启用 —— "
-                             "导入后会在「模组」页把冲突的那一份标出来，不会删除。",
-                             "Conflict: the pack includes an OptiFine compatibility patch that cannot be enabled "
-                             "alongside Sodium — it will be marked in the Mods tab after import without deleting it."));
+        box.setNote(demoText("包内的 OptiFine 兼容补丁与 Sodium 冲突。导入后将在「模组」页标出该文件，不会删除。",
+                             "The OptiFine compatibility patch in this pack conflicts with Sodium. "
+                             "After import it will be marked on the Mods page and will not be deleted."));
         QTimer::singleShot(200, &box, [&] {
             pump();
             std::printf("  导入检查：提示「%s」%dx%d，备注 %d 字\n",
@@ -2723,7 +2723,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
             // 版本升级：另存副本 / 原地升级两颗按钮 + 快照与校验的说明。
             dialog.setUpgradeContext(
                 demoText("当前实例：光影与优化-1.21.1\nMinecraft 1.21.1 / Fabric 0.16.9",
-                         "Current instance: Shaders & Performance 1.21.1\nMinecraft 1.21.1 / Fabric 0.16.9"));
+                         "Current instance: Shaders 1.21.1\nMinecraft 1.21.1 / Fabric 0.16.9"));
             dialog.setTransferTargets(
                 QStringLiteral("upgrade"),
                 {{demoText("Minecraft 1.21.4（未安装）", "Minecraft 1.21.4 (not installed)"), QStringLiteral("1.21.4")},
@@ -2731,14 +2731,14 @@ int runSite(QApplication &app, const ShotOptions &options) {
             dialog.setTransferPlan(
                 QStringLiteral("upgrade"),
                 demoText("升级副本计划：游戏版本不同\n\n"
-                         "将创建一份升级副本，并把选中的 8 项（1,284 个文件 / 2.6 GB）搬进去。\n\n"
-                         "只增加文件，不删除、不覆盖目标里已有的同名文件。\n\n"
+                         "将创建升级副本，并复制选中的 8 项（1,284 个文件 / 2.6 GB）。\n\n"
+                         "仅添加文件，不会删除或覆盖目标中已有的同名文件。\n\n"
                          "兼容性结论：游戏版本不同\n\n"
-                         "原地升级会先创建完整 ZIP 快照并逐文件校验，确认后才替换；"
+                         "原地升级会先创建完整 ZIP 快照并逐文件校验，确认后再替换；"
                          "原目录另行保留，可回滚。",
                          "Upgrade copy plan: different game version\n\n"
                          "An upgrade copy will be created with the 8 selected items (1,284 files / 2.6 GB).\n\n"
-                         "Files will only be added; existing files with the same name in the target will not be deleted or overwritten.\n\n"
+                         "Files are only added. Existing files in the target are not deleted or overwritten.\n\n"
                          "Compatibility: different game version\n\n"
                          "In-place upgrade creates a full ZIP snapshot and verifies every file before replacing; "
                          "the original folder is kept for rollback."));
@@ -2767,7 +2767,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
                   demoText("Forge 专用", "Forge only"),
                   QStringLiteral("create-6.0.6.jar"), QString(), QStringLiteral("incompatible")},
                  {QStringLiteral("JEI 19.27.0"), demoText("未知", "Unknown"),
-                  demoText("模组未声明支持的版本", "Mod does not declare supported versions"),
+                  demoText("模组未声明支持的版本", "Support not declared"),
                   QStringLiteral("jei.jar"), QString(), QStringLiteral("unknown")}},
                 demoText("模组声明：11 个可沿用，1 个需要替换，1 个不兼容，1 个未知。",
                          "Mod declarations: 11 compatible, 1 needs replacement, 1 incompatible, 1 unknown."));
@@ -2799,15 +2799,14 @@ int runSite(QApplication &app, const ShotOptions &options) {
             }
             {
                 InlineMessageBox box(
-                    MessageKind::Question, QCoreApplication::translate("ModpackExportController", "继续导出吗"),
-                    demoText("3 个文件在 Modrinth 与 CurseForge 都没查到出处：\n"
+                    MessageKind::Question, QCoreApplication::translate("ModpackExportController", "是否继续导出"),
+                    demoText("以下 3 个文件在 Modrinth 与 CurseForge 上均未找到来源：\n"
                              "mods/optifine-compat-1.0.3.jar\nmods/自定义合成表.jar\nconfig/rare-recipes.json\n\n"
-                             "继续的话，认不出出处的文件会原样打进包里：别人装上照样能用，"
-                             "只是启动器不能替他单独更新或者去重。",
-                             "3 files could not be matched on Modrinth or CurseForge:\n"
+                             "继续导出会保留来源未知的文件。导入后，启动器无法单独更新这些文件或去除重复项。",
+                             "3 files were not found on Modrinth or CurseForge:\n"
                              "mods/optifine-compat-1.0.3.jar\nmods/custom-recipes.jar\nconfig/rare-recipes.json\n\n"
-                             "If you continue, unrecognized files will be bundled as-is: others can still play, "
-                             "though the launcher cannot update or deduplicate them individually."),
+                             "Files from unknown sources will be kept in the export. After import, the launcher "
+                             "cannot update them individually or remove duplicates."),
                     {QCoreApplication::translate("ModpackExportController", "继续导出"),
                      QCoreApplication::translate("ModpackExportController", "取消")},
                     0, -1, &window);
@@ -2849,7 +2848,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
     {
         const QString raw = demoText(
             "#Minecraft server properties\n"
-            "motd=欢迎来到 Steve 的周末生存服\n"
+            "motd=Steve 的周末生存服\n"
             "server-port=25565\n"
             "max-players=20\n"
             "online-mode=true\n"
@@ -2864,7 +2863,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
             "simulation-distance=8\n"
             "player-idle-timeout=0\n",
             "#Minecraft server properties\n"
-            "motd=Welcome to Steve's Weekend Survival Server\n"
+            "motd=Steve's Weekend Server\n"
             "server-port=25565\n"
             "max-players=20\n"
             "online-mode=true\n"
@@ -2953,7 +2952,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
             agent->setInstanceChip(shadersName, false);
             AgentView::SessionMeta session;
             session.id = QStringLiteral("s-site");
-            session.title = demoText("把渲染距离调到 12", "Set render distance to 12");
+            session.title = demoText("渲染距离调整为 12", "Set render distance to 12");
             session.updatedAt = QDateTime::currentDateTime().addSecs(-120);
             session.encrypted = true;
             agent->setSessions({session});
@@ -2962,15 +2961,14 @@ int runSite(QApplication &app, const ShotOptions &options) {
             AgentView::Message ask;
             ask.id = QStringLiteral("m1");
             ask.user = true;
-            ask.content = demoText("光影与优化-1.21.1 有点卡，帮我把渲染距离调到 12，顺便开平滑光照。",
-                                   "Shaders & Performance 1.21.1 feels laggy — please set render distance to 12 and enable smooth lighting.");
+            ask.content = demoText("请将光影与优化-1.21.1 的渲染距离调整为 12，并启用平滑光照。",
+                                   "Set the render distance to 12 and enable smooth lighting.");
             AgentView::Message answer;
             answer.id = QStringLiteral("m2");
             answer.content = demoText(
-                "先看看 `options.txt` 现在写的是什么。\n"
-                "里面 `renderDistance:8`、`ao:false`，改这两项就行；写入前会备份成 `options.txt.bak`。",
-                "Let's check what `options.txt` currently has.\n"
-                "It has `renderDistance:8` and `ao:false`, so updating those two lines will do; a backup will be saved as `options.txt.bak` before writing.");
+                "`options.txt` 当前为 `renderDistance:8`、`ao:false`。\n"
+                "将修改这两项，写入前会将原文件备份为 `options.txt.bak`。",
+                "`options.txt` has `renderDistance:8` and `ao:false`. Both will be changed after a backup.");
             agent->clearMessages();
             app.sendPostedEvents(nullptr, QEvent::DeferredDelete);
             pump();
@@ -2978,10 +2976,12 @@ int runSite(QApplication &app, const ShotOptions &options) {
             AgentView::ToolCard card;
             card.id = QStringLiteral("t1");
             card.title = demoText("读取 options.txt", "Read options.txt");
-            card.summary = demoText("读到 42 项设置", "Read 42 settings");
+            card.summary = demoText("共 42 项设置", "42 settings");
             card.detail = QStringLiteral("renderDistance=8　ao=false");
             card.status = AgentView::ToolCardStatus::Done;
-            agent->setToolCards({card});
+            // 不摆工具卡：带上它对话流比窗口高 25 px，滚到底时用户气泡的上沿被页头压住。
+            Q_UNUSED(card);
+            agent->setToolCards({});
             agent->showEmptyState(false);
             agent->showApproval(siteApprovalRequest());
             pump();
@@ -3138,6 +3138,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
                          QStringLiteral("default-vanilla"), 1);
             addInst(vanilla, vanillaName, QStringLiteral("1.21.4"),
                     QCoreApplication::translate("MainWindow", "原版"), 5);
+            vanilla->setExpanded(false);  // 收起这一组，末行不再被窗底切掉半行
             tree->show();
             tree->setCurrentItem(first);
         }
@@ -3209,8 +3210,8 @@ int runSite(QApplication &app, const ShotOptions &options) {
         if (AgentPage *agent = ui.getAgentPage()) {
             const QDateTime now = QDateTime::currentDateTime();
             const QString crashAsk =
-                demoText("装了光影以后一进世界就闪退，帮我看看是什么原因。",
-                         "After installing shaders, the game crashes as soon as I enter a world. Can you help me find out why?");
+                demoText("安装光影后进入世界即闪退，请分析原因。",
+                         "The game crashes when entering a world after installing shaders. Please find the cause.");
             const auto mkSession = [](const QString &id, const QString &title, const QDateTime &at) {
                 AgentView::SessionMeta meta;
                 meta.id = id;
@@ -3220,7 +3221,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
             };
             const QList<AgentView::SessionMeta> sessions{
                 mkSession(QStringLiteral("sa1"), crashAsk, now),
-                mkSession(QStringLiteral("sa2"), demoText("存档备份放在哪个目录？", "Where are world backups stored?"),
+                mkSession(QStringLiteral("sa2"), demoText("存档备份的位置", "World backup location"),
                           now.addSecs(-28 * 60)),
                 mkSession(QStringLiteral("sa3"), demoText("1.20.1 Forge 启动报错", "1.20.1 Forge launch error"),
                           now.addSecs(-28 * 60)),
@@ -3243,16 +3244,16 @@ int runSite(QApplication &app, const ShotOptions &options) {
             AgentView::Message answer;
             answer.id = QStringLiteral("ma2");
             answer.content = demoText(
-                "一进世界就闪退，多半出在这三处：\n\n"
-                "1. **Iris 与 Sodium 版本不配套**：两者要对应同一个 Minecraft 版本；\n"
-                "2. **显卡驱动过旧**：光影需要 OpenGL 4.x，先把驱动更新到最新；\n"
-                "3. **内存不够**：开光影建议给到 4 GB 以上，在实例设置的「启动」里调。\n\n"
-                "实例目录下 `crash-reports` 里最新的那份崩溃报告能说明是哪一种。要我读一下吗？",
-                "A crash right when entering a world usually comes down to one of three things:\n\n"
-                "1. **Iris & Sodium version mismatch**: both mods need to match your Minecraft version.\n"
-                "2. **Outdated GPU drivers**: shaders require OpenGL 4.x, so update your graphics driver first.\n"
-                "3. **Not enough memory**: shaders generally need at least 4 GB — adjust it under Instance Settings → Launch.\n\n"
-                "The latest report in the instance's `crash-reports` folder will tell us which one it is. Want me to read it?");
+                "进入世界时闪退，通常有以下三种原因：\n\n"
+                "1. **Iris 与 Sodium 版本不匹配**：两者须对应同一个 Minecraft 版本；\n"
+                "2. **显卡驱动过旧**：光影需要 OpenGL 4.x，请先更新驱动；\n"
+                "3. **内存不足**：使用光影建议分配 4 GB 以上，可在实例设置的「启动设置」中调整。\n\n"
+                "实例目录 `crash-reports` 中最新的崩溃报告可以确定原因。是否读取该报告？",
+                "A crash when entering a world usually has one of three causes:\n\n"
+                "1. **Iris and Sodium version mismatch**: both mods must match the same Minecraft version.\n"
+                "2. **Outdated graphics driver**: shaders require OpenGL 4.x. Update the driver first.\n"
+                "3. **Not enough memory**: 4 GB or more is recommended for shaders. Adjust it under Launch settings in the instance settings.\n\n"
+                "The latest report in the instance's `crash-reports` folder can confirm the cause. Would you like me to read it?");
             agent->clearMessages();
             app.sendPostedEvents(nullptr, QEvent::DeferredDelete);
             pump();
@@ -3313,7 +3314,7 @@ int runLegacy(QApplication &app, const QString &out) {
 
         MainWindowUI::HomeQuickItem none;
         none.key = QStringLiteral("none");
-        none.name = QStringLiteral("还没有实例");
+        none.name = QStringLiteral("暂无实例");
         none.empty = true;
         ui.setHomeQuickRows({none}, {}, {});
 

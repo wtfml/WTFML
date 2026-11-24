@@ -28,7 +28,7 @@ const TrimMaterialRow kTrimMaterials[] = {
     {"iron", QT_TRANSLATE_NOOP("ArmorTrim", "铁质"), QT_TRANSLATE_NOOP("ArmorTrim", "铁锭"), "1.20"},
     {"lapis", QT_TRANSLATE_NOOP("ArmorTrim", "青金石质"), QT_TRANSLATE_NOOP("ArmorTrim", "青金石"), "1.20"},
     {"netherite", QT_TRANSLATE_NOOP("ArmorTrim", "下界合金质"), QT_TRANSLATE_NOOP("ArmorTrim", "下界合金锭"), "1.20"},
-    {"quartz", QT_TRANSLATE_NOOP("ArmorTrim", "石英质"), QT_TRANSLATE_NOOP("ArmorTrim", "石英"), "1.20"},
+    {"quartz", QT_TRANSLATE_NOOP("ArmorTrim", "石英质"), QT_TRANSLATE_NOOP("ArmorTrim", "下界石英"), "1.20"},
     {"redstone", QT_TRANSLATE_NOOP("ArmorTrim", "红石质"), QT_TRANSLATE_NOOP("ArmorTrim", "红石粉"), "1.20"},
     {"resin", QT_TRANSLATE_NOOP("ArmorTrim", "树脂质"), QT_TRANSLATE_NOOP("ArmorTrim", "树脂砖"), "1.21.4"},
 };
@@ -265,10 +265,10 @@ Plan plan(int armorMaterial, int part, int patternIndex, int trimMaterial, int p
 
     // 一句话把"从哪来"和"再要一枚拿什么换"说完 —— 这两样是用户看这页真正要查的。
     // 模板本身和那七颗钻石不必写：前者就是这一枚，后者谁都备得住。
-    result.notes.append(QCoreApplication::translate("ArmorTrim", "这枚%1来自：%2；复制用%3。")
+    result.notes.append(QCoreApplication::translate("ArmorTrim", "此%1来源：%2；复制需%3。")
                             .arg(templateName, pattern.source, pattern.duplicate));
     if (pattern.since != QStringLiteral("1.20")) {
-        result.notes.append(QCoreApplication::translate("ArmorTrim", "%1 纹饰模板自 Java 版 %2 起可用。")
+        result.notes.append(QCoreApplication::translate("ArmorTrim", "%1自 Java 版 %2 起可用。")
                                 .arg(templateName, pattern.since));
     }
     const QString materialSince = trimMaterialSince(trimMaterial);
@@ -318,7 +318,8 @@ Plan plan(int armorMaterial, int part, int patternIndex, int trimMaterial, int p
     result.materials.append(QStringLiteral("%1 × %2").arg(armor).arg(pieces));
 
     if (pieces > 1) {
-        result.notes.append(QCoreApplication::translate("ArmorTrim", "模板每打一件消耗一个：%1 件共需 %1 个。")
+        result.notes.append(QCoreApplication::translate("ArmorTrim",
+                                                        "每锻造一件消耗一个模板：%1 件共需 %1 个。")
                                 .arg(pieces));
     }
     result.summary = QCoreApplication::translate("ArmorTrim", "%1 / %2纹饰的%3 × %4")
@@ -330,12 +331,12 @@ Plan plan(int armorMaterial, int part, int patternIndex, int trimMaterial, int p
 
 QString Plan::detailText() const {
     if (!ok) {
-        return error.isEmpty() ? QCoreApplication::translate("ArmorTrim", "排不出来。") : error;
+        return error.isEmpty() ? QCoreApplication::translate("ArmorTrim", "无法生成方案。") : error;
     }
     QStringList lines;
     lines.append(summary);
     lines.append(QString());
-    lines.append(QCoreApplication::translate("ArmorTrim", "一步一步："));
+    lines.append(QCoreApplication::translate("ArmorTrim", "步骤："));
     for (const QString &step : steps) {
         lines.append(QStringLiteral("• %1").arg(step));
     }

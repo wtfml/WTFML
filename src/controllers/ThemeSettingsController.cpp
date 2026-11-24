@@ -72,7 +72,7 @@ ThemeSettingsController::ThemeSettingsController(MainWindowUI *ui, LauncherSetti
             const auto key = Theme::Role(role);
             const QColor before = Theme::buildPalette(Theme::current(), QApplication::palette()).color(Theme::qtRole(key));
             const auto picked = InlineMessage::pickColor(m_ui->overlay(), Theme::roleName(key),
-                tr("只覆盖这一类控件颜色；可随时恢复跟随主题。"), before);
+                tr("仅覆盖此类控件的颜色；可随时恢复为跟随主题。"), before);
             if (picked.isValid()) editor->setRoleColor(role, picked);
         });
         connect(editor, &ThemeAdvancedEditor::partColorRequested, this, [this, editor](int part, bool foreground) {
@@ -108,7 +108,7 @@ void ThemeSettingsController::chooseImage(int index) {
     QString error;
     const QString stored = ThemeImage::store(row.partKey, picked, &error);
     if (stored.isEmpty()) {
-        InlineMessage::warning(m_ui->overlay(), tr("这张图用不了"), error);
+        InlineMessage::warning(m_ui->overlay(), tr("无法使用此图片"), error);
         return;
     }
     const Theme::PartImage before = Theme::partImage(part);
@@ -262,7 +262,7 @@ void ThemeSettingsController::changePreset() {
 void ThemeSettingsController::chooseAccent() {
     const QColor picked = InlineMessage::pickColor(
         m_ui->overlay(), tr("主题色"),
-        tr("顶栏、侧栏选中项那根竖条、确认性按钮（启动 / 下载 / 搜索那些）都用它。"),
+        tr("用于顶栏、侧栏选中项的竖条及确认类按钮（启动 / 下载 / 搜索等）。"),
         Theme::current().accent);
     if (!picked.isValid()) return;
     Theme::Spec spec = Theme::current();
@@ -280,7 +280,7 @@ void ThemeSettingsController::chooseSemantic(int index) {
     const Theme::Spec before = Theme::current();
     const QColor picked = InlineMessage::pickColor(
         m_ui->overlay(), MainWindowUI::themeSemanticText(index),
-        tr("这一处红 / 黄 / 绿在界面上是哪儿（见下面那行说明）。"),
+        tr("此项红 / 黄 / 绿色在界面中的位置（见下方说明）。"),
         semanticColor(before, index));
     if (!picked.isValid()) return;
     Theme::Spec spec = before;
@@ -349,7 +349,7 @@ void ThemeSettingsController::importTheme() {
     QFile file(source);
     if (!file.open(QIODevice::ReadOnly)) {
         InlineMessage::warning(m_ui->overlay(), tr("导入失败"),
-                               tr("读不了这个文件：\n%1\n\n%2")
+                               tr("无法读取此文件：\n%1\n\n%2")
                                    .arg(QDir::toNativeSeparators(source), file.errorString()));
         return;
     }
@@ -362,7 +362,7 @@ void ThemeSettingsController::importTheme() {
         const QString why = document.isNull() || !document.isObject()
                                 ? parseError.errorString() : error;
         InlineMessage::warning(m_ui->overlay(), tr("导入失败"),
-                               tr("这不是一份主题文件：\n%1\n\n%2")
+                               tr("此文件不是主题文件：\n%1\n\n%2")
                                    .arg(QDir::toNativeSeparators(source), why));
         return;
     }

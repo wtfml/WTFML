@@ -63,6 +63,7 @@ public:
     /// 这一份的世界正在备份 / 还原（起服和"删服务端"两道闸读的就是它）。
     void setFileBusy(const QString &serverId, bool busy);
     bool fileBusy(const QString &serverId) const { return m_fileBusy.contains(serverId); }
+    bool isStarting(const QString &serverId) const { return m_startupTasks.contains(serverId); }
 
     /// 用户把「异常退出后自动重启」关掉了：这一轮的计数清零（再打开时从第 1 次算起）。
     void forgetRestartAttempts(const QString &serverId) { m_restartAttempts.remove(serverId); }

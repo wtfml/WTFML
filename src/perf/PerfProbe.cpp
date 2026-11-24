@@ -757,13 +757,13 @@ private:
             m_steps.push_back(std::move(step));
         }
 
-        // ---------- 账号与外观（皮肤 / 披风） ----------
+        // ---------- 账号与皮肤（皮肤 / 披风） ----------
         addWait(QStringLiteral("account:open"), [this] {
             QMetaObject::invokeMethod(&m_window, "onAccountSkinButtonClicked", Qt::DirectConnection);
         }, [this] {
             m_accountDialog = m_window.findChild<AccountSkinDialog *>();
             return !m_accountDialog.isNull() && m_accountDialog->isVisible();
-        }, 5000, [] { return QStringLiteral("主页右上账号胶囊 → 账号与外观"); },
+        }, 5000, [] { return QStringLiteral("主页右上账号胶囊 → 账号与皮肤"); },
         [this] {
             if (m_accountDialog.isNull()) return -1;
             auto *list = m_accountDialog->findChild<QListWidget *>(AccountSkinDialog::accountListName());

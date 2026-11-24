@@ -219,7 +219,7 @@ void UpdateCenterController::onUpdateRequested(const QStringList &paths) {
             }
             if (customLaunch
                 && !InlineMessage::question(
-                    m_owner.m_ui->overlay(), tr("这个整合包带自定义启动配置"),
+                    m_owner.m_ui->overlay(), tr("此整合包含自定义启动配置"),
                     tr("更新所选模组可能影响主类、JVM 参数或专用库，导致实例无法启动。\n\n建议先备份实例。确认继续？"),
                     tr("仍要继续"), tr("取消"), false)) {
                 return;
@@ -262,7 +262,7 @@ void UpdateCenterController::onIgnoreToggled(const QString &path, bool ignored) 
         if (targetVersionId.isEmpty()) {
             // 拼不出"要换成哪一版"就**不许记这一条**：记下去的是"忽略某一版"，而那一版是谁
             // 都不知道 —— 那样记出来的记录永远对不上任何一次检测（等于一颗点了没反应的按钮）。
-            InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("无法忽略这一条"),
+            InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("无法忽略此项"),
                                    MainWindow::tr("未找到可固定的版本。请重新检查更新。"));
             return;
         }
@@ -270,9 +270,9 @@ void UpdateCenterController::onIgnoreToggled(const QString &path, bool ignored) 
     UpdatePolicy::setIgnored(m_policy, instanceId, key, ignored ? targetVersionId : QString());
     savePolicy();
     m_owner.appendLog(
-        ignored ? MainWindow::tr("「更新中心」：%1 的这一版以后不再提示更新。")
+        ignored ? MainWindow::tr("「更新中心」：%1 的此版本将不再提示更新。")
                       .arg(QFileInfo(path).fileName())
-                : MainWindow::tr("「更新中心」：%1 又参与更新提示了。").arg(QFileInfo(path).fileName()));
+                : MainWindow::tr("「更新中心」：%1 已恢复更新提示。").arg(QFileInfo(path).fileName()));
     rebuildOutdatedPaths(instanceId);
     // 按完**当场重喂这一页**。不喂的话那一行照旧写着「可更新到 X」、三颗
     // chip 也照旧——用户按的是"以后别再提示我"，屏幕上却一点变化都没有，他只能靠"再点
@@ -305,7 +305,7 @@ void UpdateCenterController::onPinToggled(const QString &path, bool pinned) {
             }
         }
         if (sha1.isEmpty()) {
-            InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("固定不了这一条"),
+            InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("无法固定此项"),
                                    MainWindow::tr("无法读取文件或计算其 SHA-1，因此无法固定此版本。"));
             return;
         }
@@ -313,9 +313,9 @@ void UpdateCenterController::onPinToggled(const QString &path, bool pinned) {
     UpdatePolicy::setPinned(m_policy, instanceId, key, pinned ? sha1 : QString());
     savePolicy();
     m_owner.appendLog(
-        pinned ? MainWindow::tr("「更新中心」：%1 固定在这一版上，以后不再提示更新。")
+        pinned ? MainWindow::tr("「更新中心」：%1 已固定在此版本，将不再提示更新。")
                      .arg(QFileInfo(path).fileName())
-               : MainWindow::tr("「更新中心」：%1 不再固定了。").arg(QFileInfo(path).fileName()));
+               : MainWindow::tr("「更新中心」：%1 已取消固定。").arg(QFileInfo(path).fileName()));
     // 同上（忽略那一档）：按完当场重喂，让那一行写成「已固定」、chip 翻成「不再固定」——
     // `rebuildOutdatedPaths()` 里那一下就是它。
     rebuildOutdatedPaths(instanceId);
@@ -331,8 +331,8 @@ void UpdateCenterController::onUndoRequested() {
     const UpdateRollback::Snapshot snapshot =
         UpdateRollback::read(instanceId, &hasSnapshot, &problem);
     if (!hasSnapshot) {
-        InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("没有可撤销的更新"),
-                               problem.isEmpty() ? MainWindow::tr("这个实例没有回滚点。") : problem);
+        InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("无可撤销的更新"),
+                               problem.isEmpty() ? MainWindow::tr("此实例无回滚点。") : problem);
         return;
     }
     // 问一次再动手：这一下**会覆盖盘上现在的文件**（用户可能已经在游戏里玩了半天、
@@ -353,7 +353,7 @@ void UpdateCenterController::onUndoRequested() {
 
     const UpdateRollback::RestoreResult result =
         UpdateRollback::restore(snapshot, AppPaths::versionDir(instanceId));
-    m_owner.appendLog(MainWindow::tr("撤销「%1」上一次更新：换回去 %2 个、删掉 %3 个、失败 %4 个。")
+    m_owner.appendLog(MainWindow::tr("撤销「%1」上一次更新：恢复 %2 个、删除 %3 个、失败 %4 个。")
                           .arg(m_owner.instanceDisplayName(instanceId))
                           .arg(result.restored)
                           .arg(result.removed)
@@ -373,9 +373,9 @@ void UpdateCenterController::onUndoRequested() {
         // 「撤销上一次更新」，而它指向的那次更新已经不存在了）。
         UpdateRollback::discard(instanceId);
         m_owner.appendLog(
-            MainWindow::tr("「%1」已经退回更新前的样子。").arg(m_owner.instanceDisplayName(instanceId)));
+            MainWindow::tr("「%1」已恢复到更新前的状态。").arg(m_owner.instanceDisplayName(instanceId)));
     }
-    // 这一批文件的内容换过了 ⇒ 「固定这一版」那几条的判据（sha1）多半已经对不上，
+    // 这一批文件的内容换过了 ⇒ 「固定此版本」那几条的判据（sha1）多半已经对不上，
     // 顺手清一遍过期的（不清的话那几条会一直挂着"已固定"，而它其实早就失效了）。
     QHash<QString, QString> sha1ByKey;
     for (const ModDependencies::UpdateVerdict &verdict :

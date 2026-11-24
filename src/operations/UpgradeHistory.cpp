@@ -90,20 +90,20 @@ QList<Entry> read(const QString &instanceDir, QString *problem) {
     }
     if (!file.open(QIODevice::ReadOnly)) {
         if (problem != nullptr) {
-            *problem = QCoreApplication::translate("UpgradeHistory", "读不了升级历史：%1").arg(file.errorString());
+            *problem = QCoreApplication::translate("UpgradeHistory", "无法读取升级历史：%1").arg(file.errorString());
         }
         return {};
     }
     if (file.size() > 4 * 1024 * 1024) {
         if (problem != nullptr) {
-            *problem = QCoreApplication::translate("UpgradeHistory", "升级历史大得不像一份记录，按读不懂处理。");
+            *problem = QCoreApplication::translate("UpgradeHistory", "升级历史文件过大，无法作为记录解析。");
         }
         return {};
     }
     const QJsonDocument document = QJsonDocument::fromJson(file.readAll());
     if (!document.isObject()) {
         if (problem != nullptr) {
-            *problem = QCoreApplication::translate("UpgradeHistory", "升级历史读不懂（不是 JSON 对象）。");
+            *problem = QCoreApplication::translate("UpgradeHistory", "升级历史无法解析（不是 JSON 对象）。");
         }
         return {};
     }
@@ -128,7 +128,7 @@ bool append(const QString &instanceDir, const Entry &entry, QString *problem) {
         existing = read(instanceDir, &readProblem);
         if (!readProblem.isEmpty()) {
             if (problem != nullptr) {
-                *problem = readProblem + QCoreApplication::translate("UpgradeHistory", "。这一条没有写进去。");
+                *problem = readProblem + QCoreApplication::translate("UpgradeHistory", "，此条未写入。");
             }
             return false;
         }

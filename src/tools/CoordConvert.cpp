@@ -179,7 +179,7 @@ ParsedTp parseTeleportCommand(const QString &text) {
         // 后面必须跟着 `run`
         int index = 3;
         if (tokens.at(index).compare(QLatin1String("run"), Qt::CaseInsensitive) != 0) {
-            result.error = QCoreApplication::translate("CoordConvert", "`execute in <维度>` 后面缺一个 `run`。");
+            result.error = QCoreApplication::translate("CoordConvert", "`execute in <维度>` 后缺少 `run`。");
             return result;
         }
         tokens = tokens.mid(index + 1);
@@ -187,7 +187,7 @@ ParsedTp parseTeleportCommand(const QString &text) {
 
     // ---------- `tp` 那一段 ----------
     if (tokens.isEmpty() || tokens.first().compare(QLatin1String("tp"), Qt::CaseInsensitive) != 0) {
-        result.error = QCoreApplication::translate("CoordConvert", "这条命令里没有 `tp`：只认传送命令（F3+C 复制出来的就是一条）。");
+        result.error = QCoreApplication::translate("CoordConvert", "此命令不含 `tp`。仅支持传送命令，F3+C 复制的内容即为传送命令。");
         return result;
     }
     tokens.removeFirst();
@@ -199,7 +199,7 @@ ParsedTp parseTeleportCommand(const QString &text) {
 
     const int coordinateCount = qMin(3, int(tokens.size()));
     if (coordinateCount < 3) {
-        result.error = QCoreApplication::translate("CoordConvert", "三个坐标不全：读到的只有 %1 个数。").arg(tokens.size());
+        result.error = QCoreApplication::translate("CoordConvert", "坐标不足 3 个：仅读取到 %1 个数。").arg(tokens.size());
         return result;
     }
 
@@ -211,12 +211,12 @@ ParsedTp parseTeleportCommand(const QString &text) {
             continue;
         }
         if (!toDouble(token, &values[index])) {
-            result.error = QCoreApplication::translate("CoordConvert", "`%1` 不是一个数。").arg(token);
+            result.error = QCoreApplication::translate("CoordConvert", "`%1` 不是有效数字。").arg(token);
             return result;
         }
     }
     if (result.relative) {
-        result.error = QCoreApplication::translate("CoordConvert", "输入含 `~` 或 `^` 相对坐标。请站到目标位置后复制绝对坐标。");
+        result.error = QCoreApplication::translate("CoordConvert", "输入包含 `~` 或 `^` 相对坐标。请站到目标位置后复制绝对坐标。");
         return result;
     }
     result.position = Position{values[0], values[1], values[2]};

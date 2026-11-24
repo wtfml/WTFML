@@ -61,7 +61,7 @@ int itemPriority(const QJsonObject &item, int fallback) {
 ResourcePackOrderState readResourcePackOrderState(const QString &instanceRoot) {
     ResourcePackOrderState state;
     if (instanceRoot.trimmed().isEmpty()) {
-        state.problem = QCoreApplication::translate("Presets", "没有指定实例目录。");
+        state.problem = QCoreApplication::translate("Presets", "未指定实例目录。");
         return state;
     }
     const ResourcePackOptions::Snapshot snapshot =
@@ -170,7 +170,7 @@ ResourcePackOrderReport applyResourcePackOrdering(const QString &instanceRoot,
         named.insert(leaf);
     }
     if (wanted.isEmpty()) {
-        report.details.append(QCoreApplication::translate("Presets", "这一份预设的资源包项上没有启用信息，只部署、不启用。"));
+        report.details.append(QCoreApplication::translate("Presets", "此预设的资源包项无启用信息，仅部署、不启用。"));
         return report;
     }
 
@@ -231,7 +231,7 @@ ResourcePackOrderReport applyResourcePackOrdering(const QString &instanceRoot,
     for (const Wanted &one : enabled) {
         const QString id = localIdOf(one.leaf);
         if (!available.contains(id)) {
-            report.details.append(QCoreApplication::translate("Presets", "「%1」没有出现在目标的 resourcepacks/ 里，没有启用它。")
+            report.details.append(QCoreApplication::translate("Presets", "「%1」未出现在目标的 resourcepacks/ 中，未启用。")
                                       .arg(one.leaf));
             continue;
         }
@@ -250,7 +250,7 @@ ResourcePackOrderReport applyResourcePackOrdering(const QString &instanceRoot,
     }
 
     if (after == before) {
-        report.details.append(QCoreApplication::translate("Presets", "资源包的启用顺序已经和预设一致，没有改写 options.txt。"));
+        report.details.append(QCoreApplication::translate("Presets", "资源包启用顺序已与预设一致，未改写 options.txt。"));
         return report;
     }
 
@@ -259,7 +259,7 @@ ResourcePackOrderReport applyResourcePackOrdering(const QString &instanceRoot,
                                    available, backupRoot, &problem)) {
         report.ok = false;
         report.problem = problem.isEmpty()
-                             ? QCoreApplication::translate("Presets", "资源包的启用顺序没有写进去。")
+                             ? QCoreApplication::translate("Presets", "资源包启用顺序未写入。")
                              : problem;
         return report;
     }
@@ -269,7 +269,7 @@ ResourcePackOrderReport applyResourcePackOrdering(const QString &instanceRoot,
                                   .arg(report.enabled));
     }
     if (report.disabled > 0) {
-        report.details.append(QCoreApplication::translate("Presets", "按预设关掉了 %1 个资源包。").arg(report.disabled));
+        report.details.append(QCoreApplication::translate("Presets", "按预设禁用了 %1 个资源包。").arg(report.disabled));
     }
     return report;
 }

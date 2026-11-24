@@ -314,7 +314,7 @@ void runServerRunTests() {
         const QString text = ServerRun::eulaPromptText();
         check(text.contains(QStringLiteral("eula=true")),
               "★★ ZZ4 EULA 那道闸说清楚它到底会写什么", text);
-        check(text.contains(QStringLiteral("仅在勾选协议并选择「同意并启动」后")),
+        check(text.contains(QStringLiteral("仅当勾选协议并选择「同意并启动」时")),
               "★★ ZZ4 而且说清楚**不自动接受**", text);
         check(!ServerRun::eulaPromptTitle().isEmpty(), "★ ZZ4 那道闸有标题");
 

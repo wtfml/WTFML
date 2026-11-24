@@ -151,14 +151,14 @@ NewServerPage::NewServerPage(QWidget *parent) : QDialog(parent) {
     identityLayout->addWidget(new QLabel(tr("名称"), identity));
     m_nameEdit = new QLineEdit(identity);
     m_nameEdit->setObjectName(MainWindowUI::newServerNameEditName());
-    m_nameEdit->setPlaceholderText(tr("会当成这个服务端的目录名"));
+    m_nameEdit->setPlaceholderText(tr("将作为此服务端的目录名"));
     InputSizing::shortValue(m_nameEdit, InputSizing::kNameChars, InputSizing::Script::Han);
     identityLayout->addWidget(m_nameEdit);
     m_targetDirLabel = makeMutedLabel(identity, MainWindowUI::newServerTargetDirName());
     m_targetDirLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     // 路径可能很长：**不许**参与横向度量（同一条规矩，和摘要那一句一样）。
     m_targetDirLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
-    m_targetDirLabel->setToolTip(tr("服务端根目录下面以它的名字命名的那个目录"));
+    m_targetDirLabel->setToolTip(tr("服务端根目录下以其名称命名的目录"));
     // 没有路径可写（名字还空着）时整行不占位：空着的一行会把名称框和下面的「服务端」撑开 20 多 px。
     m_targetDirLabel->hide();
     identityLayout->addWidget(m_targetDirLabel);
@@ -309,7 +309,9 @@ void NewServerPage::setDefaults(const QString &name, const QString &gameVersion)
         m_loaderEdit->clear(); m_installerEdit->clear(); m_buildEdit->clear();
     }
     m_nameEdit->setText(name);
+    m_nameEdit->setCursorPosition(0);
     m_gameVersionEdit->setText(gameVersion);
+    m_gameVersionEdit->setCursorPosition(0);
 }
 
 void NewServerPage::setTargetDir(const QString &dir) {

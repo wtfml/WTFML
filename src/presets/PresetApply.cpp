@@ -55,7 +55,7 @@ bool readWholeFile(const QString &path, QByteArray *out, QString *problem) {
 bool writeWholeFile(const QString &path, const QByteArray &bytes, QString *problem) {
     QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly)) {
-        *problem = QCoreApplication::translate("Presets", "写不动「%1」：%2").arg(path, file.errorString());
+        *problem = QCoreApplication::translate("Presets", "无法写入「%1」：%2").arg(path, file.errorString());
         return false;
     }
     if (file.write(bytes) != bytes.size()) {
@@ -173,7 +173,7 @@ TargetSnapshot readTargetSnapshot(const QString &instanceRoot, QString *problemO
     snapshot.instanceRoot = instanceRoot;
     if (instanceRoot.trimmed().isEmpty()) {
         if (problemOut != nullptr) {
-            *problemOut = QCoreApplication::translate("Presets", "没有指定目标实例。");
+            *problemOut = QCoreApplication::translate("Presets", "未指定目标实例。");
         }
         return snapshot;
     }
@@ -250,7 +250,7 @@ PresetApplyResult applyPresetToInstance(const QString &presetsRoot, const Preset
     }
     if (request.instanceRoot.trimmed().isEmpty() ||
         !QFileInfo(request.instanceRoot).isDir()) {
-        result.problem = QCoreApplication::translate("Presets", "找不到目标实例目录，无法应用预设。");
+        result.problem = QCoreApplication::translate("Presets", "未找到目标实例目录，无法应用预设。");
         return finish();
     }
 
@@ -270,7 +270,7 @@ PresetApplyResult applyPresetToInstance(const QString &presetsRoot, const Preset
         for (int i = manifest.sections.size() - 1; i >= 0; --i)
             if (done.contains(manifest.sections[i].id)) manifest.sections.removeAt(i);
         if (manifest.sections.isEmpty()) {
-            result.ok = true; result.details.append(QCoreApplication::translate("Presets", "没有未完成的预设段；待应用数据包仍等待目标世界。"));
+            result.ok = true; result.details.append(QCoreApplication::translate("Presets", "无未完成的预设段；待应用数据包仍等待目标世界。"));
             return finish();
         }
     }
@@ -780,7 +780,7 @@ PresetApplyResult applyPresetToInstance(const QString &presetsRoot, const Preset
                 row.ok = false;
                 row.blocked = true;
                 row.problem = order.problem.isEmpty()
-                                  ? QCoreApplication::translate("Presets", "资源包的启用顺序没有写进去。")
+                                  ? QCoreApplication::translate("Presets", "资源包启用顺序未写入。")
                                   : order.problem;
             }
         }

@@ -126,7 +126,7 @@ int UiLaunchCardChecks(QApplication &app) {
     check(pill != nullptr && pill->geometry() == pillRunning && pillButton->text() == QStringLiteral("关闭"),
           "LC13 失败：胶囊同位同尺寸，字换成「关闭」", rectText(pill != nullptr ? pill->geometry() : QRect()));
     check(text("homeCurrentEyebrow") == QStringLiteral("启动失败") && text("homeLaunchReason") == failed.reason
-              && text("homeLaunchStopAt") == QStringLiteral("停在「准备 Java」") && shownAt("homeLaunchDetails")
+              && text("homeLaunchStopAt") == QStringLiteral("停止于「准备 Java」") && shownAt("homeLaunchDetails")
               && !shownAt("homeLaunchStep") && !shownAt("homeLaunchBar"),
           "LC14 失败：眉题、原因、停在哪一段、「查看详情」",
           QStringLiteral("%1 / %2 / %3").arg(text("homeCurrentEyebrow"), text("homeLaunchReason"), text("homeLaunchStopAt")));

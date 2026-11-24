@@ -4,10 +4,9 @@
 #include "PresetManagePage.hpp"
 #include "PresetOptionsEditor.hpp"
 #include "NewServerPage.hpp"
-#include <QDoubleSpinBox>
 #include <QKeyEvent>
 #include <QPainter>
-#include <QSpinBox>
+#include <QSlider>
 #include <QStyleOptionViewItem>
 #include "PresetInstallPicker.hpp"
 #include "LoadingState.hpp"
@@ -304,8 +303,14 @@ int UiInstallLayoutCheck(QApplication &app) {
             PresetEditorPage packEditor(packs);
             auto *packTable=packEditor.findChild<QTableWidget *>("presetEditorFiles_resourcePacks");
             expect(packTable&&packTable->item(0,0)->text().endsWith("high.zip"),"resource pack editor displays highest priority first");
-            const auto storedPacks=packEditor.document().value("sections").toArray().first().toObject().value("items").toArray();
-            expect(storedPacks.first().toObject().value("priority").toInt()>storedPacks.last().toObject().value("priority").toInt(),"saving the resource pack editor preserves effective pack priority");
+            QJsonArray storedPacks;
+            for (const auto &section : packEditor.document().value("sections").toArray()) {
+                if (section.toObject().value("id") == "resourcePacks")
+                    storedPacks = section.toObject().value("items").toArray();
+            }
+            expect(storedPacks.size() == 2 && storedPacks.first().toObject().value("priority").toInt() >
+                       storedPacks.last().toObject().value("priority").toInt(),
+                   "saving the resource pack editor preserves effective pack priority");
             PresetEditorPage metadataEditor(QJsonObject{{"id","metadata"},{"name","Metadata"},{"sections",QJsonArray{QJsonObject{{"id","original-section"},{"kind","vanillaOptions"},{"mode","replace"},{"items",QJsonArray{QJsonObject{{"key","guiScale"},{"value","2"},{"extra","retained"}}}}}}}});
             const auto metadata=metadataEditor.document().value("sections").toArray().first().toObject();
             expect(metadata.value("mode")=="replace"&&metadata.value("items").toArray().first().toObject().value("extra")=="retained","editing preserves existing section policy and item metadata");
@@ -460,13 +465,37 @@ int UiInstallLayoutCheck(QApplication &app) {
         {
             PresetOptionsEditor detailed({}, nullptr, PresetOptionsEditor::Mode::Options);
             auto *table = detailed.findChild<QTableWidget *>("presetOptionsEditorTable");
-            expect(table && table->rowCount() >= 35 && detailed.entries().isEmpty(),
-                   "blank preset exposes detailed settings without silently selecting defaults");
-            auto rowFor = [table](const QString &key) {
-                for (int row=0;row<table->rowCount();++row) if (table->item(row,0)->text()==key) return row;
-                return -1;
+            const auto values = [](const PresetOptionsEditor &editor) {
+                QHash<QString, QString> result;
+                for (const auto &entry : editor.entries()) result.insert(entry.key, entry.value);
+                return result;
             };
-            const int fov = rowFor(QStringLiteral("fov"));
+            const auto defaults = values(detailed);
+            expect(table && table->columnCount() == 4 && table->rowCount() >= 25 &&
+                       defaults.value("fov") == "0.0" && defaults.value("renderDistance") == "12",
+                   "game options include the displayed defaults without requiring edits");
+            auto itemFor = [table](const QString &key) -> QTableWidgetItem * {
+                for (int row = 0; row < table->rowCount(); ++row) {
+                    for (int column : {0, 2}) {
+                        auto *item = table->item(row, column);
+                        if (item && item->text() == key) return item;
+                    }
+                }
+                return nullptr;
+            };
+            const auto *graphics = itemFor("graphicsMode");
+            const auto *render = itemFor("renderDistance");
+            const auto *vsync = itemFor("enableVsync");
+            const auto *bobbing = itemFor("bobView");
+            expect(graphics && render && graphics->row() == render->row() &&
+                       graphics->column() == 0 && render->column() == 2 &&
+                       vsync && bobbing && vsync->row() == bobbing->row() && bobbing->column() == 2,
+                   "vanilla video options keep their original left and right slots");
+            auto *guiScale = detailed.findChild<QComboBox *>("presetValue_guiScale");
+            expect(guiScale && guiScale->isEnabled() && guiScale->currentData().toString() == "0" && guiScale->findData("2") > 0,
+                   "GUI scale can be edited directly using its automatic and numeric values");
+            const auto *fovItem = itemFor("fov");
+            const int fov = fovItem ? fovItem->row() : -1;
             if (fov >= 0) {
                 auto *value = table->item(fov, 1);
                 const QModelIndex index = table->indexFromItem(value);
@@ -489,29 +518,28 @@ int UiInstallLayoutCheck(QApplication &app) {
                 value->setText(QString());
                 const bool valueIsNotPainted = paintCell(false) == normal && paintCell(true) == selected;
                 value->setText(raw);
-                auto *angle = qobject_cast<QSpinBox *>(table->cellWidget(fov, 1));
-                expect(raw == QStringLiteral("0.0") && angle && angle->text() == QStringLiteral("70°") &&
+                auto *angle = table->cellWidget(fov, 1)->findChild<QSlider *>();
+                auto *angleLabel = table->cellWidget(fov, 1)->findChild<QLabel *>();
+                expect(raw == QStringLiteral("0.0") && angle && angle->value() == 70 &&
+                           angleLabel && angleLabel->text() == QStringLiteral("70°") &&
                            valueIsNotPainted && normal != selected,
                        "preset value editor draws the formatted value without the raw value underneath");
             } else expect(false, "field of view option exists");
-            const int gamma = rowFor("gamma");
-            auto *brightness = detailed.findChild<QDoubleSpinBox *>("presetValue_gamma");
-            expect(gamma>=0 && brightness && !brightness->isEnabled(), "unselected settings cannot be edited accidentally");
-            if (gamma>=0 && brightness) {
-                table->item(gamma,0)->setCheckState(Qt::Checked);
-                brightness->setValue(75);
-                expect(detailed.entries().size()==1 && detailed.entries().first().value=="0.75",
-                       "percentage control stores the game normalized value only when selected");
-                table->item(gamma,0)->setCheckState(Qt::Unchecked);
-                expect(detailed.entries().isEmpty(), "unchecking excludes an option without deleting its edited value");
-                table->item(gamma,0)->setCheckState(Qt::Checked);
-                expect(detailed.entries().first().value=="0.75", "reselecting retains the edited value");
-                brightness->findChild<QLineEdit *>()->setText("86.5%");
-                expect(detailed.entries().first().value=="0.865", "saving commits a pending numeric edit even before focus leaves the control");
+            auto *gamma = itemFor("gamma");
+            auto *brightness = gamma ? table->cellWidget(gamma->row(), gamma->column() + 1)->findChild<QSlider *>() : nullptr;
+            expect(gamma && !gamma->flags().testFlag(Qt::ItemIsUserCheckable) && brightness && brightness->isEnabled(),
+                   "game option sliders can be edited directly without a row checkbox");
+            if (gamma && brightness) {
+                brightness->setValue(865);
+                auto edited = defaults;
+                edited["gamma"] = "0.865";
+                expect(values(detailed) == edited, "slider changes save alongside every untouched game option");
             }
             PresetOptionsEditor imported({{"gamma","2.5"},{"futureOption","keep:raw"}}, nullptr, PresetOptionsEditor::Mode::Options);
-            expect(imported.entries().size()==2 && imported.entries()[0].value=="2.5" && imported.entries()[1].value=="keep:raw",
-                   "unknown options and out-of-range imported values survive opening the editor unchanged");
+            const auto importedValues = values(imported);
+            expect(importedValues.value("gamma") == "2.5" && importedValues.value("futureOption") == "keep:raw" &&
+                       importedValues.value("renderDistance") == "12",
+                   "older presets keep their imported values and include displayed defaults for missing options");
             PresetOptionsEditor bindings({}, nullptr, PresetOptionsEditor::Mode::Keys);
             auto *keyTable = bindings.findChild<QTableWidget *>("presetOptionsEditorTable");
             expect(keyTable->rowCount()>=25 && bindings.entries().isEmpty(), "key page exposes vanilla bindings independently of settings");
@@ -536,8 +564,23 @@ int UiInstallLayoutCheck(QApplication &app) {
             } else expect(false,"jump binding control exists");
             auto *search=detailed.findChild<QLineEdit *>("presetOptionsSearch");
             search->setText("声音");
-            expect(table->isRowHidden(rowFor("fov")) && !table->isRowHidden(rowFor("soundCategory_master")),
-                   "settings search matches categories without changing selection");
+            const auto *masterVolume = itemFor("soundCategory_master");
+            expect(fov >= 0 && masterVolume && table->isRowHidden(fov) && !table->isRowHidden(masterVolume->row()),
+                   "settings search matches categories without excluding options from the preset");
+            search->setText("renderDistance");
+            expect(graphics && render && !table->isRowHidden(render->row()) &&
+                       table->cellWidget(graphics->row(), graphics->column() + 1)->isHidden() &&
+                       !table->cellWidget(render->row(), render->column() + 1)->isHidden(),
+                   "search can isolate one setting in a paired row");
+            if (app.arguments().contains(QStringLiteral("--install-layout-preview"))) {
+                PresetOptionsEditor preview({{"fov", "0.0"}, {"graphicsMode", "1"}, {"renderDistance", "12"},
+                                              {"gamma", "0.65"}, {"guiScale", "0"}}, nullptr, PresetOptionsEditor::Mode::Options);
+                preview.resize(1100, 760);
+                preview.show();
+                app.processEvents();
+                QDir().mkpath(QStringLiteral("build/install-previews"));
+                preview.grab().save(QStringLiteral("build/install-previews/preset-game-options.png"));
+            }
         }
         {
             NewServerPage server;

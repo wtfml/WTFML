@@ -287,6 +287,14 @@ python tools/acceptance_directory_boundary.py --exe <WTFMinecraftLauncher.exe> -
 
 2026-11-24｜服务端左栏按管理对象分组并接入启动参数、世界选择、插件管理和维护操作｜`main-window` 3192/3192、服务端界面 94/94、`core-servers` 796/796、`core-instances` 1869/1869，Windows x64 构建与隔离启动通过｜独立维度用整服迁移包备份，导入防覆盖，升级使用同类型副本。
 
+2026-11-24｜英文界面截断修正：折叠行、设置导航、服务端表单名列、工具箱卡片、智能体实例胶囊、升级页与下载页搜索框｜`ui_check_modules` 全部 24 项通过，`check-i18n` 无新增，中英文各 28 张站点图重拍｜中文界面宽度保持原值（按实测取宽、原值作下限）；设置页搜索框「Search settings…」在 900 宽窗口放不下，已列交 Neon。
+
+2026-11-24｜补齐服务端概览、扩宽 MOTD、开放其他属性并接入客户端存档编辑器｜`main-window` 3197/3197、服务端界面 95/95、`core-servers` 797/797，Windows x64 构建与隔离启动通过｜准备启动时锁定世界选择、存档编辑和配置，停服后恢复编辑。
+
+2026-11-24｜预设游戏选项按 Minecraft Java 1.21.1 菜单位置分组，使用滑条和下拉框｜`install-layout`、离屏预览、Windows x64 构建与隔离启动通过｜搜索可单独显示一对选项中的一项，滑条修改保留游戏原始数值格式，未识别的导入项可原样保存。
+
+2026-11-24｜预设游戏选项直接编辑，由基本设置控制整组覆盖｜`install-layout` 107 项、`preset-install`、Windows x64 构建与隔离启动通过｜启用后未改动的默认值也写入对应键，关闭后保留编辑值。安装套件允许连接本机模拟服务后通过。
+
 2026-11-24｜智能体崩溃快照与日志检索（S5.3）｜`verify_agent` 1166/1166、`verify_launch` 370/370、`ui_check_agent` 77/77、`mw_check_agent` 91/91，产品目标严格编译通过，`check-agent-release.ps1`/`check-i18n.ps1`/`check-test-modules.ps1`/`check-doc-links.ps1`/`check-repo-layout.ps1` PASS｜100 MB 日志首次行索引 + 读 200 行 98 ms、全文搜索 353 ms；ASCII 搜索词走字节匹配后有 2.4 倍收益；真机 1.20.1 整合包仍需复跑。
 
 2026-11-24｜智能体模组兼容与文件修复（S5.4）｜`verify_agent` 1268/1268、`mw_check_agent` 93/93、`mw_check` 3192/3192、`verify_launch` 370/370、`ui_check_agent` 77/77，产品目标严格编译通过，`check-agent-release.ps1`/`check-i18n.ps1`/`check-test-modules.ps1`/`check-doc-links.ps1`/`check-repo-layout.ps1` PASS｜`UpgradeAssessment` 改用共用 `ModDeclarations` 后升级夹具零差异；真实 Modrinth 查询、真实下载与提交未跑（A9/A10）。

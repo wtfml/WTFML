@@ -624,7 +624,7 @@ ArchiveLayout detectArchiveLayout(const QStringList &entries) {
         layout.format = Format::Modrinth;
         layout.gameDirPrefix = prefix;
         layout.hasOverrides = hasRelativeDir(entries, prefix, QStringLiteral("overrides"));
-        layout.detail = QObject::tr("里面有一份 %1").arg(modrinthIndexName());
+        layout.detail = QObject::tr("含 %1").arg(modrinthIndexName());
         return layout;
     }
     layout.manifestEntry = findRelativeEntry(entries, prefix, curseForgeManifestName());
@@ -632,7 +632,7 @@ ArchiveLayout detectArchiveLayout(const QStringList &entries) {
         layout.format = Format::CurseForge;
         layout.gameDirPrefix = prefix;
         layout.hasOverrides = hasRelativeDir(entries, prefix, QStringLiteral("overrides"));
-        layout.detail = QObject::tr("里面有一份 %1").arg(curseForgeManifestName());
+        layout.detail = QObject::tr("含 %1").arg(curseForgeManifestName());
         return layout;
     }
 
@@ -644,7 +644,7 @@ ArchiveLayout detectArchiveLayout(const QStringList &entries) {
         layout.format = Format::MultiMC;
         layout.gameDirPrefix =
             hasDotMinecraft ? prefix + QStringLiteral(".minecraft/") : prefix;
-        layout.detail = QObject::tr("这是一个 MultiMC / Prism 导出的实例");
+        layout.detail = QObject::tr("此为 MultiMC / Prism 导出的实例");
         return layout;
     }
 
@@ -656,7 +656,7 @@ ArchiveLayout detectArchiveLayout(const QStringList &entries) {
                                  QStringLiteral("META-INF/neoforge.mods.toml")}) {
         if (!findRelativeEntry(entries, prefix, marker).isEmpty()) {
             layout.modsBundle = true;
-            layout.detail = QObject::tr("这是一个模组文件，不是整合包");
+            layout.detail = QObject::tr("此为模组文件，不是整合包");
             return layout;
         }
     }
@@ -675,7 +675,7 @@ ArchiveLayout detectArchiveLayout(const QStringList &entries) {
             layout.format = Format::Wrapper;
             layout.innerPackEntry = name;
             layout.gameDirPrefix = prefix;
-            layout.detail = QObject::tr("这是一个 PCL 打包的整合包（里面有一份 %1）").arg(rest);
+            layout.detail = QObject::tr("此为 PCL 打包的整合包（含 %1）").arg(rest);
             return layout;
         }
     }
@@ -697,7 +697,7 @@ ArchiveLayout detectArchiveLayout(const QStringList &entries) {
         if (!findRelativeEntry(entries, prefix, marker).isEmpty()) {
             layout.serverPack = true;
             layout.gameDirPrefix = prefix;
-            layout.detail = QObject::tr("这是一个服务端包（里面有 %1）").arg(marker);
+            layout.detail = QObject::tr("此为服务端包（含 %1）").arg(marker);
             return layout;
         }
     }
@@ -706,7 +706,7 @@ ArchiveLayout detectArchiveLayout(const QStringList &entries) {
     if (!findRelativeEntry(entries, prefix, QStringLiteral("level.dat")).isEmpty()) {
         layout.worldSave = true;
         layout.gameDirPrefix = prefix;
-        layout.detail = QObject::tr("这是一个世界存档（里面有 level.dat）");
+        layout.detail = QObject::tr("此为世界存档（含 level.dat）");
         return layout;
     }
 
@@ -738,7 +738,7 @@ ArchiveLayout detectArchiveLayout(const QStringList &entries) {
             || !findRelativeEntry(entries, prefix, QStringLiteral("bin/minecraft.jar")).isEmpty();
         layout.detail = layout.legacyLauncherJar
             ? QObject::tr("检测到旧版 Technic / Forge 整合包。版本清单未声明加载器，导入后需手动安装。")
-            : QObject::tr("里面是一个 .minecraft 游戏目录");
+            : QObject::tr("含 .minecraft 游戏目录");
         return layout;
     }
 
@@ -770,7 +770,7 @@ ArchiveLayout detectArchiveLayout(const QStringList &entries) {
     if ((hasMods && !layout.gameFolderMarkers) || (rootJars > 0 && !rootOthers)) {
         layout.modsBundle = true;
         layout.gameDirPrefix = prefix;
-        layout.detail = QObject::tr("里面只有一堆模组，没有整合包清单");
+        layout.detail = QObject::tr("仅含模组，无整合包清单");
         return layout;
     }
     // ⑦ 最后一个仍然认不出的形状里，最常见的是"好几个实例打在一起"。它照样不导入，
@@ -834,7 +834,7 @@ Result parseMultiMCInstance(const QByteArray &mmcPackJson, const QByteArray &ins
         }
         const QString uidLower = uid.toLower();
         if (seenComponents.contains(uidLower)) {
-            result.problem = QObject::tr("mmc-pack.json 有重复组件 %1，无法确定启动配置，没有导入。").arg(uid);
+            result.problem = QObject::tr("mmc-pack.json 有重复组件 %1，无法确定启动配置，未导入。").arg(uid);
             return result;
         }
         seenComponents.insert(uidLower);
@@ -846,12 +846,12 @@ Result parseMultiMCInstance(const QByteArray &mmcPackJson, const QByteArray &ins
             uidLower == QLatin1String("org.quiltmc.quilt-loader");
         if (!standard) customComponents.append(uid);
         if (standard && uidLower != QLatin1String("org.lwjgl") && version.isEmpty()) {
-            result.problem = QObject::tr("组件 %1 没有明确版本，不能自动选择最新版代替，没有导入。").arg(uid);
+            result.problem = QObject::tr("组件 %1 未指定明确版本，无法自动选用最新版，未导入。").arg(uid);
             return result;
         }
         if (standard && uidLower != QLatin1String("net.minecraft") &&
             uidLower != QLatin1String("org.lwjgl") && !loaderKey.isEmpty()) {
-            result.problem = QObject::tr("这个实例同时声明多个加载器，暂不支持，没有导入。");
+            result.problem = QObject::tr("此实例同时声明多个加载器，暂不支持，未导入。");
             return result;
         }
 
@@ -891,7 +891,7 @@ Result parseMultiMCInstance(const QByteArray &mmcPackJson, const QByteArray &ins
         return result;
     }
     if (!customComponents.isEmpty()) {
-        result.problem = QCoreApplication::translate("ModpackImport", "这个 MultiMC / Prism 包依赖自定义启动组件：%1。\n\n目前不能转换它的 patches、专用库和 JVM 参数，因此没有导入，避免生成无法启动的实例。GTNH Java 17+ 的 lwjgl3ify 包请暂用 Prism 导入；这不影响普通标准格式整合包。")
+        result.problem = QCoreApplication::translate("ModpackImport", "此 MultiMC / Prism 整合包依赖自定义启动组件：%1。\n\n目前无法转换其中的 patches、专用库和 JVM 参数，因此未导入，以避免生成无法启动的实例。GTNH Java 17+ 的 lwjgl3ify 整合包请暂用 Prism 导入；普通标准格式整合包不受影响。")
                              .arg(customComponents.join(QCoreApplication::translate("ModpackImport", "、")));
         return result;
     }
@@ -951,7 +951,7 @@ Result parseGameFolderInstance(const QStringList &entries, const QByteArray &ver
     }
     if (jsonId.isEmpty() && (loaderCandidates > 1 ||
         (loaderCandidates == 0 && versionIds.size() > 1))) {
-        result.problem = QObject::tr("这个游戏目录包含多个候选实例，无法确定要导入哪一个。请分别打包后导入。");
+        result.problem = QObject::tr("此游戏目录包含多个候选实例，无法确定导入对象。请分别打包后导入。");
         return result;
     }
     if (chosenId.isEmpty()) {
@@ -1027,7 +1027,8 @@ Result parseGameFolderInstance(const QStringList &entries, const QByteArray &ver
         }
     }
     if (!guess.key.isEmpty() && guess.version.isEmpty()) {
-        result.problem = QObject::tr("认出了加载器，但包里没有明确的加载器版本。请提供完整版本 JSON，不能用最新版代替。");
+        result.problem = QObject::tr("已识别加载器，但整合包中无明确的加载器版本。请提供完整版本 JSON，"
+                                     "不能用最新版代替。");
         return result;
     }
 
@@ -1064,7 +1065,7 @@ Result parseModrinthIndex(const QByteArray &json, bool allowEmptyFiles) {
     QJsonParseError parseError;
     const QJsonDocument doc = QJsonDocument::fromJson(json, &parseError);
     if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
-        result.problem = QObject::tr("整合包清单无法解析（%1）。这个文件可能已损坏。")
+        result.problem = QObject::tr("整合包清单无法解析（%1）。此文件可能已损坏。")
                              .arg(parseError.errorString());
         return result;
     }
@@ -1086,7 +1087,7 @@ Result parseModrinthIndex(const QByteArray &json, bool allowEmptyFiles) {
             game.isEmpty()
                 ? QObject::tr("%1 缺少游戏标识，无法安装。")
                       .arg(modrinthIndexName())
-                : QObject::tr("这不是 Minecraft 的整合包：清单里写的是「%1」。").arg(game);
+                : QObject::tr("此包不是 Minecraft 整合包：清单声明为「%1」。").arg(game);
         return result;
     }
 
@@ -1328,7 +1329,7 @@ Result parseCurseForgeManifest(const QByteArray &json, bool allowEmptyFiles) {
     QJsonParseError parseError;
     const QJsonDocument doc = QJsonDocument::fromJson(json, &parseError);
     if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
-        result.problem = QObject::tr("整合包清单无法解析（%1）。这个文件可能已损坏。")
+        result.problem = QObject::tr("整合包清单无法解析（%1）。此文件可能已损坏。")
                              .arg(parseError.errorString());
         return result;
     }
@@ -1350,7 +1351,7 @@ Result parseCurseForgeManifest(const QByteArray &json, bool allowEmptyFiles) {
     const QString manifestType = root.value(QStringLiteral("manifestType")).toString();
     if (!manifestType.isEmpty() && manifestType != QLatin1String("minecraftModpack")) {
         result.problem =
-            QObject::tr("这不是 Minecraft 的整合包：清单里写的类型是「%1」。").arg(manifestType);
+            QObject::tr("此包不是 Minecraft 整合包：清单类型为「%1」。").arg(manifestType);
         return result;
     }
 
@@ -1498,8 +1499,8 @@ CurseForgeFiles parseCurseForgeFileInfo(const QByteArray &json, const QList<Pack
         const QString error =
             doc.object().value(QStringLiteral("error")).toString().trimmed();
         out.problem = error.isEmpty()
-                          ? QObject::tr("CurseForge 的接口回的话里没有文件表。")
-                          : QObject::tr("CurseForge 的接口拒绝了这一问：%1").arg(error);
+                          ? QObject::tr("CurseForge 接口返回的内容中无文件表。")
+                          : QObject::tr("CurseForge 接口拒绝了本次请求：%1").arg(error);
         return out;
     }
 
@@ -1690,7 +1691,7 @@ QHash<int, int> parseCurseForgeClassIds(const QByteArray &json, QString *problem
     }
     const QJsonValue data = doc.object().value(QStringLiteral("data"));
     if (!data.isArray()) {
-        return fail(QObject::tr("CurseForge 的接口回的话里没有项目表。"));
+        return fail(QObject::tr("CurseForge 接口返回的内容中无项目表。"));
     }
 
     QHash<int, int> out;

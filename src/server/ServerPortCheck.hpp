@@ -39,11 +39,11 @@ State stateOf(int port, QString *problemOut = nullptr);
 inline QString stateName(State state) {
     switch (state) {
     case State::Free:
-        return QCoreApplication::translate("ServerPortCheck", "没被占用");
+        return QCoreApplication::translate("ServerPortCheck", "未被占用");
     case State::InUse:
-        return QCoreApplication::translate("ServerPortCheck", "被占用了");
+        return QCoreApplication::translate("ServerPortCheck", "已被占用");
     case State::Unknown:
-        return QCoreApplication::translate("ServerPortCheck", "没能查出来");
+        return QCoreApplication::translate("ServerPortCheck", "检测失败");
     }
     return QString();
 }

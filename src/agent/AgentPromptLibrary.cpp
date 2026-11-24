@@ -95,7 +95,7 @@ AgentPrompt AgentPromptLibrary::load(const QString &id, QString *problem) {
     const QString path = resourcePath(id);
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        if (problem != nullptr) *problem = QCoreApplication::translate("AgentPromptLibrary", "找不到技能提示词资源：%1").arg(path);
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentPromptLibrary", "未找到技能提示词资源：%1").arg(path);
         return {};
     }
     const int budget = id == QStringLiteral("common") ? kMaxCommonBytes : kMaxSkillBytes;

@@ -301,9 +301,9 @@ bool parseEntry(const QString &entryName, const QByteArray &bytes, Declaration *
         if (ranges.size() == 1) {
             declaration->game = ranges.constFirst();
         } else if (ranges.size() > 1) {
-            declaration->problem = tr("mcmod.info 里多个 mod 的 acceptedMinecraftVersions 不一致");
+            declaration->problem = tr("mcmod.info 中多个 mod 的 acceptedMinecraftVersions 不一致");
         } else {
-            declaration->problem = tr("mcmod.info 没有 acceptedMinecraftVersions");
+            declaration->problem = tr("mcmod.info 缺少 acceptedMinecraftVersions");
         }
         if (requiredLoaderIds != nullptr) requiredLoaderIds->append(QStringLiteral("forge"));
         return true;

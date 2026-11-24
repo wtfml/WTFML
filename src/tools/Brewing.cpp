@@ -36,31 +36,31 @@ struct Recipe {
 
 const Recipe kRecipes[] = {
     {QT_TRANSLATE_NOOP("Brewing", "迅捷药水"), QT_TRANSLATE_NOOP("Brewing", "糖"), QT_TRANSLATE_NOOP("Brewing", "迅捷"), -1, false, true, true, 2, nullptr, 180, 480, 90},
-    {QT_TRANSLATE_NOOP("Brewing", "跳跃药水"), QT_TRANSLATE_NOOP("Brewing", "兔子脚"), QT_TRANSLATE_NOOP("Brewing", "跳跃"), -1, false, true, true, 2, nullptr, 180, 480, 90},
+    {QT_TRANSLATE_NOOP("Brewing", "跳跃药水"), QT_TRANSLATE_NOOP("Brewing", "兔子脚"), QT_TRANSLATE_NOOP("Brewing", "跳跃提升"), -1, false, true, true, 2, nullptr, 180, 480, 90},
     // 治疗 / 伤害是瞬间效果：没有时长，只有一句说明。
-    {QT_TRANSLATE_NOOP("Brewing", "治疗药水"), QT_TRANSLATE_NOOP("Brewing", "闪烁的西瓜片"), QT_TRANSLATE_NOOP("Brewing", "治疗"), -1, false, false, true, 2, nullptr, 0, 0, 0,
+    {QT_TRANSLATE_NOOP("Brewing", "治疗药水"), QT_TRANSLATE_NOOP("Brewing", "闪烁的西瓜片"), QT_TRANSLATE_NOOP("Brewing", "瞬间治疗"), -1, false, false, true, 2, nullptr, 0, 0, 0,
      QT_TRANSLATE_NOOP("Brewing", "恢复 4 点生命值"), QT_TRANSLATE_NOOP("Brewing", "恢复 8 点生命值")},
-    {QT_TRANSLATE_NOOP("Brewing", "伤害药水"), QT_TRANSLATE_NOOP("Brewing", "发酵蜘蛛眼"), QT_TRANSLATE_NOOP("Brewing", "伤害"), 2, false, false, true, 2, nullptr, 0, 0, 0,
+    {QT_TRANSLATE_NOOP("Brewing", "伤害药水"), QT_TRANSLATE_NOOP("Brewing", "发酵蛛眼"), QT_TRANSLATE_NOOP("Brewing", "瞬间伤害"), 2, false, false, true, 2, nullptr, 0, 0, 0,
      QT_TRANSLATE_NOOP("Brewing", "造成 6 点伤害"), QT_TRANSLATE_NOOP("Brewing", "造成 12 点伤害")},
     {QT_TRANSLATE_NOOP("Brewing", "剧毒药水"), QT_TRANSLATE_NOOP("Brewing", "蜘蛛眼"), QT_TRANSLATE_NOOP("Brewing", "中毒"), -1, false, true, true, 2, nullptr, 45, 90, 21},
     {QT_TRANSLATE_NOOP("Brewing", "力量药水"), QT_TRANSLATE_NOOP("Brewing", "烈焰粉"), QT_TRANSLATE_NOOP("Brewing", "力量"), -1, false, true, true, 2, nullptr, 180, 480, 90},
     // 再生能加红石延长（1:30 → 3:00），荧石粉升 II —— 之前那张表把它标成了「不能延长」。
-    {QT_TRANSLATE_NOOP("Brewing", "再生药水"), QT_TRANSLATE_NOOP("Brewing", "恶魂之泪"), QT_TRANSLATE_NOOP("Brewing", "再生"), -1, false, true, true, 2, nullptr, 45, 90, 22},
+    {QT_TRANSLATE_NOOP("Brewing", "再生药水"), QT_TRANSLATE_NOOP("Brewing", "恶魂之泪"), QT_TRANSLATE_NOOP("Brewing", "生命恢复"), -1, false, true, true, 2, nullptr, 45, 90, 22},
     {QT_TRANSLATE_NOOP("Brewing", "抗火药水"), QT_TRANSLATE_NOOP("Brewing", "岩浆膏"), QT_TRANSLATE_NOOP("Brewing", "抗火"), -1, false, true, false, 2, nullptr, 180, 480},
-    {QT_TRANSLATE_NOOP("Brewing", "水肺药水"), QT_TRANSLATE_NOOP("Brewing", "河豚"), QT_TRANSLATE_NOOP("Brewing", "水肺"), -1, false, true, false, 2, nullptr, 180, 480},
+    {QT_TRANSLATE_NOOP("Brewing", "水肺药水"), QT_TRANSLATE_NOOP("Brewing", "河豚"), QT_TRANSLATE_NOOP("Brewing", "水下呼吸"), -1, false, true, false, 2, nullptr, 180, 480},
     {QT_TRANSLATE_NOOP("Brewing", "夜视药水"), QT_TRANSLATE_NOOP("Brewing", "金胡萝卜"), QT_TRANSLATE_NOOP("Brewing", "夜视"), -1, false, true, false, 2, nullptr, 180, 480},
-    {QT_TRANSLATE_NOOP("Brewing", "隐身药水"), QT_TRANSLATE_NOOP("Brewing", "发酵蜘蛛眼"), QT_TRANSLATE_NOOP("Brewing", "隐身"), 9, false, true, false, 2, nullptr, 180, 480},
+    {QT_TRANSLATE_NOOP("Brewing", "隐身药水"), QT_TRANSLATE_NOOP("Brewing", "发酵蛛眼"), QT_TRANSLATE_NOOP("Brewing", "隐身"), 9, false, true, false, 2, nullptr, 180, 480},
     // 荧石粉给的是**迟缓 IV**（不是 II）—— 这是唯一一种升级跳两级的药水。
-    {QT_TRANSLATE_NOOP("Brewing", "迟缓药水"), QT_TRANSLATE_NOOP("Brewing", "发酵蜘蛛眼"), QT_TRANSLATE_NOOP("Brewing", "迟缓"), 0, false, true, true, 4, nullptr, 90, 240, 20},
+    {QT_TRANSLATE_NOOP("Brewing", "迟缓药水"), QT_TRANSLATE_NOOP("Brewing", "发酵蛛眼"), QT_TRANSLATE_NOOP("Brewing", "缓慢"), 0, false, true, true, 4, nullptr, 90, 240, 20},
     {QT_TRANSLATE_NOOP("Brewing", "缓降药水"), QT_TRANSLATE_NOOP("Brewing", "幻翼膜"), QT_TRANSLATE_NOOP("Brewing", "缓降"), -1, false, true, false, 2, nullptr, 90, 240},
-    {QT_TRANSLATE_NOOP("Brewing", "虚弱药水"), QT_TRANSLATE_NOOP("Brewing", "发酵蜘蛛眼"), QT_TRANSLATE_NOOP("Brewing", "虚弱"), -1, true, true, false, 2, nullptr, 90, 240},
-    {QT_TRANSLATE_NOOP("Brewing", "神龟药水"), QT_TRANSLATE_NOOP("Brewing", "海龟壳"), QT_TRANSLATE_NOOP("Brewing", "海龟大师"), -1, false, true, true, 2, nullptr, 20, 40, 20},
+    {QT_TRANSLATE_NOOP("Brewing", "虚弱药水"), QT_TRANSLATE_NOOP("Brewing", "发酵蛛眼"), QT_TRANSLATE_NOOP("Brewing", "虚弱"), -1, true, true, false, 2, nullptr, 90, 240},
+    {QT_TRANSLATE_NOOP("Brewing", "神龟药水"), QT_TRANSLATE_NOOP("Brewing", "海龟壳"), QT_TRANSLATE_NOOP("Brewing", "缓慢 + 抗性提升"), -1, false, true, true, 2, nullptr, 20, 40, 20},
     // 1.21 加的四瓶：都从**粗制的药水**来（不是水瓶直做），也没有延长 / II 级版本。
     // 材料名照 `zh_cn.json`：旋风棒 / 蜘蛛网 / 黏液块 / 石头。
     {QT_TRANSLATE_NOOP("Brewing", "盘丝药水"), QT_TRANSLATE_NOOP("Brewing", "蜘蛛网"), QT_TRANSLATE_NOOP("Brewing", "盘丝"), -1, false, false, false, 2, "1.21", 180},
     {QT_TRANSLATE_NOOP("Brewing", "蓄风药水"), QT_TRANSLATE_NOOP("Brewing", "旋风棒"), QT_TRANSLATE_NOOP("Brewing", "蓄风"), -1, false, false, false, 2, "1.21", 180},
     {QT_TRANSLATE_NOOP("Brewing", "渗浆药水"), QT_TRANSLATE_NOOP("Brewing", "黏液块"), QT_TRANSLATE_NOOP("Brewing", "渗浆"), -1, false, false, false, 2, "1.21", 180},
-    {QT_TRANSLATE_NOOP("Brewing", "虫蚀药水"), QT_TRANSLATE_NOOP("Brewing", "石头"), QT_TRANSLATE_NOOP("Brewing", "虫蚀"), -1, false, false, false, 2, "1.21", 180},
+    {QT_TRANSLATE_NOOP("Brewing", "虫蚀药水"), QT_TRANSLATE_NOOP("Brewing", "石头"), QT_TRANSLATE_NOOP("Brewing", "寄生"), -1, false, false, false, 2, "1.21", 180},
 };
 
 int recipeCount() { return int(sizeof(kRecipes) / sizeof(kRecipes[0])); }
@@ -198,7 +198,8 @@ QString Plan::detailText() const {
         lines << QStringLiteral("%1. %2").arg(i + 1).arg(steps.at(i));
     }
     if (directFromWater) {
-        lines << QCoreApplication::translate("Brewing", "特殊路径：这一瓶直接从水瓶酿，不需要先做粗制的药水。");
+        lines << QCoreApplication::translate("Brewing", "特殊路径：此药水可直接用水瓶酿造，"
+                                                        "无需先制作粗制的药水。");
     }
     lines << QCoreApplication::translate("Brewing", "材料：%1").arg(materials.join(QCoreApplication::translate("Brewing", "、")));
     return lines.join(QLatin1Char('\n'));
@@ -230,7 +231,7 @@ Plan plan(int potionIndex, bool extended, bool level2, Form form, int bottles) {
         return result;
     }
     if (bottles < 1 || bottles > maxBottles()) {
-        result.error = QCoreApplication::translate("Brewing", "瓶数只能是 1 – %1（%2 不在这个范围里）。")
+        result.error = QCoreApplication::translate("Brewing", "瓶数须为 1 – %1（当前为 %2）。")
                            .arg(maxBottles())
                            .arg(bottles);
         return result;
@@ -318,14 +319,14 @@ Plan plan(int potionIndex, bool extended, bool level2, Form form, int bottles) {
                                 .arg(name)
                                 .arg(ingredientCounts.value(name) * result.operations);
     }
-    result.materials << QCoreApplication::translate("Brewing", "烈焰粉（燃料） × %1（1 个烈焰粉可酿 20 次）")
+    result.materials << QCoreApplication::translate("Brewing", "烈焰粉（燃料） × %1（1 个烈焰粉可酿造 20 次）")
                             .arg(blazePowderFor(result.operations));
 
     result.ok = true;
     result.directFromWater = target.fromWater;
     const QString effectName = QCoreApplication::translate("Brewing", kRecipes[potionIndex].effectName);
     result.effect = effectText(target, effectName, extended, level2, form);
-    result.summary = QCoreApplication::translate("Brewing", "产出：%1 × %2 瓶（酿 %3 次）")
+    result.summary = QCoreApplication::translate("Brewing", "产出：%1 × %2 瓶（酿造 %3 次）")
                          .arg(nameWithModifiers(target.name, extended, level2, form,
                                                 target.upgradedLevel))
                          .arg(bottles)

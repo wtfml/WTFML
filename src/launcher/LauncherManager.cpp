@@ -274,7 +274,7 @@ bool LauncherManager::checkPreLaunch(const QString &versionId, QStringList *erro
             const QString storageProblem = StorageAvailability::unavailableReason(basePath);
             errors->append(storageProblem.isEmpty()
                                ? tr("无法创建 Minecraft 目录：%1").arg(basePath)
-                               : tr("游戏目录所在的磁盘现在不可用：%1\n%2")
+                               : tr("游戏目录所在的磁盘当前不可用：%1\n%2")
                                      .arg(QDir::toNativeSeparators(basePath), storageProblem));
         }
         return false;
@@ -287,7 +287,7 @@ bool LauncherManager::checkPreLaunch(const QString &versionId, QStringList *erro
     const QString storageProblem = StorageAvailability::unavailableReason(basePath);
     if (!storageProblem.isEmpty()) {
         if (errors) {
-            errors->append(tr("游戏目录所在的磁盘现在不可用：%1\n%2")
+            errors->append(tr("游戏目录所在的磁盘当前不可用：%1\n%2")
                                .arg(QDir::toNativeSeparators(basePath), storageProblem));
         }
         return false;
@@ -1158,7 +1158,7 @@ int LauncherManager::startGame(const QStringList &arguments, const EffectiveJava
     // 都不该挂在某个实例名下（被拦下的是"又开一个"这件事本身，不是某个实例）。
     if (runningCount() >= maxConcurrentSessions()) {
         qWarning() << "Too many game sessions already running:" << runningCount();
-        emit processError(0, tr("同时运行的游戏已经有 %1 个了（上限 %2），先关掉几个再启动。")
+        emit processError(0, tr("同时运行的游戏已有 %1 个（上限 %2），请关闭部分游戏后再启动。")
                                  .arg(runningCount())
                                  .arg(maxConcurrentSessions()));
         return 0;
@@ -1203,8 +1203,8 @@ int LauncherManager::startGame(const QStringList &arguments, const EffectiveJava
         if (program.isEmpty()) {
             qWarning() << "Java executable not found on PATH and no path is configured.";
             emit processError(sessionId,
-                              tr("没有找到 Java：设置里没有指定 Java 路径，系统 PATH 上也没"
-                                 "有 java。请在「设置 → 启动 → Java 管理」里指定一份。"));
+                              tr("未找到 Java：设置中未指定 Java 路径，系统 PATH 中也无 java。请在「设置 → "
+                                 "启动 → Java 管理」中指定 Java。"));
             discardSession(sessionId, /*abandoned=*/true);
             return 0;
         }
@@ -1223,7 +1223,7 @@ int LauncherManager::startGame(const QStringList &arguments, const EffectiveJava
         // 长路径这一档 `QFileInfo::exists()` 本身就看不穿（没开 LongPathsEnabled 时它
         // 走的就是 CreateFile 那一套），所以"没找到"可能只是路径太长。补一句，别让用户
         // 对着一条明明存在的 java.exe 反复核对。
-        emit processError(sessionId, tr("Java可执行文件未找到：%1").arg(program) +
+        emit processError(sessionId, tr("未找到 Java 可执行文件：%1").arg(program) +
                                         ProcessPathLimit::tooLongHint({program}));
         discardSession(sessionId, /*abandoned=*/true);
         return 0;
@@ -1320,7 +1320,7 @@ int LauncherManager::startGame(const QStringList &arguments, const EffectiveJava
     m_sessions[sessionId].info.processId = static_cast<qint64>(process->processId());
     m_sessions[sessionId].info.startedAtMs = QDateTime::currentMSecsSinceEpoch();
     emit gameStarted(sessionId);
-    emit processOutput(sessionId, tr("游戏已启动（进程ID：%1）").arg(process->processId()));
+    emit processOutput(sessionId, tr("游戏已启动（进程 ID：%1）").arg(process->processId()));
     return sessionId;
 }
 

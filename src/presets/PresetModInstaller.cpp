@@ -128,7 +128,7 @@ void PresetModInstaller::start(const QList<ModReference> &references, const QStr
     }
     if (references.isEmpty()) { m_result.ok = true; finish(); return; }
     if (gameVersion.isEmpty() || m_request.loader.isEmpty()) {
-        finish(tr("没有可确认的游戏版本或模组加载器，未下载模组。")); return;
+        finish(tr("无可确认的游戏版本或模组加载器，未下载模组。")); return;
     }
     if (!m_store) m_store = new ResourceStore(this);
     m_store->setCurseForgeApiKey(apiKey);

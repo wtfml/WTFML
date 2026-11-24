@@ -99,8 +99,8 @@ Tasks::TaskId CrashReportController::report(int sessionId, int exitCode, bool cr
     const QString exitText = GameExitDiagnosis::exitDescription(exitCode);
     QList<Tasks::TaskStep> steps{
         {tr("收集退出信息"), Tasks::TaskStepState::Done, exitText},
-        {tr("对已知原因"), Tasks::TaskStepState::Done,
-         hints.isEmpty() ? tr("没有能指认的原因") : tr("%1 条").arg(hints.size())}};
+        {tr("比对已知原因"), Tasks::TaskStepState::Done,
+         hints.isEmpty() ? tr("未匹配到已知原因") : tr("%1 条").arg(hints.size())}};
     const Tasks::TaskId id = m_activity->begin(Tasks::TaskKind::Crash, title,
                                                record.facts.instanceId, steps);
     if (id == Tasks::invalidTaskId()) return id;
@@ -195,22 +195,22 @@ void CrashReportController::showCrashDialog(Tasks::TaskId id, int overlayRetry) 
     QString text = tr("「%1」异常退出：%2。")
                        .arg(where, GameExitDiagnosis::exitDescription(record.facts.exitCode));
     if (hints.isEmpty()) {
-        text += tr("\n\n没有从退出码或日志里识别出明确原因。可以导出报告，或把日志交给智能体一起看。");
+        text += tr("\n\n未从退出码或日志中识别出明确原因。可导出报告，或将日志交给智能体分析。");
     } else {
         text += tr("\n\n可能的原因与建议：");
         for (const QString &hint : hints) {
             text += QStringLiteral("\n• ") + hint;
         }
     }
-    text += tr("\n\n如果只是偶发，可以先重启游戏；反复出现时，建议先按上面的提示处理，再导出报告或完整日志。");
+    text += tr("\n\n如为偶发，可先重启游戏；反复出现时，建议先按上述提示处理，再导出报告或完整日志。");
 
     QString context = tr("实例：%1\n退出码：%2\n\n").arg(where, GameExitDiagnosis::exitDescription(record.facts.exitCode));
-    context += hints.isEmpty() ? tr("日志中没有识别出明确原因。") : hints.join(QLatin1Char('\n'));
+    context += hints.isEmpty() ? tr("日志中未识别出明确原因。") : hints.join(QLatin1Char('\n'));
     if (context.size() > 6000) context = context.left(6000) + tr("\n…（已截断）");
 
     for (;;) {
-        InlineMessageBox box(MessageKind::Warning, tr("游戏崩溃了"), text,
-                             {tr("我知道了"), tr("导出错误报告"), tr("导出完整日志"),
+        InlineMessageBox box(MessageKind::Warning, tr("游戏已崩溃"), text,
+                             {tr("确定"), tr("导出错误报告"), tr("导出完整日志"),
                               tr("使用智能体询问")},
                              0, -1);
         m_overlay->execPrompt(&box);
@@ -236,8 +236,8 @@ void CrashReportController::exportFullLog(const QString &key) {
     const Tasks::TaskId id = key.toULongLong(&parsed);
     const auto found = parsed ? m_records.constFind(id) : m_records.cend();
     if (found == m_records.cend()) {
-        InlineMessage::warning(m_overlay, tr("没有完整日志"),
-                               tr("这次退出没有留下可导出的完整日志。"));
+        InlineMessage::warning(m_overlay, tr("无完整日志"),
+                               tr("本次退出未留下可导出的完整日志。"));
         return;
     }
     const Record record = found.value();
@@ -252,8 +252,8 @@ void CrashReportController::exportFullLog(const QString &key) {
         if (!bytes.isEmpty()) completeLog = QString::fromUtf8(bytes);
     }
     if (completeLog.isEmpty()) {
-        InlineMessage::warning(m_overlay, tr("没有完整日志"),
-                               tr("这次退出没有留下可导出的完整日志。"));
+        InlineMessage::warning(m_overlay, tr("无完整日志"),
+                               tr("本次退出未留下可导出的完整日志。"));
         return;
     }
     const QDateTime now = QDateTime::currentDateTime();
@@ -344,8 +344,8 @@ void CrashReportController::exportReport(const QString &key) {
 void CrashReportController::openReportsDirectory() {
     const QString dir = AppPaths::crashReportsDir();
     if (!QDir().exists(dir)) {
-        InlineMessage::warning(m_overlay, tr("还没有崩溃报告"),
-            tr("未在 %1 中找到崩溃报告。\n\n进程被强制终止或在生成报告前退出时，可能没有报告。")
+        InlineMessage::warning(m_overlay, tr("暂无崩溃报告"),
+            tr("未在 %1 中找到崩溃报告。\n\n进程被强制终止或在生成报告前退出时，可能未生成报告。")
                 .arg(QDir::toNativeSeparators(dir)));
         return;
     }

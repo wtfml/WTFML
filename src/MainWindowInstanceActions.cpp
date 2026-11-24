@@ -54,15 +54,14 @@ void MainWindow::showInstanceSettingsNotice(const InstanceSettingsController::No
     case InstanceSettingsController::Notice::Kind::RenameBlockedScanning:
         // 说清楚"等它结束"（不是"重开启动器"）：那一趟还在跑，等它自己结束就行。
         InlineMessage::warning(m_ui->overlay(), tr("重命名实例"),
-                               tr("「%1」正在做完整性检查，请结束后再改名。")
+                               tr("「%1」正在进行完整性检查，请在其结束后再重命名。")
                                    .arg(instanceDisplayName(notice.instanceId)));
         break;
     case InstanceSettingsController::Notice::Kind::RenameBlockedBusy:
         // 装 / 导入 / 复制 / 快照 / 还原这几类作业都攥着改名前的绝对路径。把话说全，
         // 用户才知道"等一会儿再改"是等什么。
         InlineMessage::warning(m_ui->overlay(), tr("重命名实例"),
-                               tr("「%1」正在被另一项操作占用（安装、导入、复制、备份或还原），"
-                                  "等它结束后再改名。")
+                               tr("「%1」正被另一项操作占用（安装、导入、复制、备份或还原），请在其结束后再重命名。")
                                    .arg(instanceDisplayName(notice.instanceId)));
         break;
     case InstanceSettingsController::Notice::Kind::RenameRejected:
@@ -75,7 +74,7 @@ void MainWindow::showInstanceSettingsNotice(const InstanceSettingsController::No
         break;
     case InstanceSettingsController::Notice::Kind::RenameGroupNotMoved:
         // 说清楚"名字改成了、归属没搬"：不能只弹"改名失败"，那会让人再点一次。
-        InlineMessage::warning(m_ui->overlay(), tr("分组归属没跟着搬"),
+        InlineMessage::warning(m_ui->overlay(), tr("分组归属未迁移"),
                                tr("实例已重命名为「%1」，但分组未能迁移：\n%2\n\n可在「分组」中重新设置。")
                                    .arg(notice.instanceId, notice.detail));
         break;
@@ -89,7 +88,7 @@ void MainWindow::showInstanceSettingsNotice(const InstanceSettingsController::No
     case InstanceSettingsController::Notice::Kind::SettingsGroupNotMoved:
         // 和改名那一条同款，只是没有新名字：设置**存上了**，只是归属没搬 ⇒ 不能说成
         // "没能保存"（那会让用户重来一次）。
-        InlineMessage::warning(m_ui->overlay(), tr("分组归属没跟着搬"),
+        InlineMessage::warning(m_ui->overlay(), tr("分组归属未迁移"),
                                tr("「%1」的分组迁移失败：\n%2\n\n可在「分组」中重新设置。")
                                    .arg(instanceDisplayName(notice.instanceId), notice.detail));
         break;
@@ -199,8 +198,7 @@ bool MainWindow::confirmDeleteInstance(const QString &versionId) {
         // 这一份集合里不只有"正在安装"：复制 / 快照 / 还原也在这棵目录树上读写，删除
         // 会让它们写到一半的目标消失（然后被 `mkpath()` 重新建出一个半截的）。话说全。
         InlineMessage::warning(m_ui->overlay(), tr("删除实例"),
-                              tr("「%1」正在被另一项操作占用（安装、导入、复制、备份或还原），"
-                                 "等它结束后再删。")
+                              tr("「%1」正被另一项操作占用（安装、导入、复制、备份或还原），请在其结束后再删除。")
                                   .arg(name));
         return false;
     }
@@ -209,7 +207,7 @@ bool MainWindow::confirmDeleteInstance(const QString &versionId) {
     // 路径，报告里全是假的"缺文件"。
     if (integrityScanningVersion(versionId)) {
         InlineMessage::warning(m_ui->overlay(), tr("删除实例"),
-                              tr("「%1」正在做完整性检查，请结束后再删。").arg(name));
+                              tr("「%1」正在进行完整性检查，请在其结束后再删除。").arg(name));
         return false;
     }
 
@@ -245,15 +243,14 @@ bool MainWindow::deleteInstance(const QString &versionId) {
         // 这一份集合里不只有"正在安装"：复制 / 快照 / 还原也在这棵目录树上读写，删除
         // 会让它们写到一半的目标消失（然后被 `mkpath()` 重新建出一个半截的）。话说全。
         InlineMessage::warning(m_ui->overlay(), tr("删除实例"),
-                              tr("「%1」正在被另一项操作占用（安装、导入、复制、备份或还原），"
-                                 "等它结束后再删。")
+                              tr("「%1」正被另一项操作占用（安装、导入、复制、备份或还原），请在其结束后再删除。")
                                   .arg(name));
         return false;
     }
     // 闸口三（同上，理由见 confirmDeleteInstance 那一半）：正在体检的不能删。
     if (integrityScanningVersion(versionId)) {
         InlineMessage::warning(m_ui->overlay(), tr("删除实例"),
-                              tr("「%1」正在做完整性检查，请结束后再删。").arg(name));
+                              tr("「%1」正在进行完整性检查，请在其结束后再删除。").arg(name));
         return false;
     }
 

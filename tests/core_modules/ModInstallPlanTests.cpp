@@ -587,7 +587,7 @@ void runModInstallPlanTests() {
               "PM13 每一档状态有自己的字");
 
         Presets::ModInstallPlan empty;
-        check(Presets::modInstallSummaryText(empty) == QStringLiteral("没有要动的东西。"),
+        check(Presets::modInstallSummaryText(empty) == QStringLiteral("无待处理内容。"),
               "PM13 空计划一句人话", Presets::modInstallSummaryText(empty));
 
         Presets::ModInstallPlan summary;

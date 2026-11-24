@@ -345,6 +345,11 @@ void runServerSettingsTests() {
               "ZV3 被改的那一项真的变了");
         check(props.value(QStringLiteral("some-plugin-option")) == QStringLiteral("nonsense value"),
               "★★ ZV3 我们不认识的键原样留着（整合包和插件往里加的键一个都不动）");
+        check(ServerPropertiesForm::applyEdits(props,
+                  {{QStringLiteral("some-plugin-option"), QStringLiteral("a\nb")}}) == 1 &&
+                  ServerModel::parseProperties(props.toString()).value(QStringLiteral("some-plugin-option")) ==
+                      QStringLiteral("a\nb"),
+              "ZV3 其他属性可编辑并保留转义的换行");
 
         // 表里没有的键：跳过（这一层只认那十九项）。
         ServerModel::Properties other = ServerModel::parseProperties(QStringLiteral("a=1\n"));
@@ -565,12 +570,12 @@ void runServerSettingsTests() {
         // 没装好那一条：不再往下报 EULA / 世界 / 备份那几条 —— 那些本来就没到那一步。
         ServerCheck::Facts fresh;
         fresh.installed = false;
-        fresh.installedNote = QStringLiteral("入口文件不在这个目录里。");
+        fresh.installedNote = QStringLiteral("入口文件不在当前目录中。");
         const QList<ServerCheck::Finding> one = ServerCheck::inspect(fresh);
         check(one.size() == 1 && one.first().action == ServerCheck::Action::Reinstall,
               "★★ ZV5 没装好 ⇒ **只报一条**（「还没装好」），并指向「修复」",
               QString::number(one.size()));
-        check(one.first().detail.contains(QStringLiteral("入口文件不在这个目录里")),
+        check(one.first().detail.contains(QStringLiteral("入口文件不在当前目录中")),
               "★ ZV5 那一条把 `Entry::note` 原话带上（「缺什么」是那一层说的）", one.first().detail);
 
         // 世界还没生成（新装的、没跑过）：说一声就好，不是错。
@@ -626,11 +631,11 @@ void runServerSettingsTests() {
                   QString::number(taken));
         }
         // 三档那三句话的唯一出处。
-        check(ServerPortCheck::stateName(ServerPortCheck::State::Free) == QStringLiteral("没被占用")
+        check(ServerPortCheck::stateName(ServerPortCheck::State::Free) == QStringLiteral("未被占用")
                   && ServerPortCheck::stateName(ServerPortCheck::State::InUse)
-                         == QStringLiteral("被占用了")
+                         == QStringLiteral("已被占用")
                   && ServerPortCheck::stateName(ServerPortCheck::State::Unknown)
-                         == QStringLiteral("没能查出来"),
+                         == QStringLiteral("检测失败"),
               "★ ZV6 三档那三句话的唯一出处");
     }
 }

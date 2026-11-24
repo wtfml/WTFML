@@ -5,12 +5,13 @@
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QHeaderView>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
 #include <QTableWidget>
 #include <QVBoxLayout>
 #include <QSet>
-#include <QSpinBox>
+#include <QSlider>
 #include <QStyledItemDelegate>
 
 #include "PresetOptionCatalog.hpp"
@@ -18,12 +19,88 @@
 #include <QMouseEvent>
 #include <QLineEdit>
 #include <QSignalBlocker>
-#include <QDoubleSpinBox>
 #include <QApplication>
+#include <QLocale>
 #include <functional>
+#include <utility>
 
 namespace {
 using namespace PresetOptionCatalog;
+constexpr int kFiltered = Qt::UserRole + 1;
+
+// 原版 Java 1.21.1 的选项槽位。空槽对应预设目录中没有的游戏选项。
+using Pair = std::pair<const char *, const char *>;
+const auto videoRows = {
+    Pair{"graphicsMode", "renderDistance"}, Pair{nullptr, "simulationDistance"}, Pair{nullptr, "maxFps"},
+    Pair{"enableVsync", "bobView"}, Pair{"guiScale", nullptr}, Pair{"gamma", "renderClouds"},
+    Pair{"fullscreen", "particles"}, Pair{nullptr, "entityShadows"},
+};
+const auto mouseRows = {Pair{"mouseSensitivity", "invertYMouse"}, Pair{nullptr, "rawMouseInput"}};
+const auto controlRows = {Pair{"toggleCrouch", "toggleSprint"}, Pair{"autoJump", nullptr}};
+const auto accessibilityRows = {
+    Pair{nullptr, "showSubtitles"}, Pair{"highContrast", nullptr},
+    Pair{"screenEffectScale", "fovEffectScale"}, Pair{"darknessEffectScale", nullptr},
+    Pair{"hideLightningFlash", nullptr},
+};
+const auto chatRows = {
+    Pair{"chatVisibility", "chatColors"}, Pair{"chatLinks", "chatLinksPrompt"},
+    Pair{"chatOpacity", nullptr}, Pair{"chatScale", nullptr},
+};
+const auto soundRows = {
+    Pair{"soundCategory_master", nullptr}, Pair{"soundCategory_music", "soundCategory_record"},
+    Pair{"soundCategory_weather", "soundCategory_block"}, Pair{"soundCategory_hostile", "soundCategory_neutral"},
+    Pair{"soundCategory_player", "soundCategory_ambient"}, Pair{"soundCategory_voice", nullptr},
+};
+
+class OptionSlider final : public QWidget {
+public:
+    OptionSlider(const Option &spec, QWidget *parent) : QWidget(parent), m_spec(spec) {
+        auto *layout = new QHBoxLayout(this);
+        layout->setContentsMargins(8, 0, 8, 0);
+        m_slider = new QSlider(Qt::Horizontal, this);
+        m_slider->setAccessibleName(spec.name);
+        const int factor = spec.kind == Kind::Fraction ? 1000 : 1;
+        m_slider->setRange(qRound(spec.minimum * factor), qRound(spec.maximum * factor));
+        m_label = new QLabel(this);
+        m_label->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        layout->addWidget(m_slider, 1);
+        layout->addWidget(m_label);
+        setFocusProxy(m_slider);
+        connect(m_slider, &QSlider::valueChanged, this, [this] { updateLabel(); });
+    }
+
+    void load(const QString &value) {
+        const double number = value.toDouble();
+        m_slider->setValue(qRound(m_spec.key == "fov" ? 70 + 40 * number
+            : m_spec.kind == Kind::Fraction ? 1000 * number : number));
+        updateLabel();
+    }
+
+    QString value() const {
+        const int position = m_slider->value();
+        if (m_spec.key == "fov") return QString::number((position - 70) / 40.0);
+        if (m_spec.kind == Kind::Fraction) return QString::number(position / 1000.0);
+        return QString::number(position);
+    }
+
+    QSlider *slider() const { return m_slider; }
+
+private:
+    void updateLabel() {
+        const int position = m_slider->value();
+        QString text = QString::number(position);
+        if (m_spec.kind == Kind::Fraction) text = QLocale().toString(position / 10.0, 'f', position % 10 == 0 ? 0 : 1) + '%';
+        else if (m_spec.key == "fov") text += QStringLiteral("°");
+        else if (m_spec.key == "maxFps") text += QStringLiteral(" FPS");
+        else if (m_spec.key.endsWith("Distance")) text += QCoreApplication::translate("OptionValueDelegate", " 区块");
+        m_label->setText(text);
+    }
+
+    const Option &m_spec;
+    QSlider *m_slider;
+    QLabel *m_label;
+};
+
 QString keyLabel(QString value) {
     const QHash<QString, QString> names{
         {"key.keyboard.space", QCoreApplication::translate("PresetOptionsEditor", "空格")},
@@ -118,15 +195,26 @@ private:
 class OptionValueDelegate : public DesignDefaults::RowDelegate {
 public:
     using DesignDefaults::RowDelegate::RowDelegate;
+    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override {
+        if (!index.data(kFiltered).toBool()) DesignDefaults::RowDelegate::paint(painter, option, index);
+    }
+    bool editorEvent(QEvent *event, QAbstractItemModel *model, const QStyleOptionViewItem &option,
+                     const QModelIndex &index) override {
+        return !index.data(kFiltered).toBool() && DesignDefaults::RowDelegate::editorEvent(event, model, option, index);
+    }
     QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override {
-        const auto *spec = PresetOptionCatalog::find(index.siblingAtColumn(0).data().toString());
-        if (index.column() == 1 && spec) {
+        const auto *spec = PresetOptionCatalog::find(index.siblingAtColumn(index.column() - 1).data().toString());
+        if (index.column() % 2 == 1 && spec) {
             if (spec->kind == Kind::Key) return new KeyCapture(parent);
-            if (spec->kind == Kind::Boolean || spec->kind == Kind::Choice) {
+            if (spec->kind == Kind::Boolean || spec->kind == Kind::Choice || spec->key == "guiScale") {
                 auto *combo = new QComboBox(parent);
                 if (spec->kind == Kind::Boolean) {
                     combo->addItem(QCoreApplication::translate("OptionValueDelegate", "关闭"), "false");
                     combo->addItem(QCoreApplication::translate("OptionValueDelegate", "开启"), "true");
+                } else if (spec->key == "guiScale") {
+                    combo->addItem(QCoreApplication::translate("OptionValueDelegate", "自动"), "0");
+                    for (int scale = 1; scale <= spec->maximum; ++scale)
+                        combo->addItem(QString::number(scale), QString::number(scale));
                 } else {
                     for (const auto &choice : spec->choices) {
                         combo->addItem(choice.label, QString::fromLatin1(choice.value));
@@ -134,31 +222,14 @@ public:
                 }
                 return combo;
             }
-            if (spec->kind == Kind::Fraction) {
-                auto *spin = new QDoubleSpinBox(parent);
-                spin->setRange(spec->minimum * 100, spec->maximum * 100);
-                spin->setDecimals(1); spin->setSuffix("%"); spin->setKeyboardTracking(false);
-                return spin;
-            }
-            auto *spin = new QSpinBox(parent);
-            spin->setRange(int(spec->minimum), int(spec->maximum));
-            spin->setKeyboardTracking(false);
-            if (spec->key == "fov") spin->setSuffix("°");
-            if (spec->key == "guiScale") spin->setSpecialValueText(QCoreApplication::translate("OptionValueDelegate", "自动"));
-            if (spec->key.endsWith("Distance")) spin->setSuffix(QCoreApplication::translate("OptionValueDelegate", " 区块"));
-            if (spec->key == "maxFps") { spin->setSuffix(" FPS"); }
-            return spin;
+            return new OptionSlider(*spec, parent);
         }
         return QStyledItemDelegate::createEditor(parent, option, index);
     }
     void setEditorData(QWidget *editor, const QModelIndex &index) const override {
         const QSignalBlocker blocker(editor);
         if (auto *key = dynamic_cast<KeyCapture *>(editor)) { key->setValue(index.data().toString()); return; }
-        if (auto *spin = qobject_cast<QDoubleSpinBox *>(editor)) { spin->setValue(index.data().toDouble() * 100); return; }
-        if (auto *spin = qobject_cast<QSpinBox *>(editor)) {
-            spin->setValue(index.siblingAtColumn(0).data().toString() == "fov"
-                ? qRound(70 + 40 * index.data().toDouble()) : index.data().toInt()); return;
-        }
+        if (auto *slider = dynamic_cast<OptionSlider *>(editor)) { slider->load(index.data().toString()); return; }
         if (auto *combo = qobject_cast<QComboBox *>(editor)) {
             int selected = combo->findData(index.data().toString());
             if (selected < 0) { combo->addItem(index.data().toString(), index.data().toString()); selected = combo->count()-1; }
@@ -167,14 +238,7 @@ public:
         QStyledItemDelegate::setEditorData(editor, index);
     }
     void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override {
-        if (auto *spin = qobject_cast<QDoubleSpinBox *>(editor)) {
-            spin->interpretText(); model->setData(index, QString::number(spin->value()/100.0, 'g', 8)); return;
-        }
-        if (auto *spin = qobject_cast<QSpinBox *>(editor)) {
-            spin->interpretText();
-            model->setData(index, index.siblingAtColumn(0).data().toString() == "fov"
-                ? QString::number((spin->value()-70)/40.0, 'g', 8) : QString::number(spin->value())); return;
-        }
+        if (auto *slider = dynamic_cast<OptionSlider *>(editor)) { model->setData(index, slider->value()); return; }
         if (auto *combo = qobject_cast<QComboBox *>(editor)) { model->setData(index, combo->currentData().toString()); return; }
         if (dynamic_cast<KeyCapture *>(editor)) return;
         QStyledItemDelegate::setModelData(editor, model, index);
@@ -182,7 +246,7 @@ public:
 protected:
     void initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const override {
         QStyledItemDelegate::initStyleOption(option, index);
-        if (index.column() == 1) {
+        if (index.column() % 2 == 1) {
             // 右栏的输入控件负责显示设置值。透明底下只画行底，原始值留在模型里供搜索和保存。
             option->text.clear();
             option->features.setFlag(QStyleOptionViewItem::HasDisplay, false);
@@ -193,7 +257,8 @@ protected:
 };
 }
 
-PresetOptionsEditor::PresetOptionsEditor(const QList<Entry> &entries, QWidget *parent, Mode mode) : QDialog(parent) {
+PresetOptionsEditor::PresetOptionsEditor(const QList<Entry> &entries, QWidget *parent, Mode mode)
+    : QDialog(parent), m_mode(mode) {
     setWindowTitle(QCoreApplication::translate("PresetOptionsEditor", "编辑游戏设置预设")); resize(600, 440);
     auto *layout = new QVBoxLayout(this);
     auto *search = new QLineEdit(this);
@@ -203,40 +268,122 @@ PresetOptionsEditor::PresetOptionsEditor(const QList<Entry> &entries, QWidget *p
         : QCoreApplication::translate("PresetOptionsEditor", "搜索设置"));
     search->setClearButtonEnabled(true);
     layout->addWidget(search);
-    m_table = new QTableWidget(0, 2, this);
+    const bool paired = mode == Mode::Options;
+    m_table = new QTableWidget(0, paired ? 4 : 2, this);
     m_table->setObjectName(QStringLiteral("presetOptionsEditorTable"));
     m_table->setHorizontalHeaderLabels({
         QCoreApplication::translate("PresetOptionsEditor", "纳入预设"),
         mode == Mode::Keys ? QCoreApplication::translate("PresetOptionsEditor", "按键")
                            : QCoreApplication::translate("PresetOptionsEditor", "设置值"),
     });
-    m_table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
-    m_table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    m_table->horizontalHeader()->setVisible(!paired);
     m_table->verticalHeader()->hide();
     m_table->verticalHeader()->setDefaultSectionSize(48);
     m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_table->setItemDelegate(new OptionValueDelegate(m_table));
     layout->addWidget(m_table, 1);
-    QSet<QString> present;
-    for (const auto &entry : entries) { append(entry); present.insert(entry.key); }
-    for (const auto &spec : PresetOptionCatalog::all()) {
-        if (present.contains(spec.key) || (mode == Mode::Keys && spec.kind != Kind::Key) ||
-            (mode == Mode::Options && spec.kind == Kind::Key)) continue;
-        append({spec.key, spec.initial}, false);
+    QHash<QString, int> remaining;
+    for (int index = 0; index < entries.size(); ++index) {
+        if (!remaining.contains(entries.at(index).key)) remaining.insert(entries.at(index).key, index);
     }
-    connect(search, &QLineEdit::textChanged, this, [this](const QString &text) {
-        for (int row=0; row<m_table->rowCount(); ++row) {
-            const auto *item = m_table->item(row,0);
+    QList<QTableWidgetItem *> existing(entries.size(), nullptr);
+    const auto newRow = [this] {
+        const int row = m_table->rowCount();
+        m_table->insertRow(row);
+        return row;
+    };
+    const auto addGroup = [this, &newRow](const QString &label) {
+        const int row = newRow();
+        auto *heading = new QTableWidgetItem(label);
+        QFont font = m_table->font();
+        font.setBold(true);
+        heading->setFont(font);
+        heading->setFlags(Qt::ItemIsEnabled);
+        m_table->setItem(row, 0, heading);
+        m_table->setSpan(row, 0, 1, m_table->columnCount());
+        m_groups.append(heading);
+    };
+    QSet<QString> placed;
+    const auto place = [&](const Option &spec, int row, int column) {
+        const auto index = remaining.find(spec.key);
+        if (index != remaining.end()) {
+            existing[*index] = append(entries.at(*index), row, column);
+            remaining.erase(index);
+        } else {
+            m_options.append(append({spec.key, spec.initial}, row, column, false));
+        }
+        if (paired && spec.key == "soundCategory_master") m_table->setSpan(row, 1, 1, 3);
+        placed.insert(spec.key);
+    };
+    const auto addPairs = [&](const auto &rows) {
+        for (const auto &[left, right] : rows) {
+            const int row = newRow();
+            if (const auto *spec = left ? PresetOptionCatalog::find(QString::fromLatin1(left)) : nullptr)
+                place(*spec, row, 0);
+            if (const auto *spec = right ? PresetOptionCatalog::find(QString::fromLatin1(right)) : nullptr)
+                place(*spec, row, 2);
+        }
+    };
+    if (paired) {
+        place(*PresetOptionCatalog::find(QStringLiteral("fov")), newRow(), 0);
+        addGroup(PresetOptionCatalog::find(QStringLiteral("graphicsMode"))->group);
+        addPairs(videoRows);
+        addGroup(PresetOptionCatalog::find(QStringLiteral("autoJump"))->group);
+        addPairs(controlRows);
+        addPairs(mouseRows);
+        addGroup(PresetOptionCatalog::find(QStringLiteral("highContrast"))->group);
+        addPairs(accessibilityRows);
+        addGroup(PresetOptionCatalog::find(QStringLiteral("chatVisibility"))->group);
+        addPairs(chatRows);
+        addGroup(PresetOptionCatalog::find(QStringLiteral("soundCategory_master"))->group);
+        addPairs(soundRows);
+    }
+    const int groupedEnd = m_table->rowCount();
+    for (int index = 0; index < entries.size(); ++index) {
+        if (existing.at(index)) continue;
+        const auto &entry = entries.at(index);
+        existing[index] = append(entry, newRow(), 0);
+        remaining.remove(entry.key);
+        placed.insert(entry.key);
+    }
+    for (const auto &spec : PresetOptionCatalog::all()) {
+        if (placed.contains(spec.key) || (mode == Mode::Keys && spec.kind != Kind::Key) ||
+            (mode == Mode::Options && spec.kind == Kind::Key)) continue;
+        place(spec, newRow(), 0);
+    }
+    m_options = existing + m_options;
+    connect(search, &QLineEdit::textChanged, this, [this, groupedEnd](const QString &text) {
+        const QString query = text.trimmed();
+        QSet<int> matches;
+        for (auto *item : std::as_const(m_options)) {
+            auto *value = m_table->item(item->row(), item->column() + 1);
             const auto *spec = PresetOptionCatalog::find(item->text());
             const QString haystack = item->text() + " " + (spec ? spec->name + " " + spec->group : QString())
-                + " " + m_table->item(row,1)->text();
-            m_table->setRowHidden(row, !haystack.contains(text.trimmed(), Qt::CaseInsensitive));
+                + " " + value->text();
+            const bool match = haystack.contains(query, Qt::CaseInsensitive);
+            item->setData(kFiltered, !match);
+            value->setData(kFiltered, !match);
+            m_table->cellWidget(item->row(), value->column())->setVisible(match);
+            if (match) matches.insert(item->row());
+        }
+        for (int i = 0; i < m_groups.size(); ++i) {
+            const int row = m_groups.at(i)->row();
+            const int end = i + 1 < m_groups.size() ? m_groups.at(i + 1)->row() : groupedEnd;
+            for (int itemRow = row + 1; itemRow < end; ++itemRow) {
+                if (matches.contains(itemRow)) { matches.insert(row); break; }
+            }
+        }
+        for (int row = 0; row < m_table->rowCount(); ++row) {
+            m_table->setRowHidden(row, !matches.contains(row));
         }
     });
     connect(m_table, &QTableWidget::itemChanged, this, [this](QTableWidgetItem *item) {
-        if (item->column()!=0) return;
-        if (auto *editor=m_table->cellWidget(item->row(),1)) editor->setEnabled(item->checkState()==Qt::Checked);
+        if (!item->flags().testFlag(Qt::ItemIsUserCheckable)) return;
+        if (auto *editor = m_table->cellWidget(item->row(), item->column() + 1))
+            editor->setEnabled(item->checkState() == Qt::Checked);
     });
     auto *problem = new QLabel(this); problem->setWordWrap(true); layout->addWidget(problem);
     // 不用标准钮（QDialogButtonBox::Save/Cancel/…）：它的字在 LanguageChange 时会被 Qt 刷回自带的英文，
@@ -265,17 +412,20 @@ PresetOptionsEditor::PresetOptionsEditor(const QList<Entry> &entries, QWidget *p
         accept();
     });
 }
-void PresetOptionsEditor::append(const Entry &entry, bool included) {
+QTableWidgetItem *PresetOptionsEditor::append(const Entry &entry, int row, int column, bool included) {
     using namespace PresetOptionCatalog;
-    const int row = m_table->rowCount(); m_table->insertRow(row);
     auto *key = new QTableWidgetItem(entry.key);
-    key->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
-    key->setCheckState(included ? Qt::Checked : Qt::Unchecked);
+    const bool chooseIndividually = m_mode != Mode::Options;
+    key->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+    if (chooseIndividually) {
+        key->setFlags(key->flags() | Qt::ItemIsUserCheckable);
+        key->setCheckState(included ? Qt::Checked : Qt::Unchecked);
+    }
     const auto *spec = PresetOptionCatalog::find(entry.key);
     key->setToolTip(spec ? spec->group + " / " + entry.key : entry.key);
     auto *value = new QTableWidgetItem(entry.value);
-    m_table->setItem(row, 0, key);
-    m_table->setItem(row, 1, value);
+    m_table->setItem(row, column, key);
+    m_table->setItem(row, column + 1, value);
     // 未识别或超出控件范围的导入值仍按原文保留，不能静默截断。
     bool valid = true;
     const double number = entry.value.toDouble(&valid);
@@ -283,31 +433,31 @@ void PresetOptionsEditor::append(const Entry &entry, bool included) {
     bool supported = spec != nullptr;
     if (spec && (spec->kind == Kind::Integer || spec->kind == Kind::Fraction))
         supported = valid && display >= spec->minimum && display <= spec->maximum;
-    QWidget *editor = supported ? m_table->itemDelegate()->createEditor(m_table, {}, m_table->model()->index(row,1))
+    const QModelIndex index = m_table->indexFromItem(value);
+    QWidget *editor = supported ? m_table->itemDelegate()->createEditor(m_table, {}, index)
                                 : new QLineEdit(m_table);
-    if (supported) m_table->itemDelegate()->setEditorData(editor, m_table->model()->index(row,1));
+    if (supported) m_table->itemDelegate()->setEditorData(editor, index);
     else qobject_cast<QLineEdit *>(editor)->setText(entry.value);
     editor->setObjectName("presetValue_" + entry.key);
-    editor->setEnabled(included);
-    m_table->setCellWidget(row,1,editor);
+    editor->setEnabled(!chooseIndividually || included);
+    m_table->setCellWidget(row, column + 1, editor);
     const auto commit = [this, editor, value, supported] {
         if (supported) m_table->itemDelegate()->setModelData(editor,m_table->model(),m_table->indexFromItem(value));
         else value->setText(qobject_cast<QLineEdit *>(editor)->text());
     };
     if (auto *capture = dynamic_cast<KeyCapture *>(editor))
         capture->changed = [value](const QString &binding) { value->setText(binding); };
-    else if (auto *spin = qobject_cast<QSpinBox *>(editor)) connect(spin,qOverload<int>(&QSpinBox::valueChanged),this,commit);
-    else if (auto *spin = qobject_cast<QDoubleSpinBox *>(editor)) connect(spin,qOverload<double>(&QDoubleSpinBox::valueChanged),this,commit);
+    else if (auto *slider = dynamic_cast<OptionSlider *>(editor)) connect(slider->slider(), &QSlider::valueChanged, this, commit);
     else if (auto *combo = qobject_cast<QComboBox *>(editor)) connect(combo,qOverload<int>(&QComboBox::currentIndexChanged),this,commit);
     else if (auto *line = qobject_cast<QLineEdit *>(editor)) connect(line,&QLineEdit::textChanged,this,commit);
+    return key;
 }
 QList<PresetOptionsEditor::Entry> PresetOptionsEditor::entries() const {
     QList<Entry> result;
-    for (int row = 0; row < m_table->rowCount(); ++row)
-        if (m_table->item(row,0)->checkState() == Qt::Checked) {
-            // 导航离开检查可能先于失焦，保存前提交仍在输入中的数字。
-            if (auto *spin = qobject_cast<QAbstractSpinBox *>(m_table->cellWidget(row,1))) spin->interpretText();
-            result.append({m_table->item(row, 0)->text().trimmed(), m_table->item(row, 1)->text()});
+    for (const auto *item : m_options) {
+        if (m_mode == Mode::Options || item->checkState() == Qt::Checked) {
+            result.append({item->text().trimmed(), m_table->item(item->row(), item->column() + 1)->text()});
         }
+    }
     return result;
 }

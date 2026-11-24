@@ -41,10 +41,12 @@
 #include "server/ServerPortCheck.hpp"
 
 #include <QObject>
+#include <QByteArray>
 #include <QString>
 
 class MainWindow;
 class ServerSettingsPage;
+namespace ServerModel { struct Properties; }
 
 class ServerSettingsPageController final : public QObject {
 public:
@@ -70,7 +72,7 @@ public:
 
     /// 用户按了「保存」：原文 + 表单补丁 → `server.properties`。
     void save();
-    /// 用户按了「放弃改动」：把这一页按盘上那一份重新摆一遍（**不碰盘**）。
+    /// 用户按了「放弃更改」：把这一页按盘上那一份重新摆一遍（**不碰盘**）。
     void revert();
     /// 跑一遍体检（开页 / 保存之后 / 用户点了「重新检查」），把结论摆到那一页上。
     /// 顺带把端口那一次真监听的结论记下来（它不是个"随时都准"的事实）。
@@ -105,6 +107,9 @@ private:
     /// `refresh()` 与 `refreshRunStateIfShowing()` 都走这里，免得两边的措辞和判据分叉。
     void applyRunState(ServerSettingsPage *page, const QString &serverId);
     void refreshWorlds();
+    void refreshWorldEditor(bool force = false);
+    void saveWorldEditor();
+    void refreshForm(const ServerModel::Properties &properties);
     void refreshLogs();
     void saveLaunchSettings();
     void exportMigration();
@@ -116,6 +121,8 @@ private:
     ServerSettingsPage *m_page = nullptr;
     /// 这一页**现在说的是哪一个**服务端（见文件头：认它，不问列表选中谁）。
     QString m_serverId;
+    QString m_worldEditorDir;
+    QByteArray m_worldSourceHash;
     /// 这一页现在能不能改（服务端在跑 = 不能）。
     bool m_editable = true;
     bool m_copyingUpgrade = false;

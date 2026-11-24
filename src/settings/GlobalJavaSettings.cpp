@@ -1272,7 +1272,7 @@ bool GlobalJavaSettings::installerJavaFor(int requiredMajor, const QString &conf
                     .arg(requiredMajor)
                     .arg(configuredMajor > 0 ? QString::number(configuredMajor)
                                              : QCoreApplication::translate("GlobalJavaSettings", "版本未知"))
-                    .arg(highest > 0 ? QString::number(highest) : QCoreApplication::translate("GlobalJavaSettings", "没有"));
+                    .arg(highest > 0 ? QString::number(highest) : QCoreApplication::translate("GlobalJavaSettings", "无"));
         }
         return false;
     }
@@ -1502,7 +1502,7 @@ bool GlobalJavaSettings::ensureJavaForVersion(
 
     // First, check if we already have the correct version configured
     if (!io.javaPath.isEmpty()) {
-        // 用户在「Java 版本不符」那个框里点了「仍然用这个 Java 启动」：他要的就是这条路径。
+        // 用户在「Java 版本不符」那个框里点了「仍使用此 Java 启动」：他要的就是这条路径。
         // 判在 javaMatchesMajor() **之前**是有意的 —— 那个函数总是冷启一个 JVM，而这里
         // 已经拿到过用户的明确授权，没必要再花那几十毫秒去确认一件他已经决定的事。
         if (allowMismatchedPath) {
@@ -1566,7 +1566,7 @@ bool GlobalJavaSettings::ensureJavaForVersion(
     // 这一道放在两个下载分支**共同的前面**，所以不存在"跳过 Mojang 又落到 Adoptium"的缺口。
     if (!allowDownload) {
         qDebug() << "Download disabled for Java" << majorVersion << "- local scan only";
-        return fail(QCoreApplication::translate("GlobalJavaSettings", "这台机器上没有 Java %1，且当前不允许下载运行时。")
+        return fail(QCoreApplication::translate("GlobalJavaSettings", "本机无 Java %1，且当前不允许下载运行时。")
                         .arg(majorVersion));
     }
 
@@ -1603,7 +1603,7 @@ bool GlobalJavaSettings::ensureJavaForVersion(
     }
 
     qDebug() << "Failed to obtain Java version" << majorVersion;
-    return fail(QCoreApplication::translate("GlobalJavaSettings", "找不到也下载不到 Java %1。").arg(majorVersion));
+    return fail(QCoreApplication::translate("GlobalJavaSettings", "未找到 Java %1，且无法下载。").arg(majorVersion));
 }
 
 

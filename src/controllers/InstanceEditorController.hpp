@@ -4,9 +4,11 @@
 #include <QByteArray>
 #include <QString>
 #include <QStringList>
+#include "WorldSettingsPage.hpp"
 
 class MainWindow;
 class InstanceSettingsDialog;
+namespace WorldFiles { struct LevelData; }
 
 class InstanceEditorController final : public QObject {
     Q_OBJECT
@@ -29,6 +31,8 @@ public:
     void leaveConfigEditor(InstanceSettingsDialog *dialog);
     bool confirmDiscardConfigEdits();
     bool confirmDiscardWorldEdits();
+    static WorldSettingsPage::WorldView worldViewOf(const QString &worldDir, const WorldFiles::LevelData &data);
+    static bool applyWorldEdits(WorldFiles::LevelData &data, const WorldSettingsPage::Delta &delta, QString *problem);
 private:
     void loadConfigBackup(InstanceSettingsDialog *dialog, const QString &path,
                           const QString &backupPath);

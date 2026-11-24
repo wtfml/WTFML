@@ -493,7 +493,7 @@ QWidget *PresetManagePage::buildPresetContentSection(QWidget *parent) {
     m_deleteButton->setAutoDefault(false);
     Theme::markButton(m_deleteButton, Theme::ButtonKind::Danger);
     m_deleteButton->setToolTip(
-        QCoreApplication::translate("PresetManagePage", "连这一份的目录一起删掉，删掉的东西会进回收站，可以从那里还原。"));
+        QCoreApplication::translate("PresetManagePage", "同时删除此预设的目录；删除内容将移至回收站，可从回收站还原。"));
     m_moveUpButton = new QPushButton(QCoreApplication::translate("PresetManagePage", "上移"), section);
     m_moveUpButton->setObjectName(moveUpButtonName());
     m_moveUpButton->setAutoDefault(false);
@@ -562,7 +562,7 @@ QWidget *PresetManagePage::buildCaptureSection(QWidget *parent) {
     QVBoxLayout *card = nullptr;
     auto *section = makePageSection(tr("从实例提取"), parent, &card);
 
-    auto *captureToggle = new QPushButton(tr("勾选要收的几样"), section);
+    auto *captureToggle = new QPushButton(tr("选择要收集的项"), section);
     captureToggle->setObjectName(QStringLiteral("presetCaptureToggle"));
     captureToggle->setCheckable(true);
     captureToggle->setAutoDefault(false);
@@ -606,7 +606,7 @@ QWidget *PresetManagePage::buildCaptureSection(QWidget *parent) {
              true, &m_captureServers);
     captureGrid->addWidget(new QLabel(QCoreApplication::translate("PresetManagePage", "配置文件"), section), 2, 0);
     addCheck(2, 1, QStringLiteral("config/"),
-             QCoreApplication::translate("PresetManagePage", "整份按「缺了才拷」落下去，不会盖掉目标上已经有的同名项。"),
+             QCoreApplication::translate("PresetManagePage", "按「仅在缺失时复制」部署，不覆盖目标已有同名项。"),
              true, &m_captureConfig);
     addCheck(2, 2, QStringLiteral("defaultconfigs/"),
              QCoreApplication::translate("PresetManagePage", "新实例第一次启动时模组会照它生成配置。"), false,
@@ -619,9 +619,9 @@ QWidget *PresetManagePage::buildCaptureSection(QWidget *parent) {
              QCoreApplication::translate("PresetManagePage", "shaderpacks/。文件通常较大，默认排除。"), false, &m_captureShaderPacks);
     captureGrid->addWidget(new QLabel(QStringLiteral("MaLiLib"), section), 4, 0);
     addCheck(4, 1, QCoreApplication::translate("PresetManagePage", "热键"),
-             QCoreApplication::translate("PresetManagePage", "按结构认这一族，一个模组一段；默认只收绑好的热键。"),
+             QCoreApplication::translate("PresetManagePage", "按结构识别此类配置，每个模组一段；默认仅收集已绑定的热键。"),
              true, &m_captureMalilib);
-    addCheck(4, 2, QCoreApplication::translate("PresetManagePage", "连值一起收"),
+    addCheck(4, 2, QCoreApplication::translate("PresetManagePage", "同时收集值"),
              QCoreApplication::translate("PresetManagePage", "包含开关和其他设置。"),
              false, &m_captureMalilibValues);
     captureGrid->addWidget(new QLabel(QCoreApplication::translate("PresetManagePage", "数据包"), section), 5, 0);
@@ -960,8 +960,8 @@ void PresetManagePage::rebuildPresetList(const QString &selectId, bool emitSelec
                 if (!group->child(i)->isHidden()) ++visibleRows;
             }
         }
-        m_noMatchLabel->setText(m_presets.isEmpty() ? tr("还没有预设")
-                                                    : tr("没有符合筛选条件的预设"));
+        m_noMatchLabel->setText(m_presets.isEmpty() ? tr("暂无预设")
+                                                    : tr("无符合筛选条件的预设"));
         m_noMatchLabel->setVisible(visibleRows == 0);
     }
 
@@ -1149,7 +1149,9 @@ void PresetManagePage::showPreset(const QString &id, const QString &name,
     m_currentId = id;
     LoadingState::finish(m_sectionList);
     m_nameEdit->setText(name);
+    m_nameEdit->setCursorPosition(0);
     m_descriptionEdit->setText(description);
+    m_descriptionEdit->setCursorPosition(0);
     m_nameEdit->parentWidget()->setVisible(!m_nameEdit->isHidden() || !description.isEmpty());
     // 细节那一层顶上的标题就是这一份的名字（外面改了名之后这一发跟着换）。
     if (m_detailTitle != nullptr) {
@@ -1270,7 +1272,7 @@ void PresetManagePage::showPlan(const PlanView &plan) {
     } else if (plan.needsConfirm) {
         hint = QCoreApplication::translate("PresetManagePage", "预设包含覆盖操作。选择「应用」后需要再次确认。");
     } else if (!plan.canApply) {
-        hint = QCoreApplication::translate("PresetManagePage", "本次没有可应用的内容。");
+        hint = QCoreApplication::translate("PresetManagePage", "本次无可应用的内容。");
     }
     m_planHint->setText(hint);
     m_applyButton->setText(QCoreApplication::translate("PresetManagePage", "应用"));
@@ -1313,10 +1315,10 @@ void PresetManagePage::showApplyResult(const ApplyView &result) {
         auto *item = new QListWidgetItem(QCoreApplication::translate("PresetManagePage", "备份：%1").arg(result.backupDir),
                                          m_planList);
         item->setFlags(Qt::NoItemFlags);
-        item->setToolTip(QCoreApplication::translate("PresetManagePage", "还原时把这一份里的文件按原路径拷回实例目录。"));
+        item->setToolTip(QCoreApplication::translate("PresetManagePage", "还原时将此预设中的文件按原路径复制回实例目录。"));
     }
     m_planHint->setText(result.ok ? QCoreApplication::translate("PresetManagePage", "应用完成。")
-                                  : QCoreApplication::translate("PresetManagePage", "应用没有全部完成，看上面哪一段没做成。"));
+                                  : QCoreApplication::translate("PresetManagePage", "应用未全部完成，请查看上方未完成的段。"));
     m_applyButton->setText(QCoreApplication::translate("PresetManagePage", "应用"));
     refreshActions();
 }

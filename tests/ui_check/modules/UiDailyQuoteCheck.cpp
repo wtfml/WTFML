@@ -277,6 +277,45 @@ int UiDailyQuoteCheck(QApplication &app) {
         app.processEvents();
     }
 
+    // ---- 切主题：样式重刷不许把后来 setFont() 的字体还原 ----
+    // 根因：`Theme::apply()` → `repolishWidgets()` 里 `style()->polish()`，QStyleSheetStyle 会把控件的字体
+    // 还原成样式表第一次落字体时存下的那一份（`_q_styleSheetWidgetFont`），后来 setFont() 的全丢。
+    // 症状：主页实例名从 40 缩到下限、英文每日一言从 Dancing Script 退成文楷。
+    {
+        window.resize(900, 619);
+        MainWindowUI::HomeQuickItem item;
+        item.key = item.name = QStringLiteral("Shaders 1.21.1");
+        item.detail = QStringLiteral("Minecraft 1.21.1 / Fabric 0.16.9");
+        item.current = item.recent = true;
+        ui.setHomeQuickRows({item}, {}, {item});
+        ui.setHomeQuickMode(MainWindowUI::HomeQuickMode::Current);
+        ui.setHomeHeroQuote(QStringLiteral("Imagination is more important than knowledge."),
+                            QStringLiteral("— Albert Einstein"), Theme::QuoteScript::Latin);
+        for (int i = 0; i < 4; ++i) app.processEvents();
+        QLabel *name = window.findChild<QLabel *>(QStringLiteral("homeCurrentName"));
+        check(name != nullptr, "DQ-UI28 主页有当前实例名（切主题字体断言的对象）");
+        if (name != nullptr) {
+            const int namePx = name->font().pixelSize();
+            const QString quoteFamily = quote->font().families().value(0);
+            const int quotePx = quote->font().pixelSize();
+            for (const QString &id : {QStringLiteral("emerald"), QStringLiteral("ocean"), QStringLiteral("dark")}) {
+                Theme::setSpec(Theme::presetSpec(id));
+                Theme::apply(app);
+                for (int i = 0; i < 4; ++i) app.processEvents();
+                check(name->font().pixelSize() == namePx,
+                      QStringLiteral("DQ-UI29 切到 %1 后实例名字号不变").arg(id),
+                      QStringLiteral("%1px → %2px").arg(namePx).arg(name->font().pixelSize()));
+                check(quote->font().families().value(0) == quoteFamily && quote->font().pixelSize() == quotePx,
+                      QStringLiteral("DQ-UI30 切到 %1 后每日一言字体族与字号不变").arg(id),
+                      QStringLiteral("%1 %2px → %3 %4px")
+                          .arg(quoteFamily).arg(quotePx)
+                          .arg(quote->font().families().value(0)).arg(quote->font().pixelSize()));
+            }
+        }
+        window.resize(1280, 800);
+        app.processEvents();
+    }
+
     // ---- 设置页那个开关 ----
     auto *dailyQuote = window.findChild<QCheckBox *>(MainWindowUI::dailyQuoteCheckName());
     check(dailyQuote != nullptr, "DQ-UI21 设置 → 个性化 → 外观 有「每日一言」开关");

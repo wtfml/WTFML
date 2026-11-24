@@ -932,9 +932,10 @@ void TaskCenterPanel::rebuild() {
 
     if (active.isEmpty() && finished.isEmpty()) {
         // 一项都没有：面板里留一句话，不留一大块空白（和底栏那两块面板的空态一个路数）。
-        auto *empty = new QLabel(items.isEmpty() ? MainWindowUI::taskCenterPanelEmptyText()
-                                                 : QCoreApplication::translate("TaskCenterPanel", "没有符合筛选条件的任务"),
-                                 m_content);
+        auto *empty = new QLabel(
+            items.isEmpty() ? MainWindowUI::taskCenterPanelEmptyText()
+                            : QCoreApplication::translate("TaskCenterPanel", "无符合筛选条件的任务"),
+            m_content);
         empty->setObjectName(MainWindowUI::taskCenterPanelEmptyLabelName());
         applyMutedFont(empty, 0);
         layout->addWidget(empty);

@@ -732,8 +732,8 @@ SearchResult parseSearch(const QByteArray &json) {
         // 把接口自己的那句话带出去 —— 它比"搜索失败"有用得多。
         const QString description = root.value(QStringLiteral("description")).toString();
         result.problem = description.isEmpty()
-                             ? QCoreApplication::translate("ResourceCatalog", "这不是一份搜索结果（里面没有 hits）")
-                             : QCoreApplication::translate("ResourceCatalog", "接口说：%1").arg(description);
+                             ? QCoreApplication::translate("ResourceCatalog", "返回内容不是搜索结果（缺少 hits）")
+                             : QCoreApplication::translate("ResourceCatalog", "接口返回：%1").arg(description);
         return result;
     }
 
@@ -766,7 +766,7 @@ SearchResult parseSearch(const QByteArray &json) {
     }
 
     // 一条都没有**不算错** —— "搜不到"和"没搜成"是两句话，界面上得分开说
-    // （同一个坑在加载器树那边踩过：详见 MainWindow 里「无可用版本」与「列表没取到」）。
+    // （同一个坑在加载器树那边踩过：详见 MainWindow 里「无可用版本」与「列表获取失败」）。
     result.ok = true;
     return result;
 }
@@ -788,8 +788,8 @@ SearchResult parseCurseForgeSearch(const QByteArray &json) {
         // 两条都带出去：接口自己的那句话优先，没有就如实说形状不对。
         const QString apiError = root.value(QStringLiteral("error")).toString();
         result.problem = !apiError.isEmpty()
-                             ? QCoreApplication::translate("ResourceCatalog", "接口说：%1").arg(apiError)
-                             : QCoreApplication::translate("ResourceCatalog", "这不是一份搜索结果（里面没有 data）");
+                             ? QCoreApplication::translate("ResourceCatalog", "接口返回：%1").arg(apiError)
+                             : QCoreApplication::translate("ResourceCatalog", "返回内容不是搜索结果（缺少 data）");
         return result;
     }
 
@@ -1386,7 +1386,7 @@ QString versionRowSubText(const VersionEntry &version) {
     }
     // 下载量：0 = 接口没给这一栏（见 VersionEntry::downloads），那一截省掉。
     if (version.downloads > 0) {
-        bits.append(QCoreApplication::translate("ResourceCatalog", "下载 %1次").arg(formatDownloads(version.downloads)));
+        bits.append(QCoreApplication::translate("ResourceCatalog", "下载 %1 次").arg(formatDownloads(version.downloads)));
     }
     const QString updated = relativeTimeText(version.datePublished);
     if (!updated.isEmpty()) {
@@ -1466,7 +1466,7 @@ QString hitMetaLine(const Hit &hit) {
     }
     // 下载量：0 = 接口没给这一栏（见 Hit::downloads），那一截省掉 —— 不写"下载 0 次"。
     if (hit.downloads > 0) {
-        bits.append(QCoreApplication::translate("ResourceCatalog", "下载 %1次").arg(formatDownloads(hit.downloads)));
+        bits.append(QCoreApplication::translate("ResourceCatalog", "下载 %1 次").arg(formatDownloads(hit.downloads)));
     }
     const QString updated = relativeTimeText(hit.updatedIso);
     if (!updated.isEmpty()) {

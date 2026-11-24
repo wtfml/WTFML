@@ -163,7 +163,7 @@ Result digestOfFile(const QString &path, Algorithm algorithm, const ProgressFn &
         }
         const qint64 read = file.read(buffer.data(), buffer.size());
         if (read < 0) {
-            result.error = QCoreApplication::translate("FileHash", "读这个文件读失败了：%1").arg(file.errorString());
+            result.error = QCoreApplication::translate("FileHash", "读取文件失败：%1").arg(file.errorString());
             return result;
         }
         if (read == 0) {
@@ -257,7 +257,7 @@ Verdict compare(const QString &actualHex, const Expected &expected) {
     verdict.expectedAlgorithm = expected.algorithm;
     verdict.expectedHasAlgorithm = expected.hasAlgorithm;
     if (!expected.valid) {
-        verdict.text = expected.error.isEmpty() ? QCoreApplication::translate("FileHash", "没有已知值可比。") : expected.error;
+        verdict.text = expected.error.isEmpty() ? QCoreApplication::translate("FileHash", "无已知值可比。") : expected.error;
         return verdict;
     }
     verdict.valid = true;
@@ -266,8 +266,8 @@ Verdict compare(const QString &actualHex, const Expected &expected) {
     if (verdict.matches) {
         verdict.text = QCoreApplication::translate("FileHash", "一致。");
     } else {
-        verdict.text = QCoreApplication::translate("FileHash", "不一致：算出来的是 %1。").arg(actual.isEmpty()
-                                                                       ? QCoreApplication::translate("FileHash", "（没算出来）")
+        verdict.text = QCoreApplication::translate("FileHash", "不一致：实际值为 %1。").arg(actual.isEmpty()
+                                                                       ? QCoreApplication::translate("FileHash", "（未计算）")
                                                                        : actual);
     }
     return verdict;

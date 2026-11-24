@@ -198,7 +198,7 @@ void MainWindow::finishUpdateBatch(bool success, const QString &errorMessage) {
     // finishTask() 认领过就会自己清掉；这一段是"那一件已经不在账本里"的兜底，
     // 别让重试资格留在一次已经收尾的更新上（见 `clearOwnerIf()`）。
     m_downloadTaskLedger->clearOwnerIf(run.task);
-    appendLog(success ? tr("更新「%1」结束：换好 %2 个，失败 %3 个。")
+    appendLog(success ? tr("更新「%1」已结束：已替换 %2 个，失败 %3 个。")
                             .arg(instanceDisplayName(run.instanceId))
                             .arg(run.succeeded.size())
                             .arg(run.failedSteps)
@@ -234,8 +234,7 @@ void MainWindow::finishUpdateBatch(bool success, const QString &errorMessage) {
     const QString text = run.lines.isEmpty() ? errorMessage : run.lines.join(QLatin1Char('\n'));
     if (!success || run.failedSteps > 0) {
         InlineMessage::warning(m_ui->overlay(), tr("部分更新文件未能替换"),
-                               tr("有 %1 个文件未能替换。\n\n%2\n\n"
-                                  "可以在「更新中心」里撤销上一次更新。")
+                               tr("有 %1 个文件未能替换。\n\n%2\n\n可在「更新中心」中撤销上一次更新。")
                                    .arg(run.failedSteps)
                                    .arg(text));
     }

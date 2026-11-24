@@ -161,7 +161,7 @@ public:
     // 验证工程靠这些名字认控件。**不要**改回按占位文案或条目文本去认——那些是
     // 会被产品逻辑改写的显示内容（占位文案现在就要随"有没有可选版本"切换），
     // 拿显示内容当身份标识的测试会在产品改动时以看不懂的方式挂掉。
-    // / 设置页「个性化」栏里「账户」那一格的入口按钮：「账号与外观…」。主页可见入口在
+    // / 设置页「个性化」栏里「账户」那一格的入口按钮：「管理账号与皮肤」。主页可见入口在
     // / 底栏账号面板；隐藏兼容控件用同一文案，避免两处接线分叉。
     static QString accountSkinSettingsButtonName() {
         return QStringLiteral("accountSkinSettingsButton");
@@ -171,10 +171,10 @@ public:
     // ---------- 安装页那份「模组加载器」（一棵树，和上一页的版本树同一个模式） ----------
     //
     // 「选中哪一条」决定「安装」装什么（0..4 = 加载器，见 VersionManager::loaderKindFromIndex），
-    // 而那一个「不装」选项是**默认选中的**，它代表装纯原版那条路。
+    // 而那一个「不安装」选项是**默认选中的**，它代表装纯原版那条路。
     //
     // NOTE: 这一组是**一棵树**，和上一页的版本选择同一个模式：
-    // · 顶层六条 = 五个加载器 + 「不装（纯原版）」，前面各挂自己那个标志；
+    // · 顶层六条 = 五个加载器 + 「不安装（纯原版）」，前面各挂自己那个标志；
     // · 点一条加载器 → 它**展开**，底下先摆那两档、再列出它能装的版本；
     // · 点一个版本 → 那一列**收起来**，选中的版本号写回这条的第二行小字。
     // 下标、文案、那几条的顺序都是固定的；展开在**同一行下面**，和版本树那边长得一样。
@@ -183,11 +183,11 @@ public:
     // /
     // / NOTE: 树里的条目不是 QObject、没有 objectName —— 所以这已经不是"控件的名字"了。
     // / 它现在只剩三个用处：①给"第 i 条是哪个加载器"这件事一个写得出来的称呼
-    // / （注释、日志、验证工程的失败信息里用）；②条数（6 = 五个加载器 + 一个「不装」）；
+    // / （注释、日志、验证工程的失败信息里用）；②条数（6 = 五个加载器 + 一个「不安装」）；
     // / ③和下面那张文案表**一一对应**的那条约束（多一条少一条，界面上就会有条目
     // / 既没称呼也对不上字）。身份仍然只认下标，见 loaderTreeName() 那一段。
     // /
-    // / NOTE: 「不装」排在五个加载器**后面**（不是最前面）是刻意的：这样下标 0..4 和
+    // / NOTE: 「不安装」排在五个加载器**后面**（不是最前面）是刻意的：这样下标 0..4 和
     // / VersionManager::LoaderKind 的枚举顺序一一对应，中间那层翻译
     // / （loaderKindFromIndex）就少一个"顺序对不上、勾了 A 装成 B"的机会。
     static QStringList modLoaderOptionNames() {
@@ -203,9 +203,9 @@ public:
     static QStringList modLoaderOptionTexts() {
         return {QStringLiteral("Fabric"), QStringLiteral("Forge"), QStringLiteral("NeoForge"),
                 QStringLiteral("OptiFine"), QStringLiteral("Quilt"),
-                QCoreApplication::translate("MainWindowUI", "不装（纯原版）")};
+                QCoreApplication::translate("MainWindowUI", "不安装（纯原版）")};
     }
-    /// 「不装（纯原版）」那一条在两张表里的下标。加载器那一组现在是一棵树（见下面
+    /// 「不安装（纯原版）」那一条在两张表里的下标。加载器那一组现在是一棵树（见下面
     /// buildTwoColumnPage 里那段），选中它就是"回到装纯原版"—— 初始选中的也是它。
     /// 写死数字的地方一律用这个函数。
     static int modLoaderNoneIndex() { return 5; }
@@ -258,7 +258,7 @@ public:
     ///
     /// NOTE: 只有稳定档会缺。最新档是"上游发过什么就列什么"，列表非空它就一定挑得出东西。
     static QString loaderVersionStableMissingText() {
-        return QCoreApplication::translate("MainWindowUI", "没有正式版");
+        return QCoreApplication::translate("MainWindowUI", "无正式版");
     }
     /// 某一档被挑中之后，加载器那一行第二行的小字（短一点 —— 那一行本来就窄）。
     static QString loaderVersionChannelShortText(bool newestChannel) {
@@ -279,7 +279,7 @@ public:
     /// 版本列表没拉到时的那个灰条目。具体原因（超时？404？）写进日志 ——
     /// 这条只是告诉用户"列不出来"，而这个加载器照样能装（上面那两档不依赖列表）。
     static QString loaderVersionFailedText() {
-        return QCoreApplication::translate("MainWindowUI", "列表没取到");
+        return QCoreApplication::translate("MainWindowUI", "列表获取失败");
     }
     /// **这个版本上这个加载器一个能装的都没有**时那个灰条目。
     /// 它和 loaderVersionFailedText() 是两件事，别混：那是"**没问到**"（网络的事，换一次
@@ -290,7 +290,7 @@ public:
     ///
     /// NOTE: "**有预览版、没有正式版**"的那种版本**不算**"一个能装的都没有"
     /// —— 列表非空就摆那两档和实有的版本号，只有稳定档那一行是灰的
-    /// （第二行写着「没有正式版」）。
+    /// （第二行写着「无正式版」）。
     static QString loaderVersionUnavailableText() {
         return QCoreApplication::translate("MainWindowUI", "无可用版本");
     }
@@ -338,7 +338,7 @@ public:
         return QCoreApplication::translate("MainWindowUI", "搜索版本号，如 1.20.1");
     }
     static QString versionFilterNoMatchText(const QString &text) {
-        return QCoreApplication::translate("MainWindowUI", "没有版本号匹配「%1」").arg(text);
+        return QCoreApplication::translate("MainWindowUI", "无与「%1」匹配的版本号").arg(text);
     }
     static QString versionFilterMatchText(int count) {
         return QCoreApplication::translate("MainWindowUI", "找到 %1 个版本").arg(count);
@@ -360,7 +360,7 @@ public:
     static int rowIconRole() { return Qt::DecorationRole; }
     /// 「这一行尾那个小叉要画」挂在哪个角色上（真 = 画）。只有安装页那棵树上"**选中的那条
     /// 加载器**"会写真（见 InstallPageController::updateLoaderRows()），点了它 = 取消装这个加载器、
-    /// 退回「不装（纯原版）」（选中以后在那个 > 左侧加一个 x 来取消安装）。
+    /// 退回「不安装（纯原版）」（选中以后在那个 > 左侧加一个 x 来取消安装）。
     /// NOTE: 版本树从来不写这个角色 —— 那棵树上没有"取消掉项目"这种事。
     /// NOTE: 号码是 `UserRole + 9`：它属于行装饰那一档（+8/+9/+10），不能和条目身份那批
     /// （+0…+7）撞，见 rowSubTextRole() 上面那段。
@@ -396,7 +396,7 @@ public:
     static int rowGroupGearRole() { return Qt::UserRole + 11; }
     /// 悬停在那个齿轮上时弹的那句话（和 rowRefreshTipText() 一个规矩：只在**真落在
     /// 那一格上**才说话，整条行不弹）。
-    static QString rowGroupGearTipText() { return QCoreApplication::translate("MainWindowUI", "这一组的更多操作"); }
+    static QString rowGroupGearTipText() { return QCoreApplication::translate("MainWindowUI", "更多操作"); }
     /// 分组头行尾那颗齿轮的边长（像素）。比文件夹行那颗（24）小一号 —— 那是一行 56 px 的
     /// 两行式的行，这一行只有一行字，齿轮得装在行高里面。
     ///
@@ -478,10 +478,10 @@ public:
     /// 「服务器列表」那一页第 0 列里**那一台服务器真正的名字**（`servers.dat` 里写的那个，
     /// 可以是空串）。
     ///
-    /// Why 要专门存一格：那一格显示的是 `unnamedMark()`（「（无名）」）—— 名字空的那些在屏幕
+    /// Why 要专门存一格：那一格显示的是 `unnamedMark()`（「（未命名）」）—— 名字空的那些在屏幕
     /// 上写的是一句**我们编的话**，而「编辑」那颗按钮要预填的是**文件里真正的那一串**（空就
     /// 是空，用户想让它继续空着）。拿屏幕上的字当数据用的话，用户一点「编辑」就会看见
-    /// 「（无名）」被预填进输入框，一确定就把这四个字**真的写进 servers.dat** 了。
+    /// 「（未命名）」被预填进输入框，一确定就把这四个字**真的写进 servers.dat** 了。
     ///
     /// NOTE: 号码 **`Qt::UserRole + 16`**（15 是 serverAddressRole() 的，见
     /// rowSubTextRole() 上面那段"撞号的表现是屏幕上多出一笔"）。
@@ -522,11 +522,11 @@ public:
     /// 同一格反过来那一颗（下箭头）弹的话。它是 `rowPinTipText()` 的反义词，
     /// 只说「取消收藏」这一个意思。
     static QString rowUnpinTipText() { return QCoreApplication::translate("MainWindowUI", "取消收藏"); }
-    static QString rowDeleteInstanceTipText() { return QCoreApplication::translate("MainWindowUI", "删除这个实例"); }
+    static QString rowDeleteInstanceTipText() { return QCoreApplication::translate("MainWindowUI", "删除实例"); }
     /// 实例行悬停快捷操作（ListRowDelegate 那三格）的提示与「更多」菜单的出处。
     static QString rowOpenFolderTipText() { return QCoreApplication::translate("MainWindowUI", "打开实例文件夹"); }
     static QString rowMoreTipText() { return QCoreApplication::translate("MainWindowUI", "更多操作"); }
-    static QString rowLaunchTipText() { return QCoreApplication::translate("MainWindowUI", "启动这个实例"); }
+    static QString rowLaunchTipText() { return QCoreApplication::translate("MainWindowUI", "启动实例"); }
     static QString instanceRowMenuName() { return QStringLiteral("instanceRowMenu"); }
     /// 悬停在那两个**行里的按钮**上时弹的那句话（刷新 / 取消）。谁把它弹出来的、
     /// 按哪一格判，见 VersionTreeDelegate::rowActionTip()（那儿是**几何的唯一出处**，
@@ -551,8 +551,9 @@ public:
     static int versionTreeIconSize() { return 18; }
     /// 最右边那个 >/V 的边长。
     static int versionTreeArrowSize() { return 12; }
-    /// 行尾那一格文字（「展开 / 收起」或悬停时的动词）占多宽：13 px 两个汉字 + 余量。
-    static int versionTreeTrailWidth() { return 28; }
+    /// 行尾那一格文字（「展开 / 收起」或悬停时的动词）占多宽：按当前语言译文实测（辅助档字号），
+    /// 28 px（13 px 两个汉字 + 余量）作下限、96 px 作上限，所以中文不变、英文不再被裁。
+    static int versionTreeTrailWidth();
     /// 行内左右留白。
     static int versionTreeRowPadding() { return 6; }
 
@@ -600,7 +601,7 @@ public:
     /// 加载器树、安装按钮在正常情况下一个像素都不动。
     static QString installNameErrorName() { return QStringLiteral("installNameError"); }
     /// 安装页那棵树里「预设」那一行（就在 OptiFine 下面、
-    /// 「不装（纯原版）」上面）。
+    /// 「不安装（纯原版）」上面）。
     ///
     /// 它**不是加载器**：`Qt::UserRole` 是下面那个哨兵值，不是 `modLoaderOptionNames()`
     /// 的下标。点它 = 开那张四类的紧凑弹窗（`PresetInstallPicker`），不是选加载器。
@@ -771,7 +772,8 @@ public:
     /// 这一页上，找不到刚才那个东西。
     static QString downloadServerHintName() { return QStringLiteral("downloadServerHint"); }
     static QString downloadServerHintText() {
-        return QCoreApplication::translate("MainWindowUI", "安装完成后会出现在「管理 → 服务端」：启动、控制台和设置都在那里。");
+        return QCoreApplication::translate("MainWindowUI", "安装完成后可在「管理 → 服务端」中启动、"
+                                                           "使用控制台和修改设置。");
     }
     /// 「新建服务端…」那一颗。**和实例页那颗是同一个动作**（同一串字、同一条路），
     /// 只是换个入口；字直接复用 `newServerText()`，别在这儿再写一遍。
@@ -1097,16 +1099,17 @@ public:
     /// 它**只在真筛过、且一条都没剩下**的时候露出来：不筛的时候树是空的（"一个实例都
     /// 没有"）是另一件事，那句话由页头那行说明（`当前文件夹：…（0 个实例）`）来说。
     /// 两件事混成一句的症状是"用户明明有 60 个实例，却看见'没有符合条件的实例'"。
-    static QString instanceNoMatchText() { return QCoreApplication::translate("MainWindowUI", "没有符合筛选条件的实例"); }
+    static QString instanceNoMatchText() { return QCoreApplication::translate("MainWindowUI", "无符合筛选"
+                                                                                              "条件的实例"); }
     static QString instanceNoMatchLabelName() { return QStringLiteral("instanceNoMatch"); }
     /// 文件夹里一个实例都没有（也没在筛）时列表上方那句话：说清下一步去哪，不用防御腔。
     static QString instanceEmptyText() {
-        return QCoreApplication::translate("MainWindowUI", "可以导入一个整合包，或者去「下载」页装一个新版本。");
+        return QCoreApplication::translate("MainWindowUI", "可导入整合包，或在「下载」页安装新版本。");
     }
     /// 空态大标题、容器与两颗按钮（设计稿 manage-empty）。
     static QString instanceEmptyTitleText() { return QCoreApplication::translate("MainWindowUI", "此目录暂无实例"); }
     static QString instanceEmptyStateName() { return QStringLiteral("instanceEmptyState"); }
-    static QString instanceEmptyDownloadText() { return QCoreApplication::translate("MainWindowUI", "去下载页装新版本"); }
+    static QString instanceEmptyDownloadText() { return QCoreApplication::translate("MainWindowUI", "下载游戏"); }
     static QString instanceEmptyLabelName() { return QStringLiteral("instanceEmpty"); }
 
     /// 某颗筛选 chip 的 objectName。**按这一档点名找**（不解析文字）：文字会改。
@@ -1146,7 +1149,7 @@ public:
         case InstanceFilterButton::Modded:
             return QCoreApplication::translate("MainWindowUI", "仅显示包含模组加载器的实例。");
         case InstanceFilterButton::Updatable:
-            return QCoreApplication::translate("MainWindowUI", "只看检查过更新、且有可更新版本的实例。");
+            return QCoreApplication::translate("MainWindowUI", "仅显示已检查更新且有可更新版本的实例。");
         case InstanceFilterButton::Recent:
             return QCoreApplication::translate("MainWindowUI", "仅显示最近启动过的实例（最多 20 个）。");
         }
@@ -1215,7 +1218,7 @@ public:
         return QStringLiteral("serverFilter%1").arg(static_cast<int>(which));
     }
     static QString serverListName() { return QStringLiteral("serverList"); }
-    /// 「一个服务端都还没有」那句（和实例页「没有符合筛选条件的实例」不是一回事：这一句
+    /// 「一个服务端都还没有」那句（和实例页「无符合筛选条件的实例」不是一回事：这一句
     /// 说的是"**盘上真的一条都没有**"）。平时收着，列表空着时才露。
     static QString serverEmptyLabelName() { return QStringLiteral("serverEmpty"); }
     static QString serverEmptyText() {
@@ -1298,7 +1301,7 @@ public:
         case ServerMenuAction::RestartOnCrash:
             return QCoreApplication::translate("MainWindowUI", "异常退出后自动重启");
         case ServerMenuAction::Remove:
-            return QCoreApplication::translate("MainWindowUI", "删除这个服务端…");
+            return QCoreApplication::translate("MainWindowUI", "删除服务端…");
         }
         return QString();
     }
@@ -1437,7 +1440,7 @@ public:
     }
 
     static QString serverSettingsSaveText() { return QCoreApplication::translate("MainWindowUI", "保存"); }
-    static QString serverSettingsRevertText() { return QCoreApplication::translate("MainWindowUI", "放弃改动"); }
+    static QString serverSettingsRevertText() { return QCoreApplication::translate("MainWindowUI", "放弃更改"); }
     static QString serverSettingsBackupNowText() { return QCoreApplication::translate("MainWindowUI", "立即备份"); }
     static QString serverSettingsRestoreText() { return QCoreApplication::translate("MainWindowUI", "恢复备份…"); }
     static QString serverSettingsDeleteBackupText() { return QCoreApplication::translate("MainWindowUI", "删除备份…"); }
@@ -1464,7 +1467,7 @@ public:
     static QString serverSettingsSavedNote() { return QCoreApplication::translate("MainWindowUI", "已保存。"); }
     /// 服务端在跑时整页只读的那句原因（`setEditable(false, …)` 收的就是它）。
     static QString serverSettingsRunningNote() {
-        return QCoreApplication::translate("MainWindowUI", "服务端正在运行，停止后才能修改。");
+        return QCoreApplication::translate("MainWindowUI", "服务端运行中，停止后方可修改。");
     }
 
     /// 「原始文本」那一页顶上那句（只留布局说明不了的那条：表单改动会先合并进来）。
@@ -1522,7 +1525,7 @@ public:
     }
     /// 内容那张表的三格。
     static QStringList serverSettingsContentColumns() {
-        return QStringList{QCoreApplication::translate("MainWindowUI", "名字"), QCoreApplication::translate("MainWindowUI", "大小"),
+        return QStringList{QCoreApplication::translate("MainWindowUI", "名称"), QCoreApplication::translate("MainWindowUI", "大小"),
                            QCoreApplication::translate("MainWindowUI", "状态")};
     }
     /// 状态那一格：禁用着的那一行说得明白一点（它还在文件夹里，只是不加载）。
@@ -1641,7 +1644,7 @@ public:
     static QString homeAccountSignInText() { return QCoreApplication::translate("MainWindowUI", "登录"); }
     /// 胶囊里那行小状态：微软正版账号 / 离线账号。
     static QString homeAccountMicrosoftText() { return QCoreApplication::translate("MainWindowUI", "微软账号"); }
-    /// 进「账号与外观」那一页的说法（账号弹层末行、设置页那颗按钮共用）。和其它文案一样
+    /// 进「账号与皮肤」那一页的说法（账号弹层末行、设置页那颗按钮共用）。和其它文案一样
     /// 做成静态访问器 —— 验证工程引它，产品里改一个字就不用两边各写一遍字面量。
     static QString accountSkinButtonText() { return QCoreApplication::translate("MainWindowUI", "管理账号与皮肤"); }
     /// 账号弹层里「添加账号」那一行。
@@ -1772,7 +1775,7 @@ public:
     /// NOTE: **三种而不是两种** —— 没勾离线、又没登录的时候写「离线登录」是骗人：
     /// 那种状态点下去会被"请先登录"挡回来（见 MainWindow::onStartButtonClicked()
     /// 里 token.isEmpty() 那条分支）。照实说「未登录」，用户才知道该去登录。
-    static QString accountTypeOnlineText() { return QCoreApplication::translate("MainWindowUI", "正版"); }
+    static QString accountTypeOnlineText() { return QCoreApplication::translate("MainWindowUI", "微软"); }
     static QString accountTypeOfflineText() { return QCoreApplication::translate("MainWindowUI", "离线"); }
     static QString accountTypeNotLoggedInText() { return QCoreApplication::translate("MainWindowUI", "未登录"); }
     /// 底栏**左边那颗按钮（实例运行状态）的固定宽度**（像素）。中间那格（进度）要稳定，
@@ -1845,7 +1848,7 @@ public:
     /// NOTE: 这里是它的**唯一出处**：装控件的时候挂一次，点不开的时候要把它摘掉
     /// （见 setRunPanelAvailable()），两处抄同一句话迟早会对不上。
     static QString bottomBarRunPanelTip() {
-        return QCoreApplication::translate("MainWindowUI", "点一下查看运行中的进程");
+        return QCoreApplication::translate("MainWindowUI", "单击查看运行中的进程");
     }
 
     static QString runStateButtonName() { return QStringLiteral("runStateButton"); }
@@ -2019,7 +2022,7 @@ public:
     ///
     /// NOTE: 登出**不删账号**：只清掉盘上的登录状态，那一项还留在列表里，点它那行的
     /// 「选择」/「登录」就回来了（见 AccountStore::logout()）。想彻底不要这个账号
-    /// 走「账号与外观…」里的「删除所选」。
+    /// 走「账号与皮肤」里的「删除所选」。
     static QString bottomBarPanelLogoutText() { return QCoreApplication::translate("MainWindowUI", "登出"); }
     /// 登出那颗按钮的悬停提示。文字按钮本可以不写 —— 但这一颗要说清"账号还在不在"，
     /// 不然用户不敢点（"登出"听起来像是要把账号弄没）。
@@ -2032,11 +2035,11 @@ public:
     /// "这一趟怎么启动"，这里说的是"这个账号是哪一种"。两句混用的话，面板上会出现
     /// "正版登录"——那读起来像"这个账号现在是登录状态"，而这一行恰恰是**还没登录**
     /// 的那个账号。
-    static QString bottomBarPanelOnlineAccountText() { return QCoreApplication::translate("MainWindowUI", "正版"); }
+    static QString bottomBarPanelOnlineAccountText() { return QCoreApplication::translate("MainWindowUI", "微软"); }
     static QString bottomBarPanelOfflineAccountText() { return QCoreApplication::translate("MainWindowUI", "离线"); }
     /// 左面板里"一个进程都没在跑"时那一句（面板只在有进程在跑时点得开，这一句是兜底）。
     static QString bottomBarPanelNoRunningTitle() {
-        return QCoreApplication::translate("MainWindowUI", "没有运行中的进程");
+        return QCoreApplication::translate("MainWindowUI", "无运行中的进程");
     }
     /// 账号弹层里"一个账号都没保存"时那一行，下面紧跟一行「登录」。
     static QString bottomBarPanelNoAccountTitle() { return QCoreApplication::translate("MainWindowUI", "未登录"); }
@@ -2167,7 +2170,7 @@ public:
     }
     /// 悬停在那一格上显示什么（它现在是一整颗能点的按钮）。
     static QString taskSummaryTip() {
-        return QCoreApplication::translate("MainWindowUI", "点一下展开任务中心");
+        return QCoreApplication::translate("MainWindowUI", "单击展开任务中心");
     }
     /// 有活跃或近期任务时，悬停在进度环或摘要卡片上的提示（任务名、步骤、百分比）。
     static QString taskSummaryToolTip(const BottomBarTaskSummary &summary) {
@@ -2312,7 +2315,7 @@ public:
     static QString taskDetailStepsTitleText() { return QCoreApplication::translate("MainWindowUI", "执行步骤"); }
     static QString taskDetailErrorTitleText() { return QCoreApplication::translate("MainWindowUI", "错误详情"); }
     static QString taskDetailNoStepsText() { return QCoreApplication::translate("MainWindowUI", "无分步记录"); }
-    static QString taskDetailNoTitleText() { return QCoreApplication::translate("MainWindowUI", "（没有名字的任务）"); }
+    static QString taskDetailNoTitleText() { return QCoreApplication::translate("MainWindowUI", "（未命名任务）"); }
     static QString taskDetailCancelText() { return QCoreApplication::translate("MainWindowUI", "取消"); }
     static QString taskDetailRetryText() { return QCoreApplication::translate("MainWindowUI", "重试"); }
     static QString taskDetailLogText() { return QCoreApplication::translate("MainWindowUI", "打开日志"); }
@@ -2479,14 +2482,14 @@ public:
         return name.isEmpty() ? fileName : name;
     }
     /// 某一行的状态那一格（右边那小字）。**这一句是"它现在算不算更新"的唯一说法**。
-    /// @param suppressed 「忽略这一版」/「固定这一版」那一档（`UpdateCenterPage::Suppress`）。
+    /// @param suppressed 「忽略此版本」/「固定此版本」那一档（`UpdateCenterPage::Suppress`）。
     static QString updateCenterRowStateText(int state, int suppressed, const QString &versionText) {
         // state: 0 = 有新版本、1 = 已是最新、2 = 说不清（`UpdateCenterPage::State`）
         // suppressed: 0 = 没有、1 = 已忽略、2 = 已固定（`UpdateCenterPage::Suppress`）
         switch (state) {
         case 0:
             if (suppressed == 1) {
-                return QCoreApplication::translate("MainWindowUI", "已忽略这一版（%1）").arg(versionText);
+                return QCoreApplication::translate("MainWindowUI", "已忽略此版本（%1）").arg(versionText);
             }
             if (suppressed == 2) {
                 return QCoreApplication::translate("MainWindowUI", "已固定（不再提示）");
@@ -2503,9 +2506,9 @@ public:
     }
     /// 那一行「更新」那颗 chip 的字。
     static QString updateCenterRowUpdateText() { return QCoreApplication::translate("MainWindowUI", "更新"); }
-    static QString updateCenterRowIgnoreText() { return QCoreApplication::translate("MainWindowUI", "忽略这一版"); }
+    static QString updateCenterRowIgnoreText() { return QCoreApplication::translate("MainWindowUI", "忽略此版本"); }
     static QString updateCenterRowIgnoreUndoText() { return QCoreApplication::translate("MainWindowUI", "不再忽略"); }
-    static QString updateCenterRowPinText() { return QCoreApplication::translate("MainWindowUI", "固定这一版"); }
+    static QString updateCenterRowPinText() { return QCoreApplication::translate("MainWindowUI", "固定此版本"); }
     static QString updateCenterRowPinUndoText() { return QCoreApplication::translate("MainWindowUI", "不再固定"); }
     /// 行尾那三颗 chip 各自的鼠标提示（说清按下去会发生什么）。
     static QString updateCenterRowUpdateTipText() {
@@ -2687,7 +2690,7 @@ public:
         /// 以及点了之后要翻成什么，都用它。
         bool expanded = true;
         /// 此刻列表里**有没有**"选中的实例"，以及那个实例**是不是就在这一组里**。
-        /// 「把选中的实例移入分组…」能不能点看第一个；挑目标那个框里"就是本组"那一条
+        /// 「将所选实例移入分组…」能不能点看第一个；挑目标那个框里"就是本组"那一条
         /// 灰掉看第二个。
         bool hasSelection = false;
         bool containsSelected = false;
@@ -2695,7 +2698,7 @@ public:
         ///
         /// NOTE: 它不是真的组：不能改名、不能删、不能排序、也没有"默认展开"这一说
         /// （它收起来这件事不落盘 —— 文件里没有它的记录，每次重灌树它都是展开的）。
-        /// 它那一档的菜单因此只剩「把选中的实例移入分组…」一项 —— 那一项是
+        /// 它那一档的菜单因此只剩「将所选实例移入分组…」一项 —— 那一项是
         /// **回到分组里的唯一入口**：一个组里一个实例都没有时那个组头是藏着的，
         /// 想往空组里放第一个实例就得从这儿进（见 groupActionVisible）。
         bool virtualGroup = false;
@@ -3190,7 +3193,7 @@ public:
     /// 第 @p index 个语义色在 `Theme::Spec` 里是哪一位（"danger" / "warning" / "ok" /
     /// "errorText"）。**和 `Theme::accentSettingKey()` 那一套同名** —— 认的是它，不是下标。
     static QString themeSemanticKey(int index);
-    /// 界面上那颗色块旁边写什么（「危险」/「警告」/「正常」/「报错」）。
+    /// 界面上那颗色块旁边写什么（「危险」/「警告」/「正常」/「错误」）。
     static QString themeSemanticText(int index);
     /// 那一行左列的行标题。
     static QString themePresetRowText() { return QCoreApplication::translate("MainWindowUI", "配色"); }
@@ -3214,8 +3217,8 @@ public:
     static int themeSwatchRowSpacing() { return 8; }
     /// 一行里两组之间那道更宽的缝（16，同上）。
     static int themeSwatchGroupSpacing() { return 16; }
-    /// 「整份主题」那一行的行标题（恢复默认 / 导出 / 导入三颗按钮都归它）。
-    static QString themeFileRowText() { return QCoreApplication::translate("MainWindowUI", "整份主题"); }
+    /// 「完整主题」那一行的行标题（恢复默认 / 导出 / 导入三颗按钮都归它）。
+    static QString themeFileRowText() { return QCoreApplication::translate("MainWindowUI", "完整主题"); }
     /// 文字不透明度那根条多长（和背景图那一根同一个量级）。
     static int themeOpacityWidth() { return 180; }
     static int themePercentWidth() { return 44; }
@@ -3352,7 +3355,7 @@ public:
     static QString skinHintOfflineDefaultSkinText(const QString &name, const QString &versionId) {
         return QCoreApplication::translate("MainWindowUI", "%1 的外观（离线账号 / %2 的默认皮肤）").arg(name, versionId);
     }
-    /// 离线账号**用户自己挑的那张**（「账号与外观」里「换一张…」）。不能借用上面那两句：
+    /// 离线账号**用户自己挑的那张**（「账号与皮肤」里「更换皮肤…」）。不能借用上面那两句：
     /// 随机那句说的是"启动器里挑的"，默认皮肤那句说的是"跟这个实例走" —— 自己挑的这张
     /// 两样都不对（它是明确的"我要这张"，而且换实例也不变）。
     static QString skinHintOfflineCustomSkinText(const QString &name) {
@@ -3364,8 +3367,8 @@ public:
     }
     /// 要到了。@param withCape 这人有没有披风（有就在后面缀一句，不然用户会以为是没画出来）。
     static QString skinHintLoadedText(const QString &name, bool withCape) {
-        return withCape ? QCoreApplication::translate("MainWindowUI", "%1 的正版外观（含披风）").arg(name)
-                        : QCoreApplication::translate("MainWindowUI", "%1 的正版外观").arg(name);
+        return withCape ? QCoreApplication::translate("MainWindowUI", "%1 的微软账号外观（含披风）").arg(name)
+                        : QCoreApplication::translate("MainWindowUI", "%1 的微软账号外观").arg(name);
     }
     /// 要不到。**不弹窗**（这是可选的外观功能，见 MainWindow.cpp 里的说明），
     /// 但也不能一声不吭 —— 用户会觉得是画错了。
@@ -4050,7 +4053,7 @@ private:
     QPushButton *installButton = nullptr;
     QPushButton *installBackButton = nullptr;
     /// 安装页那棵「模组加载器」树（见头文件上面那段）。顶层五条按 modLoaderOptionNames()
-    /// 的顺序摆，前四条各带自己的版本列表（点开才灌）、第 5 条是「不装（纯原版）」。
+    /// 的顺序摆，前四条各带自己的版本列表（点开才灌）、第 5 条是「不安装（纯原版）」。
     QTreeWidget *loaderTree = nullptr;
     /// 后面四页那四张资源表 + 各自的搜索框，按分类键索引（见头文件上面那段）。
     /// 五页里「游戏」不在里头（它不用搜），所以这里是四对。

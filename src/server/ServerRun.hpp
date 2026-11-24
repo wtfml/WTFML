@@ -271,8 +271,10 @@ inline QString eulaPromptTitle() {
 }
 
 inline QString eulaPromptText() {
-    return QCoreApplication::translate("ServerRun", "首次启动 Minecraft 服务端前，需阅读并接受最终用户许可协议。"
-                          "仅在勾选协议并选择「同意并启动」后，才会在 eula.txt 中写入 eula=true。");
+    return QCoreApplication::translate("ServerRun", "首次启动 Minecraft 服务端前，"
+                                                    "需阅读并接受最终用户许可协议。"
+                                                    "仅当勾选协议并选择「同意并启动」时，才在 eula.txt 中写入 "
+                                                    "eula=true。");
 }
 
 inline QString eulaCheckBoxText() {

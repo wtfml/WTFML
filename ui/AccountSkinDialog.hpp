@@ -1,6 +1,6 @@
 /**
  * @file AccountSkinDialog.hpp
- * @brief 「账号与外观」对话框：左边管多个正版账号（登录/切换/删除），右边管外观
+ * @brief 「账号与皮肤」对话框：左边管多个正版账号（登录/切换/删除），右边管外观
  * （换皮肤、换披风、不显示披风）。
  * @note 和 GroupDialog / InstanceSettingsDialog 同一条约定：**ui/ 不依赖业务层**，本文件
  * 不 include 任何 src/ 下的头；进参出参都是值，对话框只发"用户想做什么"的信号，
@@ -108,7 +108,7 @@ public:
      * @brief 当前账号是不是离线身份（决定「皮肤」那一行露出哪一颗按钮）。
      *
      * 正版账号走「上传皮肤…」（要令牌、传到官方）；离线账号没有令牌，那一颗按下去只会
-     * 失败，所以**藏起来**，换成「换一张…」（从盘上挑一张）。
+     * 失败，所以**藏起来**，换成「更换皮肤…」（从盘上挑一张）。
      * 两档互斥，不是两个都能点。
      *
      * @param offline 当前账号本身是不是离线账号（判据由调用方给，见
@@ -172,7 +172,7 @@ public:
     }
     static QString viewerName() { return QStringLiteral("accountSkinViewer"); }
     static QString uploadButtonName() { return QStringLiteral("accountSkinUploadButton"); }
-    /// 离线账号那一颗「换一张…」（正版账号露的是 uploadButtonName()，两档互斥）。
+    /// 离线账号那一颗「更换皮肤…」（正版账号露的是 uploadButtonName()，两档互斥）。
     static QString offlineSkinButtonName() {
         return QStringLiteral("accountSkinOfflineSkinButton");
     }
@@ -186,7 +186,7 @@ public:
     static QString closeButtonName() { return QStringLiteral("accountSkinCloseButton"); }
 
     // ---------- 产品文案 ----------
-    static QString windowTitle() { return tr("账号与外观"); }
+    static QString windowTitle() { return tr("账号与皮肤"); }
     static QString accountSectionTitle() { return tr("账号"); }
     static QString looksSectionTitle() { return tr("外观预览"); }
     static QString capeSectionTitle() { return tr("披风"); }
@@ -201,19 +201,20 @@ public:
     static QString retryButtonText() { return tr("重试"); }
     /// 离线账号预览下面的说明（预览和游戏一致时不显示）。
     static QString previewNoteLocalSkin() {
-        return tr("本地皮肤只在启动器内显示，游戏内按名字分配默认皮肤。");
+        return tr("本地皮肤仅在启动器内显示，游戏内按名称分配默认皮肤。");
     }
-    static QString previewNoteSteve() { return tr("游戏内按名字分配默认皮肤。"); }
+    static QString previewNoteSteve() { return tr("游戏内按名称分配默认皮肤。"); }
     static QString switchButtonText() { return tr("切换到所选"); }
     static QString removeButtonText() { return tr("删除所选"); }
     static QString refreshButtonText() { return tr("刷新外观"); }
     static QString uploadButtonText() { return tr("上传皮肤…"); }
     /// 离线账号那一颗（见 `setOfflineSkinState()`）。用词和图片选择框/Coding plan 里那句
-    /// 「换一张」一致 —— 它换的只是**启动器里**显示的那张，不是游戏里那张脸。
-    static QString offlineSkinButtonText() { return tr("换一张…"); }
+    /// 「更换皮肤…」一致 —— 它换的只是**启动器里**显示的那张，不是游戏里那张脸。
+    static QString offlineSkinButtonText() { return tr("更换皮肤…"); }
     static QString offlineSkinResetButtonText() { return tr("恢复默认外观"); }
     static QString offlineSkinButtonToolTip() {
-        return tr("选一张 PNG（64×64 或 64×32）作为这个离线账号在启动器里的外观。只影响启动器预览，游戏内皮肤由游戏自己决定。");
+        return tr("选择 PNG 图片（64×64 或 64×32）作为此离线账号在启动器中的外观。仅影响启动器预览，"
+                  "游戏内皮肤由游戏决定。");
     }
     static QString offlineSkinResetButtonToolTip() {
         return tr("移除手动设置的皮肤，恢复此账号的默认皮肤。");
@@ -230,7 +231,7 @@ public:
     static QString currentMark() { return tr("（当前）"); }
     /// 离线账号那一条后面的标记（和「（当前）」可以同时出现）。
     static QString offlineMark() { return tr("（离线）"); }
-    static QString offlineNamePlaceholder() { return tr("离线账号的名字"); }
+    static QString offlineNamePlaceholder() { return tr("离线账号名称"); }
     static QString addOfflineButtonText() { return tr("添加离线账号"); }
     /// 离线账号那一行的 tooltip —— 它没有"什么时候登录取自"这回事，得说清它是哪一种。
     static QString offlineRowTooltip() {
@@ -257,7 +258,7 @@ public:
     /// notLoggedInNote()）。
     /// @param name 账号名。
     static QString identityText(const QString &name) {
-        return tr("已登录为「%1」（正版登录）").arg(name);
+        return tr("已登录为「%1」（微软登录）").arg(name);
     }
 
 signals:
@@ -297,7 +298,7 @@ protected:
 private slots:
     /// 「上传皮肤…」：选文件，成了就发 skinUploadRequested()。
     void pickSkinFile();
-    /// 「换一张…」（只有离线账号露这一颗）：选文件，发 offlineSkinPickRequested()。
+    /// 「更换皮肤…」（只有离线账号露这一颗）：选文件，发 offlineSkinPickRequested()。
     void pickOfflineSkinFile();
     /// 「添加离线账号」（或者在那个输入框里回车）：发 offlineAccountRequested()。
     void submitOfflineName();

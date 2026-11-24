@@ -589,7 +589,7 @@ void ResourceDetailPage::setGroups(const QList<Group> &groups) {
     if (groups.isEmpty()) {
         // 空表**不摆一片空白**：一个资源还没发过版本是正常的（刚建的项目），
         // 一片空白看着像"读失败了"。
-        showPlaceholder(tr("这个资源一个版本都没发过"));
+        showPlaceholder(tr("此资源未发布任何版本"));
         return;
     }
     fillGroups(groups);

@@ -141,7 +141,7 @@ void InstanceSettingsDialog::setServerList(const QList<QPair<QString, QString>> 
     for (const QPair<QString, QString> &server : servers) {
         auto *item = new QTreeWidgetItem(m_serverTree);
         item->setText(0, server.first.isEmpty() ? unnamedMark() : server.first);
-        // 那一格里**真正**的名字（可以是空串）。屏幕上空名字写的是「（无名）」——那是我们
+        // 那一格里**真正**的名字（可以是空串）。屏幕上空名字写的是「（未命名）」——那是我们
         // 编的一句话，「编辑」那颗要预填的是文件里原本那一串（见 MainWindowUI::serverNameRole()）。
         item->setData(0, MainWindowUI::serverNameRole(), server.first);
         // 地址那一栏默认写用户填的原文，「隐藏服务器地址」打开时写遮过的（`m-.h-.c-`）。
@@ -243,10 +243,10 @@ QStringList InstanceSettingsDialog::serverStatusLines(const ServerRowStatus &sta
         // `timedOut` 这一位（盘上只存了这一位，见 ServerStatusCache::Entry），而下面
         // 那一支拿得到 `error` 那句全话。
         if (status.fromCache) {
-            return {status.timedOut ? serverTimeoutText() : tr("没连上")};
+            return {status.timedOut ? serverTimeoutText() : tr("无法连接")};
         }
         // 超时那一档**只写两个字**。判据是
-        // `Status::timedOut` 那一位，不是这句 error 的前缀 —— 「网络不通」和「它连上了却
+        // `Status::timedOut` 那一位，不是这句 error 的前缀 —— 「网络不可达」和「它连上了却
         // 不答话」在 ServerPing 里是两处不同的判定（见那边 isTimeoutError()），只是对这个
         // 格子来说结论是同一个：现在连不上。
         if (status.timedOut) {

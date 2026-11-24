@@ -139,7 +139,7 @@ bool isReservedDeviceName(const QString &stem) {
 
 QString validatePathSegment(const QString &segment) {
     if (segment.isEmpty()) {
-        return QCoreApplication::translate("InstanceFiles", "名字不能是空的。");
+        return QCoreApplication::translate("InstanceFiles", "名称不能为空。");
     }
 
     // `/` `\` 排在最前面判，理由写在 .hpp 里：它们同时是路径分隔符，放过去就是
@@ -149,7 +149,8 @@ QString validatePathSegment(const QString &segment) {
     // 但这种名字在盘上确实建得出来，之后就再也说不清那是哪个实例了。
     for (const QChar ch : segment) {
         if (ch.unicode() < 0x20 || QStringLiteral("<>:\"/\\|?*").contains(ch)) {
-            return QCoreApplication::translate("InstanceFiles", "名字里不能有 < > : \" / \\ | ? * 这些字符，也不能有制表符、换行这类控制字符。");
+            return QCoreApplication::translate("InstanceFiles", "名称不能包含 < > : \" / \\ | ? * 等字符，"
+                                                                "也不能包含制表符、换行等控制字符。");
         }
     }
 
@@ -333,7 +334,7 @@ QString validateRenameTarget(const QString &rawName, const QString &currentId) {
 
     const QString name = rawName.trimmed();
     if (name == currentId) {
-        return QCoreApplication::translate("InstanceFiles", "新名字和现在一样，没有改动的必要。");
+        return QCoreApplication::translate("InstanceFiles", "新名称与当前名称相同，无需修改。");
     }
 
     // 重名比较不区分大小写，理由见 .hpp。`entry` 用磁盘上的真实拼写，
@@ -348,7 +349,8 @@ QString validateRenameTarget(const QString &rawName, const QString &currentId) {
     for (const QString &entry : entries) {
         if (entry.compare(name, Qt::CaseInsensitive) == 0 &&
             entry.compare(currentId, Qt::CaseInsensitive) != 0) {
-            return QCoreApplication::translate("InstanceFiles", "已经有一个叫“%1”的实例了，换一个名字。").arg(entry);
+            return QCoreApplication::translate("InstanceFiles", "已存在名为「%1」的实例，"
+                                                                "请更换名称。").arg(entry);
         }
     }
 
@@ -620,7 +622,8 @@ int mainClassJavaMajor(const QString &versionId, const QString &mainClass) {
             // （R11）：class 文件再大也不会到这个数，而一个同名的巨无霸条目不该在每次
             // 启动扫描时把内存和临时目录一起撑起来。
             if (ZipUtil::readEntry(jar, entryName, &bytes, nullptr,
-                                   QCoreApplication::translate("InstanceFiles", "读客户端 JAR 里的主类"), 1024 * 1024) !=
+                                   QCoreApplication::translate("InstanceFiles", "读取客户端 JAR "
+                                                                                "中的主类"), 1024 * 1024) !=
                 ZipUtil::EntryStatus::Ok) {
                 continue;  // 这个 jar 里没有这个类（或者读不动）—— 换下一个
             }
@@ -836,7 +839,8 @@ QStringList migrateInstanceCacheDirs(const QString &oldId, const QString &newId,
     // 名字都是先过 validateDirName()／validateRenameTarget() 的；这里再挡一次纯属自卫 ——
     // 下面拿它拼路径，空串拼出来是**根目录本身**，那会把整个 cache 根当成一个格子搬走。
     if (badName(oldId) || badName(newId)) {
-        problems.append(QCoreApplication::translate("InstanceFiles", "缓存备份没有搬：%1 → %2 里有一个不能当目录名用。")
+        problems.append(QCoreApplication::translate("InstanceFiles", "未移动缓存备份：%1 → %2 "
+                                                                     "中有一项不能用作目录名。")
                             .arg(oldId, newId));
         return problems;
     }
@@ -863,7 +867,7 @@ QStringList migrateInstanceCacheDirs(const QString &oldId, const QString &newId,
             continue;  // 没备份过（绝大多数实例都是这样）
         }
         if (!fromInfo.isDir() || fromInfo.isSymLink() || fromInfo.isJunction()) {
-            problems.append(QCoreApplication::translate("InstanceFiles", "缓存备份没有搬：%1 不是一个普通目录。")
+            problems.append(QCoreApplication::translate("InstanceFiles", "未移动缓存备份：%1 不是普通目录。")
                                 .arg(QDir::toNativeSeparators(from)));
             continue;
         }

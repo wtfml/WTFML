@@ -446,7 +446,7 @@ quint32 PresetController::captureMaskFor(Presets::PresetCategory category) {
 QString PresetController::captureNoteFor(Presets::PresetCategory category) {
     switch (category) {
     case Presets::PresetCategory::Unset:
-        return tr("旧版预设没写类别，九样都能收。");
+        return tr("旧版预设未记录类别，九类均可收集。");
     case Presets::PresetCategory::GameSettings:
         return tr("「游戏设置」预设不收资源包 / 光影包。");
     case Presets::PresetCategory::ResourcePacks:
@@ -750,7 +750,7 @@ void PresetController::createPreset(const QString &categoryKey) {
             .arg(created.name, categoryText(created.category)));
     refreshList(created.id);
     if (m_page != nullptr) {
-        m_page->showStatus(tr("建好了。在右边改名字和说明，然后从实例提取内容。"));
+        m_page->showStatus(tr("已创建。请在右侧修改名称和说明，然后从实例提取内容。"));
     }
 }
 
@@ -829,7 +829,7 @@ void PresetController::removePreset(const QString &id) {
     }
     refreshList(QString());
     if (m_page != nullptr) {
-        m_page->showStatus(tr("删掉了「%1」。").arg(name));
+        m_page->showStatus(tr("已删除「%1」。").arg(name));
     }
 }
 
@@ -919,7 +919,7 @@ QString PresetController::captureSummary(const Presets::CaptureReport &report) c
                          .arg(report.dataPackItems)
                          .arg(report.dataPackWorlds));
     }
-    QString text = parts.isEmpty() ? tr("没有收到任何内容。")
+    QString text = parts.isEmpty() ? tr("未收到任何内容。")
                                    : tr("已提取：%1。").arg(parts.join(tr("，")));
     if (!report.problems.isEmpty()) {
         text += tr("\n未提取：%1")
@@ -984,7 +984,7 @@ void PresetController::captureInto(const QString &presetId, const QString &insta
                 .arg(added));
         refreshList(presetId);
         if (m_page != nullptr) {
-            QString status = tr("收到 %1 条平台模组引用").arg(manifest.modReferences.size());
+            QString status = tr("已收到 %1 条平台模组引用").arg(manifest.modReferences.size());
             if (added > 0) {
                 status += tr("（新增 %1 条）").arg(added);
             }
@@ -1004,7 +1004,7 @@ void PresetController::captureInto(const QString &presetId, const QString &insta
             m_page->showStatus(
                 skipped.isEmpty()
                     ? tr("未选择任何项。")
-                    : tr("这类预设不收录：%1。")
+                    : tr("此类预设不收录：%1。")
                           .arg(skipped.join(tr("、"))));
         }
         return;
@@ -1014,7 +1014,7 @@ void PresetController::captureInto(const QString &presetId, const QString &insta
     if (!report.ok) {
         if (m_page != nullptr) {
             m_page->showStatus(report.problem.isEmpty()
-                                   ? tr("没有收到任何内容。")
+                                   ? tr("未收到任何内容。")
                                    : tr("提取失败：%1").arg(report.problem));
         }
         return;
@@ -1037,7 +1037,7 @@ void PresetController::captureInto(const QString &presetId, const QString &insta
     if (m_page != nullptr) {
         QString status = captureSummary(report);
         if (!skipped.isEmpty()) {
-            status += tr("\n这一类预设不收：%1。")
+            status += tr("\n此类预设不收录：%1。")
                           .arg(skipped.join(tr("、")));
         }
         m_page->showStatus(status);
@@ -1115,7 +1115,7 @@ void PresetController::captureAsNew(const QString &instanceId, const QString &na
                 .arg(created.modReferences.size()));
         refreshList(created.id);
         if (m_page != nullptr) {
-            QString status = tr("收到 %1 条平台模组引用").arg(created.modReferences.size());
+            QString status = tr("已收到 %1 条平台模组引用").arg(created.modReferences.size());
             if (unidentified > 0) {
                 // 认不出的那几件怎么处理**要说出来**：编辑器那条「从本地模组导入」会按
                 // CurseForge 指纹 + Modrinth sha1 再认一遍（这一层只认安装记录，不联网）。
@@ -1133,8 +1133,8 @@ void PresetController::captureAsNew(const QString &instanceId, const QString &na
         if (m_page != nullptr) {
             m_page->showStatus(
                 skipped.isEmpty()
-                    ? tr("未选择任何项，新预设没有创建。")
-                    : tr("这类预设不收录：%1；新预设没有创建。")
+                    ? tr("未选择任何项，未创建新预设。")
+                    : tr("此类预设不收录：%1；未创建新预设。")
                           .arg(skipped.join(tr("、"))));
         }
         return;
@@ -1146,7 +1146,7 @@ void PresetController::captureAsNew(const QString &instanceId, const QString &na
         Presets::remove(root, created.id);
         if (m_page != nullptr) {
             m_page->showStatus(report.problem.isEmpty()
-                                   ? tr("没有收到任何内容，新预设没有创建。")
+                                   ? tr("未收到任何内容，未创建新预设。")
                                    : tr("提取失败：%1").arg(report.problem));
         }
         return;
@@ -1170,7 +1170,7 @@ void PresetController::captureAsNew(const QString &instanceId, const QString &na
     if (m_page != nullptr) {
         QString status = captureSummary(report);
         if (!skipped.isEmpty()) {
-            status += tr("\n这一类预设不收：%1。")
+            status += tr("\n此类预设不收录：%1。")
                           .arg(skipped.join(tr("、")));
         }
         m_page->showStatus(status);
@@ -1200,7 +1200,7 @@ void PresetController::previewPlan(const QString &presetId, const QString &insta
     if (m_host.isInstanceBusy && m_host.isInstanceBusy(instanceId)) {
         invalidatePreview();
         PresetManagePage::PlanView view;
-        view.problem = tr("这个实例正在处理文件，请完成后再重新预览。");
+        view.problem = tr("此实例正在处理文件，请完成后再重新预览。");
         m_page->showPlan(view);
         return;
     }
@@ -1266,7 +1266,7 @@ void PresetController::showPreview(const Presets::PreviewSnapshot &snapshot) {
     if (plan.ok) {
         QString summary = tr("%1 段，会动 %2 项").arg(plan.rows.size()).arg(plan.totalCount());
         if (plan.blockedRowCount() > 0) {
-            summary += tr("，%1 段做不了").arg(plan.blockedRowCount());
+            summary += tr("，%1 段无法完成").arg(plan.blockedRowCount());
         }
         if (plan.riskyRowCount() > 0) {
             summary += tr("，%1 段要留意").arg(plan.riskyRowCount());
@@ -1285,7 +1285,7 @@ QString PresetController::applyRowText(const Presets::PresetApplyRow &row) const
     }
     QString state;
     if (row.blocked) {
-        state = tr("做不了%1").arg(row.problem.isEmpty()
+        state = tr("无法完成%1").arg(row.problem.isEmpty()
                                                   ? QString()
                                                   : tr("（%1）").arg(row.problem));
     } else if (row.skipped) {
@@ -1295,7 +1295,7 @@ QString PresetController::applyRowText(const Presets::PresetApplyRow &row) const
                                                    ? QString()
                                                    : tr("（%1）").arg(row.problem));
     } else if (row.written == 0 && row.removed == 0 && row.deferred == 0) {
-        state = tr("没有变化");
+        state = tr("无变化");
     } else {
         QStringList bits;
         if (row.written > 0) {
@@ -1305,7 +1305,7 @@ QString PresetController::applyRowText(const Presets::PresetApplyRow &row) const
             bits.append(tr("新增 %1").arg(row.added));
         }
         if (row.removed > 0) {
-            bits.append(tr("删掉 %1").arg(row.removed));
+            bits.append(tr("删除 %1").arg(row.removed));
         }
         if (row.deferred > 0) {
             bits.append(tr("待应用 %1").arg(row.deferred));
@@ -1328,7 +1328,7 @@ void PresetController::showExecutionReport(const QString &presetId, const QStrin
         : Presets::presetExecutionReportPath(instanceRoot(instanceId));
     QFile file(path);
     if (QFileInfo(path).isSymLink() || !file.open(QIODevice::ReadOnly) || file.size() > 8 * 1024 * 1024) {
-        m_page->showStatus(tr("没有可读的执行报告。")); return;
+        m_page->showStatus(tr("无可读取的执行报告。")); return;
     }
     const auto object = QJsonDocument::fromJson(file.readAll()).object();
     PresetManagePage::ApplyView view;
@@ -1362,7 +1362,7 @@ void PresetController::applyPlanImpl(const QString &presetId, const QString &ins
     PresetManagePage::ApplyView view;
 
     if (m_host.isInstanceBusy && m_host.isInstanceBusy(instanceId)) {
-        view.problem = tr("这个实例正在安装、补全文件或后台搬文件（复制、还原、导入），等它收尾之后再应用预设。");
+        view.problem = tr("此实例正在安装、补全文件或后台迁移文件（复制、还原、导入），请等待完成后再应用预设。");
         m_page->showApplyResult(view);
         return;
     }
@@ -1407,7 +1407,7 @@ void PresetController::applyPlanImpl(const QString &presetId, const QString &ins
             const QString path = instanceRoot(instanceId) + QStringLiteral("/wtfml.preset-mod-install.json");
             QFile file(path);
             if (QFileInfo(path).isSymLink() || !file.open(QIODevice::ReadOnly) || file.size() > 8 * 1024 * 1024) {
-                m_page->showStatus(tr("没有可读的模组执行报告，请重新预览。")); return;
+                m_page->showStatus(tr("无可读取的模组执行报告，请重新预览。")); return;
             }
             const auto report = QJsonDocument::fromJson(file.readAll()).object();
             if (report.value("format").toString() != QStringLiteral("wtfml-preset-mod-result/1")) {
@@ -1483,7 +1483,7 @@ void PresetController::applyPlanImpl(const QString &presetId, const QString &ins
                        .arg(manifest.name, displayName(instanceId))
                        .arg(result.written);
     if (result.removed > 0) {
-        line += QStringLiteral("、删掉 %1 项").arg(result.removed);  // i18n-ignore
+        line += QStringLiteral("、删除 %1 项").arg(result.removed);  // i18n-ignore
     }
     if (!result.backupDir.isEmpty()) {
         line += QStringLiteral("；备份在 %1").arg(QDir::toNativeSeparators(result.backupDir));  // i18n-ignore
@@ -1613,7 +1613,7 @@ void PresetController::requestInstallPickerData(
             const QFileInfo rootInfo(root);
             if (rootInfo.exists() && (!rootInfo.isDir() || !rootInfo.isReadable())) {
                 InstallPickerData failed;
-                failed.problem = tr("预设文件夹读不了：%1").arg(QDir::toNativeSeparators(root));
+                failed.problem = tr("无法读取预设文件夹：%1").arg(QDir::toNativeSeparators(root));
                 if (done) done(failed);
                 return;
             }
@@ -1675,7 +1675,7 @@ PresetController::InstallPreview PresetController::previewForInstall(
     const QString &presetId, const QString &instanceName) const {
     InstallPreview view;
     if (!Presets::isValidPresetId(presetId)) {
-        view.problem = tr("没有选中有效的预设。");
+        view.problem = tr("未选择有效预设。");
         return view;
     }
 
@@ -1747,7 +1747,7 @@ PresetController::InstallPreview PresetController::previewForInstall(
                               .arg(plan.rows.size())
                               .arg(plan.totalCount());
         if (plan.blockedRowCount() > 0) {
-            summary += tr("，%1 段做不了").arg(plan.blockedRowCount());
+            summary += tr("，%1 段无法完成").arg(plan.blockedRowCount());
         }
         if (plan.riskyRowCount() > 0) {
             summary += tr("，%1 段要留意").arg(plan.riskyRowCount());
@@ -1816,10 +1816,10 @@ PresetController::InstallApply PresetController::applyAfterInstall(const QString
                           .arg(manifest.name)
                           .arg(result.written);
         if (result.removed > 0) {
-            out.message += tr("、删掉 %1 项").arg(result.removed);
+            out.message += tr("、删除 %1 项").arg(result.removed);
         }
         if (failed > 0) {
-            out.message += tr("，%1 段没做成（管理页里可以看详情）").arg(failed);
+            out.message += tr("，%1 段未完成（可在管理页查看详情）").arg(failed);
         }
         for (const auto &row : result.rows) {
             if (row.deferred > 0 || !row.problem.isEmpty())
@@ -1954,7 +1954,7 @@ void PresetController::installModsAfterInstallImpl(const QStringList &presetIds,
     // 同一道闸在真正开跑之前再问一次（和 `applyPlan()` 那道是**同一个判断**）：从
     // 「应用」按下去到这儿之间可能进过嵌套提示，期间另一趟搬文件已经起来了。
     if (m_host.isFileOperationBusy && m_host.isFileOperationBusy(instanceId)) {
-        completed(false, tr("这个实例正在后台被其它操作写入（复制、还原或导入），完成后再应用模组预设。"));
+        completed(false, tr("此实例正在被其他操作写入（复制、还原或导入），请完成后再应用模组预设。"));
         return;
     }
     QList<Presets::ModReference> references;

@@ -98,7 +98,7 @@ void runTransferPlannerTests() {
               "★ TR1 默认勾选合计 5 个文件 / 17 字节",
               QStringLiteral("%1 / %2").arg(plan.selectedFileCount(keys)).arg(plan.selectedBytes(keys)));
         check(plan.headline().contains(QStringLiteral("迁移计划：一致"))
-                  && plan.headline().contains(QStringLiteral("默认搬")),
+                  && plan.headline().contains(QStringLiteral("默认迁移")),
               "TR1 顶上那一句", plan.headline());
         check(plan.detailText().contains(TextMarks::checked() + QStringLiteral(" 存档"))
                   && plan.detailText().contains(TextMarks::unchecked() + QStringLiteral(" 日志")),
@@ -166,7 +166,7 @@ void runTransferPlannerTests() {
         TransferPlanner::Inputs missing = baseInputs();
         missing.sourceDir = root + QStringLiteral("/nope");
         const TransferPlanner::Plan plan5 = TransferPlanner::plan(missing);
-        check(!plan5.ok && plan5.problem.contains(QStringLiteral("找不到源实例目录")),
+        check(!plan5.ok && plan5.problem.contains(QStringLiteral("未找到源实例目录")),
               "★ TR2 源目录不在盘上 ⇒ 计划不成立，报的是哪条路径", plan5.problem);
     }
 
@@ -220,7 +220,7 @@ void runTransferPlannerTests() {
         const TransferPlanner::Plan plan = TransferPlanner::plan(baseInputs());
         const QStringList keys{QStringLiteral("saves")};
         const TransferApply::Result same = TransferApply::apply(source, source, plan.items, keys);
-        check(!same.ok && same.problem.contains(QStringLiteral("同一份")),
+        check(!same.ok && same.problem.contains(QStringLiteral("相同或互相嵌套")),
               "★★ TR4 源和目标就是同一份 ⇒ 拒绝（不然就是自己抄自己）", same.problem);
 
         const QString nested = source + QStringLiteral("/nested");
@@ -328,7 +328,7 @@ void runTransferPlannerTests() {
                   .arg(good.checkedFiles)
                   .arg(good.missingFiles)
                   .arg(good.sizeMismatchFiles));
-        check(good.text().contains(QStringLiteral("缺 0 个")),
+        check(good.text().contains(QStringLiteral("缺少 0 个")),
               "TR7 那句话把「缺 0 个」直接说出来", good.text());
 
         // 从目标里删掉一个 ⇒ 校验必须报缺，而不是静默通过。
@@ -336,11 +336,11 @@ void runTransferPlannerTests() {
               "TR7 造一个「目标里少了一个文件」的场景");
         const TransferApply::VerifySummary missing =
             TransferApply::verify(source, target, plan.items, keys);
-        check(missing.ok && missing.missingFiles == 1 && missing.text().contains(QStringLiteral("缺 1 个")),
+        check(missing.ok && missing.missingFiles == 1 && missing.text().contains(QStringLiteral("缺少 1 个")),
               "★★ TR7 少一个文件 ⇒ 校验报缺（不是静默通过）", missing.text());
         check(missing.missing.size() == 1
                   && missing.missing.first().contains(QStringLiteral("level.dat"))
-                  && missing.text().contains(QStringLiteral("没在目标里找到的")),
+                  && missing.text().contains(QStringLiteral("目标中未找到的文件")),
               "TR7 缺失清单里点名了那一条路径", missing.text());
 
         // 目标里原有的同名文件大小不同 ⇒ 跳过不覆盖是设计，校验只单独报数。
@@ -366,7 +366,7 @@ void runTransferPlannerTests() {
         const TransferApply::VerifySummary empty =
             TransferApply::verify(source, target, plan.items, {});
         check(empty.ok && empty.checkedFiles == 0 && empty.missingFiles == 0,
-              "TR7 一项都没勾 ⇒ 校验看过 0 个、缺 0 个（不冤枉目标）");
+              "TR7 一项都没勾 ⇒ 校验检查过 0 个、缺少 0 个（不冤枉目标）");
     }
 }
 

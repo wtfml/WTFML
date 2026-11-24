@@ -91,9 +91,9 @@ void runServerListControllerTests() {
                            QStringLiteral("|c.example.com")}),
           "ZK17 三条都读得出来（第三条名字是空串）", rowsOf().join(QStringLiteral(" / ")));
 
-    section("ZK18. 「（无名）」只有一处出处");
-    check(ServerListController::displayName(QString()) == QStringLiteral("（无名）"),
-          "ZK18 空名字 ⇒ 「（无名）」");
+    section("ZK18. 「（未命名）」只有一处出处");
+    check(ServerListController::displayName(QString()) == QStringLiteral("（未命名）"),
+          "ZK18 空名字 ⇒ 「（未命名）」");
     check(ServerListController::displayName(QStringLiteral("A服")) == QStringLiteral("A服"),
           "ZK18 有名字的原样回（不套括号、不加前后缀）");
     check(ServerListController::displayName(QStringLiteral(" ")) == QStringLiteral(" "),
@@ -147,7 +147,7 @@ void runServerListControllerTests() {
                               QStringLiteral("a.example.com:25565")),
               "ZK21 改名 + 改地址成功");
         check(fake.logs == QStringList{QStringLiteral(
-                  "已改服务器：A服（a.example.com:25565）→ 新名字（new.example.com）")},
+                  "已修改服务器：A服（a.example.com:25565）→ 新名字（new.example.com）")},
               "ZK21 日志那一行**逐字**对得上（测试按逐字文本认日志）",
               fake.logs.join(QStringLiteral(" / ")));
         check(fake.notices.isEmpty(), "ZK21 成了就不用弹");
@@ -180,14 +180,14 @@ void runServerListControllerTests() {
               fake.initials.join(QStringLiteral(" / ")));
     }
 
-    section("ZK23. 加一台：名字留空也行，日志里那一格是「（无名）」");
+    section("ZK23. 加一台：名字留空也行，日志里那一格是「（未命名）」");
     {
         check(seed(), "ZK23 夹具重新落盘");
         FakeHost fake;
         ServerListController controller(fake.make());
         fake.answers = {QString(), QStringLiteral("d.example.com")};
         check(controller.add(instanceId), "ZK23 名字留空照样加得进去");
-        check(fake.logs == QStringList{QStringLiteral("已加服务器：（无名）（d.example.com）")},
+        check(fake.logs == QStringList{QStringLiteral("已添加服务器：（未命名）（d.example.com）")},
               "ZK23 日志里走的是 displayName()（不是把空串原样印进去）",
               fake.logs.join(QStringLiteral(" / ")));
         check(rowsOf().contains(QStringLiteral("|d.example.com")),
@@ -217,7 +217,7 @@ void runServerListControllerTests() {
         check(seed(), "ZK24 夹具还原");
     }
 
-    section("ZK25. 删一台：那句问话**点名字**（没名字的点「（无名）」）");
+    section("ZK25. 删一台：那句问话**点名字**（没名字的点「（未命名）」）");
     {
         FakeHost fake;
         ServerListController controller(fake.make());
@@ -225,8 +225,8 @@ void runServerListControllerTests() {
         fake.confirmAnswer = false;
         check(!controller.remove(instanceId, QString(), QStringLiteral("c.example.com")),
               "ZK25 点了「不删」⇒ 回头");
-        check(fake.confirmations == QStringList{QStringLiteral("（无名）@c.example.com")},
-              "ZK25 问的是「（无名）」+ 地址 —— 光说「这一台」的话，屏幕上是同一个问题",
+        check(fake.confirmations == QStringList{QStringLiteral("（未命名）@c.example.com")},
+              "ZK25 问的是「（未命名）」+ 地址 —— 光说「这一台」的话，屏幕上是同一个问题",
               fake.confirmations.join(QStringLiteral(" / ")));
         check(readBytesAt(datPath) == before, "ZK25 没删 ⇒ 盘上逐字节没动");
         check(fake.logs.isEmpty() && fake.reloads.isEmpty(), "ZK25 没记日志、没喊重读");
@@ -242,7 +242,7 @@ void runServerListControllerTests() {
               "ZK26 删得掉");
         check(fake.confirmations == QStringList{QStringLiteral("B服@b.example.com")},
               "ZK26 那句问话里用的是这个名字", fake.confirmations.join(QStringLiteral(" / ")));
-        check(fake.logs == QStringList{QStringLiteral("已删服务器：B服（b.example.com）")},
+        check(fake.logs == QStringList{QStringLiteral("已删除服务器：B服（b.example.com）")},
               "ZK26 日志那一行逐字对得上", fake.logs.join(QStringLiteral(" / ")));
         check(fake.reloads == QStringList{instanceId}, "ZK26 删完也喊了一声「重读重测」");
         check(rowsOf() == QStringList({QStringLiteral("A服|a.example.com:25565"),
@@ -302,7 +302,7 @@ void runServerListControllerTests() {
             check(controller.removeMany(instanceId, both), "ZK28 全认得出 ⇒ 删得掉");
             check(rowsOf() == QStringList{QStringLiteral("B服|b.example.com")},
                   "ZK28 盘上只剩没选的那一台", rowsOf().join(QStringLiteral(" / ")));
-            check(fake.logs == QStringList{QStringLiteral("已删服务器：2 台")} && fake.reloads == QStringList{instanceId},
+            check(fake.logs == QStringList{QStringLiteral("已删除服务器：2 台")} && fake.reloads == QStringList{instanceId},
                   "ZK28 记一行日志、喊一次重读重测");
         }
     }

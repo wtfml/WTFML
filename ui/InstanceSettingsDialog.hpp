@@ -361,6 +361,9 @@ public:
     static QString navigationTreeName() { return QStringLiteral("instanceLifecycleTree"); }
     /// 左栏那一列的宽：最长的二级页名（「服务器列表」）加缩进放得下就够，多出来的都从右栏扣（UI问题 #6）。
     static int navigationTreeWidth() { return 152; }
+    /// 按这棵树里每一项的实测宽（缩进 + 字 + 左右留白）取宽：`navigationTreeWidth()` 作下限、240 作上限。
+    /// 中文所有项都比下限窄，所以中文仍是 152；英文长名（「Diagnostics and …」）不再被省略。
+    static int fittedNavigationTreeWidth(const QTreeWidget *tree);
     static QString launchInstanceButtonName() {
         return QStringLiteral("instanceSettingsLaunchInstance");
     }
@@ -1026,7 +1029,7 @@ public:
     static QString iconCandidateButtonName(int index) {
         return QStringLiteral("instanceIconCandidate%1").arg(index);
     }
-    /// 浮层里的「选一张图片…」（开的是 Windows 自己的文件选择框）。
+    /// 浮层里的「选择图片…」（开的是 Windows 自己的文件选择框）。
     static QString iconPickButtonName() { return QStringLiteral("instanceIconPickButton"); }
     /// 浮层里的「恢复默认」。
     static QString iconResetButtonName() { return QStringLiteral("instanceIconResetButton"); }
@@ -1165,7 +1168,9 @@ public:
     static QString repairFilesText() { return QCoreApplication::translate("InstanceSettingsDialog", "补全版本文件"); }
     /// 两颗按钮的 tooltip，以及那一行下面那句合起来的说明。
     static QString exportScriptHint() {
-        return QCoreApplication::translate("InstanceSettingsDialog", "导出独立启动脚本。正版脚本不保存令牌，运行时需提供 WTFML_MC_ACCESS_TOKEN。");
+        return QCoreApplication::translate("InstanceSettingsDialog",
+                                           "导出独立启动脚本。微软账号脚本不保存令牌，"
+                                           "运行时需提供 WTFML_MC_ACCESS_TOKEN。");
     }
     static QString repairFilesHint() {
         return QCoreApplication::translate("InstanceSettingsDialog", "校验并补齐客户端、库和资源；下载或安装期间不可执行。");
@@ -1386,7 +1391,7 @@ public:
     /// 超时那一档在界面上**就写这两个字**，不加别的解释。
     ///
     /// NOTE: 和 `Status::timedOut` 那一位配着用 —— 那一位才是判据，这一句只是写出来的字。
-    /// 那一格窄（`ResizeToContents`），而「它没答话」和「网络不通」这两个理由对这个
+    /// 那一格窄（`ResizeToContents`），而「它没答话」和「网络不可达」这两个理由对这个
     /// 格子的读者（想点进去玩的人）是同一件事：现在连不上。
     static QString serverTimeoutText() { return QCoreApplication::translate("InstanceSettingsDialog", "超时"); }
     /// 右键服务器行弹出的菜单：objectName 与三项的文字（验证工程按它们取控件）。
@@ -1423,7 +1428,9 @@ public:
     static QString maskedServerAddress(const QString &address);
     static QString serverEmptyText() { return QCoreApplication::translate("InstanceSettingsDialog", "暂无服务器"); }
     /// 服务器名字那一格是空的的时候顶上什么字。servers.dat 里的 name 真能是空串。
-    static QString unnamedMark() { return QCoreApplication::translate("InstanceSettingsDialog", "（无名）"); }
+    static QString unnamedMark() {
+        return QCoreApplication::translate("InstanceSettingsDialog", "（未命名）");
+    }
 
     /// 「光影包」那一页用不上时那句话（唯一出处，验证工程也按它核对）。
     static QString shaderUnavailableText();
@@ -1437,7 +1444,7 @@ public:
     /// 「用不上」和勾选表的悬停提示都走它，别再各写一遍 if 链。
     static QString pageUnavailableText(const QString &key);
 
-    // ---- 「显示哪些页」那张勾选表（概览页最下面）----
+    // ---- 「显示页面」那张勾选表（概览页最下面）----
     //
     // 七条一条一个勾选框（顺序见 optionalPageKeys()），**不可用的那一条不勾、灰着、
     // tooltip 说为什么**。勾/不勾直接决定左栏那一列里有没有这一页。
@@ -1447,7 +1454,7 @@ public:
         return QStringLiteral("instanceSettingsShowPage-") + key;
     }
     /// 那一小块的字（**它的行名**）。
-    static QString showPagesLabelText() { return QCoreApplication::translate("InstanceSettingsDialog", "显示哪些页"); }
+    static QString showPagesLabelText() { return QCoreApplication::translate("InstanceSettingsDialog", "显示页面"); }
     /// 可用那几条的 tooltip（"勾上左边那一列里就有这一页…"）。
     static QString pageShownHint();
 
@@ -1462,7 +1469,7 @@ public:
     /// 实例操作 → 导出页的主动作。
     static QString exportText() { return QCoreApplication::translate("InstanceSettingsDialog", "导出整合包…"); }
     /// 浮层里那两个动作按钮上的字。
-    static QString iconPickText() { return QCoreApplication::translate("InstanceSettingsDialog", "选一张图片…"); }
+    static QString iconPickText() { return QCoreApplication::translate("InstanceSettingsDialog", "选择图片…"); }
     static QString iconResetText() { return QCoreApplication::translate("InstanceSettingsDialog", "恢复默认"); }
     /// 八个内置候选在界面上叫什么（顺序与 VersionIcons::iconCandidateKeys() 一一对应；
     /// 后四个故意同一个字：加载器名在设置页 / 安装页里就叫这个）。
@@ -1790,7 +1797,7 @@ signals:
     /// 同一个做法：按钮在页里发，接的人在对话框上接。
     void upgradeRecheckRequested();
 
-    /// 用户按了「搬过去…」/「创建升级副本…」。**只发意图，不写盘**：路径闸、运不运
+    /// 用户按了「迁移…」/「创建升级副本…」。**只发意图，不写盘**：路径闸、运不运
     /// 行、要不要问名字都在 controller 那一层。
     /// @param key `migration` / `upgrade`
     /// @param targetId 下拉框里选中的那个（空串 = 还没选目标）
@@ -1966,7 +1973,7 @@ signals:
      * 认出那一条（**按值匹配，不按下标** —— 见 ServerListFile 那段）。
      *
      * NOTE: 名字给的是 `serverNameRole()` 里那一份，**不是**屏幕上显示的那一格 —— 空的
-     * 名字屏幕上写的是「（无名）」，那是我们编的话，不能拿去当数据。
+     * 名字屏幕上写的是「（未命名）」，那是我们编的话，不能拿去当数据。
      */
     void editServerRequested(const QString &name, const QString &address);
 
@@ -2291,7 +2298,7 @@ private:
     QHash<QString, bool> m_pageAvailable;
     /// 用户**勾掉的**那几页（键 → false，见 pageChoices()）。只装显式选择，不写"默认值"。
     QJsonObject m_pageOverrides;
-    /// 「显示哪些页」那七条（键 → 勾选框，顺序同 optionalPageKeys()）。
+    /// 「显示页面」那七条（键 → 勾选框，顺序同 optionalPageKeys()）。
     QHash<QString, QCheckBox *> m_pageChecks;
 
     /// 「实例名」那一格（见 instanceName()）。现在长在「概览」栏里。

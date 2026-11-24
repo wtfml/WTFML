@@ -1,6 +1,6 @@
 /**
  * @file VersionIntegrity.cpp
- * @brief 「体检」那套判据的实现（只报不装，见头文件里那几段说明）。
+ * @brief 「诊断」那套判据的实现（只报不装，见头文件里那几段说明）。
  */
 
 #include "VersionIntegrity.hpp"
@@ -50,7 +50,7 @@ QString Verdict::detail() const {
     case Status::Missing:
         return QCoreApplication::translate("VersionIntegrity", "缺少文件");
     case Status::Empty:
-        return QCoreApplication::translate("VersionIntegrity", "0 字节（下载写了一半留下的）");
+        return QCoreApplication::translate("VersionIntegrity", "0 字节（下载中断留下的）");
     case Status::WrongSize:
         return QCoreApplication::translate("VersionIntegrity", "大小 %1 字节，应为 %2").arg(actualSize).arg(expectedSize);
     case Status::WrongSha1:

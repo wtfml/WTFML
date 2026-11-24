@@ -183,7 +183,7 @@ struct Status {
     ///
     /// NOTE: 缓存（ServerStatusCache::Entry）**存这一位**，照旧不存
     /// `error` 那句理由 —— 理由是当时那一刻的。盘上那份"上次问到"的没通按它写
-    /// 「超时」或者「没连上」（见那边 Entry::timedOut 那条 NOTE）—— 那两句和当场
+    /// 「超时」或者「无法连接」（见那边 Entry::timedOut 那条 NOTE）—— 那两句和当场
     /// 测出来写的是**同一句字**。
     bool timedOut = false;
     /// 延迟：**连接建好之后**，握手那一趟往返花了多久（毫秒）。ok 为假时是 -1。

@@ -78,7 +78,7 @@ namespace {
 
 /// 服务端那一档在 `VersionIcons::loaderMark()` 那张表里的下标。
 ///
-/// 那张表的顺序是 0 Fabric / 1 Forge / 2 NeoForge / 3 OptiFine / 4 Quilt，5（「不装（纯原版）」）
+/// 那张表的顺序是 0 Fabric / 1 Forge / 2 NeoForge / 3 OptiFine / 4 Quilt，5（「不安装（纯原版）」）
 /// 和越界的下标给草方块。服务端八档里 Fabric / Forge / NeoForge / Quilt 有自己那张图，
 /// 其余（原版 / Paper / Purpur / Spigot）一律拿草方块 —— 别去新画一张，也别借 OptiFine 的。
 int loaderMarkIndexForServerFlavor(ServerInstall::Flavor flavor) {
@@ -154,7 +154,7 @@ void fillServerRow(QTreeWidgetItem *item, const ServerRegistry::Entry &entry,
 
     ListRowDelegate::LaunchKind kind = ListRowDelegate::LaunchKind::Start;
     QString text = MainWindowUI::serverStartText();
-    QString launchTip = MainWindow::tr("启动这个服务端");
+    QString launchTip = MainWindow::tr("启动服务端");
     if (!entry.installed) {
         kind = ListRowDelegate::LaunchKind::Repair;
         text = MainWindowUI::serverRepairText();
@@ -442,7 +442,7 @@ void MainWindow::openServerPageForGameVersion(const QString &gameVersion) {
             m_serverAvailabilityCache.insert(version, false);
             fallbackToServerVersionList(
                 tr("暂无对应服务端"),
-                tr("版本 %1 没有对应的服务端，已返回服务端版本列表。").arg(version));
+                tr("版本 %1 暂无对应的服务端，已返回服务端版本列表。").arg(version));
             return;
         }
     }
@@ -454,7 +454,7 @@ void MainWindow::openServerPageForGameVersion(const QString &gameVersion) {
         }
         fallbackToServerVersionList(
             tr("暂无对应服务端"),
-            tr("版本 %1 没有对应的服务端，已返回服务端版本列表。").arg(version));
+            tr("版本 %1 暂无对应的服务端，已返回服务端版本列表。").arg(version));
         return;
     }
 
@@ -470,7 +470,7 @@ void MainWindow::openServerPageForGameVersion(const QString &gameVersion) {
     if (officialUrl.isEmpty()) {
         fallbackToServerVersionList(
             tr("暂无对应服务端"),
-            tr("版本 %1 没有对应的服务端，已返回服务端版本列表。").arg(version));
+            tr("版本 %1 暂无对应的服务端，已返回服务端版本列表。").arg(version));
         return;
     }
 
@@ -558,7 +558,7 @@ void MainWindow::startServerVersionProbe(const QString &version, const QString &
             if (!hasServer) {
                 fallbackToServerVersionList(
                     tr("暂无对应服务端"),
-                    tr("版本 %1 没有对应的服务端，已返回服务端版本列表。").arg(version));
+                    tr("版本 %1 暂无对应的服务端，已返回服务端版本列表。").arg(version));
                 return;
             }
             LoadingState::finish(m_ui->getServerFormHost());
@@ -574,8 +574,8 @@ void MainWindow::createServerFromNewServerPage() {
     const QString desired = ServerRegistry::sanitizeId(m_newServerPage->serverName());
     if (desired.isEmpty()) {
         // 话说完就停在表单上：刚填的东西不能因为一句提醒就没收。
-        InlineMessage::warning(m_ui->overlay(), tr("这个名字不能当目录名"),
-                               tr("换一个名字再试（名字里不能只有标点或空白）。"));
+        InlineMessage::warning(m_ui->overlay(), tr("此名称不能用作目录名"),
+                               tr("请更换名称后重试（名称不能仅含标点或空白）。"));
         return;
     }
     const QString serverId = ServerRegistry::uniqueServerId(desired);
@@ -593,7 +593,7 @@ void MainWindow::createServerFromNewServerPage() {
     info.memoryMb = m_newServerPage->memoryMb();
     QString problem;
     if (!ServerRegistry::createServer(serverId, info, &problem)) {
-        InlineMessage::critical(m_ui->overlay(), tr("建不了这个服务端"), problem);
+        InlineMessage::critical(m_ui->overlay(), tr("无法创建此服务端"), problem);
         return;
     }
     // 建好了：表单那一层退回去（下次进来从版本列表开始），并切到「管理 → 服务端」——
@@ -639,9 +639,9 @@ void MainWindow::installServer(const QString &serverId, const ServerInstall::Req
     // 先单任务聚合。下载那一层只有一份批次状态，同时开两批会让两边的收尾互相算错
     // —— 所以忙的时候说清楚，而不是让它排着队（排队还没做）。
     if (m_serverInstall->isRunning()) {
-        InlineMessage::warning(m_ui->overlay(), tr("先等这一个装完"),
-                               tr("同一时间只能安装一个服务端：下载共用同一条队列，两批同时运行"
-                                  "会打乱彼此的进度。"));
+        InlineMessage::warning(m_ui->overlay(), tr("请等待当前安装完成"),
+                               tr("同一时间只能安装一个服务端：下载共用同一条队列，"
+                                  "两批同时运行会打乱彼此的进度。"));
         return;
     }
     // 这一档这一轮接没接。**判据的唯一出处是 `ServerInstallRun::flavorSupported()`** ——
@@ -654,7 +654,7 @@ void MainWindow::installServer(const QString &serverId, const ServerInstall::Req
     const ServerInstall::Plan plan = ServerInstall::planFor(request);
     if (!plan.ok) {
         // `planFor()` 给的 `problem` 就是给用户看的那句话（那一层承诺过），别再另编一句。
-        InlineMessage::critical(m_ui->overlay(), tr("无法安装这个服务端"), plan.problem);
+        InlineMessage::critical(m_ui->overlay(), tr("无法安装此服务端"), plan.problem);
         return;
     }
     // 跑安装器的那三档（Forge / NeoForge / Quilt）才要 java。**在记账之前**问：
@@ -706,12 +706,12 @@ bool MainWindow::pickServerInstallerJava(const ServerInstall::Request &request, 
     }
     QString reason;
     if (!m_javaSettings->installerJavaFor(requiredJavaMajor, configuredJava, &java, &reason)) {
-        appendLog(tr("装这个服务端要的 Java 拿不到：%1").arg(reason));
-        InlineMessage::warning(m_ui->overlay(), tr("Java 版本不够"), reason);
+        appendLog(tr("无法获取安装此服务端所需的 Java：%1").arg(reason));
+        InlineMessage::warning(m_ui->overlay(), tr("Java 版本过低"), reason);
         return false;
     }
     if (java != configuredJava) {
-        appendLog(tr("这个版本要 Java %1，装的时候改用 %2").arg(requiredJavaMajor).arg(java));
+        appendLog(tr("此版本需要 Java %1，安装时将改用 %2").arg(requiredJavaMajor).arg(java));
     }
     *out = java;
     return true;
@@ -808,7 +808,7 @@ void MainWindow::removeServer(const QString &serverId) {
     // 世界正在备份 / 还原：那一趟还在往这个目录里读 / 写，删掉它等于把正在解压的落点
     // 从底下抽走（备份那一趟则会把"删到一半的目录"打进包里）。
     if (m_serverRun->fileBusy(serverId)) {
-        InlineMessage::warning(m_ui->overlay(), tr("暂时不能删除"),
+        InlineMessage::warning(m_ui->overlay(), tr("暂时无法删除"),
                                tr("「%1」的世界正在备份或还原，请完成后再删除。").arg(shown));
         return;
     }
@@ -974,7 +974,7 @@ bool MainWindow::ensureServerEula(const QString &serverId) {
     }
     QString problem;
     if (!ServerRegistry::acceptEula(serverId, &problem)) {
-        InlineMessage::critical(m_ui->overlay(), tr("写不了 eula.txt"), problem);
+        InlineMessage::critical(m_ui->overlay(), tr("无法写入 eula.txt"), problem);
         return false;
     }
     appendLog(tr("%1：已接受 EULA，已将 eula=true 写入 eula.txt。").arg(serverId));
@@ -1027,7 +1027,7 @@ void MainWindow::onServerLineAppended(const QString &serverId, const QString &li
     // 只有长到离谱的那些才截断，而且**只截写进日志的这一份** —— 控制台那一页照旧是原话。
     QString logged = line;
     if (logged.size() > kMaxLoggedServerLineChars) {
-        logged = logged.left(kMaxLoggedServerLineChars) + tr("…（这一行太长，截断了）");
+        logged = logged.left(kMaxLoggedServerLineChars) + tr("…（此行过长，已截断）");
     }
     appendLog(QStringLiteral("[%1] %2").arg(serverId, logged));
     // 控制台那一页正开着它的话，这一行也进那一页（认人认"这一页现在说的是谁"，见控制器）。
@@ -1061,7 +1061,7 @@ void MainWindow::updateNewServerSummary(NewServerPage *page) {
     const QString desiredId = ServerRegistry::sanitizeId(page->serverName());
     if (desiredId.isEmpty()) {
         page->setTargetDir(QString());
-        page->setSummary(QString(), tr("先给它起个名字（会当成目录名）。"));
+        page->setSummary(QString(), tr("请先填写名称（将作为目录名）。"));
         return;
     }
     // 「目录」那一行：服务端根目录只有一份（`<数据目录>/servers`，就是左栏那一列里的根），

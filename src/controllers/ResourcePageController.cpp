@@ -210,7 +210,7 @@ bool ResourcePageController::open(const QString &iconKey, const QString &kindKey
     // 图标是异步来的：先清掉上一次那一张（不然会留着上一个资源的图标，比空着糟），
     // 那一格的位置照旧留着，图回来时整张卡不会往左跳一下。
     page->setIcon(QPixmap());
-    page->setLoading(tr("正在读版本列表…"));
+    page->setLoading(tr("正在读取版本列表…"));
     // 中间那一行也**每次开页清一次**（同上：这一页是建一次留着的，不清就留着上一个
     // 资源的"要装的前置"，而那一行看着像是这个资源的）。
     m_state.dependencies.clear();
@@ -295,7 +295,7 @@ void ResourcePageController::fillGroups() {
     // 还没回来：chip 是在这一页上点的，而版本列表可能还在路上（用户手快）。
     // **不能**在这儿说"这一档没有版本" —— 那是在替一份还没到的数据回答。
     if (!m_state.loaded) {
-        m_page->setLoading(tr("正在读版本列表…"));
+        m_page->setLoading(tr("正在读取版本列表…"));
         return;
     }
     // 这一页当下摆在**最上面那一版**（= 用户一眼看到、最可能点的那一条）。下面那一段
@@ -375,7 +375,7 @@ void ResourcePageController::fillGroups() {
         if (m_state.chip.isEmpty()) {
             m_page->setGroups({});
         } else {
-            m_page->setPlaceholder(tr("这个游戏版本上没有可下载的版本。"));
+            m_page->setPlaceholder(tr("此游戏版本暂无可下载的版本。"));
         }
         return;
     }
@@ -450,7 +450,7 @@ void ResourcePageController::onProjectsFinished(const QString &requestKey,
     // 没取到**不是错误**（那一页上还有"有几条"那句），所以不弹窗、只记一句日志 ——
     // 和前置那一趟同一条规矩（见 `ResourceInstallController::onProjectsFinished`）。
     if (!problem.isEmpty()) {
-        m_owner.appendLog(tr("前置模组的名字没取到：%1").arg(problem));
+        m_owner.appendLog(tr("未获取到前置模组的名称：%1").arg(problem));
     }
     // 名字已经进缓存了：再走一次那一段就会走到"全都有了"那条路上去。**问不着也一样**：
     // 那几个号已经记进 `dependencyAskedIds`，不会再被凑成新的一发（见 `updateDependencies`
@@ -514,7 +514,7 @@ void ResourcePageController::onDownloadFinished(const QString &label, bool succe
         const Tasks::TaskId activeTask = ledgerTask;
         m_owner.m_downloadTaskLedger->clear();
         if (pending.gameRoot != AppPaths::minecraftDir()) {
-            m_owner.finishTask(activeTask, false, MainWindow::tr("请切回原游戏文件夹再重试这次安装。"));
+            m_owner.finishTask(activeTask, false, MainWindow::tr("请切换回原游戏目录后重试本次安装。"));
             return;
         }
         if (activeTask != Tasks::invalidTaskId() && m_owner.m_activityCenter->tasks()->has(activeTask)) {
@@ -528,7 +528,7 @@ void ResourcePageController::onDownloadFinished(const QString &label, bool succe
             tasks->setProgress(activeTask, 0, 0);
             tasks->setDetail(activeTask, tr("正在解析整合包清单…"));
         }
-        m_owner.appendLog(TextMarks::done(tr("%1 下好了：%2").arg(label, errorMessage)));
+        m_owner.appendLog(TextMarks::done(tr("%1 下载完成：%2").arg(label, errorMessage)));
         // 不弹"下载完成"：整合包下回来只是第一步，紧接着就会进入一键导入（不在此提前
         // finishTask），中间夹一个"下好了"等于让他白点一次。
         //
@@ -581,5 +581,5 @@ void ResourcePageController::onDownloadFinished(const QString &label, bool succe
 
     m_owner.appendLog(TextMarks::done(tr("%1 下载完成：%2").arg(label, errorMessage)));
     InlineMessage::information(m_owner.m_ui->overlay(), tr("下载完成"),
-                             tr("%1 已经装进实例里了。\n\n%2").arg(label, errorMessage));
+                             tr("%1 已安装到此实例。\n\n%2").arg(label, errorMessage));
 }

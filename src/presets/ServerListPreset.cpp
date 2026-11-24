@@ -292,7 +292,7 @@ ServerListReport applyServerListToInstance(const QString &datPath, ApplyMode mod
     ServerListReport report;
     if (datPath.trimmed().isEmpty()) {
         report.problem =
-            QCoreApplication::translate("Presets", "没有指定要写到哪个 servers.dat。");
+            QCoreApplication::translate("Presets", "未指定要写入的 servers.dat。");
         return report;
     }
 

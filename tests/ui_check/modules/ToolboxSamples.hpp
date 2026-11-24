@@ -119,9 +119,9 @@ inline void fillToolboxSamples(ToolboxPage &page, ToolboxPage::Tool tool) {
         page.setBrewingForms({demoText("普通", "Normal"), demoText("喷溅型", "Splash"), demoText("滞留型", "Lingering")});
         page.setBrewingVersions({QString(), QStringLiteral("1.21"), QStringLiteral("1.20")});
         page.setBrewingResult(demoText(
-            "产出：迅捷药水 × 1 瓶（酿 1 次）\n效果：迅捷 I · 3:00\n"
+            "产出：迅捷药水 × 1 瓶（酿造 1 次）\n效果：迅捷 I · 3:00\n"
             "步骤（共 2 步）：\n1. 水瓶 + 下界疣 → 粗制的药水\n2. 粗制的药水 + 糖 → 迅捷药水\n"
-            "材料：水瓶 × 1、下界疣 × 1、糖 × 1、烈焰粉（燃料） × 1（1 个烈焰粉可酿 20 次）",
+            "材料：水瓶 × 1、下界疣 × 1、糖 × 1、烈焰粉（燃料） × 1（1 个烈焰粉可酿造 20 次）",
             "Output: Potion of Swiftness × 1 (1 brew)\nEffect: Speed I · 3:00\n"
             "Steps (2 total):\n1. Water Bottle + Nether Wart → Awkward Potion\n2. Awkward Potion + Sugar → Potion of Swiftness\n"
             "Ingredients: Water Bottle × 1, Nether Wart × 1, Sugar × 1, Blaze Powder (fuel) × 1 (1 Blaze Powder fuels 20 brews)"));
@@ -138,15 +138,15 @@ inline void fillToolboxSamples(ToolboxPage &page, ToolboxPage::Tool tool) {
         page.setBannerDesign(0, {QStringLiteral("0:1"), QStringLiteral("1:2"), QStringLiteral("2:3"), QStringLiteral("0:0"),
                                  QStringLiteral("1:1"), QStringLiteral("2:2")}, QString());
         page.setBannerResult(demoText(
-            "底色 白色 · 6/6 层\n\n一步一步：\n• 先做一面白色旗帜：6 块白色羊毛 + 1 根木棍\n• 第 1 层：条纹（橙色）\n• 第 2 层：十字（品红色）\n"
+            "底色 白色 · 6/6 层\n\n步骤：\n• 合成白色旗帜：6 块白色羊毛 + 1 根木棍\n• 第 1 层：条纹（橙色）\n• 第 2 层：十字（品红色）\n"
             "• 第 3 层：边框（黑色）\n• 第 4 层：条纹（白色）\n• 第 5 层：十字（橙色）\n• 第 6 层：边框（品红色）\n\n"
             "材料清单：\n• 白色羊毛 × 6\n• 木棍 × 1\n• 橙色染料 × 2\n• 品红色染料 × 2\n• 黑色染料 × 1\n\n"
-            "指令（1.13–1.20.4 的 NBT 写法；1.20.5 起换成了组件写法，这一版不出）：\n"
+            "指令（写法随目标版本变化）：\n"
             "/give @p white_banner{BlockEntityTag:{Patterns:[{Pattern:ss,Color:2},{Pattern:cr,Color:6},{Pattern:bo,Color:15}]}}",
             "Base White · 6/6 layers\n\nSteps:\n• Craft a White Banner: 6 White Wool + 1 Stick\n• Layer 1: Stripe (Orange)\n• Layer 2: Cross (Magenta)\n"
             "• Layer 3: Bordure (Black)\n• Layer 4: Stripe (White)\n• Layer 5: Cross (Orange)\n• Layer 6: Bordure (Magenta)\n\n"
             "Materials:\n• White Wool × 6\n• Stick × 1\n• Orange Dye × 2\n• Magenta Dye × 2\n• Black Dye × 1\n\n"
-            "Command (NBT syntax for 1.13–1.20.4; 1.20.5+ uses item components):\n"
+            "Command (syntax depends on the target version):\n"
             "/give @p white_banner{BlockEntityTag:{Patterns:[{Pattern:ss,Color:2},{Pattern:cr,Color:6},{Pattern:bo,Color:15}]}}"));
         break;
     case Tool::Trim:

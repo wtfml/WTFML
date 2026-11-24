@@ -188,7 +188,7 @@ Snapshot scan(const QString &worldDir) {
     Snapshot out;
     const QFileInfo worldInfo(worldDir);
     if (worldDir.isEmpty() || !worldInfo.isDir()) {
-        out.problem = QCoreApplication::translate("WorldMap", "这个世界的目录不在了。");
+        out.problem = QCoreApplication::translate("WorldMap", "该世界的目录已不存在。");
         return out;
     }
 

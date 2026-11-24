@@ -420,9 +420,9 @@ int UiAccountSkinChecks() {
                           applyCapeBtn->isEnabled(),
                       "X8 前提：不忙而且都选中了，那三个按钮都是点得动的");
 
-                dialog.setBusy(true, QStringLiteral("正在等浏览器完成登录…"));
+                dialog.setBusy(true, QStringLiteral("正在等待浏览器完成登录…"));
                 QApplication::processEvents();
-                check(statusLabel->text() == QStringLiteral("正在等浏览器完成登录…"),
+                check(statusLabel->text() == QStringLiteral("正在等待浏览器完成登录…"),
                       "忙的时候状态行说的是在等什么", statusLabel->text());
                 check(!loginBtn->isEnabled() && !refreshBtn->isEnabled() &&
                           !uploadBtn->isEnabled(),
@@ -440,7 +440,7 @@ int UiAccountSkinChecks() {
                 check(switchBtn->isEnabled() && removeBtn->isEnabled() &&
                           applyCapeBtn->isEnabled(),
                       "按选中项恢复的那三个也回来（选中项还在）");
-                check(statusLabel->text() == QStringLiteral("正在等浏览器完成登录…"),
+                check(statusLabel->text() == QStringLiteral("正在等待浏览器完成登录…"),
                       "setBusy(false) 不碰状态行的文字 —— 写什么由调用方决定"
                       "（背景刷新失败要写失败原因，成功就写回当前身份）");
             }
@@ -477,7 +477,7 @@ int UiAccountSkinChecks() {
 
                 // 忙的时候这一行也得灰：它一旦成功就会把活动槽清空（切到离线身份），而正飞着的
                 // 那次登录回来还要往活动槽里写 —— 两个人会打架。
-                dialog.setBusy(true, QStringLiteral("正在等浏览器完成登录…"));
+                dialog.setBusy(true, QStringLiteral("正在等待浏览器完成登录…"));
                 QApplication::processEvents();
                 check(!offlineEdit->isEnabled() && !addOfflineBtn->isEnabled(),
                       "忙的时候那个框和按钮一起灰（不许一边登录一边加离线账号）");

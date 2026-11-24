@@ -62,7 +62,7 @@ QString projectPath(const QString &projectId) {
 QString throttleText(qint64 untilMs) {
     const qint64 leftMs = untilMs - QDateTime::currentMSecsSinceEpoch();
     const qint64 seconds = qMax<qint64>(1, (leftMs + 999) / 1000);
-    return QCoreApplication::translate("ModrinthCompatibility", "平台正在限流（大约还要 %1 秒），暂时无法确认。").arg(seconds);
+    return QCoreApplication::translate("ModrinthCompatibility", "平台请求受限（约需等待 %1 秒），暂时无法确认。").arg(seconds);
 }
 
 CompatibilityState classifyVersions(const QList<ResourceCatalog::VersionEntry> &versions,
@@ -79,8 +79,8 @@ CompatibilityState classifyVersions(const QList<ResourceCatalog::VersionEntry> &
             !loaders.contains(normalizeCompatibilityLoader(context.loader))) continue;
         return CompatibilityState::Matched;
     }
-    *detail = unknown ? QCoreApplication::translate("ModrinthCompatibility", "版本信息不完整，暂时无法确认；没有将其判断为缺失。")
-        : QCoreApplication::translate("ModrinthCompatibility", "平台没有兼容当前游戏、加载器和发布筛选的发行版。");
+    *detail = unknown ? QCoreApplication::translate("ModrinthCompatibility", "版本信息不完整，暂时无法确认；未判定为缺失。")
+        : QCoreApplication::translate("ModrinthCompatibility", "平台无兼容当前游戏、加载器与发布筛选的发行版。");
     return unknown ? CompatibilityState::Unknown : CompatibilityState::Missing;
 }
 
@@ -219,7 +219,7 @@ void PlatformCompatibilityProvider::queryModrinth(const ModReference &reference,
                 return;
             }
             if (status == 404) {
-                reply(CompatibilityState::Missing, QCoreApplication::translate("ModrinthCompatibility", "Modrinth 上没有这个项目。"));
+                reply(CompatibilityState::Missing, QCoreApplication::translate("ModrinthCompatibility", "Modrinth 无此项目。"));
                 return;
             }
             if (status == 429) {
@@ -228,7 +228,7 @@ void PlatformCompatibilityProvider::queryModrinth(const ModReference &reference,
                 m_modrinthThrottledUntilMs =
                     QDateTime::currentMSecsSinceEpoch() + kThrottleWindowMs;
                 reply(CompatibilityState::Unknown,
-                      QCoreApplication::translate("ModrinthCompatibility", "Modrinth 限流了，暂时无法确认，稍后再试。"));
+                      QCoreApplication::translate("ModrinthCompatibility", "Modrinth 请求受限，暂时无法确认，请稍后重试。"));
                 return;
             }
             if (status == 408 || status >= 500) {
@@ -250,8 +250,8 @@ void PlatformCompatibilityProvider::queryModrinth(const ModReference &reference,
             const QJsonArray versions = document.array();
             if (versions.isEmpty()) {
                 reply(CompatibilityState::Missing,
-                      QCoreApplication::translate("ModrinthCompatibility", "Modrinth 上没有兼容 %1%2 的发行版。")
-                          .arg(context.gameVersion.isEmpty() ? QCoreApplication::translate("ModrinthCompatibility", "这个版本")
+                      QCoreApplication::translate("ModrinthCompatibility", "Modrinth 无兼容 %1%2 的发行版。")
+                          .arg(context.gameVersion.isEmpty() ? QCoreApplication::translate("ModrinthCompatibility", "当前版本")
                                                              : context.gameVersion,
                                context.loader.isEmpty()
                                    ? QString()
@@ -274,7 +274,7 @@ void PlatformCompatibilityProvider::queryCurseForge(const ModReference &referenc
     if (state->cancelled) return;
     if (!m_curseForgeAvailable) {
         reply(CompatibilityState::Unknown,
-              QCoreApplication::translate("ModrinthCompatibility", "没有配置 CurseForge 接口，暂时无法确认。"));
+              QCoreApplication::translate("ModrinthCompatibility", "未配置 CurseForge 接口，暂时无法确认。"));
         return;
     }
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
@@ -334,14 +334,14 @@ void PlatformCompatibilityProvider::queryCurseForge(const ModReference &referenc
                 return;
             }
             if (status == 404) {
-                reply(CompatibilityState::Missing, QCoreApplication::translate("ModrinthCompatibility", "CurseForge 上没有这个项目。"));
+                reply(CompatibilityState::Missing, QCoreApplication::translate("ModrinthCompatibility", "CurseForge 无此项目。"));
                 return;
             }
             if (status == 429) {
                 m_curseForgeThrottledUntilMs =
                     QDateTime::currentMSecsSinceEpoch() + kThrottleWindowMs;
                 reply(CompatibilityState::Unknown,
-                      QCoreApplication::translate("ModrinthCompatibility", "CurseForge 限流了，暂时无法确认，稍后再试。"));
+                      QCoreApplication::translate("ModrinthCompatibility", "CurseForge 请求受限，暂时无法确认，请稍后重试。"));
                 return;
             }
             if (status == 408 || status >= 500) {
@@ -368,8 +368,8 @@ void PlatformCompatibilityProvider::queryCurseForge(const ModReference &referenc
             const QJsonArray files = document.object().value(QStringLiteral("data")).toArray();
             if (files.isEmpty()) {
                 reply(CompatibilityState::Missing,
-                      QCoreApplication::translate("ModrinthCompatibility", "CurseForge 上没有兼容 %1%2 的发行版。")
-                          .arg(context.gameVersion.isEmpty() ? QCoreApplication::translate("ModrinthCompatibility", "这个版本")
+                      QCoreApplication::translate("ModrinthCompatibility", "CurseForge 无兼容 %1%2 的发行版。")
+                          .arg(context.gameVersion.isEmpty() ? QCoreApplication::translate("ModrinthCompatibility", "当前版本")
                                                              : context.gameVersion,
                                context.loader.isEmpty()
                                    ? QString()

@@ -590,7 +590,7 @@ int UiSurfaceSweepCheck(QApplication &app) {
                            false},
                           {QStringLiteral("uuid-2"), QStringLiteral("Alex"), QStringLiteral("2026-10-20"), false,
                            true}});
-        overlayDialog(QStringLiteral("account-skin"), QStringLiteral("账号与外观"),
+        overlayDialog(QStringLiteral("account-skin"), QStringLiteral("账号与皮肤"),
                       QStringLiteral("主窗口 → 主页左下账号 → 「账号与外观」"),
                       QStringLiteral("ui/AccountSkinDialog.cpp"), QStringLiteral("input-widths / ui-review-shots"),
                       &page, AccountSkinDialog::windowTitle());

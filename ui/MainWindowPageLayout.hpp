@@ -113,7 +113,7 @@ inline constexpr int kJvmArgsEditHeight = 72;
 /// 不给下限就会各自缩成一小块、排在一起长短不齐。
 inline constexpr int kDownloadButtonMinWidth = 96;
 
-/// 「账号与外观…」那个入口按钮的最小宽度。文案固定，但给一个下限，免得以后换文案时
+/// 「管理账号与皮肤」那个入口按钮的最小宽度。文案固定，但给一个下限，免得以后换文案时
 /// 按钮缩成一小块。**主页那个和设置页那个共用这一个值** —— 它们说的是同一件事。
 inline constexpr int kAccountSkinButtonMinWidth = 140;
 
@@ -219,6 +219,9 @@ void markTextRole(QWidget *label, const QString &value);
 
 /// 搜索框左边那枚放大镜（跟着主题重新着色）。
 void addSearchIcon(QLineEdit *edit);
+/// 把搜索框的最小宽取成「占位字实测宽 + 图标与清除钮的留白」，夹在 [lo, hi]：中文占位短，落在 @p lo；
+/// 英文占位长，放宽到放得下（上限 @p hi），不再被省略号截断。
+void fitSearchWidth(QLineEdit *edit, int lo, int hi);
 QLineEdit *makeListFilterSearch(QWidget *parent, const QString &name, const QString &placeholder);
 
 void styleSidebarList(QListWidget *list);
@@ -251,7 +254,7 @@ void addHint(QWidget *box, const QString &text, QWidget *parent);
 // · `makeSectionCard()`：浅色面 + 一圈内边距 + 一条粗标题 —— 下载页那张安装页
 //   （「模组加载器」）和服务端表单（「服务端」）用的是它；
 // · `makePageSection()`：**不套卡片**，只有一条粗标题 + 下面那片内容 —— 实例设置页
-//   （「显示哪些页」）和预设详情（「预设内容」…）用的是它；
+//   （「显示页面」）和预设详情（「预设内容」…）用的是它；
 // · `makePageScroll()`：无边框 + 可伸缩 + 横向不滚的正文层（底下留出浮着的主按钮）。
 
 /// 一张小节卡片。@p layoutOut 拿回来的是卡片里的竖布局（标题已经在里面）。

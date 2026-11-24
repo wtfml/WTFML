@@ -489,6 +489,7 @@ void InstanceSettingsDialog::setInstanceName(const QString &name) {
     // 也不需要挡什么 —— 这一句只是让控件和"磁盘上现在叫什么"重新对上（改名成功之后是
     // 新名字，失败之后退回老名字）。
     m_instanceNameEdit->setText(name);
+    m_instanceNameEdit->setCursorPosition(0);
 }
 
 void InstanceSettingsDialog::setInstanceDisplayName(const QString &displayName) {
@@ -1049,16 +1050,16 @@ QString InstanceSettingsDialog::filesHint(const QString &key) {
 
 QString InstanceSettingsDialog::filesEmptyText(const QString &key) {
     if (key == QStringLiteral("mod")) {
-        return tr("暂无模组，可通过“%1”添加。").arg(filesDownloadText(key));
+        return tr("暂无模组，可通过「%1」添加。").arg(filesDownloadText(key));
     }
     if (key == QStringLiteral("resourcepack")) {
-        return tr("暂无资源包，可通过“%1”添加。").arg(filesDownloadText(key));
+        return tr("暂无资源包，可通过「%1」添加。").arg(filesDownloadText(key));
     }
     if (key == QStringLiteral("datapack")) {
-        return tr("暂无数据包，可通过“%1”添加。").arg(filesDownloadText(key));
+        return tr("暂无数据包，可通过「%1」添加。").arg(filesDownloadText(key));
     }
     if (key == QStringLiteral("shader")) {
-        return tr("暂无光影，可通过“%1”添加。").arg(filesDownloadText(key));
+        return tr("暂无光影，可通过「%1」添加。").arg(filesDownloadText(key));
     }
     if (key == QStringLiteral("schematic")) {
         return tr("暂无结构或原理图");
@@ -1124,7 +1125,7 @@ QString InstanceSettingsDialog::filesDownloadTip(const QString &key) {
         return QString();
     }
     // 提示里得说清"这一页会关掉"：用户按它是为了**换个地方**，不是就地多出一个东西。
-    return tr("打开“%1”下载页。").arg(texts.at(index));
+    return tr("打开「%1」下载页。").arg(texts.at(index));
 }
 
 QString InstanceSettingsDialog::filesDownloadCategoryKey(const QString &key) {
@@ -1170,7 +1171,7 @@ QString InstanceSettingsDialog::filesResourceTip(const QString &title) {
     }
     // 和 filesDownloadTip() 同一句话的规矩：**说清这一页会关掉** —— 用户点它是为了换个
     // 地方，不是就地多出一个东西。
-    return tr("打开“%1”下载页。").arg(title);
+    return tr("打开「%1」下载页。").arg(title);
 }
 
 // 那几页底下不挂说明文字，所以这里也没有一段讲"行尾那颗 ⓘ"的小字。要再挂说明，写的时候
@@ -1646,7 +1647,7 @@ void InstanceSettingsDialog::refreshGroupMenuState() {
     const QString name = m_chosenGroupIndex >= 0 && m_chosenGroupIndex < m_groupRows.size()
                              ? m_groupRows.at(m_chosenGroupIndex)->text()
                              : ungroupedGroupText();
-    m_groupButton->setToolTip(tr("现在归在「%1」里。点开可以换一组。").arg(name));
+    m_groupButton->setToolTip(tr("当前归属分组「%1」。单击可更换分组。").arg(name));
 }
 
 void InstanceSettingsDialog::popUpMenuBelow(QWidget *menu, const QWidget *anchor) {
@@ -1811,6 +1812,18 @@ QString InstanceSettingsDialog::currentPageKey() const {
     return m_stack == nullptr ? QString() : pageKeyAtStackIndex(m_stack->currentIndex());
 }
 
+int InstanceSettingsDialog::fittedNavigationTreeWidth(const QTreeWidget *tree) {
+    int widest = 0;
+    for (QTreeWidgetItemIterator it(const_cast<QTreeWidget *>(tree)); *it; ++it) {
+        int depth = 0;
+        for (const QTreeWidgetItem *p = (*it)->parent(); p != nullptr; p = p->parent()) ++depth;
+        const int textWidth = QFontMetrics((*it)->font(0)).horizontalAdvance((*it)->text(0));
+        // 36 = 右留白 12 + 树内部左右各约 12 的余量（按截图实测：整项可画宽比树宽少约 22）
+        widest = qMax(widest, depth * tree->indentation() + 8 + textWidth + 36);
+    }
+    return qBound(navigationTreeWidth(), widest, 240);
+}
+
 void InstanceSettingsDialog::rebuildNavigationTree() {
     if (m_navigationTree == nullptr) return;
     QSet<QString> collapsed;
@@ -1873,6 +1886,7 @@ void InstanceSettingsDialog::rebuildNavigationTree() {
             (*it)->setExpanded(rebuilding ? !collapsed.contains(id) : defaultExpanded);
         }
     }
+    m_navigationTree->setFixedWidth(fittedNavigationTreeWidth(m_navigationTree));
 }
 
 QWidget *InstanceSettingsDialog::addOverrideRow(QGridLayout *grid, int row, const QString &field,
@@ -2251,7 +2265,7 @@ void InstanceSettingsDialog::watchPage(QWidget *page) {
 
     // NOTE: 【上面两条按类型的线接不到两种改动，各自在动手的地方补一发 notifyEdited()】
     // ①「浏览…」选完 java.exe：那是 `setText()`（程序化，不发 editingFinished）；
-    // ②「选一张图片…」挑完图：`clicked` 在**框弹出来之前**就发完了，等用户挑完，
+    // ②「选择图片…」挑完图：`clicked` 在**框弹出来之前**就发完了，等用户挑完，
     // 那一发早过去了（值是在那之后才变的）。
     // 往这一页再加"点一下、然后弹个系统框问点什么"的按钮时，记住同一件事。
 }
@@ -2281,7 +2295,7 @@ QStringList InstanceSettingsDialog::valueSignature() const {
     if (!m_pickedIconImage.isNull()) {
         inputs.iconSignature += QLatin1Char('|') + QString::number(m_pickedIconImage.cacheKey());
     }
-    // 「显示哪些页」按 optionalPageKeys() 的**顺序**摆（不能按 QHash 的遍历顺序）。
+    // 「显示页面」按 optionalPageKeys() 的**顺序**摆（不能按 QHash 的遍历顺序）。
     for (const QString &key : optionalPageKeys()) {
         const QCheckBox *check = m_pageChecks.value(key);
         inputs.pageChecks.append({key, check != nullptr && check->isChecked()});

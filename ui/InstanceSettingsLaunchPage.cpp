@@ -144,6 +144,7 @@ void InstanceSettingsDialog::setupLaunchPage(const GlobalValues &global, const Q
         const auto applyPath = [this](const QString &path) {
             if (path.isEmpty()) return;
             m_javaPathEdit->setText(path);
+            m_javaPathEdit->setCursorPosition(0);
             setChoiceCustom(javaPathField(), true);
             notifyEdited();
         };
@@ -542,6 +543,7 @@ void InstanceSettingsDialog::applyLaunchValues(const Override &current, const Gl
     // 重开这个对话框必须停在「自定义」上，否则用户会以为自己的设置丢了。
     setChoiceCustom(javaPathField(), current.javaPath.has_value());
     m_javaPathEdit->setText(current.javaPath.value_or(global.javaPath));
+    m_javaPathEdit->setCursorPosition(0);
 
     setChoiceCustom(xmxField(), current.xmx.has_value());
     m_memoryMaxSpin->setValue(current.xmx.value_or(global.xmx));
@@ -560,6 +562,7 @@ void InstanceSettingsDialog::applyLaunchValues(const Override &current, const Gl
 
     setChoiceCustom(extraJvmArgsField(), current.extraJvmArgs.has_value());
     m_extraJvmArgsEdit->setText(current.extraJvmArgs.value_or(global.extraJvmArgs));
+    m_extraJvmArgsEdit->setCursorPosition(0);
 
     // ---------- 窗口模式 / 窗口大小 ----------
     if (m_windowModeCombo != nullptr) {

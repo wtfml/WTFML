@@ -44,6 +44,7 @@
 
 namespace {
 
+constexpr int kInstanceChipValueMax = 200;     // 页头实例胶囊里实例名最宽，超出省略号
 constexpr int kColumnMax = 760;              // 对话流与输入岛最宽（样张 .col / .composer）
 constexpr int kGroupHeaderRole = Qt::UserRole + 2;  // 「固定 / 今天 / 更早」小标题行
 constexpr int kTimeRole = Qt::UserRole + 3;         // 会话行右侧的相对时间
@@ -516,7 +517,11 @@ AgentPage::AgentPage(QWidget *parent)
         auto *lbl = new QLabel(QCoreApplication::translate("AgentPage", "实例"), m_instanceChip);
         lbl->setAttribute(Qt::WA_TransparentForMouseEvents);
         lbl->setFont(pxFont(lbl->font(), 13.5));
-        m_instanceValue = new QLabel(QCoreApplication::translate("AgentPage", "无"), m_instanceChip);
+        auto *value = new ElidedLabel(m_instanceChip);  // 实例名太长时省略号收尾，完整名放胶囊悬停提示
+        value->setText(QCoreApplication::translate("AgentPage", "无"));
+        value->setMinimumWidth(1);
+        value->setMaximumWidth(kInstanceChipValueMax);
+        m_instanceValue = value;
         m_instanceValue->setObjectName(QStringLiteral("agentInstanceValue"));
         m_instanceValue->setAttribute(Qt::WA_TransparentForMouseEvents);
         m_instanceValue->setFont(pxFont(m_instanceValue->font(), 13.5, QFont::Medium));
@@ -999,7 +1004,7 @@ void AgentPage::setStreaming(bool streaming) {
 void AgentPage::setConfigured(bool configured, const QString &statusText) {
     m_configured = configured;
     if (!statusText.isEmpty()) m_statusText = statusText;
-    // 未配置：顶上一颗警示胶囊（点了开 API 设置），空状态换成「先配置 API」，输入岛停用。
+    // 未配置：顶上一颗警示胶囊（点了开 API 设置），空状态换成「请先配置 API」，输入岛停用。
     m_apiWarn->setVisible(!configured);
     m_apiWarn->setText(m_statusText.startsWith(QCoreApplication::translate("AgentPage", "配置无效")) ? QCoreApplication::translate("AgentPage", "API 配置无效")
                                                                         : QCoreApplication::translate("AgentPage", "API 未配置"));
@@ -1022,6 +1027,10 @@ void AgentPage::setModelLabel(const QString &label) {
 
 void AgentPage::setInstanceChip(const QString &text, bool locked) {
     m_instanceValue->setText(text);
+    QString tip = QCoreApplication::translate("AgentPage", "选择本会话关联的实例");
+    if (QFontMetrics(m_instanceValue->font()).horizontalAdvance(text) > kInstanceChipValueMax)
+        tip += QLatin1Char('\n') + text;
+    m_instanceChip->setToolTip(tip);
     // QPushButton 的 sizeHint 只量自己的字（这里是空的），宽度按里面两颗字的布局给。
     m_instanceChip->setMinimumWidth(qMin(260, m_instanceChip->layout()->sizeHint().width()));
     m_instanceChip->setProperty("locked", locked);
@@ -1146,7 +1155,7 @@ void AgentPage::showEmptyState(bool empty) { m_emptyState->setVisible(empty); }
 void AgentPage::updateEmptyState() {
     const bool empty = m_views.isEmpty() && m_toolCards.isEmpty() && m_approvalCard == nullptr;
     m_emptyState->setVisible(empty);
-    m_emptyTitle->setText(m_configured ? QCoreApplication::translate("AgentPage", "有什么想问的？") : QCoreApplication::translate("AgentPage", "先配置 API"));
+    m_emptyTitle->setText(m_configured ? QCoreApplication::translate("AgentPage", "开始对话") : QCoreApplication::translate("AgentPage", "请先配置 API"));
     m_emptyText->setText(m_configured ? QCoreApplication::translate("AgentPage", "可查看关联实例的文件；写入文件前会先征得确认。")
                                       : QCoreApplication::translate("AgentPage", "填写服务地址和密钥后即可开始对话。"));
     m_emptyAction->setVisible(!m_configured);

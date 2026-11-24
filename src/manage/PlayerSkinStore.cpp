@@ -90,7 +90,7 @@ PlayerSkinProfile PlayerSkinStore::parseProfileJson(const QByteArray &body, QStr
     QJsonParseError parseError;
     const QJsonDocument document = QJsonDocument::fromJson(body, &parseError);
     if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
-        return fail(QCoreApplication::translate("PlayerSkinStore", "档案不是合法的 JSON：%1").arg(parseError.errorString()));
+        return fail(QCoreApplication::translate("PlayerSkinStore", "档案不是有效的 JSON：%1").arg(parseError.errorString()));
     }
 
     // properties 是个数组，里面按 name 找 "textures" 那一条。**不假定它在第 0 位**：
@@ -120,7 +120,8 @@ PlayerSkinProfile PlayerSkinStore::parseProfileJson(const QByteArray &body, QStr
 
     const QJsonDocument inner = QJsonDocument::fromJson(decoded.decoded, &parseError);
     if (parseError.error != QJsonParseError::NoError || !inner.isObject()) {
-        return fail(QCoreApplication::translate("PlayerSkinStore", "textures 解出来不是合法的 JSON：%1").arg(parseError.errorString()));
+        return fail(QCoreApplication::translate("PlayerSkinStore", "textures 解码后不是有效的 JSON：%1")
+                        .arg(parseError.errorString()));
     }
 
     const QJsonObject textures = inner.object().value(kTexturesField).toObject();
@@ -140,7 +141,7 @@ PlayerSkinProfile PlayerSkinStore::parseProfileJson(const QByteArray &body, QStr
     if (profile.skinUrl.isEmpty()) {
         // 有档案但没皮肤地址：每个账号都有皮肤（没设过就是默认那套），所以这一定是
         // 协议变了。当成"解不出来"，别把一份没有皮肤的档案发出去。
-        return fail(QCoreApplication::translate("PlayerSkinStore", "档案里没有 SKIN.url"));
+        return fail(QCoreApplication::translate("PlayerSkinStore", "档案中无 SKIN.url"));
     }
     return profile;
 }
@@ -318,7 +319,7 @@ bool PlayerSkinStore::saveProfile(const QString &uuid, const PlayerSkinProfile &
         return fail(QCoreApplication::translate("PlayerSkinStore", "无法识别玩家 UUID，未缓存玩家档案"));
     }
     if (profile.isEmpty()) {
-        return fail(QCoreApplication::translate("PlayerSkinStore", "档案里没有皮肤，不存"));
+        return fail(QCoreApplication::translate("PlayerSkinStore", "档案中无皮肤，未保存"));
     }
 
     if (!QDir().mkpath(AppPaths::skinsDir())) {
@@ -409,7 +410,7 @@ void PlayerSkinStore::refreshForUuid(const QString &uuid) {
                                              // 没成。发 failed() 而不是只记日志 —— 调用方拿它把
                                              // "正在获取"那一格落回 false（以前超时走网络错误那条
                                              // 路，同样会发 failed）。
-                                             emit failed(QCoreApplication::translate("PlayerSkinStore", "取档案失败：%1").arg(jobError));
+                                             emit failed(QCoreApplication::translate("PlayerSkinStore", "获取档案失败：%1").arg(jobError));
                                              return;
                                          }
                                          const int status =
@@ -425,7 +426,7 @@ void PlayerSkinStore::refreshForUuid(const QString &uuid) {
                                              // 手上那份缓存 —— 多半是限流，此时"继续用上次那套外观"比
                                              // "退回默认外观"更接近用户想看到的。
                                              qWarning().noquote()
-                                                 << QCoreApplication::translate("PlayerSkinStore", "官方查不到这个玩家的档案（204），沿用上次的外观");
+                                                 << QCoreApplication::translate("PlayerSkinStore", "官方未查到此玩家的档案（204），沿用上次的外观");
                                              return;
                                          }
                                          if (outcome == ProfileFetchOutcome::Throttled) {
@@ -437,11 +438,11 @@ void PlayerSkinStore::refreshForUuid(const QString &uuid) {
                                              m_throttledUntil = QDateTime::currentDateTimeUtc().addMSecs(
                                                  kThrottleBackoffMs);
                                              qWarning().noquote()
-                                                 << QCoreApplication::translate("PlayerSkinStore", "官方限流了（429），一分钟后再说，这段时间沿用上次的外观");
+                                                 << QCoreApplication::translate("PlayerSkinStore", "官方已限流（429），一分钟后重试，期间沿用上次的外观");
                                              return;
                                          }
                                          if (outcome == ProfileFetchOutcome::Failed) {
-                                             emit failed(QCoreApplication::translate("PlayerSkinStore", "取档案失败（HTTP %1）：%2")
+                                             emit failed(QCoreApplication::translate("PlayerSkinStore", "获取档案失败（HTTP %1）：%2")
                                                              .arg(status)
                                                              .arg(networkError));
                                              return;
@@ -493,7 +494,7 @@ void PlayerSkinStore::fetchTexture(const QString &url) {
         [this, url, cached](QNetworkReply *reply, const QString &jobError) {
             if (reply == nullptr) {
                 // 同上：没发出去/被掐/包装层先没，都是"这次没成"。
-                emit failed(QCoreApplication::translate("PlayerSkinStore", "下贴图失败：%1").arg(jobError));
+                emit failed(QCoreApplication::translate("PlayerSkinStore", "下载贴图失败：%1").arg(jobError));
                 return;
             }
             const QByteArray bytes = reply->readAll();
@@ -501,14 +502,15 @@ void PlayerSkinStore::fetchTexture(const QString &url) {
             const bool ok = reply->error() == QNetworkReply::NoError;
 
             if (!ok) {
-                emit failed(QCoreApplication::translate("PlayerSkinStore", "下贴图失败：%1").arg(networkError));
+                emit failed(QCoreApplication::translate("PlayerSkinStore", "下载贴图失败：%1").arg(networkError));
                 return;
             }
             if (!looksLikeSkinPng(bytes)) {
                 // **不落盘**。往里写一张垃圾图，下次开窗会把它当"命中缓存"用，而缓存是
                 // 永不失效的 —— 那张图会一直错下去，而且再也不会有人去重下它。
                 emit failed(
-                    QCoreApplication::translate("PlayerSkinStore", "贴图不是一张 64 宽的皮肤 PNG（%1 字节）").arg(bytes.size()));
+                    QCoreApplication::translate("PlayerSkinStore", "贴图不是宽 64 "
+                                                                   "的皮肤 PNG（%1 字节）").arg(bytes.size()));
                 return;
             }
 
@@ -523,7 +525,7 @@ void PlayerSkinStore::fetchTexture(const QString &url) {
                 // 落盘失败（磁盘满、权限）时**也当失败**：这张图只在内存里，而调用方要的是
                 // 一个能读的路径。说清楚比"发一个读不到的路径"强。
                 emit failed(
-                    QCoreApplication::translate("PlayerSkinStore", "贴图存不下来：%1").arg(QDir::toNativeSeparators(cached)));
+                    QCoreApplication::translate("PlayerSkinStore", "无法保存贴图：%1").arg(QDir::toNativeSeparators(cached)));
                 return;
             }
             emit textureReady(url, cached);

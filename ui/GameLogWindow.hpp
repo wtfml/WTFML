@@ -165,7 +165,7 @@ public:
     // 主线程上做）：调用方在工作线程里读好，再把行递进来。
 
     /// 切成文件查看器：标题与顶端写文件名，运行徽标、清空、导出错误报告收起，
-    /// 「用外部程序打开」露出来；正文先写「正在读取…」。
+    /// 「使用外部程序打开」露出来；正文先写「正在读取…」。
     void beginFile(const QString &path);
     /// 读好了：@p lines 是全部行，@p cutHeadBytes > 0 表示文件太大、开头那一截没读。
     /// 行数超过 `maxLogBlocks()` 时把模型容量放大到装得下；默认只显示末尾
@@ -183,7 +183,7 @@ public:
     bool fileBatchPending() const { return m_batchPos < m_batchLines.size(); }
     static QString fileWindowTitleText(const QString &fileName);
     static QString fileHintText(qint64 cutHeadBytes, bool tailByDefault);
-    /// 右上「…」菜单里「用外部程序打开」那一项。
+    /// 右上「…」菜单里「使用外部程序打开」那一项。
     QAction *externalOpenAction() const { return m_externalAction; }
 
     /**
@@ -441,7 +441,7 @@ signals:
     /// 用户点了「导出日志…」。槽该读 `allLogText()`。
     void exportLogRequested();
     void exportReportRequested();
-    /// 文件查看器里点了「用外部程序打开」。
+    /// 文件查看器里点了「使用外部程序打开」。
     void openExternalRequested(const QString &path);
 
 public:

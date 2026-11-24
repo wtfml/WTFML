@@ -194,7 +194,7 @@ QList<ValueProblem> problemsIn(const ServerModel::Properties &properties);
 /// 一行被下面那行盖掉了。
 QStringList duplicateKeys(const ServerModel::Properties &properties);
 
-/// 文件里我们**不认识**的键（`commonFields()` 里没有的那些）。空 = 全认识。
+/// 文件里没有专用控件的键（`commonFields()` 以外）。用于「其他属性」。
 /// 这不是错误：整合包和插件会往里加自己的键，那些键这一页一个都不动（原样留着）。
 QStringList unknownKeys(const ServerModel::Properties &properties);
 

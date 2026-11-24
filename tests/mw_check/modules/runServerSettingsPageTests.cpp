@@ -3,6 +3,8 @@
 #include "controllers/ActivityCenterController.hpp"
 #include "controllers/ServerSettingsController.hpp"
 #include "controllers/ServerWorkspaceController.hpp"
+#include "WorldSettingsPage.hpp"
+#include "manage/WorldFiles.hpp"
 void runServerSettingsPageTests() {
     const QString originalDir = AppPaths::minecraftDir();
     QTemporaryDir root;
@@ -40,7 +42,7 @@ void runServerSettingsPageTests() {
     {
         QFile levelDat(serverDir + QStringLiteral("/world/level.dat"));
         if (levelDat.open(QIODevice::WriteOnly)) {
-            levelDat.write(QByteArrayLiteral("LEVEL-DATA"));
+            levelDat.write(QByteArray::fromHex("0a00000a0004446174610800094c6576656c4e616d650004546573740000"));
             levelDat.close();
         }
     }
@@ -48,6 +50,7 @@ void runServerSettingsPageTests() {
                                                 "motd=欢迎来到我的服务端\n"
                                                 "server-port=25565\n"
                                                 "level-name=world\n"
+                                                "accepts-transfers=false\n"
                                                 "view-distance=10\n");
     {
         QFile props(ServerRegistry::propertiesPath(serverId));
@@ -185,6 +188,24 @@ void runServerSettingsPageTests() {
         selectSection(Section::Backups);
         auto *worldSelector = page->findChild<QComboBox *>(QStringLiteral("serverSettingsWorldSelector"));
         auto *activateWorld = page->findChild<QPushButton *>(QStringLiteral("serverSettingsActivateWorld"));
+        auto *worldEditor = page->worldEditor();
+        worldEditor->setFileEditingOpen(true);
+        auto *worldNameEdit = worldEditor->findChild<QLineEdit *>(WorldSettingsPage::nameEditName());
+        check(worldNameEdit && worldNameEdit->text() == QStringLiteral("Test"),
+              "T42 服务端世界使用客户端存档编辑器读取 level.dat");
+        if (worldNameEdit && worldNameEdit->text() == QStringLiteral("Test")) {
+            worldNameEdit->setText(QStringLiteral("Server test world"));
+            {
+                PromptAnswerer prompts({0});
+                prompts.start();
+                worldEditor->saveButton()->click();
+            }
+            WorldFiles::LevelData savedWorld;
+            check(WorldFiles::readLevelData(QDir(serverDir).filePath(QStringLiteral("world")), &savedWorld) &&
+                      savedWorld.info.levelName == QStringLiteral("Server test world") &&
+                      propsTextOnDisk() == originalProps,
+                  "T42 服务端存档编辑保存 level.dat，保留启动世界配置");
+        }
         if (worldSelector) worldSelector->setCurrentIndex(worldSelector->findData(QStringLiteral("second-world")));
         check(worldSelector && page->selectedWorld() == QStringLiteral("second-world") &&
                   ServerRegistry::readProperties(serverId).value(QStringLiteral("level-name")) == QStringLiteral("world"),
@@ -199,6 +220,9 @@ void runServerSettingsPageTests() {
             worldSelector->setCurrentIndex(worldSelector->findData(QStringLiteral("world")));
         }
         selectSection(Section::Common);
+        auto *extra = textFieldOf(QStringLiteral("accepts-transfers"));
+        check(extra && extra->text() == QStringLiteral("false"),
+              "T42 其他属性出现在设置表单");
 
         // ---------- ② 表单改一格 → 保存带亮 → 保存 → 盘上只动了那一行 ----------
         textFieldOf(QStringLiteral("motd"))->setText(QStringLiteral("新的说明"));
@@ -225,13 +249,16 @@ void runServerSettingsPageTests() {
                   !save->isEnabled(),
               "★★ T42.2 存完那一行小字换成「已保存」、按钮又灭了（按过就没了）",
               saveNote->text());
+        extra = textFieldOf(QStringLiteral("accepts-transfers"));
+        if (extra) extra->setText(QStringLiteral("true"));
 
         // ---------- ③ 切到「原始文本」：表单那笔改动**已经合进文本**了 ----------
         // 这一步量的是"两页看到的不是两份东西"（见 `mergeServerSettingsEdits`）。
         selectSection(Section::RawText);
         QApplication::processEvents();
         check(stack->currentIndex() == static_cast<int>(ServerSettingsPage::Section::RawText) &&
-                  rawEdit->toPlainText() == afterSave,
+                  rawEdit->toPlainText() == QString(afterSave).replace(
+                      QStringLiteral("accepts-transfers=false"), QStringLiteral("accepts-transfers=true")),
               "★★★ T42.3 切到「原始文本」⇒ 文本框里就是**刚存下去的那一份**（表单那笔改动"
               "早合进来了 —— 用户马上要看的正是「我改完之后这份文件长什么样」）",
               rawEdit->toPlainText());
@@ -246,6 +273,7 @@ void runServerSettingsPageTests() {
         QApplication::processEvents();
         const QString afterRaw = propsTextOnDisk();
         check(afterRaw.contains(QStringLiteral("pvp=false")) &&
+                  afterRaw.contains(QStringLiteral("accepts-transfers=true")) &&
                   afterRaw.contains(QStringLiteral("motd=\\u65B0\\u7684\\u8BF4\\u660E")),
               "★★★ T42.4 文本框里加的那一行真的写下去了（保存写回去的就是**这一份原文**；"
               "中文以 `\\uXXXX` 的样子放在原文里 —— 游戏按 ISO-8859-1 读）",
@@ -442,6 +470,10 @@ void runServerSettingsPageTests() {
                 process->start(serverId, serverRunDir.path(),
                                QCoreApplication::applicationFilePath(),
                                {QStringLiteral("--fake-server"), QStringLiteral("normal")}, 4000);
+                const auto *runningExtra = textFieldOf(QStringLiteral("accepts-transfers"));
+                check(worldSelector && !worldSelector->isEnabled() && !worldEditor->isEnabled() &&
+                          rawEdit->isReadOnly() && runningExtra && !runningExtra->isEnabled(),
+                      "T42 进程进入启动中即锁定世界选择、存档编辑和全部属性");
                 const bool running = pumpUntil(
                     [process] { return process->status() == ServerModel::Status::Running; }, 20000);
                 check(running, "T42.11 前提：假服务端起来了（没起来后面那几条没有意义）",
@@ -467,6 +499,8 @@ void runServerSettingsPageTests() {
                       "★★ T42.11 停下来之后状态那行也跟着翻回去", statusLabel->text());
                 check(textFieldOf(QStringLiteral("motd"))->isEnabled(),
                       "★★ T42.11 停了 ⇒ 这一页又能改");
+                check(worldSelector && worldSelector->isEnabled() && worldEditor->isEnabled() && !rawEdit->isReadOnly(),
+                      "T42 服务端停止后恢复世界和配置编辑");
             }
         }
 

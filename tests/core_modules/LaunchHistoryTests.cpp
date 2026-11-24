@@ -293,7 +293,7 @@ void runLaunchHistoryTests() {
     check(LaunchHistory::resultNote(note) == QStringLiteral("（上次是异常退出）"),
           "ZR7 崩过就明说");
     note.result = LaunchHistory::Result::Running;
-    check(LaunchHistory::resultNote(note) == QStringLiteral("（还在玩）"),
+    check(LaunchHistory::resultNote(note) == QStringLiteral("（游玩中）"),
           "★ ZR7 还在跑也明说（卡片上那颗按钮点下去会提醒「已经有一份在跑」）");
     note.result = LaunchHistory::Result::StartFailed;
     check(LaunchHistory::resultNote(note) == QStringLiteral("（上次启动失败）"),
@@ -303,15 +303,15 @@ void runLaunchHistoryTests() {
           "ZR7 正常退出**不占一行**（绝大多数时候都正常，写出来只是噪音）");
 
     check(LaunchHistory::durationText(-1).isEmpty(), "ZR7 还没算出来 ⇒ 空串");
-    check(LaunchHistory::durationText(0) == QStringLiteral("玩了不到 1 分钟")
-              && LaunchHistory::durationText(59) == QStringLiteral("玩了不到 1 分钟"),
+    check(LaunchHistory::durationText(0) == QStringLiteral("已游玩不到 1 分钟")
+              && LaunchHistory::durationText(59) == QStringLiteral("已游玩不到 1 分钟"),
           "ZR7 不到一分钟那一档（「玩了」两个字和量词一起挪，不许拼出「玩了 不到 1 分钟」）");
-    check(LaunchHistory::durationText(60) == QStringLiteral("玩了 1 分钟")
-              && LaunchHistory::durationText(3599) == QStringLiteral("玩了 59 分钟"),
+    check(LaunchHistory::durationText(60) == QStringLiteral("已游玩 1 分钟")
+              && LaunchHistory::durationText(3599) == QStringLiteral("已游玩 59 分钟"),
           "ZR7 分钟那一档");
-    check(LaunchHistory::durationText(3600) == QStringLiteral("玩了 1 小时")
-              && LaunchHistory::durationText(4320) == QStringLiteral("玩了 1 小时 12 分")
-              && LaunchHistory::durationText(7200) == QStringLiteral("玩了 2 小时"),
+    check(LaunchHistory::durationText(3600) == QStringLiteral("已游玩 1 小时")
+              && LaunchHistory::durationText(4320) == QStringLiteral("已游玩 1 小时 12 分")
+              && LaunchHistory::durationText(7200) == QStringLiteral("已游玩 2 小时"),
           "ZR7 小时那一档（整点不写「0 分」）");
 
     AppPaths::setMinecraftDir(originalDir);

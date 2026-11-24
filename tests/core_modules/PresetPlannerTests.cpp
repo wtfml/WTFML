@@ -12,7 +12,7 @@ void runPresetPlannerTests() {
                                    Presets::applyPlanVerb(Presets::ApplyMode::Skip)};
         check(verbs.at(0) == QStringLiteral("合并") && verbs.at(1) == QStringLiteral("覆盖") &&
                   verbs.at(2) == QStringLiteral("追加") &&
-                  verbs.at(3) == QStringLiteral("缺了才拷") &&
+                  verbs.at(3) == QStringLiteral("仅在缺失时复制") &&
                   verbs.at(4) == QStringLiteral("跳过"),
               "PE0 五档的动作词就是表上那五个字（唯一出处，别处不许再写一遍）",
               verbs.join(QStringLiteral(" / ")));
@@ -114,10 +114,10 @@ void runPresetPlannerTests() {
         check(first.ok && row.needsConfirm && !row.blocked && row.risky() && !row.problem.isEmpty(),
               "★★ PE3 第一趟（还没点头）：「覆盖」那一行标着要确认", row.problem);
         check(row.count == 1 && row.removed == 1,
-              "★★★ PE3 而且**数照样给出来**（动 1 项、删掉 1 项）—— 只告诉用户「要确认」而不告诉"
-              "他「会删掉什么」，那个确认框等于没问",
+              "★★★ PE3 而且**数照样给出来**（动 1 项、删除 1 项）—— 只告诉用户「要确认」而不告诉"
+              "他「会删除什么」，那个确认框等于没问",
               Presets::applyPlanRowText(row));
-        check(Presets::applyPlanRowText(row) == QStringLiteral("覆盖 1 项，删掉 1 项"),
+        check(Presets::applyPlanRowText(row) == QStringLiteral("覆盖 1 项，删除 1 项"),
               "PE3 那一行的右栏", Presets::applyPlanRowText(row));
         check(first.needsConfirm() && !first.canApply(),
               "★★ PE3 整份计划**不许开工**（`canApply()` 是那条闸的唯一出处）");
@@ -149,9 +149,9 @@ void runPresetPlannerTests() {
         const Presets::ApplyPlanRow &row = plan.rows.at(0);
         check(plan.ok && !row.blocked && row.count == 0 && row.removed == 2,
               "★★ PE4 「覆盖成空」：一个键都不写、但目标上那一域认得出的 2 个键（`fov` 和 "
-              "`gamma`）会被删掉",
+              "`gamma`）会被删除",
               Presets::applyPlanRowText(row));
-        check(Presets::applyPlanRowText(row) == QStringLiteral("覆盖，删掉 2 项"),
+        check(Presets::applyPlanRowText(row) == QStringLiteral("覆盖，删除 2 项"),
               "★★★ PE4 那一行**绝不能写成「覆盖 0 项」** —— 把「什么都写」和「什么都没留下」说成"
               "同一件事，是最要紧的那半截被藏起来了",
               Presets::applyPlanRowText(row));
@@ -204,7 +204,7 @@ void runPresetPlannerTests() {
                   plan.rows.at(0).count == 2 && !plan.canApply(),
               "★★ PE5 「覆盖」没点头：要写 2 条、会拿掉 1 条（目标上对不上的那一台），先要确认",
               Presets::applyPlanRowText(plan.rows.at(0)));
-        check(Presets::applyPlanRowText(plan.rows.at(0)) == QStringLiteral("覆盖 2 个，删掉 1 个"),
+        check(Presets::applyPlanRowText(plan.rows.at(0)) == QStringLiteral("覆盖 2 个，删除 1 个"),
               "PE5 那一行的右栏", Presets::applyPlanRowText(plan.rows.at(0)));
 
         // 目标那一份读不动 ⇒ 这一段**做不了**（而不是"目标上是空的"）。
@@ -215,7 +215,7 @@ void runPresetPlannerTests() {
               "★★ PE5 目标那一份读不动 ⇒ 这一段做不了（整份计划照样算得出来 —— 做不了的是"
               "**这一段**）",
               Presets::applyPlanRowText(plan.rows.at(0)));
-        check(Presets::applyPlanRowText(plan.rows.at(0)) == QStringLiteral("做不了"),
+        check(Presets::applyPlanRowText(plan.rows.at(0)) == QStringLiteral("无法完成"),
               "PE5 做不了的那一行右栏只说得出这三个字");
     }
 
@@ -248,7 +248,7 @@ void runPresetPlannerTests() {
         check(plan.rows.size() == 1 && !plan.rows.at(0).blocked && plan.rows.at(0).count == 1,
               "★★ PE6 目标上还没有那一份 ⇒ 要拷 1 个（`CopyIfMissing` 那一档真数了一遍目标）",
               Presets::applyPlanRowText(plan.rows.at(0)));
-        check(Presets::applyPlanRowText(plan.rows.at(0)) == QStringLiteral("缺了才拷 1 个"),
+        check(Presets::applyPlanRowText(plan.rows.at(0)) == QStringLiteral("仅在缺失时复制 1 个"),
               "PE6 那一行的右栏", Presets::applyPlanRowText(plan.rows.at(0)));
 
         QDir().mkpath(instanceRoot + QStringLiteral("/config"));
@@ -261,7 +261,7 @@ void runPresetPlannerTests() {
               "★★ PE6 目标上已经有了 ⇒ 这一项是「不用动」，**不是「拷了 0 个」**",
               Presets::applyPlanRowText(plan.rows.at(0)));
         check(Presets::applyPlanRowText(plan.rows.at(0)) == QStringLiteral("跳过 1 个"),
-              "★★ PE6 那一行的右栏说「跳过」，不说「缺了才拷 0 个」",
+              "★★ PE6 那一行的右栏说「跳过」，不说「仅在缺失时复制 0 个」",
               Presets::applyPlanRowText(plan.rows.at(0)));
 
         // 「合并」在一坨字节上做不了主 ⇒ 要用户选，而且**一个字节都不写**。
@@ -327,7 +327,7 @@ void runPresetPlannerTests() {
               "「做不了」，理由里带上**盘上那个词**（这句要能原样显示给用户看，不然他只知道"
               "「有一段做不了」，不知道该去预设里删哪一段）",
               plan.rows.at(1).problem);
-        check(Presets::applyPlanRowText(plan.rows.at(1)) == QStringLiteral("做不了") &&
+        check(Presets::applyPlanRowText(plan.rows.at(1)) == QStringLiteral("无法完成") &&
                   plan.blockedRowCount() == 1 && plan.canApply() && plan.totalCount() == 1,
               "★★ PE7 做不了的那一段**不拦着别的段**（整份 still 可以开工）");
     }
@@ -353,8 +353,8 @@ void runPresetPlannerTests() {
         Presets::ApplyPlanRow row;
         row.kind = Presets::SectionKind::VanillaOptions;
         row.mode = Presets::ApplyMode::Merge;
-        check(Presets::applyPlanRowText(row) == QStringLiteral("不动"),
-              "★★ PE9 什么都不动的那一行说「不动」（而「合并 0 项」听起来像「有一段是空的但我"
+        check(Presets::applyPlanRowText(row) == QStringLiteral("无变化"),
+              "★★ PE9 什么都不动的那一行说「无变化」（而「合并 0 项」听起来像「有一段是空的但我"
               "「什么都没做」，两句话不一样）",
               Presets::applyPlanRowText(row));
 
@@ -368,7 +368,7 @@ void runPresetPlannerTests() {
               "★ PE9 「跳过」那一档：一个字，不带数字", Presets::applyPlanRowText(row));
 
         row.blocked = true;
-        check(Presets::applyPlanRowText(row) == QStringLiteral("做不了") &&
+        check(Presets::applyPlanRowText(row) == QStringLiteral("无法完成") &&
                   row.risky() && !Presets::applyPlanRowText(row).contains(QStringLiteral("跳过")),
               "PE9 做不了的那一行不再提「跳过」（那会让人以为这一档就是不用管）",
               Presets::applyPlanRowText(row));
@@ -378,14 +378,14 @@ void runPresetPlannerTests() {
         row.mode = Presets::ApplyMode::CopyIfMissing;
         row.count = 8;
         row.skipped = 2;
-        check(Presets::applyPlanRowText(row) == QStringLiteral("缺了才拷 8 个，跳过 2 个"),
+        check(Presets::applyPlanRowText(row) == QStringLiteral("仅在缺失时复制 8 个，跳过 2 个"),
               "PE9 一行里那几个数用「，」接起来",
               Presets::applyPlanRowText(row));
 
         row.conflictCount = 1;
         row.removed = 3;
         check(Presets::applyPlanRowText(row) ==
-                  QStringLiteral("缺了才拷 8 个，删掉 3 个，冲突 1 项，跳过 2 个"),
+                  QStringLiteral("仅在缺失时复制 8 个，删除 3 个，冲突 1 项，跳过 2 个"),
               "★★ PE9 次序是**动的 / 删的 / 冲突 / 跳过的**（先是「会怎样」、「会拿掉什么」，"
               "再是「要你注意什么」），而且冲突那一项永远说「项」（抢键位的是键）",
               Presets::applyPlanRowText(row));

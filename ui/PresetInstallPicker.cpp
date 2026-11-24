@@ -627,7 +627,7 @@ void PresetInstallPicker::setComposites(const QList<Composite> &presets) {
         // 空态不留一块空列表：图标 + 一句话 + 说明 +「管理预设」。
         addPageTop(layout, page, tr("综合预设"), false);
         auto *manage = addEmptyState(layout, page, m_categories.size(), tr("暂无可用的综合预设"),
-            tr("综合预设把几类预设打成一份，一次装好。在「预设管理」里新建，或从实例提取。"));
+            tr("综合预设将多类预设合并为一份，一次安装完成。可在「预设管理」中新建，或从实例提取。"));
         connect(manage, &QPushButton::clicked, this, &PresetInstallPicker::manageRequested);
     } else {
         QLineEdit *search = addPageTop(layout, page, tr("综合预设"), true);

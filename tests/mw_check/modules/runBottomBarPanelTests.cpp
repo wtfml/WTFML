@@ -1814,7 +1814,7 @@ void runBottomBarPanelTests() {
             check(!answerer.answered.isEmpty() &&
                       answerer.answered.at(0).title == QStringLiteral("无法刷新登录凭据") &&
                       answerer.answered.at(0).text.contains(QStringLiteral("无法刷新登录凭据：")) &&
-                      answerer.answered.at(0).text.contains(QStringLiteral("以离线方式进入游戏（无法加入正版服务器）")) &&
+                      answerer.answered.at(0).text.contains(QStringLiteral("以离线方式进入游戏（无法加入启用正版验证的服务器）")) &&
                       answerer.answered.at(0).buttons == QStringList({QStringLiteral("重试"), QStringLiteral("离线游玩"), QStringLiteral("取消")}),
                   "AH13 断网启动弹出「重试」「离线游玩」「取消」三选及规定文案",
                   answerer.answered.isEmpty() ? QStringLiteral("未弹框")

@@ -59,7 +59,7 @@ OperationReport::Entry entry(const QString &path, OperationReport::EntryState st
 bool copyFileAtomically(const QString &source, const QString &target, QString *problem) {
     QFile in(source);
     if (!in.open(QIODevice::ReadOnly)) {
-        if (problem) *problem = QCoreApplication::translate("FileOperationRecoveryController", "读不了 %1（%2）").arg(source, in.errorString());
+        if (problem) *problem = QCoreApplication::translate("FileOperationRecoveryController", "无法读取 %1（%2）").arg(source, in.errorString());
         return false;
     }
     const QFileInfo info(target);
@@ -75,7 +75,7 @@ bool copyFileAtomically(const QString &source, const QString &target, QString *p
     while (!in.atEnd()) {
         const QByteArray chunk = in.read(1 << 20);
         if (chunk.isEmpty()) {
-            if (problem) *problem = QCoreApplication::translate("FileOperationRecoveryController", "读不了 %1（%2）").arg(source, in.errorString());
+            if (problem) *problem = QCoreApplication::translate("FileOperationRecoveryController", "无法读取 %1（%2）").arg(source, in.errorString());
             return false;
         }
         if (out.write(chunk) != chunk.size()) {
@@ -84,7 +84,7 @@ bool copyFileAtomically(const QString &source, const QString &target, QString *p
         }
     }
     if (!out.commit()) {
-        if (problem) *problem = QCoreApplication::translate("FileOperationRecoveryController", "发布不了 %1（%2）").arg(target, out.errorString());
+        if (problem) *problem = QCoreApplication::translate("FileOperationRecoveryController", "无法发布 %1（%2）").arg(target, out.errorString());
         return false;
     }
     return true;

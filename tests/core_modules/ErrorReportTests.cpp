@@ -105,7 +105,7 @@ void runErrorReportTests() {
     full.crashed = false;
     full.exitCode = 0;
     const QString liveHeader = ErrorReport::header(full, now);
-    check(liveHeader.contains(QStringLiteral("退出码：（导出时游戏还在运行）")),
+    check(liveHeader.contains(QStringLiteral("退出码：（导出时游戏仍在运行）")),
           "ZI1 还没退出时那一行明说「还在运行」");
     check(!liveHeader.contains(QStringLiteral("退出码：0")),
           "ZI1 而且**不许**顺手写个 0 出来（那是最坏的一种假话）");
@@ -161,7 +161,7 @@ void runErrorReportTests() {
         ErrorReport::text(full, now, QString(), QStringLiteral("[21:03:10] 一切正常\n"));
     check(noErrors.contains(QStringLiteral("错误与致命（共 0 行）")),
           "ZI2 没错误时那一段的标题照旧（写的是 0 行）");
-    check(noErrors.contains(QStringLiteral("本次没有 ERROR 及以上的输出")),
+    check(noErrors.contains(QStringLiteral("本次无 ERROR 及以上级别的输出")),
           "ZI2 而且明说「这一段里一行都没有」（不是空着）");
     check(noErrors.contains(QStringLiteral("[21:03:10] 一切正常")),
           "ZI2 日志那一段照旧在");
@@ -183,12 +183,12 @@ void runErrorReportTests() {
         check(clipped.contains(QStringLiteral("错误与致命（末尾 1 行 / 原始共 8000 行）")),
               "ZI2 ★ 截过的错误摘录：标题写「末尾几行 / 原始共 N 行」");
         check(clipped.contains(
-                  QStringLiteral("日志末尾（最近 2 行 / 原始共 12000 行；完整日志没有导出）")),
+                  QStringLiteral("日志末尾（最近 2 行 / 原始共 12000 行；未导出完整日志）")),
               "ZI2 ★ 截过的日志：标题明说完整日志不在这份文件里");
         // 标题里那个"最近几行"读的是**递进来的文本**，不是记录里的总数 —— 换一份短的
         // 文本，那个数就得跟着变（不然它写的是一句没人核对过的话）。
         check(ErrorReport::text(truncated, now, QStringLiteral("一行"), QStringLiteral("一行"))
-                  .contains(QStringLiteral("日志末尾（最近 1 行 / 原始共 12000 行；完整日志没有导出）")),
+                  .contains(QStringLiteral("日志末尾（最近 1 行 / 原始共 12000 行；未导出完整日志）")),
               "ZI2 截过的日志标题按**实际留下来的行数**写（不是拿总数冒充）");
         // 旗子不竖 = 全量导出（日志窗那条路）—— 标题必须回到老写法。
         ErrorReport::Facts atLimit = full;

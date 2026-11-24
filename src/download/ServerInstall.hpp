@@ -211,21 +211,22 @@ inline QString flavorName(Flavor flavor) {
 inline QString flavorNote(Flavor flavor) {
     switch (flavor) {
     case Flavor::Vanilla:
-        return QCoreApplication::translate("ServerInstall", "Mojang 官方服务端，什么都不改");
+        return QCoreApplication::translate("ServerInstall", "Mojang 官方服务端，不作修改");
     case Flavor::Paper:
         return QCoreApplication::translate("ServerInstall", "支持插件的高性能服务端，基于原版服务端。");
     case Flavor::Purpur:
-        return QCoreApplication::translate("ServerInstall", "Paper 的下游，玩法开关比 Paper 多");
+        return QCoreApplication::translate("ServerInstall", "Paper 的分支，玩法选项多于 Paper");
     case Flavor::Fabric:
-        return QCoreApplication::translate("ServerInstall", "轻量加载器，模组偏原版风格的小改");
+        return QCoreApplication::translate("ServerInstall", "轻量加载器，模组多为贴近原版的小改动");
     case Flavor::Forge:
-        return QCoreApplication::translate("ServerInstall", "老牌模组加载器，1.20.1 及更早的服务端模组大多在它上面");
+        return QCoreApplication::translate("ServerInstall", "老牌模组加载器，1.20.1 "
+                                                            "及更早版本的服务端模组大多基于它");
     case Flavor::NeoForge:
-        return QCoreApplication::translate("ServerInstall", "Forge 分家出来的那支，1.20.2 起的服务端模组主流");
+        return QCoreApplication::translate("ServerInstall", "Forge 的分支，1.20.2 起的主流服务端模组加载器");
     case Flavor::Quilt:
-        return QCoreApplication::translate("ServerInstall", "Fabric 的分支，模组基本通用，服务端侧用得少");
+        return QCoreApplication::translate("ServerInstall", "Fabric 的分支，模组基本通用，服务端上较少使用");
     case Flavor::Spigot:
-        return QCoreApplication::translate("ServerInstall", "插件服务端的老底子，官方不发成品，得现编一份");
+        return QCoreApplication::translate("ServerInstall", "老牌插件服务端，官方不提供成品，需本地构建");
     }
     return QString();
 }
@@ -284,7 +285,8 @@ inline QString installMethodText(InstallMethod method) {
     case InstallMethod::RunInstaller:
         return QCoreApplication::translate("ServerInstall", "下载的是安装器，需在安装目录中运行一次");
     case InstallMethod::BuildRequired:
-        return QCoreApplication::translate("ServerInstall", "官方不提供成品，需用其构建工具现场编译（需要几分钟并联网）");
+        return QCoreApplication::translate("ServerInstall",
+                                           "官方不提供成品，需使用其构建工具在本地编译（需联网，约需数分钟）");
     }
     return QString();
 }
@@ -709,7 +711,8 @@ inline Plan planFor(const Request &request) {
         plan.installedMarkers = QStringList{QStringLiteral("server.jar")};
         plan.launchTokens = QStringList{QStringLiteral("-jar"), QStringLiteral("server.jar"),
                                         QStringLiteral("nogui")};
-        plan.note = QCoreApplication::translate("ServerInstall", "它是版本 json 里的一部分，地址跟着当前游戏版本走（见 vanillaServerDownload）");
+        plan.note = QCoreApplication::translate("ServerInstall", "属于版本 json 的一部分，"
+                                                                 "地址随当前游戏版本变化");
         return plan;
 
     case Flavor::Paper: {
@@ -720,7 +723,8 @@ inline Plan planFor(const Request &request) {
         plan.installedMarkers = QStringList{QStringLiteral("server.jar")};
         plan.launchTokens = QStringList{QStringLiteral("-jar"), QStringLiteral("server.jar"),
                                         QStringLiteral("nogui")};
-        plan.note = QCoreApplication::translate("ServerInstall", "下载地址要先取构建列表（见 paperBuildsUrl / paperBuildsFromJson），取回来那条里才有地址和校验值");
+        plan.note = QCoreApplication::translate("ServerInstall", "下载地址须先获取构建列表，"
+                                                                 "列表中包含地址和校验值");
         return plan;
     }
 
@@ -738,7 +742,7 @@ inline Plan planFor(const Request &request) {
         plan.launchTokens = QStringList{QStringLiteral("-jar"), QStringLiteral("server.jar"),
                                         QStringLiteral("nogui")};
         if (request.buildId.isEmpty()) {
-            plan.note = QCoreApplication::translate("ServerInstall", "没给构建号 ⇒ 下的是最新那条");
+            plan.note = QCoreApplication::translate("ServerInstall", "未指定构建号时下载最新构建");
         }
         return plan;
     }
@@ -749,7 +753,8 @@ inline Plan planFor(const Request &request) {
             return plan;
         }
         if (request.installerVersion.isEmpty()) {
-            plan.problem = QCoreApplication::translate("ServerInstall", "这一档的地址里必须带安装器版本（少一段就是 404）");
+            plan.problem = QCoreApplication::translate("ServerInstall",
+                                                       "此类型的地址中必须包含安装器版本（缺少则返回 404）");
             return plan;
         }
         Download jar;
@@ -811,7 +816,9 @@ inline Plan planFor(const Request &request) {
         // 我们的内存那几项夹在两张参数文件**中间**（理由与那条被改掉的旧说法见
         // `launchJvmArgsIndex` 上面那段）。
         plan.launchJvmArgsIndex = 1;
-        plan.note = QCoreApplication::translate("ServerInstall", "装完的入口不是 jar，是它生成的两张参数文件；启动时我们不跑它的 run.bat，直接自己拼这条命令");
+        plan.note = QCoreApplication::translate("ServerInstall", "安装后的启动入口不是 jar，"
+                                                                 "而是生成的两个参数文件；启动时不运行 run."
+                                                                 "bat，直接生成启动命令");
         return plan;
     }
 
@@ -865,7 +872,10 @@ inline Plan planFor(const Request &request) {
         plan.ok = true;
         plan.firstLaunchNeedsNetwork = true;  // 编的过程中要 git clone + maven 拉依赖
         // 产物名带 `-R0.1-SNAPSHOT` 后缀，从游戏版本号拼不出来 ⇒ 只能扫目录（见 pickSpigotJar）。
-        plan.note = QCoreApplication::translate("ServerInstall", "BuildTools 在子目录中生成 spigot-<版本>-R0.1-SNAPSHOT.jar。安装时将选中的 JAR 移到服务端目录，并据此生成启动参数。");
+        plan.note = QCoreApplication::translate("ServerInstall", "BuildTools 在子目录中生成 "
+                                                                 "spigot-<版本>-R0.1-SNAPSHOT.jar。"
+                                                                 "安装时将选中的 JAR 移动到服务端目录，"
+                                                                 "并据此生成启动参数。");
         return plan;
     }
     }

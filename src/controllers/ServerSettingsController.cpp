@@ -57,6 +57,7 @@ ServerSettingsController::SaveResult ServerSettingsController::save(
     for (const QPair<QString, QString> &edit : edits) {
         const ServerPropertiesForm::Field *field = ServerPropertiesForm::fieldFor(edit.first);
         if (field == nullptr) {
+            if (properties.contains(edit.first)) accepted.append(edit);
             continue;
         }
         QString normalized;
@@ -231,7 +232,7 @@ ServerPlayers::Content ServerSettingsController::readPlayers(const QString &serv
     if (path.isEmpty()) {
         ServerPlayers::Content content;
         content.ok = false;
-        content.problem = QCoreApplication::translate("ServerSettingsController", "找不到这个服务端的目录。");
+        content.problem = QCoreApplication::translate("ServerSettingsController", "未找到此服务端的目录。");
         return content;
     }
     QFile file(path);
@@ -255,7 +256,7 @@ bool ServerSettingsController::writePlayers(const QString &serverId, ServerPlaye
     if (!ServerWriteGuard::acquireFile(serverId, ServerPlayers::fileName(list), problemOut)) return false;
     const QString path = playersPath(serverId, list);
     if (path.isEmpty()) {
-        if (problemOut != nullptr) *problemOut = QCoreApplication::translate("ServerSettingsController", "找不到这个服务端的目录。");
+        if (problemOut != nullptr) *problemOut = QCoreApplication::translate("ServerSettingsController", "未找到此服务端的目录。");
         return false;
     }
     QDir().mkpath(QFileInfo(path).absolutePath());
