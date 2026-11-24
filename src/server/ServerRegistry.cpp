@@ -209,6 +209,7 @@ Entry describe(const QString &serverId, QString *problemOut) {
     entry.name = info.name.isEmpty() ? serverId : info.name;
     entry.gameVersion = info.gameVersion;
     entry.loaderVersion = info.loaderVersion;
+    entry.buildId = info.buildId;
 
     // 2) 盘上现在有哪些文件（认 flavor 和判"装好了没有"都用它）。
     const QStringList rootFiles = rootFileNames(entry.dirPath);

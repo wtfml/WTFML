@@ -143,6 +143,7 @@ QString sizeText(qint64 bytes);
 /// （见 `backupFilePrefix()` 那段）。那个记号本身是 `backupFileName()` 定的 ——
 /// 「恢复前-」夹在前缀和时间戳中间。
 bool nameIsSafety(const QString &fileName, const QString &prefix);
+bool matchesBackupPrefix(const QString &fileName, const QString &prefix);
 
 /// 走一遍目录，把要记进清单的文件列出来（**按路径排序**，可复现）。
 /// @param rootDir 要走的目录（必须存在）。
@@ -221,10 +222,12 @@ struct RestoreResult {
  */
 /// 同步进度通知；提交区间不接受取消，观察者不得抛出异常或修改用户目录。
 enum class RestorePhase { Prepared, OriginalRetained, Published, Committed };
+enum class RestoreTarget { Replace, NewOnly };
 using RestoreObserver = std::function<void(RestorePhase)>;
 RestoreResult restoreBackup(const QString &zipPath, const QString &targetParentDir,
                             const std::function<bool()> &cancelled = {},
-                            const RestoreObserver &observer = {});
+                            const RestoreObserver &observer = {},
+                            RestoreTarget policy = RestoreTarget::Replace);
 
 /// 启动/切换数据目录时在扫描实例之前调用；只恢复本数据目录内已验证的中断还原。
 /// 不覆盖新出现的目标，不按前缀删除目录，活动事务跳过。

@@ -19,9 +19,7 @@
 
 | 文档 | 内容 |
 | --- | --- |
-| [AGENT.md](features/AGENT.md) | 智能体（Agent）现行实现 + Stage 2–4 阶段计划：聊天、工具、审批、外发脱敏、存储、MCP 与工作流 |
-| [AGENT_STAGE1A.md](features/AGENT_STAGE1A.md) | 智能体 Stage 1A：Provider、会话、基础聊天 UI、盘上格式与待测网络错误 |
-| [AGENT_STAGE1B.md](features/AGENT_STAGE1B.md) | 智能体 Stage 1B：受控文件工具、审批、D11 外发、实例锁定、维护备份与待测项 |
+| [AGENT.md](features/AGENT.md) | 智能体（Agent）：模式、工具与上限、工作流、MCP、审批与外发、存储、提示词、测试与待人工验证 |
 | [DAILY_QUOTE.md](features/DAILY_QUOTE.md) | 主页「每日一言」：句子从哪三个站来、按日期定语种、限长与回退、字体选择、开关与隐私 |
 | [DIRECTORY_SESSION_LOCK.md](features/DIRECTORY_SESSION_LOCK.md) | 同一数据目录只允许一个窗口：锁的实现、目录/文件被占用、写入口审计、复制实例先暂存后发布、破坏性操作矩阵 |
 | [HIGH_SPEED_DOWNLOAD.md](features/HIGH_SPEED_DOWNLOAD.md) | 高速下载：暂停/显式继续/跨进程恢复、分段与限速、本机文件复用、速度与剩余时间 |

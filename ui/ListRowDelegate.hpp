@@ -5,8 +5,7 @@
  *
  * 数据：DisplayRole = 标题，DecorationRole = 封面（QIcon / QPixmap），SubtitleRole = 第二行，
  * MetaRole = 行尾那句（如「2 小时前」）。行高 60（设计稿令牌），用 install() 挂到视图上。
- * 可选：CoverRole 给了就用它当封面（DecorationRole 留给别处用）；MetaIconRole 给了，元信息改成
- * 行中部一列「小图标 + 字」（设计稿 manage 的加载器那一列），悬停时也不让位。
+ * CoverRole 可以单独指定封面。管理页可启用中部元信息列，MetaIconRole 提供可选小图标。
  * 服务端行借同一个代理：LaunchTextRole / LaunchKindRole 把第三格换成「启动 / 停止 / 修复 / 停止中…」，
  * ActionTipRole 给三格各一句悬停说明（文件夹、更多、第三格）。
  */
@@ -37,6 +36,9 @@ public:
 
     /// 挂到视图上：设本委托、打开悬停（快捷操作只在悬停那一行出现）。
     static ListRowDelegate *install(QAbstractItemView *view);
+    void setInlineRowActions(bool enabled) { m_inlineRowActions = enabled; }
+    bool inlineRowActions() const { return m_inlineRowActions; }
+    void setCenteredMeta(bool enabled) { m_centeredMeta = enabled; }
 
     static constexpr int rowHeight() { return 60; }
     static constexpr int coverSize() { return 40; }
@@ -60,6 +62,8 @@ protected:
                      const QModelIndex &index) override;
 
 private:
+    bool m_inlineRowActions = true;
+    bool m_centeredMeta = false;
     mutable QSet<QPersistentModelIndex> m_elidedTitles;
     mutable QSet<QPersistentModelIndex> m_elidedSubs;
 };

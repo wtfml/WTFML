@@ -11608,6 +11608,126 @@ Minecraft %2 / %3 %4</source>
     <context>
         <name>MainWindow</name>
         <message>
+            <source>无法访问内容目录。请检查所选世界和目录位置。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>选择%1文件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Java 归档 (*.jar);;所有文件 (*.*)</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>请先保存或放弃修改。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>正在处理服务端文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>没有可选的世界存档。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>暂无服务端日志。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>请选择有效的 Java 可执行文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法保存启动设置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>导出服务端迁移包</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>ZIP 归档 (*.zip)</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法导出迁移包</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>请选择服务端目录之外的新文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>迁移包已导出</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>迁移包导出失败</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>导入服务端迁移包</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法导入迁移包</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>请选择由服务端设置导出的迁移包。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>迁移包已导入</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>迁移包导入失败</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法创建升级副本</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>版本号或构建号含有无效字符。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1（%2 升级副本）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>准备服务端升级副本</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>游戏目录已切换，未发布升级副本。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法发布升级副本。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法创建服务端暂存目录。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>升级副本的来源包含链接：%1。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法复制 %1。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法保存升级副本的安装记录。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>请切回原游戏文件夹再重试这次安装。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -12297,10 +12417,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>level-name 无效，无法确定世界目录。请在「常用设置」中填写有效的世界目录名。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>加不了</source>
             <translation type="unfinished"></translation>
         </message>
@@ -12309,19 +12425,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>选数据包 zip</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>选模组 jar</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>数据包 (*.zip);;所有文件 (*.*)</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>模组 (*.jar);;所有文件 (*.*)</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -15123,6 +15227,18 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>插件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>搜索服务端名称、版本号或类型</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>没有符合筛选条件的服务端</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>新建服务端…</source>
             <translation type="unfinished"></translation>
         </message>
@@ -15208,30 +15324,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>选择本地 zip…</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>常用设置</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>原始文本</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>内容</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>世界备份</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>玩家</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>体检</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20919,6 +21011,10 @@ Minecraft %2 / %3 %4</source>
     <context>
         <name>QObject</name>
         <message>
+            <source>目标已存在，原有文件已保留：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>%1：%2</source>
             <translation type="unfinished"></translation>
         </message>
@@ -24353,6 +24449,10 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
     <context>
         <name>ServerContent</name>
         <message>
+            <source>插件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>数据包</source>
             <translation type="unfinished"></translation>
         </message>
@@ -25409,11 +25509,167 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
     <context>
         <name>ServerSettingsPage</name>
         <message>
-            <source>启动服务端</source>
+            <source>打开目录</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>服务端正在运行</source>
+            <source>控制台</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>停止服务端</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>概览</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启动设置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>设置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>世界与玩家</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>世界</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>玩家</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>内容管理</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>维护</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>诊断与补全</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>日志</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>原始文本</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>迁移</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>升级</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>设为启动世界</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>玩家名单</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Java 路径</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>跟随全局 Java 设置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>浏览…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>选择 Java 可执行文件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>跟随全局设置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>最大内存</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>JVM 参数</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>保存启动设置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>刷新日志</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>将服务端目录打包，包括世界、名单和配置。请先停止服务端。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>导出迁移包…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>导入迁移包…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>安装新版本到独立的服务端副本。原服务端及存档会保留。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标游戏版本</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标加载器版本</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标安装器版本</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标构建号（可留空）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>创建升级副本</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1（启动世界）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1（待保存）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份完整服务端…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>该世界的下界或末地在独立目录中。请用完整服务端备份同时保留这些维度。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启动服务端</source>
             <translation type="unfinished"></translation>
         </message>
         <message>

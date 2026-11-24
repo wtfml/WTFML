@@ -4,8 +4,7 @@
     智能体发布前检查：明文密钥、测试假端点、调试后门、危险开关默认值、确认闸存在性。
 
 .DESCRIPTION
-    对应 docs/features/AGENT.md §14 的 Stage 4「发布检查」与
-    docs/features/AGENT_STAGE3_4_ACCEPTANCE.md 的 G4-16/G4-17。只读检查，不改任何文件：
+    对应 docs/features/AGENT.md §12/§13.3 的发布检查项。只读检查，不改任何文件：
 
     1. 产品源码（src/、ui/）里不许出现明文 API Key / 令牌字面量（`sk-…`、`Bearer <长串>`、
        测试用的假 key），tests/ 与 docs/ 不算；

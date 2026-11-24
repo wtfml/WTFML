@@ -1208,12 +1208,21 @@ public:
     static QString instancePresetPageName() { return QStringLiteral("instancePresetPage"); }
 
     // ---------- 服务端那一页 ----------
+    enum class ServerFilterButton { Vanilla, Plugins, Mods, Running };
+    static QString serverFilterRowName() { return QStringLiteral("serverFilterRow"); }
+    static QString serverSearchName() { return QStringLiteral("serverSearch"); }
+    static QString serverFilterButtonName(ServerFilterButton which) {
+        return QStringLiteral("serverFilter%1").arg(static_cast<int>(which));
+    }
     static QString serverListName() { return QStringLiteral("serverList"); }
     /// 「一个服务端都还没有」那句（和实例页「没有符合筛选条件的实例」不是一回事：这一句
     /// 说的是"**盘上真的一条都没有**"）。平时收着，列表空着时才露。
     static QString serverEmptyLabelName() { return QStringLiteral("serverEmpty"); }
     static QString serverEmptyText() {
         return QCoreApplication::translate("MainWindowUI", "暂无服务端实例。点击「新建服务端」开始创建。");
+    }
+    static QString serverNoMatchText() {
+        return QCoreApplication::translate("MainWindowUI", "没有符合筛选条件的服务端");
     }
     /// 「新建服务端…」那一颗（正文面底部）。**是造一个新东西出来**，不是改已有的 ——
     /// 所以它是这一页的主操作，摆在列表下面、整栏宽。
@@ -1427,27 +1436,6 @@ public:
         return QStringLiteral("serverSettingsField_") + key;
     }
 
-    /// 左栏那六页的标题。**顺序就是左栏的顺序**（`ServerSettingsPage::Section` 按下标对齐）。
-    /// 「内容」那一页是内容管理（模组 / 数据包）。
-    static int serverSettingsSectionCount() { return 6; }
-    static QString serverSettingsSectionTitle(int index) {
-        switch (index) {
-        case 0:
-            return QCoreApplication::translate("MainWindowUI", "常用设置");
-        case 1:
-            return QCoreApplication::translate("MainWindowUI", "原始文本");
-        case 2:
-            return QCoreApplication::translate("MainWindowUI", "内容");
-        case 3:
-            return QCoreApplication::translate("MainWindowUI", "世界备份");
-        case 4:
-            return QCoreApplication::translate("MainWindowUI", "玩家");
-        case 5:
-            return QCoreApplication::translate("MainWindowUI", "体检");
-        }
-        return QString();
-    }
-
     static QString serverSettingsSaveText() { return QCoreApplication::translate("MainWindowUI", "保存"); }
     static QString serverSettingsRevertText() { return QCoreApplication::translate("MainWindowUI", "放弃改动"); }
     static QString serverSettingsBackupNowText() { return QCoreApplication::translate("MainWindowUI", "立即备份"); }
@@ -1520,13 +1508,15 @@ public:
         return QStringLiteral("serverSettingsContentRefresh");
     }
     /// 那两类。**顺序就是下拉框的顺序**（`ServerContent::Kind` 按下标对齐）。
-    static int serverSettingsContentKindCount() { return 2; }
+    static int serverSettingsContentKindCount() { return 3; }
     static QString serverSettingsContentKindTitle(int index) {
         switch (index) {
         case 0:
             return QCoreApplication::translate("MainWindowUI", "模组");
         case 1:
             return QCoreApplication::translate("MainWindowUI", "数据包");
+        case 2:
+            return QCoreApplication::translate("MainWindowUI", "插件");
         }
         return QString();
     }
@@ -3487,6 +3477,10 @@ public:
     QWidget *getInstancePresetPage() const { return instancePresetPage; }
     /// 服务端那一页的列表（一行一个服务端）。
     QTreeWidget *getServerList() const { return serverList; }
+    QLineEdit *getServerSearchEdit() const { return serverSearchEdit; }
+    QPushButton *getServerFilterButton(ServerFilterButton which) const {
+        return serverFilterButtons.value(static_cast<int>(which));
+    }
     /// 「还没有服务端」那句（平时收着）。
     QLabel *getServerEmptyLabel() const { return serverEmptyLabel; }
     /// 「新建服务端…」那一颗。
@@ -3991,6 +3985,8 @@ private:
     QList<QPushButton *> instanceModeButtons;
     /// 服务端那一页：列表 + 空态那句 + 「新建服务端…」那颗。
     QTreeWidget *serverList = nullptr;
+    QLineEdit *serverSearchEdit = nullptr;
+    QList<QPushButton *> serverFilterButtons;
     QLabel *serverEmptyLabel = nullptr;
     QPushButton *newServerButton = nullptr;
     QComboBox *installedVersionCombo = nullptr;

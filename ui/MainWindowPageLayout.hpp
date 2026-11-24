@@ -219,6 +219,7 @@ void markTextRole(QWidget *label, const QString &value);
 
 /// 搜索框左边那枚放大镜（跟着主题重新着色）。
 void addSearchIcon(QLineEdit *edit);
+QLineEdit *makeListFilterSearch(QWidget *parent, const QString &name, const QString &placeholder);
 
 void styleSidebarList(QListWidget *list);
 

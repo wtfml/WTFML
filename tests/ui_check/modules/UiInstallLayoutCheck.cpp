@@ -1,4 +1,5 @@
 #include "Support.hpp"
+#include "ListRowDelegate.hpp"
 #include "PresetEditorPage.hpp"
 #include "PresetManagePage.hpp"
 #include "PresetOptionsEditor.hpp"
@@ -147,8 +148,30 @@ int UiInstallLayoutCheck(QApplication &app) {
         {
             const bool preview = app.arguments().contains(QStringLiteral("--install-layout-preview"));
             ui.getTabWidget()->setCurrentIndex(MainWindowUI::instancesTabIndex());
-            ui.setInstanceMode(MainWindowUI::InstanceMode::Preset);
             window.resize(1150, 720);
+            ui.setInstanceMode(MainWindowUI::InstanceMode::Server);
+            app.processEvents();
+            auto *serverFilterRow = window.findChild<QWidget *>(MainWindowUI::serverFilterRowName());
+            auto *serverSearch = ui.getServerSearchEdit();
+            auto *serverTypeChip = ui.getServerFilterButton(MainWindowUI::ServerFilterButton::Vanilla);
+            expect(serverFilterRow && serverSearch && serverTypeChip && serverFilterRow->isVisible() &&
+                       serverTypeChip->geometry().top() == serverSearch->geometry().top() &&
+                       serverTypeChip->geometry().left() == 0 &&
+                       serverSearch->geometry().right() == serverFilterRow->rect().right(),
+                   "server filters and search align to the left and right of the same row");
+            if (preview) {
+                QDir().mkpath("build/install-previews");
+                auto *server = new QTreeWidgetItem(ui.getServerList(), {QStringLiteral("生存服务器")});
+                const int color = VersionIcons::isoBlockKindFor(QStringLiteral("survival-server"));
+                server->setData(0, ListRowDelegate::CoverRole, QIcon(VersionIcons::isoBlock(color, 48)));
+                server->setData(0, ListRowDelegate::SubtitleRole, QStringLiteral("可启动"));
+                server->setData(0, ListRowDelegate::MetaRole, QStringLiteral("Paper 1.21.1 #111"));
+                server->setData(0, ListRowDelegate::MetaIconRole, QIcon(VersionIcons::loaderMark(5, 32)));
+                ui.getServerEmptyLabel()->hide();
+                expect(window.grab().save("build/install-previews/server-filters.png"), "server filter preview saved");
+            }
+
+            ui.setInstanceMode(MainWindowUI::InstanceMode::Preset);
             auto *host = ui.getInstancePresetPage();
             PresetManagePage details(host);
             details.setWindowFlags(Qt::Widget);
@@ -158,10 +181,47 @@ int UiInstallLayoutCheck(QApplication &app) {
             details.enableEditorTabs();
             PresetManagePage::PresetItem preset;
             preset.id = QStringLiteral("layout-test");
-            preset.name = QStringLiteral("Test preset");
+            preset.name = QStringLiteral("生存画面设置");
+            preset.categoryKey = QStringLiteral("game");
+            preset.categoryText = QStringLiteral("游戏设置");
             details.setPresets({preset}, {}, preset.id);
             details.showPreset(preset.id, preset.name, {}, QStringLiteral("Game settings"), {});
+            details.setCategories({{"game", "游戏设置"}, {"mods", "模组"}, {"resources", "资源包"},
+                                   {"data", "数据包"}, {"shaders", "光影包"}, {"legacy", "旧版", true},
+                                   {"composite", "综合预设", true}, {"draft", "草稿", true}});
+            details.show();
+            app.processEvents();
             auto *presets = details.findChild<QTreeWidget *>(PresetManagePage::presetListName());
+            const auto *presetRow = presets ? presets->currentItem() : nullptr;
+            const QIcon expectedCover(VersionIcons::isoBlock(VersionIcons::isoBlockKindFor(preset.id), 48));
+            expect(presetRow && presetRow->parent() &&
+                       presetRow->data(0, ListRowDelegate::CoverRole).value<QIcon>().pixmap(48).toImage() ==
+                           expectedCover.pixmap(48).toImage() &&
+                       presetRow->data(0, ListRowDelegate::MetaRole).toString() == preset.categoryText &&
+                       presets->visualItemRect(presetRow).height() == ListRowDelegate::rowHeight() &&
+                       presets->visualItemRect(presetRow).left() == presets->visualItemRect(presetRow->parent()).left(),
+                   "preset rows use the instance cover, category column and aligned compact list geometry");
+            auto *presetFilterRow = details.findChild<QWidget *>("presetFilterRow");
+            auto *presetSearch = details.findChild<QLineEdit *>("presetSearchEdit");
+            auto *firstChip = details.findChild<QPushButton *>(PresetManagePage::categoryChipName(QString()));
+            auto *lastChip = details.findChild<QPushButton *>(PresetManagePage::categoryChipName("draft"));
+            expect(presetFilterRow && presetSearch && firstChip && lastChip &&
+                       firstChip->mapTo(presetFilterRow, QPoint()).y() == presetSearch->y() &&
+                       lastChip->mapTo(presetFilterRow, QPoint()).y() == presetSearch->y() &&
+                       presetSearch->geometry().right() == presetFilterRow->rect().right(),
+                   "preset categories and search fit on one aligned row at a regular width");
+            if (preview) {
+                expect(window.grab().save("build/install-previews/preset-filters.png"), "preset filter preview saved");
+            }
+            window.resize(900, 590);
+            app.processEvents();
+            if (presetFilterRow && presetSearch && firstChip && lastChip) {
+                const QRect lastRect(lastChip->mapTo(presetFilterRow, QPoint()), lastChip->size());
+                expect(lastRect.top() > firstChip->mapTo(presetFilterRow, QPoint()).y() &&
+                           presetFilterRow->rect().contains(lastRect) && lastRect.right() < presetSearch->x(),
+                       "preset categories wrap inside the left side at minimum width");
+            }
+            window.resize(1150, 720);
             auto *instancePage = ui.getTabWidget()->widget(MainWindowUI::instancesTabIndex());
             auto *catalogHeader = instancePage->findChild<QWidget *>(MainWindowUI::pageHeaderName(QStringLiteral("instance")));
             auto *catalogModes = instancePage->findChild<QWidget *>(MainWindowUI::instanceModeRowName());
