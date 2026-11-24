@@ -45,11 +45,11 @@
     <td width="50%"><img src="assets/readme/shot-download.webp" alt="下载页"><br><sub>下载：游戏版本与加载器</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="assets/readme/shot-settings.webp" alt="设置页"><br><sub>设置：改完就存，没有「应用」按钮</sub></td>
-    <td width="50%"><img src="assets/readme/shot-toolbox.webp" alt="工具箱"><br><sub>工具箱：玩的时候常要算的都在这</sub></td>
+    <td width="50%"><img src="assets/readme/shot-settings.webp" alt="设置页"><br><sub>设置：更改即时保存</sub></td>
+    <td width="50%"><img src="assets/readme/shot-toolbox.webp" alt="工具箱"><br><sub>工具箱：常用计算与查询工具</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="assets/readme/shot-agent.webp" alt="智能体页"><br><sub>智能体：围着当前实例聊</sub></td>
+    <td width="50%"><img src="assets/readme/shot-agent.webp" alt="智能体页"><br><sub>智能体：围绕当前实例对话</sub></td>
     <td width="50%"><img src="assets/readme/themes.webp" alt="同一个主页在三套主题下的样子"><br><sub>主题：暮色雪山、冰川碧湖、落日海崖</sub></td>
   </tr>
 </table>
