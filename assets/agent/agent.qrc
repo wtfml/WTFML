@@ -1,0 +1,23 @@
+<!DOCTYPE RCC>
+<!--
+  智能体提示词与后续诊断知识的内嵌资源清单。
+
+  CMAKE_AUTORCC 已经开着（见根 CMakeLists.txt），这个文件只要出现在目标的源文件列表里就行。
+  产品目标把它编进 exe；验证工程通过 `wtfml_core_runtime` 带同一份资源，
+  `AgentPromptLibrary` 里的 `Q_INIT_RESOURCE(agent)` 负责静态库场景的显式初始化。
+
+  新增或改名提示词时，必须同时改这里和 `src/agent/AgentSkill.cpp` 的 prompt id；
+  `tools/check-agent-release.ps1` 会比对目录与清单。
+-->
+<RCC version="1.0">
+    <qresource prefix="/agent">
+        <file alias="prompts/common.md">prompts/common.md</file>
+        <file alias="prompts/general.md">prompts/general.md</file>
+        <file alias="prompts/inspection.md">prompts/inspection.md</file>
+        <file alias="prompts/crash_rescue.md">prompts/crash_rescue.md</file>
+        <file alias="prompts/upgrade.md">prompts/upgrade.md</file>
+        <file alias="prompts/mods.md">prompts/mods.md</file>
+        <file alias="prompts/repair_protocol.md">prompts/repair_protocol.md</file>
+        <file alias="prompts/README.md">prompts/README.md</file>
+    </qresource>
+</RCC>

@@ -298,11 +298,13 @@ Collect → AwaitPlanApproval → Execute*（每步审批）→ Verify → Repor
 
 ### 11.4 核心提示词
 
-提示词全部编译在 `src/agent/AgentSkill.cpp`（技能 `systemPrompt`），控制器每轮只追加一行「当前工作流状态（本地记账，不要复述给用户）：…」。共享规则原文：
+提示词在 `assets/agent/prompts/` 下的 md 文件里，由 `AgentPromptLibrary` 从 Qt 资源 `:/agent/prompts/` 加载；`AgentSkill.cpp` 只留技能 id、显示名、工具白名单和提示词 id。组合顺序为 `common.md` + 技能文件 +（崩溃急救/模组维护）`repair_protocol.md`，用空行连接。每个技能带 `promptId`、`promptHash`、`promptVersion`；资源缺失、为空、不是 UTF-8 或超过 64 KB 时技能不可用，发送前报错，不回退成空提示。
+
+共享规则（`common.md`，对所有技能生效）原文：
 
 > 没有用工具读到的文件、日志或实例信息，不要假装读过；不知道就说不确定。任何凭据、令牌、账户信息都不要索要或复述。每条结论引用证据 id（E1、E2…）；拿不到证据就写“无法确认”并说明还需要什么。
 
-各技能在此基础上加各自的只读/计划/报告要求；工具描述与参数 schema 在各自引擎的 `specs()` 里（文件工具 `AgentToolRegistry.cpp`、启动器 `AgentLauncherTools.cpp`、工作流 `AgentWorkflowEngine.cpp`、联网 `AgentWebTools.cpp`、命令 `AgentCommandTools.cpp`）。系统提示作为 `messages` 第一条发出，role 按 `systemRole` 适配。
+各技能在此基础上加各自的只读/计划/报告要求；崩溃急救与模组维护再追加 `repair_protocol.md` 的计划、验证、失败即停与报告要求。工具描述与参数 schema 在各自引擎的 `specs()` 里（文件工具 `AgentToolRegistry.cpp`、启动器 `AgentLauncherTools.cpp`、工作流 `AgentWorkflowEngine.cpp`、联网 `AgentWebTools.cpp`、命令 `AgentCommandTools.cpp`）。系统提示作为 `messages` 第一条发出，role 按 `systemRole` 适配；控制器每轮只追加一行「当前工作流状态（本地记账，不要复述给用户）：…」。提示词是模型输入，不是界面文案，不包 `tr()`。
 
 ## 12. 防御性约束与上限
 
@@ -363,7 +365,7 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 
 ## 14. 现状、未覆盖与剩余计划
 
-已实现：聊天底座、文件工具、启动器工具、工作流、stdio MCP、联网与固定诊断命令、模式与证据、发布检查脚本。核心计数与最近一次自动化结果见 [TEST_RUN_HISTORY](../archive/TEST_RUN_HISTORY.md)。
+已实现：聊天底座、文件工具、启动器工具、工作流、stdio MCP、联网与固定诊断命令、模式与证据、提示词资源化、发布检查脚本。核心计数与最近一次自动化结果见 [TEST_RUN_HISTORY](../archive/TEST_RUN_HISTORY.md)。
 
 ### 14.1 自主修复缺口
 
@@ -382,7 +384,7 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 | 显卡 / Native 崩溃 | 退出码和日志的有限分类 | 不解析 `hs_err_pid` 与 native 模块，不能安全复现 |
 | 世界 / 存档崩溃 | 有限的崩溃诊断 | 不复制世界、不进世界验证 |
 
-下一阶段的启动测试、事务回滚、崩溃快照、模组兼容与二分、提示词外置见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)；实现后行为写回本文 §9 与 §11。
+下一阶段的启动测试、事务回滚、崩溃快照、模组兼容与二分见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)；实现后行为写回本文 §9 与 §11。提示词已于 2026-11-24 外置，见 §11.4。
 
 未覆盖：
 

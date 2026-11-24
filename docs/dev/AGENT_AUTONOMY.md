@@ -135,7 +135,7 @@ assets/agent/
 
 ### 3.6 提示词
 
-提示词从 `AgentSkill.cpp` 移到 `assets/agent/prompts/`，由 `AgentPromptLibrary` 从 Qt 资源加载。组合顺序固定为 `common.md` + 技能文件 +（崩溃急救/模组维护）`repair_protocol.md`；每个文件 UTF-8、无 BOM、统一 LF、非空，单文件硬上限 64 KB，`common + 技能 + 协议` 目标不超过 16 KB。
+提示词在 `assets/agent/prompts/`，由 `AgentPromptLibrary` 从 Qt 资源加载；`AgentSkill.cpp` 只留技能元数据。组合顺序固定为 `common.md` + 技能文件 +（崩溃急救/模组维护）`repair_protocol.md`；每个文件 UTF-8、无 BOM、统一 LF、非空，单文件硬上限 64 KB，`common + 技能 + 协议` 目标不超过 16 KB。
 
 `AgentSkill` 增加 `promptId`、`promptHash`、`promptVersion`；`promptVersion` 是每个技能的人工版本号，改提示词时递增，`promptHash` 每次加载现算。`AgentSkill.cpp` 只留技能 id、显示名、工具白名单、只读/计划标记和提示词文件名，不再出现提示词正文。资源缺失时技能不可用并明确报错，不回退成空提示。
 
@@ -151,20 +151,21 @@ assets/agent/
 
 ## 4. 阶段计划
 
-顺序：S5.0 → S5.1 → S5.2 必须串行；S5.3–S5.5 在闭环底座可用后可并行；S5.6 在工具稳定后；S5.7 最后并需产品确认。每个阶段拆成可独立评审的提交，测试和文档跟对应改动一起走。
+顺序：S5.1 → S5.2 必须串行；S5.3–S5.5 在闭环底座可用后可并行；S5.6 在工具稳定后；S5.7 最后并需产品确认。每个阶段拆成可独立评审的提交，测试和文档跟对应改动一起走。
 
-### S5.0 提示词外置（P0，先做）
+### S5.0 提示词外置（已完成 2026-11-24）
 
-改动：
+实现：
 
-- 新建 `assets/agent/prompts/common.md`、`general.md`、`inspection.md`、`crash_rescue.md`、`upgrade.md`、`mods.md`、`repair_protocol.md` 和 `README.md`。
-- 新建 `assets/agent/agent.qrc`，前缀 `/agent`，把提示词和后续知识文件列进去；产品与 `verify_agent` / `ui_check_agent` / `mw_check_agent` 的目标都加入这份 qrc。
-- 新建 `src/agent/AgentPromptLibrary.{hpp,cpp}`：加载、组合、哈希、大小校验，缓存已加载文本和哈希；`AgentSkillRegistry::builtins()` 改为读资源，不每次重读。
-- `AgentSkill.cpp` 删掉 `kCommonRules` 和五段技能正文；`AgentSkill` 增加提示词标识与哈希。
-- `tools/check-agent-release.ps1` 增加检查：提示词文件非空、都在 qrc 里、`AgentSkill.cpp` 不含技能正文、提示词不含密钥形态。
-- `tests/core_modules/AgentSkillsTests.cpp` 改为断言 id、哈希非空且内容变化时变化、组合顺序、缺失资源失败和大小上限，不再逐字断言提示词句子，也不把某个哈希写死。
+- `assets/agent/prompts/` 下放 `common.md`、`general.md`、`inspection.md`、`crash_rescue.md`、`upgrade.md`、`mods.md`、`repair_protocol.md` 和 `README.md`；`assets/agent/agent.qrc` 前缀 `/agent`，产品目标与 `wtfml_core_runtime` 各带一份，`ui_check_agent` / `mw_check_agent` 经 runtime 共用。
+- `AgentPromptLibrary` 负责加载、组合、缓存、SHA-256、UTF-8/空文件/64 KB 上限校验；`Q_INIT_RESOURCE(agent)` 负责静态库场景的资源初始化。
+- `AgentSkill` 增加 `promptId` / `promptHash` / `promptVersion` / `promptProblem`；`AgentSkill.cpp` 只留技能元数据和工具白名单。`AgentController` 在发送前和切换模式时拒绝坏提示词。
+- `tools/check-agent-release.ps1` 检查提示词目录、qrc 登记、BOM、空文件、密钥形态、`AgentSkill.cpp` 无正文和 `Q_INIT_RESOURCE(agent)`。
+- `tests/core_modules/AgentSkillsTests.cpp` 覆盖加载、组合、缺失、非法 id、大小上限和每个技能都带共享规则。
 
-提示词走 Qt 资源，不生成 `const char[]` 头文件；改提示词只改 `.md` 和资源清单，`AgentSkill.cpp` 不动。本阶段只搬家，不改提示词语义。验收：在 `AgentSkill.cpp` 里搜不到技能提示词正文；五个技能都能加载并返回非空哈希；请求缺失提示词 id 的用例能明确报错；`verify_agent` 通过。
+组合顺序为 `common` + 技能 +（崩溃急救/模组维护）`repair_protocol`。共享规则现在对所有技能生效；技能正文仍保持原语义，没有提前引入 S5.1 之后的工具。
+
+验收：`verify_agent` core-agent 846/846、`ui_check_agent` 77/77、`mw_check_agent` 83/83；`check-agent-release.ps1`、`check-i18n.ps1`、`check-test-modules.ps1` PASS；产品与测试目标编译通过。
 
 ### S5.1 隔离工作区与启动测试（P0）
 

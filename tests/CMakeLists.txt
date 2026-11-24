@@ -133,6 +133,9 @@ set(PROJECT_SOURCES
     ${REPO_ROOT}/src/agent/AgentLoop.hpp
     ${REPO_ROOT}/src/agent/AgentSkill.cpp
     ${REPO_ROOT}/src/agent/AgentSkill.hpp
+    ${REPO_ROOT}/src/agent/AgentPromptLibrary.cpp
+    ${REPO_ROOT}/src/agent/AgentPromptLibrary.hpp
+    ${REPO_ROOT}/assets/agent/agent.qrc
     ${REPO_ROOT}/src/agent/AgentWinPath.cpp
     ${REPO_ROOT}/src/agent/AgentWinPath.hpp
     ${REPO_ROOT}/src/agent/AgentEgressPolicy.cpp

@@ -207,6 +207,7 @@ set(HEADER_FILES
     src/agent/AgentContextBuilder.hpp
     src/agent/AgentLoop.hpp
     src/agent/AgentSkill.hpp
+    src/agent/AgentPromptLibrary.hpp
     src/agent/AgentWinPath.hpp
     src/agent/AgentEgressPolicy.hpp
     src/agent/AgentArtifactStore.hpp
@@ -550,6 +551,7 @@ set(SOURCE_FILES
     src/agent/AgentContextBuilder.cpp
     src/agent/AgentLoop.cpp
     src/agent/AgentSkill.cpp
+    src/agent/AgentPromptLibrary.cpp
     src/agent/AgentWinPath.cpp
     src/agent/AgentEgressPolicy.cpp
     src/agent/AgentArtifactStore.cpp
@@ -800,6 +802,9 @@ set(SOURCE_FILES
     # 列在这儿就够了、不用再写 qt_add_resources。验证工程也要各自列一份（见那几个
     # CMakeLists 里同一行的注释）：漏了的表现是那几张图**静默变回草方块**。
     assets/icons.qrc
+    # 技能提示词与后续诊断知识。提示词正文不在 AgentSkill.cpp 里；改 .md 后
+    # 只重编这份资源。验证工程通过 wtfml_core_runtime 带同一份 qrc。
+    assets/agent/agent.qrc
     ui/VersionTreeDelegate.cpp
     ui/LoadingState.cpp
     ui/ResourceDetailPage.cpp

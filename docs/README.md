@@ -35,7 +35,7 @@
 | 文档 | 内容 |
 | --- | --- |
 | [BUILDING.md](dev/BUILDING.md) | 构建（动态 / 静态单文件）、跑起来之后数据与日志在哪、源码目录结构、开发与验证的常用命令 |
-| [AGENT_AUTONOMY.md](dev/AGENT_AUTONOMY.md) | 智能体自主修复（Stage 5）开发计划：启动测试、隔离工作区、事务回滚、崩溃快照与日志检索、模组兼容/二分、提示词外置与 Prompt V2 |
+| [AGENT_AUTONOMY.md](dev/AGENT_AUTONOMY.md) | 智能体自主修复（Stage 5）开发计划：启动测试、隔离工作区、事务回滚、崩溃快照与日志检索、模组兼容/二分、Prompt V2；提示词外置已完成 |
 | [COMMENT_STYLE.md](dev/COMMENT_STYLE.md) | 注释规范：写“为什么/约束”、不写“做了什么”；文件头、行内、类注释、TODO/FIXME/NOTE、正反例 |
 | [TESTING.md](dev/TESTING.md) | 测试怎么跑：`tools/test.ps1` 14 个套件、`ctest --preset`、CI 分片、超时与环境变量、模块与夹具边界、新增用例约定、Agent 套件、未覆盖项；日常看效果用 `tools/dev-build.ps1` / `tools/dev-run.ps1` |
 | [I18N.md](dev/I18N.md) | 界面英文：翻译文件与构建管线、怎么刷新 .ts、不翻标记、守卫 `tools/check-i18n.ps1`、测试为什么钉 zh_CN |
