@@ -224,9 +224,16 @@ void ToolboxController::setupTool(ToolboxPage::Tool tool) {
     case Tool::Anvil: {
         QList<QPair<QString, QString>> enchantments;
         for (const Anvil::EnchantInfo &info : Anvil::enchantmentTable()) {
-            enchantments.append({info.id, QCoreApplication::translate("ToolboxController", "%1（%2，上限 %3 级）")
-                                            .arg(info.name, info.english)
-                                            .arg(info.maxLevel)});
+            // 中英同名（`Mending` 那种两边写法一样的）不重复写一遍。
+            const QString label =
+                info.name.compare(info.english, Qt::CaseInsensitive) == 0
+                    ? QCoreApplication::translate("ToolboxController", "%1（上限 %2 级）")
+                          .arg(info.name)
+                          .arg(info.maxLevel)
+                    : QCoreApplication::translate("ToolboxController", "%1（%2，上限 %3 级）")
+                          .arg(info.name, info.english)
+                          .arg(info.maxLevel);
+            enchantments.append({info.id, label});
         }
         m_page->setEnchantmentChoices(enchantments);
         break;

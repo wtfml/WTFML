@@ -126,7 +126,7 @@ AgentSettingsPage::AgentSettingsPage(QWidget *parent) : QDialog(parent) {
     m_baseUrl = new QLineEdit(content);
     m_baseUrl->setObjectName(QStringLiteral("agentBaseUrlEdit"));
     m_baseUrl->setPlaceholderText(QCoreApplication::translate("AgentSettingsPage", "例如 https://api.example.com/v1"));
-    InputSizing::longValue(m_baseUrl, QCoreApplication::translate("AgentSettingsPage", "网址：路径长度不定"));
+    InputSizing::longValue(m_baseUrl, QStringLiteral("网址：路径长度不定"));  // i18n-ignore
     m_urlPreview = captionLabel(content, QStringLiteral("agentFinalUrlPreview"));
     m_urlPreview->setTextInteractionFlags(Qt::TextSelectableByMouse);
     row(service, QCoreApplication::translate("AgentSettingsPage", "接口地址"), fieldWithNote(content, m_baseUrl, m_urlPreview), Placement::Wide);

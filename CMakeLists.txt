@@ -405,6 +405,8 @@ set(HEADER_FILES
     src/util/ServerPing.hpp
     src/util/ErrorReport.hpp
     src/util/DownloadDiagnostics.hpp
+    # 几个完整句子接成一段：中文直接相接，英文那一个空格在译文里。
+    src/util/SentenceJoin.hpp
     # 工具箱那五件：纯逻辑层，各自的"照什么规矩、不做什么"
     # 都写在头文件开头那一段里。
     src/tools/TextFormat.hpp

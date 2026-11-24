@@ -1422,7 +1422,7 @@ void runInstanceFilesPagesTests() {
             check(savedNotDirty,
                   "★ T20.7 存完那一格不脏了（不脏的话用户接着点「返回」又被问一次"
                   "「改过要不要丢掉」——它明明刚存过）");
-            check(promptCount == 1 && promptTitle == QStringLiteral("世界设置有未保存的更改"),
+            check(promptCount == 1 && promptTitle == QStringLiteral("配置文件有未保存的更改"),
                   "★★ T20.7 改过之后点「返回」**先问一句**（那一问的字是 MainWindow 给的，"
                   "两处共用同一份）",
                   QStringLiteral("%1 条 / %2").arg(promptCount).arg(promptTitle));
@@ -2493,7 +2493,7 @@ void runInstanceFilesPagesTests() {
                   "用户要回退的是他刚才那一次保存）",
                   restoredText);
             check(restoredDirty &&
-                      restoredNote.startsWith(ConfigFileEditorPage::restoredPrefix()) &&
+                      restoredNote.startsWith(QStringLiteral("已恢复上次保存前的内容（")) &&
                       restoredNote.contains(QStringLiteral("保存")),
                   "★★ T20.10 取回来**只是摆进框里**：那一份是脏的、底下那行字说清它哪来的，"
                   "而且要用户按「保存」才写回盘上 —— 「还原」不许是一次悄悄的写入（不然用户"

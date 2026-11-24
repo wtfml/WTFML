@@ -17,6 +17,7 @@
 #include "manage/InstanceFiles.hpp"
 #include "manage/ModpackImport.hpp"
 #include "util/SevenZip.hpp"
+#include "util/SentenceJoin.hpp"
 #include "manage/ModpackInstallReport.hpp"
 #include "manage/ModpackCompletion.hpp"
 #include "manage/VersionManager.hpp"
@@ -1121,9 +1122,13 @@ void ImportController::repairFromReport(const QString &reportPath) {
         if (verify) checked.clear(); // 外部删除/修改后，不沿用旧的已校验状态。
         for (int index = 0; index < report.issues.size(); ++index)
             if (result.suppliedPaths.contains(report.issues.at(index).path)) checked.insert(index);
-        lastResult = tr("本次校验通过 %1 项，未处理/失败 %2 项。%3\n补齐后可点击“完成安装”；没有安装凭据的旧安装仍需原包。")
-            .arg(result.suppliedPaths.size()).arg(result.problems.size())
-            .arg(result.cancelled ? tr("已取消或超时，未改变安装状态。") : QString());
+        QStringList sentences;
+        sentences << tr("本次校验通过 %1 项，未处理/失败 %2 项。")
+                         .arg(result.suppliedPaths.size())
+                         .arg(result.problems.size());
+        if (result.cancelled) sentences << tr("已取消或超时，未改变安装状态。");
+        lastResult = joinSentences(sentences) + QLatin1Char('\n')
+            + tr("补齐后可点击「完成安装」；无安装凭据的旧安装仍需原包。");
         if (!result.problems.isEmpty()) lastResult += QLatin1Char('\n') + result.problems.mid(0, 5).join(QLatin1Char('\n'));
         m_owner->appendLog(lastResult);
         for (const auto &error : result.problems) m_owner->appendLog(error);

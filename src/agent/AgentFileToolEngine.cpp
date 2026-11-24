@@ -11,6 +11,7 @@
 #include "AgentWorkspaceStore.hpp"
 #include "AgentRedaction.hpp"
 
+#include <QCoreApplication>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -151,7 +152,7 @@ AgentToolResult AgentFileToolEngine::handleListNames(const Agent::ToolCall &call
                           .arg(truncated ? QStringLiteral("（已截断）") : QString());
     return approvalRequired(pending, pending.summary,
                             AgentRedaction::preview(redacted.text, 4000), QString(),
-                            QStringLiteral("不提供“本会话允许此目录”；每次都要重新确认。"),
+                            QCoreApplication::translate("AgentFileToolEngine", "不提供「本会话允许此目录」，每次均需重新确认。"),
                             pending.egress);
 }
 

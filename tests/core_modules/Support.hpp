@@ -2294,6 +2294,9 @@ void runDownloadProxyTests();
 /// ZAA 节。`§` 码 / JSON 组件 / `/tellraw` 三份形态之间的往返。
 void runTextFormatTests();
 
+/// ZAJ 节。几个完整句子接成一段（中文直接相接，英文那一个空格在译文里）。
+void runSentenceJoinTests();
+
 /// ZAB 节。8:1 换算、区块 / 区域文件坐标、以及 F3+C 复制出来的那条命令。
 void runCoordConvertTests();
 

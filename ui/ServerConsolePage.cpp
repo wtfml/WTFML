@@ -83,7 +83,7 @@ ServerConsolePage::ServerConsolePage(QWidget *parent) : QDialog(parent) {
         m_searchEdit->setObjectName(searchEditName());
         m_searchEdit->setPlaceholderText(searchPlaceholderText());
         m_searchEdit->setClearButtonEnabled(true);
-        InputSizing::longValue(m_searchEdit, QCoreApplication::translate("ServerConsolePage", "搜索框：筛选日志行，关键词长度不定"));
+        InputSizing::longValue(m_searchEdit, QStringLiteral("搜索框：筛选日志行，关键词长度不定"));  // i18n-ignore
         m_searchEdit->setToolTip(
             QCoreApplication::translate("ServerConsolePage", "只筛选当前显示的行；「导出日志…」仍导出完整日志。"));
         connect(m_searchEdit, &QLineEdit::textChanged, this, [this](const QString &text) {
@@ -150,7 +150,7 @@ ServerConsolePage::ServerConsolePage(QWidget *parent) : QDialog(parent) {
         layout->setSpacing(8);
         m_commandEdit = new QLineEdit(row);
         m_commandEdit->setObjectName(MainWindowUI::serverConsoleCommandEditName());
-        InputSizing::longValue(m_commandEdit, QCoreApplication::translate("ServerConsolePage", "命令输入：像聊天框一样整行"));
+        InputSizing::longValue(m_commandEdit, QStringLiteral("命令输入：像聊天框一样整行"));  // i18n-ignore
         m_commandEdit->setPlaceholderText(
             QCoreApplication::translate("ServerConsolePage", "往这个服务端敲一条命令（比如 say 大家好），回车发送"));
         layout->addWidget(m_commandEdit, 1);

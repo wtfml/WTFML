@@ -637,6 +637,13 @@ Select “Log out” to try again.</translation>
         </message>
     </context>
     <context>
+        <name>AgentFileToolEngine</name>
+        <message>
+            <source>不提供「本会话允许此目录」，每次均需重新确认。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>AgentLauncherHostImpl</name>
         <message>
             <source>找不到日志文件（实例目录的 logs/latest.log 或数据根的 logs/latest.log、logs/wtfml.log）。</source>
@@ -901,10 +908,6 @@ Select “Log out” to try again.</translation>
         <message>
             <source>例如 https://api.example.com/v1</source>
             <translation>For example https://api.example.com/v1</translation>
-        </message>
-        <message>
-            <source>网址：路径长度不定</source>
-            <translation>URL: Path length is variable</translation>
         </message>
         <message>
             <source>接口地址</source>
@@ -1682,6 +1685,102 @@ Select “Log out” to try again.</translation>
         <message>
             <source>海龟壳</source>
             <translation>Turtle Shell</translation>
+        </message>
+        <message>
+            <source>皮革帽子</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>皮革外套</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>皮革裤子</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>皮革靴子</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>锁链头盔</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>锁链胸甲</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>锁链护腿</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>锁链靴子</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>铁头盔</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>铁胸甲</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>铁护腿</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>铁靴子</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>金头盔</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>金胸甲</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>金护腿</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>金靴子</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>钻石头盔</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>钻石胸甲</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>钻石护腿</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>钻石靴子</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>下界合金头盔</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>下界合金胸甲</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>下界合金护腿</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>下界合金靴子</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>盔甲材质编号无效（%1）。</source>
@@ -3671,10 +3770,6 @@ What you want to restore is this one:
             <translation>(This file is empty)</translation>
         </message>
         <message>
-            <source>）</source>
-            <translation>)</translation>
-        </message>
-        <message>
             <source>文件使用非 UTF-8 编码。为保护内容，已按只读方式打开。</source>
             <translation>The file is not UTF-8 encoded. Saving will corrupt the content and can only be viewed.</translation>
         </message>
@@ -3683,8 +3778,24 @@ What you want to restore is this one:
             <translation>This file is too large (%1 MB is the upper limit given here) and cannot be modified.</translation>
         </message>
         <message>
-            <source>范围：</source>
-            <translation>Scope:</translation>
+            <source>已保存（%1）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>只读：%1</source>
+            <translation type="unfinished">Read only: %1</translation>
+        </message>
+        <message>
+            <source>已恢复上次保存前的内容（%1）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>，选择「保存」后写入文件。</source>
+            <translation type="unfinished">, click "Save" to write it back to disk.</translation>
+        </message>
+        <message>
+            <source>范围：%1</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>%1 / 第 %2 行</source>
@@ -3711,24 +3822,12 @@ What you want to restore is this one:
             <translation>Restore last time</translation>
         </message>
         <message>
-            <source>已恢复上次保存前的内容（</source>
-            <translation>Restored content before last save (</translation>
-        </message>
-        <message>
             <source>文件中未找到可编辑的设置项</source>
             <translation>The setting item was not recognized in this document</translation>
         </message>
         <message>
-            <source>只读：</source>
-            <translation>Read only:</translation>
-        </message>
-        <message>
             <source>选择「保存」后写入文件。保留原文件的换行格式和 BOM。</source>
             <translation>After making changes, click "Save" to save the changes to disk. It turns out that the end of the line, whether there is a BOM or not, doesn't move.</translation>
-        </message>
-        <message>
-            <source>已保存（</source>
-            <translation>Saved (</translation>
         </message>
     </context>
     <context>
@@ -6414,6 +6513,14 @@ Check size against SHA-1; run for up to 900 seconds, can be canceled at any time
             <translation>Batch match %1 files</translation>
         </message>
         <message>
+            <source>本次校验通过 %1 项，未处理/失败 %2 项。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>补齐后可点击「完成安装」；无安装凭据的旧安装仍需原包。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>已把原包的启动补丁保存在实例目录（导出时可以原样带回）。</source>
             <translation>The modpack’s launch patches were saved in the instance directory and will be included when you export it.</translation>
         </message>
@@ -6432,12 +6539,6 @@ Check size against SHA-1; run for up to 900 seconds, can be canceled at any time
         <message>
             <source>所有阶段文件与补齐项已通过校验，现在可以启动 %1。</source>
             <translation>All stage files and completions have been verified and can now be started %1.</translation>
-        </message>
-        <message>
-            <source>本次校验通过 %1 项，未处理/失败 %2 项。%3
-补齐后可点击“完成安装”；没有安装凭据的旧安装仍需原包。</source>
-            <translation>This verification passed %1 items and %2 items were not processed/failed. %3
- After completion, you can click "Complete Installation"; old installations without installation credentials still need the original package.</translation>
         </message>
         <message>
             <source>已取消或超时，未改变安装状态。</source>
@@ -7707,10 +7808,6 @@ This file changed after you opened it. Minecraft may have written it when quitti
             <translation>Reload from disk</translation>
         </message>
         <message>
-            <source>点击「重新载入」将放弃当前修改并读取磁盘最新内容。</source>
-            <translation>Reloading from disk discards your changes and opens the latest version of the file.</translation>
-        </message>
-        <message>
             <source>这个数据目录已被另一份启动器占用</source>
             <translation>This data directory is in use by another launcher window</translation>
         </message>
@@ -7937,6 +8034,10 @@ Nothing was saved.</translation>
 %2</translation>
         </message>
         <message>
+            <source>配置文件有未保存的更改</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>世界设置有未保存的更改</source>
             <translation>Unsaved changes</translation>
         </message>
@@ -7947,6 +8048,10 @@ Nothing was saved.</translation>
             <translation>Your changes to this file have not been saved. Leaving now will discard them.
 
 Discard changes?</translation>
+        </message>
+        <message>
+            <source>点击「重新读取文件」将放弃当前修改并读取磁盘最新内容。</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>丢掉改动</source>
@@ -8107,20 +8212,16 @@ Discard changes?</translation>
             <translation>Are you sure you want to delete the selected %1 items?</translation>
         </message>
         <message>
-            <source>其中 %1 个是文件夹（连同里面的东西一起删）</source>
-            <translation>%1 of them are folders (deleted together with the contents)</translation>
+            <source>其中 %1 个为文件夹，其内容将一并删除。</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>，</source>
-            <translation>,</translation>
+            <source>其中 %1 个为链接，仅删除链接本身，指向的目标不受影响。</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>%1 个是链接（只删链接本身，指向的东西不动）</source>
-            <translation>%1 are links (only the link itself is deleted, the thing pointed to is not moved)</translation>
-        </message>
-        <message>
-            <source>。它们会进回收站，要恢复可以从那里找回来。</source>
-            <translation>. They will go into the Recycle Bin and can be retrieved from there if you want to restore them.</translation>
+            <source>内容将移入回收站，可从回收站恢复。</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>批量删除 %1 项</source>
@@ -10596,12 +10697,20 @@ The current version will also be retained separately and the file will not be de
             <translation>The replica was published, but the transaction record failed to update; no files were deleted.</translation>
         </message>
         <message>
-            <source>更新副本发布后校验失败，已保留在被拒绝目录：</source>
-            <translation>After the update copy is released, the verification fails and is retained in the rejected directory:</translation>
+            <source>更新副本发布后校验失败，已保留在被拒绝目录：%1</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>升级副本校验失败，自动撤回也未完成。请检查以下内容：</source>
-            <translation>After the updated copy is released, the verification fails and the automatic withdrawal fails; please check manually:</translation>
+            <source>升级副本校验失败，自动撤回也未完成。请检查以下内容：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>升级事务 %1（实例 %2）未找到匹配的游戏根指纹，未自动恢复；请使用完整 ZIP 快照恢复。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>升级事务 %1（实例 %2）未找到匹配的游戏根指纹，未自动恢复；请使用完整 ZIP 快照 %3 恢复。</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>副本事务正在使用，未修改实例。</source>
@@ -10752,10 +10861,6 @@ The current version will also be retained separately and the file will not be de
             <translation>Cleaned up unregistered upgrade cache: %1</translation>
         </message>
         <message>
-            <source>升级事务 %1（实例 %2）找不到匹配的游戏根指纹，未自动恢复；请使用完整 ZIP 快照%3恢复。</source>
-            <translation>Upgrade transaction %1 (instance %2) cannot find a matching game root fingerprint and is not automatically restored; please use the full ZIP snapshot %3 to restore.</translation>
-        </message>
-        <message>
             <source>上次的更新副本已发布（事务记录未更新），已清理暂存：%1</source>
             <translation>The last updated copy has been published (the transaction record has not been updated), and the temporary cache has been cleaned: %1</translation>
         </message>
@@ -10797,8 +10902,8 @@ The current version will also be retained separately and the file will not be de
             <translation>File changes:</translation>
         </message>
         <message>
-            <source>升级工作发生异常；恢复检查：</source>
-            <translation>An exception occurred during the upgrade work; recovery check:</translation>
+            <source>升级工作发生异常；恢复检查：%1</source>
+            <translation type="unfinished"></translation>
         </message>
     </context>
     <context>
@@ -12639,10 +12744,6 @@ Write only an IPv4/IPv6 address (without port).</translation>
 If you change the zip, you need to recalculate SHA-1; the new value will be used the next time the server starts.</translation>
         </message>
         <message>
-            <source>level-name 无效，无法确定世界目录。请在「常用设置」中填写有效的世界目录名。</source>
-            <translation>Invalid level-name, unable to determine world directory. Please fill in a valid world directory name in "Common Settings".</translation>
-        </message>
-        <message>
             <source>加不了</source>
             <translation>Can't add</translation>
         </message>
@@ -12651,20 +12752,8 @@ If you change the zip, you need to recalculate SHA-1; the new value will be used
             <translation>The level-name of this server is not recognized, and I don’t know where the world is.</translation>
         </message>
         <message>
-            <source>选数据包 zip</source>
-            <translation>Select data package zip</translation>
-        </message>
-        <message>
-            <source>选模组 jar</source>
-            <translation>Select mod jar</translation>
-        </message>
-        <message>
             <source>数据包 (*.zip);;所有文件 (*.*)</source>
             <translation>Data package (*.zip);;All files (*.*)</translation>
-        </message>
-        <message>
-            <source>模组 (*.jar);;所有文件 (*.*)</source>
-            <translation>Mod (*.jar);;All files (*.*)</translation>
         </message>
         <message>
             <source>无法创建文件夹：%1</source>
@@ -14903,10 +14992,6 @@ Are you sure to delete?</translation>
             <translation>It will be effective for subsequent requests.</translation>
         </message>
         <message>
-            <source>API 密钥：约 60 个字符，明文显示便于核对</source>
-            <translation>API key: about 60 characters, displayed in clear text for easy verification</translation>
-        </message>
-        <message>
             <source>下载的文件</source>
             <translation>Downloaded files</translation>
         </message>
@@ -15663,30 +15748,6 @@ It will not restart automatically when stopped manually or exited normally.</tra
             <translation>Select local zip…</translation>
         </message>
         <message>
-            <source>常用设置</source>
-            <translation>Common settings</translation>
-        </message>
-        <message>
-            <source>原始文本</source>
-            <translation>Original text</translation>
-        </message>
-        <message>
-            <source>内容</source>
-            <translation>Content</translation>
-        </message>
-        <message>
-            <source>世界备份</source>
-            <translation>World backup</translation>
-        </message>
-        <message>
-            <source>玩家</source>
-            <translation>Player</translation>
-        </message>
-        <message>
-            <source>体检</source>
-            <translation>Physical examination</translation>
-        </message>
-        <message>
             <source>保存</source>
             <translation>Save</translation>
         </message>
@@ -15835,7 +15896,7 @@ It will not restart automatically when stopped manually or exited normally.</tra
         <message>
             <source>玩家</source>
             <comment>table column</comment>
-            <translation type="unfinished"></translation>
+            <translation type="unfinished">Players</translation>
         </message>
         <message>
             <source>封禁 IP…</source>
@@ -18969,10 +19030,6 @@ Not supported by this preset category: %1.</translation>
             <translation>Description (optional)</translation>
         </message>
         <message>
-            <source>预设说明：一两句话，长度不定</source>
-            <translation>Default description: one or two sentences, variable length</translation>
-        </message>
-        <message>
             <source>复制</source>
             <translation>Copy</translation>
         </message>
@@ -21405,13 +21462,6 @@ Not supported by this preset category: %1.</translation>
         </message>
     </context>
     <context>
-        <name>QCoreApplication</name>
-        <message>
-            <source>，选择「保存」后写入文件。</source>
-            <translation>, click "Save" to write it back to disk.</translation>
-        </message>
-    </context>
-    <context>
         <name>QObject</name>
         <message>
             <source>目标已存在，原有文件已保留：%1</source>
@@ -21666,24 +21716,6 @@ Minecraft %2 / %3
             <translation>Cancel</translation>
         </message>
         <message>
-            <source>当前实例：%1
-目标：Minecraft %2 / %3 %4
-
-保留启用：%5&#x3000;替换适配版：%6&#x3000;禁用但保留文件：%7&#x3000;待确认：%8
-
-%9
-
-存档跨版本后可能无法降级；执行前会检查磁盘空间。%11%10</source>
-            <translation>Current instance: %1
-Target: Minecraft %2 / %3 %4
-
-Keep enabled: %5&#x3000;Replace with adapted version: %6&#x3000;Disable but keep files: %7&#x3000;Pending confirmation: %8
-
-%9
-
-A world may not downgrade across versions; disk space is checked before execution. %11%10</translation>
-        </message>
-        <message>
             <source>更新当前实例：完整快照并校验后替换，保留回滚。</source>
             <translation>Update the current instance: take a complete snapshot and verify it before replacing it, and keep the rollback.</translation>
         </message>
@@ -21702,8 +21734,20 @@ A world may not downgrade across versions; disk space is checked before executio
             <translation>The game directory has been changed, please close the wizard and re-enter.</translation>
         </message>
         <message>
-            <source>更新当前实例：先创建并逐文件校验完整 ZIP 快照（约需 2 倍实例空间），原目录另行保留，可用「回滚上次更新」恢复。</source>
-            <translation>Update the current instance: First create and verify a complete ZIP snapshot file by file (requiring approximately 2 times the instance space). The original directory is retained separately and can be restored by "rollback last update".</translation>
+            <source>当前实例：%1
+目标：Minecraft %2 / %3 %4
+
+保留启用：%5&#x3000;替换适配版：%6&#x3000;禁用但保留文件：%7&#x3000;待确认：%8
+
+%9
+
+存档跨版本后可能无法降级；执行前会检查磁盘空间。
+%11%10</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>更新当前实例：先创建并逐文件校验完整 ZIP 快照（约需 2 倍实例空间），原目录另行保留，可用「回滚上次更新…」恢复。</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>创建独立副本并逐文件校验，约需一份实例空间；保留源实例，不重复创建 ZIP 快照。</source>
@@ -24643,6 +24687,14 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         </message>
     </context>
     <context>
+        <name>SentenceJoin</name>
+        <message>
+            <source>%1%2</source>
+            <comment>two sentences; English puts a space between them</comment>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>ServerCheck</name>
         <message>
             <source>要处理</source>
@@ -24843,10 +24895,6 @@ Please close the program occupying the port, or change the port in "Common Setti
     <context>
         <name>ServerConsolePage</name>
         <message>
-            <source>搜索框：筛选日志行，关键词长度不定</source>
-            <translation>Search box: filter log lines, keyword length is variable</translation>
-        </message>
-        <message>
             <source>只筛选当前显示的行；「导出日志…」仍导出完整日志。</source>
             <translation>Only the currently displayed rows are filtered; "Export Log..." still exports the complete log.</translation>
         </message>
@@ -24861,10 +24909,6 @@ Please close the program occupying the port, or change the port in "Common Setti
         <message>
             <source>把控制台全部输出存成文本文件（含被搜掉的行）。</source>
             <translation>Save all output from the console into a text file (including the searched lines).</translation>
-        </message>
-        <message>
-            <source>命令输入：像聊天框一样整行</source>
-            <translation>Command input: full line like chat box</translation>
         </message>
         <message>
             <source>往这个服务端敲一条命令（比如 say 大家好），回车发送</source>
@@ -25028,10 +25072,6 @@ Please close the program occupying the port, or change the port in "Common Setti
             <translation>This file needs to run its installer, and the installer is a Java program - no Java can be found. Go to "Settings → Startup → Java Management" to choose one, or run the game first and let it choose by itself.</translation>
         </message>
         <message>
-            <source>%1失败：%2</source>
-            <translation>%1 failed: %2</translation>
-        </message>
-        <message>
             <source>服务端安装超过 %1 秒，已停止。部分文件已保留，请检查网络后修复。</source>
             <translation>The server installer has reached the total deadline (%1 seconds), and the work in progress is reserved. Please check the network and fix it.</translation>
         </message>
@@ -25074,16 +25114,8 @@ Please close the program occupying the port, or change the port in "Common Setti
             <translation>There is no local version information for %1. Please go to the version list and ask.</translation>
         </message>
         <message>
-            <source>取 %1 </source>
-            <translation>Take %1</translation>
-        </message>
-        <message>
             <source>取 %1 失败了：%2</source>
             <translation>Failed to retrieve %1: %2</translation>
-        </message>
-        <message>
-            <source>取版本清单</source>
-            <translation>Get version list</translation>
         </message>
         <message>
             <source>取版本清单失败了：%1</source>
@@ -25092,10 +25124,6 @@ Please close the program occupying the port, or change the port in "Common Setti
         <message>
             <source>版本清单里没有 %1 这个版本。</source>
             <translation>There is no version %1 in the version list.</translation>
-        </message>
-        <message>
-            <source>取 %1 的版本信息 </source>
-            <translation>Get the version information of %1</translation>
         </message>
         <message>
             <source>取 %1 的版本信息失败了：%2</source>
@@ -26142,10 +26170,6 @@ Please close the program occupying the port, or change the port in "Common Setti
         <message>
             <source>启动服务端</source>
             <translation>Start the server</translation>
-        </message>
-        <message>
-            <source>服务端正在运行</source>
-            <translation>Server is running</translation>
         </message>
         <message>
             <source>请先保存或放弃修改</source>
@@ -27325,6 +27349,10 @@ The changes you made yourself will not be retained.</translation>
             <translation>The custom color should be written as `#RRGGBB`, a six-digit hexadecimal number, such as `#ff8800` (games do not recognize abbreviations such as `#f80`).</translation>
         </message>
         <message>
+            <source>%1（上限 %2 级）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>%1（%2，上限 %3 级）</source>
             <translation>%1 (%2, upper limit %3 level)</translation>
         </message>
@@ -27549,10 +27577,6 @@ The changes you made yourself will not be retained.</translation>
         <message>
             <source>纹饰</source>
             <translation>Ornamentation</translation>
-        </message>
-        <message>
-            <source>材料</source>
-            <translation>Material</translation>
         </message>
         <message>
             <source>目标版本</source>
@@ -27835,10 +27859,6 @@ The changes you made yourself will not be retained.</translation>
             <translation>Conversion result</translation>
         </message>
         <message>
-            <source>只读结果：整条 tp 命令，方便选中复制</source>
-            <translation>Read-only results: the entire tp command, easy to select and copy</translation>
-        </message>
-        <message>
             <source>生成 tp 命令</source>
             <translation>Generate tp command</translation>
         </message>
@@ -28091,6 +28111,11 @@ The changes you made yourself will not be retained.</translation>
             <translation>Instruction</translation>
         </message>
         <message>
+            <source>材料</source>
+            <comment>banner materials tab</comment>
+            <translation type="unfinished">Material</translation>
+        </message>
+        <message>
             <source>第 %1 层：%2（%3）</source>
             <translation>Layer %1: %2 (%3)</translation>
         </message>
@@ -28113,6 +28138,11 @@ The changes you made yourself will not be retained.</translation>
         <message>
             <source>）</source>
             <translation>)</translation>
+        </message>
+        <message>
+            <source>材料</source>
+            <comment>armor trim material</comment>
+            <translation type="unfinished">Material</translation>
         </message>
         <message>
             <source>从本机已装的游戏里读取盔甲贴图</source>
@@ -28454,6 +28484,13 @@ The changes you made yourself will not be retained.</translation>
         <message>
             <source>无法识别目标版本。确认兼容性后再选择是否迁移。</source>
             <translation>The target version cannot be recognized: I am not sure whether this item is compatible. Please make your own judgment whether you want to move it or not.</translation>
+        </message>
+    </context>
+    <context>
+        <name>UiLanguage</name>
+        <message>
+            <source>zh</source>
+            <translation>en</translation>
         </message>
     </context>
     <context>

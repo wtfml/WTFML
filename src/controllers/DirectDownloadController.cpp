@@ -8,6 +8,7 @@
 #include "download/DownloadCache.hpp"
 #include "download/DownloadCheckpoint.hpp"
 #include "util/AppPaths.hpp"
+#include "util/SentenceJoin.hpp"
 #include <QUuid>
 #include <QLockFile>
 #include <QSettings>
@@ -170,8 +171,10 @@ void DirectDownloadController::startJob(Tasks::TaskId id, const DirectDownloadRe
     m_running = true;
     m_activity->tasks()->setStepState(id, 0, Tasks::TaskStepState::Running);
     m_activity->tasks()->setStepState(id, 1, Tasks::TaskStepState::Pending);
-    m_status = tr("正在连接；进度可在任务中心查看。");
-    if (!m_recoveryReadable) m_status += tr("恢复记录不可用或被占用，原件已保留；本次下载不提供暂停和跨重启恢复。");
+    QStringList status;
+    status << tr("正在连接；进度可在任务中心查看。");
+    if (!m_recoveryReadable) status << tr("恢复记录不可用或被占用，原件已保留；本次下载不提供暂停和跨重启恢复。");
+    m_status = joinSentences(status);
     m_activity->tasks()->setDetail(m_task, m_status);
     m_rateClock.start(); m_rate.reset(); m_transferred = 0; m_lastRateUi = -1000;
     m_lastDone = 0; m_lastTotal = -1; m_showTransferTelemetry = false;

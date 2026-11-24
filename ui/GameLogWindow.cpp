@@ -15,6 +15,7 @@
 #include "ElidedLabel.hpp"
 #include "Theme.hpp"   // 按钮身份、`neutralFill()`（那几档中性灰）、`isDarkPalette()`
 #include "VersionIcons.hpp"
+#include "util/SentenceJoin.hpp"
 
 #include <QApplication>
 #include <QAction>
@@ -1270,15 +1271,16 @@ QString GameLogWindow::fileWindowTitleText(const QString &fileName) {
 }
 
 QString GameLogWindow::fileHintText(qint64 cutHeadBytes, bool tailByDefault) {
-    QString text = QCoreApplication::translate("GameLogWindow", "已保存的日志，不再更新。");
+    QStringList sentences;
+    sentences << QCoreApplication::translate("GameLogWindow", "已保存的日志，不再更新。");
     if (cutHeadBytes > 0) {
-        text += QCoreApplication::translate("GameLogWindow", "文件过大，只读取了末尾部分。");
+        sentences << QCoreApplication::translate("GameLogWindow", "文件过大，只读取了末尾部分。");
     }
     if (tailByDefault) {
-        text += QCoreApplication::translate("GameLogWindow", "当前显示末尾 %1 行，可在右上角调整。")
-                    .arg(fileTailLines());
+        sentences << QCoreApplication::translate("GameLogWindow", "当前显示末尾 %1 行，可在右上角调整。")
+                         .arg(fileTailLines());
     }
-    return text;
+    return joinSentences(sentences);
 }
 
 QString GameLogWindow::hintText() {

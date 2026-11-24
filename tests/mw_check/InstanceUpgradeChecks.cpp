@@ -1683,7 +1683,7 @@ int runInstanceUpgradeChecks() {
         check(QDir().rename(r.gameDir, moved), "move the tampered game root");
         const auto messages = InstanceUpgrade::recoverInterruptedInRoots({moved});
         check(!messages.isEmpty()
-                  && messages.join(QLatin1Char('\n')).contains(QStringLiteral("找不到匹配"))
+                  && messages.join(QLatin1Char('\n')).contains(QStringLiteral("未找到匹配"))
                   && !QFileInfo::exists(moved + "/versions/Instance")
                   && QFileInfo::exists(moved + "/cache/instance-upgrades/tx-test/original/Instance.jar"),
               "★★ mismatched root fingerprint is not recovered and points to the ZIP fallback");

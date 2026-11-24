@@ -51,12 +51,6 @@ QString javaMissingMessage() {
     return QCoreApplication::translate("ServerInstallController", "未找到可运行服务端安装器的 Java。请在「设置 → 启动 → Java 管理」中选择兼容版本。");
 }
 
-/// 没有回复（排队到点 / 被掐 / 管理器先没）时的失败措辞：`what` 是"取 xxx"，
-/// 拼出来是「取 xxx失败：等待网络请求超时。」—— 和以前超时走"网络错误"那条路一个收场。
-QString unansweredText(const QString &what, const QString &jobError) {
-    return QCoreApplication::translate("ServerInstallController", "%1失败：%2").arg(what, jobError);
-}
-
 }  // namespace
 
 ServerInstallController::ServerInstallController(QObject *parent) : QObject(parent) {
@@ -256,16 +250,18 @@ void ServerInstallController::beginResolve() {
     }
 
     // Paper：那份构建列表。
-    const QString what = QCoreApplication::translate("ServerInstallController", "取 %1 ").arg(need.url);
+    const QString url = need.url;
     QNetworkRequest request{QUrl(need.url)};
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
                          QNetworkRequest::NoLessSafeRedirectPolicy);
     m_metadataReply = RequestBudget::ControlGet::start(
         this, m_network, request, HttpClient::kDefaultTimeoutMs,
-        [this, what](QNetworkReply *reply, const QString &jobError) {
+        [this, url](QNetworkReply *reply, const QString &jobError) {
             m_metadataReply = nullptr;
             if (reply == nullptr) {
-                onMetadataReady(QByteArray(), unansweredText(what, jobError));
+                onMetadataReady(QByteArray(),
+                                QCoreApplication::translate("ServerInstallController", "取 %1 失败了：%2")
+                                    .arg(url, jobError));
                 return;
             }
             const QByteArray payload = reply->readAll();
@@ -300,7 +296,7 @@ void ServerInstallController::onVersionManifest(QNetworkReply *reply, const QStr
         if (m_cancelling) {
             return;
         }
-        fail(unansweredText(QCoreApplication::translate("ServerInstallController", "取版本清单"), jobError));
+        fail(QCoreApplication::translate("ServerInstallController", "取版本清单失败了：%1").arg(jobError));
         return;
     }
     const QByteArray payload = reply->readAll();
@@ -351,13 +347,14 @@ void ServerInstallController::onVersionManifest(QNetworkReply *reply, const QStr
                             ? DownloadManager::mirrorVersionJsonUrl(m_request.gameVersion)
                             : officialUrl;
     QNetworkRequest request{QUrl(url)};
-    const QString what = QCoreApplication::translate("ServerInstallController", "取 %1 的版本信息 ").arg(m_request.gameVersion);
     m_metadataReply = RequestBudget::ControlGet::start(
         this, m_network, request, HttpClient::kDefaultTimeoutMs,
-        [this, what](QNetworkReply *inner, const QString &jobError) {
+        [this](QNetworkReply *inner, const QString &jobError) {
             m_metadataReply = nullptr;
             if (inner == nullptr) {
-                onMetadataReady(QByteArray(), unansweredText(what, jobError));
+                onMetadataReady(QByteArray(),
+                                QCoreApplication::translate("ServerInstallController", "取 %1 的版本信息失败了：%2")
+                                    .arg(m_request.gameVersion, jobError));
                 return;
             }
             const QByteArray bytes = inner->readAll();

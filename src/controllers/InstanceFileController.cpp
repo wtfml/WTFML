@@ -7,6 +7,7 @@
 #include "manage/FolderManager.hpp"
 #include "util/WriteDirectoryGuard.hpp"
 #include "util/AppPaths.hpp"
+#include "util/SentenceJoin.hpp"
 #include "operations/OperationReport.hpp"
 #include <QUuid>
 
@@ -306,17 +307,15 @@ void InstanceFileController::removeMany(const QStringList &paths) {
                              ? tr("确定删除选中的 %1 个文件夹及其内容？文件将移至回收站。")
                                    .arg(paths.size())
                              : [&] {
-                                   QString text =
-                                       tr("确定删除选中的 %1 项？").arg(paths.size());
+                                   QStringList sentences;
+                                   sentences << tr("确定删除选中的 %1 项？").arg(paths.size());
                                    if (dirCount > 0)
-                                       text += tr("其中 %1 个是文件夹（连同里面的东西一起删）")
-                                                   .arg(dirCount);
-                                   if (linkCount > 0) {
-                                       if (dirCount > 0) text += tr("，");
-                                       text += tr("%1 个是链接（只删链接本身，指向的东西不动）")
-                                                   .arg(linkCount);
-                                   }
-                                   return text + tr("。它们会进回收站，要恢复可以从那里找回来。");
+                                       sentences << tr("其中 %1 个为文件夹，其内容将一并删除。").arg(dirCount);
+                                   if (linkCount > 0)
+                                       sentences << tr("其中 %1 个为链接，仅删除链接本身，指向的目标不受影响。")
+                                                        .arg(linkCount);
+                                   sentences << tr("内容将移入回收站，可从回收站恢复。");
+                                   return joinSentences(sentences);
                                }())));
     if (InlineMessage::ask(m_overlay, MessageKind::Question, tr("删除文件"), question,
                            {tr("删除"), tr("取消")}, 1, 0) != 0) return;
