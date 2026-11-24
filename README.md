@@ -17,7 +17,7 @@
 ## <img src="assets/readme/h-home-en.svg" alt="Home" height="40">
 
 <p align="center">
-  <img src="assets/readme/shot-home.webp" alt="Home page: greeting, quote of the day, current instance and Play button" width="100%">
+  <img src="assets/readme/shot-home-en.webp" alt="Home page: greeting, quote of the day, current instance and Play button" width="100%">
 </p>
 
 ## <img src="assets/readme/h-features-en.svg" alt="Features" height="40">
@@ -41,16 +41,16 @@
 
 <table>
   <tr>
-    <td width="50%"><img src="assets/readme/shot-library.webp" alt="Library page"><br><sub>Library — instances and groups</sub></td>
-    <td width="50%"><img src="assets/readme/shot-download.webp" alt="Download page"><br><sub>Download — game versions and loaders</sub></td>
+    <td width="50%"><img src="assets/readme/shot-library-en.webp" alt="Library page"><br><sub>Library — instances and groups</sub></td>
+    <td width="50%"><img src="assets/readme/shot-download-en.webp" alt="Download page"><br><sub>Download — game versions and loaders</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="assets/readme/shot-settings.webp" alt="Settings page"><br><sub>Settings — changes save as you go</sub></td>
-    <td width="50%"><img src="assets/readme/shot-toolbox.webp" alt="Toolbox"><br><sub>Toolbox — calculators and helpers for play</sub></td>
+    <td width="50%"><img src="assets/readme/shot-settings-en.webp" alt="Settings page"><br><sub>Settings — changes save as you go</sub></td>
+    <td width="50%"><img src="assets/readme/shot-toolbox-en.webp" alt="Toolbox"><br><sub>Toolbox — calculators and helpers for play</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="assets/readme/shot-agent.webp" alt="Agent page"><br><sub>Agent — chat about the current instance</sub></td>
-    <td width="50%"><img src="assets/readme/themes.webp" alt="The home page in all three themes"><br><sub>Themes — the same home page in all three</sub></td>
+    <td width="50%"><img src="assets/readme/shot-agent-en.webp" alt="Agent page"><br><sub>Agent — chat about the current instance</sub></td>
+    <td width="50%"><img src="assets/readme/themes-en.webp" alt="The home page in all three themes"><br><sub>Themes — the same home page in all three</sub></td>
   </tr>
 </table>
 
