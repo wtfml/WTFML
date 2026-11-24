@@ -751,7 +751,7 @@ PresetManifest loadManifest(const QString &root, const QString &id, bool *ok, QS
     const QString path = manifestPath(root, id);
     if (!QFileInfo::exists(path)) {
         if (!QFileInfo::exists(dir)) {
-            return fail(faultAt(dir, QCoreApplication::translate("PresetStore", "已经不在了")));
+            return fail(faultAt(dir, QCoreApplication::translate("PresetStore", "已不存在")));
         }
         return fail(faultAt(path, QCoreApplication::translate("PresetStore", "不存在（该目录中无此预设）")));
     }
@@ -772,7 +772,7 @@ PresetManifest loadManifest(const QString &root, const QString &id, bool *ok, QS
         QJsonParseError syntax;
         QJsonDocument::fromJson(bytes, &syntax);
         if (syntax.error != QJsonParseError::NoError)
-            return fail(faultAt(path, QCoreApplication::translate("PresetStore", "JSON字节位置 %1：%2").arg(syntax.offset).arg(syntax.errorString())));
+            return fail(faultAt(path, QCoreApplication::translate("PresetStore", "JSON 字节位置 %1：%2").arg(syntax.offset).arg(syntax.errorString())));
         return fail(faultAt(path, QCoreApplication::translate("PresetStore", "预设有误。请检查 JSON 格式、版本、ID 和名称")));
     }
     // 记的 id 和目录名对不上 ⇒ 这一份被人动过（拷串了、或者手改过）。这种时候**宁可

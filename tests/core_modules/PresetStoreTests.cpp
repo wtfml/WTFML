@@ -795,7 +795,7 @@ void runPresetStoreTests() {
         }
     }
     check(survivors2.size() == survivors.size() && !ghostReason.isEmpty()
-              && ghostReason.contains(QStringLiteral("已经不在了")),
+              && ghostReason.contains(QStringLiteral("已不存在")),
           "★★ PA9 下标里有、盘上没了的 ⇒ 进 broken **而不进列表**", ghostReason);
     check(Presets::loadIndex(root).contains(ghostId),
           "★★ PA9 读的那一趟**没有替用户改下标**（读的时候顺手改盘是最难查的那一类）");

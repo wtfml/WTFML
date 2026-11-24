@@ -482,7 +482,7 @@ void runDependencyAndBatchTests() {
         const PassResult missing = runPass(QStringLiteral("T31.1b"), true, 1, 0);
         check(missing.depPromptButtons == QStringList{QStringLiteral("取消"),
                                                     ModDependencies::dependencyOnlyThisButtonText()} &&
-                  missing.depPromptText.contains(QStringLiteral("没有兼容的前置版本")) &&
+                  missing.depPromptText.contains(QStringLiteral("无兼容的前置版本")) &&
                   !missing.depPromptText.contains(QStringLiteral("已下载")),
               "T31.1b 接口返回其他加载器的文件时提示无兼容前置，下载前只提供取消和仅下载主模组");
         check(std::none_of(missing.newRequests.cbegin(), missing.newRequests.cend(), [](const auto &line) {

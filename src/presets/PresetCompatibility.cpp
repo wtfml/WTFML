@@ -237,7 +237,7 @@ void CompatibilityChecker::start(const QList<ModReference> &references,
         for (auto &item : m_items) {
             if (item.state != CompatibilityState::Pending && item.state != CompatibilityState::Checking) continue;
             item.state = CompatibilityState::Unknown;
-            item.detail = QCoreApplication::translate("PresetCompatibility", "本轮检查已到截止时间，暂时无法确认；请重试未完成项。");
+            item.detail = QCoreApplication::translate("PresetCompatibility", "本次检查已到截止时间，暂无法确认；请重试未完成项。");
         }
         emitUpdate();
         finishIfDone();

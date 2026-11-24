@@ -570,7 +570,7 @@ int runModActionPanelChecks() {
           "preview detects dependency type and exact-version changes");
     check(diff.contains(QStringLiteral("版本不符")) && diff.contains(QStringLiteral("冲突提示")),
           "preview warns about known version mismatch and installed incompatible project");
-    check(diff.contains(QStringLiteral("不等于确定未安装")) && diff.contains(QStringLiteral("不删除现有模组")),
+    check(diff.contains(QStringLiteral("不代表确定未安装")) && diff.contains(QStringLiteral("不删除现有模组")),
           "incomplete inventory never claims missing dependency or deletes removed declaration");
     const QString plannedDiff = ModDependencies::updateDifferenceText(oldVersion, newVersion,
         {{QStringLiteral("changed"), QStringLiteral("v2")}});
@@ -656,7 +656,7 @@ int runModActionPanelChecks() {
           !inspection.contains(QStringLiteral("版本不符")), "read-only inspection resolves same-platform exact dependency from current inventory");
     auto disabledDependency = dependency; disabledDependency.path += QStringLiteral(".disabled");
     const auto disabledReport = ModDependencies::inspectInstalledDependencies({inspected}, {inspected, disabledDependency});
-    check(disabledReport.contains(QStringLiteral("需确认")) && disabledReport.contains(QStringLiteral("不等于确定未安装")),
+    check(disabledReport.contains(QStringLiteral("需确认")) && disabledReport.contains(QStringLiteral("不代表确定未安装")),
           "disabled dependency cannot satisfy active dependency but absence is not overstated");
     auto foreignDependency = dependency; foreignDependency.source = ResourceCatalog::Source::CurseForge;
     check(ModDependencies::inspectInstalledDependencies({inspected}, {inspected, foreignDependency})

@@ -33,7 +33,7 @@ QStringList dependencyWarnings(const ResourceCatalog::Dependency &d,
     const QString label = dependencyLabel(d, names);
     if (d.required()) {
         if (d.projectId.isEmpty() || !versions.contains(d.projectId))
-            lines.append(QCoreApplication::translate("ModDependencies", "需确认：%1 未在%2中找到，不等于确定未安装。此步骤不会自动补装依赖。").arg(label, scope));
+            lines.append(QCoreApplication::translate("ModDependencies", "需确认：%1 未在%2中找到，不代表确定未安装。此步骤不会自动补装依赖。").arg(label, scope));
         else if (!d.versionId.isEmpty() && versions.value(d.projectId).isEmpty())
             lines.append(QCoreApplication::translate("ModDependencies", "需确认：%1 已识别项目，但版本号未知。").arg(label));
         else if (!d.versionId.isEmpty() && versions.value(d.projectId) != d.versionId)
@@ -136,7 +136,7 @@ QString inspectInstalledDependencies(const QList<InstalledItem> &selected,
         lines.append(QStringLiteral("\n%1%2").arg(fileName(item), disabled(item) ? QCoreApplication::translate("ModDependencies", "（已禁用）") : QString()));
         const auto &version = item.currentVersion;
         if (version.id.isEmpty() || !version.dependencyMetadataKnown) {
-            lines.append(QCoreApplication::translate("ModDependencies", "当前版本或依赖资料未知。可先检查更新，再回来查看；未知不等于没有依赖。"));
+            lines.append(QCoreApplication::translate("ModDependencies", "当前版本或依赖资料未知。可先检查更新，再回来查看；未知不代表没有依赖。"));
             continue;
         }
         lines.append(QCoreApplication::translate("ModDependencies", "当前版本：%1").arg(!version.versionNumber.isEmpty() ? version.versionNumber : version.id));
@@ -297,7 +297,7 @@ bool resolveDependency(const ResourceCatalog::Dependency &dependency,
     };
 
     if (versions.isEmpty()) {
-        return fail(QCoreApplication::translate("ModDependencies", "所选实例的游戏版本和加载器没有兼容的前置版本。"));
+        return fail(QCoreApplication::translate("ModDependencies", "所选实例的游戏版本和加载器无兼容的前置版本。"));
     }
 
     const ResourceCatalog::VersionEntry *picked = nullptr;

@@ -642,7 +642,7 @@ struct VersionGroup {
     QString loader;      ///< 组头里那个加载器（小写，空 = 通用）
     QList<VersionEntry> versions;
 
-    /// 组头那行字：「Fabric 26.2」/「通用 1.21.1」/（两个都没有时）「其它版本」。
+    /// 组头那行字：「Fabric 26.2」/「通用 1.21.1」/（两个都没有时）「其他版本」。
     QString title() const;
 };
 

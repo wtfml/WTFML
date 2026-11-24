@@ -2102,7 +2102,7 @@ void DownloadManager::onVersionJsonReplyFinished() {
         if (problem.isEmpty() && !job.expectedId.isEmpty()) {
             const QString id = json.object().value(QStringLiteral("id")).toString();
             if (id != job.expectedId) {
-                problem = QCoreApplication::translate("DownloadManager", "里面写的版本号是「%1」，取的是「%2」")
+                problem = QCoreApplication::translate("DownloadManager", "其中记录的版本号是「%1」，取的是「%2」")
                               .arg(id.isEmpty() ? QCoreApplication::translate("DownloadManager", "（无此字段）") : id,
                                    job.expectedId);
             }

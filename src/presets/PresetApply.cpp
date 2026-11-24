@@ -45,7 +45,7 @@ bool readWholeFile(const QString &path, QByteArray *out, QString *problem) {
     }
     *out = file.readAll();
     if (file.error() != QFileDevice::NoError) {
-        *problem = QCoreApplication::translate("Presets", "读「%1」读到一半出错了：%2").arg(path, file.errorString());
+        *problem = QCoreApplication::translate("Presets", "读取「%1」中断：%2").arg(path, file.errorString());
         return false;
     }
     return true;
@@ -59,7 +59,7 @@ bool writeWholeFile(const QString &path, const QByteArray &bytes, QString *probl
         return false;
     }
     if (file.write(bytes) != bytes.size()) {
-        *problem = QCoreApplication::translate("Presets", "写「%1」写到一半出错了：%2").arg(path, file.errorString());
+        *problem = QCoreApplication::translate("Presets", "写入「%1」中断：%2").arg(path, file.errorString());
         file.cancelWriting();
         return false;
     }
@@ -580,7 +580,7 @@ PresetApplyResult applyPresetToInstance(const QString &presetsRoot, const Preset
             row.removed = applied.report.removed;
             row.skippedItems = applied.report.skipped;
             for (const OptionsConflict &conflict : applied.report.conflicts) {
-                row.details.append(QCoreApplication::translate("Presets", "按键「%1」被 %2 个动作抢着用。")
+                row.details.append(QCoreApplication::translate("Presets", "按键「%1」被 %2 个动作占用。")
                                        .arg(conflict.binding)
                                        .arg(conflict.claimedBy()));
             }
@@ -607,7 +607,7 @@ PresetApplyResult applyPresetToInstance(const QString &presetsRoot, const Preset
             row.removed = applied.removed;
             row.skippedItems = applied.skipped;
             if (applied.skipped > 0) {
-                row.details.append(QCoreApplication::translate("Presets", "这几台已经在列表里了：%1")
+                row.details.append(QCoreApplication::translate("Presets", "以下服务器已在列表中：%1")
                                        .arg(applied.skippedAddresses.join(QStringLiteral("、"))));
             }
             result.rows.append(row); checkpoint(false);

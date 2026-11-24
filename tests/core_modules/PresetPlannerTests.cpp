@@ -278,7 +278,7 @@ void runPresetPlannerTests() {
                   !plan.writesAnything() && plan.rows.at(0).risky(),
               "★★★ PE6 「合并」：这一项只有复制和覆盖两种做法 ⇒ 那一行是「要你选」",
               Presets::applyPlanRowText(plan.rows.at(0)));
-        check(Presets::applyPlanRowText(plan.rows.at(0)) == QStringLiteral("要你选 1 个"),
+        check(Presets::applyPlanRowText(plan.rows.at(0)) == QStringLiteral("待选择 1 个"),
               "PE6 那一行的右栏", Presets::applyPlanRowText(plan.rows.at(0)));
 
         // 段的身份和它的内容对不上 ⇒ **不认**这一段（`fileGroupFromSection()` 判不了这一条）。

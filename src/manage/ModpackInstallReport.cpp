@@ -239,7 +239,7 @@ QString description(const ModpackImport::FileIssue &issue) {
     const QString where = issue.path.isEmpty()
                               ? QObject::tr("实例的 mods/ 目录（文件名以项目页为准）")
                               : issue.path;
-    return QCoreApplication::translate("ModpackInstallReport", "%1\n项目 %2 / 文件 %3 / %4\n%5\n补齐位置：%6\n补法：打开上面的项目页，在 Files 里找对应游戏版本和加载器的文件；下载后放到上面的位置。补齐后回到导入报告选择「完成安装」，或用同一个包和实例名重新导入让本程序校验。")
+    return QCoreApplication::translate("ModpackInstallReport", "%1\n项目 %2 / 文件 %3 / %4\n%5\n补齐位置：%6\n补齐方式：打开上述项目页，在 Files 中查找对应游戏版本和加载器的文件；下载后放入上述位置。补齐后返回导入报告选择「完成安装」，或用同一个包和实例名重新导入，由本程序校验。")
         .arg(shownName)
         .arg(projectName)
         .arg(issue.ref.fileId)

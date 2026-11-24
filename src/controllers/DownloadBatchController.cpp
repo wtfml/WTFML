@@ -78,8 +78,8 @@ void DownloadBatchController::load() {
             m_activity->tasks()->setDetail(id, receipt.context.value("refreshSources").toBool()
                 ? tr("部分暂存文件未补齐，等待明确继续以重新查询平台地址和兼容性；未自动部署。")
                 : tr("文件已补齐，等待明确点击继续安装；执行前仍会检查目标和预设变化。"));
-        } else if (!reused) m_activity->finish(id, false, tr("上次文件下载中断。先补齐文件，不会自动执行安装器。"), false);
-        else m_activity->tasks()->setDetail(id, tr("上次文件下载中断。先补齐文件，不会自动执行安装器。"));
+        } else if (!reused) m_activity->finish(id, false, tr("上次文件下载中断。补齐文件后不会自动执行安装器。"), false);
+        else m_activity->tasks()->setDetail(id, tr("上次文件下载中断。补齐文件后不会自动执行安装器。"));
         receipt.context.insert("task", QString::number(id));
         if (!receipt.save()) continue;
         m_records.insert(id, path);

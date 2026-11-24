@@ -121,7 +121,7 @@ void PresetModInstaller::start(const QList<ModReference> &references, const QStr
             (!ref.loader.isEmpty() && input.reference.loader != m_request.loader)) {
             input.queried = true;
             input.queryFailed = true;
-            input.queryProblem = tr("预设限定的游戏版本或加载器与目标实例不符，未查询其它版本替代。");
+            input.queryProblem = tr("预设限定的游戏版本或加载器与目标实例不符，未查询其他版本替代。");
             m_answers.insert(ref.key(), input);
         }
         m_request.references.append(input);
@@ -479,7 +479,7 @@ void PresetModInstaller::resolveNext() {
     }
     for (const auto &row : m_plan.rows) if (row.isFailure()) m_result.lines.append(row.title + QCoreApplication::translate("PresetModInstaller", "：") + row.problem);
     const int unidentified = static_cast<int>(m_inventory.files.size() - m_identifiedFiles.size());
-    if (unidentified > 0) m_result.lines.append(tr("%1 个启用模组的项目身份尚未确认，未将它们当作前置已满足。") .arg(unidentified));
+    if (unidentified > 0) m_result.lines.append(tr("%1 个启用模组的项目身份尚未确认，未将其视为前置已满足。") .arg(unidentified));
     m_result.optionalFailures = m_plan.optionalFailures();
     if (!m_plan.ok) { finish(tr("必要模组或前置缺失、未知或冲突；未写入模组文件。")); return; }
     QSet<QString> unsafeOptional;
@@ -620,7 +620,7 @@ void PresetModInstaller::commit() {
     skipOptional = failingParents(rows, skipOptional);
     if (!skipOptional.isEmpty()) {
         m_result.optionalFailures += skipOptional.size();
-        m_result.lines.append(tr("可选文件下载失败，跳过对应模组及依赖它的父项：%1；其它独立项继续。")
+        m_result.lines.append(tr("可选文件下载失败，跳过对应模组及依赖它的父项：%1；其他独立项继续。")
             .arg(QStringList(skipOptional.values()).join(QCoreApplication::translate("PresetModInstaller", "、"))));
     }
     if ((m_running && m_running()) || redirected(m_root) ||

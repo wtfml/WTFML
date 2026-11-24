@@ -817,7 +817,7 @@ void runResourceCatalogTests() {
                   none.unresolved.join(QStringLiteral(" | ")));
             const auto emptyList = ModDependencies::buildPlan(missing, {{key, {}}});
             check(emptyList.downloads.isEmpty() && emptyList.unresolved.size() == 1 &&
-                      emptyList.unresolved.first().contains(QStringLiteral("没有兼容的前置版本")),
+                      emptyList.unresolved.first().contains(QStringLiteral("无兼容的前置版本")),
                   "Z6d 接口已返回空列表时说明当前版本与加载器无兼容前置");
 
             // ② 有答案：挑出要下的那一条，而且名字用的是接口那份（不是项目号）。

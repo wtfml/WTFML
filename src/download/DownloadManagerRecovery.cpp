@@ -63,7 +63,7 @@ bool DownloadManager::resumeBatch(QString *problem) {
     const auto reject = [problem](const QString &reason) { if (problem) *problem = reason; return false; };
     if (!m_batchPaused || !m_checkpoint || pendingDownloads > 0 || !m_segmentJobs.isEmpty() || m_reuseActive > 0
         || m_precheckActive > 0 || !m_precheckQueue.isEmpty())
-        return reject(tr("下载仍在收尾，请稍后继续。"));
+        return reject(tr("下载尚未结束，请稍后继续。"));
     const auto receipt = m_checkpoint;
     for (const auto &file : receipt->files) if (!DownloadCheckpoint::unchanged(file))
         return reject(tr("目标文件已被外部修改，未覆盖：%1。请重新预览。").arg(file.path));
@@ -86,7 +86,7 @@ bool DownloadManager::resumeValidatedBatch(const QSharedPointer<DownloadCheckpoi
     return true;
 }
 bool DownloadManager::restoreBatch(const QString &path, QString *problem) {
-    if (isBusy() || m_checkpoint) { if (problem) *problem = tr("已有下载在进行，稍后再继续。"); return false; }
+    if (isBusy() || m_checkpoint) { if (problem) *problem = tr("已有下载正在进行，请稍后继续。"); return false; }
     auto receipt = QSharedPointer<DownloadCheckpoint>::create();
     if (!receipt->load(path)) { if (problem) *problem = tr("恢复记录不可读或被占用，原件已保留。"); return false; }
     m_checkpoint = receipt; m_batchPaused = true;

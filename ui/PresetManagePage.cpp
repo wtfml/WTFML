@@ -237,7 +237,7 @@ void PresetManagePage::buildListLayer() {
     m_newButton = new QPushButton(tr("新建预设…"), m_listLayer);
     m_newButton->setObjectName(newButtonName());
     m_newButton->setAutoDefault(false);
-    m_newButton->setToolTip(QCoreApplication::translate("PresetManagePage", "建一份空预设；建好之后在编辑页里填内容。"));
+    m_newButton->setToolTip(QCoreApplication::translate("PresetManagePage", "创建空预设；创建后可在编辑页填写内容。"));
     Theme::markButton(m_newButton, Theme::ButtonKind::Accent);
     layout->addWidget(m_newButton);
     connect(m_newButton, &QPushButton::clicked, this, [this] {
@@ -487,13 +487,13 @@ QWidget *PresetManagePage::buildPresetContentSection(QWidget *parent) {
     m_defaultButton = new QPushButton(QCoreApplication::translate("PresetManagePage", "设为默认"), section);
     m_defaultButton->setObjectName(defaultButtonName());
     m_defaultButton->setAutoDefault(false);
-    m_defaultButton->setToolTip(QCoreApplication::translate("PresetManagePage", "安装实例时优先选中这一份。"));
+    m_defaultButton->setToolTip(QCoreApplication::translate("PresetManagePage", "安装实例时优先选择此项。"));
     m_deleteButton = new QPushButton(QCoreApplication::translate("PresetManagePage", "删除"), section);
     m_deleteButton->setObjectName(deleteButtonName());
     m_deleteButton->setAutoDefault(false);
     Theme::markButton(m_deleteButton, Theme::ButtonKind::Danger);
     m_deleteButton->setToolTip(
-        QCoreApplication::translate("PresetManagePage", "同时删除此预设的目录；删除内容将移至回收站，可从回收站还原。"));
+        QCoreApplication::translate("PresetManagePage", "同时删除此预设的目录；删除的内容将移至回收站，可从回收站还原。"));
     m_moveUpButton = new QPushButton(QCoreApplication::translate("PresetManagePage", "上移"), section);
     m_moveUpButton->setObjectName(moveUpButtonName());
     m_moveUpButton->setAutoDefault(false);
@@ -598,7 +598,7 @@ QWidget *PresetManagePage::buildCaptureSection(QWidget *parent) {
              QCoreApplication::translate("PresetManagePage", "FOV、界面缩放、语言、音量、渲染距离等。"),
              true, &m_captureOptions);
     addCheck(0, 2, QCoreApplication::translate("PresetManagePage", "标准按键"),
-             QCoreApplication::translate("PresetManagePage", "options.txt 里的 key_*。"),
+             QCoreApplication::translate("PresetManagePage", "options.txt 中的 key_*。"),
              true, &m_captureKeys);
     captureGrid->addWidget(new QLabel(QCoreApplication::translate("PresetManagePage", "服务器"), section), 1, 0);
     addCheck(1, 1, QCoreApplication::translate("PresetManagePage", "服务器列表"),
@@ -609,7 +609,7 @@ QWidget *PresetManagePage::buildCaptureSection(QWidget *parent) {
              QCoreApplication::translate("PresetManagePage", "按「仅在缺失时复制」部署，不覆盖目标已有同名项。"),
              true, &m_captureConfig);
     addCheck(2, 2, QStringLiteral("defaultconfigs/"),
-             QCoreApplication::translate("PresetManagePage", "新实例第一次启动时模组会照它生成配置。"), false,
+             QCoreApplication::translate("PresetManagePage", "新实例首次启动时，模组会据此生成配置。"), false,
              &m_captureDefaultConfigs);
     captureGrid->addWidget(new QLabel(QCoreApplication::translate("PresetManagePage", "资源包 / 光影"), section), 3, 0);
     addCheck(3, 1, QCoreApplication::translate("PresetManagePage", "资源包"),
@@ -626,7 +626,7 @@ QWidget *PresetManagePage::buildCaptureSection(QWidget *parent) {
              false, &m_captureMalilibValues);
     captureGrid->addWidget(new QLabel(QCoreApplication::translate("PresetManagePage", "数据包"), section), 5, 0);
     addCheck(5, 1, QCoreApplication::translate("PresetManagePage", "存档数据包"),
-             QCoreApplication::translate("PresetManagePage", "saves/<世界>/datapacks/；目标实例没有该存档时先记为「待应用」。"),
+             QCoreApplication::translate("PresetManagePage", "saves/<世界>/datapacks/；目标实例无该存档时先记为「待应用」。"),
              false, &m_captureDataPacks);
     captureGrid->setColumnStretch(3, 1);
     captureLayout->addLayout(captureGrid);
@@ -1228,7 +1228,7 @@ void PresetManagePage::setPlanLoading(bool loading) {
     clearPlan();
     m_previewButton->setText(loading ? tr("取消预览") : tr("预览计划"));
     m_previewButton->setToolTip(loading ? tr("取消本次预览，不会修改实例。")
-        : tr("预览会改动的段落与条目，这一步不写文件。"));
+        : tr("预览将改动的段落与条目；此步骤不写入文件。"));
     // 计划那一格还空着：整格盖加载态（和上面预设详情同一个组件），底下那行提示不再写状态字。
     if (loading) LoadingState::begin(m_planList, tr("正在读取实例并生成计划…"));
     else LoadingState::finish(m_planList);

@@ -409,7 +409,7 @@ static ModInstallPlan planModInstallPass(const ModInstallRequest &request) {
             row.problem = QCoreApplication::translate("Presets", "此版本与「%1」不兼容，未加入安装计划。")
                               .arg(otherTitle);
             plan.conflicts.append(
-                QCoreApplication::translate("Presets", "「%1」和「%2」不能一起装。").arg(row.title, otherTitle));
+                QCoreApplication::translate("Presets", "「%1」与「%2」不能同时安装。").arg(row.title, otherTitle));
             break;
         }
     }
@@ -605,7 +605,7 @@ DownloadVerification verifyDownloadedFile(const QString &path, qint64 expectedSi
     while (!file.atEnd()) {
         const QByteArray chunk = file.read(1 << 16);
         if (chunk.isEmpty() && file.error() != QFileDevice::NoError) {
-            out.problem = QCoreApplication::translate("Presets", "读「%1」读到一半出错了：%2").arg(path, file.errorString());
+            out.problem = QCoreApplication::translate("Presets", "读取「%1」中断：%2").arg(path, file.errorString());
             return out;
         }
         total += chunk.size();
@@ -645,7 +645,7 @@ QString modInstallStatusText(ModInstallStatus status) {
     case ModInstallStatus::Download:
         return QCoreApplication::translate("Presets", "下载");
     case ModInstallStatus::AlreadyInstalled:
-        return QCoreApplication::translate("Presets", "已经在实例里");
+        return QCoreApplication::translate("Presets", "已在实例中");
     case ModInstallStatus::Missing:
         return QCoreApplication::translate("Presets", "缺失");
     case ModInstallStatus::Unknown:
@@ -666,7 +666,7 @@ QString modInstallSummaryText(const ModInstallPlan &plan) {
         parts.append(QCoreApplication::translate("Presets", "下载 %1 个").arg(plan.download));
     }
     if (plan.alreadyInstalled > 0) {
-        parts.append(QCoreApplication::translate("Presets", "已经在实例里 %1 个").arg(plan.alreadyInstalled));
+        parts.append(QCoreApplication::translate("Presets", "已在实例中 %1 个").arg(plan.alreadyInstalled));
     }
     if (plan.missing > 0) {
         parts.append(QCoreApplication::translate("Presets", "缺失 %1 个").arg(plan.missing));

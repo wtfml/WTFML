@@ -503,7 +503,7 @@ OptionsApplyResult applyOptions(SectionKind kind, const OptionsFile &target,
     if (!optionsHandlesSection(kind)) {
         result.bytes = target.toBytes();
         result.report.problem =
-            QCoreApplication::translate("Presets", "这一段不归原版设置这一层管。");
+            QCoreApplication::translate("Presets", "此段不属于原版设置层管理范围。");
         return result;
     }
 

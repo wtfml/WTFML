@@ -43,7 +43,7 @@ QString categoryDescription(const QString &key) {
     if (key == QStringLiteral("shaderpacks")) return QCoreApplication::translate("InstanceUpgradePage", "需渲染器支持后生效");
     if (key == QStringLiteral("screenshots")) return QCoreApplication::translate("InstanceUpgradePage", "作为普通文件复制");
     if (key == QStringLiteral("schematics")) return QCoreApplication::translate("InstanceUpgradePage", "structures 等结构文件");
-    if (key == QStringLiteral("servers")) return QCoreApplication::translate("InstanceUpgradePage", "servers.dat 里的条目");
+    if (key == QStringLiteral("servers")) return QCoreApplication::translate("InstanceUpgradePage", "servers.dat 中的条目");
     return QString();
 }
 

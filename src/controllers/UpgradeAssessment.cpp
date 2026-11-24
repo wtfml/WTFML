@@ -199,7 +199,7 @@ Scan scan(const QString &root, const QString &sourceId, const QString &cache, co
         Mod mod; mod.path = path; mod.name = QFileInfo(path).fileName();
         const auto record = metadata.value(path);
         if (!metadata.contains(path)) {
-            mod.problem = batchProblem.isEmpty() ? QObject::tr("未检查：本轮未返回声明结果")
+            mod.problem = batchProblem.isEmpty() ? QObject::tr("未检查：本次未返回声明结果")
                                                  : batchProblem;
         } else {
             mod.problem = record.problem;
@@ -325,7 +325,7 @@ Scan scan(const QString &root, const QString &sourceId, const QString &cache, co
                 declaration.loader = ModDeclarations::Loader::Forge;
                 declaration.basis = QCoreApplication::translate("UpgradeAssessment", "旧 Forge 注解");
                 declaration.problem = classes.size() > take
-                    ? QObject::tr("旧 Forge 注解未完整扫描（候选 %1 个，仅检查了 %2 个）")
+                    ? QObject::tr("旧 Forge 注解未完整扫描（候选 %1 个，仅检查 %2 个）")
                           .arg(classes.size()).arg(take)
                     : annotationProblem.isEmpty()
                           ? QObject::tr("未读取到旧 Forge @Mod 注解")
@@ -340,7 +340,7 @@ Scan scan(const QString &root, const QString &sourceId, const QString &cache, co
                 if (nestedReadBudget <= 0) {
                     NestedCheck check;
                     check.name = entry;
-                    check.problem = QObject::tr("嵌套 JAR 超过本轮检查上限，未检查");
+                    check.problem = QObject::tr("嵌套 JAR 超过本次检查上限，未检查");
                     mod.nestedChecks.append(check);
                     continue;
                 }
@@ -437,7 +437,7 @@ Scan scan(const QString &root, const QString &sourceId, const QString &cache, co
             }
         }
     }
-    result.note += QObject::tr("仅检查顶层启用 JAR；按包内声明判断 Minecraft 范围，加载器版本、Java 和前置在本轮由适配替换再核对。嵌套 JAR 只随父 JAR 替换，不单独替换。");
+    result.note += QObject::tr("仅检查顶层启用 JAR；按包内声明判断 Minecraft 范围，加载器版本、Java 和前置在本次由适配替换后再核对。嵌套 JAR 只随父 JAR 替换，不单独替换。");
     return result;
 }
 struct State {

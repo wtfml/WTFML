@@ -88,7 +88,7 @@ UpgradeHistoryDialog::UpgradeHistoryDialog(QWidget *parent) : ChromeDialog(paren
                     .arg(entry.skippedFiles)
                     .arg(entry.failedFiles);
         if (entry.snapshotName.isEmpty()) {
-            text += QCoreApplication::translate("UpgradeHistoryDialog", "快照：没有（副本模式以源实例为回滚材料）\n");
+            text += QCoreApplication::translate("UpgradeHistoryDialog", "快照：无（副本模式以源实例为回滚材料）\n");
         } else {
             text += QCoreApplication::translate("UpgradeHistoryDialog", "快照：%1%2\n")
                         .arg(entry.snapshotName,

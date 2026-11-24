@@ -667,7 +667,7 @@ QString malilibConfigRelativePath(const QString &modId) {
 
 QString malilibModIdProblem(const QString &modId) {
     if (modId.isEmpty()) {
-        return QCoreApplication::translate("Presets", "模组名是空的。");
+        return QCoreApplication::translate("Presets", "模组名称为空。");
     }
     // 用的是实例名那一套规矩（Windows 的禁区、`.` / `..`、保留设备名、结尾的点或空格）——
     // 那一条只有一处实现，不另立一套。
@@ -743,7 +743,7 @@ bool malilibEntriesFromSections(const QList<PresetSection> &sections, QList<Mali
     QList<MalilibEntry> entries;
     for (const PresetSection &section : sections) {
         if (!malilibHandlesSection(section.kind)) {
-            failWith(problemOut, QCoreApplication::translate("Presets", "这一段（%1）不归 MaLiLib 这一层管。")
+            failWith(problemOut, QCoreApplication::translate("Presets", "此段（%1）不属于 MaLiLib 层管理范围。")
                                      .arg(sectionKindKey(section.kind)));
             return false;
         }
@@ -1086,7 +1086,7 @@ MalilibApplyResult applyMalilibEntries(const QList<MalilibEntry> &entries,
         }
         if (modId.isEmpty()) {
             report.skipped += static_cast<int>(group.size());
-            report.details << QCoreApplication::translate("Presets", "有一条缺少模组名称，整段跳过。");
+            report.details << QCoreApplication::translate("Presets", "有一条缺少模组名称，整段已跳过。");
             continue;
         }
 
@@ -1226,7 +1226,7 @@ MalilibApplyReport applyMalilibToInstance(const QString &instanceRoot,
         if (out.write(file.bytes) != file.bytes.size()) {
             out.cancelWriting();
             report.ok = false;
-            report.problem = QCoreApplication::translate("Presets", "写「%1」写到一半出错了：%2").arg(path, out.errorString());
+            report.problem = QCoreApplication::translate("Presets", "写入「%1」中断：%2").arg(path, out.errorString());
             return report;
         }
         if (!out.commit()) {

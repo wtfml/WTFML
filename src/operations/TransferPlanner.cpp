@@ -177,7 +177,7 @@ QString Plan::detailText() const {
     }
     lines << QString();
     lines << QCoreApplication::translate("TransferPlanner", "日志、截图和崩溃报告默认不迁移，可手动选择。");
-    lines << QCoreApplication::translate("TransferPlanner", "迁移只增加文件、不删除、不覆盖目标里已有的同名文件；" "两边的游戏都必须先关掉。");
+    lines << QCoreApplication::translate("TransferPlanner", "迁移只增加文件、不删除、不覆盖目标中已有的同名文件；" "两边的游戏都必须先关闭。");
     return lines.join(QLatin1Char('\n'));
 }
 
@@ -189,7 +189,7 @@ QString Plan::confirmText(const QStringList &keys) const {
                              .arg(QString::number(keys.size()), joinSize(files, bytes))
                        : QCoreApplication::translate("TransferPlanner", "将把选中的 %1 项（%2）迁移到目标实例。")
                              .arg(QString::number(keys.size()), joinSize(files, bytes));
-    text += QCoreApplication::translate("TransferPlanner", "\n\n只增加文件，不删除、不覆盖目标里已有的同名文件。");
+    text += QCoreApplication::translate("TransferPlanner", "\n\n只增加文件，不删除、不覆盖目标中已有的同名文件。");
     if (compatibility != Compatibility::Same) {
         text += QCoreApplication::translate("TransferPlanner", "\n\n兼容性结论：%1").arg(compatibilityName(compatibility));
     }
