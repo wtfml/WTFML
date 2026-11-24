@@ -365,6 +365,25 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 
 已实现：聊天底座、文件工具、启动器工具、工作流、stdio MCP、联网与固定诊断命令、模式与证据、发布检查脚本。核心计数与最近一次自动化结果见 [TEST_RUN_HISTORY](../archive/TEST_RUN_HISTORY.md)。
 
+### 14.1 自主修复缺口
+
+现有闭环停在「改完再建议用户手动启动」：没有启动测试工具，没有事务化回滚；崩溃报告每份只读头 8 KB，日志只读尾 500 行；模组工具不读本地声明；世界、显卡与 Native 问题只能给建议。按故障类型拆：
+
+| 故障 | 现有能力 | 缺口 |
+| --- | --- | --- |
+| Java 版本不匹配 | `java.list`、`settings.set` 改 Java 或自动选择 | 改完不能实际启动验证，失败不能自动回退 |
+| OOM | `memory.suggest`、`settings.set` 改 Xmx/Xms | 只按堆内存建议，不区分 Metaspace、Direct Buffer、native thread |
+| 缺模组前置 | `diagnostics.crash` 的规则提示、`mods.list` | 不读模组声明、不建已装依赖图、不能安装前置 |
+| Mod 版本冲突 | `mods.list`、`mods.setEnabled` | 没有兼容矩阵，不能查兼容版本或下载候选文件 |
+| Mod 文件损坏 | 无 | `instance.integrity` 不覆盖 `mods/`，不能重新下载修复 |
+| 配置文件错误 | `fs.read` / `fs.write` 白名单 | 不解析配置结构，只能靠备份整体回退 |
+| Mixin 冲突 | `diagnostics.crash` 的日志与规则提示 | 不认 mixin 配置归属，不能二分定位 |
+| 游戏库文件损坏 | `instance.integrity` 只报 | 没有把 `VersionManager::repairVersionFiles()` 暴露成受控修复工具 |
+| 显卡 / Native 崩溃 | 退出码和日志的有限分类 | 不解析 `hs_err_pid` 与 native 模块，不能安全复现 |
+| 世界 / 存档崩溃 | 有限的崩溃诊断 | 不复制世界、不进世界验证 |
+
+下一阶段的启动测试、事务回滚、崩溃快照、模组兼容与二分、提示词外置见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)；实现后行为写回本文 §9 与 §11。
+
 未覆盖：
 
 | 项 | 状态 |
@@ -377,4 +396,4 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 | 高 DPI/读屏/长路径/换用户解密/视觉套件 | 人工项，见 §13.3 |
 | 长会话一次重摆（2000 条约 3.8 s） | 未优化，见 perf-notes |
 
-剩余计划只在 [ROADMAP](../ROADMAP.md) 维护：G1B 复测、网络错误验收、A2–A8 中未做的人工项、Stage 3 剩余工具、性能与长会话渲染。
+剩余计划只在 [ROADMAP](../ROADMAP.md) 维护：G1B 复测、网络错误验收、A2–A8 中未做的人工项、Stage 3 剩余工具、Stage 5 自主修复（拆解见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)）、性能与长会话渲染。
