@@ -1486,7 +1486,7 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>石英</source>
+            <source>下界石英</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -1854,6 +1854,10 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>%1自 Java 版 %2 起可用。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>每锻造一件消耗一个模板：%1 件共需 %1 个。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -1863,10 +1867,6 @@
         </message>
         <message>
             <source>步骤：</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>%1 纹饰模板自 Java 版 %2 起可用。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2772,18 +2772,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>砖块</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>波纹边框</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>藤蔓</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>圆形</source>
             <translation type="unfinished"></translation>
         </message>
@@ -2793,10 +2781,6 @@
         </message>
         <message>
             <source>苦力怕盾徽</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>苦力怕头颅</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2812,11 +2796,23 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>花朵盾徽</source>
+            <source>右上三角</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>滨菊</source>
+            <source>左上三角</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>右下三角</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>左下三角</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>花朵盾徽</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2828,47 +2824,11 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>橡树树苗</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>渐变</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>上渐变</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>旋风</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>上半</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>下半</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>左半</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>右半</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>Mojang徽标</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>附魔金苹果</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>猪灵</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2880,15 +2840,7 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>凋灵骷髅头颅</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>猪鼻</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>金胡萝卜</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2904,51 +2856,11 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>左下斜条</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>右下斜条</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>左侧竖条</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>中横条</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>右侧竖条</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>细横条</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>顶横条</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>左下角</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>右下角</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>左上角</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>右上角</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>神秘图案</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2960,14 +2872,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>底双三角</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>顶双三角</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>左斜条</source>
             <translation type="unfinished"></translation>
         </message>
@@ -2976,11 +2880,63 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>左上斜条</source>
+            <source>自上渐淡</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>右上斜条</source>
+            <source>自下渐淡</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>上半方形</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>下半方形</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>右半方形</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>左半方形</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>竖条纹</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>右底方</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>左底方</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>右顶方</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>左顶方</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>右竖条</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>左竖条</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>底波纹</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>顶波纹</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -3048,6 +3004,14 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>砖纹旗帜图案</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>波纹边旗帜图案</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>%1染料</source>
             <translation type="unfinished"></translation>
         </message>
@@ -3076,7 +3040,19 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>第 %1 层：织布机里放%2 + %3 + %4%5 → 叠出「%6」</source>
+            <source>第 %1 层：织布机里放%2 + %3</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source> + %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source> → 叠出「%1」</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>指令（写法随目标版本变化）：</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -3105,10 +3081,6 @@
         </message>
         <message>
             <source>（%1）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>指令（1.13–1.20.4 的 NBT 写法；1.20.5 起换成了组件写法，这一版不出）：</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -3334,19 +3306,11 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>跳跃</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>治疗药水</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>闪烁的西瓜片</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>治疗</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -3359,14 +3323,6 @@
         </message>
         <message>
             <source>伤害药水</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>发酵蜘蛛眼</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>伤害</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -3410,10 +3366,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>再生</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>抗火药水</source>
             <translation type="unfinished"></translation>
         </message>
@@ -3431,10 +3383,6 @@
         </message>
         <message>
             <source>河豚</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>水肺</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -3459,10 +3407,6 @@
         </message>
         <message>
             <source>迟缓药水</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>迟缓</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -3491,10 +3435,6 @@
         </message>
         <message>
             <source>海龟壳</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>海龟大师</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -3539,10 +3479,6 @@
         </message>
         <message>
             <source>石头</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>虫蚀</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -3607,6 +3543,42 @@
         </message>
         <message>
             <source>（延长）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>跳跃提升</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>瞬间治疗</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>发酵蛛眼</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>瞬间伤害</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>生命恢复</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>水下呼吸</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>缓慢</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>缓慢 + 抗性提升</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>寄生</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -26917,10 +26889,6 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>%1 中的字段：%2</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>区块：(x %1, z %2)（x %3、z %4）</source>
             <translation type="unfinished"></translation>
         </message>
@@ -27015,6 +26983,10 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         </message>
         <message>
             <source>以下组件未解析：%1。其内容需由游戏内的服务器或语言文件确定，此处不做推测。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 中的坐标：%2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -27418,6 +27390,10 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>把 /give 指令复制走（按目标版本选择写法）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>步骤</source>
             <translation type="unfinished"></translation>
         </message>
@@ -27611,10 +27587,6 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         </message>
         <message>
             <source>加载游戏 JAR / 资源包贴图</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>把 /give 指令复制走（1.13–1.20.4 的写法）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
