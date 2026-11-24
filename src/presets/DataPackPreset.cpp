@@ -143,7 +143,7 @@ bool writePendingList(const QString &instanceRoot, const QMap<QString, QStringLi
 
     QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly)) {
-        *problem = QCoreApplication::translate("Presets", "写不动待应用清单「%1」：%2").arg(path, file.errorString());
+        *problem = QCoreApplication::translate("Presets", "无法写入待应用清单「%1」：%2").arg(path, file.errorString());
         return false;
     }
     if (file.write(bytes) != bytes.size()) {

@@ -39,7 +39,7 @@ void runStartupDiagnosisTests() {
         check(report.problems == 0 && report.warnings == 0,
               "★ DX1 一份没毛病的实例：0 个问题、0 条提醒",
               QStringLiteral("%1 / %2").arg(report.problems).arg(report.warnings));
-        check(report.headline() == QStringLiteral("启动诊断：没有发现明显问题"),
+        check(report.headline() == QStringLiteral("启动诊断：未发现明显问题"),
               "DX1 顶上那一句", report.headline());
         check(report.instanceLine.contains(QStringLiteral("测试实例"))
                   && report.instanceLine.contains(QStringLiteral("1.20.1"))
@@ -47,7 +47,7 @@ void runStartupDiagnosisTests() {
               "DX1 第二行说这是哪个实例（名字 / 版本 / 加载器版本）", report.instanceLine);
         check(hasTitle(report, QStringLiteral("加载器：Forge 47.2.0")),
               "DX1 加载器那一条");
-        check(hasTitle(report, QStringLiteral("没有崩溃报告"))
+        check(hasTitle(report, QStringLiteral("暂无崩溃报告"))
                   && hasTitle(report, QStringLiteral("暂无启动日志")),
               "DX1 没崩溃报告、没日志时如实说「没有」，不编");
         check(textOf(report).contains(QStringLiteral("【正常】"))
@@ -66,10 +66,10 @@ void runStartupDiagnosisTests() {
         writeFileAt(mods + QStringLiteral("/b.jar"), QByteArray("x"));
         inputs.modsDir = mods;
         const StartupDiagnosis::Report report = StartupDiagnosis::analyze(inputs);
-        check(report.problems == 1 && hasTitle(report, QStringLiteral("没有模组加载器")),
+        check(report.problems == 1 && hasTitle(report, QStringLiteral("未安装模组加载器")),
               "★★ DX2 原版实例却有两个 .jar ⇒ **问题**（游戏不会读它们），不是一句提醒",
               textOf(report));
-        check(hasTitle(report, QStringLiteral("2 个启用的模组")),
+        check(hasTitle(report, QStringLiteral("启用了 2 个模组")),
               "DX2 数出来的是 2 个", textOf(report));
     }
 
@@ -79,7 +79,7 @@ void runStartupDiagnosisTests() {
         missing.configuredJavaPath = root + QStringLiteral("/no/such/java.exe");
         const StartupDiagnosis::Report report = StartupDiagnosis::analyze(missing);
         check(report.problems == 1
-                  && hasTitle(report, QStringLiteral("指定的 Java 用不了")),
+                  && hasTitle(report, QStringLiteral("指定的 Java 不可用")),
               "★ DX3 指定的 Java 路径不存在 ⇒ 问题", textOf(report));
 
         StartupDiagnosis::Inputs manualEmpty = baseInputs();
@@ -93,7 +93,7 @@ void runStartupDiagnosisTests() {
         StartupDiagnosis::Inputs autoNoPath = baseInputs();
         autoNoPath.configuredJavaPath.clear();
         const StartupDiagnosis::Report report3 = StartupDiagnosis::analyze(autoNoPath);
-        check(report3.problems == 0 && hasTitle(report3, QStringLiteral("自动挑")),
+        check(report3.problems == 0 && hasTitle(report3, QStringLiteral("自动选择")),
               "DX3 自动档、还没挑过 ⇒ 只是一条「信息」", textOf(report3));
     }
 
@@ -103,27 +103,27 @@ void runStartupDiagnosisTests() {
         over.xmxMb = 9000;
         over.systemTotalMb = 8192;
         const StartupDiagnosis::Report report = StartupDiagnosis::analyze(over);
-        check(report.problems == 1 && hasTitle(report, QStringLiteral("超过了机器总内存")),
+        check(report.problems == 1 && hasTitle(report, QStringLiteral("超过设备总内存")),
               "★★ DX4 Xmx 比机器总内存还大 ⇒ 问题", textOf(report));
 
         StartupDiagnosis::Inputs high = baseInputs();
         high.xmxMb = 7000;
         high.systemTotalMb = 8192;
         const StartupDiagnosis::Report report2 = StartupDiagnosis::analyze(high);
-        check(report2.warnings == 1 && hasTitle(report2, QStringLiteral("偏多")),
+        check(report2.warnings == 1 && hasTitle(report2, QStringLiteral("过多")),
               "★ DX4 超过五分之四 ⇒ 提醒（不是问题）", textOf(report2));
 
         StartupDiagnosis::Inputs tiny = baseInputs();
         tiny.xmxMb = 256;
         const StartupDiagnosis::Report report3 = StartupDiagnosis::analyze(tiny);
-        check(report3.warnings == 1 && hasTitle(report3, QStringLiteral("偏小")),
+        check(report3.warnings == 1 && hasTitle(report3, QStringLiteral("过小")),
               "★ DX4 256 MB ⇒ 提醒「偏小」", textOf(report3));
 
         StartupDiagnosis::Inputs unknownMemory = baseInputs();
         unknownMemory.systemTotalMb = 0;
         const StartupDiagnosis::Report report4 = StartupDiagnosis::analyze(unknownMemory);
-        check(hasTitle(report4, QStringLiteral("读不到这台机器的物理内存"))
-                  && !hasTitle(report4, QStringLiteral("超过了机器总内存")),
+        check(hasTitle(report4, QStringLiteral("无法读取设备物理内存"))
+                  && !hasTitle(report4, QStringLiteral("超过设备总内存")),
               "★ DX4 读不到系统内存：明说读不到，**不拿 0 当总内存**", textOf(report4));
     }
 

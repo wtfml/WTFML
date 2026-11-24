@@ -96,7 +96,7 @@ bool parse(const QByteArray &json, Manifest *out, QString *error) {
         return false;
     };
     if (out == nullptr) {
-        return fail(QCoreApplication::translate("AssetDirectorKnownSet", "没有给出清单结果。"));
+        return fail(QCoreApplication::translate("AssetDirectorKnownSet", "未提供清单结果。"));
     }
     out->sets.clear();
     if (json.isEmpty() || json.size() > kMaxManifestBytes) {
@@ -113,7 +113,7 @@ bool parse(const QByteArray &json, Manifest *out, QString *error) {
     }
     const QJsonValue setsValue = root.value(QStringLiteral("knownSets"));
     if (!setsValue.isArray() || setsValue.toArray().isEmpty() || setsValue.toArray().size() > kMaxSets) {
-        return fail(QCoreApplication::translate("AssetDirectorKnownSet", "已知集合清单里没有可用的条目。"));
+        return fail(QCoreApplication::translate("AssetDirectorKnownSet", "已知集合清单中无可用条目。"));
     }
     QSet<QString> ids;
     QSet<QString> hashes;
@@ -138,7 +138,7 @@ bool parse(const QByteArray &json, Manifest *out, QString *error) {
         const QJsonValue patternsValue = object.value(QStringLiteral("consumerPatterns"));
         if (!patternsValue.isArray() || patternsValue.toArray().isEmpty()
             || patternsValue.toArray().size() > kMaxPatternsPerSet) {
-            return fail(QCoreApplication::translate("AssetDirectorKnownSet", "%1 没有可用的消费者匹配规则。").arg(set.id));
+            return fail(QCoreApplication::translate("AssetDirectorKnownSet", "%1 无可用消费者匹配规则。").arg(set.id));
         }
         for (const QJsonValue &patternValue : patternsValue.toArray()) {
             const QString pattern = patternValue.toString();
@@ -157,7 +157,7 @@ bool parse(const QByteArray &json, Manifest *out, QString *error) {
         }
         const QJsonValue indexValue = object.value(QStringLiteral("assetIndex"));
         if (!indexValue.isObject()) {
-            return fail(QCoreApplication::translate("AssetDirectorKnownSet", "%1 没有资源索引。").arg(set.id));
+            return fail(QCoreApplication::translate("AssetDirectorKnownSet", "%1 无资源索引。").arg(set.id));
         }
         set.assetIndexId = indexValue.toObject().value(QStringLiteral("id")).toString();
         static const QRegularExpression indexIdPattern(QStringLiteral("^[0-9A-Za-z._-]{1,64}$"));

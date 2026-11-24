@@ -134,7 +134,7 @@ void runReplayInfoTests() {
         }
 
         const ReplayInfo::Info absent = ReplayInfo::read(root + QStringLiteral("/nope.mcpr"));
-        check(!absent.ok && absent.problem.contains(QStringLiteral("不存在")),
+        check(!absent.ok && absent.problem.contains(QStringLiteral("未找到")),
               "RP3 文件不存在", absent.problem);
     }
 
