@@ -1500,7 +1500,7 @@ Select "Sign out" to try again.</translation>
             <translation>Quartz Material</translation>
         </message>
         <message>
-            <source>石英</source>
+            <source>下界石英</source>
             <translation>Nether Quartz</translation>
         </message>
         <message>
@@ -1868,6 +1868,10 @@ Select "Sign out" to try again.</translation>
             <translation>%1 source: %2; duplicate with %3.</translation>
         </message>
         <message>
+            <source>%1自 Java 版 %2 起可用。</source>
+            <translation>%1 is available in Java Edition %2 and later.</translation>
+        </message>
+        <message>
             <source>每锻造一件消耗一个模板：%1 件共需 %1 个。</source>
             <translation>1 template is consumed per piece (%1 total for %1 pieces).</translation>
         </message>
@@ -1878,10 +1882,6 @@ Select "Sign out" to try again.</translation>
         <message>
             <source>步骤：</source>
             <translation>Steps:</translation>
-        </message>
-        <message>
-            <source>%1 纹饰模板自 Java 版 %2 起可用。</source>
-            <translation>%1 is available in Java Edition %2 and later.</translation>
         </message>
         <message>
             <source>「%1」纹饰材料自 Java 版 %2 起可用。</source>
@@ -2839,18 +2839,6 @@ What you want to restore is this one:
             <translation>Bordure</translation>
         </message>
         <message>
-            <source>砖块</source>
-            <translation>Bricks</translation>
-        </message>
-        <message>
-            <source>波纹边框</source>
-            <translation>Bordure Indented</translation>
-        </message>
-        <message>
-            <source>藤蔓</source>
-            <translation>Vines</translation>
-        </message>
-        <message>
             <source>圆形</source>
             <translation>Roundel</translation>
         </message>
@@ -2861,10 +2849,6 @@ What you want to restore is this one:
         <message>
             <source>苦力怕盾徽</source>
             <translation>Creeper Charge</translation>
-        </message>
-        <message>
-            <source>苦力怕头颅</source>
-            <translation>Creeper Head</translation>
         </message>
         <message>
             <source>斜十字</source>
@@ -2879,12 +2863,24 @@ What you want to restore is this one:
             <translation>Field Masoned</translation>
         </message>
         <message>
-            <source>花朵盾徽</source>
-            <translation>Flower Charge</translation>
+            <source>右上三角</source>
+            <translation>Per Bend Sinister</translation>
         </message>
         <message>
-            <source>滨菊</source>
-            <translation>Oxeye Daisy</translation>
+            <source>左上三角</source>
+            <translation>Per Bend</translation>
+        </message>
+        <message>
+            <source>右下三角</source>
+            <translation>Per Bend Inverted</translation>
+        </message>
+        <message>
+            <source>左下三角</source>
+            <translation>Per Bend Sinister Inverted</translation>
+        </message>
+        <message>
+            <source>花朵盾徽</source>
+            <translation>Flower Charge</translation>
         </message>
         <message>
             <source>涡流</source>
@@ -2895,48 +2891,12 @@ What you want to restore is this one:
             <translation>Globe</translation>
         </message>
         <message>
-            <source>橡树树苗</source>
-            <translation>Oak Sapling</translation>
-        </message>
-        <message>
-            <source>渐变</source>
-            <translation>Gradient</translation>
-        </message>
-        <message>
-            <source>上渐变</source>
-            <translation>Base Gradient</translation>
-        </message>
-        <message>
             <source>旋风</source>
             <translation>Guster</translation>
         </message>
         <message>
-            <source>上半</source>
-            <translation>Per Fess</translation>
-        </message>
-        <message>
-            <source>下半</source>
-            <translation>Per Fess Inverted</translation>
-        </message>
-        <message>
-            <source>左半</source>
-            <translation>Per Pale</translation>
-        </message>
-        <message>
-            <source>右半</source>
-            <translation>Per Pale Inverted</translation>
-        </message>
-        <message>
             <source>Mojang徽标</source>
             <translation>Thing</translation>
-        </message>
-        <message>
-            <source>附魔金苹果</source>
-            <translation>Enchanted Golden Apple</translation>
-        </message>
-        <message>
-            <source>猪灵</source>
-            <translation>Snout</translation>
         </message>
         <message>
             <source>菱形</source>
@@ -2947,16 +2907,8 @@ What you want to restore is this one:
             <translation>Skull Charge</translation>
         </message>
         <message>
-            <source>凋灵骷髅头颅</source>
-            <translation>Wither Skeleton Skull</translation>
-        </message>
-        <message>
             <source>猪鼻</source>
             <translation>Snout</translation>
-        </message>
-        <message>
-            <source>金胡萝卜</source>
-            <translation>Golden Carrot</translation>
         </message>
         <message>
             <source>正十字</source>
@@ -2971,52 +2923,12 @@ What you want to restore is this one:
             <translation>Pale</translation>
         </message>
         <message>
-            <source>左下斜条</source>
-            <translation>Bend Sinister</translation>
-        </message>
-        <message>
-            <source>右下斜条</source>
-            <translation>Bend</translation>
-        </message>
-        <message>
-            <source>左侧竖条</source>
-            <translation>Pale Dexter</translation>
-        </message>
-        <message>
             <source>中横条</source>
             <translation>Fess</translation>
         </message>
         <message>
-            <source>右侧竖条</source>
-            <translation>Pale Sinister</translation>
-        </message>
-        <message>
-            <source>细横条</source>
-            <translation>Paly</translation>
-        </message>
-        <message>
             <source>顶横条</source>
             <translation>Chief</translation>
-        </message>
-        <message>
-            <source>左下角</source>
-            <translation>Base Dexter Canton</translation>
-        </message>
-        <message>
-            <source>右下角</source>
-            <translation>Base Sinister Canton</translation>
-        </message>
-        <message>
-            <source>左上角</source>
-            <translation>Chief Dexter Canton</translation>
-        </message>
-        <message>
-            <source>右上角</source>
-            <translation>Chief Sinister Canton</translation>
-        </message>
-        <message>
-            <source>神秘图案</source>
-            <translation>Thing</translation>
         </message>
         <message>
             <source>底三角</source>
@@ -3027,28 +2939,72 @@ What you want to restore is this one:
             <translation>Inverted Chevron</translation>
         </message>
         <message>
-            <source>底双三角</source>
-            <translation>Base Indented</translation>
-        </message>
-        <message>
-            <source>顶双三角</source>
-            <translation>Chief Indented</translation>
-        </message>
-        <message>
             <source>左斜条</source>
-            <translation>Per Bend Sinister</translation>
+            <translation>Bend Sinister</translation>
         </message>
         <message>
             <source>右斜条</source>
-            <translation>Per Bend</translation>
+            <translation>Bend</translation>
         </message>
         <message>
-            <source>左上斜条</source>
-            <translation>Per Bend Inverted</translation>
+            <source>自上渐淡</source>
+            <translation>Gradient</translation>
         </message>
         <message>
-            <source>右上斜条</source>
-            <translation>Per Bend Sinister Inverted</translation>
+            <source>自下渐淡</source>
+            <translation>Base Gradient</translation>
+        </message>
+        <message>
+            <source>上半方形</source>
+            <translation>Per Fess</translation>
+        </message>
+        <message>
+            <source>下半方形</source>
+            <translation>Per Fess Inverted</translation>
+        </message>
+        <message>
+            <source>右半方形</source>
+            <translation>Per Pale</translation>
+        </message>
+        <message>
+            <source>左半方形</source>
+            <translation>Per Pale Inverted</translation>
+        </message>
+        <message>
+            <source>竖条纹</source>
+            <translation>Paly</translation>
+        </message>
+        <message>
+            <source>右底方</source>
+            <translation>Base Dexter Canton</translation>
+        </message>
+        <message>
+            <source>左底方</source>
+            <translation>Base Sinister Canton</translation>
+        </message>
+        <message>
+            <source>右顶方</source>
+            <translation>Chief Dexter Canton</translation>
+        </message>
+        <message>
+            <source>左顶方</source>
+            <translation>Chief Sinister Canton</translation>
+        </message>
+        <message>
+            <source>右竖条</source>
+            <translation>Pale Dexter</translation>
+        </message>
+        <message>
+            <source>左竖条</source>
+            <translation>Pale Sinister</translation>
+        </message>
+        <message>
+            <source>底波纹</source>
+            <translation>Base Indented</translation>
+        </message>
+        <message>
+            <source>顶波纹</source>
+            <translation>Chief Indented</translation>
         </message>
         <message>
             <source>白色</source>
@@ -3115,6 +3071,14 @@ What you want to restore is this one:
             <translation>Black</translation>
         </message>
         <message>
+            <source>砖纹旗帜图案</source>
+            <translation>Field Masoned Banner Pattern</translation>
+        </message>
+        <message>
+            <source>波纹边旗帜图案</source>
+            <translation>Bordure Indented Banner Pattern</translation>
+        </message>
+        <message>
             <source>%1染料</source>
             <translation>%1 Dye</translation>
         </message>
@@ -3143,8 +3107,20 @@ What you want to restore is this one:
             <translation>Banner from previous layer</translation>
         </message>
         <message>
-            <source>第 %1 层：织布机里放%2 + %3 + %4%5 → 叠出「%6」</source>
-            <translation>Layer %1 (Loom): %2 + %3 + %5 (%4) → "%6"</translation>
+            <source>第 %1 层：织布机里放%2 + %3</source>
+            <translation>Layer %1: place %2 + %3 in a loom</translation>
+        </message>
+        <message>
+            <source> + %1</source>
+            <translation> + %1</translation>
+        </message>
+        <message>
+            <source> → 叠出「%1」</source>
+            <translation> → "%1"</translation>
+        </message>
+        <message>
+            <source>指令（写法随目标版本变化）：</source>
+            <translation>Command (syntax depends on the target version):</translation>
         </message>
         <message>
             <source>图案「%1」自 %2 版起可用。</source>
@@ -3173,10 +3149,6 @@ What you want to restore is this one:
         <message>
             <source>（%1）</source>
             <translation>(%1)</translation>
-        </message>
-        <message>
-            <source>指令（1.13–1.20.4 的 NBT 写法；1.20.5 起换成了组件写法，这一版不出）：</source>
-            <translation>Command (NBT syntax for 1.13–1.20.4; 1.20.5+ uses item components, not output here):</translation>
         </message>
     </context>
     <context>
@@ -3401,20 +3373,12 @@ What you want to restore is this one:
             <translation>Rabbit's Foot</translation>
         </message>
         <message>
-            <source>跳跃</source>
-            <translation>Jump Boost</translation>
-        </message>
-        <message>
             <source>治疗药水</source>
             <translation>Potion of Healing</translation>
         </message>
         <message>
             <source>闪烁的西瓜片</source>
             <translation>Glistering Melon Slice</translation>
-        </message>
-        <message>
-            <source>治疗</source>
-            <translation>Instant Health</translation>
         </message>
         <message>
             <source>恢复 4 点生命值</source>
@@ -3427,14 +3391,6 @@ What you want to restore is this one:
         <message>
             <source>伤害药水</source>
             <translation>Potion of Harming</translation>
-        </message>
-        <message>
-            <source>发酵蜘蛛眼</source>
-            <translation>Fermented Spider Eye</translation>
-        </message>
-        <message>
-            <source>伤害</source>
-            <translation>Instant Damage</translation>
         </message>
         <message>
             <source>造成 6 点伤害</source>
@@ -3477,10 +3433,6 @@ What you want to restore is this one:
             <translation>Ghast Tear</translation>
         </message>
         <message>
-            <source>再生</source>
-            <translation>Regeneration</translation>
-        </message>
-        <message>
             <source>抗火药水</source>
             <translation>Potion of Fire Resistance</translation>
         </message>
@@ -3499,10 +3451,6 @@ What you want to restore is this one:
         <message>
             <source>河豚</source>
             <translation>Pufferfish</translation>
-        </message>
-        <message>
-            <source>水肺</source>
-            <translation>Water Breathing</translation>
         </message>
         <message>
             <source>夜视药水</source>
@@ -3527,10 +3475,6 @@ What you want to restore is this one:
         <message>
             <source>迟缓药水</source>
             <translation>Potion of Slowness</translation>
-        </message>
-        <message>
-            <source>迟缓</source>
-            <translation>Slowness</translation>
         </message>
         <message>
             <source>缓降药水</source>
@@ -3559,10 +3503,6 @@ What you want to restore is this one:
         <message>
             <source>海龟壳</source>
             <translation>Turtle Shell</translation>
-        </message>
-        <message>
-            <source>海龟大师</source>
-            <translation>Turtle Master</translation>
         </message>
         <message>
             <source>盘丝药水</source>
@@ -3607,10 +3547,6 @@ What you want to restore is this one:
         <message>
             <source>石头</source>
             <translation>Stone</translation>
-        </message>
-        <message>
-            <source>虫蚀</source>
-            <translation>Infested</translation>
         </message>
         <message>
             <source> · 瞬间，效果云内周期生效</source>
@@ -3675,6 +3611,42 @@ What you want to restore is this one:
         <message>
             <source>（延长）</source>
             <translation> (Extended)</translation>
+        </message>
+        <message>
+            <source>跳跃提升</source>
+            <translation>Jump Boost</translation>
+        </message>
+        <message>
+            <source>瞬间治疗</source>
+            <translation>Instant Health</translation>
+        </message>
+        <message>
+            <source>发酵蛛眼</source>
+            <translation>Fermented Spider Eye</translation>
+        </message>
+        <message>
+            <source>瞬间伤害</source>
+            <translation>Instant Damage</translation>
+        </message>
+        <message>
+            <source>生命恢复</source>
+            <translation>Regeneration</translation>
+        </message>
+        <message>
+            <source>水下呼吸</source>
+            <translation>Water Breathing</translation>
+        </message>
+        <message>
+            <source>缓慢</source>
+            <translation>Slowness</translation>
+        </message>
+        <message>
+            <source>缓慢 + 抗性提升</source>
+            <translation>Slowness + Resistance</translation>
+        </message>
+        <message>
+            <source>寄生</source>
+            <translation>Infested</translation>
         </message>
         <message>
             <source>普通</source>
@@ -27468,10 +27440,6 @@ Please close the program occupying the port, or change the port in "Common Setti
             <translation>%1: %2</translation>
         </message>
         <message>
-            <source>%1 中的字段：%2</source>
-            <translation>Coordinates (%1): %2</translation>
-        </message>
-        <message>
             <source>区块：(x %1, z %2)（x %3、z %4）</source>
             <translation>Chunk: (x %1, z %2) (x %3, z %4)</translation>
         </message>
@@ -27572,6 +27540,10 @@ Please close the program occupying the port, or change the port in "Common Setti
         <message>
             <source>以下组件未解析：%1。其内容需由游戏内的服务器或语言文件确定，此处不做推测。</source>
             <translation>Unresolved components: %1. They require an in-game server or language files and weren't guessed.</translation>
+        </message>
+        <message>
+            <source>%1 中的坐标：%2</source>
+            <translation>Coordinates in %1: %2</translation>
         </message>
         <message>
             <source>%1：末地不进行比例换算（两侧坐标之间无 8:1 的对应关系）。</source>
@@ -27975,6 +27947,10 @@ Please close the program occupying the port, or change the port in "Common Setti
             <translation>Upgrade (Glowstone)</translation>
         </message>
         <message>
+            <source>把 /give 指令复制走（按目标版本选择写法）</source>
+            <translation>Copy the /give command (syntax depends on the target version)</translation>
+        </message>
+        <message>
             <source>步骤</source>
             <translation>Steps</translation>
         </message>
@@ -28169,10 +28145,6 @@ Please close the program occupying the port, or change the port in "Common Setti
         <message>
             <source>加载游戏 JAR / 资源包贴图</source>
             <translation>Load textures from a game JAR or resource pack</translation>
-        </message>
-        <message>
-            <source>把 /give 指令复制走（1.13–1.20.4 的写法）</source>
-            <translation>Copy /give command (1.13–1.20.4 syntax)</translation>
         </message>
         <message>
             <source>复制指令</source>
