@@ -144,7 +144,7 @@ struct DataPackApplyReport {
  *
  * `Replace` 会先删掉目标上同名的那个包再拷（**备份是调用方的事** —— 应用引擎那一层
  * 在动手之前会把它收走）；`CopyIfMissing` 目标上有就不动；`Merge` / `Append` 一个字节
- * 都不写，只把"要你选"的数报出来。
+ * 都不写，只把"待选择"的数报出来。
  */
 DataPackApplyReport applyDataPacks(const QString &presetFilesRoot, const QString &instanceRoot,
                                    const PresetSection &section, ApplyMode mode,

@@ -14,7 +14,7 @@
  * （`written` / `removed` / `skipped` / `conflicts`）。
  *
  * MaLiLib 那一段的"冲突"和原版按键那一档**是同一件事**（两个东西抢同一组键位），
- * 所以它报在同一个格子上（`conflictCount`）。它和"要你选"（通用文件组那一档）不是
+ * 所以它报在同一个格子上（`conflictCount`）。它和"待选择"（通用文件组那一档）不是
  * 一回事，别混着看。
  *
  * 【"还没确认"的那一趟为什么照样算】
@@ -342,7 +342,7 @@ QString applyPlanRowText(const ApplyPlanRow &row) {
 
     // 这一档我们做不了主 ⇒ 这一行只说得出口这一件事（`count` 那一趟必然是 0）。
     if (row.needsChoice > 0) {
-        return QCoreApplication::translate("Presets", "要你选 %1 %2")
+        return QCoreApplication::translate("Presets", "待选择 %1 %2")
             .arg(row.needsChoice)
             .arg(applyPlanUnit(row.kind));
     }

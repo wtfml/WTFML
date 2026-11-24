@@ -112,7 +112,7 @@ QString blockerText(Blocker blocker) {
     case Blocker::ConfigWithoutMods:
         return QCoreApplication::translate("UpgradePageState", "已选中模组配置，未选中模组文件。请同时迁移模组，或取消迁移相关配置。");
     case Blocker::ReportMissing:
-        return QCoreApplication::translate("UpgradePageState", "请先执行兼容性检查，再确认迁移。");
+        return QCoreApplication::translate("UpgradePageState", "请执行兼容性检查后确认迁移。");
     case Blocker::ReportStale:
         return QCoreApplication::translate("UpgradePageState", "目标或选择已更改，需要重新检查。");
     case Blocker::None:

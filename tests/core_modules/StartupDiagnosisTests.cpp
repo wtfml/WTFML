@@ -184,7 +184,7 @@ void runStartupDiagnosisTests() {
         StartupDiagnosis::Inputs inputs3 = baseInputs();
         inputs3.crashDir = crashDir3;
         const StartupDiagnosis::Report report3 = StartupDiagnosis::analyze(inputs3);
-        check(hasTitle(report3, QStringLiteral("Java 版本不对")),
+        check(hasTitle(report3, QStringLiteral("Java 版本不匹配")),
               "★ DX6 UnsupportedClassVersionError ⇒ 问题（Java 太旧）", textOf(report3));
     }
 

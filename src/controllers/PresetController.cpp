@@ -448,7 +448,7 @@ QString PresetController::captureNoteFor(Presets::PresetCategory category) {
     case Presets::PresetCategory::Unset:
         return tr("旧版预设未记录类别，九类均可收集。");
     case Presets::PresetCategory::GameSettings:
-        return tr("「游戏设置」预设不收资源包 / 光影包。");
+        return tr("「游戏设置」预设不收录资源包与光影包。");
     case Presets::PresetCategory::ResourcePacks:
         return tr("仅提取资源包。");
     case Presets::PresetCategory::ShaderPacks:
@@ -456,7 +456,7 @@ QString PresetController::captureNoteFor(Presets::PresetCategory category) {
     case Presets::PresetCategory::Mods:
         return tr("模组预设请使用“编辑模组清单”添加平台项目，当前不从实例提取本地 JAR。");
     case Presets::PresetCategory::DataPacks:
-        return tr("数据包按存档应用；目标中没有同名存档时标记为「待应用」。");
+        return tr("数据包按存档应用；目标中无同名存档时标记为「待应用」。");
     }
     return QString();
 }
@@ -781,14 +781,14 @@ void PresetController::saveDetails(const QString &id, const QString &name,
     const QString cleaned = Presets::cleanDisplayName(name);
     if (cleaned.isEmpty()) {
         if (m_page != nullptr) {
-            m_page->showStatus(tr("名字不能空着。"));
+            m_page->showStatus(tr("名称不能为空。"));
         }
         return;
     }
     const bool renamed = cleaned != manifest.name;
     if (!renamed && description == manifest.description) {
         if (m_page != nullptr) {
-            m_page->showStatus(tr("没有要保存的改动。"));
+            m_page->showStatus(tr("无可保存的改动。"));
         }
         return;
     }
@@ -806,7 +806,7 @@ void PresetController::saveDetails(const QString &id, const QString &name,
     }
     refreshList(id);
     if (m_page != nullptr) {
-        m_page->showStatus(tr("保存了。"));
+        m_page->showStatus(tr("已保存。"));
     }
 }
 
@@ -1097,7 +1097,7 @@ void PresetController::captureAsNew(const QString &instanceId, const QString &na
             Presets::remove(root, created.id);
             if (m_page != nullptr) {
                 m_page->showStatus(
-                    tr("无法确认此实例中的模组来自哪个平台。其安装记录可能缺失，或文件已被替换。预设未创建。"));
+                    tr("无法确认此实例模组的来源平台。其安装记录可能缺失，或文件已被替换。预设未创建。"));
             }
             return;
         }
@@ -1264,12 +1264,12 @@ void PresetController::showPreview(const Presets::PreviewSnapshot &snapshot) {
             QStringLiteral("%1 ← %2").arg(conflict.keys, conflict.claims.join(QStringLiteral(" / "))));
     }
     if (plan.ok) {
-        QString summary = tr("%1 段，会动 %2 项").arg(plan.rows.size()).arg(plan.totalCount());
+        QString summary = tr("%1 段，将改动 %2 项").arg(plan.rows.size()).arg(plan.totalCount());
         if (plan.blockedRowCount() > 0) {
             summary += tr("，%1 段无法完成").arg(plan.blockedRowCount());
         }
         if (plan.riskyRowCount() > 0) {
-            summary += tr("，%1 段要留意").arg(plan.riskyRowCount());
+            summary += tr("，%1 段需留意").arg(plan.riskyRowCount());
         }
         view.summary = summary;
     }
@@ -1291,7 +1291,7 @@ QString PresetController::applyRowText(const Presets::PresetApplyRow &row) const
     } else if (row.skipped) {
         state = tr("跳过");
     } else if (!row.ok) {
-        state = tr("没做成%1").arg(row.problem.isEmpty()
+        state = tr("未完成%1").arg(row.problem.isEmpty()
                                                    ? QString()
                                                    : tr("（%1）").arg(row.problem));
     } else if (row.written == 0 && row.removed == 0 && row.deferred == 0) {
@@ -1345,7 +1345,7 @@ void PresetController::showExecutionReport(const QString &presetId, const QStrin
             .arg(row.value(mods ? "filename" : "title").toString(), states.value(state, tr("状态无法确认")))
             .arg(row.value("written").toInt()).arg(row.value("reason").toString()));
     }
-    view.lines.append(tr("已完成项保留；继续时重新核对预设和实际文件，只重试未完成部分。不会宣称整趟回滚。"));
+    view.lines.append(tr("已完成项保留；继续时重新核对预设和实际文件，只重试未完成部分。不会声明整个流程回滚。"));
     m_page->showApplyResult(view);
 }
 
@@ -1743,14 +1743,14 @@ PresetController::InstallPreview PresetController::previewForInstall(
     }
     // 这一段和 `previewPlan()` 里那句小结**同口径**：界面里两处说"会动几项"不该有两种说法。
     if (plan.ok) {
-        QString summary = tr("%1 段，会动 %2 项")
+        QString summary = tr("%1 段，将改动 %2 项")
                               .arg(plan.rows.size())
                               .arg(plan.totalCount());
         if (plan.blockedRowCount() > 0) {
             summary += tr("，%1 段无法完成").arg(plan.blockedRowCount());
         }
         if (plan.riskyRowCount() > 0) {
-            summary += tr("，%1 段要留意").arg(plan.riskyRowCount());
+            summary += tr("，%1 段需留意").arg(plan.riskyRowCount());
         }
         view.summary = summary;
     }

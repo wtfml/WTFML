@@ -61,7 +61,7 @@ void InstanceTransferController::upgradeInPlace(QString sourceId, QString target
                 || (m_host.isBeingModified && m_host.isBeingModified(id))) return true;
         return false;
     };
-    if (unavailable()) { fail(tr("相关实例正在运行、安装或处理文件，完成后再试。")); return; }
+    if (unavailable()) { fail(tr("相关实例正在运行、安装或处理文件，请完成后再试。")); return; }
     if (core.mergedJson.isEmpty() || core.gameVersion.isEmpty() || !QFileInfo(core.clientJar).isFile()) {
         fail(tr("目标核心不完整，请先安装或修复目标版本。")); return;
     }
@@ -141,7 +141,7 @@ void InstanceTransferController::upgradeToCopy(const QString &sourceId, const QS
     }
     if ((m_launcher && m_launcher->isVersionRunning(sourceId))
         || (m_host.isBeingModified && m_host.isBeingModified(sourceId))) {
-        fail(tr("源实例正在运行、安装或处理文件，完成后再试。"));
+        fail(tr("源实例正在运行、安装或处理文件，请完成后再试。"));
         return;
     }
     m_versions->clearVersionJsonCache();

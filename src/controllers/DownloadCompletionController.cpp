@@ -299,7 +299,7 @@ void DownloadCompletionController::onFinished(const QString &versionId, bool suc
             m_owner.appendLog(TextMarks::failed(tr("整合包导入已由用户取消。")));
         } else {
             m_owner.takeOneClickModpack(versionId);
-            m_owner.appendLog(TextMarks::failed(tr("整合包没有导入：%1").arg(errorMessage)));
+            m_owner.appendLog(TextMarks::failed(tr("整合包未导入：%1").arg(errorMessage)));
             const auto showFailPrompt = [weakOwner = QPointer<MainWindow>(&m_owner), errorMessage]() {
                 if (weakOwner.isNull()) {
                     return;
@@ -371,7 +371,7 @@ void DownloadCompletionController::onFinished(const QString &versionId, bool suc
         } else if (userCancelled) {
             m_owner.appendLog(TextMarks::failed(tr("实例「%1」的文件校验已由用户取消。").arg(displayName)));
         } else {
-            m_owner.appendLog(TextMarks::failed(tr("实例「%1」的文件没补齐：%2").arg(displayName, errorMessage)));
+            m_owner.appendLog(TextMarks::failed(tr("实例「%1」的文件未补齐：%2").arg(displayName, errorMessage)));
             InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("文件未补齐"),
                                    MainWindow::tr("未能获取实例「%1」的部分文件。\n\n%2")
                                        .arg(displayName, errorMessage));

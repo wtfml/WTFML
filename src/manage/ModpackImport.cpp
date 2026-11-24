@@ -887,7 +887,7 @@ Result parseMultiMCInstance(const QByteArray &mmcPackJson, const QByteArray &ins
         gameVersion = instanceCfgValue(instanceCfg, QStringLiteral("IntendedVersion"));
     }
     if (gameVersion.isEmpty()) {
-        result.problem = QCoreApplication::translate("ModpackImport", "这是一个 MultiMC / Prism 的实例导出（有 mmc-pack.json），但里面没写它基于哪个 Minecraft 版本（components 里没有 net.minecraft），无法安装。");
+        result.problem = QCoreApplication::translate("ModpackImport", "这是一个 MultiMC / Prism 的实例导出（含 mmc-pack.json），但其中未注明所基于的 Minecraft 版本（components 中没有 net.minecraft），无法安装。");
         return result;
     }
     if (!customComponents.isEmpty()) {

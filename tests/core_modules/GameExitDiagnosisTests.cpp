@@ -10,7 +10,7 @@ void runGameExitDiagnosisTests() {
               == QStringLiteral("0xC0000374（堆损坏）"),
           "ZP1 堆损坏");
     check(GameExitDiagnosis::exitDescription(-1073741515)
-              == QStringLiteral("0xC0000135（缺一个系统 DLL）"),
+              == QStringLiteral("0xC0000135（缺少系统 DLL）"),
           "ZP1 缺 DLL");
     // 十六进制那一截是**由那个已知的码算出来的**（同一件事不写两遍）：`0xC0000006` 是
     // 分页失败，而它的十进制是 -1073741818 —— 差一个数就会指到"访问冲突"上去。

@@ -362,7 +362,7 @@ void PlatformCompatibilityProvider::queryCurseForge(const ModReference &referenc
             }
             if (!document.object().value(QStringLiteral("data")).isArray()) {
                 reply(CompatibilityState::Unknown,
-                      QCoreApplication::translate("ModrinthCompatibility", "接口没有返回文件清单，暂时无法确认。"));
+                      QCoreApplication::translate("ModrinthCompatibility", "接口未返回文件清单，暂无法确认。"));
                 return;
             }
             const QJsonArray files = document.object().value(QStringLiteral("data")).toArray();

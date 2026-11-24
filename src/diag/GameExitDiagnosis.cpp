@@ -28,8 +28,8 @@ constexpr ExitCodeName kExitCodeNames[] = {
     {-1073741795, QT_TRANSLATE_NOOP("GameExitDiagnosis", "非法指令")},               // 0xC000001D STATUS_ILLEGAL_INSTRUCTION
     {-1073741676, QT_TRANSLATE_NOOP("GameExitDiagnosis", "整数除以零")},             // 0xC0000094 STATUS_INTEGER_DIVIDE_BY_ZERO
     {-1073741571, QT_TRANSLATE_NOOP("GameExitDiagnosis", "栈溢出")},                 // 0xC00000FD STATUS_STACK_OVERFLOW
-    {-1073741515, QT_TRANSLATE_NOOP("GameExitDiagnosis", "缺一个系统 DLL")},         // 0xC0000135 STATUS_DLL_NOT_FOUND
-    {-1073741511, QT_TRANSLATE_NOOP("GameExitDiagnosis", "DLL 里的入口点找不到")},   // 0xC0000139 STATUS_ENTRYPOINT_NOT_FOUND
+    {-1073741515, QT_TRANSLATE_NOOP("GameExitDiagnosis", "缺少系统 DLL")},         // 0xC0000135 STATUS_DLL_NOT_FOUND
+    {-1073741511, QT_TRANSLATE_NOOP("GameExitDiagnosis", "DLL 中的入口点未找到")},   // 0xC0000139 STATUS_ENTRYPOINT_NOT_FOUND
     {-1073741502, QT_TRANSLATE_NOOP("GameExitDiagnosis", "DLL 初始化失败")},         // 0xC0000142 STATUS_DLL_INIT_FAILED
     {-1073740940, QT_TRANSLATE_NOOP("GameExitDiagnosis", "堆损坏")},                 // 0xC0000374 STATUS_HEAP_CORRUPTION
     {-1073740791, QT_TRANSLATE_NOOP("GameExitDiagnosis", "栈上的缓冲区写越界")},     // 0xC0000409 STATUS_STACK_BUFFER_OVERRUN
@@ -141,7 +141,7 @@ QStringList hints(const Facts &facts) {
     // ⓪ 手动调试崩溃。这条要排在最前面：它是**玩家自己按出来的**，不是模组或游戏
     // 真的坏了；后面那些内存/Java 规则即使碰巧命中也不该让人去改配置。
     if (facts.sawManualDebugCrash) {
-        say(QCoreApplication::translate("GameExitDiagnosis", "日志显示这是手动触发的调试崩溃（F3+C）。如果只是在测试，松开 F3+C 后不要在倒计时里等，崩溃就不会发生；这次退出不代表游戏或模组有问题。"));
+        say(QCoreApplication::translate("GameExitDiagnosis", "日志显示这是手动触发的调试崩溃（F3+C）。如果仅用于测试，松开 F3+C 后无需等待倒计时，崩溃就不会发生；这次退出不代表游戏或模组有问题。"));
     }
 
     // ① Java 版本对不上。**两个数都非 0 才说话** —— 只拿到一个的时候分不出"对得上"和

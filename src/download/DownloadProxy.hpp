@@ -132,7 +132,7 @@ inline bool parseManual(const QString &raw, Endpoint *out, QString *error = null
     bool ok = false;
     const int port = portText.toInt(&ok);
     if (!ok || port < 1 || port > 65535) {
-        return fail(QCoreApplication::translate("DownloadProxy", "端口须为 1~65535 之间的整数。"));
+        return fail(QCoreApplication::translate("DownloadProxy", "端口须为 1–65535 之间的整数。"));
     }
     if (out) {
         out->host = host;
