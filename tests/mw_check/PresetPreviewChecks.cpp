@@ -22,6 +22,7 @@
 #include <QListWidget>
 #include <QPushButton>
 #include <QSemaphore>
+#include <QStackedWidget>
 #include <QTemporaryDir>
 #include <QThread>
 #include <QTimer>
@@ -214,6 +215,8 @@ int runPresetPreviewChecks() {
         QTemporaryDir editorFixture;
         const auto previousDefault=qApp->property("wtfml.testDefaultMinecraftDir");
         qApp->setProperty("wtfml.testDefaultMinecraftDir",editorFixture.path());
+        const auto inlinePreset = Presets::create(PresetController::presetsRoot(), "Inline editor test");
+        check(!inlinePreset.id.isEmpty(), "published preset fixture is saved before the catalog can load");
         QWidget host;
         // 编辑器现在是**整页**（铺在内容区上，和实例设置同一条路）。`showPage()` 摆上去
         // 就返回，收页之后才叫那条回调 —— 和真覆盖层同一个语义。验证工程没有真覆盖层，
@@ -284,6 +287,46 @@ int runPresetPreviewChecks() {
         choice=2;  // 不保存：这一趟只是把它打开看一眼
         check(editorController.leaveEditor(),"leaving a clean reopened draft closes it directly");
         QCoreApplication::sendPostedEvents(nullptr,QEvent::DeferredDelete);
+        editorController.open();
+        check(pump([&] { return !editorController.catalogLoading(); }), "preset catalog loaded for inline editing");
+        const auto matches = presetList ? presetList->findItems(inlinePreset.name, Qt::MatchExactly | Qt::MatchRecursive)
+                                        : QList<QTreeWidgetItem *>{};
+        check(matches.size() == 1, "published preset appears in the catalog");
+        if (!matches.isEmpty()) {
+            presetList->setCurrentItem(matches.first());
+            presetList->itemClicked(matches.first(), 0);
+            check(pump([&] { return !editorController.detailsLoading() && !embeddedManager->isBusy(); }),
+                  "preset details loaded for inline editing");
+            auto *tabs = embeddedManager->findChild<QListWidget *>("presetDetailNav");
+            auto *detailPages = embeddedManager->findChild<QStackedWidget *>("presetDetailPages");
+            auto *headerAction = embeddedManager->findChild<QPushButton *>(PresetManagePage::saveDetailsButtonName());
+            check(tabs && tabs->count() == 9 && headerAction && headerAction->isHidden(),
+                  "existing preset opens with editor tabs in its detail sidebar and no editor button");
+            if (tabs && detailPages) {
+                tabs->setCurrentRow(2);
+                auto *inlineEditor = visibleEditor();
+                auto *sections = inlineEditor ? inlineEditor->findChild<QStackedWidget *>("presetEditorSections") : nullptr;
+                auto *inlineName = inlineEditor ? inlineEditor->findChild<QLineEdit *>("presetEditorName") : nullptr;
+                check(inlineEditor && sections && detailPages->currentWidget() == inlineEditor &&
+                          !inlineEditor->isWindow() && sections->currentIndex() == 1 &&
+                          !inlineEditor->findChild<QListWidget *>("presetEditorNavigation"),
+                      "Game Options tab shows its editor on the right without a second sidebar or window");
+                tabs->setCurrentRow(3);
+                check(sections && sections->currentIndex() == 2 && visibleEditor() == inlineEditor,
+                      "Keys tab reuses the same editor document");
+                if (inlineName) inlineName->setText("Unsaved inline change");
+                choice = 3;
+                tabs->setCurrentRow(7);
+                check(inlineEditor && tabs->currentRow() == 3 && visibleEditor() == inlineEditor && inlineEditor->isDirty(),
+                      "cancelling departure restores the editor tab and keeps the unsaved document");
+                choice = 2;
+                tabs->setCurrentRow(7);
+                check(!visibleEditor() && detailPages->currentIndex() == 1,
+                      "discarding changes switches to Extract from Instance");
+                tabs->setCurrentRow(8);
+                check(detailPages->currentIndex() == 2, "Apply to Instance remains available in the same sidebar");
+            }
+        }
         auto legacy=Presets::create(PresetController::presetsRoot(),"Legacy repeated sections");
         Presets::PresetSection first;first.id=Presets::newPresetId();first.kind=Presets::SectionKind::VanillaOptions;first.items=QJsonArray{QJsonObject{{"key","guiScale"},{"value","2"}}};
         auto second=first;second.id=Presets::newPresetId();second.mode=Presets::ApplyMode::Replace;

@@ -14,6 +14,7 @@
 #include <QDebug>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QRegularExpression>
 #include <QSettings>
 
 namespace {
@@ -131,15 +132,13 @@ bool makeOfflineCurrent(const QString &uuid, QString *errorOut) {
     // 写不进去**，那下面两句就是把这台机器上唯一那份 refresh_token 删掉 —— 这一种
     // 必须中止，一个字节都不动（判据在 activeCredentialWouldBeLost()）。
     QString captureError;
-    if (!AccountStore::captureActive(&captureError)) {
+    if (activeCredentialWouldBeLost() && !AccountStore::captureActive(&captureError)) {
         qWarning().noquote() << QCoreApplication::translate("AccountStore", "切换离线账号前，保存当前账号失败：") << captureError;
-        if (activeCredentialWouldBeLost()) {
-            if (errorOut != nullptr) {
-                *errorOut = QCoreApplication::translate("AccountStore", "无法保存当前账号（%1），已取消切换。\n\n当前账号的登录凭据已保留。")
-                                .arg(captureError);
-            }
-            return false;
+        if (errorOut != nullptr) {
+            *errorOut = QCoreApplication::translate("AccountStore", "无法保存当前账号（%1），已取消切换。\n\n当前账号的登录凭据已保留。")
+                            .arg(captureError);
         }
+        return false;
     }
     // R13：清不动就别往下走 —— 活动槽里那份凭据还在的话，下面这一格（`CurrentAccountUuid`）
     // 写进去也改变不了 activeUuid() 的结论（它先看活动槽），界面会显示成"切过去了"、
@@ -530,29 +529,12 @@ QString AccountStore::offlineUuidFor(const QString &name) {
 
 bool AccountStore::addOffline(const QString &name, QString *errorOut) {
     const QString trimmed = name.trimmed();
-    if (trimmed.isEmpty()) {
+    static const QRegularExpression profileName(QStringLiteral("\\A[A-Za-z0-9_]{3,16}\\z"));
+    if (!profileName.match(trimmed).hasMatch()) {
         if (errorOut != nullptr) {
-            *errorOut = QCoreApplication::translate("AccountStore", "离线账号名称不能为空。");
+            *errorOut = QCoreApplication::translate("AccountStore", "离线账号名称须为 3 至 16 个字符，只能使用英文字母、数字和下划线。");
         }
         return false;
-    }
-    // 长度按官方 ID 那条上限（16）。**下限不跟官方走**：官方要求至少 3 个字符，那是登录
-    // 名的规矩；离线玩的时候叫 "ab" 完全正常，跟着卡只会拦下本来能用的人。
-    if (trimmed.size() > 16) {
-        if (errorOut != nullptr) {
-            *errorOut = QCoreApplication::translate("AccountStore", "离线账号名称最多为 16 个字符。");
-        }
-        return false;
-    }
-    // 空白和控制字符真的会有问题：这个名字要进 --username、也要当存档和服务器列表里的
-    // 标识，中间带一个空格就会在那些地方被切开或者对不上。
-    for (const QChar &ch : trimmed) {
-        if (ch.isSpace() || ch.isNull() || ch.category() == QChar::Other_Control) {
-            if (errorOut != nullptr) {
-                *errorOut = QCoreApplication::translate("AccountStore", "离线账号名称不能含空格或控制字符。");
-            }
-            return false;
-        }
     }
 
     const QString uuid = offlineUuidFor(trimmed);

@@ -23,6 +23,7 @@
 #include <QProcess>
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
+#include <QSet>
 #include <QSettings>
 #include <QStandardPaths>
 #include <QTemporaryFile>
@@ -343,6 +344,15 @@ struct VanillaRuntime {
     QString exe;
     int majorVersion = -1;
 };
+
+QStringList javaPathsInRuntimeDir(const QString &root) {
+    QDir dir(root);
+    QStringList paths;
+    for (const QString &subdir : dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        paths.append(dir.absoluteFilePath(subdir + QStringLiteral("/bin/java.exe")));
+    }
+    return paths;
+}
 
 /**
  * @brief 扫描原版启动器已经下载好的运行时目录。
@@ -1094,9 +1104,6 @@ int GlobalJavaSettings::suggestXmxMb(qint64 totalMb, qint64 availableMb, int mod
     // 整合包规模那一档加在**基准**上（第 1 步），不是加在最后的结果上 —— 见上面
     // kAutoXmxModsPerStep 那段：加成抬的是目标值，机器侧那两条硬顶照旧说了算。
     qint64 budget = totalMb / 4 + modCountBonusMb(modCount);
-    if (availableMb > 0) {
-        budget = qMin(budget, availableMb / 2);
-    }
     // 先在"体面范围"里夹一次。三个参数都写成 qint64：常量是 int，混着传会让 qBound 的
     // 重载解析变成二义的。
     budget = qBound(qint64(kAutoXmxMinMb), budget, qint64(kAutoXmxMaxMb));
@@ -1104,6 +1111,10 @@ int GlobalJavaSettings::suggestXmxMb(qint64 totalMb, qint64 availableMb, int mod
     // （2 GB 的机器给 1024 已经是一半了，1 GB 的机器只该给 512）—— 在一条本来就紧张的
     // 机器上按"最少 1 GB"硬凑，只会让 JVM 连堆都开不起来，比给个小值更糟。
     budget = qMin(budget, totalMb / 2);
+    if (availableMb > 0) {
+        // 低可用内存也可以压过常规下限；末尾仍保留 JVM 能接受的最小值。
+        budget = qMin(budget, availableMb / 2);
+    }
     // 但绝不小于 JVM 侧的下限（setXmx 会钳到 256）：返回一个会被 setter 悄悄改掉的值，
     // 就是"界面显示的和实际用的不一致"。
     return qMax(roundDownToStep(budget), 256);
@@ -1158,16 +1169,9 @@ QMap<int, QString> GlobalJavaSettings::scanLocalJavaVersions(const QString &java
     // 扫的是这台机器上有什么，不读也不写这个对象的任何状态。
     QMap<int, QString> versions;
 
-    QDir dir(javaDir);
-    if (dir.exists()) {
-        const QStringList subdirs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-        for (const QString &subdir : subdirs) {
-            const QString javaExe = dir.absoluteFilePath(subdir + "/bin/java.exe");
-            const int majorVersion = GlobalJavaSettings::probeJavaMajorVersion(javaExe);
-            if (majorVersion > 0) {
-                versions[majorVersion] = javaExe;
-            }
-        }
+    for (const QString &javaExe : javaPathsInRuntimeDir(javaDir)) {
+        const int majorVersion = probeJavaMajorVersion(javaExe);
+        if (majorVersion > 0) versions[majorVersion] = javaExe;
     }
 
     // 原版启动器已经下载好的运行时（jre-legacy / java-runtime-*）同样可以复用，
@@ -1182,6 +1186,33 @@ QMap<int, QString> GlobalJavaSettings::scanLocalJavaVersions(const QString &java
         }
     }
 
+    return versions;
+}
+
+QMap<int, QStringList> GlobalJavaSettings::scanAvailableJavaPaths(const QString &javaDir) {
+    QMap<int, QStringList> versions;
+    QSet<QString> seen;
+    const auto add = [&](const QString &path, int knownMajor = -1) {
+        if (path.isEmpty()) return;
+        const QFileInfo file(path);
+        QString key = file.canonicalFilePath();
+        if (key.isEmpty()) return;
+#ifdef Q_OS_WIN
+        key = key.toCaseFolded();
+#endif
+        if (seen.contains(key)) return;
+        seen.insert(key);
+        const int major = knownMajor > 0 ? knownMajor : probeJavaMajorVersion(path);
+        if (major > 0) versions[major].append(file.absoluteFilePath());
+    };
+    for (const QString &path : javaPathsInRuntimeDir(javaDir)) add(path);
+    const auto vanilla = scanVanillaRuntimeComponents();
+    for (const VanillaRuntime &runtime : vanilla) add(runtime.exe, runtime.majorVersion);
+    for (const char *variable : {"JAVA_HOME", "JDK_HOME"}) {
+        const QString home = qEnvironmentVariable(variable);
+        if (!home.isEmpty()) add(QDir(home).absoluteFilePath(QStringLiteral("bin/java.exe")));
+    }
+    add(QStandardPaths::findExecutable(QStringLiteral("java")));
     return versions;
 }
 

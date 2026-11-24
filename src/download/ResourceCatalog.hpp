@@ -88,8 +88,7 @@ QString modrinthApiRoot();
 // ---------- 来源（ 加的第二个数据源）----------
 //
 // 在此之前这一层**只有一个数据源**（Modrinth），所以"从哪儿搜的"这件事压根没有名字。
-// 用户要「按来源搜」（要求见 downloadFilterRow 那段）之后它就得是个东西了：一个页面上
-// 同时只搜一个来源，但**同一个资源在两边是两个不同的 id**，而且两边能筛的东西、
+// 搜索页允许并行查询两站，每个请求和结果行都保有自己的来源。两站使用独立的 ID 空间，能筛的东西、
 // 回来的形状、连"哪个字段是加载器"都不一样。
 //
 // | | Modrinth | CurseForge |
@@ -98,7 +97,7 @@ QString modrinthApiRoot();
 // | 筛游戏版本 | facets `versions:1.21.1` | 查询参数 `gameVersion=1.21.1` |
 // | 筛加载器 | facets `categories:fabric`（**不是** `loaders:`） | `modLoaderType=1`（**数字**） |
 // | 筛类型 | facets `categories:optimization` | `categoryId=6814`（**数字**） |
-// | 排序 | `index=relevance` / `downloads` | `sortField=6`（**两边都只用它**，见 searchUrl） |
+// | 接口排序 | `index=relevance` / `downloads` | `sortField=6&sortOrder=desc`，关键词结果由 ResourceStore 按匹配度分组 |
 // | 要不要 key | 不要 | 官方那份要（默认走一台不要 key 的社区镜像，见 curseForgeApiBase） |
 // | 答复根 | `{"hits":[…]}` | `{"data":[…],"pagination":{…}}` |
 //

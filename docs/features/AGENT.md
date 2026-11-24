@@ -249,6 +249,8 @@ Base URL 只接受 `https://`；loopback `http://` 需显式勾选并持续提�
 
 默认 `%LOCALAPPDATA%\WTFML\agent`。会话、artifacts、维护备份、MCP 配置分目录；测试用 `wtfml.testAgentDataDir` 隔离。
 
+限制：旧版把数据放在 `%LOCALAPPDATA%\WTFML\WTFML\WTFML\agent`（三层 WTFML）与 `%LOCALAPPDATA%\WTFML\WTFML\cache`。启动时搬一次到新位置：新位置已有内容就不动，旧目录只在搬空后 rmdir；搬不动只记一句警告，不挡启动。
+
 ### 6.2 元数据与消息记录
 
 `<uuid>.meta.json` 存标题、时间、固定、加密、skill、provider、instanceLock、messageCount、bodySha256、deletionState；`<uuid>.json` / `.enc` 存消息、summary、usage、pendingApproval。消息状态：`complete/streaming/interrupted/error/tool_pending/awaiting_approval`。
@@ -343,8 +345,9 @@ Base URL 只接受 `https://`；loopback `http://` 需显式勾选并持续提�
 - `instance.context`：只返回当前锁定实例摘要；未锁定返回 `NeedsInstanceLock`；字段同 §5.6.2 的锁定实例元数据。
 - `diagnostics.startup`：调用 `StartupDiagnosis::analyze()`，输入由现有事实组装，首次调用锁定实例；结果经 `AgentDiagnosticProjection` 投影后才能自动进入模型上下文。
 - `diagnostics.crash`：调用 `GameExitDiagnosis` / 崩溃报告读取，只读，同样经投影。
-- `logs.tail`：启动器日志/实例 latest.log 末尾，限行/字节，只读，按 D11。
-- `crash.list/latest`：崩溃报告目录，只读，按 D11。
+- `logs.tail`：实例 `logs/latest.log` 末尾（缺失时退到数据根的 `logs/latest.log` / `logs/wtfml.log`），限行/字节，只读，按 D11。
+  路径规则唯一出处是 `AgentInstancePaths::logSources()`：游戏以 `--gameDir versions/<id>` 启动，日志与崩溃报告在实例目录里。
+- `crash.list/latest`：实例目录 `crash-reports/` 优先、数据根兜底（`AgentInstancePaths::collectCrashReports()`），只读，按 D11。
 - `instance.integrity`：调用 `VersionIntegrity`，只读，结构化报告，路径/账户字段经投影，不自动外发。
 - `mods.list`：调用 `InstanceFiles` 的扫描/分类，不解 jar 内容；按 D11 属于"其他文件"，逐次确认后才把文件名/启停状态发给模型，也可只给数量/分类汇总。
 - `settings.get/set`：只允许白名单键（Java 选择、内存、启动后行为、JVM 参数等），经现有设置模型读写；每次写都审批、记录旧值和新值，失败不推进"已保存"基线；`settings.get` 默认只返回非路径字段。
@@ -674,6 +677,7 @@ Collect → Analyze → Plan → AwaitPlanApproval → ExecuteStep* → Verify �
 | `AgentDiagnosticProjectionTests.cpp` | 允许字段保留；绝对路径/账户/环境/原始日志剔除；空结果不报成功；`scrubPaths` | 已有 |
 | `AgentLauncherToolsTests.cpp` | 19 个启动器工具的分派与审批；默认不带文件名；`settings.get` 不含路径；拒绝不改盘；模型传实例 id 被拒 | 已有 |
 | `AgentWorkflowTests.cpp` | 计划字段/工具/只读/验证步/步数校验；计划卡拒绝作废；计划外写与跳步被拦；失败后锁写；完成闸 | 已有 |
+| `AgentInstancePathTests.cpp` | 日志/崩溃报告的目录查找：实例目录优先、数据根兜底、同名去重、上限、相对标签 | 已有 |
 | `AgentMcpProtocolTests.cpp` / `AgentMcpTrustTests.cpp` | JSON-RPC 帧与上限、工具线上名、`configHash` 变化；首次启动确认、身份变化失效、文件缺失阻断、重连确认、确认记录落盘、未连接拒绝 | 已有 |
 | `AgentMcpClientTests.cpp` | 真子进程（`verify_agent --mcp-fake-server`）：握手、分页、stderr 脱敏、逐次审批、异步结果、`isError`、垃圾行、崩溃不自动重启、重连确认 | 已有 |
 | `AgentWebPolicyTests.cpp` | scheme/userinfo/片段、A/AAAA 全量校验（v4/v6 各特殊段）、pinned-IP URL、content-type、HTML 转文本、截断 | 已有（真网/代理/证书项见 G3 清单） |
@@ -857,6 +861,7 @@ src/agent/                                   （已实现）
   AgentLauncherHost.hpp, AgentLauncherTools, AgentDiagnosticProjection   （Stage 2B）
   McpTypes, McpProtocol, McpTrustStore, McpClient, McpManager, AgentMcpToolEngine（Stage 2A）
   AgentWebPolicy, AgentWebTransport, QtAgentWebTransport, AgentWebTools, AgentCommandTools（Stage 3）
+  AgentInstancePaths（实例内日志/崩溃报告目录的唯一判据）
 src/controllers/AgentController.hpp/.cpp     （已实现）
 src/controllers/AgentLauncherHostImpl.hpp/.cpp  （Stage 2B：启动器能力宿主）
 src/util/SecretProtector.hpp/.cpp            （已实现；从 TokenStore 抽出的 DPAPI 封装，TokenStore 委托它）

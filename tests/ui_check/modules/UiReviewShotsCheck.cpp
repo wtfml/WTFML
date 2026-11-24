@@ -19,17 +19,22 @@
 // 实例设置对话框是产品里那个 820×560 的浮层，
 // 这里照真实样子嵌在覆盖层里拍，不跟着窗口拉伸。
 //
-// `--site`（步骤 174）一次拍官网「功能详解」页的候选截图：1120×760、默认暮色雪山，
-// 主页按主题各一张（dark / emerald / ocean / system），其余是设置·外观、安装页·选加载器、
-// 任务中心、Java 管理、导入 / 导出整合包、实例模组 / 存档 / 升级、服务端控制台 /
-// server.properties / 玩家名单、智能体写文件审批卡、工具箱三页。夹具全是代码里的假数据
-// （Steve、D:\Games\WTFML\… 这类通用路径），不联网、不读本机的 .minecraft 或用户设置。
+// `--site`（步骤 174）一次拍官网「功能详解」页及 README 首页的候选截图：默认暮色雪山，
+// 含 1120×760 专题图（look-home-* / look-settings / install-* / inst-* / server-* / agent-confirm /
+// tool-* / shot-home）和 900×619 README 图（themes-* / shot-library / shot-download / shot-settings /
+// shot-toolbox / shot-agent）。夹具全是代码里的假数据（Steve、D:\Games\WTFML\… 这类通用路径），
+// 不联网、不读本机的 .minecraft 或用户设置。
+//
+// `--language en`（或 `--language=en`）：在任何界面创建之前加载内嵌英文翻译，并把演示夹具切换为英文；
+// 不带参数或非 `en` 时保持默认简体中文行为不变。
 #include "Support.hpp"
 #include "InputWidthScan.hpp"
 #include "LoadingState.hpp"
+#include "ListRowDelegate.hpp"
 #include "PresetManagePage.hpp"
 #include "InlineMessage.hpp"
 #include "PresetInstallPicker.hpp"
+#include "UiLanguage.hpp"
 
 #include "AgentPage.hpp"
 #include "AgentApprovalCard.hpp"
@@ -37,11 +42,16 @@
 #include "AgentSettingsPage.hpp"
 #include "AgentViewTypes.hpp"
 #include "agent/AgentSession.hpp"
+#include "download/VersionCategory.hpp"
+#include "manage/InstanceGroupStore.hpp"
+#include "manage/VersionManager.hpp"
 #include "OverlayHost.hpp"
 #include "MainWindowPageLayout.hpp"
 #include "Popups.hpp"
+#include "server/ServerModel.hpp"
 #include "ToolboxPage.hpp"
 #include "ToolboxSamples.hpp"
+#include "util/HomeGreeting.hpp"
 #include "VersionIcons.hpp"
 
 // 「Java 管理」「服务端控制台」「服务端设置」三页：官网截图（--site）要单独摆出来拍。
@@ -72,6 +82,7 @@
 #include <QStackedWidget>
 #include <QTemporaryDir>
 #include <QTimer>
+#include <QTranslator>
 #include <QTreeWidget>
 
 #include <tuple>
@@ -90,6 +101,7 @@ void sendTabKey(QWidget *target) {
 struct ShotOptions {
     QString out;
     QString theme;
+    QString language;
     QSize size{0, 0};
     QString background; ///< 自定义页面背景图（绝对路径），空 = 不设
     bool extended = false;
@@ -200,17 +212,36 @@ void fillSettingsSamples(MainWindowUI &ui) {
         combo->addItems(items);
         combo->setCurrentIndex(current);
     };
-    fill(ui.getGameWindowModeCombo(), {QStringLiteral("窗口化"), QStringLiteral("最大化"), QStringLiteral("全屏")});
-    fill(ui.getLauncherBehaviourCombo(), {QStringLiteral("收起启动器"), QStringLiteral("保持打开"), QStringLiteral("退出启动器")});
-    fill(ui.getProcessPriorityCombo(), {QStringLiteral("正常"), QStringLiteral("较高"), QStringLiteral("较低")});
-    fill(ui.getDownloadSourceCombo(), {QStringLiteral("优先官方源"), QStringLiteral("优先镜像"), QStringLiteral("仅官方")});
-    fill(ui.getDownloadConcurrencyCombo(), {QStringLiteral("8 个"), QStringLiteral("16 个"), QStringLiteral("32 个")});
-    fill(ui.getDownloadSpeedLimitCombo(), {QStringLiteral("不限速"), QStringLiteral("10 MB/s"), QStringLiteral("5 MB/s")});
-    fill(ui.getDownloadProxyCombo(), {QStringLiteral("跟随系统"), QStringLiteral("直连"), QStringLiteral("手动")});
-    fill(ui.getMemoryModeCombo(), {QStringLiteral("自动分配"), QStringLiteral("手动分配")}, 1);
-    if (ui.getJavaPathLabel() != nullptr) ui.getJavaPathLabel()->setText(QStringLiteral("自动选择　按游戏版本"));
+    fill(ui.getGameWindowModeCombo(),
+         {demoText("窗口化", "Windowed"), QCoreApplication::translate("MainWindow", "最大化"),
+          QCoreApplication::translate("MainWindow", "全屏")});
+    fill(ui.getLauncherBehaviourCombo(),
+         {QCoreApplication::translate("MainWindow", "收起启动器"), demoText("保持打开", "Keep open"),
+          demoText("退出启动器", "Quit launcher")});
+    fill(ui.getProcessPriorityCombo(),
+         {demoText("正常", "Normal"), demoText("较高", "Above normal"), demoText("较低", "Below normal")});
+    fill(ui.getDownloadSourceCombo(),
+         {QCoreApplication::translate("MainWindow", "优先官方源"), demoText("优先镜像", "Prefer mirror"),
+          demoText("仅官方", "Official only")});
+    fill(ui.getDownloadConcurrencyCombo(),
+         {QCoreApplication::translate("QObject", "%1 个").arg(8),
+          QCoreApplication::translate("QObject", "%1 个").arg(16),
+          QCoreApplication::translate("QObject", "%1 个").arg(32)});
+    fill(ui.getDownloadSpeedLimitCombo(),
+         {demoText("不限速", "Unlimited"), QStringLiteral("10 MB/s"), QStringLiteral("5 MB/s")});
+    fill(ui.getDownloadProxyCombo(),
+         {QCoreApplication::translate("QObject", "跟随系统"), demoText("直连", "Direct"),
+          demoText("手动", "Manual")});
+    fill(ui.getMemoryModeCombo(),
+         {QCoreApplication::translate("MainWindow", "自动分配"),
+          QCoreApplication::translate("MainWindow", "手动分配")},
+         1);
+    if (ui.getJavaPathLabel() != nullptr)
+        ui.getJavaPathLabel()->setText(QCoreApplication::translate("JavaSettingsController", "自动选择　按游戏版本"));
     if (ui.getMemoryHint() != nullptr)
-        ui.getMemoryHint()->setText(QStringLiteral("系统总内存 31.5 GB，当前可用 14.5 GB；最小内存由启动器设为 1024 MB。"));
+        ui.getMemoryHint()->setText(
+            demoText("系统总内存 31.5 GB，当前可用 14.5 GB；最小内存由启动器设为 1024 MB。",
+                     "Total RAM 31.5 GB, 14.5 GB available; minimum memory set to 1024 MB by the launcher."));
     if (ui.getMemoryMaxSpin() != nullptr) ui.getMemoryMaxSpin()->setValue(4096);
     if (ui.getMemoryMaxSlider() != nullptr) ui.getMemoryMaxSlider()->setValueMb(4096);
     if (ui.getGameWindowWidthSpin() != nullptr) ui.getGameWindowWidthSpin()->setValue(1280);
@@ -2064,21 +2095,39 @@ MainWindowUI::HomeQuickItem siteHomeItem(const QString &key, const QString &name
     return row;
 }
 
+QString siteDemoInstanceName(int index) {
+    switch (index) {
+    case 0: return demoText("光影与优化-1.21.1", "Shaders & Performance 1.21.1");
+    case 1: return demoText("机械动力-1.20.1", "Create 1.20.1");
+    case 2: return demoText("科技整合-1.21.1", "Tech Pack 1.21.1");
+    case 3: return demoText("原版生存-1.21.4", "Vanilla Survival 1.21.4");
+    case 4: return demoText("空岛-1.20.4", "Skyblock 1.20.4");
+    default: return QString();
+    }
+}
+
 /// 官网那五份实例（名字、版本、加载器照任务单）。
 void fillSiteHome(MainWindowUI &ui) {
+    const QString shadersName = siteDemoInstanceName(0);
+    const QString createName = siteDemoInstanceName(1);
+    const QString techName = siteDemoInstanceName(2);
+    const QString vanillaName = siteDemoInstanceName(3);
+    const QString skyblockName = siteDemoInstanceName(4);
+    const QString vanillaLabel = QCoreApplication::translate("MainWindow", "原版");
     const QList<MainWindowUI::HomeQuickItem> all{
-        siteHomeItem(QStringLiteral("光影与优化-1.21.1"), QStringLiteral("光影与优化-1.21.1"),
-                     QStringLiteral("Minecraft 1.21.1 / Fabric 0.16.9"), true, true, true),
-        siteHomeItem(QStringLiteral("机械动力-1.20.1"), QStringLiteral("机械动力-1.20.1"),
-                     QStringLiteral("Minecraft 1.20.1 / Forge 47.2.0"), false, true, true),
-        siteHomeItem(QStringLiteral("科技整合-1.21.1"), QStringLiteral("科技整合-1.21.1"),
-                     QStringLiteral("Minecraft 1.21.1 / NeoForge 21.1.77"), false, true, false),
-        siteHomeItem(QStringLiteral("原版生存-1.21.4"), QStringLiteral("原版生存-1.21.4"),
-                     QStringLiteral("Minecraft 1.21.4 / 原版"), false, false, true),
-        siteHomeItem(QStringLiteral("空岛-1.20.4"), QStringLiteral("空岛-1.20.4"),
-                     QStringLiteral("Minecraft 1.20.4 / Fabric 0.15.11"), false, false, true)};
+        siteHomeItem(shadersName, shadersName, QStringLiteral("Minecraft 1.21.1 / Fabric 0.16.9"), true, true, true),
+        siteHomeItem(createName, createName, QStringLiteral("Minecraft 1.20.1 / Forge 47.2.0"), false, true, true),
+        siteHomeItem(techName, techName, QStringLiteral("Minecraft 1.21.1 / NeoForge 21.1.77"), false, true, false),
+        siteHomeItem(vanillaName, vanillaName, QStringLiteral("Minecraft 1.21.4 / %1").arg(vanillaLabel), false, false,
+                     true),
+        siteHomeItem(skyblockName, skyblockName, QStringLiteral("Minecraft 1.20.4 / Fabric 0.15.11"), false, false,
+                     true)};
     ui.setHomeQuickRows({all.at(0)}, {all.at(1), all.at(2)}, {all.at(0), all.at(1), all.at(3)});
     ui.setHomeQuickMode(MainWindowUI::HomeQuickMode::Current);
+    if (isEnglishDemo()) {
+        ui.setHomeHeroQuote(QStringLiteral("Imagination is more important than knowledge."),
+                            QStringLiteral("— Albert Einstein"), Theme::QuoteScript::Latin);
+    }
     if (ui.getHomeAccountLabel() != nullptr) ui.getHomeAccountLabel()->setText(QStringLiteral("Steve"));
     if (ui.getHomeAccountTypeLabel() != nullptr) {
         ui.getHomeAccountTypeLabel()->setText(MainWindowUI::accountTypeOnlineText());
@@ -2118,13 +2167,13 @@ void makeSiteInstanceFixture(const QString &root) {
                             qMakePair(QStringLiteral("create-1.21.1-6.0.6.jar"), qint64(14680064)),
                             qMakePair(QStringLiteral("old-fabric-api-0.15.11.jar.disabled"), qint64(2100000))})
         mkfile(root + QStringLiteral("/mods/") + mod.first, mod.second);
-    for (const QString &world : {QStringLiteral("生存世界"), QStringLiteral("空岛生存"),
-                                 QStringLiteral("红石试验场")}) {
+    for (const QString &world : {demoText("生存世界", "Survival World"), demoText("空岛生存", "Skyblock Survival"),
+                                 demoText("红石试验场", "Redstone Lab")}) {
         mkfile(root + QStringLiteral("/saves/") + world + QStringLiteral("/level.dat"), 9216);
         mkfile(root + QStringLiteral("/saves/") + world + QStringLiteral("/region/r.0.0.mca"), 1048576);
     }
-    mkfile(root + QStringLiteral("/resourcepacks/清新材质 1.3.zip"), 8650752);
-    mkfile(root + QStringLiteral("/resourcepacks/低火把.zip"), 262144);
+    mkfile(root + QStringLiteral("/resourcepacks/") + demoText("清新材质 1.3.zip", "Clean Textures 1.3.zip"), 8650752);
+    mkfile(root + QStringLiteral("/resourcepacks/") + demoText("低火把.zip", "Low Fire.zip"), 262144);
     mkfile(root + QStringLiteral("/shaderpacks/Complementary 5.3.zip"), 4718592);
     mkfile(root + QStringLiteral("/shaderpacks/BSL 8.4.zip"), 3670016);
     mkfile(root + QStringLiteral("/options.txt"), 4096);
@@ -2219,34 +2268,34 @@ QList<TaskCenter::Item> siteTaskItems() {
     QList<TaskCenter::Item> items;
     TaskCenter::Item running;
     running.key = QStringLiteral("1");
-    running.title = QStringLiteral("下载 Iris Shaders 1.8.4");
-    running.detail = QStringLiteral("已下载 21.7 MB / 47.2 MB");
+    running.title = demoText("下载 Iris Shaders 1.8.4", "Download Iris Shaders 1.8.4");
+    running.detail = demoText("已下载 21.7 MB / 47.2 MB", "Downloaded 21.7 MB / 47.2 MB");
     running.percent = 46;
     running.state = TaskCenter::State::Running;
-    running.steps = {{QStringLiteral("解析依赖"), TaskCenter::StepState::Done, QString()},
-                     {QStringLiteral("下载文件"), TaskCenter::StepState::Running,
+    running.steps = {{demoText("解析依赖", "Resolve dependencies"), TaskCenter::StepState::Done, QString()},
+                     {demoText("下载文件", "Download file"), TaskCenter::StepState::Running,
                       QStringLiteral("21.7 MB / 47.2 MB")},
-                     {QStringLiteral("写入实例"), TaskCenter::StepState::Pending, QString()}};
+                     {demoText("写入实例", "Write to instance"), TaskCenter::StepState::Pending, QString()}};
     running.capabilities.cancel = true;
     running.capabilities.pause = true;
     items.append(running);
 
     TaskCenter::Item install;
     install.key = QStringLiteral("2");
-    install.title = QStringLiteral("安装 Minecraft 1.21.1");
-    install.detail = QStringLiteral("26 个文件");
+    install.title = demoText("安装 Minecraft 1.21.1", "Install Minecraft 1.21.1");
+    install.detail = demoText("26 个文件", "26 files");
     install.percent = 100;
     install.state = TaskCenter::State::Succeeded;
     install.finishedAt = QDateTime::currentDateTime().addSecs(-420);
-    install.steps = {{QStringLiteral("下载游戏文件"), TaskCenter::StepState::Done, QString()},
-                     {QStringLiteral("解压 natives"), TaskCenter::StepState::Done, QString()}};
+    install.steps = {{demoText("下载游戏文件", "Download game files"), TaskCenter::StepState::Done, QString()},
+                     {demoText("解压 natives", "Extract natives"), TaskCenter::StepState::Done, QString()}};
     install.capabilities.openTarget = true;
     items.append(install);
 
     TaskCenter::Item loader;
     loader.key = QStringLiteral("3");
-    loader.title = QStringLiteral("安装 Fabric 0.16.9");
-    loader.detail = QStringLiteral("已写入 1.21.1-Fabric");
+    loader.title = demoText("安装 Fabric 0.16.9", "Install Fabric 0.16.9");
+    loader.detail = demoText("已写入 1.21.1-Fabric", "Installed 1.21.1-Fabric");
     loader.percent = 100;
     loader.state = TaskCenter::State::Succeeded;
     loader.finishedAt = QDateTime::currentDateTime().addSecs(-360);
@@ -2260,16 +2309,20 @@ QJsonObject siteApprovalRequest() {
     return QJsonObject{
         {QStringLiteral("approvalId"), QStringLiteral("a-site-1")},
         {QStringLiteral("tool"), QStringLiteral("fs.write")},
-        {QStringLiteral("displayName"), QStringLiteral("写入视频设置")},
-        {QStringLiteral("target"), QStringLiteral("D:/Games/WTFML/instances/光影与优化-1.21.1/options.txt")},
-        {QStringLiteral("summary"), QStringLiteral("修改 2 行：renderDistance 8 → 12，ao false → true。")},
+        {QStringLiteral("displayName"), demoText("写入视频设置", "Write video settings")},
+        {QStringLiteral("target"), QStringLiteral("D:/Games/WTFML/instances/%1/options.txt").arg(siteDemoInstanceName(0))},
+        {QStringLiteral("summary"),
+         demoText("修改 2 行：renderDistance 8 → 12，ao false → true。",
+                  "Edit 2 lines: renderDistance 8 → 12, ao false → true.")},
         {QStringLiteral("diff"),
          QStringLiteral("- renderDistance:8\n- ao:false\n+ renderDistance:12\n+ ao:true")},
-        {QStringLiteral("backupHint"), QStringLiteral("写之前会把原文件另存为 options.txt.bak。")},
+        {QStringLiteral("backupHint"),
+         demoText("写之前会把原文件另存为 options.txt.bak。",
+                  "Original file will be backed up as options.txt.bak before writing.")},
         {QStringLiteral("sessionAllowAvailable"), false},
         {QStringLiteral("egress"),
-         QJsonObject{{QStringLiteral("kind"), QStringLiteral("本机文件")},
-                     {QStringLiteral("reason"), QStringLiteral("不经过网络")}}}};
+         QJsonObject{{QStringLiteral("kind"), demoText("本机文件", "Local file")},
+                     {QStringLiteral("reason"), demoText("不经过网络", "No network access")}}}};
 }
 
 int runSite(QApplication &app, const ShotOptions &options) {
@@ -2359,6 +2412,11 @@ int runSite(QApplication &app, const ShotOptions &options) {
     };
 
     // ---- 主页：三套具名主题各一张 ----
+    const QString shadersName = siteDemoInstanceName(0);
+    const QString createName = siteDemoInstanceName(1);
+    const QString techName = siteDemoInstanceName(2);
+    const QString vanillaName = siteDemoInstanceName(3);
+    const QString skyblockName = siteDemoInstanceName(4);
     ui.getTabWidget()->setCurrentIndex(MainWindowUI::homeTabIndex());
     fillSiteHome(ui);
     for (const QString &id : {QStringLiteral("dark"), QStringLiteral("emerald"), QStringLiteral("ocean")}) {
@@ -2366,9 +2424,9 @@ int runSite(QApplication &app, const ShotOptions &options) {
         shot(QStringLiteral("look-home-") + id);
     }
     applyTheme(QStringLiteral("dark"));
-    reportLabel(QStringLiteral("光影与优化-1.21.1"), QStringLiteral("主页当前实例"));
-    reportLabel(QStringLiteral("机械动力-1.20.1"), QStringLiteral("主页收藏实例"));
-    reportLabel(QStringLiteral("原版生存-1.21.4"), QStringLiteral("主页最近实例"));
+    reportLabel(shadersName, QStringLiteral("主页当前实例"));
+    reportLabel(createName, QStringLiteral("主页收藏实例"));
+    reportLabel(vanillaName, QStringLiteral("主页最近实例"));
     reportLabel(QStringLiteral("Steve"), QStringLiteral("主页账号"));
 
     // ---- 设置 › 个性化 › 外观：背景图 / 主题色 / 文字不透明度 ----
@@ -2384,12 +2442,14 @@ int runSite(QApplication &app, const ShotOptions &options) {
             Theme::PartStyle &page = spec.parts[int(Theme::Part::PageBackground)];
             page.hasImage = true;
             page.imagePath = QStringLiteral(":/assets/scenes/dark.jpg");
-            page.imageName = QStringLiteral("暮色雪山.jpg");
+            page.imageName = Theme::presetName(QStringLiteral("dark")) + QStringLiteral(".jpg");
             Theme::setSpec(spec);
             Theme::apply(app);
             pump();
             const MainWindowUI::ThemeImageRow &row = ui.getThemeImageRow(0);
-            if (row.state != nullptr) row.state->setText(QStringLiteral("当前图片：暮色雪山.jpg"));
+            if (row.state != nullptr)
+                row.state->setText(
+                    QCoreApplication::translate("ThemeSettingsController", "当前图片：%1").arg(page.imageName));
             if (row.fit != nullptr) row.fit->setEnabled(true);
             if (row.opacity != nullptr) {
                 row.opacity->setEnabled(true);
@@ -2428,7 +2488,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
         }
         reportLabel(MainWindowUI::themeAccentRowText(), QStringLiteral("设置行"));
         reportLabel(MainWindowUI::themeTextOpacityRowText(), QStringLiteral("设置行"));
-        reportLabel(QStringLiteral("背景图"), QStringLiteral("设置分组"));
+        reportLabel(QCoreApplication::translate("MainWindowSettingsPage", "背景图"), QStringLiteral("设置分组"));
         shot(QStringLiteral("look-settings"));
         // 这张拍完把背景图撤回去：后面几页照产品默认（内置风景底）看，而不是一块自定义图。
         {
@@ -2578,13 +2638,18 @@ int runSite(QApplication &app, const ShotOptions &options) {
                         ? ui.getDownloadResourceTree(QStringLiteral("modpack"))->topLevelItemCount()
                         : -1);
         InlineMessageBox box(
-            MessageKind::Question, QStringLiteral("开始导入"),
-            QStringLiteral("整合包：Fabulously Optimized 6.1\nMinecraft：1.21.1 + Fabric 0.16.9\n"
-                           "要下载的文件：87 个\n装到：D:\\Games\\WTFML\\instances\\光影与优化-1.21.1\n\n"
-                           "开始导入吗？"),
-            {QStringLiteral("是"), QStringLiteral("否")}, 0, -1, &window);
-        box.setNote(QStringLiteral("冲突：包里自带 OptiFine 兼容补丁，与 Sodium 不能同时启用 —— "
-                                   "导入后会在「模组」页把冲突的那一份标出来，不会删除。"));
+            MessageKind::Question, QCoreApplication::translate("ImportController", "开始导入"),
+            demoText("整合包：Fabulously Optimized 6.1\nMinecraft：1.21.1 + Fabric 0.16.9\n"
+                     "要下载的文件：87 个\n装到：D:\\Games\\WTFML\\instances\\光影与优化-1.21.1\n\n"
+                     "开始导入吗？",
+                     "Modpack: Fabulously Optimized 6.1\nMinecraft: 1.21.1 + Fabric 0.16.9\n"
+                     "Files to download: 87\nInstall to: D:\\Games\\WTFML\\instances\\Shaders & Performance 1.21.1\n\n"
+                     "Start import?"),
+            {demoText("是", "Yes"), demoText("否", "No")}, 0, -1, &window);
+        box.setNote(demoText("冲突：包里自带 OptiFine 兼容补丁，与 Sodium 不能同时启用 —— "
+                             "导入后会在「模组」页把冲突的那一份标出来，不会删除。",
+                             "Conflict: the pack includes an OptiFine compatibility patch that cannot be enabled "
+                             "alongside Sodium — it will be marked in the Mods tab after import without deleting it."));
         QTimer::singleShot(200, &box, [&] {
             pump();
             std::printf("  导入检查：提示「%s」%dx%d，备注 %d 字\n",
@@ -2608,7 +2673,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
         // 用临时目录的话截图里会出现本机工作树的路径。D 盘上没有 Games 才这么摆，收工删掉。
         QTemporaryDir fallbackRoot(QDir::current().filePath(QStringLiteral(".review-site-XXXXXX")));
         const bool genericRoot = !QFileInfo::exists(QStringLiteral("D:/Games"));
-        const QString root = genericRoot ? QStringLiteral("D:/Games/WTFML/instances/光影与优化-1.21.1")
+        const QString root = genericRoot ? QStringLiteral("D:/Games/WTFML/instances/%1").arg(shadersName)
                                          : fallbackRoot.path();
         if (!genericRoot && !fallbackRoot.isValid()) return 2;
         QDir().mkpath(root);
@@ -2619,8 +2684,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
         global.xmx = 4096;
         global.xms = 1024;
         global.autoMemory = false;
-        Dlg dialog(QStringLiteral("光影与优化-1.21.1"), QStringLiteral("光影与优化-1.21.1"), Dlg::Override(),
-                   global, QStringList(), false);
+        Dlg dialog(shadersName, shadersName, Dlg::Override(), global, QStringList(), false);
         QHash<QString, QString> dirs;
         dirs.insert(QStringLiteral("mod"), root + QStringLiteral("/mods"));
         dirs.insert(QStringLiteral("resourcepack"), root + QStringLiteral("/resourcepacks"));
@@ -2635,7 +2699,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
         dialog.setIcon(VersionIcons::iconCandidateKeys().value(0), VersionIcons::grassBlock(48));
 
         ui.getTabWidget()->setCurrentIndex(MainWindowUI::instancesTabIndex());
-        if (ui.overlay()->showPage(&dialog, QStringLiteral("实例设置"), MainWindowUI::instancesTabIndex())) {
+        if (ui.overlay()->showPage(&dialog, dialog.titleText(), MainWindowUI::instancesTabIndex())) {
             pump();
             std::printf("  实例设置：对话框 (%d,%d) %dx%d\n", inWindow(&dialog).x(), inWindow(&dialog).y(),
                         dialog.width(), dialog.height());
@@ -2657,42 +2721,56 @@ int runSite(QApplication &app, const ShotOptions &options) {
             shot(QStringLiteral("inst-saves"));
 
             // 版本升级：另存副本 / 原地升级两颗按钮 + 快照与校验的说明。
-            dialog.setUpgradeContext(QStringLiteral("当前实例：光影与优化-1.21.1\nMinecraft 1.21.1 / Fabric 0.16.9"));
-            dialog.setTransferTargets(QStringLiteral("upgrade"),
-                                      {{QStringLiteral("Minecraft 1.21.4（未安装）"), QStringLiteral("1.21.4")},
-                                       {QStringLiteral("Minecraft 1.21.1（当前）"), QStringLiteral("1.21.1")}});
+            dialog.setUpgradeContext(
+                demoText("当前实例：光影与优化-1.21.1\nMinecraft 1.21.1 / Fabric 0.16.9",
+                         "Current instance: Shaders & Performance 1.21.1\nMinecraft 1.21.1 / Fabric 0.16.9"));
+            dialog.setTransferTargets(
+                QStringLiteral("upgrade"),
+                {{demoText("Minecraft 1.21.4（未安装）", "Minecraft 1.21.4 (not installed)"), QStringLiteral("1.21.4")},
+                 {demoText("Minecraft 1.21.1（当前）", "Minecraft 1.21.1 (current)"), QStringLiteral("1.21.1")}});
             dialog.setTransferPlan(
                 QStringLiteral("upgrade"),
-                QStringLiteral("升级副本计划：游戏版本不同\n\n"
-                               "将创建一份升级副本，并把选中的 8 项（1,284 个文件 / 2.6 GB）搬进去。\n\n"
-                               "只增加文件，不删除、不覆盖目标里已有的同名文件。\n\n"
-                               "兼容性结论：游戏版本不同\n\n"
-                               "原地升级会先创建完整 ZIP 快照并逐文件校验，确认后才替换；"
-                               "原目录另行保留，可回滚。"));
+                demoText("升级副本计划：游戏版本不同\n\n"
+                         "将创建一份升级副本，并把选中的 8 项（1,284 个文件 / 2.6 GB）搬进去。\n\n"
+                         "只增加文件，不删除、不覆盖目标里已有的同名文件。\n\n"
+                         "兼容性结论：游戏版本不同\n\n"
+                         "原地升级会先创建完整 ZIP 快照并逐文件校验，确认后才替换；"
+                         "原目录另行保留，可回滚。",
+                         "Upgrade copy plan: different game version\n\n"
+                         "An upgrade copy will be created with the 8 selected items (1,284 files / 2.6 GB).\n\n"
+                         "Files will only be added; existing files with the same name in the target will not be deleted or overwritten.\n\n"
+                         "Compatibility: different game version\n\n"
+                         "In-place upgrade creates a full ZIP snapshot and verifies every file before replacing; "
+                         "the original folder is kept for rollback."));
             dialog.setTransferItems(
                 QStringLiteral("upgrade"),
-                {{QStringLiteral("存档 · 3 个世界"), QStringLiteral("saves")},
-                 {QStringLiteral("模组 · 16 个"), QStringLiteral("mods")},
-                 {QStringLiteral("config 与 defaultconfigs"), QStringLiteral("config")},
-                 {QStringLiteral("键位、视频、声音"), QStringLiteral("options")},
-                 {QStringLiteral("资源包 · 2 份"), QStringLiteral("resourcepacks")},
-                 {QStringLiteral("光影 · 2 份"), QStringLiteral("shaderpacks")},
-                 {QStringLiteral("截图 · 1 张"), QStringLiteral("screenshots")},
-                 {QStringLiteral("结构文件"), QStringLiteral("schematics")},
-                 {QStringLiteral("服务器列表 · 3 条"), QStringLiteral("servers")}},
+                {{demoText("存档 · 3 个世界", "Saves · 3 worlds"), QStringLiteral("saves")},
+                 {demoText("模组 · 16 个", "Mods · 16"), QStringLiteral("mods")},
+                 {demoText("config 与 defaultconfigs", "config & defaultconfigs"), QStringLiteral("config")},
+                 {demoText("键位、视频、声音", "Keybinds, video & audio"), QStringLiteral("options")},
+                 {demoText("资源包 · 2 份", "Resource packs · 2"), QStringLiteral("resourcepacks")},
+                 {demoText("光影 · 2 份", "Shaders · 2"), QStringLiteral("shaderpacks")},
+                 {demoText("截图 · 1 张", "Screenshots · 1"), QStringLiteral("screenshots")},
+                 {demoText("结构文件", "Schematics"), QStringLiteral("schematics")},
+                 {demoText("服务器列表 · 3 条", "Servers · 3"), QStringLiteral("servers")}},
                 {QStringLiteral("saves"), QStringLiteral("mods"), QStringLiteral("config"),
                  QStringLiteral("options"), QStringLiteral("resourcepacks"), QStringLiteral("shaderpacks"),
                  QStringLiteral("servers")});
             dialog.setUpgradeModChecks(
-                {{QStringLiteral("Sodium 0.6.13"), QStringLiteral("可沿用"), QStringLiteral("声明支持 1.21.4")},
-                 {QStringLiteral("Iris 1.8.4"), QStringLiteral("需要替换"), QStringLiteral("平台提供 1.21.4 适配版"),
+                {{QStringLiteral("Sodium 0.6.13"), demoText("可沿用", "Compatible"),
+                  demoText("声明支持 1.21.4", "Declares support for 1.21.4")},
+                 {QStringLiteral("Iris 1.8.4"), demoText("需要替换", "Needs replacement"),
+                  demoText("平台提供 1.21.4 适配版", "1.21.4 build available"),
                   QStringLiteral("iris-fabric-1.8.4.jar"), QString(), QStringLiteral("replaceable"),
                   QStringLiteral("1.8.6")},
-                 {QStringLiteral("Create 6.0.6"), QStringLiteral("不兼容"), QStringLiteral("Forge 专用"),
+                 {QStringLiteral("Create 6.0.6"), demoText("不兼容", "Incompatible"),
+                  demoText("Forge 专用", "Forge only"),
                   QStringLiteral("create-6.0.6.jar"), QString(), QStringLiteral("incompatible")},
-                 {QStringLiteral("JEI 19.27.0"), QStringLiteral("未知"), QStringLiteral("模组未声明支持的版本"),
+                 {QStringLiteral("JEI 19.27.0"), demoText("未知", "Unknown"),
+                  demoText("模组未声明支持的版本", "Mod does not declare supported versions"),
                   QStringLiteral("jei.jar"), QString(), QStringLiteral("unknown")}},
-                QStringLiteral("模组声明：11 个可沿用，1 个需要替换，1 个不兼容，1 个未知。"));
+                demoText("模组声明：11 个可沿用，1 个需要替换，1 个不兼容，1 个未知。",
+                         "Mod declarations: 11 compatible, 1 needs replacement, 1 incompatible, 1 unknown."));
             dialog.showPage(QStringLiteral("upgrade"));
             pump();
             if (auto *combo = dialog.findChild<QComboBox *>(Dlg::transferTargetComboName(QStringLiteral("upgrade")))) {
@@ -2721,12 +2799,18 @@ int runSite(QApplication &app, const ShotOptions &options) {
             }
             {
                 InlineMessageBox box(
-                    MessageKind::Question, QStringLiteral("继续导出吗"),
-                    QStringLiteral("3 个文件在 Modrinth 与 CurseForge 都没查到出处：\n"
-                                   "mods/optifine-compat-1.0.3.jar\nmods/自定义合成表.jar\nconfig/rare-recipes.json\n\n"
-                                   "继续的话，认不出出处的文件会原样打进包里：别人装上照样能用，"
-                                   "只是启动器不能替他单独更新或者去重。"),
-                    {QStringLiteral("继续导出"), QStringLiteral("取消")}, 0, -1, &window);
+                    MessageKind::Question, QCoreApplication::translate("ModpackExportController", "继续导出吗"),
+                    demoText("3 个文件在 Modrinth 与 CurseForge 都没查到出处：\n"
+                             "mods/optifine-compat-1.0.3.jar\nmods/自定义合成表.jar\nconfig/rare-recipes.json\n\n"
+                             "继续的话，认不出出处的文件会原样打进包里：别人装上照样能用，"
+                             "只是启动器不能替他单独更新或者去重。",
+                             "3 files could not be matched on Modrinth or CurseForge:\n"
+                             "mods/optifine-compat-1.0.3.jar\nmods/custom-recipes.jar\nconfig/rare-recipes.json\n\n"
+                             "If you continue, unrecognized files will be bundled as-is: others can still play, "
+                             "though the launcher cannot update or deduplicate them individually."),
+                    {QCoreApplication::translate("ModpackExportController", "继续导出"),
+                     QCoreApplication::translate("ModpackExportController", "取消")},
+                    0, -1, &window);
                 QTimer::singleShot(200, &box, [&] {
                     pump();
                     std::printf("  导出确认：提示「%s」%dx%d\n",
@@ -2763,7 +2847,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
 
     // ---- 服务端：控制台 / server.properties / 玩家名单 ----
     {
-        const QString raw = QStringLiteral(
+        const QString raw = demoText(
             "#Minecraft server properties\n"
             "motd=欢迎来到 Steve 的周末生存服\n"
             "server-port=25565\n"
@@ -2778,12 +2862,28 @@ int runSite(QApplication &app, const ShotOptions &options) {
             "spawn-protection=16\n"
             "view-distance=10\n"
             "simulation-distance=8\n"
+            "player-idle-timeout=0\n",
+            "#Minecraft server properties\n"
+            "motd=Welcome to Steve's Weekend Survival Server\n"
+            "server-port=25565\n"
+            "max-players=20\n"
+            "online-mode=true\n"
+            "white-list=true\n"
+            "difficulty=easy\n"
+            "gamemode=survival\n"
+            "pvp=true\n"
+            "level-name=world\n"
+            "level-seed=\n"
+            "spawn-protection=16\n"
+            "view-distance=10\n"
+            "simulation-distance=8\n"
             "player-idle-timeout=0\n");
         const auto properties = ServerModel::parseProperties(raw);
+        const QString serverTitle = demoText("周末生存服", "Weekend Survival");
 
         ServerConsolePage console;
-        console.setServerName(QStringLiteral("周末生存服"));
-        console.setStatusText(QStringLiteral("运行中"));
+        console.setServerName(serverTitle);
+        console.setStatusText(ServerModel::statusName(ServerModel::Status::Running));
         console.setStopAvailable(true);
         console.setForceKillAvailable(false);
         console.setCommandAvailable(true);
@@ -2801,8 +2901,8 @@ int runSite(QApplication &app, const ShotOptions &options) {
         }
 
         ServerSettingsPage settingsPage;
-        settingsPage.setServerName(QStringLiteral("周末生存服"));
-        settingsPage.setStatusText(QStringLiteral("已停止"));
+        settingsPage.setServerName(serverTitle);
+        settingsPage.setStatusText(ServerModel::statusName(ServerModel::Status::Stopped));
         settingsPage.setEditable(true, QString());
         settingsPage.setFields(siteServerFields());
         settingsPage.setValues(ServerPropertiesForm::valuesOf(properties, ServerPropertiesForm::commonFields()));
@@ -2819,16 +2919,19 @@ int runSite(QApplication &app, const ShotOptions &options) {
 
             settingsPage.setSection(ServerSettingsPage::Section::Players);
             settingsPage.setPlayerList(0);
+            const QString onlineAccount = demoText("正版账号", "Microsoft account");
+            const QString offlineAccount = demoText("离线账号", "Offline account");
+            const QString builderName = demoText("建筑小工", "BuilderBob");
             settingsPage.setPlayerRows(
                 {{QStringLiteral("069a79f4-44e9-4726-a5be-fca90e38aaf5"), QStringLiteral("Steve"),
-                  QStringLiteral("069a79f4-44e9-4726-a5be-fca90e38aaf5"), QStringLiteral("正版账号"),
+                  QStringLiteral("069a79f4-44e9-4726-a5be-fca90e38aaf5"), onlineAccount,
                   QStringLiteral("Steve")},
                  {QStringLiteral("ec561538-f3fd-461d-aff5-086b22154bce"), QStringLiteral("Alex"),
-                  QStringLiteral("ec561538-f3fd-461d-aff5-086b22154bce"), QStringLiteral("正版账号"),
+                  QStringLiteral("ec561538-f3fd-461d-aff5-086b22154bce"), onlineAccount,
                   QStringLiteral("Alex")},
-                 {QStringLiteral("b7c4a1de-7c1b-3c1e-9a0f-2a5e6b9d4c11"), QStringLiteral("建筑小工"),
-                  QStringLiteral("b7c4a1de-7c1b-3c1e-9a0f-2a5e6b9d4c11"), QStringLiteral("离线账号"),
-                  QStringLiteral("建筑小工")}});
+                 {QStringLiteral("b7c4a1de-7c1b-3c1e-9a0f-2a5e6b9d4c11"), builderName,
+                  QStringLiteral("b7c4a1de-7c1b-3c1e-9a0f-2a5e6b9d4c11"), offlineAccount,
+                  builderName}});
             settingsPage.setPlayerNote(
                 MainWindowUI::serverSettingsPlayerNoteText(0, /*running=*/false));
             pump();
@@ -2846,30 +2949,36 @@ int runSite(QApplication &app, const ShotOptions &options) {
     {
         ui.getTabWidget()->setCurrentIndex(MainWindowUI::agentTabIndex());
         if (AgentPage *agent = ui.getAgentPage()) {
-            agent->setConfigured(true, QStringLiteral("已连接 · OpenAI 兼容"));
-            agent->setInstanceChip(QStringLiteral("光影与优化-1.21.1"), false);
+            agent->setConfigured(true, demoText("已连接 · OpenAI 兼容", "Connected · OpenAI-compatible"));
+            agent->setInstanceChip(shadersName, false);
             AgentView::SessionMeta session;
             session.id = QStringLiteral("s-site");
-            session.title = QStringLiteral("把渲染距离调到 12");
+            session.title = demoText("把渲染距离调到 12", "Set render distance to 12");
             session.updatedAt = QDateTime::currentDateTime().addSecs(-120);
             session.encrypted = true;
             agent->setSessions({session});
             agent->setCurrentSession(QStringLiteral("s-site"));
-            agent->setTitle(QStringLiteral("把渲染距离调到 12"));
+            agent->setTitle(session.title);
             AgentView::Message ask;
             ask.id = QStringLiteral("m1");
             ask.user = true;
-            ask.content = QStringLiteral("光影与优化-1.21.1 有点卡，帮我把渲染距离调到 12，顺便开平滑光照。");
+            ask.content = demoText("光影与优化-1.21.1 有点卡，帮我把渲染距离调到 12，顺便开平滑光照。",
+                                   "Shaders & Performance 1.21.1 feels laggy — please set render distance to 12 and enable smooth lighting.");
             AgentView::Message answer;
             answer.id = QStringLiteral("m2");
-            answer.content = QStringLiteral(
+            answer.content = demoText(
                 "先看看 `options.txt` 现在写的是什么。\n"
-                "里面 `renderDistance:8`、`ao:false`，改这两项就行；写入前会备份成 `options.txt.bak`。");
+                "里面 `renderDistance:8`、`ao:false`，改这两项就行；写入前会备份成 `options.txt.bak`。",
+                "Let's check what `options.txt` currently has.\n"
+                "It has `renderDistance:8` and `ao:false`, so updating those two lines will do; a backup will be saved as `options.txt.bak` before writing.");
+            agent->clearMessages();
+            app.sendPostedEvents(nullptr, QEvent::DeferredDelete);
+            pump();
             agent->setMessages({ask, answer});
             AgentView::ToolCard card;
             card.id = QStringLiteral("t1");
-            card.title = QStringLiteral("读取 options.txt");
-            card.summary = QStringLiteral("读到 42 项设置");
+            card.title = demoText("读取 options.txt", "Read options.txt");
+            card.summary = demoText("读到 42 项设置", "Read 42 settings");
             card.detail = QStringLiteral("renderDistance=8　ao=false");
             card.status = AgentView::ToolCardStatus::Done;
             agent->setToolCards({card});
@@ -2924,32 +3033,236 @@ int runSite(QApplication &app, const ShotOptions &options) {
     }
 
     // ---- 工具箱：附魔顺序 / 旗帜设计 / 坐标换算 ----
+    ToolboxPage *siteToolbox = nullptr;
     {
         ui.openToolboxTab();
         QWidget *host = ui.toolboxTab();
         if (host != nullptr && host->layout() != nullptr) {
-            auto *toolbox = new ToolboxPage(host);
-            host->layout()->addWidget(toolbox);
-            wireToolboxSamples(*toolbox);
-            toolbox->showTool(ToolboxPage::Tool::Anvil);
+            siteToolbox = new ToolboxPage(host);
+            host->layout()->addWidget(siteToolbox);
+            wireToolboxSamples(*siteToolbox);
+            siteToolbox->showTool(ToolboxPage::Tool::Anvil);
             pump();
-            std::printf("  附魔顺序：%d 行输入，结果区 %s\n", toolbox->anvilRows().size(),
-                        toolbox->hasTool(ToolboxPage::Tool::Anvil) ? "有" : "无");
-            reportText(QStringLiteral("合计 14 级"), QStringLiteral("附魔结果"));
+            std::printf("  附魔顺序：%d 行输入，结果区 %s\n", siteToolbox->anvilRows().size(),
+                        siteToolbox->hasTool(ToolboxPage::Tool::Anvil) ? "有" : "无");
+            reportText(demoText("合计 14 级", "Total 14 levels"), QStringLiteral("附魔结果"));
             shot(QStringLiteral("tool-enchant"));
 
-            toolbox->showTool(ToolboxPage::Tool::Banner);
+            siteToolbox->showTool(ToolboxPage::Tool::Banner);
             pump();
-            reportText(QStringLiteral("白色羊毛"), QStringLiteral("旗帜结果"));
+            reportText(demoText("白色羊毛", "White Wool"), QStringLiteral("旗帜结果"));
             shot(QStringLiteral("tool-banner"));
 
-            toolbox->showTool(ToolboxPage::Tool::Coord);
-            toolbox->setCoordinates(0, -123.5, 71.0, 208.25);
-            toolbox->setTeleportParse(true, QStringLiteral("已识别：主世界 (-123.5, 71, 208.25)"));
-            toolbox->setTeleportCommand(QStringLiteral("/tp Steve -123.5 71 208.25"));
+            siteToolbox->showTool(ToolboxPage::Tool::Coord);
+            siteToolbox->setCoordinates(0, -123.5, 71.0, 208.25);
+            siteToolbox->setTeleportParse(
+                true, demoText("已识别：主世界 (-123.5, 71, 208.25)", "Parsed: Overworld (-123.5, 71, 208.25)"));
+            siteToolbox->setTeleportCommand(QStringLiteral("/tp Steve -123.5 71 208.25"));
             pump();
-            reportText(QStringLiteral("下界：x"), QStringLiteral("坐标结果"));
+            reportText(demoText("下界：x", "Nether: x"), QStringLiteral("坐标结果"));
             shot(QStringLiteral("tool-coords"));
+        }
+    }
+
+    // ---- README / 官网首页组（1120×760 主页 + 900×619 三套主题与五页功能图）----
+    {
+        // 1. shot-home（1120×760，暮色雪山，带问候、每日一言、当前实例、启动按钮、Steve 立绘）
+        ui.getTabWidget()->setCurrentIndex(MainWindowUI::homeTabIndex());
+        fillSiteHome(ui);
+        const QDateTime homeNow(QDate(2026, 11, 23), QTime(20, 30));
+        ui.setHomeHeroTitle(HomeGreeting::text(homeNow, QDate(2026, 11, 23), true, QStringLiteral("Steve")),
+                            QStringLiteral("Steve"));
+        ui.setHomeHeroQuote(
+            demoText("大鹏一日同风起，扶摇直上九万里。", "Imagination is more important than knowledge."),
+            demoText("— 李白《上李邕》", "— Albert Einstein"),
+            isEnglishDemo() ? Theme::QuoteScript::Latin : Theme::QuoteScript::Han);
+        if (SkinViewer *sv = ui.getSkinViewer()) {
+            sv->setAnimated(false);
+            sv->setWalkPhase(0.0);
+        }
+        applyTheme(QStringLiteral("dark"));
+        shot(QStringLiteral("shot-home"));
+
+        // 2. themes-{dark,emerald,ocean}（900×619，同一画面三套主题）
+        window.resize(900, 619);
+        pump();
+        for (const QString &id : {QStringLiteral("dark"), QStringLiteral("emerald"), QStringLiteral("ocean")}) {
+            applyTheme(id);
+            shot(QStringLiteral("themes-") + id);
+        }
+        applyTheme(QStringLiteral("dark"));
+
+        // 3. shot-library（900×619，管理页：有加载器的 4 个 + 原版 1 个，选中第一个）
+        ui.getTabWidget()->setCurrentIndex(MainWindowUI::instancesTabIndex());
+        ui.setInstanceMode(MainWindowUI::InstanceMode::Client);
+        ui.setFolderRows({{QStringLiteral("D:/Games/WTFML/.minecraft"), MainWindowUI::folderAssistantTitle(),
+                           QStringLiteral("D:/Games/WTFML/.minecraft"), true, true}});
+        ui.setInstanceFolderText(QStringLiteral("D:\\Games\\WTFML\\.minecraft") +
+                                 QCoreApplication::translate("MainWindow", "（%1 个实例）").arg(5));
+        if (QTreeWidget *tree = ui.getInstanceList()) {
+            tree->clear();
+            const auto addGroup = [&](const QString &name, const QString &id, int count) {
+                auto *group = new QTreeWidgetItem(tree);
+                group->setText(0, MainWindowUI::groupItemText(name, count));
+                group->setData(0, MainWindowUI::groupIdRole(), id);
+                group->setData(0, MainWindowUI::rowGroupGearRole(), true);
+                group->setFlags(group->flags() & ~Qt::ItemIsSelectable);
+                group->setExpanded(true);
+                return group;
+            };
+            const auto addInst = [&](QTreeWidgetItem *parent, const QString &name, const QString &mcVer,
+                                     const QString &loaderText, int loaderIndex) {
+                auto *row = new QTreeWidgetItem(parent);
+                row->setText(0, name);
+                row->setData(0, MainWindowUI::instanceIdRole(), name);
+                row->setData(0, ListRowDelegate::SubtitleRole, QStringLiteral("Minecraft %1").arg(mcVer));
+                row->setData(0, ListRowDelegate::MetaRole, loaderText);
+                row->setData(0, ListRowDelegate::CoverRole,
+                             QIcon(VersionIcons::isoBlock(VersionIcons::isoBlockKindFor(name), 64)));
+                row->setData(0, ListRowDelegate::MetaIconRole,
+                             QIcon(VersionIcons::loaderMark(loaderIndex, MainWindowUI::instanceTreeIconSize())));
+                row->setData(0, MainWindowUI::rowPinRole(), true);
+                return row;
+            };
+            QTreeWidgetItem *moddable =
+                addGroup(InstanceGroupStore::defaultGroupName(InstanceGroupStore::DefaultKind::Moddable),
+                         QStringLiteral("default-moddable"), 4);
+            QTreeWidgetItem *first = addInst(moddable, shadersName, QStringLiteral("1.21.1"),
+                                             QStringLiteral("Fabric 0.16.9"), 0);
+            addInst(moddable, createName, QStringLiteral("1.20.1"), QStringLiteral("Forge 47.2.0"), 1);
+            addInst(moddable, techName, QStringLiteral("1.21.1"), QStringLiteral("NeoForge 21.1.77"), 2);
+            addInst(moddable, skyblockName, QStringLiteral("1.20.4"), QStringLiteral("Fabric 0.15.11"), 0);
+
+            QTreeWidgetItem *vanilla =
+                addGroup(InstanceGroupStore::defaultGroupName(InstanceGroupStore::DefaultKind::Vanilla),
+                         QStringLiteral("default-vanilla"), 1);
+            addInst(vanilla, vanillaName, QStringLiteral("1.21.4"),
+                    QCoreApplication::translate("MainWindow", "原版"), 5);
+            tree->show();
+            tree->setCurrentItem(first);
+        }
+        if (auto *empty = window.findChild<QWidget *>(MainWindowUI::instanceEmptyStateName())) empty->hide();
+        shot(QStringLiteral("shot-library"));
+
+        // 4. shot-download（900×619，下载页·游戏，最新版本展开，日期照 shot-download.webp）
+        ui.getTabWidget()->setCurrentIndex(MainWindowUI::downloadTabIndex());
+        ui.getDownloadCategoryList()->setCurrentRow(MainWindowUI::downloadCategoryGameIndex());
+        ui.setDownloadHeaderRow(MainWindowUI::downloadCategoryGameIndex());
+        ui.getDownloadStack()->setCurrentIndex(MainWindowUI::downloadCategoryGameIndex());
+        ui.getGameStack()->setCurrentIndex(MainWindowUI::downloadGameTreeIndex());
+        if (QTreeWidget *tree = ui.getVersionTree()) {
+            tree->clear();
+            const int column = MainWindowUI::versionTreeKeyColumn();
+            const auto addLeaf = [&](QTreeWidgetItem *parent, const QString &id, const QString &date, int channel) {
+                auto *leaf = new QTreeWidgetItem(parent);
+                leaf->setData(column, Qt::UserRole, id);
+                leaf->setText(column, id);
+                leaf->setData(column, MainWindowUI::rowSubTextRole(), date);
+                leaf->setData(column, MainWindowUI::rowIconRole(),
+                              VersionIcons::versionChannelMark(channel, MainWindowUI::versionTreeIconSize()));
+                return leaf;
+            };
+            auto *latest = new QTreeWidgetItem(tree);
+            latest->setData(column, Qt::UserRole, VersionManager::latestGroupKey());
+            latest->setText(column, VersionManager::latestGroupText());
+            addLeaf(latest, QStringLiteral("26.3"), QStringLiteral("2026-09-15"), 0);
+            addLeaf(latest, QStringLiteral("26.4-snapshot-8"), QStringLiteral("2026-11-10"), 1);
+            latest->setExpanded(true);
+
+            const std::pair<VersionCategory::Channel, QPair<QString, QString>> collapsed[] = {
+                {VersionCategory::Channel::Release, {QStringLiteral("26.3"), QStringLiteral("2026-09-15")}},
+                {VersionCategory::Channel::Snapshot, {QStringLiteral("26.4-snapshot-8"), QStringLiteral("2026-11-10")}},
+                {VersionCategory::Channel::Old, {QStringLiteral("b1.7.3"), QStringLiteral("2011-07-08")}},
+                {VersionCategory::Channel::AprilFools, {QStringLiteral("3D Shareware v1.34"), QStringLiteral("2019-04-01")}},
+            };
+            for (const auto &[channel, sample] : collapsed) {
+                const int idx = VersionCategory::channelIndex(channel);
+                auto *top = new QTreeWidgetItem(tree);
+                top->setData(column, Qt::UserRole, VersionCategory::channelKey(channel));
+                top->setText(column, VersionCategory::channelText(channel));
+                top->setData(column, MainWindowUI::rowIconRole(),
+                             VersionIcons::versionChannelMark(idx, MainWindowUI::versionTreeIconSize()));
+                addLeaf(top, sample.first, sample.second, idx);
+                top->setExpanded(false);
+            }
+            ui.applyVersionFilter();
+        }
+        shot(QStringLiteral("shot-download"));
+
+        // 5. shot-settings（900×619，设置页·个性化顶部）
+        ui.getTabWidget()->setCurrentIndex(MainWindowUI::settingsTabIndex());
+        fillSettingsSamples(ui);
+        const int lookIndex = MainWindowUI::settingsCategoryKeys().indexOf(QStringLiteral("look"));
+        ui.getSettingsTabs()->setCurrentIndex(lookIndex);
+        if (auto *scroll = qobject_cast<QScrollArea *>(ui.getSettingsCategoryStack()->widget(lookIndex))) {
+            scroll->verticalScrollBar()->setValue(0);
+        }
+        shot(QStringLiteral("shot-settings"));
+
+        // 6. shot-toolbox（900×619，工具箱目录首页）
+        ui.openToolboxTab();
+        if (siteToolbox != nullptr) siteToolbox->showCatalog();
+        shot(QStringLiteral("shot-toolbox"));
+
+        // 7. shot-agent（900×619，智能体会话：装光影后进世界闪退）
+        ui.getTabWidget()->setCurrentIndex(MainWindowUI::agentTabIndex());
+        if (AgentPage *agent = ui.getAgentPage()) {
+            const QDateTime now = QDateTime::currentDateTime();
+            const QString crashAsk =
+                demoText("装了光影以后一进世界就闪退，帮我看看是什么原因。",
+                         "After installing shaders, the game crashes as soon as I enter a world. Can you help me find out why?");
+            const auto mkSession = [](const QString &id, const QString &title, const QDateTime &at) {
+                AgentView::SessionMeta meta;
+                meta.id = id;
+                meta.title = title;
+                meta.updatedAt = at;
+                return meta;
+            };
+            const QList<AgentView::SessionMeta> sessions{
+                mkSession(QStringLiteral("sa1"), crashAsk, now),
+                mkSession(QStringLiteral("sa2"), demoText("存档备份放在哪个目录？", "Where are world backups stored?"),
+                          now.addSecs(-28 * 60)),
+                mkSession(QStringLiteral("sa3"), demoText("1.20.1 Forge 启动报错", "1.20.1 Forge launch error"),
+                          now.addSecs(-28 * 60)),
+                mkSession(QStringLiteral("sa4"),
+                          demoText("整合包启动卡在加载界面", "Modpack stuck on loading screen"),
+                          now.addSecs(-28 * 60)),
+            };
+            agent->setConfigured(true, demoText("已连接 · OpenAI 兼容", "Connected · OpenAI-compatible"));
+            agent->setInstanceChip(shadersName, false);
+            agent->setSessions(sessions);
+            agent->setCurrentSession(QStringLiteral("sa1"));
+            agent->setTitle(crashAsk);
+            agent->setToolCards({});
+            agent->hideApproval();
+
+            AgentView::Message ask;
+            ask.id = QStringLiteral("ma1");
+            ask.user = true;
+            ask.content = crashAsk;
+            AgentView::Message answer;
+            answer.id = QStringLiteral("ma2");
+            answer.content = demoText(
+                "一进世界就闪退，多半出在这三处：\n\n"
+                "1. **Iris 与 Sodium 版本不配套**：两者要对应同一个 Minecraft 版本；\n"
+                "2. **显卡驱动过旧**：光影需要 OpenGL 4.x，先把驱动更新到最新；\n"
+                "3. **内存不够**：开光影建议给到 4 GB 以上，在实例设置的「启动」里调。\n\n"
+                "实例目录下 `crash-reports` 里最新的那份崩溃报告能说明是哪一种。要我读一下吗？",
+                "A crash right when entering a world usually comes down to one of three things:\n\n"
+                "1. **Iris & Sodium version mismatch**: both mods need to match your Minecraft version.\n"
+                "2. **Outdated GPU drivers**: shaders require OpenGL 4.x, so update your graphics driver first.\n"
+                "3. **Not enough memory**: shaders generally need at least 4 GB — adjust it under Instance Settings → Launch.\n\n"
+                "The latest report in the instance's `crash-reports` folder will tell us which one it is. Want me to read it?");
+            agent->clearMessages();
+            app.sendPostedEvents(nullptr, QEvent::DeferredDelete);
+            pump();
+            agent->setMessages({ask, answer});
+            agent->showEmptyState(false);
+            pump();
+            if (QScrollArea *scroll = window.findChild<QScrollArea *>(QStringLiteral("agentMessageScroll"))) {
+                scroll->verticalScrollBar()->setValue(0);
+            }
+            shot(QStringLiteral("shot-agent"));
         }
     }
 
@@ -3032,14 +3345,6 @@ int runLegacy(QApplication &app, const QString &out) {
 
 int UiReviewShotsCheck(QApplication &app) {
     Anim::setEnabled(false);
-    QTemporaryDir settingsDir(QDir::current().filePath(QStringLiteral(".review-shots-XXXXXX")));
-    if (!settingsDir.isValid()) return 2;
-    QSettings::setDefaultFormat(QSettings::IniFormat);
-    QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, settingsDir.path());
-    app.setOrganizationName(QStringLiteral("WTFMLReviewShots"));
-    app.setApplicationName(QStringLiteral("ReviewShots"));
-    app.setStyle(Theme::createStyle());
-    installShotFonts(app);
 
     ShotOptions options;
     options.out = QDir::current().filePath(QStringLiteral("build/review-shots"));
@@ -3047,6 +3352,8 @@ int UiReviewShotsCheck(QApplication &app) {
     const QStringList args = app.arguments();
     for (int i = 1; i < args.size(); ++i) {
         const QString &arg = args.at(i);
+        // 通过 ui_check_modules.exe 调起时，第 1 个参数是模块名本身。
+        if (i == 1 && arg == QLatin1String("ui_check_review_shots")) continue;
         const auto valueOf = [&](const QString &prefix) {
             return arg.startsWith(prefix) ? arg.mid(prefix.size()) : QString();
         };
@@ -3089,6 +3396,10 @@ int UiReviewShotsCheck(QApplication &app) {
             options.theme = valueOf(QStringLiteral("--theme="));
         } else if (arg == QLatin1String("--theme") && i + 1 < args.size()) {
             options.theme = args.at(++i);
+        } else if (arg.startsWith(QLatin1String("--language="))) {
+            options.language = valueOf(QStringLiteral("--language="));
+        } else if (arg == QLatin1String("--language") && i + 1 < args.size()) {
+            options.language = args.at(++i);
         } else if (arg.startsWith(QLatin1String("--size="))) {
             const QStringList parts = valueOf(QStringLiteral("--size=")).split(QLatin1Char('x'));
             if (parts.size() == 2) options.size = QSize(parts.at(0).toInt(), parts.at(1).toInt());
@@ -3107,6 +3418,23 @@ int UiReviewShotsCheck(QApplication &app) {
             positional.append(arg);
         }
     }
+
+    QTranslator languageTranslator;
+    if (options.language == QLatin1String(UiLanguage::kEnglish)) {
+        if (!UiLanguage::loadEnglish(&languageTranslator) || !app.installTranslator(&languageTranslator)) {
+            qCritical("--language en requires an English translation resource");
+            return 2;
+        }
+    }
+
+    QTemporaryDir settingsDir(QDir::current().filePath(QStringLiteral(".review-shots-XXXXXX")));
+    if (!settingsDir.isValid()) return 2;
+    QSettings::setDefaultFormat(QSettings::IniFormat);
+    QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, settingsDir.path());
+    app.setOrganizationName(QStringLiteral("WTFMLReviewShots"));
+    app.setApplicationName(QStringLiteral("ReviewShots"));
+    app.setStyle(Theme::createStyle());
+    installShotFonts(app);
     // 不带参数时仍是老行为：第一个位置参数是输出目录。
     if (!positional.isEmpty() && options.out.endsWith(QStringLiteral("build/review-shots"))) {
         options.out = positional.first();

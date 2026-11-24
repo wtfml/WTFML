@@ -79,10 +79,11 @@ protected:
         p.setFont(font());
         int right = r.right();
         if (!note.isEmpty()) {
-            const int nw = qMin(fm.horizontalAdvance(note), r.width() / 2);
+            const int naturalWidth = fm.horizontalAdvance(note) + 2;
+            const int nw = qMin(naturalWidth, r.width() / 2);
             p.setPen(noteColor.isValid() ? noteColor : palette().color(QPalette::PlaceholderText));
             p.drawText(QRect(right - nw + 1, r.top(), nw, r.height()), Qt::AlignRight | Qt::AlignVCenter,
-                       fm.elidedText(note, Qt::ElideMiddle, nw));
+                       naturalWidth <= nw ? note : fm.elidedText(note, Qt::ElideMiddle, nw));
             right -= nw + 24;
         }
         const int x = r.left() + glyphSize + glyphGap;

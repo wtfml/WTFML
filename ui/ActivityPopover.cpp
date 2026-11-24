@@ -118,9 +118,17 @@ public:
         setAttribute(Qt::WA_Hover);
     }
 protected:
+    void mousePressEvent(QMouseEvent *event) override {
+        if (m_onClick && event->button() == Qt::LeftButton) {
+            event->accept();
+            return;
+        }
+        QWidget::mousePressEvent(event);
+    }
     void mouseReleaseEvent(QMouseEvent *event) override {
         if (m_onClick && event->button() == Qt::LeftButton && rect().contains(event->position().toPoint())) {
             const auto fn = m_onClick;  // 回调里可能把整块面板删掉：先拷一份
+            event->accept();
             fn();
             return;
         }

@@ -283,16 +283,8 @@ Select “Log out” to try again.</translation>
             <translation>Logged out. The account is still in the saved list.</translation>
         </message>
         <message>
-            <source>离线账号名称不能为空。</source>
-            <translation>The offline account must have a name.</translation>
-        </message>
-        <message>
-            <source>离线账号名称最多为 16 个字符。</source>
-            <translation>Offline account names can be up to 16 characters long.</translation>
-        </message>
-        <message>
-            <source>离线账号名称不能含空格或控制字符。</source>
-            <translation>Offline account names cannot contain spaces or control characters.</translation>
+            <source>离线账号名称须为 3 至 16 个字符，只能使用英文字母、数字和下划线。</source>
+            <translation>Use 3 to 16 letters (A–Z), digits, or underscores for the offline profile name.</translation>
         </message>
     </context>
     <context>
@@ -316,6 +308,10 @@ Select “Log out” to try again.</translation>
         <message>
             <source>已下载 %1 / %2</source>
             <translation>Downloaded %1 / %2</translation>
+        </message>
+        <message>
+            <source>已下载 %1</source>
+            <translation>Downloaded %1</translation>
         </message>
         <message>
             <source>当前步骤无法安全中止。请在此步骤完成后取消。</source>
@@ -478,6 +474,12 @@ Select “Log out” to try again.</translation>
             <translation>There is no API Key available, please configure it in settings first.</translation>
         </message>
         <message>
+            <source>游戏刚刚异常退出，请结合下面的信息帮我判断可能的原因，并给出按顺序可执行的排查步骤。
+
+%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>检测到疑似凭据（%1），已在本机遮挡后再发送。</source>
             <translation>Suspected credentials (%1) were detected and were blocked by the machine before sending.</translation>
         </message>
@@ -632,6 +634,13 @@ Select “Log out” to try again.</translation>
         <message>
             <source>配置已删除。</source>
             <translation>Configuration has been deleted.</translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentLauncherHostImpl</name>
+        <message>
+            <source>找不到日志文件（实例目录的 logs/latest.log 或数据根的 logs/latest.log、logs/wtfml.log）。</source>
+            <translation>No log file was found. Look for logs/latest.log in the instance folder, or logs/latest.log and logs/wtfml.log in the data folder.</translation>
         </message>
     </context>
     <context>
@@ -1769,6 +1778,29 @@ Select “Log out” to try again.</translation>
         <message>
             <source>（%1）</source>
             <translation>(%1)</translation>
+        </message>
+    </context>
+    <context>
+        <name>ArmorTrimAssets</name>
+        <message>
+            <source>读取预览资源超时或无法启动读取器。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法读取预览资源，归档损坏或资源超过安全限制。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>资源输出超过安全限制。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>预览资源清单无效。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未找到受支持的盔甲纹理。请选择 Java 1.20 及以上、带原版纹理的客户端，或下载预览资源。</source>
+            <translation type="unfinished"></translation>
         </message>
     </context>
     <context>
@@ -3001,6 +3033,59 @@ What you want to restore is this one:
         </message>
     </context>
     <context>
+        <name>BannerDesign</name>
+        <message>
+            <source>设计文件过大或参数无效。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>JSON 格式错误（字节 %1）：%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>不是受支持的 WTFML 旗帜设计文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>底色或目标版本无效。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>旗帜最多支持 6 层纹样。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>图层字段类型无效。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>设计包含无法识别的图案或颜色。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>BannerRender</name>
+        <message>
+            <source>缺少图案贴图：%1。请加载包含该图案的游戏 JAR。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>BannerTextures</name>
+        <message>
+            <source>读取旗帜贴图超时或无法启动读取器。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法读取归档中的旗帜贴图，或贴图超过安全限制。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>没有找到受支持的 Java 旗帜贴图，请选择原版客户端 JAR 或包含旗帜贴图的资源包。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>Beacon</name>
         <message>
             <source>迅捷</source>
@@ -3133,6 +3218,17 @@ What you want to restore is this one:
         <message>
             <source>• 信标放在金字塔正中间，上方留出天空（可用玻璃）</source>
             <translation>• Place the beacon at the center of the pyramid with a clear path to the sky. Glass is allowed.</translation>
+        </message>
+    </context>
+    <context>
+        <name>BeaconBeam</name>
+        <message>
+            <source>最多计算 64 层染色玻璃。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>玻璃颜色无效。</source>
+            <translation type="unfinished"></translation>
         </message>
     </context>
     <context>
@@ -3724,6 +3820,80 @@ What you want to restore is this one:
             <translation>Exit code %1</translation>
         </message>
         <message>
+            <source>「%1」异常退出：%2。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>
+
+没有从退出码或日志里识别出明确原因。可以导出报告，或把日志交给智能体一起看。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>
+
+可能的原因与建议：</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>
+
+如果只是偶发，可以先重启游戏；反复出现时，建议先按上面的提示处理，再导出报告或完整日志。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>实例：%1
+退出码：%2
+
+</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>日志中没有识别出明确原因。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>
+…（已截断）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>游戏崩溃了</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>我知道了</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>导出完整日志</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>使用智能体询问</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>没有完整日志</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>这次退出没有留下可导出的完整日志。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>日志文件 (*.log *.txt);;所有文件 (*)</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>导出完整日志失败：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>完整日志已导出：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>%1（%2）</source>
             <translation>%1(%2)</translation>
         </message>
@@ -4029,6 +4199,51 @@ What you want to restore is this one:
         </message>
     </context>
     <context>
+        <name>DirectDownloadRequest</name>
+        <message>
+            <source>请输入有效的 HTTP 或 HTTPS 文件直链。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>不接受地址中内嵌的用户名或密码。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>保存目录必须是绝对路径。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>文件名无效：不能包含路径、保留名称或特殊字符。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标位置是文件夹，请更换文件名。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>DirectorySessionLock</name>
+        <message>
+            <source>未指定数据目录，未继续操作。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>这个数据目录已被另一份启动器占用，请先关闭那一份窗口。
+%1
+
+如果确认没有别的启动器在运行（上一次是崩溃或强制结束的），删掉这个文件再试：
+%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法取得数据目录的安全锁，未继续操作。
+%1
+
+锁文件：%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>DownloadBatchController</name>
         <message>
             <source>部分暂存文件未补齐，等待明确继续以重新查询平台地址和兼容性；未自动部署。</source>
@@ -4171,6 +4386,10 @@ The instance is ready, but some presets could not be applied:
     <context>
         <name>DownloadFilterController</name>
         <message>
+            <source>全部来源</source>
+            <translation>All sources</translation>
+        </message>
+        <message>
             <source>正在重新获取游戏版本列表…</source>
             <translation>Retrieving game version list...</translation>
         </message>
@@ -4242,6 +4461,49 @@ The instance is ready, but some presets could not be applied:
         <message>
             <source>分段下载失败</source>
             <translation>Partial download failed</translation>
+        </message>
+    </context>
+    <context>
+        <name>DownloadProxy</name>
+        <message>
+            <source>内部错误：没有接住解析结果</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>手动代理要填一个地址，例如 127.0.0.1:7890。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>只认 http:// 和 socks5:// 两种前缀（不写前缀就是 HTTP）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>代理地址只要主机和端口，不要带路径。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>IPv6 地址要用方括号包起来，例如 [::1]:7890。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>要写端口，例如 [::1]:7890。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>要写端口，例如 127.0.0.1:7890。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>主机那一截是空的。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>主机那一截里有不认识的字符，只要主机名或 IP。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>端口要是 1~65535 之间的整数。</source>
+            <translation type="unfinished"></translation>
         </message>
     </context>
     <context>
@@ -4665,10 +4927,6 @@ The instance is ready, but some presets could not be applied:
             <translation>Failed to add folder</translation>
         </message>
         <message>
-            <source>「%1」不是一个存在的目录。</source>
-            <translation>"%1" is not an existing directory.</translation>
-        </message>
-        <message>
             <source>已添加文件夹：%1</source>
             <translation>Added folder: %1</translation>
         </message>
@@ -4792,6 +5050,10 @@ To remove only from the list, please use the "Remove" operation, the disk file w
         <message>
             <source>已删除游戏目录：%1</source>
             <translation>Deleted game directory: %1</translation>
+        </message>
+        <message>
+            <source>无法使用游戏目录「%1」。请检查目录是否存在并允许写入。</source>
+            <translation>Could not use game directory “%1”. Check that it exists and allows writes.</translation>
         </message>
     </context>
     <context>
@@ -5009,6 +5271,10 @@ The part that has been moved is in the Recycle Bin and can be restored.</transla
         <message>
             <source>「%1」以非 0 退出码结束（%2）。</source>
             <translation>"%1" ends with a non-zero exit code (%2).</translation>
+        </message>
+        <message>
+            <source>日志显示这是手动触发的调试崩溃（F3+C）。如果只是在测试，松开 F3+C 后不要在倒计时里等，崩溃就不会发生；这次退出不代表游戏或模组有问题。</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>「%1」要求 Java %2，本次实际使用的是 Java %3。</source>
@@ -5850,10 +6116,6 @@ Are you sure you want to restore?</translation>
             <translation>Choose an installation folder</translation>
         </message>
         <message>
-            <source>没有文件网页</source>
-            <translation>No file page</translation>
-        </message>
-        <message>
             <source>现在正忙</source>
             <translation>Busy now</translation>
         </message>
@@ -5984,18 +6246,6 @@ The manifest may be damaged. The modpack was not imported.</translation>
         <message>
             <source>没有导入 %1：%2</source>
             <translation>Could not import %1: %2</translation>
-        </message>
-        <message>
-            <source>选中文件可打开对应网页。可以先安装其余内容，但文件未补齐时不会标记为成功。
-补齐位置：%1
-重新导入同一个包和实例名可重新校验。</source>
-            <translation>Select a file to open its web page. You can install the rest now, but the import stays incomplete until every file is present.
-Add the missing files to: %1
-Reimport the same modpack with the same instance name to verify them again.</translation>
-        </message>
-        <message>
-            <source>平台未提供规范项目网址，无法可靠打开文件页。请按报告中的项目和文件编号手动查找；这不代表文件已下架。</source>
-            <translation>The platform did not provide a valid project URL. Look up the project and file IDs in the report to find the file manually. The file may still be available.</translation>
         </message>
         <message>
             <source>这个版本要 Java %1，装的时候改用 %2</source>
@@ -6385,6 +6635,33 @@ Start the import?</translation>
             <translation>Some files are missing</translation>
         </message>
         <message>
+            <source>已取消</source>
+            <translation type="unfinished">Canceled</translation>
+        </message>
+        <message>
+            <source>整合包导入已取消：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>用户取消了导入</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>项目 %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1（文件名未返回）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>每一条会列出模组/项目名、项目编号、文件编号和项目页。选中一条后，下方会显示具体文件名、补齐位置和补法。
+
+可以先安装其余内容；缺的文件会保留在导入报告里，之后可以再补。
+实例目录：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>继续安装其余内容</source>
             <translation>Install remaining contents</translation>
         </message>
@@ -6393,8 +6670,32 @@ Start the import?</translation>
             <translation>Open selected file page</translation>
         </message>
         <message>
+            <source>补齐提示未能展开（界面被占用），继续安装其余内容；缺件已记录在导入报告中。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>没有项目网页</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>平台没有返回可用的项目页。请按项目/文件编号在 CurseForge 搜索；项目编号和文件编号已写在报告里，不代表文件一定下架。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>Java 版本不够</source>
             <translation>Required Java version unavailable</translation>
+        </message>
+        <message>
+            <source>名称冲突提示被取消</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>文件补齐提示被取消</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Java 选择被取消</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>开始导入整合包 %1 ...</source>
@@ -6553,22 +6854,6 @@ Save or discard the changes, then drop the files again.</translation>
         <message>
             <source>设置游戏目录「%1」失败，整合包导入取消。</source>
             <translation>Could not set the game directory to "%1". The modpack import was canceled.</translation>
-        </message>
-        <message>
-            <source>没有可用实例</source>
-            <translation>No instances installed</translation>
-        </message>
-        <message>
-            <source>未找到已安装的实例。请先安装实例，再将文件拖到实例设置页。</source>
-            <translation>No instances are installed yet. Install one first, or drop the files directly onto an existing instance's settings page.</translation>
-        </message>
-        <message>
-            <source>装到哪个实例里</source>
-            <translation>Select an instance</translation>
-        </message>
-        <message>
-            <source>这几个文件装进哪一个实例？</source>
-            <translation>Which instance should these files be installed in?</translation>
         </message>
         <message>
             <source>已把 %1 个文件装进「%2」。</source>
@@ -6783,6 +7068,22 @@ Files can only be moved within the same drive. Existing files will not be replac
             <translation>%1: %2 of %3 items processed.</translation>
         </message>
         <message>
+            <source>读不出来：找不到这个文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 行</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>行数统计中…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>读不出来：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>复制世界</source>
             <translation>Copy the world</translation>
         </message>
@@ -6804,6 +7105,18 @@ Files can only be moved within the same drive. Existing files will not be replac
         <message>
             <source>无法复制「%1」：%2</source>
             <translation>Unable to copy '%1': %2</translation>
+        </message>
+        <message>
+            <source>重置游玩时间</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>将清掉这个实例已记录的累计游玩时间和上次游玩时长，且不能恢复。确认重置？</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>重置</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>%1 升级副本</source>
@@ -6956,6 +7269,14 @@ Files can only be moved within the same drive. Existing files will not be replac
         <message>
             <source>无法打开文件：%1</source>
             <translation>Unable to open file: %1</translation>
+        </message>
+        <message>
+            <source>实例已不存在</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>这个实例的目录已经不在盘上了，无法打开或创建它的文件夹。请刷新实例列表。</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>没有更新</source>
@@ -7112,22 +7433,6 @@ Files can only be moved within the same drive. Existing files will not be replac
         <message>
             <source>暂不支持批量编辑。</source>
             <translation>Batch editing is not supported yet.</translation>
-        </message>
-        <message>
-            <source>创建备份</source>
-            <translation>Create backup</translation>
-        </message>
-        <message>
-            <source>已备份存档信息。手动还原时，将备份复制到存档目录并命名为 level.dat。
-
-备份位置：%1</source>
-            <translation>World save information has been backed up. When restoring manually, copy the backup to the world save directory and name it level.dat. 
-
-Backup location: %1</translation>
-        </message>
-        <message>
-            <source>备份创建失败：%1</source>
-            <translation>Failed to keep backup: %1</translation>
         </message>
         <message>
             <source>重命名世界</source>
@@ -7889,6 +8194,10 @@ Discard changes?</translation>
     <context>
         <name>InstanceFiles</name>
         <message>
+            <source>无法保存图标到 %1：%2</source>
+            <translation>Could not save the icon to %1 (%2).</translation>
+        </message>
+        <message>
             <source>名字不能是空的。</source>
             <translation>Name cannot be empty.</translation>
         </message>
@@ -8086,6 +8395,16 @@ Discard changes?</translation>
         <message>
             <source>显示</source>
             <translation>Show</translation>
+        </message>
+        <message>
+            <source>启用</source>
+            <comment>state filter</comment>
+            <translation type="unfinished">Enable</translation>
+        </message>
+        <message>
+            <source>禁用</source>
+            <comment>state filter</comment>
+            <translation type="unfinished">Disable</translation>
         </message>
         <message>
             <source>可更新</source>
@@ -8401,6 +8720,58 @@ Discard changes?</translation>
     </context>
     <context>
         <name>InstanceSettingsDialog</name>
+        <message>
+            <source>钻石</source>
+            <translation>Diamond</translation>
+        </message>
+        <message>
+            <source>绿宝石</source>
+            <translation>Emerald</translation>
+        </message>
+        <message>
+            <source>苹果</source>
+            <translation>Apple</translation>
+        </message>
+        <message>
+            <source>指南针</source>
+            <translation>Compass</translation>
+        </message>
+        <message>
+            <source>书</source>
+            <translation>Book</translation>
+        </message>
+        <message>
+            <source>末影珍珠</source>
+            <translation>Ender Pearl</translation>
+        </message>
+        <message>
+            <source>铁锭</source>
+            <translation>Iron Ingot</translation>
+        </message>
+        <message>
+            <source>红石粉</source>
+            <translation>Redstone Dust</translation>
+        </message>
+        <message>
+            <source>正在读取游戏物品图标…</source>
+            <translation>Loading item icons from Minecraft…</translation>
+        </message>
+        <message>
+            <source>客户端文件中没有可用的物品图标。</source>
+            <translation>No supported item icons were found in the client files.</translation>
+        </message>
+        <message>
+            <source>选择本机 Java</source>
+            <translation>Select a local Java runtime</translation>
+        </message>
+        <message>
+            <source>正在检测 Java…</source>
+            <translation>Detecting Java…</translation>
+        </message>
+        <message>
+            <source>未检测到本机 Java</source>
+            <translation>No local Java runtimes found</translation>
+        </message>
         <message>
             <source>实例设置</source>
             <translation>Instance settings</translation>
@@ -9328,6 +9699,14 @@ Discard changes?</translation>
             <translation>Pictures (*.png *.jpg *.jpeg *.bmp *.gif *.webp);;All files (*)</translation>
         </message>
         <message>
+            <source>重置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>清掉这个实例已记录的累计游玩时间和上次游玩时长。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>Modrinth 整合包 (*.mrpack)</source>
             <translation>Modrinth integration package (*.mrpack)</translation>
         </message>
@@ -9338,10 +9717,6 @@ Discard changes?</translation>
         <message>
             <source>检查中断恢复…</source>
             <translation>Check for interrupt recovery…</translation>
-        </message>
-        <message>
-            <source>更新</source>
-            <translation>Update</translation>
         </message>
         <message>
             <source>文件与导出</source>
@@ -10783,11 +11158,11 @@ You can click it again after a while, or click "Detect existing Java" after inst
             <translation>Manually specified: %1</translation>
         </message>
         <message>
-            <source>自动选择　按游戏版本</source>
+            <source>自动选择&#x3000;按游戏版本</source>
             <translation>Automatic selection by game version</translation>
         </message>
         <message>
-            <source>自动选择　上次使用 %1</source>
+            <source>自动选择&#x3000;上次使用 %1</source>
             <translation>Automatic selection Last used %1</translation>
         </message>
         <message>
@@ -11122,14 +11497,6 @@ Select the version and click Download to get its version information again.</tra
             <translation>Available memory may be too low</translation>
         </message>
         <message>
-            <source>此实例需要 %1 MB 堆内存，运行中的实例共分配 %3 MB。系统可用物理内存约 %2 MB。
-
-继续启动可能导致卡顿。可关闭其他程序或调低内存分配。确认启动？</source>
-            <translation>This instance requests %1 MB of heap memory. Running instances already use a combined allocation of %3 MB, and about %2 MB of physical memory is available.
-
-Launching with low available memory can cause slowdowns. Close unused apps or lower the memory allocation in Settings. Launch anyway?</translation>
-        </message>
-        <message>
             <source>Java 运行时缺失</source>
             <translation>Java runtime unavailable</translation>
         </message>
@@ -11176,6 +11543,18 @@ Click Launch again.</translation>
 %3
 
 The game was not launched. You can set the Java path manually in Instance Settings.</translation>
+        </message>
+        <message>
+            <source>本次启动最多分配 %1 MB 堆内存，系统当前可用约 %2 MB。</source>
+            <translation>This launch allows up to %1 MB of heap memory. About %2 MB is currently available.</translation>
+        </message>
+        <message>
+            <source>其他运行中的实例最多分配 %1 MB 堆内存。</source>
+            <translation>Other running instances allow up to %1 MB of heap memory in total.</translation>
+        </message>
+        <message>
+            <source>继续启动可能导致卡顿。可关闭其他程序或调低内存分配。确认启动？</source>
+            <translation>Continuing may cause stuttering. Close other apps or lower the memory allocation. Launch anyway?</translation>
         </message>
     </context>
     <context>
@@ -11407,7 +11786,186 @@ The game was not launched. You can set the Java path manually in Instance Settin
         </message>
     </context>
     <context>
+        <name>LogFileReader</name>
+        <message>
+            <source>打不开这个文件：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>MainWindow</name>
+        <message>
+            <source>无法访问内容目录。请检查所选世界和目录位置。</source>
+            <translation>Could not access the content folder. Check the selected world and folder location.</translation>
+        </message>
+        <message>
+            <source>选择%1文件</source>
+            <translation>Select %1 Files</translation>
+        </message>
+        <message>
+            <source>Java 归档 (*.jar);;所有文件 (*.*)</source>
+            <translation>Java Archives (*.jar);;All Files (*.*)</translation>
+        </message>
+        <message>
+            <source>请先保存或放弃修改。</source>
+            <translation>Save or discard your changes first.</translation>
+        </message>
+        <message>
+            <source>正在处理服务端文件。</source>
+            <translation>A server file operation is in progress.</translation>
+        </message>
+        <message>
+            <source>没有可选的世界存档。</source>
+            <translation>No worlds are available.</translation>
+        </message>
+        <message>
+            <source>暂无服务端日志。</source>
+            <translation>No server logs are available yet.</translation>
+        </message>
+        <message>
+            <source>请选择有效的 Java 可执行文件。</source>
+            <translation>Select a valid Java executable.</translation>
+        </message>
+        <message>
+            <source>无法保存启动设置</source>
+            <translation>Could Not Save Launch Settings</translation>
+        </message>
+        <message>
+            <source>导出服务端迁移包</source>
+            <translation>Export Server Migration Archive</translation>
+        </message>
+        <message>
+            <source>ZIP 归档 (*.zip)</source>
+            <translation>ZIP Archives (*.zip)</translation>
+        </message>
+        <message>
+            <source>无法导出迁移包</source>
+            <translation>Could Not Export Migration Archive</translation>
+        </message>
+        <message>
+            <source>请选择服务端目录之外的新文件。</source>
+            <translation>Choose a new file outside the server folder.</translation>
+        </message>
+        <message>
+            <source>迁移包已导出</source>
+            <translation>Migration Archive Exported</translation>
+        </message>
+        <message>
+            <source>迁移包导出失败</source>
+            <translation>Migration Archive Export Failed</translation>
+        </message>
+        <message>
+            <source>导入服务端迁移包</source>
+            <translation>Import Server Migration Archive</translation>
+        </message>
+        <message>
+            <source>无法导入迁移包</source>
+            <translation>Could Not Import Migration Archive</translation>
+        </message>
+        <message>
+            <source>请选择由服务端设置导出的迁移包。</source>
+            <translation>Select a migration archive exported from the server settings.</translation>
+        </message>
+        <message>
+            <source>迁移包已导入</source>
+            <translation>Migration Archive Imported</translation>
+        </message>
+        <message>
+            <source>迁移包导入失败</source>
+            <translation>Migration Archive Import Failed</translation>
+        </message>
+        <message>
+            <source>无法创建升级副本</source>
+            <translation>Could Not Create Upgraded Copy</translation>
+        </message>
+        <message>
+            <source>版本号或构建号含有无效字符。</source>
+            <translation>A version or build number contains invalid characters.</translation>
+        </message>
+        <message>
+            <source>%1（%2 升级副本）</source>
+            <translation>%1 (%2 upgrade copy)</translation>
+        </message>
+        <message>
+            <source>准备服务端升级副本</source>
+            <translation>Preparing an Upgraded Server Copy</translation>
+        </message>
+        <message>
+            <source>游戏目录已切换，未发布升级副本。</source>
+            <translation>The game folder changed. The upgraded copy was not published.</translation>
+        </message>
+        <message>
+            <source>无法发布升级副本。</source>
+            <translation>Could not publish the upgraded copy.</translation>
+        </message>
+        <message>
+            <source>无法创建服务端暂存目录。</source>
+            <translation>Could not create the temporary server folder.</translation>
+        </message>
+        <message>
+            <source>升级副本的来源包含链接：%1。</source>
+            <translation>The source for the upgraded copy contains a link: %1.</translation>
+        </message>
+        <message>
+            <source>无法复制 %1。</source>
+            <translation>Could not copy %1.</translation>
+        </message>
+        <message>
+            <source>无法保存升级副本的安装记录。</source>
+            <translation>Could not save the installation record for the upgraded copy.</translation>
+        </message>
+        <message>
+            <source>请切回原游戏文件夹再重试这次安装。</source>
+            <translation>Switch back to the original game folder and retry the installation.</translation>
+        </message>
+        <message>
+            <source>WTFML · 首次使用测试</source>
+            <translation>WTFML · First-run Test</translation>
+        </message>
+        <message>
+            <source>清除缓存</source>
+            <translation>Clear Cache</translation>
+        </message>
+        <message>
+            <source>清除以下游戏目录中的外观、图标和服务器状态缓存？账号、存档、备份和手动导入的皮肤会保留。
+
+%1</source>
+            <translation>Clear cached appearances, icons, and server status for this game folder? Accounts, worlds, backups, and manually imported skins will be kept.
+
+%1</translation>
+        </message>
+        <message>
+            <source>部分缓存未清除</source>
+            <translation>Some Cache Files Could Not Be Cleared</translation>
+        </message>
+        <message>
+            <source>以下缓存目录无法清理。请检查目录权限和链接后重试。
+
+%1</source>
+            <translation>These cache folders could not be cleared. Check their permissions and links, then try again.
+
+%1</translation>
+        </message>
+        <message>
+            <source>缓存已清除</source>
+            <translation>Cache Cleared</translation>
+        </message>
+        <message>
+            <source>磁盘缓存已清除。重启后会重新加载外观、图标和服务器状态。</source>
+            <translation>The disk cache was cleared. Appearances, icons, and server status will reload after you restart.</translation>
+        </message>
+        <message>
+            <source>无法打开测试窗口</source>
+            <translation>Could Not Open the Test Window</translation>
+        </message>
+        <message>
+            <source>请检查系统临时目录是否允许写入，并确认启动器可以再次运行。</source>
+            <translation>Check that the system temporary folder is writable and that another copy of the launcher can run.</translation>
+        </message>
+        <message>
+            <source>首次使用测试目录：%1</source>
+            <translation>First-run test folder: %1</translation>
+        </message>
         <message>
             <source>游玩 %1</source>
             <translation>Played %1</translation>
@@ -11797,8 +12355,8 @@ Verify and repair missing or damaged files?</translation>
             <translation>Could not read %1 files. The related resources were not checked.</translation>
         </message>
         <message>
-            <source>资源更新检查</source>
-            <translation>Check for resource updates</translation>
+            <source>资源更新检查 / %1</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>更新检查结果可能不完整</source>
@@ -11811,6 +12369,14 @@ Verify and repair missing or damaged files?</translation>
         <message>
             <source>前置模组的名字没取到：%1</source>
             <translation>The name of the pre-mod was not found: %1</translation>
+        </message>
+        <message>
+            <source>前置版本列表没取到：%1</source>
+            <translation>Could not retrieve dependency versions: %1</translation>
+        </message>
+        <message>
+            <source>下载可用前置</source>
+            <translation>Download available dependencies</translation>
         </message>
         <message>
             <source>知道了</source>
@@ -12859,8 +13425,8 @@ Anything you changed after that update will also be reverted.</translation>
             <translation>Preparing to download...</translation>
         </message>
         <message>
-            <source>已下载 %1 / %2</source>
-            <translation>Downloaded %1 / %2</translation>
+            <source>已下载 %1 / %2 个文件</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>，失败 %1</source>
@@ -13248,6 +13814,24 @@ Do you want to turn it off now?</translation>
             <translation>Closing is on hold: There is still a prompt that has not been answered. Please close it again after answering.</translation>
         </message>
         <message>
+            <source>正在安装整合包</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>整合包还在安装。现在关闭启动器会取消安装，已下载的文件会保留。
+
+确认关闭？</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>取消并关闭</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>继续安装</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>「%1」仍在运行。关闭启动器后，游戏、存档和联机会继续运行。
 
 确认关闭启动器？</source>
@@ -13448,6 +14032,18 @@ Go back to the "%1" tab, click the "←" in the upper left corner to close it, a
             <translation>Could not parse version information for %1.</translation>
         </message>
         <message>
+            <source>这个名字不能当目录名</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>换一个名字再试（名字里不能只有标点或空白）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>建不了这个服务端</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>先等这一个装完</source>
             <translation>Wait until this one is installed first</translation>
         </message>
@@ -13579,6 +14175,14 @@ Are you sure to delete?</translation>
         <message>
             <source>更多操作</source>
             <translation>More actions</translation>
+        </message>
+        <message>
+            <source>…（这一行太长，截断了）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>先给它起个名字（会当成目录名）。</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>导出日志</source>
@@ -13859,6 +14463,20 @@ Are you sure to delete?</translation>
             <translation>Waiting game window</translation>
         </message>
         <message>
+            <source>取消安装整合包</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>整合包还在安装。取消后已下载的文件会保留，但实例不会完成。
+
+确认取消？</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>取消安装</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>已请求取消备份或还原；已取消的任务不会留下不完整的文件。</source>
             <translation>Cancellation of the backup or restore has been requested; a canceled task does not leave incomplete files.</translation>
         </message>
@@ -13944,6 +14562,34 @@ Are you sure to delete?</translation>
     </context>
     <context>
         <name>MainWindowSettingsPage</name>
+        <message>
+            <source>启动器数据</source>
+            <translation>Launcher Data</translation>
+        </message>
+        <message>
+            <source>清除缓存…</source>
+            <translation>Clear Cache…</translation>
+        </message>
+        <message>
+            <source>本地缓存</source>
+            <translation>Local Cache</translation>
+        </message>
+        <message>
+            <source>清除外观、图标和服务器状态的缓存。</source>
+            <translation>Clear cached appearances, icons, and server status.</translation>
+        </message>
+        <message>
+            <source>打开测试窗口</source>
+            <translation>Open Test Window</translation>
+        </message>
+        <message>
+            <source>首次使用测试</source>
+            <translation>First-run Test</translation>
+        </message>
+        <message>
+            <source>在独立窗口中使用空白设置、账号和游戏目录。</source>
+            <translation>Open a separate window with fresh settings, accounts, and a game folder.</translation>
+        </message>
         <message>
             <source>数量较多时，放不下的卡片只显示图标和启动按钮。</source>
             <translation>When space is limited, extra cards show only an icon and a launch button.</translation>
@@ -14270,6 +14916,10 @@ Are you sure to delete?</translation>
         <message>
             <source>装到哪个实例里</source>
             <translation>Choose an instance</translation>
+        </message>
+        <message>
+            <source>下载到哪个实例</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>请选择目标实例或其他文件夹。</source>
@@ -14912,6 +15562,18 @@ Are you sure to delete?</translation>
             <translation>There is currently no server instance. Click "New Server" to start creating.</translation>
         </message>
         <message>
+            <source>插件</source>
+            <translation>Plugins</translation>
+        </message>
+        <message>
+            <source>搜索服务端名称、版本号或类型</source>
+            <translation>Search name, version, or type</translation>
+        </message>
+        <message>
+            <source>没有符合筛选条件的服务端</source>
+            <translation>No servers match your filters</translation>
+        </message>
+        <message>
             <source>新建服务端…</source>
             <translation>Create a new server…</translation>
         </message>
@@ -14922,6 +15584,21 @@ Are you sure to delete?</translation>
         <message>
             <source>停止</source>
             <translation>Stop</translation>
+        </message>
+        <message>
+            <source>收藏</source>
+            <comment>verb</comment>
+            <translation type="unfinished">Collect</translation>
+        </message>
+        <message>
+            <source>模组</source>
+            <comment>instance filter</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启动</source>
+            <comment>start server</comment>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>修复</source>
@@ -15154,6 +15831,11 @@ It will not restart automatically when stopped manually or exited normally.</tra
         <message>
             <source>身份</source>
             <translation>Identity</translation>
+        </message>
+        <message>
+            <source>玩家</source>
+            <comment>table column</comment>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>封禁 IP…</source>
@@ -15696,8 +16378,8 @@ It will not restart automatically when stopped manually or exited normally.</tra
             <translation>%1's authentic appearance</translation>
         </message>
         <message>
-            <source>获取皮肤失败，已显示默认外观。</source>
-            <translation>Failed to obtain skin, default appearance has been displayed.</translation>
+            <source>获取皮肤失败，已显示默认外观（%1）。</source>
+            <translation>Could not load %1's skin; showing the default look.</translation>
         </message>
         <message>
             <source>正在启动 %1…</source>
@@ -15888,8 +16570,8 @@ It will not restart automatically when stopped manually or exited normally.</tra
             <translation>Only based on valid cache and identified data; unidentified items still need to be confirmed by yourself. It is not a full solver, is not guaranteed to be startable, and does not modify files.</translation>
         </message>
         <message>
-            <source>无法获取兼容版本，请检查网络连接及目标版本支持情况。</source>
-            <translation>Could not find a compatible version. Check your connection and whether the target version is supported.</translation>
+            <source>所选实例的游戏版本和加载器没有兼容的前置版本。</source>
+            <translation>No dependency version supports the selected instance’s game version and loader.</translation>
         </message>
         <message>
             <source>指定版本（%1）不在目标实例的兼容版本列表中。</source>
@@ -15980,16 +16662,12 @@ It will not restart automatically when stopped manually or exited normally.</tra
             <translation>Only place this one</translation>
         </message>
         <message>
-            <source>以下依赖缺少兼容版本：
+            <source>以下前置无法一并下载：
 
-%1
+%1</source>
+            <translation>The following dependencies cannot be downloaded together:
 
-其余文件已下载。可在对应项目页面查找并手动安装依赖。</source>
-            <translation>There are several pre-installed versions that cannot be found: 
-
-%1
-
- Some dependencies failed to download, and the remaining files have been completed. It can be downloaded manually from the project homepage.</translation>
+%1</translation>
         </message>
         <message>
             <source>正在查询 %1 个前置模组的可用版本…</source>
@@ -16418,10 +17096,10 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         <message>
             <source>%1
 项目 %2 / 文件 %3 / %4
-%5%6</source>
-            <translation>%1
-Project %2 / File %3 / %4
-%5%6</translation>
+%5
+补齐位置：%6
+补法：打开上面的项目页，在 Files 里找对应游戏版本和加载器的文件；下载后放到上面的位置。补齐后回到导入报告选择「完成安装」，或用同一个包和实例名重新导入让本程序校验。</source>
+            <translation type="unfinished"></translation>
         </message>
     </context>
     <context>
@@ -16685,8 +17363,116 @@ Project %2 / File %3 / %4
             <translation>Integer</translation>
         </message>
         <message>
+            <source>长度是负的</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>文件在这里就断了（还要 %1 个字节，只剩 %2 个）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>元素太多（超过 %1 个）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>不认识的标签类型 %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>嵌套太深（超过 %1 层）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>这里不该出现结束标签</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>列表里写着不认识的元素类型 %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>列表的项数是负的</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>列表的元素类型是空的、却写着 %1 项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>列表的项数 %1 比文件剩下的字节还多</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>复合标签没有收尾</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>整数数组的长度是负的</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>长整数数组的长度是负的</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>结束</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>字节</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>短整数</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>长整数</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>单精度小数</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>双精度小数</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>字节数组</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>文字</source>
             <translation>Word</translation>
+        </message>
+        <message>
+            <source>列表</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>复合</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>整数数组</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>长整数数组</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>不认识</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>这份文件太大了（%1 字节）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>末尾还多着 %1 个字节</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>level.dat 缺少游戏规则数据。存档可能尚未初始化或来自旧版本。</source>
@@ -18123,10 +18909,6 @@ Not supported by this preset category: %1.</translation>
             <translation>New preset…</translation>
         </message>
         <message>
-            <source>← 返回</source>
-            <translation>← Return</translation>
-        </message>
-        <message>
             <source>预设内容</source>
             <translation>Default content</translation>
         </message>
@@ -18141,6 +18923,10 @@ Not supported by this preset category: %1.</translation>
         <message>
             <source>从实例提取</source>
             <translation>Extract from instance</translation>
+        </message>
+        <message>
+            <source>基本设置</source>
+            <translation>General</translation>
         </message>
         <message>
             <source>勾选要收的几样</source>
@@ -18173,6 +18959,10 @@ Not supported by this preset category: %1.</translation>
         <message>
             <source>预设名称</source>
             <translation>Default name</translation>
+        </message>
+        <message>
+            <source>预设详情</source>
+            <translation>Preset Details</translation>
         </message>
         <message>
             <source>说明（可选）</source>
@@ -19116,6 +19906,13 @@ Not supported by this preset category: %1.</translation>
         </message>
     </context>
     <context>
+        <name>PresetPreviewLoader</name>
+        <message>
+            <source>这一份读不出来：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>PresetStore</name>
         <message>
             <source>：</source>
@@ -19259,6 +20056,13 @@ Not supported by this preset category: %1.</translation>
         <message>
             <source>预设已保存，但列表顺序未能写入。</source>
             <translation>The preset was saved, but the list order could not be written.</translation>
+        </message>
+    </context>
+    <context>
+        <name>PresetWriteLock</name>
+        <message>
+            <source>这个实例的另一项预设应用尚未结束，请等待或取消后重试。</source>
+            <translation type="unfinished"></translation>
         </message>
     </context>
     <context>
@@ -20592,6 +21396,15 @@ Not supported by this preset category: %1.</translation>
         </message>
     </context>
     <context>
+        <name>ProcessPathLimit</name>
+        <message>
+            <source>
+%1 有 %2 个字符，超过了 Windows 起进程时 260 字符的路径上限。
+把 Java 或实例挪到浅一点的目录（比如 D:/MC）再试。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>QCoreApplication</name>
         <message>
             <source>，选择「保存」后写入文件。</source>
@@ -20600,6 +21413,10 @@ Not supported by this preset category: %1.</translation>
     </context>
     <context>
         <name>QObject</name>
+        <message>
+            <source>目标已存在，原有文件已保留：%1</source>
+            <translation>The destination already exists. Existing files were kept: %1</translation>
+        </message>
         <message>
             <source>%1：%2</source>
             <translation>%1:%2</translation>
@@ -20695,14 +21512,6 @@ Not supported by this preset category: %1.</translation>
             <translation>This image cannot be read: %1
 
  (It may not be in image format, or it may not be there anymore.)</translation>
-        </message>
-        <message>
-            <source>无法保存图标：%1</source>
-            <translation>The icon cannot be written: %1</translation>
-        </message>
-        <message>
-            <source>无法将图标写入 %1：%2</source>
-            <translation>The icon could not be placed in %1: %2</translation>
         </message>
         <message>
             <source>当前模组</source>
@@ -20860,7 +21669,7 @@ Minecraft %2 / %3
             <source>当前实例：%1
 目标：Minecraft %2 / %3 %4
 
-保留启用：%5　替换适配版：%6　禁用但保留文件：%7　待确认：%8
+保留启用：%5&#x3000;替换适配版：%6&#x3000;禁用但保留文件：%7&#x3000;待确认：%8
 
 %9
 
@@ -20868,7 +21677,7 @@ Minecraft %2 / %3
             <translation>Current instance: %1
 Target: Minecraft %2 / %3 %4
 
-Keep enabled: %5　Replace with adapted version: %6　Disable but keep files: %7　Pending confirmation: %8
+Keep enabled: %5&#x3000;Replace with adapted version: %6&#x3000;Disable but keep files: %7&#x3000;Pending confirmation: %8
 
 %9
 
@@ -22299,10 +23108,6 @@ Recovery records are retained in %3, please check manually.</translation>
             <translation>The file name is missing or the path is unsafe</translation>
         </message>
         <message>
-            <source>平台将文件标记为不可用</source>
-            <translation>Platform marks file as unavailable</translation>
-        </message>
-        <message>
             <source>无法生成安全下载地址</source>
             <translation>Unable to generate secure download address</translation>
         </message>
@@ -22415,17 +23220,20 @@ Recovery records are retained in %3, please check manually.</translation>
             <translation>%1: The file is missing, the content does not match, or the trusted verification information is missing</translation>
         </message>
         <message>
-            <source>文件名未知</source>
-            <translation>Unknown file name</translation>
+            <source>项目 %1</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>未取得规范网页地址；请按编号手动查找（不代表文件下架）</source>
-            <translation>The standard web page address has not been obtained; please search manually according to the number (it does not mean that the file has been removed from the shelves)</translation>
+            <source>%1（文件名未返回）</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>
-补齐位置：%1</source>
-            <translation>Completion position: %1</translation>
+            <source>实例的 mods/ 目录（文件名以项目页为准）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未取得项目页；请按项目名和文件编号在 CurseForge 搜索</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>导入报告目录不存在或路径含链接，未写入</source>
@@ -22744,6 +23552,44 @@ Recovery records are retained in %3, please check manually.</translation>
         <message>
             <source>搜索预设</source>
             <translation>Search presets</translation>
+        </message>
+    </context>
+    <context>
+        <name>QuickPlay</name>
+        <message>
+            <source>「加入服务器」要用游戏自己的 --quickPlayMultiplayer 参数，这个版本（1.20 之前）没有它 —— 发了游戏会直接报错退出。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「加入选中的世界」要用游戏自己的 --quickPlaySingleplayer 参数，这个版本（1.20 之前）没有它 —— 发了游戏会直接报错退出。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>RecoveryReview</name>
+        <message>
+            <source>日志不可读取或路径不安全；请人工检查，不自动清理。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>日志格式或目录边界不合法；不提供自动处理。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>日志位置不安全，未处理。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>还原事务仍在使用中，未处理。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目录或日志已变化，或两份目录未同时保留，请重新检查。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>检查记录未能归档，原日志和两份目录均保留。</source>
+            <translation type="unfinished"></translation>
         </message>
     </context>
     <context>
@@ -24056,6 +24902,10 @@ Please close the program occupying the port, or change the port in "Common Setti
     <context>
         <name>ServerContent</name>
         <message>
+            <source>插件</source>
+            <translation>Plugin</translation>
+        </message>
+        <message>
             <source>数据包</source>
             <translation>Datapacks</translation>
         </message>
@@ -24485,6 +25335,37 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
     </context>
     <context>
+        <name>ServerModel</name>
+        <message>
+            <source>未安装</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>可启动</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启动中</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>运行中</source>
+            <translation type="unfinished">Running</translation>
+        </message>
+        <message>
+            <source>停止中</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已停止</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>异常退出</source>
+            <translation type="unfinished">Quit unexpectedly</translation>
+        </message>
+    </context>
+    <context>
         <name>ServerPing</name>
         <message>
             <source>SRV 查询超时</source>
@@ -24628,6 +25509,21 @@ Please close the program occupying the port, or change the port in "Common Setti
         <message>
             <source>已经过期（%1）</source>
             <translation>Expired (%1)</translation>
+        </message>
+    </context>
+    <context>
+        <name>ServerPortCheck</name>
+        <message>
+            <source>没被占用</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>被占用了</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>没能查出来</source>
+            <translation type="unfinished"></translation>
         </message>
     </context>
     <context>
@@ -24997,6 +25893,37 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
     </context>
     <context>
+        <name>ServerRun</name>
+        <message>
+            <source>正在停止服务端，等待保存数据（最多 %1 秒）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务端在 %1 秒内未退出。可强制结束，但可能丢失未保存的存档数据。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务端安装不完整：缺少启动文件。请通过「修复」补全安装。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>打开《Minecraft 最终用户许可协议》原文</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Minecraft 最终用户许可协议</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>首次启动 Minecraft 服务端前，需阅读并接受最终用户许可协议。仅在勾选协议并选择「同意并启动」后，才会在 eula.txt 中写入 eula=true。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>我已阅读并同意《Minecraft 最终用户许可协议》</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>ServerRun::ServerProcess</name>
         <message>
             <source>服务端进程未启动（%1）。请检查 Java 设置。</source>
@@ -25053,6 +25980,166 @@ Please close the program occupying the port, or change the port in "Common Setti
     <context>
         <name>ServerSettingsPage</name>
         <message>
+            <source>打开目录</source>
+            <translation>Open Folder</translation>
+        </message>
+        <message>
+            <source>控制台</source>
+            <translation>Console</translation>
+        </message>
+        <message>
+            <source>停止服务端</source>
+            <translation>Stop Server</translation>
+        </message>
+        <message>
+            <source>概览</source>
+            <translation>Overview</translation>
+        </message>
+        <message>
+            <source>启动设置</source>
+            <translation>Launch Settings</translation>
+        </message>
+        <message>
+            <source>设置</source>
+            <translation>Settings</translation>
+        </message>
+        <message>
+            <source>世界与玩家</source>
+            <translation>Worlds and Players</translation>
+        </message>
+        <message>
+            <source>世界</source>
+            <translation>Worlds</translation>
+        </message>
+        <message>
+            <source>玩家</source>
+            <translation>Players</translation>
+        </message>
+        <message>
+            <source>内容管理</source>
+            <translation>Content Management</translation>
+        </message>
+        <message>
+            <source>维护</source>
+            <translation>Maintenance</translation>
+        </message>
+        <message>
+            <source>诊断与补全</source>
+            <translation>Diagnostics and Repair</translation>
+        </message>
+        <message>
+            <source>日志</source>
+            <translation>Logs</translation>
+        </message>
+        <message>
+            <source>原始文本</source>
+            <translation>Raw Text</translation>
+        </message>
+        <message>
+            <source>迁移</source>
+            <translation>Migration</translation>
+        </message>
+        <message>
+            <source>升级</source>
+            <translation>Upgrade</translation>
+        </message>
+        <message>
+            <source>设为启动世界</source>
+            <translation>Set as Startup World</translation>
+        </message>
+        <message>
+            <source>玩家名单</source>
+            <translation>Player Lists</translation>
+        </message>
+        <message>
+            <source>Java 路径</source>
+            <translation>Java Path</translation>
+        </message>
+        <message>
+            <source>跟随全局 Java 设置</source>
+            <translation>Use Global Java Settings</translation>
+        </message>
+        <message>
+            <source>浏览…</source>
+            <translation>Browse…</translation>
+        </message>
+        <message>
+            <source>选择 Java 可执行文件</source>
+            <translation>Select a Java Executable</translation>
+        </message>
+        <message>
+            <source>跟随全局设置</source>
+            <translation>Use Global Settings</translation>
+        </message>
+        <message>
+            <source>最大内存</source>
+            <translation>Maximum Memory</translation>
+        </message>
+        <message>
+            <source>JVM 参数</source>
+            <translation>JVM Arguments</translation>
+        </message>
+        <message>
+            <source>保存启动设置</source>
+            <translation>Save Launch Settings</translation>
+        </message>
+        <message>
+            <source>刷新日志</source>
+            <translation>Refresh Log</translation>
+        </message>
+        <message>
+            <source>将服务端目录打包，包括世界、名单和配置。请先停止服务端。</source>
+            <translation>Stop the server before exporting its worlds, player lists, and configuration.</translation>
+        </message>
+        <message>
+            <source>导出迁移包…</source>
+            <translation>Export Migration Archive…</translation>
+        </message>
+        <message>
+            <source>导入迁移包…</source>
+            <translation>Import Migration Archive…</translation>
+        </message>
+        <message>
+            <source>安装新版本到独立的服务端副本。原服务端及存档会保留。</source>
+            <translation>Install the new version in a separate copy. The original server and its worlds are kept.</translation>
+        </message>
+        <message>
+            <source>目标游戏版本</source>
+            <translation>Target Game Version</translation>
+        </message>
+        <message>
+            <source>目标加载器版本</source>
+            <translation>Target Loader Version</translation>
+        </message>
+        <message>
+            <source>目标安装器版本</source>
+            <translation>Target Installer Version</translation>
+        </message>
+        <message>
+            <source>目标构建号（可留空）</source>
+            <translation>Target Build (Optional)</translation>
+        </message>
+        <message>
+            <source>创建升级副本</source>
+            <translation>Create Upgraded Copy</translation>
+        </message>
+        <message>
+            <source>%1（启动世界）</source>
+            <translation>%1 (startup world)</translation>
+        </message>
+        <message>
+            <source>%1（待保存）</source>
+            <translation>%1 (unsaved)</translation>
+        </message>
+        <message>
+            <source>备份完整服务端…</source>
+            <translation>Back Up Entire Server…</translation>
+        </message>
+        <message>
+            <source>该世界的下界或末地在独立目录中。请用完整服务端备份同时保留这些维度。</source>
+            <translation>This world's Nether or End is in a separate folder. Back up the entire server to include these dimensions.</translation>
+        </message>
+        <message>
             <source>启动服务端</source>
             <translation>Start the server</translation>
         </message>
@@ -25092,6 +26179,17 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
     </context>
     <context>
+        <name>ServerWriteGuard</name>
+        <message>
+            <source>服务端路径含链接或越界，未写入或删除。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务端文件路径含链接或越界，原文件未替换。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>SettingsParts</name>
         <message>
             <source>说明</source>
@@ -25100,6 +26198,33 @@ Please close the program occupying the port, or change the port in "Common Setti
         <message>
             <source>已保存</source>
             <translation>Saved</translation>
+        </message>
+    </context>
+    <context>
+        <name>SevenZip</name>
+        <message>
+            <source>不是 rar/7z。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>没找到 7z.exe：请先装 7-Zip，或手动解压后再导入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>建不了临时目录。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>7z.exe 起不来。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>7-Zip 解压失败：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>压成 zip 失败。</source>
+            <translation type="unfinished"></translation>
         </message>
     </context>
     <context>
@@ -25532,6 +26657,13 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
     </context>
     <context>
+        <name>StreamedFile</name>
+        <message>
+            <source>目标文件已存在，未覆盖。请更换文件名或确认覆盖。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>TaskCenter</name>
         <message>
             <source>○</source>
@@ -25727,6 +26859,17 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
     </context>
     <context>
+        <name>TextFormat</name>
+        <message>
+            <source>默认</source>
+            <translation type="unfinished">Default</translation>
+        </message>
+        <message>
+            <source>复位</source>
+            <translation type="unfinished">Reset</translation>
+        </message>
+    </context>
+    <context>
         <name>Theme</name>
         <message>
             <source>标题栏</source>
@@ -25905,6 +27048,29 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
     </context>
     <context>
+        <name>ThemeImage</name>
+        <message>
+            <source>内部错误：这个槽位的名字不能当文件名用。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>这个文件读不到：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>这张图太大了（%1 MB），换一张小一点的。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>这不是一张能打开的图片：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写不进 %1，检查一下磁盘权限。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>ThemeSettingsController</name>
         <message>
             <source>只覆盖这一类控件颜色；可随时恢复跟随主题。</source>
@@ -26075,6 +27241,13 @@ The changes you made yourself will not be retained.</translation>
         <message>
             <source>窗口加宽后才能展开</source>
             <translation>Widen the window to expand navigation</translation>
+        </message>
+    </context>
+    <context>
+        <name>TokenStore</name>
+        <message>
+            <source>无法保护登录凭据，未写入，原数据保留。</source>
+            <translation type="unfinished"></translation>
         </message>
     </context>
     <context>
@@ -26646,6 +27819,14 @@ The changes you made yourself will not be retained.</translation>
             <translation>Conversion</translation>
         </message>
         <message>
+            <source>粘贴命令</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>读剪贴板里 F3+C 复制的那一行，认出维度和坐标并直接换算。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>坐标</source>
             <translation>Coordinate</translation>
         </message>
@@ -26666,6 +27847,10 @@ The changes you made yourself will not be retained.</translation>
             <translation>Copy this tp command</translation>
         </message>
         <message>
+            <source>剪贴板里没有东西。先在游戏里按 F3+C 复制坐标，再点这里。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>host:port，默认 25565</source>
             <translation>Host:port, default 25565</translation>
         </message>
@@ -26680,6 +27865,10 @@ The changes you made yourself will not be retained.</translation>
         <message>
             <source>检测结果</source>
             <translation>Test results</translation>
+        </message>
+        <message>
+            <source>本次检测记录</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>超时</source>
@@ -27652,6 +28841,25 @@ The changes you made yourself will not be retained.</translation>
         </message>
     </context>
     <context>
+        <name>VersionCategory</name>
+        <message>
+            <source>正式版</source>
+            <translation type="unfinished">Releases</translation>
+        </message>
+        <message>
+            <source>快照版</source>
+            <translation type="unfinished">Snapshot version</translation>
+        </message>
+        <message>
+            <source>远古版</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>愚人节版</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>VersionIntegrity</name>
         <message>
             <source>客户端</source>
@@ -27737,6 +28945,26 @@ The changes you made yourself will not be retained.</translation>
     <context>
         <name>VersionManager</name>
         <message>
+            <source>NeoForge 的版本列表无法解析。</source>
+            <translation>Could not read the NeoForge version list.</translation>
+        </message>
+        <message>
+            <source>OptiFine 的下载页无法解析。</source>
+            <translation>Could not read the OptiFine downloads page.</translation>
+        </message>
+        <message>
+            <source>原实例的未完成安装记录已不在，请用原整合包重新导入。</source>
+            <translation>The unfinished installation record is missing. Import the original modpack again.</translation>
+        </message>
+        <message>
+            <source>原整合包文件已移动或更改，请用原整合包继续安装。</source>
+            <translation>The modpack archive has moved or changed. Use the original archive to continue.</translation>
+        </message>
+        <message>
+            <source>在任务中心选择「重试」可继续安装此实例。</source>
+            <translation>Select Retry in the Task Center to continue installing this instance.</translation>
+        </message>
+        <message>
             <source>目录 %1 中的整合包尚未导入完成，缺少客户端 JAR，暂不显示在启动列表中。使用相同名称重新导入可延续下载。</source>
             <translation>The directory %1 is the integration package that was not imported last time (without the top-level jar), so it is not listed in the startup list; re-import the same integration package and use the same name to continue.</translation>
         </message>
@@ -27759,6 +28987,10 @@ The changes you made yourself will not be retained.</translation>
         <message>
             <source>已取消最终解压或校验。已安装文件保留，实例仍未完成。</source>
             <translation>Final decompression or verification has been cancelled. The installed files are retained and the instance is not yet complete.</translation>
+        </message>
+        <message>
+            <source>已取消安装 %1。</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>下载已取消，已下载的文件会保留。</source>
@@ -28177,10 +29409,6 @@ It is now at: %2</translation>
             <translation>Unable to get the version list (%3) of %1 %2. Check the network and try again.</translation>
         </message>
         <message>
-            <source>请求超时</source>
-            <translation>Request timeout</translation>
-        </message>
-        <message>
             <source>Fabric 的版本列表无法解析（%1）。</source>
             <translation>Fabric's version list cannot be parsed (%1).</translation>
         </message>
@@ -28249,10 +29477,6 @@ It is now at: %2</translation>
             <translation>The profile of %1 %2 failed the check and was not installed.</translation>
         </message>
         <message>
-            <source>原版 %1 已安装，继续安装 %2 的文件。</source>
-            <translation>The original %1 has been installed, install %2 your own files directly.</translation>
-        </message>
-        <message>
             <source>正在安装原版 %1 的客户端 JAR、运行库和资源…</source>
             <translation>The original version %1 has not been installed yet, first download all its files (client jar + library + resources)...</translation>
         </message>
@@ -28263,14 +29487,6 @@ It is now at: %2</translation>
         <message>
             <source>正在下载 %1 %2 的 Maven 依赖…</source>
             <translation>Start downloading %1 %2 own files (maven library)...</translation>
-        </message>
-        <message>
-            <source>镜像源版本列表未找到 %2，已切换至官方源重新获取。</source>
-            <translation>%2 was not found in the mirror source version list, and has been switched to the official source to obtain it again.</translation>
-        </message>
-        <message>
-            <source>官方源连接失败（%2），已切换至镜像源重试。</source>
-            <translation>The official source connection failed (%2) and has been switched to the mirror source to try again.</translation>
         </message>
         <message>
             <source>拿不到 %1 %2 的版本表（%3）。检查网络后重试。</source>
@@ -28490,10 +29706,6 @@ The last thing it typed was:
             <translation>%1 %2 Installation completed (%3).</translation>
         </message>
         <message>
-            <source>%1 已安装，正在补齐原版 %2 的资源文件…</source>
-            <translation>%1 The installation is complete. Next, complete the files of the original %2 (the installer does not download resource files)...</translation>
-        </message>
-        <message>
             <source>OptiFine 的版本表无法解析（%1）。</source>
             <translation>OptiFine's version table cannot be parsed (%1).</translation>
         </message>
@@ -28524,14 +29736,6 @@ The last thing it typed was:
         <message>
             <source>%1 的广告页上没认出 %2 那条下载地址，没有安装。过一会儿重试；若持续失败，请尝试在设置中切换下载源。</source>
             <translation>The download address of %2 was not recognized on the advertising page of %1 and was not installed. Try again after a while; if it continues to fail, try switching the download source in the settings.</translation>
-        </message>
-        <message>
-            <source>原版 %1 已安装，直接运行 %2 的安装器。</source>
-            <translation>The original %1 has been installed, run the installer of %2 directly.</translation>
-        </message>
-        <message>
-            <source>%1 安装器需要原版 %2 的客户端 JAR，正在安装原版…</source>
-            <translation>The installer of %1 needs the client jar of the original %2 as input, so install the original version first...</translation>
         </message>
         <message>
             <source>无法创建临时工作目录（%1）。%2 安装器需要可用的 APPDATA 路径。</source>
@@ -28782,6 +29986,20 @@ Itemized list: %2
             <translation>Verified %1 local manual completion files passed.</translation>
         </message>
         <message>
+            <source>项目 %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source> 等</source>
+            <translation type="unfinished">Wait</translation>
+        </message>
+        <message>
+            <source>
+
+有 %1 个文件未能自动取得：%2。实例已按缺件状态完成导入，可以先启动；补齐这些文件后在导入报告里选择「完成安装」。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>整合包「%1」导入好了，实例列表里叫「%2」。%3</source>
             <translation>The integration package "%1" has been imported and is called "%2" in the instance list. %3</translation>
         </message>
@@ -28858,6 +30076,14 @@ Itemized list: %2
         <message>
             <source>写 %1 的时候失败了（%2）。</source>
             <translation>Failed while writing %1 (%2).</translation>
+        </message>
+        <message>
+            <source>镜像源版本列表未找到适用于 %2 的 %1，已切换至官方源。</source>
+            <translation>The mirror did not list %1 for %2. Switched to the official source.</translation>
+        </message>
+        <message>
+            <source>最新版本</source>
+            <translation type="unfinished"></translation>
         </message>
     </context>
     <context>
@@ -29120,16 +30346,8 @@ Itemized list: %2
     <context>
         <name>WorldSettingsPage</name>
         <message>
-            <source>返回</source>
-            <translation>Back</translation>
-        </message>
-        <message>
             <source>保存</source>
             <translation>Save</translation>
-        </message>
-        <message>
-            <source>创建备份</source>
-            <translation>Back up level.dat</translation>
         </message>
         <message>
             <source>打开文件夹</source>
@@ -29228,10 +30446,6 @@ Itemized list: %2
             <translation>Deleting this world and all its files will require confirmation first.</translation>
         </message>
         <message>
-            <source>备份存档信息，保存修改前也会自动备份。</source>
-            <translation>Back up world metadata. Saving changes also creates a backup.</translation>
-        </message>
-        <message>
             <source>世界名、难度、游戏规则等写在存档文件里，修改前会先确认。</source>
             <translation>Confirm changes to the world name, difficulty, or game rules before writing to the world save.</translation>
         </message>
@@ -29304,10 +30518,6 @@ Itemized list: %2
             <translation>Could not read world save: %1</translation>
         </message>
         <message>
-            <source>默认</source>
-            <translation>Default</translation>
-        </message>
-        <message>
             <source>有一条规则的值是空的，或不是整数；请改好后再保存（游戏读到坏值会静悄悄按默认值来）。</source>
             <translation>The value of one rule is empty or not an integer; please change it and save it (the game will quietly use the default value when it reads a bad value).</translation>
         </message>
@@ -29334,4 +30544,4 @@ This world can now only be viewed and backed up: the world save content cannot b
             <translation>Not saved</translation>
         </message>
     </context>
-</TS>
+    </TS>

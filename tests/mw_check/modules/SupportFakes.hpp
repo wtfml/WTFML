@@ -369,6 +369,7 @@ struct FakeResourceApi {
     QByteArray searchBody;   ///< `/mods/search` 那一发的答复
     QByteArray filesBody;    ///< `/mods/{id}/files` 那一发的答复
     int searchStatus = 200;
+    int searchDelayMs = 0;
     int filesStatus = 200;
     QStringList requests;    ///< 每一发的请求行（`GET /v1/mods/search?… HTTP/1.1`）
     QStringList apiKeys;     ///< 每一发带的 x-api-key（**没带 = 空串**）
@@ -443,7 +444,8 @@ struct FakeResourceApi {
             return;
         }
 
-        const bool isSearch = target.contains(QStringLiteral("/mods/search"));
+        const bool isSearch = target.startsWith(QLatin1String("/v1/mods/search?")) ||
+                              target.startsWith(QLatin1String("/v2/search?"));
         if (isSearch) {
             ++searchHits;
         } else {
@@ -451,13 +453,17 @@ struct FakeResourceApi {
         }
         const int status = isSearch ? searchStatus : filesStatus;
         const QByteArray payload = isSearch ? searchBody : filesBody;
-        socket->write(QByteArrayLiteral("HTTP/1.1 ") + QByteArray::number(status) + ' ' +
-                      (status == 200 ? QByteArrayLiteral("OK") : QByteArrayLiteral("Error")) +
-                      QByteArrayLiteral("\r\nContent-Type: application/json\r\nContent-Length: ") +
-                      QByteArray::number(payload.size()) +
-                      QByteArrayLiteral("\r\nConnection: close\r\n\r\n") + payload);
-        socket->flush();
-        socket->disconnectFromHost();
+        const auto send = [socket, status, payload] {
+            socket->write(QByteArrayLiteral("HTTP/1.1 ") + QByteArray::number(status) + ' ' +
+                          (status == 200 ? QByteArrayLiteral("OK") : QByteArrayLiteral("Error")) +
+                          QByteArrayLiteral("\r\nContent-Type: application/json\r\nContent-Length: ") +
+                          QByteArray::number(payload.size()) +
+                          QByteArrayLiteral("\r\nConnection: close\r\n\r\n") + payload);
+            socket->flush();
+            socket->disconnectFromHost();
+        };
+        if (isSearch && searchDelayMs > 0) QTimer::singleShot(searchDelayMs, socket, send);
+        else send();
     }
 };
 

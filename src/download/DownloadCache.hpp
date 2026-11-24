@@ -7,11 +7,13 @@
 #include <QElapsedTimer>
 #include <QLockFile>
 #include <QRegularExpression>
-#include <QStandardPaths>
 #include <algorithm>
 
+#include "../util/AppPaths.hpp"
+
 namespace DownloadCache {
-inline QString root() { return QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QStringLiteral("/range-downloads"); }
+/// 断点续传缓存根：`%LOCALAPPDATA%\WTFML\cache\range-downloads`（唯一出处是 AppPaths）。
+inline QString root() { return AppPaths::localCacheRoot() + QStringLiteral("/range-downloads"); }
 enum class Action { Inspect, Trim, ClearIdle, ClearExpired };
 struct Result { qint64 bytes = 0, removed = 0; int entries = 0, busy = 0, failed = 0; bool incomplete = false; };
 // Only this downloader's fixed names are eligible. Never recurse or follow reparse points.

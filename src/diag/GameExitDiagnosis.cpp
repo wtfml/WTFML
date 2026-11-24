@@ -94,6 +94,13 @@ bool logShowsOutOfMemory(const QString &logText) {
            && logText.contains(QLatin1String("OutOfMemoryError"), Qt::CaseInsensitive);
 }
 
+bool logShowsManualDebugCrash(const QString &logText) {
+    if (logText.isEmpty()) return false;
+    return logText.contains(QLatin1String("Manually triggered debug crash"),
+                            Qt::CaseInsensitive)
+           || logText.contains(QLatin1String("F3 + C"), Qt::CaseInsensitive);
+}
+
 QString exitDescription(int exitCode) {
     const char *name = nameForExitCode(exitCode);
     if (name == nullptr) {
@@ -130,6 +137,12 @@ QStringList hints(const Facts &facts) {
         }
     };
     const QString where = facts.instanceName.isEmpty() ? facts.instanceId : facts.instanceName;
+
+    // ⓪ 手动调试崩溃。这条要排在最前面：它是**玩家自己按出来的**，不是模组或游戏
+    // 真的坏了；后面那些内存/Java 规则即使碰巧命中也不该让人去改配置。
+    if (facts.sawManualDebugCrash) {
+        say(QCoreApplication::translate("GameExitDiagnosis", "日志显示这是手动触发的调试崩溃（F3+C）。如果只是在测试，松开 F3+C 后不要在倒计时里等，崩溃就不会发生；这次退出不代表游戏或模组有问题。"));
+    }
 
     // ① Java 版本对不上。**两个数都非 0 才说话** —— 只拿到一个的时候分不出"对得上"和
     // "没测出来"，那时候说"版本不匹配"就是猜。

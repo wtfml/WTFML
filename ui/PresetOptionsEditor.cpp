@@ -182,7 +182,13 @@ public:
 protected:
     void initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const override {
         QStyledItemDelegate::initStyleOption(option, index);
-        if (index.column() == 0) if (const auto *spec = PresetOptionCatalog::find(index.data().toString())) option->text = spec->name;
+        if (index.column() == 1) {
+            // 右栏的输入控件负责显示设置值。透明底下只画行底，原始值留在模型里供搜索和保存。
+            option->text.clear();
+            option->features.setFlag(QStyleOptionViewItem::HasDisplay, false);
+        } else if (const auto *spec = PresetOptionCatalog::find(index.data().toString())) {
+            option->text = spec->name;
+        }
     }
 };
 }

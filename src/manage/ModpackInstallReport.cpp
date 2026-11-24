@@ -221,14 +221,32 @@ QList<ModpackImport::FileIssue> remaining(
     return out;
 }
 QString description(const ModpackImport::FileIssue &issue) {
+    const QString projectSlug = issue.projectWebUrl.section(QLatin1Char('/'), -1);
+    const QString projectName = projectSlug.isEmpty()
+                                    ? QObject::tr("项目 %1").arg(issue.ref.projectId)
+                                    : projectSlug;
     if (issue.ref.projectId <= 0 || issue.ref.fileId <= 0)
         return QStringLiteral("%1\n%2\n%3").arg(issue.fileName, issue.reason, issue.path);
-    const auto url = page(issue);
-    return QCoreApplication::translate("ModpackInstallReport", "%1\n项目 %2 / 文件 %3 / %4\n%5%6")
-        .arg(issue.fileName.isEmpty() ? QObject::tr("文件名未知") : issue.fileName)
-        .arg(issue.ref.projectId).arg(issue.ref.fileId).arg(issue.reason,
-            url.isEmpty() ? QObject::tr("未取得规范网页地址；请按编号手动查找（不代表文件下架）") : url,
-            issue.path.isEmpty() ? QString() : QObject::tr("\n补齐位置：%1").arg(issue.path));
+    // 文件名没返回时（例如 JEI 的 file 7037120），只写“文件名未知”等于没说缺哪个模组；
+    // 这里用项目页最后一段的 slug 当名字，再把项目页给出来。
+    const QString shownName = issue.fileName.isEmpty()
+                                  ? QObject::tr("%1（文件名未返回）").arg(projectName)
+                                  : issue.fileName;
+    const auto fileUrl = page(issue);
+    const QString url = issue.fileName.isEmpty() && !issue.projectWebUrl.isEmpty()
+                            ? issue.projectWebUrl
+                            : fileUrl;
+    const QString where = issue.path.isEmpty()
+                              ? QObject::tr("实例的 mods/ 目录（文件名以项目页为准）")
+                              : issue.path;
+    return QCoreApplication::translate("ModpackInstallReport", "%1\n项目 %2 / 文件 %3 / %4\n%5\n补齐位置：%6\n补法：打开上面的项目页，在 Files 里找对应游戏版本和加载器的文件；下载后放到上面的位置。补齐后回到导入报告选择「完成安装」，或用同一个包和实例名重新导入让本程序校验。")
+        .arg(shownName)
+        .arg(projectName)
+        .arg(issue.ref.fileId)
+        .arg(issue.reason,
+             url.isEmpty() ? QObject::tr("未取得项目页；请按项目名和文件编号在 CurseForge 搜索")
+                           : url,
+             where);
 }
 bool write(const QString &instanceDir, const ModpackImport::Pack &pack,
            const QList<ModpackImport::FileIssue> &issues, bool complete, QString *problem,

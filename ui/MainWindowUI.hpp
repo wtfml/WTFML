@@ -518,7 +518,7 @@ public:
     /// 这里是提示，那里是标题。这个齿轮点下去直接把那一页开出来、不先问什么，
     /// 所以提示不带省略号（Qt 的规矩：点下去还要问点什么的才带）。
     static QString rowInstanceSettingsTipText() { return QCoreApplication::translate("MainWindowUI", "实例设置"); }
-    static QString rowPinTipText() { return QCoreApplication::translate("MainWindowUI", "收藏"); }
+    static QString rowPinTipText() { return QCoreApplication::translate("MainWindowUI", "收藏", "verb"); }
     /// 同一格反过来那一颗（下箭头）弹的话。它是 `rowPinTipText()` 的反义词，
     /// 只说「取消收藏」这一个意思。
     static QString rowUnpinTipText() { return QCoreApplication::translate("MainWindowUI", "取消收藏"); }
@@ -1129,7 +1129,7 @@ public:
         case InstanceFilterButton::Vanilla:
             return QCoreApplication::translate("MainWindowUI", "原版");
         case InstanceFilterButton::Modded:
-            return QCoreApplication::translate("MainWindowUI", "模组");
+            return QCoreApplication::translate("MainWindowUI", "模组", "instance filter");
         case InstanceFilterButton::Updatable:
             return QCoreApplication::translate("MainWindowUI", "可更新");
         case InstanceFilterButton::Recent:
@@ -1208,12 +1208,21 @@ public:
     static QString instancePresetPageName() { return QStringLiteral("instancePresetPage"); }
 
     // ---------- 服务端那一页 ----------
+    enum class ServerFilterButton { Vanilla, Plugins, Mods, Running };
+    static QString serverFilterRowName() { return QStringLiteral("serverFilterRow"); }
+    static QString serverSearchName() { return QStringLiteral("serverSearch"); }
+    static QString serverFilterButtonName(ServerFilterButton which) {
+        return QStringLiteral("serverFilter%1").arg(static_cast<int>(which));
+    }
     static QString serverListName() { return QStringLiteral("serverList"); }
     /// 「一个服务端都还没有」那句（和实例页「没有符合筛选条件的实例」不是一回事：这一句
     /// 说的是"**盘上真的一条都没有**"）。平时收着，列表空着时才露。
     static QString serverEmptyLabelName() { return QStringLiteral("serverEmpty"); }
     static QString serverEmptyText() {
         return QCoreApplication::translate("MainWindowUI", "暂无服务端实例。点击「新建服务端」开始创建。");
+    }
+    static QString serverNoMatchText() {
+        return QCoreApplication::translate("MainWindowUI", "没有符合筛选条件的服务端");
     }
     /// 「新建服务端…」那一颗（正文面底部）。**是造一个新东西出来**，不是改已有的 ——
     /// 所以它是这一页的主操作，摆在列表下面、整栏宽。
@@ -1251,7 +1260,7 @@ public:
     // 控制台、设置、删除…）全在「更多」与右键菜单里；单击一行 = 进服务端设置。
 
     /// 第三格上的字。**唯一出处** —— 界面照它摆，验证工程照它核。
-    static QString serverStartText() { return QCoreApplication::translate("MainWindowUI", "启动"); }
+    static QString serverStartText() { return QCoreApplication::translate("MainWindowUI", "启动", "start server"); }
     static QString serverStopText() { return QCoreApplication::translate("MainWindowUI", "停止"); }
     static QString serverRepairText() { return QCoreApplication::translate("MainWindowUI", "修复"); }
     /// 停止中（第三格是灰的，等它自己退干净）。
@@ -1427,27 +1436,6 @@ public:
         return QStringLiteral("serverSettingsField_") + key;
     }
 
-    /// 左栏那六页的标题。**顺序就是左栏的顺序**（`ServerSettingsPage::Section` 按下标对齐）。
-    /// 「内容」那一页是内容管理（模组 / 数据包）。
-    static int serverSettingsSectionCount() { return 6; }
-    static QString serverSettingsSectionTitle(int index) {
-        switch (index) {
-        case 0:
-            return QCoreApplication::translate("MainWindowUI", "常用设置");
-        case 1:
-            return QCoreApplication::translate("MainWindowUI", "原始文本");
-        case 2:
-            return QCoreApplication::translate("MainWindowUI", "内容");
-        case 3:
-            return QCoreApplication::translate("MainWindowUI", "世界备份");
-        case 4:
-            return QCoreApplication::translate("MainWindowUI", "玩家");
-        case 5:
-            return QCoreApplication::translate("MainWindowUI", "体检");
-        }
-        return QString();
-    }
-
     static QString serverSettingsSaveText() { return QCoreApplication::translate("MainWindowUI", "保存"); }
     static QString serverSettingsRevertText() { return QCoreApplication::translate("MainWindowUI", "放弃改动"); }
     static QString serverSettingsBackupNowText() { return QCoreApplication::translate("MainWindowUI", "立即备份"); }
@@ -1520,13 +1508,15 @@ public:
         return QStringLiteral("serverSettingsContentRefresh");
     }
     /// 那两类。**顺序就是下拉框的顺序**（`ServerContent::Kind` 按下标对齐）。
-    static int serverSettingsContentKindCount() { return 2; }
+    static int serverSettingsContentKindCount() { return 3; }
     static QString serverSettingsContentKindTitle(int index) {
         switch (index) {
         case 0:
             return QCoreApplication::translate("MainWindowUI", "模组");
         case 1:
             return QCoreApplication::translate("MainWindowUI", "数据包");
+        case 2:
+            return QCoreApplication::translate("MainWindowUI", "插件");
         }
         return QString();
     }
@@ -1573,7 +1563,7 @@ public:
     }
     /// 名单那张表的三格。
     static QStringList serverSettingsPlayerColumns() {
-        return QStringList{QCoreApplication::translate("MainWindowUI", "玩家"), QCoreApplication::translate("MainWindowUI", "身份"),
+        return QStringList{QCoreApplication::translate("MainWindowUI", "玩家", "table column"), QCoreApplication::translate("MainWindowUI", "身份"),
                            QCoreApplication::translate("MainWindowUI", "说明")};
     }
     /// 「加一个…」那颗按钮上的字（封禁 IP 那一档问的是地址，不是名字）。
@@ -3380,7 +3370,7 @@ public:
     /// 要不到。**不弹窗**（这是可选的外观功能，见 MainWindow.cpp 里的说明），
     /// 但也不能一声不吭 —— 用户会觉得是画错了。
     static QString skinHintFailedText(const QString &name) {
-        return QCoreApplication::translate("MainWindowUI", "获取皮肤失败，已显示默认外观。").arg(name);
+        return QCoreApplication::translate("MainWindowUI", "获取皮肤失败，已显示默认外观（%1）。").arg(name);
     }
 
     // ---------- 选项卡下标 ----------
@@ -3487,6 +3477,10 @@ public:
     QWidget *getInstancePresetPage() const { return instancePresetPage; }
     /// 服务端那一页的列表（一行一个服务端）。
     QTreeWidget *getServerList() const { return serverList; }
+    QLineEdit *getServerSearchEdit() const { return serverSearchEdit; }
+    QPushButton *getServerFilterButton(ServerFilterButton which) const {
+        return serverFilterButtons.value(static_cast<int>(which));
+    }
     /// 「还没有服务端」那句（平时收着）。
     QLabel *getServerEmptyLabel() const { return serverEmptyLabel; }
     /// 「新建服务端…」那一颗。
@@ -3572,6 +3566,7 @@ public:
     void showInstanceFolderText();
     /// 预设那一档的副标题（「N 份预设」）。只在预设模式写进页头；其余时候先记着。
     void setPresetSubtitle(const QString &text);
+    void setPresetDetailVisible(bool visible);
 
     /// 让它露面/收起来。**收起时连位置都不占**（`setVisible(false)`，不是 `setEnabled`）。
     void setDownloadBackVisible(bool visible) {
@@ -3702,6 +3697,8 @@ public:
     QComboBox *getLauncherBehaviourCombo() const { return launcherBehaviourCombo; }
     QPlainTextEdit *getExtraJvmArgsEdit() const { return extraJvmArgsEdit; }
     QComboBox *getDownloadSourceCombo() const { return downloadSourceCombo; }
+    QPushButton *getClearLauncherCacheButton() const { return clearLauncherCacheButton; }
+    QPushButton *getFirstRunTestButton() const { return firstRunTestButton; }
     QComboBox *getDownloadConcurrencyCombo() const { return downloadConcurrencyCombo; }
     QComboBox *getDownloadSpeedLimitCombo() const { return downloadSpeedLimitCombo; }
     QComboBox *getDownloadProxyCombo() const { return downloadProxyCombo; }
@@ -3908,7 +3905,7 @@ private:
     /// 这个函数只负责开，不管现在开着什么。
     void openBottomBarPanel(const BottomBarAnchor &anchor);
     /// 开任务中心那一块（整页：筛选 / 搜索 / 历史 / 详情；浮动面板「全部任务」进这里）。
-    void openTaskCenterPanel();
+    void openTaskCenterPanel(const QString &taskKey = {});
     /// 任务摘要那一格：开 / 收任务中心浮动面板（ui/ActivityPopover，设计稿 panels-tasks）。
     void toggleActivityPopover();
     /// 现在开着的任务中心面板（没开着 = nullptr）。它是个 Qt::Popup 窗口，close() 之后
@@ -3967,6 +3964,7 @@ private:
     QString instanceFolderText;
     QString serverFolderText;
     QString presetSubtitleText;
+    bool presetDetailVisible = false;
     /// 现在停在哪一档（`setInstanceMode()` 写；上面那两份底稿按它挑一份写进页头）。
     InstanceMode instanceMode = InstanceMode::Client;
     /// 实例页那一行搜索与筛选：一个搜索框 + 四颗 chip，摆进正文面里
@@ -3987,6 +3985,8 @@ private:
     QList<QPushButton *> instanceModeButtons;
     /// 服务端那一页：列表 + 空态那句 + 「新建服务端…」那颗。
     QTreeWidget *serverList = nullptr;
+    QLineEdit *serverSearchEdit = nullptr;
+    QList<QPushButton *> serverFilterButtons;
     QLabel *serverEmptyLabel = nullptr;
     QPushButton *newServerButton = nullptr;
     QComboBox *installedVersionCombo = nullptr;
@@ -4093,6 +4093,8 @@ private:
     QCheckBox *showGameLogCheck = nullptr;
     /// 「下载」栏里那个勾选框。
     QCheckBox *downloadAutoIntoInstanceCheck = nullptr;
+    QPushButton *clearLauncherCacheButton = nullptr;
+    QPushButton *firstRunTestButton = nullptr;
     /// 同一栏里「缺失前置提醒」那个勾选框。
     QCheckBox *warnMissingDependenciesCheck = nullptr;
     QCheckBox *warnDuplicateLaunchCheck = nullptr;

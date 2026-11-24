@@ -33,6 +33,7 @@
 #include "controllers/InstanceIconController.hpp"
 #include "controllers/InstanceUpdateCheckController.hpp"
 #include "controllers/IntegrityController.hpp"
+#include "manage/VersionManager.hpp"
 #include "controllers/LaunchController.hpp"
 #include "controllers/PresetController.hpp"
 #include "controllers/ServerRunController.hpp"
@@ -139,6 +140,22 @@ void MainWindow::closeEvent(QCloseEvent *event) {
             return;
         }
         m_launchController->abortStart(LaunchController::StartCancelSource::LauncherClosing);
+    }
+
+    if (m_versionManager != nullptr && m_versionManager->isModpackImporting()) {
+        const int choice = InlineMessage::ask(
+            m_ui->overlay(), MessageKind::Question, tr("正在安装整合包"),
+            tr("整合包还在安装。现在关闭启动器会取消安装，已下载的文件会保留。\n\n确认关闭？"),
+            QStringList{tr("取消并关闭"), tr("继续安装")}, 1, 0);
+        if (choice < 0) {
+            appendLog(tr("关闭被搁置：还有一条提示没答完，答完再关一次。"));
+            event->ignore();
+            return;
+        }
+        if (choice != 0) {
+            event->ignore();
+            return;
+        }
     }
 
     if (games.isEmpty() && serverIds.isEmpty()) {

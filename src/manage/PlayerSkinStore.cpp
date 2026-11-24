@@ -377,6 +377,12 @@ bool PlayerSkinStore::withinThrottleBackoff(const QDateTime &throttledUntil,
     return now < throttledUntil;
 }
 
+QUrl PlayerSkinStore::profileRequestUrl(const QString &key) {
+    return QUrl((g_profileBaseOverride.isEmpty()
+                     ? QLatin1String(kProfileEndpoint)
+                     : withTrailingSlash(g_profileBaseOverride)) + key);
+}
+
 void PlayerSkinStore::refreshForUuid(const QString &uuid) {
     const QString key = uuidKey(uuid);
     if (key.isEmpty()) {
@@ -391,9 +397,7 @@ void PlayerSkinStore::refreshForUuid(const QString &uuid) {
         return;
     }
 
-    const QUrl url(g_profileBaseOverride.isEmpty() ? QLatin1String(kProfileEndpoint)
-                                                   : withTrailingSlash(g_profileBaseOverride) + key);
-    QNetworkRequest request(url);
+    QNetworkRequest request(profileRequestUrl(key));
     // 超时不写在请求上：这一发和别的短请求共用 Control 名额，排队 + 传输一起算进
     // kTransferTimeoutMs（ControlGet 按剩余时间自己设 transferTimeout）。
     // `key` 一起捕获进去：回来的时候"现在是谁"可能已经不是发请求时的那个了，而这份档案

@@ -1200,7 +1200,7 @@ private slots:
     /// 下载页整合包一键安装入口：整合包压缩包已在缓存目录就绪、实例名也已在点击时确认，
     /// 直接沿用现有的 @p taskId 推进任务中心步骤并进入导入。
     void importModpackOneClick(const QString &zipPath, const QString &confirmedInstanceName,
-                               Tasks::TaskId taskId = Tasks::invalidTaskId());
+                               Tasks::TaskId taskId = Tasks::invalidTaskId(), const QString &coverCacheId = {});
 
     void markOneClickModpack(const QString &instanceId) { m_oneClickModpackIds.insert(instanceId); }
     bool takeOneClickModpack(const QString &instanceId) { return m_oneClickModpackIds.remove(instanceId); }
@@ -1457,7 +1457,7 @@ private:
     /// 不是一套）。★ 来源必须跟着走：前置要问"那个号叫什么、有哪些版本"。
     void installResourceVersion(ResourceCatalog::Kind kind, const QString &displayTitle,
                                 ResourceCatalog::VersionEntry version,
-                                ResourceCatalog::Source source);
+                                ResourceCatalog::Source source, const QString &projectIconId = {});
 
     // ---------- 资源详情页----------
     //
@@ -1743,9 +1743,7 @@ private:
     ///
     /// NOTE: 它**自己不搜索**（这一层只管把选项换一份）。"换完就按新来源搜一发"接在
     /// 构造函数里那条 `activated` 上 —— 「下拉即搜」这条规矩在那一处收口。
-    /// NOTE: 换来源会把这一页的加载器/类型两项**退回「全部」**：两边的键根本不是一套
-    /// （Modrinth 的 `fabric` vs CurseForge 的 `4`），留着上一个来源的选中项就是
-    /// 拿 A 家的号去问 B 家 —— 而且它不报错，只会搜出个空的。
+    /// 切换来源时按名称保留加载器，重置站点分类。全部来源模式隐藏站点分类。
     void refreshDownloadFilterOptions(ResourceCatalog::Kind kind);
     /// 把那一份**在线版本清单**灌进五页的「版本」框（构造时一次、清单一到又一次）。
     ///
@@ -1753,7 +1751,7 @@ private:
     /// 清单是异步回来的，把它当成"重新填一遍"就会清掉他刚打的版本号。
     void fillDownloadFilterVersionOptions();
     /// 这一页现在选的来源（框里没有值 / 认不出来 = Modrinth，和"没这一栏"时一致）。
-    ResourceCatalog::Source downloadFilterSource(ResourceCatalog::Kind kind) const;
+    QList<ResourceCatalog::Source> downloadFilterSources(ResourceCatalog::Kind kind) const;
     /// 这一页现在选的游戏版本（**框里的字**：这一格是可输入的，用户自己打的版本号
     /// 不在列表里，读 `currentData()` 会读到一个空 —— 那正是"看着筛了、实际没筛"）。
     /// 空串 = 不筛。
@@ -1917,6 +1915,8 @@ private:
     void onLauncherBehaviourChanged();
     /// 「语言」那一格（界面语言）：落盘 + 提示重启 + 可选「立即重启」。
     void onLanguageChanged();
+    void onClearLauncherCache();
+    void onOpenFirstRunTest();
     void onDownloadSourceChanged();
     /// 「下载源」那一组里那颗「并发数」下拉框。
     void onDownloadConcurrencyChanged();
@@ -2370,6 +2370,7 @@ private:
     void setInstanceMode(MainWindowUI::InstanceMode mode);
     /// 重扫 `<数据目录>/Servers`，把服务端列表重灌一遍（`ServerRegistry::scanAll()`）。
     void refreshServerList();
+    void applyServerListFilters();
     /// 打开「新建服务端」那张表单 —— 它**不是**单独开的一页：表单就住在「下载 → 服务端」
     /// 那一栏的第二层里（和「游戏」的安装页同一个形状，`downloadServerFormIndex()`）。
     /// 所以这里做的是"切到下载页 → 翻到服务端那一栏 → 停在表单那一层"。
@@ -2874,9 +2875,13 @@ private:
     /// —— 安装完、下载完、改名、换文件夹…都走那条路，所以这份缓存
     /// 不会比屏幕上那一棵树更旧。
     QList<VersionDisplayParts> m_instancePageParts;
+    /// 同步缓存客户端列表文案，筛选和运行态刷新直接复用已解析的版本信息。
+    QHash<QString, InstanceListRowText> m_instancePageRowTexts;
     /// 和上面那份**一一对应**的行首图标（`instanceRowMark()` 的成品）。缓存它是因为算一张
     /// 要读版本 json，而且它是"行前面那张图"，筛选前后**同一行画的还是同一张**。
     QHash<QString, QIcon> m_instancePageMarks;
+    /// 左侧封面预先解码，搜索筛选只读取已算好的图标。
+    QHash<QString, QIcon> m_instancePageCovers;
     /// 「从资源详情页返回时，那一页停在哪儿」—— 一趟性的来路（见 `NavigationReturn`）。
     ///
     /// 要保留从资源详情页退出时的滚动位置。为什么得由这一层带着走：回来时那一页是
@@ -2912,15 +2917,13 @@ private:
     /// 实例里了」而**实际没装**。按 label 键控之后，"这一单是不是在等导入的那一单"
     /// 才是个能判的问题。
     ///
-    /// NOTE: 光键控还不够，还有**登记时机**这一半：记录只在 `downloadResourceFiles()`
-    /// 回答"开起来了"之后才写（见 downloadResourceVersion）。被拒绝的那一发会带着
-    /// **同一个 label** 发一个假失败 —— 双击那一行的第二下正是这样。两半都要，
-    /// 少一半就还是会被吃掉。
-    /// 顺带的好处：两个整合包前后脚开始下也各自记得住（键不同，take() 各取各的）。
+    /// 记录在开启批次前登记，覆盖命中缓存时同步完成的路径。收尾同时核对任务号，重试接管原记录。
     struct PendingModpackImport {
         QString path;
         QString instanceName;
         Tasks::TaskId taskId = Tasks::invalidTaskId();
+        QString gameRoot;
+        QString coverCacheId;
     };
     QHash<QString, PendingModpackImport> m_pendingModpackImports;
     QSet<QString> m_oneClickModpackIds;
@@ -3087,6 +3090,9 @@ private:
 
     /// 异常退出了 → 账本上补一项，并留一份 `CrashRecord`。
     void reportGameCrash(int sessionId, int exitCode, bool crashed);
+
+    /// 崩溃卡片上的「使用智能体询问」：带着崩溃摘要切到智能体页并发问。
+    void askAgentAboutCrash(const QString &context);
 
     void exportCrashReport(const QString &key);
     void openCrashReportsDir(const QString &key);

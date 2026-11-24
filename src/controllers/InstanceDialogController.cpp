@@ -4,6 +4,7 @@
 #include "InstanceDialogController.hpp"
 #include "UpgradeAssessment.hpp"
 #include "InstanceUpdateFlow.hpp"
+#include "MainWindowViewData.hpp"
 #include "download/ResourceStore.hpp"
 
 #include "MainWindow.hpp"
@@ -271,24 +272,6 @@ VersionCategory::Channel versionChannelOf(const VersionManager *versions,
                                        type.isEmpty() ? QStringLiteral("release") : type);
 }
 
-QPixmap defaultInstanceMark(const VersionDisplayParts &part, const VersionManager *versions,
-                            int size) {
-    const QString loader = InstancePagesController::loaderName(part, versions);
-    if (!loader.isEmpty()) {
-        for (int index = 0; index < MainWindowUI::modLoaderNoneIndex(); ++index) {
-            VersionManager::LoaderKind kind;
-            if (VersionManager::loaderKindFromIndex(index, &kind)
-                && VersionManager::loaderDisplayName(kind) == loader) {
-                return VersionIcons::loaderMark(index, size);
-            }
-        }
-        return VersionIcons::grassBlock(size);
-    }
-    return VersionIcons::versionChannelMark(VersionCategory::channelIndex(
-                                                versionChannelOf(versions, part.id)),
-                                            size);
-}
-
 QSet<QString> knownGroupIdsOf(const InstanceGroupStore *groups) {
     QSet<QString> known;
     for (const InstanceGroupStore::Group &group : groups->groups()) known.insert(group.id);
@@ -372,11 +355,11 @@ void showLogFileInfo(InstanceSettingsDialog &dialog, const QString &key, const Q
     static QHash<QString, qint64> counted;
     const QFileInfo info(path);
     if (!info.isFile()) {
-        dialog.setLifecycleInfoText(key, path, QStringLiteral("读不出来：找不到这个文件。"));
+        dialog.setLifecycleInfoText(key, path, QCoreApplication::translate("InstanceDialogController", "读不出来：找不到这个文件。"));
         return;
     }
     const auto text = [info](qint64 lines) {
-        const QString lineText = lines >= 0 ? QStringLiteral("%1 行").arg(lines) : QStringLiteral("行数统计中…");
+        const QString lineText = lines >= 0 ? QCoreApplication::translate("InstanceDialogController", "%1 行").arg(lines) : QCoreApplication::translate("InstanceDialogController", "行数统计中…");
         return QStringList{info.fileName(),
                            info.lastModified().toString(QStringLiteral("yyyy-MM-dd HH:mm")),
                            FileHash::fileSizeText(info.size()), lineText}
@@ -401,7 +384,7 @@ void showLogFileInfo(InstanceSettingsDialog &dialog, const QString &key, const Q
             counted.insert(cacheKey, result.lines);
             dialog.setLifecycleInfoText(key, path, text(result.lines), toolTip);
         } else if (result.lines >= 0) {  // 放弃的那发 lines 记 -1，不报错
-            dialog.setLifecycleInfoText(key, path, QStringLiteral("读不出来：%1").arg(result.problem));
+            dialog.setLifecycleInfoText(key, path, QCoreApplication::translate("InstanceDialogController", "读不出来：%1").arg(result.problem));
         }
     });
     watcher->setFuture(QtConcurrent::run([path, token] {
@@ -578,6 +561,17 @@ void InstanceDialogController::open(const QString &versionId, const QString &pag
     qInfo() << "[UI timing] settings dialog ctor" << settingsClock.elapsed() << "ms";
     session->setParent(dialogPtr);
     InstanceSettingsDialog &dialog = *dialogPtr;
+    connect(dialogPtr, &InstanceSettingsDialog::javaRuntimeChoicesRequested, dialogPtr, [dialogPtr] {
+        const QString javaDir = AppPaths::javaDir();
+        auto *watcher = new QFutureWatcher<QMap<int, QStringList>>(dialogPtr);
+        connect(watcher, &QFutureWatcher<QMap<int, QStringList>>::finished, dialogPtr, [dialogPtr, watcher] {
+            dialogPtr->setJavaRuntimeChoices(watcher->result());
+            watcher->deleteLater();
+        });
+        watcher->setFuture(QtConcurrent::run([javaDir] {
+            return GlobalJavaSettings::scanAvailableJavaPaths(javaDir);
+        }));
+    });
     dialog.setLastLaunch(LaunchHistory::lastStartedAt(m_owner->m_launchHistory->records(), versionId));
     const auto playTime = m_owner->m_launchHistory->completedPlayTime(
         m_owner->m_versionManager->instanceId(versionId));
@@ -618,7 +612,9 @@ void InstanceDialogController::open(const QString &versionId, const QString &pag
     if (parts.icon == InstanceSettingsDialog::localIconValue()) {
         localIcon = VersionIcons::fileMark(AppPaths::versionIconPath(versionId), previewSize);
     }
-    dialog.setIcon(parts.icon, defaultInstanceMark(parts, m_owner->m_versionManager, previewSize), localIcon);
+    VersionDisplayParts defaultCover = parts;
+    defaultCover.icon.clear();
+    dialog.setIcon(parts.icon, MainWindowViewData::instanceCoverMark(defaultCover, previewSize), localIcon);
     {
         const QString game = parts.realVersion.isEmpty() ? parts.id : parts.realVersion;
         // 加载器名走 `InstancePagesController::loaderName()`，**不直接读 `parts.loaderName`**：
@@ -676,6 +672,13 @@ void InstanceDialogController::open(const QString &versionId, const QString &pag
     // 这一位在会话里（不是栈上）：收页之后那些接线还得读它，见 InstanceSettingsSession。
     QString &targetId = session->targetId;
     session->refreshInstanceDirs = [this, &dialog, &targetId](const QString &id) {
+        // 实例可能在设置页开着的时候被删掉（管理页的行尾删除、另一个入口的删除）。
+        // 这时别再拿旧 id 去算目录并 set 回对话框 —— 更不能让后面的「打开目录」用
+        // `mkpath()` 把它重新建出来。直接把这一页收掉。
+        if (!QFileInfo(AppPaths::versionDir(id)).isDir()) {
+            m_owner->m_ui->overlay()->dismiss();
+            return;
+        }
         QElapsedTimer dirClock;
         dirClock.start();
         // 这一段"算"的活全在 `InstancePagesController` 里（哪几页用得上、
@@ -1791,8 +1794,18 @@ void InstanceDialogController::open(const QString &versionId, const QString &pag
                 m_owner->m_gameSessionController->openLogFile(path);
             });
     connect(&dialog, &InstanceSettingsDialog::openInstanceFolderRequested, m_owner,
-            [this](const QString &path) {
+            [this, &targetId](const QString &path) {
                 if (path.isEmpty()) {
+                    return;
+                }
+                // 先认实例根目录，再决定要不要建快捷目录：实例已经被删掉、页面却还留着时，
+                // 直接 `mkpath(path)` 会把 `versions/<旧实例>/saves` 这类空壳目录重新建出来，
+                // 首页就多出一个“删不掉的空实例”。根目录不在就只报一句，绝不落盘。
+                const QString instanceRoot = AppPaths::versionDir(targetId);
+                if (!QFileInfo(instanceRoot).isDir()) {
+                    InlineMessage::warning(m_owner->m_ui->overlay(), tr("实例已不存在"),
+                                           tr("这个实例的目录已经不在盘上了，无法打开或创建它的文件夹。请刷新实例列表。"));
+                    m_owner->m_ui->overlay()->dismiss();
                     return;
                 }
                 // 先建出来再开：新实例的 saves/ screenshots/ 多半还不存在，而这九颗按钮
@@ -2722,6 +2735,24 @@ void InstanceDialogController::open(const QString &versionId, const QString &pag
     // 一份 wtfml.meta 的空壳实例。
     connect(&dialog, &InstanceSettingsDialog::settingsEdited, m_owner,
             [this, &dialog, &targetId]() { m_owner->applyInstanceSettings(targetId, dialog); });
+    connect(&dialog, &InstanceSettingsDialog::gameIconChoicesRequested, &dialog,
+            [this, &dialog, &targetId] {
+        QStringList jars;
+        const QString gameVersion = m_owner->m_versionManager->instanceGameVersion(targetId);
+        if (!gameVersion.isEmpty() && QFileInfo::exists(AppPaths::versionJarPath(gameVersion))) {
+            jars.append(AppPaths::versionJarPath(gameVersion));
+        }
+        const QString instanceJar = InstanceFiles::jarPath(targetId);
+        if (QFileInfo::exists(instanceJar) && !jars.contains(instanceJar)) jars.append(instanceJar);
+        using Choices = QList<QPair<QString, QImage>>;
+        auto *watcher = new QFutureWatcher<Choices>(&dialog);
+        connect(watcher, &QFutureWatcher<Choices>::finished, &dialog, [&dialog, watcher] {
+            const auto choices = watcher->result();
+            watcher->deleteLater();
+            dialog.setGameIconChoices(choices);
+        });
+        watcher->setFuture(QtConcurrent::run([jars] { return InstanceFiles::readGameItemIcons(jars); }));
+    });
 
     // 改名：**排在写设置之外自己一条**。
     // 两件事不能合成一条 —— 改名的副作用是**整个实例换了个目录**，写设置必须发生在它

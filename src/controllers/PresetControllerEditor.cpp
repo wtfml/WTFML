@@ -20,7 +20,7 @@
 #include <QTemporaryDir>
 #include <QtConcurrent/QtConcurrentRun>
 
-void PresetController::openEditor(const QString &id, bool draft) {
+void PresetController::openEditor(const QString &id, bool draft, int section) {
     if (m_editor && !leaveEditor())
         return;
     buildPage();
@@ -55,13 +55,13 @@ void PresetController::openEditor(const QString &id, bool draft) {
         }
         editableSections.insert(key);
     }
-    if (!m_host.showPage) {
+    const bool embedded = section >= 0;
+    if (!embedded && !m_host.showPage) {
         if (m_page) m_page->showStatus(tr("当前界面不能打开预设编辑器。"));
         return;
     }
-    // 编辑器是**整页**（和实例设置同一条路）：铺在内容区上，页眉带返回箭头。摆上去就
-    // 返回 —— 收页由覆盖层自己管，收掉之后才叫下面那条回调（见 `Host::showPage`）。
-    auto *editor = new PresetEditorPage(state);
+    auto *editor = new PresetEditorPage(state, embedded ? m_page.data() : nullptr,
+        embedded ? PresetEditorPage::Presentation::Embedded : PresetEditorPage::Presentation::FullPage);
     editor->saveRequested = [this](bool draft) { saveEditor(draft); };
     editor->backRequested = [this] { leaveEditor(); };
     editor->confirmReset = [this](const QString &text) {
@@ -69,6 +69,11 @@ void PresetController::openEditor(const QString &id, bool draft) {
                m_editorPrompt(tr("放弃修改"), text, {tr("确认"), tr("取消")}) == 0;
     };
     m_editor = editor;
+    if (embedded) {
+        editor->selectSection(section);
+        m_page->embedEditor(editor);
+        return;
+    }
     const bool shown = m_host.showPage(
         editor, id.isEmpty() ? tr("新建预设") : tr("编辑预设"), -1,
         [this, editor](int) {
@@ -94,6 +99,12 @@ void PresetController::closeEditor() {
         return;
     auto *editor = m_editor.data();
     m_editor = nullptr;
+    if (m_page && m_page->hasEmbeddedEditor()) {
+        m_page->removeEmbeddedEditor();
+        editor->deleteLater();
+        refreshList(m_currentId);
+        return;
+    }
     refreshList(m_currentId);
     // 收页 = accept()：覆盖层收到 finished 就拆这一层，随后 `pageClosed()` 叫到
     // openEditor() 里那条回调（reject() 已经被页面接管成"问要不要保存"，见
@@ -124,7 +135,8 @@ void PresetController::saveEditor(bool draft, const std::function<void(bool)> &d
                         editor->markSaved(result.document);
                         editor->showProblem(draft ? tr("草稿已保存") : tr("预设已保存"));
                         m_currentId = draft ? QStringLiteral("draft:")+result.manifest.id : result.manifest.id;
-                        refreshList(m_currentId);
+                        // 详情左栏正在编辑时，等离开再重读列表，保留当前标签和编辑文档。
+                        if (!m_page || !m_page->hasEmbeddedEditor()) refreshList(m_currentId);
                     } else
                         editor->showProblem(result.problem);
                 }

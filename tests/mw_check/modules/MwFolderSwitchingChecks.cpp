@@ -240,10 +240,9 @@ int MwFolderSwitchingChecks(const QDir &root, MainWindow &window) {
                           instanceItems.first()->data(0, Qt::UserRole).toString() ==
                               QStringLiteral("1.7.10"),
                       "列的就是那一份里的 1.7.10");
-                check(!instanceItems.isEmpty() &&
-                          !instanceItems.first()->data(0, ListRowDelegate::SubtitleRole).toString()
-                               .contains(QStringLiteral("游玩")),
-                      "没有游玩记录的实例只显示原有副标题");
+                check(!instanceItems.isEmpty() && instanceItems.first()->text(0) == QStringLiteral("1.7.10") &&
+                          instanceItems.first()->data(0, ListRowDelegate::SubtitleRole).toString().isEmpty(),
+                      "未命名的实例只显示一行版本号");
                 auto *versions = w7.findChild<VersionManager *>();
                 const QString stableId = versions ? versions->ensureInstanceId(QStringLiteral("1.7.10")) : QString();
                 const qint64 playedMs = 75 * 60 * 1000;
@@ -279,9 +278,10 @@ int MwFolderSwitchingChecks(const QDir &root, MainWindow &window) {
                           QStringLiteral("picker=%1 list=%2 root=%3 pill=%4 rows=%5")
                               .arg(picker != nullptr).arg(list != nullptr).arg(manager->currentFolder(),
                                   pill ? pill->text() : QString()).arg(rows.size()));
-                    check(rows.size() == 1 && rows.first()->data(0, ListRowDelegate::SubtitleRole).toString()
-                              .contains(QStringLiteral("游玩 %1").arg(LaunchHistory::playTimeText(playedMs))),
-                          "有游玩记录的实例在副标题显示游玩时长");
+                    check(rows.size() == 1 && rows.first()->data(0, ListRowDelegate::SubtitleRole).toString().isEmpty() &&
+                              rows.first()->toolTip(0).contains(
+                                  QStringLiteral("游玩 %1").arg(LaunchHistory::playTimeText(playedMs))),
+                          "未命名实例有游玩记录时仍只显示一行，悬停可查看时长");
                     if (!sameDir(manager->currentFolder(), otherRoot)) manager->setCurrentFolder(otherRoot);
                 }
                 // 同上：判据从"那个按钮亮了"搬到"齿轮里那一项亮了"（就是同一件事，

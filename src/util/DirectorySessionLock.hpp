@@ -1,6 +1,8 @@
 #pragma once
 
+#include "AppPaths.hpp"
 #include "manage/InstanceFiles.hpp"
+#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFileInfo>
@@ -8,7 +10,6 @@
 #include <QLockFile>
 #include <QMutex>
 #include <QMutexLocker>
-#include <QStandardPaths>
 #include <QThread>
 #include <memory>
 
@@ -45,8 +46,9 @@ inline QString lockDirectory() {
     if (tempInfo.isDir() && tempInfo.isWritable()) {
         return temp;
     }
-    const QString fallback =
-        QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    // 落到启动器自己的缓存根（`%LOCALAPPDATA%\WTFML\cache`），不再用 AppLocalDataLocation
+    // 拼出 `<LOCALAPPDATA>/WTFML/WTFML` 这种第二层。
+    const QString fallback = AppPaths::localCacheRoot();
     if (!fallback.isEmpty() && QDir().mkpath(fallback)) {
         const QFileInfo fallbackInfo(fallback);
         if (fallbackInfo.isDir() && fallbackInfo.isWritable()) {
@@ -72,7 +74,7 @@ inline bool acquire(const QString &root, QString *problem = nullptr) {
     if (problem) problem->clear();
     if (!enabled) return true;
     if (root.trimmed().isEmpty()) {
-        if (problem) *problem = QStringLiteral("未指定数据目录，未继续操作。");
+        if (problem) *problem = QCoreApplication::translate("DirectorySessionLock", "未指定数据目录，未继续操作。");
         return false;
     }
     const auto key = keyFor(root);
@@ -93,11 +95,11 @@ inline bool acquire(const QString &root, QString *problem = nullptr) {
     if (!locked) {
         if (problem) {
             *problem = lock->error() == QLockFile::LockFailedError
-                ? QStringLiteral("这个数据目录已被另一份启动器占用，请先关闭那一份窗口。\n%1\n\n"
+                ? QCoreApplication::translate("DirectorySessionLock", "这个数据目录已被另一份启动器占用，请先关闭那一份窗口。\n%1\n\n"
                                  "如果确认没有别的启动器在运行（上一次是崩溃或强制结束的），"
                                  "删掉这个文件再试：\n%2")
                       .arg(QDir::toNativeSeparators(root), QDir::toNativeSeparators(lockPath))
-                : QStringLiteral("无法取得数据目录的安全锁，未继续操作。\n%1\n\n"
+                : QCoreApplication::translate("DirectorySessionLock", "无法取得数据目录的安全锁，未继续操作。\n%1\n\n"
                                  "锁文件：%2")
                       .arg(QDir::toNativeSeparators(root),
                            QDir::toNativeSeparators(lockPath));

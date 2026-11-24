@@ -67,6 +67,14 @@ inline QString resolve(const QString &setting, const QStringList &systemUiLangua
 /// 英文翻译在资源里的路径（构建时编进程序，产品与验证工程同一份）。
 inline QString englishCatalogPath() { return QStringLiteral(":/i18n/wtfml_en.qm"); }
 
+/// 当前装上的界面翻译是不是英文（没装翻译 = 中文）。译文里这一条写 "en"。
+///
+/// 给"按语言换显示单位"这类**代码**分支用：中文有万 / 亿，英文只有 K / M / B，
+/// 靠改译文换不过来（那会把数字放大）。译文没跟上时回中文，和没装翻译同一档。
+inline bool isEnglish() {
+    return QCoreApplication::translate("UiLanguage", "zh") == QLatin1String("en");
+}
+
 /// 把英文那一份读进 `translator`。给验证工程自己装/卸时用。
 inline bool loadEnglish(QTranslator *translator) {
     return translator != nullptr && translator->load(englishCatalogPath());

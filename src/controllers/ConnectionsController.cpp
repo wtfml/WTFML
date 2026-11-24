@@ -24,6 +24,7 @@
 #include "controllers/ServerMenuController.hpp"
 #include "download/ResourceStore.hpp"
 #include "download/DownloadRate.hpp"
+#include <array>
 #include <memory>
 #include <QTimer>
 #include <QDesktopServices>
@@ -151,6 +152,23 @@ void ConnectionsController::setup() {
         if (QPushButton *newServer = m_owner->m_ui->getNewServerButton()) {
             connect(newServer, &QPushButton::clicked, m_owner, &MainWindow::openNewServerPage);
         }
+        connect(m_owner->m_ui->getServerSearchEdit(), &QLineEdit::textChanged,
+                m_owner, &MainWindow::applyServerListFilters);
+        using ServerFilter = MainWindowUI::ServerFilterButton;
+        const std::array types{ServerFilter::Vanilla, ServerFilter::Plugins, ServerFilter::Mods};
+        for (const auto type : types) {
+            connect(m_owner->m_ui->getServerFilterButton(type), &QPushButton::clicked, m_owner,
+                    [this, types, type](bool checked) {
+                if (checked) {
+                    for (const auto other : types) {
+                        if (other != type) m_owner->m_ui->getServerFilterButton(other)->setChecked(false);
+                    }
+                }
+                m_owner->applyServerListFilters();
+            });
+        }
+        connect(m_owner->m_ui->getServerFilterButton(ServerFilter::Running), &QPushButton::clicked,
+                m_owner, &MainWindow::applyServerListFilters);
         // 服务端列表和客户端列表同一套手势：单击一行 = 进这个服务端的设置；悬停三格 =
         // 文件夹 / 更多（同右键菜单，含控制台）/ 启动·停止·修复；双击不再开控制台
         // （单击已经跳走，双击的第一下就把页换了）。
@@ -869,6 +887,10 @@ void ConnectionsController::setup() {
     // 「语言」：落盘 + 提示重启（见 MainWindow::onLanguageChanged）。
     connect(m_owner->m_ui->getLanguageCombo(), &QComboBox::currentIndexChanged, m_owner,
             &MainWindow::onLanguageChanged);
+    connect(m_owner->m_ui->getClearLauncherCacheButton(), &QPushButton::clicked, m_owner,
+            &MainWindow::onClearLauncherCache);
+    connect(m_owner->m_ui->getFirstRunTestButton(), &QPushButton::clicked, m_owner,
+            &MainWindow::onOpenFirstRunTest);
     connect(m_owner->m_ui->getDownloadSourceCombo(), &QComboBox::currentIndexChanged, m_owner,
             &MainWindow::onDownloadSourceChanged);
     // 「同时最多下几个」。和上面那颗同一个形状：改完立刻生效。

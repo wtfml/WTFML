@@ -5,6 +5,7 @@
  */
 
 #include "FolderManager.hpp"
+#include "InstanceFiles.hpp"
 #include <QCoreApplication>
 #include <QThread>
 
@@ -570,7 +571,7 @@ FolderManager::FolderManager(LauncherSettings *settings, QObject *parent)
     // 一律重新归一化一遍，免得界面里同一个目录以两种写法各占一行。
     const QStringList stored = m_settings != nullptr ? m_settings->folders() : QStringList();
     for (const QString &entry : stored) {
-        const QString path = normalized(entry);
+        const QString path = gameFolderPathForSelection(entry);
         // 等于自带那份的要丢掉：启动器被拷到 D:\MC\ 之后，用户添加的
         // D:\MC\.minecraft 会和自带那份撞上，留着就是列表里两条一模一样的路径。
         if (path.isEmpty() || path == defaultFolder() || m_userFolders.contains(path)) {
@@ -593,7 +594,7 @@ FolderManager::FolderManager(LauncherSettings *settings, QObject *parent)
         if (tab <= 0) {
             continue;  // 连分隔符都没有（手改的）：这一项读不出是给谁起的名字
         }
-        const QString path = normalized(entry.left(tab));
+        const QString path = gameFolderPathForSelection(entry.left(tab));
         const QString name = entry.mid(tab + 1);
         if (path.isEmpty() || name.isEmpty()) {
             continue;
@@ -601,7 +602,7 @@ FolderManager::FolderManager(LauncherSettings *settings, QObject *parent)
         m_names.insert(path, name);
     }
 
-    m_current = normalized(m_settings != nullptr ? m_settings->currentFolder() : QString());
+    m_current = gameFolderPathForSelection(m_settings != nullptr ? m_settings->currentFolder() : QString());
     if (m_current.isEmpty() || !QFileInfo(m_current).isDir()) {
         // 当前那一份不在盘上（U 盘今天没插、目录被删或被挪走）：这次先用自带那份。
         // **刻意不把盘上那个值改掉** —— 它可能只是今天没挂上，插回去还该接着用它。
@@ -652,6 +653,16 @@ QString FolderManager::normalized(const QString &path) {
 
 QString FolderManager::defaultFolder() { return normalized(AppPaths::defaultMinecraftDir()); }
 
+QString FolderManager::gameFolderPathForSelection(const QString &path) {
+    const QString selected = normalized(path);
+    if (selected.isEmpty()) return {};
+    if (QDir(InstanceFiles::canonicalPath(selected)).isRoot()) {
+        const QString wrapped = normalized(QDir(selected).filePath(QStringLiteral(".minecraft")));
+        return QDir(InstanceFiles::canonicalPath(wrapped)).isRoot() ? QString() : wrapped;
+    }
+    return selected;
+}
+
 bool FolderManager::isDefaultFolder(const QString &path) {
     const QString target = normalized(path);
     return !target.isEmpty() && target == defaultFolder();
@@ -701,8 +712,13 @@ QStringList FolderManager::folders() const {
 QString FolderManager::currentFolder() const { return m_current; }
 
 bool FolderManager::addFolder(const QString &path) {
-    const QString target = normalized(path);
-    if (target.isEmpty() || !QFileInfo(target).isDir()) {
+    if (path.isEmpty() || !QFileInfo(path).isDir()) {
+        return false;
+    }
+    const QString normalizedPath = normalized(path);
+    const QString target = gameFolderPathForSelection(normalizedPath);
+    if (target.isEmpty() || (target != normalizedPath && !QFileInfo(target).isDir()
+        && !QDir(normalizedPath).mkdir(QStringLiteral(".minecraft")) && !QFileInfo(target).isDir())) {
         return false;
     }
     // 自带那份、以及已经在列表里的：不重复追加，但它确实"现在在列表里"，所以算成功。
@@ -853,7 +869,7 @@ void FolderManager::storeNames() {
 }
 
 bool FolderManager::setCurrentFolder(const QString &path) {
-    const QString target = normalized(path);
+    const QString target = gameFolderPathForSelection(path);
     if (target.isEmpty() || !QFileInfo(target).isDir() || !folders().contains(target)) {
         return false;
     }

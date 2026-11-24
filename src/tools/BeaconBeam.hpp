@@ -1,5 +1,6 @@
 #pragma once
 #include <QColor>
+#include <QCoreApplication>
 #include <QList>
 #include <QStringList>
 #include <array>
@@ -14,11 +15,11 @@ inline QColor dyeColor(int index) {
 struct Result { bool ok = true; QString error; QList<QColor> segments; QColor finalColor = Qt::white; };
 inline Result calculate(const QList<int> &glass) {
     Result result;
-    if (glass.size() > 64) { result.ok = false; result.error = QStringLiteral("最多计算 64 层染色玻璃。"); return result; }
+    if (glass.size() > 64) { result.ok = false; result.error = QCoreApplication::translate("BeaconBeam", "最多计算 64 层染色玻璃。"); return result; }
     std::array<double, 3> color{1, 1, 1};
     for (qsizetype i = 0; i < glass.size(); ++i) {
         const auto dye = dyeColor(glass[i]);
-        if (!dye.isValid()) { result.ok = false; result.error = QStringLiteral("玻璃颜色无效。"); result.segments.clear(); return result; }
+        if (!dye.isValid()) { result.ok = false; result.error = QCoreApplication::translate("BeaconBeam", "玻璃颜色无效。"); result.segments.clear(); return result; }
         const std::array<double, 3> next{dye.redF(), dye.greenF(), dye.blueF()};
         for (int channel = 0; channel < 3; ++channel)
             color[channel] = i == 0 ? next[channel] : (color[channel] + next[channel]) / 2;

@@ -23,6 +23,8 @@
 #include "VersionManager.hpp"
 #include <QCoreApplication>
 #include "VersionManagerInternals.hpp"
+#include "download/ResourceStore.hpp"
+#include "util/ImageDecode.hpp"
 
 #include <QDateTime>
 #include <QDebug>
@@ -92,6 +94,10 @@ bool VersionManager::loaderKindForDependencyKey(const QString &key, LoaderKind *
     return false;
 }
 
+void VersionManager::allowPartialModpackImport() {
+    if (m_modpackInstall.active()) m_modpackInstall.allowPartial = true;
+}
+
 void VersionManager::importModpack(const QString &zipPath, const QString &instanceId,
                                    const ModpackImport::Pack &pack,
                                    const QString &installerJavaPath,
@@ -147,6 +153,9 @@ void VersionManager::importModpack(const QString &zipPath, const QString &instan
 
     m_modpackInstall = ModpackInstall();
     m_modpackInstall.zipPath = zipPath;
+    const QFileInfo archive(zipPath);
+    m_modpackInstall.archiveSize = archive.size();
+    m_modpackInstall.archiveModifiedMs = archive.lastModified().toMSecsSinceEpoch();
     m_modpackInstall.instanceId = instanceId;
     m_modpackInstall.pack = pack;
     m_modpackInstall.manifestFingerprint = manifestFingerprint;
@@ -331,7 +340,9 @@ void VersionManager::extractModpackOverrides() {
     const auto result = std::make_shared<Result>();
     const QString archive = m_modpackInstall.zipPath;
     const QString destination = AppPaths::versionDir(id);
-    const QStringList excludes = m_modpackInstall.pack.extractExcludes;
+    QStringList excludes = m_modpackInstall.pack.extractExcludes;
+    excludes.append(QStringLiteral("icon.png"));
+    excludes.append(QLatin1String(InstanceFiles::kModpackCoverFileName));
     m_modpackOverridesFailure.clear();
     auto *watcher = new QFutureWatcher<void>(this);
     connect(watcher, &QFutureWatcher<void>::finished, this,
@@ -364,12 +375,46 @@ void VersionManager::extractModpackOverrides() {
     watcher->setFuture(m_modpackOverridesWork);
 }
 
+namespace {
+
+QImage readModpackCover(const QString &archive, const ModpackImport::Pack &pack,
+                        const std::function<bool()> &cancelled) {
+    QStringList roots{QString()};
+    if (!pack.overridesDir.isEmpty()) roots.append(pack.overridesDir + QLatin1Char('/'));
+    if (!pack.clientOverridesDir.isEmpty()) roots.append(pack.clientOverridesDir + QLatin1Char('/'));
+    if (pack.overridesDir.endsWith(QLatin1String("/.minecraft"))) {
+        roots.append(pack.overridesDir.section(QLatin1Char('/'), 0, -2) + QLatin1Char('/'));
+    }
+    QStringList paths;
+    for (const QString &root : roots) {
+        for (const QString &name : {QStringLiteral("icon.png"), QStringLiteral("cover.png"),
+                                    QStringLiteral("pack.png"), QStringLiteral("logo.png")}) {
+            paths.append(root + name);
+        }
+    }
+    const auto files = ZipUtil::readMetadataBatch({archive}, paths, nullptr, cancelled).value(archive).entries;
+    for (const QString &path : paths) {
+        const QImage image = ImageDecode::decode(files.value(path), {1024, 1024 * 1024});
+        if (!image.isNull()) return image;
+    }
+
+    if (pack.coverCacheId.isEmpty() || cancelled()) return {};
+    const QString cachePath = ResourceStore::iconCachePath(pack.coverCacheId);
+    QFile cache(cachePath);
+    if (cachePath.isEmpty() || !cache.open(QIODevice::ReadOnly) || cache.size() > 1024 * 1024) return {};
+    return ImageDecode::decode(cache.read(1024 * 1024), {1024, 1024 * 1024});
+}
+
+}  // namespace
+
 void VersionManager::finishModpackImport() {
     const QString id = m_modpackInstall.instanceId;
     const auto pack = m_modpackInstall.pack;
     const auto fingerprint = m_modpackInstall.manifestFingerprint;
     const auto destination = AppPaths::versionDir(id);
     const auto dataRoot = AppPaths::minecraftDir();
+    const auto archive = m_modpackInstall.zipPath;
+    const bool needsCover = !QFileInfo::exists(InstanceFiles::modpackCoverPath(id));
     QString planError;
     const auto core = integrityPlan(id, &planError);
     m_modpackInstall.phase = ModpackInstall::Phase::VerifyingCompletion;
@@ -377,7 +422,7 @@ void VersionManager::finishModpackImport() {
     m_modpackOverridesCancelled = std::make_shared<std::atomic_bool>(false);
     m_modpackOverridesFailure.clear();
     const auto cancelled = m_modpackOverridesCancelled;
-    struct Result { QList<ModpackImport::FileIssue> issues; QString error; };
+    struct Result { QList<ModpackImport::FileIssue> issues; QImage cover; QString error; };
     const auto result = std::make_shared<Result>();
     emit modpackImportMessage(tr("正在校验文件并保存安装记录（可取消，最长 900 秒）…"));
     auto *watcher = new QFutureWatcher<void>(this);
@@ -389,7 +434,7 @@ void VersionManager::finishModpackImport() {
             failModpackImport(reason); return;
         }
         if (!result->error.isEmpty()) { failModpackImport(result->error); return; }
-        commitModpackImport(result->issues);
+        commitModpackImport(result->issues, result->cover);
     });
     m_modpackOverridesWork = QtConcurrent::run([=] {
         QElapsedTimer timer; timer.start();
@@ -403,28 +448,32 @@ void VersionManager::finishModpackImport() {
         if (checked.cancelled || stop()) { result->error = tr("最终校验已取消或超时，安装保持未完成"); return; }
         for (const auto &issue : pack.fileIssues)
             if (!checked.suppliedPaths.contains(issue.path)) result->issues.append(issue);
+        if (needsCover && !stop()) result->cover = readModpackCover(archive, pack, stop);
     });
     watcher->setFuture(m_modpackOverridesWork);
 }
 
-void VersionManager::commitModpackImport(const QList<ModpackImport::FileIssue> &issues) {
+void VersionManager::commitModpackImport(const QList<ModpackImport::FileIssue> &issues, const QImage &cover) {
     // 要用的字段先取出来：reset() 会把它们一起清掉（忘了取的表现是那句话里名字变空的）。
     const QString id = m_modpackInstall.instanceId;
     const ModpackImport::Pack pack = m_modpackInstall.pack;
     const int skipped = pack.filesSkipped;
     const int notDistributable = pack.filesNotDistributable;
-    const int missing = pack.filesMissing;
     const int extracted = m_modpackInstall.extractedEntries;
     const QString archivePath = m_modpackInstall.zipPath;
 
-    const bool complete = issues.isEmpty() && notDistributable + missing <= pack.fileIssues.size();
+    const bool complete = issues.isEmpty();
     QString reportProblem;
     if (!ModpackInstallReport::write(AppPaths::versionDir(id), pack, issues, complete, &reportProblem)) {
         failModpackImport(tr("无法保存导入结果，保留未完成状态：%1").arg(reportProblem));
         return;
     }
-    if (!complete) {
-        // 必须在写 meta、移除 importing 标记之前终止，否则缺文件也会变成正常实例。
+    const QString coverPath = InstanceFiles::modpackCoverPath(id);
+    if (!cover.isNull() && !QFileInfo::exists(coverPath)) {
+        QString coverError;
+        if (!InstanceFiles::saveIconImage(coverPath, cover, &coverError)) emit modpackImportMessage(coverError);
+    }
+    if (!complete && !m_modpackInstall.allowPartial) {
         QStringList details;
         for (const auto &issue : issues) details.append(ModpackInstallReport::description(issue));
         failModpackImport(tr("整合包安装尚未完成。已下载的文件和已应用的覆盖文件均已保留。\n\n%1\n\n逐项清单：%2\n补齐后可在报告中选择「完成安装」。如果旧安装缺少有效的安装记录，请用原整合包和原实例名称继续导入。")
@@ -432,6 +481,8 @@ void VersionManager::commitModpackImport(const QList<ModpackImport::FileIssue> &
                  QDir::toNativeSeparators(AppPaths::versionDir(id) + QStringLiteral("/wtfml.import-report.json"))));
         return;
     }
+    // 用户已经在「有文件需要补齐」里选了「继续安装其余内容」：其余文件校验通过后
+    // 先把实例按“缺件”完成，报告仍保留 complete=false。用户可以启动，报告里再补齐。
 
     // 自检：装完的东西得真的能被列表认出来。判据用**读侧那一份**（InstanceFiles::
     // resolveInstance），不自己再判一遍 —— "装是装了、列表里看不见"这个症状这个项目已经
@@ -490,6 +541,23 @@ void VersionManager::commitModpackImport(const QList<ModpackImport::FileIssue> &
     if (notDistributable > 0) {
         extra += tr("\n\n已校验通过 %1 个本地手动补齐文件。").arg(notDistributable);
     }
+    if (!complete) {
+        QStringList names;
+        for (const auto &issue : issues) {
+            if (names.size() >= 6) break;
+            const QString project = issue.projectWebUrl.section(QLatin1Char('/'), -1);
+            names.append(!issue.fileName.isEmpty()
+                             ? issue.fileName
+                             : (project.isEmpty() ? tr("项目 %1").arg(issue.ref.projectId)
+                                                  : project));
+        }
+        QString listed = names.join(QStringLiteral("、") // i18n-ignore
+        );
+        if (issues.size() > names.size()) listed += tr(" 等");
+        extra += tr("\n\n有 %1 个文件未能自动取得：%2。实例已按缺件状态完成导入，可以先启动；补齐这些文件后在导入报告里选择「完成安装」。")
+                     .arg(issues.size())
+                     .arg(listed);
+    }
     // 这一种格式自带的话：MultiMC 实例导入了什么、没导入什么，lwjgl3ify 为什么会起不来。
     // 这条必须落在**终态**里 —— 用户装完就往下走，不会再翻日志。
     if (!pack.supportNote.isEmpty()) {
@@ -519,11 +587,24 @@ void VersionManager::failModpackImport(const QString &reason) {
 
     const QString id = m_modpackInstall.instanceId;
     QString finalReason = reason;
+    if (retryModpackInstance() == id) {
+        finalReason += QStringLiteral("\n\n") + tr("在任务中心选择「重试」可继续安装此实例。");
+    }
     if (QFileInfo::exists(InstanceFiles::importMarkerPath(id))) {
         QList<ModpackImport::FileIssue> candidates = m_modpackInstall.pack.fileIssues;
-        for (const auto &file : m_modpackInstall.pack.files) candidates.append({
-            {file.curseForgeProjectId, file.curseForgeFileId}, QFileInfo(file.path).fileName(),
-            file.path, file.sha1, file.size, tr("下载未完成或文件校验未通过")});
+        // 只把**看起来就不在盘上 / 大小不对**的文件列进报告。失败路径刻意不在 UI 线程
+        // 哈希几 GB 文件，但也不能把已经下好的 433 个文件全当成“下载未完成”摆给用户 ——
+        // 那会变成一份要人逐个点进去下载的假清单。大小对得上的留给后台“重新校验”确认。
+        const QString instanceRoot = AppPaths::versionDir(id);
+        for (const auto &file : m_modpackInstall.pack.files) {
+            const QFileInfo onDisk(QDir(instanceRoot).filePath(file.path));
+            const bool present = onDisk.exists() &&
+                                 (file.size < 0 || onDisk.size() == file.size);
+            if (present) continue;
+            candidates.append({
+                {file.curseForgeProjectId, file.curseForgeFileId}, QFileInfo(file.path).fileName(),
+                file.path, file.sha1, file.size, tr("下载未完成或文件校验未通过")});
+        }
         // 失败路径不再在 UI 线程哈希几 GB 文件；报告保留候选，后台“重新校验”确认哪些已在盘上。
         const auto issues = candidates;
         QString reportProblem;
@@ -768,6 +849,6 @@ void VersionManager::adoptInstallerVersion(const QString &version) {
         QFileInfo(QUrl(m_loaderInstall.installerUrl).path()).fileName();
 
     deferLoaderStep(LoaderInstall::Phase::FetchingInstallerList,
-                    [this] { startInstallerDownload(); });
+                    [this] { prepareInstallerParent(); });
 }
 

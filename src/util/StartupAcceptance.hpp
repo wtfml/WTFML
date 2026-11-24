@@ -1,6 +1,7 @@
 #pragma once
 // Explicit marked-profile acceptance only. Normal startup does not enter this path.
 #include "AppPaths.hpp"
+#include "IsolatedProfile.hpp"
 #include "SecretRedactor.hpp"
 #include "agent/AgentPaths.hpp"
 #include <QApplication>
@@ -35,15 +36,6 @@ struct Context {
     QString languageStep;
     bool enabled() const { return !root.isEmpty(); }
 };
-inline bool safe(const QString &path) {
-    for (QString p = path;;) {
-        const QFileInfo info(p);
-        if (info.isSymLink() || info.isJunction() || (info.exists() && !info.isDir())) return false;
-        const auto parent = info.absolutePath();
-        if (p == parent) return true;
-        p = parent;
-    }
-}
 inline bool configure(Context *out, QString *error) {
     const auto args = QCoreApplication::arguments();
     QString root;
@@ -57,7 +49,7 @@ inline bool configure(Context *out, QString *error) {
         }
     }
     if (!supplied) return true;
-    if (supplied != 1 || !QDir::isAbsolutePath(root) || !safe(root)) {
+    if (supplied != 1 || !QDir::isAbsolutePath(root) || !IsolatedProfile::safeDirectoryPath(root)) {
         *error = "Acceptance requires one absolute non-redirected marked profile"; return false;
     }
     root = QDir::cleanPath(root);
@@ -81,19 +73,9 @@ inline bool configure(Context *out, QString *error) {
          (windowWidth < 640 || windowWidth > 3840 || windowHeight < 480 || windowHeight > 2160))) {
         *error = "Invalid acceptance limits"; return false;
     }
-    if (!safe(root + "/settings") || !safe(root + "/game") || !safe(root + "/agent") ||
-        !QDir().mkpath(root + "/settings") || !QDir().mkpath(root + "/game") ||
-        !QDir().mkpath(root + "/agent")) {
+    if (!IsolatedProfile::configure(root)) {
         *error = "Cannot create isolated acceptance settings/data"; return false;
     }
-    QSettings::setDefaultFormat(QSettings::IniFormat);
-    QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, root + "/settings");
-    QSettings::setPath(QSettings::IniFormat, QSettings::SystemScope, root + "/settings-system");
-    // 智能体会话/产物/日志的根（`AgentPaths::dataDir()`）：不收进来就落进真实的
-    // `%LOCALAPPDATA%\…\WTFML\agent`。API Key 在 Windows 凭据管理器里，不在这份隔离中。
-    qApp->setProperty("wtfml.testAgentDataDir", root + "/agent");
-    qApp->setProperty("wtfml.testDefaultMinecraftDir", root + "/game");
-    AppPaths::setMinecraftDir(root + "/game");
     *out = {root, sentinel, closeMs, rows, windowWidth, windowHeight, languageStep};
     SecretRedactor::remember(sentinel);
     return true;

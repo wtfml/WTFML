@@ -54,17 +54,17 @@ bool isArchive(const QString &path) {
 
 QString toZip(const QString &archive, QString *error) {
     if (!isArchive(archive)) {
-        if (error) *error = QStringLiteral("不是 rar/7z。");
+        if (error) *error = QCoreApplication::translate("SevenZip", "不是 rar/7z。");
         return {};
     }
     const QString sevenZip = executable();
     if (sevenZip.isEmpty()) {
-        if (error) *error = QStringLiteral("没找到 7z.exe：请先装 7-Zip，或手动解压后再导入。");
+        if (error) *error = QCoreApplication::translate("SevenZip", "没找到 7z.exe：请先装 7-Zip，或手动解压后再导入。");
         return {};
     }
     QTemporaryDir dir;
     if (!dir.isValid()) {
-        if (error) *error = QStringLiteral("建不了临时目录。");
+        if (error) *error = QCoreApplication::translate("SevenZip", "建不了临时目录。");
         return {};
     }
     QProcess process;
@@ -75,14 +75,14 @@ QString toZip(const QString &archive, QString *error) {
                           QDir::toNativeSeparators(archive)});
     process.start();
     if (!process.waitForStarted(30000)) {
-        if (error) *error = QStringLiteral("7z.exe 起不来。");
+        if (error) *error = QCoreApplication::translate("SevenZip", "7z.exe 起不来。");
         return {};
     }
     while (!process.waitForFinished(1000)) {
         QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
     }
     if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
-        if (error) *error = QStringLiteral("7-Zip 解压失败：%1")
+        if (error) *error = QCoreApplication::translate("SevenZip", "7-Zip 解压失败：%1")
                                 .arg(QString::fromLocal8Bit(process.readAllStandardError()).trimmed());
         return {};
     }
@@ -101,7 +101,7 @@ QString toZip(const QString &archive, QString *error) {
     }
     QString zipError;
     if (!ZipUtil::createZip(target, sources, &zipError)) {
-        if (error) *error = zipError.isEmpty() ? QStringLiteral("压成 zip 失败。") : zipError;
+        if (error) *error = zipError.isEmpty() ? QCoreApplication::translate("SevenZip", "压成 zip 失败。") : zipError;
         return {};
     }
     return target;

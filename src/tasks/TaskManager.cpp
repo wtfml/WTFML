@@ -310,6 +310,7 @@ void TaskManager::propagateChild(const TaskSnapshot &child) {
     }
     if (child.parentStep >= 0 && child.parentStep < owner->steps.size()) {
         TaskStep &step = owner->steps[child.parentStep];
+        step.transferPercent = child.batchTransfer && child.state == TaskState::Running ? percentOf(child) : -1;
         switch (child.state) {
         case TaskState::Succeeded:
             step.state = TaskStepState::Done;
@@ -465,6 +466,12 @@ bool TaskManager::setStepState(TaskId id, int index, TaskStepState state, const 
         task->doneUnits = 0;
         task->totalUnits = 0;
     }
+    if (task->steps.at(index).state == TaskStepState::Running && state != TaskStepState::Running &&
+        task->batchTransfer) {
+        task->batchTransfer = false;
+        task->doneUnits = task->totalUnits = task->bytesDone = task->bytesTotal = 0;
+    }
+    if (state != TaskStepState::Running) task->steps[index].transferPercent = -1;
     task->steps[index].state = state;
     task->steps[index].note = note;
     touch(id, /*persist=*/false);
@@ -497,6 +504,28 @@ bool TaskManager::setBytes(TaskId id, qint64 bytesDone, qint64 bytesTotal) {
     }
     task->bytesDone = bytesDone;
     task->bytesTotal = bytesTotal;
+    const TaskSnapshot mirrored = *task;
+    propagateChild(mirrored);
+    touch(id, /*persist=*/false);
+    return true;
+}
+
+bool TaskManager::setBatchTransfer(TaskId id, int done, int total, qint64 bytesDone, qint64 bytesTotal) {
+    TaskSnapshot *task = find(id);
+    if (task == nullptr || !isActiveState(task->state)) return false;
+    const qint64 doneUnits = bytesTotal > 0 ? bytesDone : done;
+    const qint64 totalUnits = bytesTotal > 0 ? bytesTotal : total;
+    if (task->batchTransfer && task->doneUnits == doneUnits && task->totalUnits == totalUnits &&
+        task->bytesDone == bytesDone && task->bytesTotal == bytesTotal) return false;
+    task->batchTransfer = true;
+    task->doneUnits = doneUnits;
+    task->totalUnits = totalUnits;
+    task->bytesDone = bytesDone;
+    task->bytesTotal = bytesTotal;
+    const int percent = percentOf(*task);
+    for (TaskStep &step : task->steps) {
+        if (step.state == TaskStepState::Running) step.transferPercent = percent;
+    }
     const TaskSnapshot mirrored = *task;
     propagateChild(mirrored);
     touch(id, /*persist=*/false);

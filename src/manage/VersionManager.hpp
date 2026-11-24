@@ -5,6 +5,7 @@
  */
 #pragma once
 
+#include <QCoreApplication>
 #include <QHash>
 #include <QJsonObject>
 #include <QFuture>
@@ -118,7 +119,7 @@ public:
     static QString latestGroupKey() { return QStringLiteral("latest"); }
 
     /// 「最新版本」那一组给用户看的名字。
-    static QString latestGroupText() { return QStringLiteral("最新版本"); }
+    static QString latestGroupText() { return QCoreApplication::translate("VersionManager", "最新版本"); }
 
     /**
      * @brief 挑出「最新版本」那一组的两条（**纯函数**）：清单里最新的正式版与最新的快照。
@@ -278,11 +279,13 @@ public:
     /// 失败清单整个吃掉，之后就没有地方再问得到这个名字了；而重试也要在任务中心里挂
     /// 一件任务、收尾时按名字认领那一发 `resourceDownloadFinished(label, …)`。
     QString retryBatchLabel() const;
+    QString retryModpackInstance() const;
+    QString retryModpackArchive() const;
 
-    /// 重做上一次失败的那几个文件（**只重做失败项**，见 .cpp）。
+    /// 重做上一次失败的文件，整合包批次成功后接续原安装阶段。
     ///
     /// @return false = 没有可重做的，或者这会儿正有一批在跑（一次只有一批，见 .cpp）。
-    bool retryDownload();
+    bool retryDownload(QString *problem = nullptr);
 
     /**
      * @brief 给一个**已经装好的**实例做体检：扫一遍它该有的文件，**只报不装**。
@@ -593,6 +596,10 @@ public:
                        const ModpackImport::Pack &pack,
                        const QString &installerJavaPath = QString(),
                        const QString &manifestFingerprint = QString());
+
+    /// 「有文件需要补齐」里用户选了「继续安装其余内容」：允许本次导入按缺件提交。
+    /// 没有经过这个确认的调用（含测试）仍然按失败收尾，不会悄悄放过缺件。
+    void allowPartialModpackImport();
 
     /**
      * @brief 整合包依赖表里那个加载器的键 -> LoaderKind（**纯函数**）。
@@ -1411,13 +1418,14 @@ private:
             ProbingInstallerOptions, ///< Forge/NeoForge：先跑一次 `--help`，看它认哪些开关
             RunningInstaller,       ///< 三个都要跑安装器的：那个 Java 进程正在跑
             WaitingParentJson,      ///< 正在取原版的 version.json（走 fetchVersionDetails）
-            WaitingParentBefore,    ///< OptiFine：原版那一批正在下（它的安装器要拿原版当输入）
+            WaitingParentBefore,    ///< 为加载器安装器校验和补全原版文件
             WritingLegacyProfile,   ///< 老 Forge：正照它的安装说明写版本 json + 摆 universal jar
             WaitingParentFiles,     ///< 原版那一批正在下（客户端 jar / 库 / 资源）
             WaitingLoaderFiles,     ///< Fabric：加载器自己那几个库正在下
         };
 
         Phase phase = Phase::Idle;
+        bool preparingInstallerParent = false;
         LoaderKind kind = LoaderKind::Fabric;
         QString gameVersion;
         QString loaderName;     ///< wtfml.meta 的 loaderName
@@ -1446,13 +1454,13 @@ private:
         /// 不是文件名 —— 照着取会落成一个叫 `H9` 的文件。
         QString installerFileName;
 
-        /// 版本表那条请求的状态（只有 Forge / NeoForge 用得上）。
+        /// Forge 按来源依次查询，NeoForge 同时查询官方和镜像。
         QString listOfficialUrl;
         bool listRequestWasMirror = false;
-        bool listRetriedOfficial = false;
-        /// 镜像那一发已经用过了没有（开局就在镜像上、或者已经退过去一次）。
-        /// 官方那条**连不上**时 NeoForge 会往镜像退一次；用过就不再退，免得两边来回弹。
-        bool listMirrorTried = false;
+        QList<QPointer<QObject>> listJobs;
+        int listPending = 0;
+        bool listHadOfficialReply = false;
+        QString listError;
 
         /// 安装器 jar 的常规坐标 404 之后，换 `<游戏>-<加载器>-<游戏>` 那种坐标试过一次没有。
         /// 只试一次（见 VersionManager::retryInstallerDownloadAlternate）。
@@ -1471,7 +1479,14 @@ private:
         // 收尾（成功、失败都走这里）：回到 Idle，也就是"这件事结束了"。
         // NOTE: 会一起清掉 loaderName/loaderVersion/loaderId —— 要用的字段先在调用前存下来，
         // 忘了存的表现是消息里那个名字变成空的（不崩，但话就说不清了）。
-        void reset() { *this = LoaderInstall(); }
+        void cancelListRequests() {
+            for (const auto &job : listJobs) delete job.data();
+            listJobs.clear();
+        }
+        void reset() {
+            cancelListRequests();
+            *this = LoaderInstall();
+        }
     };
 
     void fetchFabricLoaderList();
@@ -1510,6 +1525,8 @@ private:
 
         Phase phase = Phase::Idle;
         QString zipPath;    ///< 用户选的那个整合包文件
+        qint64 archiveSize = -1;
+        qint64 archiveModifiedMs = 0;
         QString instanceId; ///< 落地的实例名（= versions/<id> 那个目录名）
         QString loaderId;   ///< 实例的父版本：加载器那个目录（纯原版包就是原版号）
         ModpackImport::Pack pack;
@@ -1517,6 +1534,9 @@ private:
         /// 落进 `wtfml.importing` 标记：同名的下一次导入靠它认"是不是同一个包"。
         QString manifestFingerprint;
         int extractedEntries = 0; ///< 解开了几个覆盖文件（收尾那句话要说出来）
+    /// 用户在「有文件需要补齐」的提示里选了「继续安装其余内容」。只有这一条路允许
+    /// 缺件提交；直接调用导入流程（没有经过用户确认）仍按失败收尾。
+    bool allowPartial = false;
 
         bool active() const { return phase != Phase::Idle; }
         // 收尾（成功、失败都走这里）：回到 Idle，也就是"这件事结束了"。
@@ -1531,7 +1551,7 @@ private:
     void extractModpackOverrides();
     /// 成功收尾：写 wtfml.meta + 发**唯一**那个终态信号。
     void finishModpackImport();
-    void commitModpackImport(const QList<ModpackImport::FileIssue> &issues);
+    void commitModpackImport(const QList<ModpackImport::FileIssue> &issues, const QImage &cover);
     /// 失败收尾。会把还在跑的加载器安装一起收掉（导入失败 = 整件事结束）。
     void failModpackImport(const QString &reason);
 
@@ -1608,11 +1628,11 @@ private:
     void fetchInstallerList();
     /// 发一发"取版本表"的请求。url 可能是镜像那条、也可能是官方那条（见
     /// onInstallerListReply 里"镜像挑不出来就退回官方"那一段）。
-    void requestInstallerList(const QString &url);
+    void requestInstallerList(const QString &url, bool canRetryRedirect = true);
     /// 镜像那份版本表挑不出来时的退路：换官方那条再发一发。
     /// @return 真的退了（调用方应当直接 return，等下一发回复）返回 true。
     bool retryInstallerListFromOfficial();
-    void onInstallerListReply(QNetworkReply *reply, const QString &jobError);
+    void onInstallerListReply(QNetworkReply *reply, const QString &jobError, bool fromMirror);
     // 把安装器 jar 下到 cache/installers/（一批下载，完成信号回到 onAllDownloadsFinished）。
     void startInstallerDownload();
     // 前置检查 + 起那个 Java 子进程。**异步**：它不阻塞界面，结果由 onInstallerFinished 收。
@@ -1637,7 +1657,6 @@ private:
     void abortInstaller(const QString &reason);
     // 安装器装完之后把**原版**补齐：它不下 assets，而且 Forge 连原版的 json 都不写
     // （只在 versions/<原版>/ 留下一份客户端 jar）。
-    void startParentCompletion();
 
     // ---- OptiFine：无界面入口 + 换 APPDATA ----
 
@@ -1647,7 +1666,8 @@ private:
     // 回复处理里不再重新读下载源（理由见定义处：两次读之间用户能换设置，
     // 换了就会拿另一种格式去解同一条回复）。
     void fetchOptifineVersionList();
-    void onOptifineVersionListReply(QNetworkReply *reply, bool fromMirror,
+    void requestOptifineVersionList(bool fromMirror, bool canRetry);
+    void onOptifineVersionListReply(QNetworkReply *reply, bool fromMirror, bool canRetry,
                                     const QString &jobError);
     // 版本号定了之后的收尾：填 installerFileName/loaderVersion，再按下载源决定"直接下（镜像）"
     // 还是"先去广告页拿 token（官方）"。**两条路共用**（版本表挑出来的 / 用户钉死的），
@@ -1662,7 +1682,7 @@ private:
     // OptiFine 的安装器**要拿原版的客户端 jar 当输入**，所以原版必须先在盘上才能起它
     // （这一点和 Forge 装完再补正好相反）。判据和 startParentOrLoaderFiles() 一样：
     // 版本 json + 客户端 jar 两份文件都在。
-    void ensureParentForOptifine();
+    void prepareInstallerParent();
     // 在系统临时目录里建一个假的 .minecraft：原版的 json / jar 各拷一份进去，再补一份最小
     // 的 launcher_profiles.json（安装器认它）。子进程的 APPDATA 会指到它上面。
     bool prepareOptifineWorkDir(QString *errorOut);
@@ -1793,9 +1813,7 @@ private:
 
     /// 上一次**失败**的那一批里，失败的那几个文件（「重试只重做失败项」）。
     ///
-    /// `valid` = 这一批**值得**重试。只有"纯下文件"的批次才算数：加载器安装、整合包导入、
-    /// 带名字的实例那三条路上，重下几个文件补不回来（加载器的安装器得再跑一次、导入还得解压
-    /// 覆盖），露一颗点了也修不好的「重试」比不露更糟。
+    /// 整合包保留下载所处的阶段，补齐该批后继续安装原实例。
     struct FailedBatch {
         bool valid = false;
         /// 是下载页那几类资源那一批 —— 收尾那一段靠它决定发 `resourceDownloadFinished`
@@ -1803,6 +1821,9 @@ private:
         bool resource = false;
         QString id;
         QString label;
+        QString gameRoot;
+        ModpackInstall modpack;
+        LoaderInstall loader;
         QList<DownloadManager::FailedJob> jobs;
         void reset() { *this = FailedBatch(); }
     };
@@ -1839,25 +1860,11 @@ private:
     // 会把前一发掐死，前三条底下就永远停在「正在获取…」。
     struct LoaderVersionRequest {
         QString gameVersion;
-        QPointer<QObject> queued;
+        QList<QPointer<QObject>> jobs;
         quint64 generation = 0;
-        // 这一发是走**镜像**那条路问出去的吗。**随请求钉住**，不在回复回来时再读一遍
-        // downloadManager->useMirror()。
-        //
-        // NOTE: OptiFine 两条路回来的正文**格式不一样**（镜像是 JSON 数组，官方是广告页
-        // HTML），而"用不用镜像"是用户可以随时点的开关。问出去到回来之间那几百毫秒
-        // 里开关被点一下，正文就会按**另一条路**的规矩解析 —— 症状是「列表读不懂」
-        // 或者列出一份空的，而用户什么都没做错。另外三个加载器不走镜像，这里恒 false。
-        bool fromMirror = false;
-        // 这一发问的**官方**那条地址。官方连不上时拿它换镜像（只对 NeoForge 成立，
-        // 见 VersionManager::loaderVersionsMirrorFallback()）。
-        QString officialUrl;
-        // 已经往镜像退过一次了没有 —— 只退一次，镜像再失败就照实报。
-        bool mirrorFallbackUsed = false;
-        // 正在飞的那一份。**同一个加载器**上换一局（同一个游戏版本重新问、或者换了
-        // 游戏版本）时把它 abort 掉（abort 之后 finished() 照样会来一发，回复处理函数
-        // 靠"这一个指针还是我手上这个吗"把它丢掉）。
-        QNetworkReply *reply = nullptr;
+        int pending = 0;
+        bool emptyResult = false;
+        QString error;
     };
     // 键是**加载器下标**（VersionManager::loaderIndexForKind 那套），不是枚举 —— 枚举当
     // QHash 的键要靠 qHash 的特化，下标是 int，省一层。
@@ -1869,10 +1876,9 @@ private:
     // （实测全量），而官方 host 在国内**直接连不上**。Forge 那个同名文件
     // 镜像上是旧的，换过去会得出"没有 Forge"的假结论。理由全文在 .cpp 里。
     QString loaderVersionsMirrorFallback(LoaderKind kind, const QString &officialUrl) const;
-    // 发那一发 GET，回复交给 onLoaderVersionsReply()。@p fromMirror 跟着这一发钉住
-    // （见 LoaderVersionRequest 里那一格）。
-    void fetchLoaderVersions(LoaderKind kind, const QString &url, bool fromMirror);
-    void onLoaderVersionsReply(LoaderKind kind, QNetworkReply *reply);
+    // @p fromMirror 决定这条回复的解析格式。
+    void fetchLoaderVersions(LoaderKind kind, const QString &url, bool fromMirror,
+                             bool canRetryRedirect = true);
     // 按加载器把这一份回复解析成"能挑的版本"。失败时 returned.error 非空（是给用户看的话）。
     struct LoaderVersionParse {
         LoaderMeta::LoaderVersionList versions;

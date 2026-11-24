@@ -7,15 +7,25 @@
 namespace ServerContent {
 
 int kindCount() {
-    return 2;
+    return 3;
 }
 
 QString kindTitle(Kind kind) {
-    return kind == Kind::Datapacks ? QCoreApplication::translate("ServerContent", "数据包") : QCoreApplication::translate("ServerContent", "模组");
+    switch (kind) {
+    case Kind::Mods: return QCoreApplication::translate("ServerContent", "模组");
+    case Kind::Datapacks: return QCoreApplication::translate("ServerContent", "数据包");
+    case Kind::Plugins: return QCoreApplication::translate("ServerContent", "插件");
+    }
+    return {};
 }
 
 QString folderName(Kind kind) {
-    return kind == Kind::Datapacks ? QStringLiteral("datapacks") : QStringLiteral("mods");
+    switch (kind) {
+    case Kind::Mods: return QStringLiteral("mods");
+    case Kind::Datapacks: return QStringLiteral("datapacks");
+    case Kind::Plugins: return QStringLiteral("plugins");
+    }
+    return {};
 }
 
 QString fileSuffix(Kind kind) {

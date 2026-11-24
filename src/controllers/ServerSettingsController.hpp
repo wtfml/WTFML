@@ -32,6 +32,8 @@ public:
     Values fallbackEdits(const ServerModel::Properties &properties) const;
 
     QString worldName(const QString &serverId) const;
+    QStringList worlds(const QString &serverId) const;
+    bool hasSplitDimensions(const QString &serverId, const QString &world) const;
     QString worldDir(const QString &serverId) const;
     QString backupLabel(const QString &serverId) const;
     int worldBackupCount(const QString &serverId) const;

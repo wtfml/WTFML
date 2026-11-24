@@ -79,6 +79,8 @@ struct Facts {
     /// NOTE: 这是**加载器自己说的那几句话**，不是我们按模组清单猜的 —— 退出这一刻去联网问
     /// 一遍每个模组的前置，用户只会看到启动器卡在那里（见 `hints()` 里那段）。
     bool sawMissingDependency = false;
+    /// 日志里有没有玩家手动触发的调试崩溃（F3+C 的 `Manually triggered debug crash`）。
+    bool sawManualDebugCrash = false;
     /// 这一趟到底有没有拿到游戏的输出（`显示游戏日志` 那个开关关着时是 false）。
     bool logCaptured = false;
 };
@@ -102,6 +104,9 @@ bool logShowsMissingDependency(const QString &logText);
 
 /// 日志里有没有 `OutOfMemoryError`。
 bool logShowsOutOfMemory(const QString &logText);
+
+/// 日志里有没有 `Manually triggered debug crash`（Minecraft 的 F3+C 手动崩溃）。
+bool logShowsManualDebugCrash(const QString &logText);
 
 /// 退出码写成一句人话：`0xC0000005（内存访问冲突）`。认不出的原样写十进制。
 ///

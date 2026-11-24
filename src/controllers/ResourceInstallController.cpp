@@ -2,8 +2,11 @@
 #include <QCoreApplication>
 
 #include <QDir>
+#include <QComboBox>
 #include <QFileDialog>
+#include <QFormLayout>
 #include <QScopedValueRollback>
+#include <QScrollArea>
 #include <QSet>
 #include <QStringList>
 #include <algorithm>
@@ -22,6 +25,7 @@
 #include "tasks/TaskManager.hpp"
 #include "InlineMessage.hpp"
 #include "MainWindowUI.hpp"
+#include "OverlayHost.hpp"
 #include "util/AppPaths.hpp"
 
 using MainWindowViewData::loaderGroupKey;
@@ -92,7 +96,7 @@ bool ResourceInstallController::targetStillAvailable(const InstallTarget &target
 
 void ResourceInstallController::install(ResourceCatalog::Kind kind, QString displayTitle,
                                         ResourceCatalog::VersionEntry version,
-                                        ResourceCatalog::Source source) {
+                                        ResourceCatalog::Source source, const QString &projectIconId) {
     if (m_installing || m_check.active) {
         return;
     }
@@ -132,7 +136,7 @@ void ResourceInstallController::install(ResourceCatalog::Kind kind, QString disp
         // 设置里关着 / 不知道装进哪个实例 / 光影已经能用 / 没有缺的：交给下面那一句，
         // 它的判断和话术一个字都不变（关掉 = 只下他点的那一版）。
     }
-    installNow(kind, displayTitle, version, {}, *destination);
+    installNow(kind, displayTitle, version, {}, *destination, projectIconId);
 }
 
 void ResourceInstallController::startDependencyCheck(ResourceCatalog::Kind kind,
@@ -225,7 +229,22 @@ void ResourceInstallController::onVersionsFinished(
     // 失败时**不往 answers 里放空表**：`buildPlan` 那边"钥匙缺席"和"回来了但是空的"
     // 是两句不同的话（"没问到"和"它就是没有版本"）—— 放空表等于把前者说成后者。
     if (problem.isEmpty()) {
-        m_check.answers.insert(requestKey, versions);
+        auto compatible = versions;
+        const auto &target = m_check.target;
+        const QString loader = ResourceCatalog::loaderRequestValue(target.loader, target.source);
+        compatible.removeIf([&](const ResourceCatalog::VersionEntry &entry) {
+            if (!target.gameVersion.isEmpty() && !entry.gameVersions.isEmpty() &&
+                !entry.gameVersions.contains(target.gameVersion)) {
+                return true;
+            }
+            return !loader.isEmpty() && !entry.loaders.isEmpty() &&
+                   std::none_of(entry.loaders.cbegin(), entry.loaders.cend(), [&](const QString &name) {
+                       return ResourceCatalog::loaderRequestValue(name, target.source) == loader;
+                   });
+        });
+        m_check.answers.insert(requestKey, std::move(compatible));
+    } else {
+        m_owner.appendLog(MainWindow::tr("前置版本列表没取到：%1").arg(problem));
     }
     if (m_check.pendingKeys.isEmpty()) {
         finishDependencyCheck();
@@ -268,19 +287,13 @@ void ResourceInstallController::finishDependencyCheck() {
     const QString note = ModDependencies::unresolvedNoteText(plan.unresolved);
     QList<ModDependencies::Resolved> extras;
     if (plan.downloads.isEmpty()) {
-        // 一条都没解开：**照样把这个模组装上**，但得如实说一句"前置一条都没找到"。
-        // 不说的话，用户点完下载看到的就是"下好了"，而进游戏那一下就崩。
-        //
-        // NOTE: 这一档走 `ask()` 而不是 `warning()`：只有 `ask()` 带得了那行**灰字**
-        // （那行灰字写的是"可以在设置里关掉"）。一颗「知道了」按下去就走。
-        QString text = ModDependencies::dependencyPromptText(check.kind, names);
-        if (!note.isEmpty()) {
-            text += QStringLiteral("\n\n") + note;
+        const int choice = InlineMessage::ask(
+            owner.m_ui->overlay(), MessageKind::Warning, ModDependencies::dependencyPromptTitle(), note,
+            {MainWindow::tr("取消"), ModDependencies::dependencyOnlyThisButtonText()}, 0, -1, false,
+            ModDependencies::dependencyPromptNoteText());
+        if (choice != 1) {
+            return;
         }
-        InlineMessage::ask(owner.m_ui->overlay(), MessageKind::Warning,
-                           ModDependencies::dependencyPromptTitle(), text,
-                           {MainWindow::tr("知道了")}, 0, -1, false,
-                           ModDependencies::dependencyPromptNoteText());
     } else {
         QString text = installedKnown
                            ? ModDependencies::dependencyPromptText(check.kind, names)
@@ -288,17 +301,45 @@ void ResourceInstallController::finishDependencyCheck() {
         if (!note.isEmpty()) {
             text += QStringLiteral("\n\n") + note;
         }
-        // 两颗按钮：左「只下这个」（**默认那颗** —— 误按回车不该替用户多做一件事），
-        // 右「一起下载」。
-        // NOTE: 必须用 `ask()`：`question()` 带不了那行灰字（没有 note 这一格）。
-        const int choice = InlineMessage::ask(
-            owner.m_ui->overlay(), MessageKind::Question,
-            ModDependencies::dependencyPromptTitle(), text,
-            {ModDependencies::dependencyOnlyThisButtonText(),
-             ModDependencies::dependencyAllButtonText()},
-            0, -1, false, ModDependencies::dependencyPromptNoteText());
-        if (choice == 1) {
-            extras = plan.downloads;
+        InlineMessageBox prompt(MessageKind::Question, ModDependencies::dependencyPromptTitle(), text,
+                                {ModDependencies::dependencyOnlyThisButtonText(),
+                                 plan.unresolved.isEmpty() ? ModDependencies::dependencyAllButtonText()
+                                                           : MainWindow::tr("下载可用前置")}, 0, -1);
+        prompt.setNote(ModDependencies::dependencyPromptNoteText());
+        auto *scroll = new QScrollArea(&prompt);
+        scroll->setWidgetResizable(true);
+        scroll->setFrameShape(QFrame::NoFrame);
+        auto *form = new QWidget(scroll);
+        auto *rows = new QFormLayout(form);
+        rows->setContentsMargins(0, 0, 0, 0);
+        QList<QComboBox *> selectors;
+        for (const auto &resolved : plan.downloads) {
+            const auto &versions = plan.choices[resolved.dependency.projectId];
+            auto *selector = new QComboBox(form);
+            selector->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+            selector->setMinimumContentsLength(12);
+            for (const auto &option : versions) {
+                const auto &version = option.version;
+                const QString label = version.versionNumber.isEmpty() ? version.name : version.versionNumber;
+                selector->addItem(label.isEmpty() ? option.file.filename : label);
+                selector->setItemData(selector->count() - 1, option.file.filename, Qt::ToolTipRole);
+            }
+            selector->setEnabled(versions.size() > 1);
+            rows->addRow(resolved.title, selector);
+            selectors.append(selector);
+        }
+        scroll->setWidget(form);
+        scroll->setFixedHeight(qMin(form->sizeHint().height() + 4, 170));
+        prompt.setContent(scroll);
+        owner.m_ui->overlay()->execPrompt(&prompt);
+        if (prompt.clickedIndex() < 0) {
+            return;
+        }
+        if (prompt.clickedIndex() == 1) {
+            for (qsizetype i = 0; i < selectors.size(); ++i) {
+                const auto &resolved = plan.downloads.at(i);
+                extras.append(plan.choices[resolved.dependency.projectId].at(selectors.at(i)->currentIndex()));
+            }
         }
     }
 
@@ -308,7 +349,7 @@ void ResourceInstallController::finishDependencyCheck() {
 void ResourceInstallController::installNow(ResourceCatalog::Kind kind, const QString &displayTitle,
                                           const ResourceCatalog::VersionEntry &version,
                                           const QList<ModDependencies::Resolved> &extras,
-                                          const InstallTarget &target) {
+                                          const InstallTarget &target, const QString &projectIconId) {
     MainWindow &owner = m_owner;
     const bool isModpack = kind == ResourceCatalog::Kind::Modpack;
     const QString &instanceId = target.instanceId;
@@ -520,13 +561,15 @@ void ResourceInstallController::installNow(ResourceCatalog::Kind kind, const QSt
     // 「已经装进实例里了」。而失败那一支**不** take 记录，只有成功那一支才取
     // （见 `onResourceDownloadFinished()` 里那段 ★），所以提前登记不会漏。
     if (!modpackPath.isEmpty()) {
-        owner.m_pendingModpackImports.insert(label, {modpackPath, confirmedName, task});
+        const auto hit = owner.m_resourceHits.constFind(projectIconId);
+        if (hit != owner.m_resourceHits.cend()) owner.m_resourceStore->requestIcon(hit.value());
+        owner.m_pendingModpackImports.insert(label, {modpackPath, confirmedName, task, AppPaths::minecraftDir(),
+                                                     projectIconId});
     }
     const bool started =
         owner.m_versionManager->downloadResourceFiles(destinationDir, instanceId, label, files);
     if (started) {
-        // 只有真开起来了才算"这一批的主人"（被拒那一发或已命中缓存的同步完成可能在
-        // `downloadResourceFiles()` 返回前已经收过尾并清空 Ledger，故仅在仍是当前任务时更新）。
+        // 已命中缓存的批次可能在返回前同步收尾。
         if (owner.m_downloadTaskLedger->task() == task) {
             owner.m_downloadTaskLedger->setOwner(task);
             owner.m_activityCenter->tasks()->setProgress(task, 0, 0);

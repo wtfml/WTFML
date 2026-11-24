@@ -8,6 +8,7 @@
 #include "MainWindow.hpp"
 
 #include "InstancePagesController.hpp"
+#include "agent/AgentInstancePaths.hpp"
 #include "agent/AgentPaths.hpp"
 #include "agent/AgentRedaction.hpp"
 #include "manage/BackupFiles.hpp"
@@ -21,6 +22,7 @@
 #include "util/AppPaths.hpp"
 #include "util/SystemMemory.hpp"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QDirIterator>
 #include <QElapsedTimer>
@@ -203,8 +205,9 @@ bool AgentLauncherHostImpl::crashFacts(const QString &instanceId,
     built.xmsMb = info.xmsMb;
     const SystemMemory::Usage usage = SystemMemory::read();
     built.totalMemoryMb = usage.totalMb;
-    const QString logPath = AppPaths::minecraftDir() + QStringLiteral("/logs/latest.log");
-    const QString logText = readTail(logPath, kLogTailBytes);
+    // 游戏日志在实例目录里（`--gameDir versions/<id>`）；数据根那一份只作为兜底。
+    const QList<AgentInstancePaths::Source> logs = AgentInstancePaths::logSources(instanceId);
+    const QString logText = logs.isEmpty() ? QString() : readTail(logs.constFirst().path, kLogTailBytes);
     built.logCaptured = !logText.isEmpty();
     built.sawOutOfMemory = GameExitDiagnosis::logShowsOutOfMemory(logText);
     built.sawMissingDependency = GameExitDiagnosis::logShowsMissingDependency(logText);
@@ -222,17 +225,21 @@ bool AgentLauncherHostImpl::crashFacts(const QString &instanceId,
 
 bool AgentLauncherHostImpl::logTail(const QString &instanceId, int lines, QString *text,
                                     QString *relativeSource, QString *problem) {
-    Q_UNUSED(instanceId);
-    const QString latestLog = AppPaths::minecraftDir() + QStringLiteral("/logs/latest.log");
-    const QString launcherLog = AppPaths::minecraftDir() + QStringLiteral("/logs/wtfml.log");
-    QString source = QStringLiteral("logs/latest.log");
-    QString raw = readTail(latestLog, kLogTailBytes);
-    if (raw.isEmpty()) {
-        source = QStringLiteral("logs/wtfml.log");
-        raw = readTail(launcherLog, kLogTailBytes);
+    // 顺序：实例目录的 latest.log → 数据根的 latest.log → 数据根的 wtfml.log。
+    QString source;
+    QString raw;
+    for (const AgentInstancePaths::Source &candidate :
+         AgentInstancePaths::logSources(instanceId)) {
+        raw = readTail(candidate.path, kLogTailBytes);
+        if (raw.isEmpty()) continue;
+        source = candidate.label;
+        break;
     }
     if (raw.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("找不到日志文件（latest.log / wtfml.log）。");
+        if (problem != nullptr) {
+            *problem =
+                QCoreApplication::translate("AgentLauncherHostImpl", "找不到日志文件（实例目录的 logs/latest.log 或数据根的 logs/latest.log、logs/wtfml.log）。");
+        }
         return false;
     }
     const QStringList tail = lastLines(raw, qBound(1, lines, 500));
@@ -246,23 +253,20 @@ bool AgentLauncherHostImpl::logTail(const QString &instanceId, int lines, QStrin
 
 bool AgentLauncherHostImpl::crashReports(const QString &instanceId,
                                          QList<AgentHostCrashReport> *items, QString *problem) {
-    Q_UNUSED(instanceId);
     Q_UNUSED(problem);
     if (items == nullptr) return false;
     items->clear();
-    QDir dir(AppPaths::crashReportsDir());
-    if (!dir.exists()) return true;
-    const QFileInfoList files = dir.entryInfoList({QStringLiteral("crash-*.txt")}, QDir::Files,
-                                                  QDir::Time);
-    for (const QFileInfo &file : files) {
+    // 崩溃报告在实例目录的 `crash-reports/` 里（游戏以 `--gameDir versions/<id>` 启动）；
+    // 数据根那一份是别的启动器/旧启动留下的，两处合并、同名以实例目录为准。
+    for (const AgentInstancePaths::CrashReportFile &file :
+         AgentInstancePaths::collectCrashReports(instanceId, 20)) {
         AgentHostCrashReport report;
-        report.fileName = file.fileName();
-        report.modifiedAt = file.lastModified();
-        report.bytes = file.size();
-        report.headText = AgentDiagnosticProjection::scrubPaths(
-            readHead(file.absoluteFilePath(), kCrashHeadBytes));
+        report.fileName = file.fileName;
+        report.modifiedAt = file.modifiedAt;
+        report.bytes = file.bytes;
+        report.headText =
+            AgentDiagnosticProjection::scrubPaths(readHead(file.path, kCrashHeadBytes));
         items->append(report);
-        if (items->size() >= 20) break;
     }
     return true;
 }

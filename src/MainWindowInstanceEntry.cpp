@@ -17,6 +17,8 @@
 
 #include "MainWindow.hpp"
 
+#include <QFileInfo>
+
 #include "..\ui\InlineMessage.hpp"
 #include "..\ui\InstanceSettingsDialog.hpp"
 #include "..\ui\MainWindowUI.hpp"
@@ -157,6 +159,9 @@ StartupDiagnosis::Inputs MainWindow::startupDiagnosisInputs(const QString &versi
 
     inputs.modsDir = InstancePagesController::fileDirs(versionId).value(QStringLiteral("mod"));
     inputs.logPath = AppPaths::minecraftDir() + QStringLiteral("/logs/wtfml.log");
-    inputs.crashDir = AppPaths::crashReportsDir();
+    // 游戏以 `--gameDir versions/<id>` 启动，崩溃报告在实例目录里；数据根那一份是兜底。
+    const QString instanceCrash = AppPaths::versionDir(versionId) + QStringLiteral("/crash-reports");
+    inputs.crashDir = QFileInfo(instanceCrash).isDir() ? instanceCrash
+                                                       : AppPaths::crashReportsDir();
     return inputs;
 }

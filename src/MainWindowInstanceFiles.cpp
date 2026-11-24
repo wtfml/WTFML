@@ -296,6 +296,7 @@ bool MainWindow::applyInstanceSettings(const QString &versionId,
     edit.warnJavaMismatch = dialog.warnJavaMismatch();
     edit.iconChoice = dialog.iconChoice();
     edit.pickedIconPath = dialog.pickedIconPath();
+    edit.pickedIconImage = dialog.pickedIconImage();
     // 这个常量住在 ui/ 那一侧（它是对话框上那一格显示成「本地那张」的判据）⇒ 从这里填进去，
     // controller 那边**不抄一份**。
     edit.localIconValue = InstanceSettingsDialog::localIconValue();

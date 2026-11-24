@@ -52,7 +52,7 @@ const Recipe kRecipes[] = {
     {QT_TRANSLATE_NOOP("Brewing", "隐身药水"), QT_TRANSLATE_NOOP("Brewing", "发酵蜘蛛眼"), QT_TRANSLATE_NOOP("Brewing", "隐身"), 9, false, true, false, 2, nullptr, 180, 480},
     // 荧石粉给的是**迟缓 IV**（不是 II）—— 这是唯一一种升级跳两级的药水。
     {QT_TRANSLATE_NOOP("Brewing", "迟缓药水"), QT_TRANSLATE_NOOP("Brewing", "发酵蜘蛛眼"), QT_TRANSLATE_NOOP("Brewing", "迟缓"), 0, false, true, true, 4, nullptr, 90, 240, 20},
-    {QT_TRANSLATE_NOOP("Brewing", "缓降药水"), QT_TRANSLATE_NOOP("Brewing", "幻翼膜"), QT_TRANSLATE_NOOP("Brewing", "缓降"), -1, true, true, false, 2, nullptr, 90, 240},
+    {QT_TRANSLATE_NOOP("Brewing", "缓降药水"), QT_TRANSLATE_NOOP("Brewing", "幻翼膜"), QT_TRANSLATE_NOOP("Brewing", "缓降"), -1, false, true, false, 2, nullptr, 90, 240},
     {QT_TRANSLATE_NOOP("Brewing", "虚弱药水"), QT_TRANSLATE_NOOP("Brewing", "发酵蜘蛛眼"), QT_TRANSLATE_NOOP("Brewing", "虚弱"), -1, true, true, false, 2, nullptr, 90, 240},
     {QT_TRANSLATE_NOOP("Brewing", "神龟药水"), QT_TRANSLATE_NOOP("Brewing", "海龟壳"), QT_TRANSLATE_NOOP("Brewing", "海龟大师"), -1, false, true, true, 2, nullptr, 20, 40, 20},
     // 1.21 加的四瓶：都从**粗制的药水**来（不是水瓶直做），也没有延长 / II 级版本。

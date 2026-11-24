@@ -103,6 +103,7 @@ public:
                 ResourceCatalog::Source source, const QString &query,
                 const QString &gameVersion = QString(), const QString &loader = QString(),
                 const QString &category = QString());
+    void cancelSearch(ResourceCatalog::Kind kind, ResourceCatalog::Source source);
 
     /**
      * @brief 问一个资源在某个游戏版本下有哪些版本可下。

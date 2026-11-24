@@ -133,6 +133,8 @@
   "AgentWebToolsTests.cpp": "agent",
   "AgentCommandToolsTests.cpp": "agent",
   "AgentPerformanceTests.cpp": "agent",
+  "AgentInstancePathTests.cpp": "agent",
+  "AgentPathLayoutTests.cpp": "agent",
   "DailyQuoteTests.cpp": "resources",
   "HomeGreetingTests.cpp": "resources"
 }

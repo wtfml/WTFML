@@ -9,6 +9,20 @@ void runIconCacheTests() {
     section("ZB1. 缓存路径怎么拼（以及哪些 id 宁可不缓存）");
 
     AppPaths::setMinecraftDir(rootA.path());
+    {
+        const QString jar = rootA.filePath(QStringLiteral("item-fixture.jar"));
+        const QString png = rootA.filePath(QStringLiteral("item.png"));
+        QImage texture(16, 16, QImage::Format_ARGB32);
+        texture.fill(Qt::green);
+        check(texture.save(png) && ZipUtil::createZip(jar, {
+                  {QStringLiteral("assets/minecraft/textures/item/diamond.png"), png},
+                  {QStringLiteral("assets/minecraft/textures/items/book_normal.png"), png}}),
+              "准备现代及旧版客户端物品贴图夹具");
+        const auto choices = InstanceFiles::readGameItemIcons({jar});
+        check(choices.size() == 2 && choices[0].first == QStringLiteral("钻石") &&
+                  choices[1].first == QStringLiteral("书") && choices[1].second.pixelColor(8, 8) == Qt::green,
+              "图标候选读取现代与旧版贴图并跳过缺失物品");
+    }
     const QString path = ResourceStore::iconCachePath(QStringLiteral("AANobbMI"));
     check(QFileInfo(path).absolutePath() ==
               QDir::cleanPath(rootA.path() + QStringLiteral("/cache/icons")),

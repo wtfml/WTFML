@@ -60,6 +60,30 @@ QLabel *makeHomeHint(const QString &text, QWidget *parent) {
     label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     return label;
 }
+
+DetailHeader makeDetailHeader(QWidget *parent) {
+    auto *header = new QWidget(parent);
+    auto *line = new QHBoxLayout(header);
+    line->setContentsMargins(4, 0, 4, 4);
+    line->setSpacing(14);
+    auto *icon = new QLabel(header);
+    icon->setFixedSize(48, 48);
+    line->addWidget(icon);
+
+    auto *text = new QVBoxLayout;
+    text->setSpacing(2);
+    auto *title = new ElidedLabel(header);
+    Theme::markDisplay(title, Theme::textFont(title->font(), Theme::TextRole::Display));
+    title->setFitPixelRange(Theme::textSize(Theme::TextRole::Display), 20);
+    text->addWidget(title);
+    auto *meta = new QLabel(header);
+    QPalette palette = meta->palette();
+    palette.setColor(QPalette::WindowText, Theme::tokens().secondary);
+    meta->setPalette(palette);
+    text->addWidget(meta);
+    line->addLayout(text, 1);
+    return {header, line, icon, title, meta};
+}
 // Always reserve the scrollbar gutter: expanding a category must not move the
 // right-aligned arrow/clear targets or change the width available to row text.
 void stabilizeDownloadTree(QTreeWidget *tree) {
@@ -99,6 +123,18 @@ void addSearchIcon(QLineEdit *edit) {
     };
     tint();
     Theme::follow(edit, tint);
+}
+
+QLineEdit *makeListFilterSearch(QWidget *parent, const QString &name, const QString &placeholder) {
+    auto *edit = new QLineEdit(parent);
+    edit->setObjectName(name);
+    edit->setPlaceholderText(placeholder);
+    edit->setClearButtonEnabled(true);
+    edit->setFixedWidth(280);
+    edit->setFixedHeight(Theme::chipHeight());
+    edit->setProperty("wtfmlChipHeight", true);
+    addSearchIcon(edit);
+    return edit;
 }
 
 // 侧栏列表与容器共用一层底色；代理绘制选中/悬停时也拿相同的 Base，避免白色内框。

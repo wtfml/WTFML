@@ -247,11 +247,14 @@ QString ServerManagementActions::serverContentFolder(const MainWindow *owner) {
     }
     const int kindIndex = qBound(0, page->contentKind(), ServerContent::kindCount() - 1);
     const ServerRegistry::Entry entry = ServerRegistry::describe(serverId);
-    if (static_cast<ServerContent::Kind>(kindIndex) == ServerContent::Kind::Mods) {
-        return ServerContent::modsDir(entry.dirPath);
-    }
-    // 数据包跟着世界走：`level-name` 认不出来 / 还没建过世界 ⇒ 这一页什么都不列。
-    return ServerContent::datapacksDir(owner->serverWorldDir(serverId));
+    if (entry.dirPath.isEmpty()) return {};
+    const auto kind = static_cast<ServerContent::Kind>(kindIndex);
+    const QString world = owner->m_serverSettings->selectedWorld();
+    const QDir root(entry.dirPath);
+    const QString folder = kind == ServerContent::Kind::Datapacks
+        ? (world.isEmpty() ? QString() : ServerContent::datapacksDir(root.filePath(world)))
+        : root.filePath(ServerContent::folderName(kind));
+    return RestoreJournal::ordinaryPath(root.absolutePath(), folder) ? folder : QString();
 }
 
 void ServerManagementActions::refreshServerContent(MainWindow *owner) {
@@ -268,7 +271,7 @@ void ServerManagementActions::refreshServerContent(MainWindow *owner) {
         // 数据包那一类：世界在哪儿都还不知道 —— 别摆一个假路径，说清楚该去哪儿改。
         page->setContentRows({});
         page->setContentNote(
-            MainWindow::tr("level-name 无效，无法确定世界目录。请在「常用设置」中填写有效的世界目录名。"));
+            MainWindow::tr("无法访问内容目录。请检查所选世界和目录位置。"));
         return;
     }
     page->setContentNote(MainWindowUI::serverSettingsContentNoteText(
@@ -311,10 +314,10 @@ void ServerManagementActions::addServerContent(MainWindow *owner) {
     const auto kind = static_cast<ServerContent::Kind>(kindIndex);
     const QString suffix = ServerContent::fileSuffix(kind);
     const QStringList chosen = QFileDialog::getOpenFileNames(
-        owner, kind == ServerContent::Kind::Datapacks ? MainWindow::tr("选数据包 zip") : MainWindow::tr("选模组 jar"),
+        owner, MainWindow::tr("选择%1文件").arg(ServerContent::kindTitle(kind)),
         QString(),
         kind == ServerContent::Kind::Datapacks ? MainWindow::tr("数据包 (*.zip);;所有文件 (*.*)")
-                                               : MainWindow::tr("模组 (*.jar);;所有文件 (*.*)"));
+                                               : MainWindow::tr("Java 归档 (*.jar);;所有文件 (*.*)"));
     if (chosen.isEmpty()) {
         return;
     }
@@ -575,8 +578,12 @@ void ServerManagementActions::backupServerWorld(MainWindow *owner, const QString
                                MainWindow::tr("请先停止服务端再备份，以避免读取正在写入的存档数据。"));
         return;
     }
-    const QString worldName = owner->serverWorldName(serverId);
-    const QString worldDir = owner->serverWorldDir(serverId);
+    const QString selected = owner->m_serverSettings->isShowing(serverId)
+        ? owner->m_serverSettings->selectedWorld() : QString();
+    const QString worldName = selected.isEmpty() ? owner->serverWorldName(serverId) : selected;
+    const QString worldDir = worldName.isEmpty() ? QString()
+        : QDir(ServerRegistry::describe(serverId).dirPath).filePath(worldName);
+    if (owner->m_serverSettingsController->hasSplitDimensions(serverId, worldName)) return;
     if (worldName.isEmpty()) {
         InlineMessage::warning(
             owner->m_ui->overlay(), MainWindow::tr("无法备份"),
@@ -598,7 +605,7 @@ void ServerManagementActions::backupServerWorld(MainWindow *owner, const QString
     // `root` 是 zip 里那一层前缀、也是还原时落回去的目录名 ⇒ 就是这个世界目录名。
     manifest.root = worldName;
     // `label` 只用来拼文件名 —— 带上 serverId（理由见 `serverBackupLabel()` 那段）。
-    manifest.label = owner->m_serverSettingsController->backupLabel(serverId);
+    manifest.label = serverId + QLatin1Char('-') + worldName;
     manifest.worldName = worldName;
     // NOTE: 这两格说的是"这个世界是从哪个**实例**里备出来的"，而服务端不是实例 ——
     //       留空。它在界面上只有"打开目标位置"那一处读者，而那一处走的是 `targetId`
@@ -633,7 +640,10 @@ void ServerManagementActions::restoreServerWorldBackup(MainWindow *owner, const 
                                MainWindow::tr("服务端仍在运行。停止服务端后再还原，以免服务端保存时覆盖还原的存档。"));
         return;
     }
-    const QString worldName = owner->serverWorldName(serverId);
+    const QString selected = owner->m_serverSettings->isShowing(serverId)
+        ? owner->m_serverSettings->selectedWorld() : QString();
+    const QString worldName = selected.isEmpty() ? owner->serverWorldName(serverId) : selected;
+    if (owner->m_serverSettingsController->hasSplitDimensions(serverId, worldName)) return;
     const QString serverDir = ServerRegistry::describe(serverId).dirPath;
     // 这一页的备份列只按**文件名前缀**筛（读清单要起一次 PowerShell，那一列
     //   可能摆着几十份，见 `BackupFiles::backupFilePrefix()` 那段）。可按下「还原…」之后

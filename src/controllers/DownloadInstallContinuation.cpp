@@ -10,12 +10,21 @@
 #include "controllers/PresetController.hpp"
 #include "controllers/DownloadCompletionController.hpp"
 #include "controllers/DownloadTaskLedgerController.hpp"
+#include "controllers/ActivityCenterController.hpp"
+#include "controllers/ImportController.hpp"
+#include "controllers/MainWindowViewData.hpp"
 #include <QJsonArray>
+#include <QTimer>
 
 QJsonObject MainWindow::snapshotDownloadContinuation() const {
     if (m_serverInstall && m_serverInstall->ownsDownloadBatch()) return m_serverInstall->downloadContinuation();
+    const auto pending = m_pendingModpackImports.constFind(m_downloadTaskLedger->resourceLabel());
+    if (pending != m_pendingModpackImports.cend() && pending->taskId == m_downloadTaskLedger->task()) {
+        return {{"kind", "modpack"}, {"root", pending->gameRoot}, {"instance", pending->instanceName},
+                {"archive", QFileInfo(pending->path).absoluteFilePath()}, {"coverCacheId", pending->coverCacheId}};
+    }
     auto intent = m_versionManager->downloadContinuation();
-    if (intent.isEmpty()) return {};
+    if (intent.isEmpty() || intent.value("kind") == "modpack") return intent;
     QJsonArray presets;
     for (const auto &choice : m_downloadCompletion->presets()) presets.append(QJsonObject{{"id", choice.first}, {"force", choice.second}});
     QJsonObject fingerprints;
@@ -50,6 +59,27 @@ bool MainWindow::continueDownloadInstallation(Tasks::TaskId id, const QJsonObjec
         m_versionManager->isModpackImporting() || m_versionManager->isNamedInstanceInstalling() ||
         QDir::cleanPath(intent.value("root").toString()) != QDir::cleanPath(AppPaths::minecraftDir()) ||
         !InstanceFiles::validateDirName(instance).isEmpty()) return false;
+    if (kind == "modpack") {
+        const QString archive = intent.value("archive").toString();
+        const QFileInfo info(archive);
+        if (!DownloadCheckpoint::safePath(archive) || !info.isFile()) return false;
+        if (intent.contains("archiveSize") &&
+            (QString::number(info.size()) != intent.value("archiveSize").toString() ||
+             QString::number(info.lastModified().toMSecsSinceEpoch()) != intent.value("archiveModifiedMs").toString())) return false;
+        if (intent.contains("importMarker") && DownloadCheckpoint::fingerprint(InstanceFiles::importMarkerPath(instance)) !=
+            intent.value("importMarker").toObject()) return false;
+        auto steps = MainWindowViewData::modpackOneClickSteps();
+        steps[0].state = Tasks::TaskStepState::Done;
+        steps[1].state = Tasks::TaskStepState::Running;
+        m_activityCenter->tasks()->setSteps(id, steps);
+        beginFolderSwitchHold();
+        const QString coverCacheId = intent.value("coverCacheId").toString();
+        QTimer::singleShot(0, this, [this, archive, instance, id, coverCacheId] {
+            m_importController->importModpackOneClick(archive, instance, id, /*allowRename=*/false, coverCacheId);
+            endFolderSwitchHold();
+        });
+        return true;
+    }
     if (kind != "repair" && kind != "named-vanilla" && kind != "named-loader") return false;
     if (kind != "repair" && !InstanceFiles::validateDirName(game).isEmpty()) return false;
     if (!targetsVerified && !Presets::unchangedInitializationContinuation(intent)) return false;

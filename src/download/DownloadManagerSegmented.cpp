@@ -77,6 +77,7 @@ void DownloadManager::startSegmentedDownload(const PendingJob &job) {
     connect(task, &ResumableDownload::progress, this, [this, task](qint64 done, qint64 total) {
         const auto it = m_segmentJobs.constFind(task);
         if (it == m_segmentJobs.constEnd() || it->generation != m_batchGeneration) return;
+        updateBatchFileBytes(it->destinationPath, done, total);
         emit downloadProgress(QFileInfo(it->destinationPath).fileName(), done, total);
         emitBatchProgress(it->destinationPath);
     });
@@ -198,6 +199,7 @@ void DownloadManager::finishSegmentedJob(ResumableDownload *task, bool success,
     }
 
     task->deleteLater();
+    if (!stale) updateBatchFileBytes(record.destinationPath, success ? record.expectedSize : 0);
     if (!stale && !requeued) {
         // 和 onDownloadReplyFinished 的收尾一致：done 是"已结账"，失败也含在内。
         m_doneJobs++;

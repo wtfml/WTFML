@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <QDateTime>
 #include <QList>
 #include <QSet>
@@ -73,6 +74,7 @@ struct TaskStep {
     QString name;                      // 「校验文件」「准备 Java」
     TaskStepState state = TaskStepState::Pending;
     QString note;                      // 失败原因 / 这一步的补充说明，可空
+    int transferPercent = -1;            // 仅运行中的下载步骤使用，不写进历史。
 };
 
 /// 这项任务**允许**什么操作。按钮不靠任务种类猜。
@@ -126,6 +128,7 @@ struct TaskSnapshot {
     qint64 totalUnits = 0;  // <= 0 表示不可测（**不许编造百分比**）
     qint64 bytesDone = 0;
     qint64 bytesTotal = 0;  // <= 0 表示未知
+    bool batchTransfer = false; // 当前计数来自下载批次。
     QDateTime startedAt;
     QDateTime finishedAt;
     QList<TaskStep> steps;
@@ -197,7 +200,7 @@ inline int percentOf(const TaskSnapshot &task) {
         return -1;
     }
     const qint64 done = task.doneUnits < 0 ? 0 : task.doneUnits;
-    const int percent = int(done * 100 / task.totalUnits);
+    const int percent = int(100.0 * double(qMin(done, task.totalUnits)) / double(task.totalUnits));
     return percent < 0 ? 0 : (percent > 100 ? 100 : percent);
 }
 
@@ -353,6 +356,9 @@ inline TaskSummary collapsedSummary(const QList<TaskSnapshot> &tasks,
     }
 
     const TaskSnapshot *best = nullptr;
+    const bool hasMeasuredTransfer = std::any_of(tasks.cbegin(), tasks.cend(), [](const TaskSnapshot &task) {
+        return task.state == TaskState::Running && task.batchTransfer && task.totalUnits > 0;
+    });
     int bestPriority = 0;
     QDateTime bestStarted;
     for (const TaskSnapshot &task : tasks) {
@@ -360,7 +366,7 @@ inline TaskSummary collapsedSummary(const QList<TaskSnapshot> &tasks,
         const bool unreadFailure =
             (task.state == TaskState::Failed) && unreadFailures.contains(task.id);
         if (isActiveState(task.state) || unreadFailure) {
-            priority = summaryPriority(task, unreadFailure);
+            priority = summaryPriority(task, unreadFailure && !hasMeasuredTransfer);
         } else if (task.state == TaskState::Succeeded || task.state == TaskState::Failed
                    || task.state == TaskState::Cancelled
                    || task.state == TaskState::Interrupted) {

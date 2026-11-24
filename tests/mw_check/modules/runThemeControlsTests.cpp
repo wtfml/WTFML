@@ -42,6 +42,46 @@ void runThemeControlsTests() {
             return;
         }
 
+        const QStringList generatedCache{
+            AppPaths::iconCacheDir() + QStringLiteral("/example.icon"),
+            AppPaths::instanceIconCacheDir() + QStringLiteral("/example.json"),
+            AppPaths::serverCacheDir() + QStringLiteral("/example.json"),
+            AppPaths::skinsDir() + QLatin1Char('/') + QString(40, QLatin1Char('a')) + QStringLiteral(".png"),
+            AppPaths::skinsDir() + QStringLiteral("/profile-") + QString(32, QLatin1Char('b')) + QStringLiteral(".json")};
+        const QStringList keptData{
+            AppPaths::skinsDir() + QStringLiteral("/manual-offline.png"),
+            AppPaths::configBackupDir() + QStringLiteral("/options.txt"),
+            AppPaths::themeImageDir() + QStringLiteral("/background.png"),
+            AppPaths::versionsDir() + QStringLiteral("/example/saves/keep.bin")};
+        for (const QString &path : generatedCache + keptData) {
+            writeFileAt(path, QByteArrayLiteral("keep"));
+            check(QFileInfo::exists(path), "可在隔离目录创建清理夹具", path);
+        }
+        auto *clearCache = ui->getClearLauncherCacheButton();
+        check(clearCache != nullptr && ui->getFirstRunTestButton() != nullptr,
+              "启动设置提供清除缓存和首次使用测试入口");
+        if (clearCache != nullptr) {
+            PromptAnswerer cancel({1});
+            cancel.start();
+            clearCache->click();
+            cancel.stop();
+            check(cancel.answered.size() == 1 && QFileInfo::exists(generatedCache.first()),
+                  "取消清理时保留缓存");
+
+            PromptAnswerer confirm({0, 0});
+            confirm.start();
+            clearCache->click();
+            check(pumpUntil([&confirm] { return confirm.answered.size() == 2; }, 5000),
+                  "确认后清理完成并提示结果");
+            confirm.stop();
+            for (const QString &path : generatedCache) {
+                check(!QFileInfo::exists(path), "已清除生成的缓存", path);
+            }
+            for (const QString &path : keptData) {
+                check(readBytesAt(path) == QByteArrayLiteral("keep"), "保留手动皮肤、备份、背景和存档", path);
+            }
+        }
+
         auto *presetCombo = byObjectName<QComboBox>(&w, MainWindowUI::themePresetComboName());
         auto *accentSwatch = byObjectName<QPushButton>(&w, MainWindowUI::themeAccentButtonName());
         auto *opacitySlider =

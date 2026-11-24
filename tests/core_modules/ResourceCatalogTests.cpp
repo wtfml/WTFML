@@ -1,5 +1,25 @@
 #include "Support.hpp"
 
+#include <QTranslator>
+#include "UiLanguage.hpp"  // isEnglish()：下载量按界面语言换单位
+
+namespace {
+
+/// 只认 `UiLanguage` / `zh` 这一条的替身翻译器：装上它，`UiLanguage::isEnglish()`
+/// 就回 true（不去读 assets/i18n 那份 .qm，测试不必等构建管线）。
+class EnglishUiTranslator : public QTranslator {
+public:
+    QString translate(const char *context, const char *sourceText, const char *, int) const override {
+        if (qstrcmp(context, "UiLanguage") == 0 && qstrcmp(sourceText, "zh") == 0) {
+            return QStringLiteral("en");
+        }
+        return QString();
+    }
+    bool isEmpty() const override { return false; }
+};
+
+}  // namespace
+
 void runResourceCatalogTests() {
     const QString metaDir = QStringLiteral(REPO_ROOT_PATH) + "/tests/meta";
 
@@ -365,6 +385,34 @@ void runResourceCatalogTests() {
                    ResourceCatalog::formatDownloads(229545638)));
     check(ResourceCatalog::formatDownloads(-1).isEmpty(),
           "Z5 负数（接口没给）回空串，不回「-1」");
+
+    // 英文界面没有万 / 亿，走千进位（K / M / B）。数字和字母之间没有空格；
+    // 四舍五入后到 1000 的进到下一个单位，不出 `1000.0K`。
+    {
+        EnglishUiTranslator translator;
+        check(!UiLanguage::isEnglish(), "Z5 没装英文翻译时按中文（万 / 亿）");
+        QCoreApplication::installTranslator(&translator);
+        check(UiLanguage::isEnglish(), "Z5 装上英文翻译后认得出是英文");
+        check(ResourceCatalog::formatDownloads(0) == QStringLiteral("0") &&
+                  ResourceCatalog::formatDownloads(9999) == QStringLiteral("9999") &&
+                  ResourceCatalog::formatDownloads(10000) == QStringLiteral("10.0K") &&
+                  ResourceCatalog::formatDownloads(999949) == QStringLiteral("999.9K") &&
+                  ResourceCatalog::formatDownloads(999950) == QStringLiteral("1.0M") &&
+                  ResourceCatalog::formatDownloads(1234567) == QStringLiteral("1.2M") &&
+                  ResourceCatalog::formatDownloads(229545638) == QStringLiteral("229.5M") &&
+                  ResourceCatalog::formatDownloads(1500000000) == QStringLiteral("1.5B") &&
+                  ResourceCatalog::formatDownloads(-1).isEmpty(),
+              "Z5b 英文：千进位、一位小数、进位到下一个单位",
+              QStringLiteral("%1 | %2 | %3 | %4 | %5")
+                  .arg(ResourceCatalog::formatDownloads(10000),
+                       ResourceCatalog::formatDownloads(999949),
+                       ResourceCatalog::formatDownloads(999950),
+                       ResourceCatalog::formatDownloads(1234567),
+                       ResourceCatalog::formatDownloads(229545638)));
+        QCoreApplication::removeTranslator(&translator);
+        check(ResourceCatalog::formatDownloads(10000) == QStringLiteral("1.0 万"),
+              "Z5 卸掉英文翻译后又回到中文（万 / 亿）");
+    }
 
     section("Z6. 版本列表地址与真版本列表（meta/modrinth-versions-iris.json）");
 
@@ -767,6 +815,10 @@ void runResourceCatalogTests() {
                       none.unresolved.first().contains(QStringLiteral("无法获取版本列表")),
                   "Z6d 请求未完成时保留正式的版本列表错误说明",
                   none.unresolved.join(QStringLiteral(" | ")));
+            const auto emptyList = ModDependencies::buildPlan(missing, {{key, {}}});
+            check(emptyList.downloads.isEmpty() && emptyList.unresolved.size() == 1 &&
+                      emptyList.unresolved.first().contains(QStringLiteral("没有兼容的前置版本")),
+                  "Z6d 接口已返回空列表时说明当前版本与加载器无兼容前置");
 
             // ② 有答案：挑出要下的那一条，而且名字用的是接口那份（不是项目号）。
             ResourceCatalog::VersionEntry sodium;
@@ -790,6 +842,26 @@ void runResourceCatalogTests() {
                   plan.downloads.isEmpty() ? QString() : plan.downloads.first().title);
 
             // ③ 名字取不到时退成项目号（列出来总比"有一个前置没找到"强）。
+            auto older = sodium;
+            older.id = QStringLiteral("older");
+            older.versionNumber = QStringLiteral("0.6.12");
+            older.files.first().filename = QStringLiteral("sodium-0.6.12.jar");
+            auto unavailable = older;
+            unavailable.files.first().url.clear();
+            auto loose = missing.first();
+            loose.dependency.versionId.clear();
+            const auto selectable = ModDependencies::buildPlan({loose}, {{key, {unavailable, sodium, older}}});
+            const auto choices = selectable.choices.value(loose.dependency.projectId);
+            check(choices.size() == 2 && choices.first().version.id == sodium.id &&
+                      choices.last().version.id == older.id,
+                  "未指定依赖版本时默认最新可下载版本，并保留其他候选");
+            auto pinned = loose;
+            pinned.dependency.versionId = older.id;
+            const auto pinnedPlan = ModDependencies::buildPlan({pinned}, {{key, {sodium, older}}});
+            const auto fixed = pinnedPlan.choices.value(pinned.dependency.projectId);
+            check(fixed.size() == 1 && fixed.first().version.id == older.id,
+                  "指定的依赖版本不能被候选列表覆盖");
+
             const ModDependencies::Plan unnamed = ModDependencies::buildPlan(missing, {});
             check(unnamed.unresolved.size() == 1 &&
                       unnamed.unresolved.first().startsWith(QStringLiteral("AANobbMI")),
