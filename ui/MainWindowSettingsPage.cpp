@@ -881,7 +881,7 @@ void MainWindowUI::setupSettingsDownloadPanel(QStackedWidget *stack) {
     // CurseForge API key：明文显示（贴错了要能一眼看见；它本来就明文躺在配置里），可以留空（走社区镜像）。
     curseForgeApiKeyEdit = new QLineEdit(form);
     curseForgeApiKeyEdit->setObjectName(curseForgeApiKeyEditName());
-    InputSizing::longValue(curseForgeApiKeyEdit, QCoreApplication::translate("MainWindowSettingsPage", "API 密钥：约 60 个字符，明文显示便于核对"));
+    InputSizing::longValue(curseForgeApiKeyEdit, QStringLiteral("API 密钥：约 60 个字符，明文显示便于核对"));  // i18n-ignore
     curseForgeApiKeyEdit->setPlaceholderText(curseForgeApiKeyPlaceholder());
     addRow(source, curseForgeApiKeyRowText(), curseForgeApiKeyEdit);
 

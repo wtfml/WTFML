@@ -95,6 +95,7 @@
   "PresetSnapshotScaleTests.cpp": "presets",
   "ToolboxExtraTests.cpp": "toolbox",
   "TextFormatTests.cpp": "toolbox",
+  "SentenceJoinTests.cpp": "toolbox",
   "CoordConvertTests.cpp": "toolbox",
   "FileHashTests.cpp": "toolbox",
   "AnvilPlannerTests.cpp": "toolbox",

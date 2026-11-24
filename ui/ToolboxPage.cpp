@@ -2170,7 +2170,7 @@ QWidget *ToolboxPage::buildCoordPanel() {
     m_tpCommand = new QLineEdit(result.card);
     m_tpCommand->setObjectName(QStringLiteral("coordTpCommand"));
     m_tpCommand->setReadOnly(true);
-    InputSizing::longValue(m_tpCommand, QCoreApplication::translate("ToolboxPage", "只读结果：整条 tp 命令，方便选中复制"));
+    InputSizing::longValue(m_tpCommand, QStringLiteral("只读结果：整条 tp 命令，方便选中复制"));  // i18n-ignore
     m_tpCommand->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
     auto *makeCommand = new QPushButton(QCoreApplication::translate("ToolboxPage", "生成 tp 命令"), result.card);
     makeCommand->setObjectName(QStringLiteral("coordMakeTp"));
@@ -2982,7 +2982,7 @@ QWidget *ToolboxPage::buildBannerPanel() {
     result.details->hide();  // 细项改由下面三个分段框装，这一格不再显示
     {
         const struct { const char *objectName; QString title; } kTabs[] = {
-            {"bannerStepsBox", QCoreApplication::translate("ToolboxPage", "步骤")}, {"bannerMaterialsBox", QCoreApplication::translate("ToolboxPage", "材料")}, {"bannerCommandBox", QCoreApplication::translate("ToolboxPage", "指令")}};
+            {"bannerStepsBox", QCoreApplication::translate("ToolboxPage", "步骤")}, {"bannerMaterialsBox", QCoreApplication::translate("ToolboxPage", "材料", "banner materials tab")}, {"bannerCommandBox", QCoreApplication::translate("ToolboxPage", "指令")}};
         auto *segment = new QWidget(result.card);
         segment->setObjectName(QStringLiteral("bannerResultSegments"));
         auto *segmentLayout = new QHBoxLayout(segment);
@@ -3315,7 +3315,7 @@ QWidget *ToolboxPage::buildTrimPanel() {
     auto *form = new QGridLayout; form->setHorizontalSpacing(8); form->setVerticalSpacing(10);
     form->setColumnMinimumWidth(0, kFormLabelWidth - 24);
     const QStringList parts{tr("头盔"),tr("胸甲"),tr("护腿"),tr("靴子")};
-    const QStringList rows{tr("材质"),tr("纹饰"),tr("材料")};
+    const QStringList rows{tr("材质"),tr("纹饰"),tr("材料", "armor trim material")};
     const auto muted = [panel](const QString &text) {
         auto *label = makeMutedLabel(panel);
         label->setText(text);

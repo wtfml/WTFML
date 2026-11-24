@@ -218,6 +218,7 @@ set_tests_properties(wtfml.core-presets PROPERTIES LABELS "core;core-presets;ci-
 add_library(core_cases_toolbox OBJECT
  core_modules/ToolboxExtraTests.cpp
  core_modules/TextFormatTests.cpp
+ core_modules/SentenceJoinTests.cpp
  core_modules/CoordConvertTests.cpp
  core_modules/FileHashTests.cpp
  core_modules/AnvilPlannerTests.cpp

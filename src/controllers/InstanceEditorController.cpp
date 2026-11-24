@@ -328,7 +328,7 @@ void InstanceEditorController::saveConfigFile(InstanceSettingsDialog *dialog, co
                 tr("%1\n\n文件在打开后发生了变化。继续保存会覆盖外部修改。")
                     .arg(QDir::toNativeSeparators(path)),
                 {tr("盖掉它"), tr("重新读取文件")}, -1, 0, false,
-                tr("点击「重新载入」将放弃当前修改并读取磁盘最新内容。"));
+                tr("点击「重新读取文件」将放弃当前修改并读取磁盘最新内容。"));
             if (picked == 1) {
                 // 用户要的是盘上那一份：重读一遍（**不写盘**）。走的是和点开一个文件同一条路
                 // —— 它顺手把 stamp 和"留过备份没有"都重新认一遍。
@@ -827,7 +827,7 @@ void InstanceEditorController::leaveConfigEditor(InstanceSettingsDialog *dialog)
 
 bool InstanceEditorController::confirmDiscardConfigEdits() {
     return InlineMessage::question(
-        m_owner->m_ui->overlay(), tr("世界设置有未保存的更改"),
+        m_owner->m_ui->overlay(), tr("配置文件有未保存的更改"),
         tr("离开后将丢弃尚未保存的修改。\n\n确认丢弃？"),
         tr("丢掉改动"), tr("继续编辑"), false);
 }

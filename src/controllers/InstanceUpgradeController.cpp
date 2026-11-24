@@ -391,8 +391,8 @@ void InstanceTransferController::runUpgradeJob(const InstanceUpgrade::Request &r
         } catch (...) {
             InstanceUpgrade::Result result;
             result.requiresReload = true;
-            result.problem = QCoreApplication::translate("InstanceUpgradeController", "升级工作发生异常；恢复检查：")
-                + InstanceUpgrade::recoverInterrupted(request.gameDir).join('\n');
+            result.problem = QCoreApplication::translate("InstanceUpgradeController", "升级工作发生异常；恢复检查：%1")
+                                 .arg(InstanceUpgrade::recoverInterrupted(request.gameDir).join('\n'));
             return result;
         }
     }));

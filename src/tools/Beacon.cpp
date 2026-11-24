@@ -5,6 +5,8 @@
 
 #include "tools/Beacon.hpp"
 
+#include "util/SentenceJoin.hpp"
+
 #include <QCoreApplication>
 #include <QList>
 
@@ -246,19 +248,20 @@ QString sharedBaseText(int level, int beaconCount) {
     }
     const Layout layout = compactLayout(level, beaconCount);
     const int separate = beaconCount * totalBlocks(level);
-    QString text = QCoreApplication::translate("Beacon", "%1 个信标按 %2 × %3 相邻排列时，可共用底座。%4 级底座共需 %5 块方块，分别建造则需 %6 块。")
-                       .arg(beaconCount)
-                       .arg(layout.width)
-                       .arg(layout.depth)
-                       .arg(level)
-                       .arg(layout.blocks)
-                       .arg(separate);
-    text += each;
-    text += QCoreApplication::translate("Beacon", "%1 颗一共 %2 块黑曜石、%1 颗下界之星、%3 块玻璃。")
-                .arg(beaconCount)
-                .arg(beaconCount * kObsidianPerBeacon)
-                .arg(beaconCount * kGlassPerBeacon);
-    return text;
+    QStringList sentences;
+    sentences << QCoreApplication::translate("Beacon", "%1 个信标按 %2 × %3 相邻排列时，可共用底座。%4 级底座共需 %5 块方块，分别建造则需 %6 块。")
+                     .arg(beaconCount)
+                     .arg(layout.width)
+                     .arg(layout.depth)
+                     .arg(level)
+                     .arg(layout.blocks)
+                     .arg(separate);
+    sentences << each;
+    sentences << QCoreApplication::translate("Beacon", "%1 颗一共 %2 块黑曜石、%1 颗下界之星、%3 块玻璃。")
+                     .arg(beaconCount)
+                     .arg(beaconCount * kObsidianPerBeacon)
+                     .arg(beaconCount * kGlassPerBeacon);
+    return joinSentences(sentences);
 }
 
 QStringList effectsForLevel(int level) {

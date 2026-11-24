@@ -568,7 +568,7 @@ void InstanceUpdateFlow::attach(MainWindow *owner, InstanceSettingsDialog *dialo
         const int kept = dialog->upgradeKeptMods().size();
         const int replaced = dialog->upgradeReplaceMods().size();
         const int pending = dialog->upgradePendingModCount();
-        QString summaryText = QObject::tr("当前实例：%1\n目标：Minecraft %2 / %3 %4\n\n保留启用：%5　替换适配版：%6　禁用但保留文件：%7　待确认：%8\n\n%9\n\n存档跨版本后可能无法降级；执行前会检查磁盘空间。%11%10")
+        QString summaryText = QObject::tr("当前实例：%1\n目标：Minecraft %2 / %3 %4\n\n保留启用：%5　替换适配版：%6　禁用但保留文件：%7　待确认：%8\n\n%9\n\n存档跨版本后可能无法降级；执行前会检查磁盘空间。\n%11%10")
             .arg(state->source, state->game, state->loader.isEmpty() ? QObject::tr("纯原版") : state->loader, state->loaderVersion)
             .arg(kept).arg(replaced)
             .arg(qMax(0, tree->property("upgradeModCount").toInt() - kept - pending - replaced))
@@ -577,7 +577,7 @@ void InstanceUpdateFlow::attach(MainWindow *owner, InstanceSettingsDialog *dialo
                 : QObject::tr("创建更新副本：%1，原实例保持不变。").arg(name))
             .arg(!copyValid ? QObject::tr("\n副本名称无效或已经存在，请修改。") : !correctRoot ? QObject::tr("\n游戏目录已改变，请关闭向导重新进入。") : QString())
             .arg(mode->currentData().toBool()
-                ? QObject::tr("更新当前实例：先创建并逐文件校验完整 ZIP 快照（约需 2 倍实例空间），原目录另行保留，可用「回滚上次更新」恢复。")
+                ? QObject::tr("更新当前实例：先创建并逐文件校验完整 ZIP 快照（约需 2 倍实例空间），原目录另行保留，可用「回滚上次更新…」恢复。")
                 : QObject::tr("创建独立副本并逐文件校验，约需一份实例空间；保留源实例，不重复创建 ZIP 快照。"));
         if (replaced > 0) {
             summaryText += QObject::tr("\n\n将下载并替换 %1 个模组；必要前置失败或任一替换失败时整趟回滚，并写出原因报告。")

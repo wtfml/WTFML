@@ -1037,11 +1037,11 @@ static Result prepareCopyAndCommitImpl(Request r, const Core &core, const QStrin
     result.requiresReload = true;
     if (!QFileInfo::exists(rejected) && QDir().rename(original, rejected)
         && writeJournal(r, QStringLiteral("copy_rejected"), QString())) {
-        result.problem = QCoreApplication::translate("InstanceUpgrade", "更新副本发布后校验失败，已保留在被拒绝目录：")
-            + rejected;
+        result.problem = QCoreApplication::translate("InstanceUpgrade", "更新副本发布后校验失败，已保留在被拒绝目录：%1")
+                             .arg(rejected);
     } else {
-        result.problem = QCoreApplication::translate("InstanceUpgrade", "升级副本校验失败，自动撤回也未完成。请检查以下内容：")
-            + original;
+        result.problem = QCoreApplication::translate("InstanceUpgrade", "升级副本校验失败，自动撤回也未完成。请检查以下内容：%1")
+                             .arg(original);
     }
     return result;
 }
@@ -1426,11 +1426,12 @@ QStringList recoverInterrupted(const QString &gameDir) {
                 && json.value("transactionId").toString() == id) {
                 const QString snapshot = json.value("snapshotZip").toString();
                 messages.append(
-                    QCoreApplication::translate("InstanceUpgrade", "升级事务 %1（实例 %2）找不到匹配的游戏根指纹，未自动恢复；" "请使用完整 ZIP 快照%3恢复。")
-                        .arg(id, json.value("instanceId").toString(),
-                             snapshot.isEmpty()
-                                 ? QString()
-                                 : QStringLiteral(" %1 ").arg(QFileInfo(snapshot).fileName())));
+                    snapshot.isEmpty()
+                        ? QCoreApplication::translate("InstanceUpgrade", "升级事务 %1（实例 %2）未找到匹配的游戏根指纹，未自动恢复；请使用完整 ZIP 快照恢复。")
+                              .arg(id, json.value("instanceId").toString())
+                        : QCoreApplication::translate("InstanceUpgrade", "升级事务 %1（实例 %2）未找到匹配的游戏根指纹，未自动恢复；请使用完整 ZIP 快照 %3 恢复。")
+                              .arg(id, json.value("instanceId").toString(),
+                                   QFileInfo(snapshot).fileName()));
             }
             continue;
         }

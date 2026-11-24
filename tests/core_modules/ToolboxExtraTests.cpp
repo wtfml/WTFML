@@ -779,6 +779,17 @@ void runToolboxExtraTests() {
               "★★ ZAJ3 海龟壳只认头盔（别的部位连名字都拼不出来）");
         check(ArmorTrim::armorPieceName(4, 1) == QStringLiteral("钻石胸甲"),
               "★ ZAJ3 盔甲全名 = 材质 + 部位", ArmorTrim::armorPieceName(4, 1));
+        // 皮革那四件是「帽子 / 外套 / 裤子 / 靴子」，不是拼出来的「皮革头盔」那一套。
+        check(ArmorTrim::armorPieceName(0, 0) == QStringLiteral("皮革帽子")
+                  && ArmorTrim::armorPieceName(0, 1) == QStringLiteral("皮革外套")
+                  && ArmorTrim::armorPieceName(0, 2) == QStringLiteral("皮革裤子")
+                  && ArmorTrim::armorPieceName(0, 3) == QStringLiteral("皮革靴子"),
+              "★★ ZAJ3 皮革四件用的是游戏里的那四个名字（不是「皮革头盔」）",
+              ArmorTrim::armorPieceName(0, 0) + QStringLiteral(" / ") + ArmorTrim::armorPieceName(0, 1)
+                  + QStringLiteral(" / ") + ArmorTrim::armorPieceName(0, 2) + QStringLiteral(" / ")
+                  + ArmorTrim::armorPieceName(0, 3));
+        check(ArmorTrim::armorPieceName(3, 0) == QStringLiteral("金头盔"),
+              "★ ZAJ3 金头盔（其余材质就是材质 + 部位）", ArmorTrim::armorPieceName(3, 0));
         check(ArmorTrim::trimMaterialAt(0).item == QStringLiteral("紫水晶碎片")
                   && ArmorTrim::trimMaterialAt(9).item == QStringLiteral("红石粉"),
               "★ ZAJ3 每种纹饰材料在锻造台里摆的那件东西写在表里",
