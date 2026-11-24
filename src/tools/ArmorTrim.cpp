@@ -28,7 +28,7 @@ const TrimMaterialRow kTrimMaterials[] = {
     {"iron", QT_TRANSLATE_NOOP("ArmorTrim", "铁质"), QT_TRANSLATE_NOOP("ArmorTrim", "铁锭"), "1.20"},
     {"lapis", QT_TRANSLATE_NOOP("ArmorTrim", "青金石质"), QT_TRANSLATE_NOOP("ArmorTrim", "青金石"), "1.20"},
     {"netherite", QT_TRANSLATE_NOOP("ArmorTrim", "下界合金质"), QT_TRANSLATE_NOOP("ArmorTrim", "下界合金锭"), "1.20"},
-    {"quartz", QT_TRANSLATE_NOOP("ArmorTrim", "石英质"), QT_TRANSLATE_NOOP("ArmorTrim", "石英"), "1.20"},
+    {"quartz", QT_TRANSLATE_NOOP("ArmorTrim", "石英质"), QT_TRANSLATE_NOOP("ArmorTrim", "下界石英"), "1.20"},
     {"redstone", QT_TRANSLATE_NOOP("ArmorTrim", "红石质"), QT_TRANSLATE_NOOP("ArmorTrim", "红石粉"), "1.20"},
     {"resin", QT_TRANSLATE_NOOP("ArmorTrim", "树脂质"), QT_TRANSLATE_NOOP("ArmorTrim", "树脂砖"), "1.21.4"},
 };
@@ -268,7 +268,7 @@ Plan plan(int armorMaterial, int part, int patternIndex, int trimMaterial, int p
     result.notes.append(QCoreApplication::translate("ArmorTrim", "此%1来源：%2；复制需%3。")
                             .arg(templateName, pattern.source, pattern.duplicate));
     if (pattern.since != QStringLiteral("1.20")) {
-        result.notes.append(QCoreApplication::translate("ArmorTrim", "%1 纹饰模板自 Java 版 %2 起可用。")
+        result.notes.append(QCoreApplication::translate("ArmorTrim", "%1自 Java 版 %2 起可用。")
                                 .arg(templateName, pattern.since));
     }
     const QString materialSince = trimMaterialSince(trimMaterial);
