@@ -3,13 +3,13 @@
  * @brief 实现 PresetManagePage.hpp。
  *
  * 两页一个形状，都照着这一栏里已有的样子：
- *   第 0 页（列表）= 和「客户端实例」「服务端」同一页形 —— 顶上一整条搜索框 + 下面一排
- *     类别 chip（类别多，挤在一行会把搜索框压没），中间一整棵不画外框的树（行高 58、
- *     行首图标 26、按类别分组），最底下那颗建东西的主操作。
+ *   第 0 页（列表）沿用客户端和服务端的布局，左边是类别筛选，右边是搜索框。
+ *     预设按类别分组，每行显示封面、名称和类别，底部提供新建操作。
  *   第 1 页（详情）沿用实例设置的面包屑与身份页眉，主要操作在页眉右侧，正文按左栏切换。
  */
 
 #include "PresetManagePage.hpp"
+#include "FlowLayout.hpp"
 #include <QCoreApplication>
 #include "InputSizing.hpp"
 #include "ElidedLabel.hpp"
@@ -75,6 +75,12 @@ constexpr int kRoleDefault = Qt::UserRole + 22;
 constexpr int kRoleSearchText = Qt::UserRole + 23;
 static_assert(kRoleBroken == PresetManagePage::rowBrokenRole(),
               "rowBrokenRole() 是给外面认行用的那把钥匙，两边不许各写各的");  // i18n-ignore
+
+QPixmap presetCover(const QString &id, const QString &iconPath, int size) {
+    const QPixmap custom = VersionIcons::fileMark(iconPath, size);
+    return custom.isNull() ? VersionIcons::isoBlock(VersionIcons::isoBlockKindFor(id), size) : custom;
+}
+
 /// 「读不回来」那一组的钥匙。它不是预设类别（类别钥匙由外面给），才用一个不可能撞上的串。
 QString brokenGroupKey() {
     return QStringLiteral("!broken");
@@ -144,10 +150,7 @@ void PresetManagePage::buildUi() {
 
 /// 第 0 层：搜索 + 类别 + 一棵按类别分组的树 + 底下那颗「新建预设…」。
 ///
-/// 顶上那两行和实例列表那一行同一个口径（见 `MainWindowUI` 里 `instanceFilterRow`
-/// 那一段）：搜索框 chip 高、chip 那一排挨着摆；只是预设的类别比实例多，两样分成两排
-/// （搜索框独占一行，chip 在下面一行）。树也一样：不画外框、左边不画展开三角、
-/// 行高就是实例页那一档（58）、行首图标 26。
+/// 类别筛选和搜索共用一行，窄窗时左侧类别可以折行。树的组头和预设行沿用实例列表的尺寸。
 void PresetManagePage::buildListLayer() {
     m_listLayer = new QWidget(m_layers);
     m_listLayer->setObjectName(QStringLiteral("presetListPage"));
@@ -155,36 +158,19 @@ void PresetManagePage::buildListLayer() {
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(kFilterRowSpacing);
 
-    // ---- 搜索框一行、类别 chip 一行 ----
-    //
-    // 八个类别 chip 摆在同一行里会把搜索框挤得只剩几十像素（用户量的就是这一条），
-    // 所以分两排：上面一条**整幅宽**的搜索框，下面一排 chip。chip 再多也只是往右排，
-    // 不再抢搜索框的宽度。
+    // 与客户端列表对齐。宽度不够时只折分类按钮，搜索框始终在右上方。
     auto *filterBox = new QWidget(m_listLayer);
     filterBox->setObjectName(QStringLiteral("presetFilterRow"));
-    auto *filterLayout = new QVBoxLayout(filterBox);
+    auto *filterLayout = new QHBoxLayout(filterBox);
     filterLayout->setContentsMargins(0, 0, 0, 0);
     filterLayout->setSpacing(kFilterRowSpacing);
 
-    auto *searchRow = new QWidget(filterBox);
-    auto *searchLayout = new QHBoxLayout(searchRow);
-    searchLayout->setContentsMargins(0, 0, 0, 0);
-    searchLayout->setSpacing(kFilterRowSpacing);
-    m_searchEdit = new QLineEdit(searchRow);
-    m_searchEdit->setObjectName(QStringLiteral("presetSearchEdit"));
-    m_searchEdit->setPlaceholderText(tr("搜索名称或说明"));
-    m_searchEdit->setClearButtonEnabled(true);
-    // 和实例页那个框一样高（chip 那一档）：同一栏里两页最上面那一行不该差着高度。
-    m_searchEdit->setFixedHeight(Theme::chipHeight());
-    m_searchEdit->setProperty("wtfmlChipHeight", true);
-    searchLayout->addWidget(m_searchEdit, 1);
-    filterLayout->addWidget(searchRow);
-
     auto *chipRow = new QWidget(filterBox);
-    m_chipRow = new QHBoxLayout(chipRow);
-    m_chipRow->setContentsMargins(0, 0, 0, 0);
-    m_chipRow->setSpacing(kFilterRowSpacing);
-    filterLayout->addWidget(chipRow);
+    m_chipRow = new FlowLayout(kFilterRowSpacing, kFilterRowSpacing);
+    chipRow->setLayout(m_chipRow);
+    filterLayout->addWidget(chipRow, 1);
+    m_searchEdit = makeListFilterSearch(filterBox, QStringLiteral("presetSearchEdit"), tr("搜索名称或说明"));
+    filterLayout->addWidget(m_searchEdit, 0, Qt::AlignTop);
     layout->addWidget(filterBox);
     connect(m_searchEdit, &QLineEdit::textChanged, this,
             [this] { rebuildPresetList(QString(), true); });
@@ -209,18 +195,14 @@ void PresetManagePage::buildListLayer() {
 
     // 一张**按类别分组**的列表：组头是类别名（粗体 + 右端箭头，和实例页 / 服务端页
     // 那两张表同一个代理），组里一行一份预设。窗格本身和实例树同一条规矩：不画外框、
-    // 左边不画展开三角（展开/收起画在行尾那个箭头上）、每行等高、开着悬停跟踪。
+    // 左边不画展开三角（展开/收起画在行尾那个箭头上），组头和预设行采用各自的行高。
     m_presetList = new QTreeWidget(m_listLayer);
     m_presetList->setObjectName(presetListName());
     m_presetList->setHeaderHidden(true);
     m_presetList->setFrameShape(QFrame::NoFrame);
     m_presetList->setRootIsDecorated(false);
-    m_presetList->setUniformRowHeights(true);
-    m_presetList->setIndentation(14);
-    // 这一份树必须设 iconSize（理由同实例树那一段）：不设就用样式给的默认值，
-    // 26 px 画出来的图标会被缩到默认那一档。
-    m_presetList->setIconSize(QSize(MainWindowUI::instanceTreeIconSize(),
-                                    MainWindowUI::instanceTreeIconSize()));
+    m_presetList->setUniformRowHeights(false);
+    m_presetList->setIndentation(0);
     m_presetList->setSelectionMode(QAbstractItemView::SingleSelection);
     m_presetList->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_presetList->setAlternatingRowColors(false);
@@ -228,12 +210,8 @@ void PresetManagePage::buildListLayer() {
     // 悬停底色要它（代理里那个 `&& hovered` 是另一半）：视图不填 `State_MouseOver`
     // 就一次都不会出现，而且不报错。
     m_presetList->setMouseTracking(true);
-    // 行高走代理的默认值（`MainWindowUI::instanceTreeRowHeight()` = 58）——和实例页那一档
-    // 逐像素一样，两页的行才看着是同一种行。
     auto *listDelegate = new InstanceGroupDelegate(m_presetList);
-    // 行尾那三颗（齿轮 / 置顶箭头 / 垃圾桶）**不挂**：这一份页面上"对一条做什么"
-    // 在细节那一层里（复制 / 设为默认 / 删除 / 上移下移），挂着的话行尾会多出三格
-    // 点下去没有去处的图标。
+    // 预设行的操作在详情页内。
     listDelegate->setInlineRowActions(false);
     m_presetList->setItemDelegate(listDelegate);
     Anim::animateExpansion(m_presetList);
@@ -810,16 +788,8 @@ void PresetManagePage::showDetailLayer(bool detail) {
             name = item != nullptr ? item->text(0) : QString();
         }
         m_detailTitle->setText(name);
-        // 顶上那颗图标跟着这一份走（没有自带图标就是拼图，和列表行首同一套判据）。
         if (m_identityIcon != nullptr) {
-            QPixmap pixmap(iconPath);
-            if (pixmap.isNull()) {
-                pixmap = VersionIcons::puzzleMark(
-                    m_identityIcon->width(), palette().color(QPalette::WindowText));
-            }
-            m_identityIcon->setPixmap(pixmap.scaled(m_identityIcon->size(),
-                                                    Qt::KeepAspectRatio,
-                                                    Qt::SmoothTransformation));
+            m_identityIcon->setPixmap(presetCover(id, iconPath, m_identityIcon->width()));
         }
     }
     auto *next = detail ? m_detailLayer : m_listLayer;
@@ -867,14 +837,8 @@ void PresetManagePage::rebuildPresetList(const QString &selectId, bool emitSelec
         if (!ordered.contains(key)) ordered.append(key);
     }
 
-    // 行首那一格图标：这一份自带图标就用它，没有就用拼图（和文件页里"这一份是资源"
-    // 同一个记号，见 VersionIcons::puzzleMark 那段）。实例页每行都有图标，
-    // 这一页要是空着，两张列表一眼就不像同一张表。
-    const QIcon fallbackIcon(VersionIcons::puzzleMark(
-        MainWindowUI::instanceTreeIconSize(),
-        m_presetList->palette().color(QPalette::WindowText)));
-
-    auto makeGroup = [this](const QString &text) {        auto *group = new QTreeWidgetItem(m_presetList);
+    auto makeGroup = [this](const QString &text) {
+        auto *group = new QTreeWidgetItem(m_presetList);
         group->setText(0, text);
         // 组头这一格是 `InstanceGroupDelegate` 认"这是组"的判据（和实例页同一把钥匙）。
         group->setData(0, MainWindowUI::groupIdRole(), text);
@@ -902,10 +866,8 @@ void PresetManagePage::rebuildPresetList(const QString &selectId, bool emitSelec
             item->setData(0, kRoleDefault, preset->isDefault);
             item->setData(0, kRoleSearchText,
                           preset->name + QLatin1Char(' ') + preset->description);
-            QIcon rowIcon;
-            if (!preset->iconPath.isEmpty()) rowIcon = QIcon(preset->iconPath);
-            if (rowIcon.isNull()) rowIcon = fallbackIcon;
-            item->setIcon(0, rowIcon);
+            item->setData(0, ListRowDelegate::CoverRole, QIcon(presetCover(preset->id, preset->iconPath, 48)));
+            item->setData(0, ListRowDelegate::MetaRole, preset->categoryText.isEmpty() ? text : preset->categoryText);
             QString tip = preset->description;
             if (!preset->categoryText.isEmpty()) {
                 if (!tip.isEmpty()) tip += QLatin1Char('\n');
@@ -1057,8 +1019,7 @@ void PresetManagePage::setCategories(const QList<CategoryOption> &categories) {
         }
     }
 
-    // 类别 chip：亮着的永远是**一颗**（空钥匙 = 「全部」）。摆在搜索框右边、和实例页
-    // 那一排 chip 同一个位置。
+    // 类别 chip 摆在搜索框左边。空钥匙对应「全部」。
     rebuildCategoryChips();
 
     // 组名换了（或者第一次来）⇒ 组头跟着换一遍。没数据时什么都不用建。

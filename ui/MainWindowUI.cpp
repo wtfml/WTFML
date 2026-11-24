@@ -1930,17 +1930,8 @@ QWidget *MainWindowUI::setupInstancePage() {
             auto *row = new QHBoxLayout(instanceFilterRow);
             row->setContentsMargins(0, 0, 0, 0);
             row->setSpacing(kFilterRowSpacing);
-            instanceSearchEdit = new QLineEdit(instanceFilterRow);
-            instanceSearchEdit->setObjectName(instanceSearchName());
-            instanceSearchEdit->setPlaceholderText(instanceSearchPlaceholder());
-            addSearchIcon(instanceSearchEdit);
-            // 一个 ✕（一行一次清干净）。**不加**"清空搜索"那颗独立按钮：要的是
-            // "清空搜索恢复原展开状态"，而那一格自己就带着这个动作，再摆一颗是同一件事
-            // 说两遍。
-            instanceSearchEdit->setClearButtonEnabled(true);
-            instanceSearchEdit->setFixedWidth(280);  // 设计稿：搜索框靠右、定宽，chip 在左
-            instanceSearchEdit->setFixedHeight(Theme::chipHeight());
-            instanceSearchEdit->setProperty("wtfmlChipHeight", true);
+            instanceSearchEdit = makeListFilterSearch(instanceFilterRow, instanceSearchName(),
+                                                        instanceSearchPlaceholder());
 
             // 四颗 chip **全都建着**（和下载页左栏那六个分类、文件页那四颗筛子同一套做法）：
             // 会变的是"露不露"和"亮不亮"，不是"有没有这一颗"—— 建/不建会让"这一页该有什么"
@@ -2139,6 +2130,32 @@ QWidget *MainWindowUI::setupInstancePage() {
         auto *serverLayout = new QVBoxLayout(serverPage);
         serverLayout->setContentsMargins(0, 0, 0, 0);
         serverLayout->setSpacing(kFilterRowSpacing);
+
+        auto *serverFilterRow = new QWidget(serverPage);
+        serverFilterRow->setObjectName(serverFilterRowName());
+        auto *serverFilters = new QHBoxLayout(serverFilterRow);
+        serverFilters->setContentsMargins(0, 0, 0, 0);
+        serverFilters->setSpacing(kFilterRowSpacing);
+        const QStringList serverFilterTexts{
+            instanceFilterText(InstanceFilterButton::Vanilla),
+            QCoreApplication::translate("MainWindowUI", "插件"),
+            instanceFilterText(InstanceFilterButton::Modded),
+            QCoreApplication::translate("MainWindowUI", "运行中"),
+        };
+        for (int i = 0; i < serverFilterTexts.size(); ++i) {
+            const auto which = static_cast<ServerFilterButton>(i);
+            auto *chip = new QPushButton(serverFilterTexts.at(i), serverFilterRow);
+            chip->setObjectName(serverFilterButtonName(which));
+            chip->setCheckable(true);
+            Theme::markChipButton(chip);
+            serverFilterButtons.append(chip);
+            serverFilters->addWidget(chip);
+        }
+        serverFilters->addStretch(1);
+        serverSearchEdit = makeListFilterSearch(serverFilterRow, serverSearchName(),
+            QCoreApplication::translate("MainWindowUI", "搜索服务端名称、版本号或类型"));
+        serverFilters->addWidget(serverSearchEdit);
+        serverLayout->addWidget(serverFilterRow);
 
         serverEmptyLabel = new QLabel(serverEmptyText(), serverPage);
         serverEmptyLabel->setObjectName(serverEmptyLabelName());

@@ -78,10 +78,22 @@ void runServerSettingsPageTests() {
 
     MainWindow w;
     w.show();
+    if (auto *tabs = w.findChild<QTabWidget *>(MainWindowUI::tabWidgetName()))
+        tabs->setCurrentIndex(MainWindowUI::instancesTabIndex());
+    if (auto *serverMode = w.findChild<QPushButton *>(MainWindowUI::instanceModeButtonName(
+            MainWindowUI::InstanceMode::Server))) serverMode->click();
     QApplication::processEvents();
+    auto *runningFilter = w.findChild<QPushButton *>(MainWindowUI::serverFilterButtonName(
+        MainWindowUI::ServerFilterButton::Running));
+    auto *serverList = w.findChild<QTreeWidget *>(MainWindowUI::serverListName());
+    const auto serverRow = [serverList] { return serverList ? serverList->topLevelItem(0) : nullptr; };
+    check(runningFilter && serverRow(), "服务端运行状态筛选和列表行都存在");
+    if (runningFilter) runningFilter->click();
+    check(runningFilter && runningFilter->isChecked() && serverRow() && serverRow()->isHidden(),
+          "运行中筛选会隐藏已停止的服务端");
 
     bool pageSeen = false;
-    QTimer::singleShot(0, [&pageSeen, &serverId, &originalProps, &propsTextOnDisk, &w] {
+    QTimer::singleShot(0, [&pageSeen, &serverId, &originalProps, &propsTextOnDisk, &w, serverRow] {
         OverlayHost *host = currentPageOverlay();
         if (host == nullptr) {
             return;
@@ -393,6 +405,7 @@ void runServerSettingsPageTests() {
                     [process] { return process->status() == ServerModel::Status::Running; }, 20000);
                 check(running, "T42.11 前提：假服务端起来了（没起来后面那几条没有意义）",
                       ServerModel::statusName(process->status()));
+                check(serverRow() && !serverRow()->isHidden(), "服务端启动后自动进入运行中筛选结果");
                 check(statusLabel->text() == ServerModel::statusName(ServerModel::Status::Running),
                       "★★★ T42.11 服务端一起来，正开着这一页顶上的状态**当场**翻成「运行中」"
                       "（以前要等重开这一页才看得见）",
@@ -408,6 +421,7 @@ void runServerSettingsPageTests() {
                     pumpUntil([process] { return !process->isRunning(); }, 20000);
                 check(stopped, "T42.11 前提：假服务端停下来了",
                       ServerModel::statusName(process->status()));
+                check(serverRow() && serverRow()->isHidden(), "服务端停止后自动退出运行中筛选结果");
                 check(statusLabel->text() == ServerModel::statusName(process->status()),
                       "★★ T42.11 停下来之后状态那行也跟着翻回去", statusLabel->text());
                 check(textFieldOf(QStringLiteral("motd"))->isEnabled(),
@@ -423,6 +437,7 @@ void runServerSettingsPageTests() {
     QMetaObject::invokeMethod(&w, "openServerSettingsPage", Qt::DirectConnection,
                               Q_ARG(QString, serverId));
     QApplication::processEvents();
+    if (runningFilter && runningFilter->isChecked()) runningFilter->click();
 
     check(pageSeen, "★★ T42.0 点出来的是那一页（`openServerSettingsPage` 经元对象系统驱动）");
     check(currentOverlay() == nullptr, "★ T42.8 按返回箭头 ⇒ 那一页收掉了（没卡在嵌套循环里）");

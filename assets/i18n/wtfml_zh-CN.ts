@@ -14632,6 +14632,18 @@ Minecraft %2 / %3 %4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>插件</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>搜索服务端名称、版本号或类型</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>没有符合筛选条件的服务端</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>新建服务端…</source>
         <translation type="unfinished"></translation>
     </message>

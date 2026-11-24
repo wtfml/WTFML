@@ -124,6 +124,32 @@ int MwServerCreationChecks(const QDir &root) {
                       "★ T39.3 tooltip 里有那个目录的绝对路径（悬停提示里给目录）");
             }
 
+            {
+                using Filter = MainWindowUI::ServerFilterButton;
+                auto *search = byObjectName<QLineEdit>(&w, MainWindowUI::serverSearchName());
+                auto *plugins = byObjectName<QPushButton>(&w, MainWindowUI::serverFilterButtonName(Filter::Plugins));
+                auto *vanilla = byObjectName<QPushButton>(&w, MainWindowUI::serverFilterButtonName(Filter::Vanilla));
+                auto *row = serverTree->topLevelItem(0);
+                check(search && plugins && vanilla && row, "服务端列表有搜索、类型筛选和数据行");
+                if (search && plugins && vanilla && row) {
+                    search->setText(QStringLiteral("1.20.1 甲"));
+                    check(!row->isHidden(), "服务端名称和版本号可拆成关键词同时搜索");
+                    plugins->click();
+                    check(row->isHidden() && !emptyLabel->isHidden() &&
+                              emptyLabel->text() == MainWindowUI::serverNoMatchText(),
+                          "服务端类型筛选与搜索叠加，筛空时显示没有匹配项");
+                    vanilla->click();
+                    check(!plugins->isChecked() && !row->isHidden() && emptyLabel->isHidden(),
+                          "切换服务端类型筛选后恢复匹配项");
+                    search->setText(QStringLiteral("1.20.2"));
+                    check(row->isHidden(), "服务端搜索会排除不匹配的版本");
+                    search->clear();
+                    vanilla->click();
+                    check(!row->isHidden() && serverTree->currentItem() == row,
+                          "清除服务端筛选后恢复列表和当前行");
+                }
+            }
+
             // ---------- ④ 丢一个 server.jar 进去 ⇒ 再扫就是「可启动」 ----------
             {
                 QFile jar(AppPaths::serverDir(QStringLiteral("甲服务端")) +
@@ -180,7 +206,7 @@ int MwServerCreationChecks(const QDir &root) {
                 }
             }
 
-            // ---------- ④b 每一档对应哪张图 + 页头那句计数 == 列表行数 ----------
+            // ---------- ④c 服务端封面、类型图标和版本 + 页头计数 ----------
             {
                 struct FlavorIcon { ServerInstall::Flavor flavor; int mark; };
                 // loaderMark 表：0 Fabric / 1 Forge / 2 NeoForge / 3 OptiFine / 4 Quilt / 5 草方块。
@@ -198,6 +224,8 @@ int MwServerCreationChecks(const QDir &root) {
                     info.flavor = f.flavor;
                     info.flavorKnown = true;
                     info.gameVersion = QStringLiteral("1.20.1");
+                    if (f.flavor == ServerInstall::Flavor::Forge) info.loaderVersion = QStringLiteral("47.2.0");
+                    if (f.flavor == ServerInstall::Flavor::Paper) info.buildId = QStringLiteral("111");
                     QString why;
                     check(ServerRegistry::createServer(info.name, info, &why),
                           "T39.4c 前提：摆下这一档的服务端", why);
@@ -217,11 +245,17 @@ int MwServerCreationChecks(const QDir &root) {
                             hit = serverTree->topLevelItem(i);
                         }
                     }
-                    check(hit != nullptr &&
-                              imageOf(hit->data(0, ListRowDelegate::CoverRole)) ==
-                                  QIcon(VersionIcons::loaderMark(f.mark, 48)).pixmap(96, 96).toImage(),
-                          "★★ T39.4c 每一档端类型挂对应的图（Fabric/Forge/NeoForge/Quilt 各一张，Paper/Purpur/Spigot 草方块）",
-                          ServerInstall::flavorToken(f.flavor));
+                    const QString flavor = ServerInstall::flavorName(f.flavor);
+                    QString version = QStringLiteral("1.20.1");
+                    if (f.flavor == ServerInstall::Flavor::Forge) version = QStringLiteral("47.2.0");
+                    if (f.flavor == ServerInstall::Flavor::Paper) version += QStringLiteral(" #111");
+                    const QIcon expectedCover(VersionIcons::isoBlock(VersionIcons::isoBlockKindFor(id), 48));
+                    const QIcon expectedType(VersionIcons::loaderMark(f.mark, 32));
+                    check(hit && imageOf(hit->data(0, ListRowDelegate::CoverRole)) == imageOf(expectedCover),
+                          "★★ T39.4c 服务端封面按标识分配稳定的彩色方块", flavor);
+                    check(hit && imageOf(hit->data(0, ListRowDelegate::MetaIconRole)) == imageOf(expectedType) &&
+                              hit->data(0, ListRowDelegate::MetaRole).toString() == flavor + QLatin1Char(' ') + version,
+                          "★★ T39.4c 服务端类型列显示标志和版本（含记录的加载器版本或构建号）", flavor);
                 }
                 // 前提：5 张图两两不同（不然上面的逐档比较分不出借错图）
                 bool allDistinct = true;

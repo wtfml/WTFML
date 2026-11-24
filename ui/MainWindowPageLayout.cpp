@@ -125,6 +125,18 @@ void addSearchIcon(QLineEdit *edit) {
     Theme::follow(edit, tint);
 }
 
+QLineEdit *makeListFilterSearch(QWidget *parent, const QString &name, const QString &placeholder) {
+    auto *edit = new QLineEdit(parent);
+    edit->setObjectName(name);
+    edit->setPlaceholderText(placeholder);
+    edit->setClearButtonEnabled(true);
+    edit->setFixedWidth(280);
+    edit->setFixedHeight(Theme::chipHeight());
+    edit->setProperty("wtfmlChipHeight", true);
+    addSearchIcon(edit);
+    return edit;
+}
+
 // 侧栏列表与容器共用一层底色；代理绘制选中/悬停时也拿相同的 Base，避免白色内框。
 void styleSidebarList(QListWidget *list) {
     list->setProperty("wtfmlSidebarRail", true);

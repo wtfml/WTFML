@@ -15091,6 +15091,18 @@ Are you sure to delete?</translation>
             <translation>There is currently no server instance. Click "New Server" to start creating.</translation>
         </message>
         <message>
+            <source>插件</source>
+            <translation>Plugins</translation>
+        </message>
+        <message>
+            <source>搜索服务端名称、版本号或类型</source>
+            <translation>Search name, version, or type</translation>
+        </message>
+        <message>
+            <source>没有符合筛选条件的服务端</source>
+            <translation>No servers match your filters</translation>
+        </message>
+        <message>
             <source>新建服务端…</source>
             <translation>Create a new server…</translation>
         </message>

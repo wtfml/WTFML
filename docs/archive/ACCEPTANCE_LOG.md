@@ -280,3 +280,7 @@ python tools/acceptance_directory_boundary.py --exe <WTFMinecraftLauncher.exe> -
 2026-11-23｜预设详情左栏直接显示编辑标签｜`install-layout`、`preset-install`、Windows x64 构建与隔离启动通过｜编辑标签共用一份文档，取消离开时恢复原标签。
 
 2026-11-23｜预设详情与实例设置统一页头和左右栏布局｜`install-layout`、`lifecycle`、`preset-install`、Windows x64 构建与隔离启动通过｜返回预设列表时恢复文件夹路径和模式切换。
+
+2026-11-24｜服务端列表增加筛选和搜索，预设列表改为左分类右搜索｜`install-layout`、`main-window` 3182 项、Windows x64 构建与隔离启动通过｜运行中筛选随服务端起停更新，最小窗口下仅折行左侧预设分类。
+
+2026-11-24｜服务端与预设采用实例列表的彩色方块封面和类型列｜`install-layout`、`main-window`、`preset-install`、Windows x64 构建与隔离启动通过｜颜色按标识稳定分配，服务端类型列可显示加载器版本或构建号，预设类型列显示类别。

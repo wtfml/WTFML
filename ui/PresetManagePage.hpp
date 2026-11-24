@@ -11,7 +11,7 @@
  *
  * 【两层的形状都照着这一栏里已有的样子】
  *
- * 列表那一层和「客户端实例」「服务端」是同一页形（顶上 chip 高的搜索框 + 一排类别 chip、
+ * 列表那一层和「客户端实例」「服务端」是同一页形（顶上左边是筛选 chip、右边是搜索框，
  * 中间一整棵不画外框、按类别分组的树、底下那颗建东西的主操作）。详情沿用实例设置的
  * 面包屑和身份页眉，页眉右侧是「应用」，左栏切换详情和编辑内容。
  * 点一行进细节、按返回回列表 —— 和实例页点一行进实例设置是同一条路。
@@ -39,6 +39,7 @@
 #include <QStringList>
 
 class QCheckBox;
+class FlowLayout;
 class QComboBox;
 class QFrame;
 class QGridLayout;
@@ -69,7 +70,7 @@ public:
         /// 这一份属于哪一类。★ 这里只是一把**不透明**的钥匙：页面拿它和筛选项的
         /// `CategoryOption::key` 逐字比、原样交给外面；四类叫什么、怎么翻，全在控制器。
         QString categoryKey;
-        QString categoryText;  ///< 已经翻好的类别名（工具提示与右栏摘要里显示）
+        QString categoryText;  ///< 已经翻好的类别名（用于列表、工具提示和详情摘要）
         int sectionCount = 0;
         bool isDefault = false;
         QStringList categoryKeys;
@@ -333,8 +334,8 @@ private:
     QStackedWidget *m_layers = nullptr;
     QWidget *m_listLayer = nullptr;
     QWidget *m_detailLayer = nullptr;
-    /// 列表那一层顶上那两行里的第二行（类别 chip）。第一行是搜索框，独占一整条。
-    QHBoxLayout *m_chipRow = nullptr;
+    /// 分类按钮用左侧空间，窄窗或较长译文下可以折行。
+    FlowLayout *m_chipRow = nullptr;
     /// 「没有符合筛选条件的预设」那一句（筛空了才露）。
     QLabel *m_noMatchLabel = nullptr;
     /// 类别 chip（第一颗是「全部」，钥匙空串）。点哪一颗就把哪一颗点亮 —— 单选。
