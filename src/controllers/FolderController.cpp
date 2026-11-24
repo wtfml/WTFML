@@ -29,14 +29,12 @@ void FolderController::add() {
     const QString folder = QFileDialog::getExistingDirectory(
         m_dialogParent, tr("选择 Minecraft 游戏目录"), QDir::homePath());
     if (folder.isEmpty()) return;
-    const QString gameFolder = FolderManager::gameFolderPathForSelection(folder);
     if (!m_folders->addFolder(folder)) {
         InlineMessage::warning(m_ui->overlay(), tr("添加文件夹失败"),
-                               tr("无法使用游戏目录「%1」。请检查目录是否存在并允许写入。")
-                                   .arg(QDir::toNativeSeparators(gameFolder.isEmpty() ? folder : gameFolder)));
+                               tr("「%1」不是一个存在的目录。").arg(folder));
         return;
     }
-    log(tr("已添加文件夹：%1").arg(QDir::toNativeSeparators(gameFolder)));
+    log(tr("已添加文件夹：%1").arg(folder));
     m_folders->setCurrentFolder(folder);
 }
 
@@ -54,7 +52,7 @@ void FolderController::removeFromList(const QString &folder) {
         question += tr("\n\n移除当前游戏目录后，将使用「%1」。")
                         .arg(QDir::toNativeSeparators(FolderManager::defaultFolder()));
     }
-    if (!InlineMessage::question(m_ui->overlay(), tr("从列表中移除文件夹"), question,
+    if (!InlineMessage::question(m_ui->overlay(), tr("从列表里移除文件夹"), question,
                                  tr("是"), tr("否"), true)) return;
     if (!m_folders->removeFolder(folder)) {
         InlineMessage::warning(m_ui->overlay(), tr("移除文件夹"),
@@ -62,7 +60,7 @@ void FolderController::removeFromList(const QString &folder) {
                                    .arg(QDir::toNativeSeparators(folder)));
         return;
     }
-    log(tr("已从列表中移除文件夹：%1").arg(folder));
+    log(tr("已从列表里移除文件夹：%1").arg(folder));
 }
 
 void FolderController::action(const QString &path, int action) {
@@ -102,7 +100,7 @@ void FolderController::rename(const QString &path) {
     }
     if (!m_folders->setDisplayName(path, name)) {
         InlineMessage::warning(m_ui->overlay(), tr("重命名游戏目录"),
-                               tr("「%1」已不在列表中。")
+                               tr("「%1」已经不在列表里了。")
                                    .arg(QDir::toNativeSeparators(path)));
         return;
     }
@@ -113,7 +111,7 @@ void FolderController::rename(const QString &path) {
 void FolderController::open(const QString &path) {
     if (!QFileInfo(path).isDir()) {
         InlineMessage::warning(m_ui->overlay(), tr("打开游戏目录"),
-                               tr("未找到「%1」。请确认目录仍在原位置，且存储设备已连接。")
+                               tr("找不到「%1」。请确认目录仍在原位置，且存储设备已连接。")
                                    .arg(QDir::toNativeSeparators(path)));
         return;
     }

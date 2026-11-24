@@ -126,8 +126,6 @@ struct Pack {
     /// CurseForge 由清单里的 `overrides` 字段给，**后一个对 CF 恒为空** —— 它没有这个规矩）。
     QString overridesDir = QStringLiteral("overrides");
     QString clientOverridesDir = QStringLiteral("client-overrides");
-    /// 下载页已知的项目封面缓存键，按来源隔离。
-    QString coverCacheId;
     /// 清单里点了名的文件总数（**不管下不下得成**）。确认框上那句"要下载的文件：N 个"
     /// 用它：CurseForge 的 N 条在这一步还只是号，但用户要知道的正是"这个包有多大"。
     int fileCount() const { return files.size() + pendingRefs.size(); }

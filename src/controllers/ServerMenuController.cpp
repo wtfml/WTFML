@@ -105,7 +105,7 @@ void ServerMenuController::run(const QString &serverId, int action) {
         const bool on = !ServerRegistry::readMeta(serverId).restartOnCrash;
         QString problem;
         if (!ServerRegistry::setRestartOnCrash(serverId, on, &problem)) {
-            InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("设置未保存"), problem);
+            InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("没记住"), problem);
             return;
         }
         if (!on) {

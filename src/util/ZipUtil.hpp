@@ -139,7 +139,7 @@ EntryStatus extractEntryToFile(const QString &archive, const QString &entryName,
  * 但它是**另起一个 PowerShell 进程**，所以别放进每秒都要跑的那种循环里。
  */
 EntryStatus listEntries(const QString &archive, QStringList *out, QString *errorOut = nullptr,
-                        const QString &what = QStringLiteral("读取压缩包条目列表"));
+                        const QString &what = QStringLiteral("读压缩包的条目表"));
 
 /**
  * @brief 只解压某几个前缀底下的条目，而且**把前缀剥掉**（`overrides/config/x` → `<目标>/config/x`）。

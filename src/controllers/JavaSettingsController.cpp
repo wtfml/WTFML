@@ -49,19 +49,18 @@ JavaSettingsController::JavaSettingsController(MainWindowUI *ui, GlobalJavaSetti
     connect(runtime, &JavaRuntimeController::runtimeFinished, this,
             [this](int major, bool ok, const QString &path, bool batch) {
         if (ok) {
-            log(tr("Java %1 运行时已安装：%2").arg(major).arg(QDir::toNativeSeparators(path)));
+            log(tr("Java %1 运行时已装好：%2").arg(major).arg(QDir::toNativeSeparators(path)));
         } else {
             log(tr("Java %1 运行时下载失败").arg(major));
             if (!batch && m_page != nullptr && m_page->isVisible())
                 InlineMessage::warning(m_ui->overlay(), tr("Java 运行时下载失败"),
-                    tr("Java %1 从 Adoptium 下载失败。\n请重试，或在安装 Java 后选择「检测已有 Java」。"
-                       "也可在实例设置中指定 Java。")
+                    tr("Java %1 未从 Adoptium 下载成功。\n请重试，或在安装 Java 后选择「检测已有 Java」。也可在实例设置中指定 Java。")
                         .arg(major));
         }
     });
     connect(runtime, &JavaRuntimeController::downloadSequenceFinished, this,
             [this](bool batch, int okCount, int failCount, bool cancelled) {
-        if (cancelled) log(tr("Java 下载队列已停止；当前下载完成后未继续下载下一项。"));
+        if (cancelled) log(tr("Java 下载队列已停止；当前下载完成后没有再开始下一份。"));
         if (batch && failCount > 0 && m_page != nullptr && m_page->isVisible())
             InlineMessage::warning(m_ui->overlay(), tr("部分 Java 下载失败"),
                 tr("已下载 %1 个 Java 运行时，%2 个下载失败。\n请重试，或手动安装后选择「检测已有 Java」。")
@@ -267,10 +266,10 @@ void JavaSettingsController::setManualJava(const QString &path) {
     const QFileInfo info(path.trimmed());
     if (info.fileName().isEmpty()) return;
     if (!info.isFile()) {
-        log(tr("未找到手动指定的 Java：%1").arg(QDir::toNativeSeparators(info.filePath())));
+        log(tr("找不到手动指定的 Java：%1").arg(QDir::toNativeSeparators(info.filePath())));
         InlineMessage::warning(
-            m_ui->overlay(), tr("未选择 java.exe"),
-            tr("该路径下未找到文件：\n%1\n\n请选择 Java 安装目录 bin 文件夹中的 java.exe。")
+            m_ui->overlay(), tr("没选到 java.exe"),
+            tr("这条路线上没有那个文件：\n%1\n\n要选的是 Java 安装目录下 bin 里的 java.exe。")
                 .arg(QDir::toNativeSeparators(info.filePath())));
         return;
     }
@@ -291,7 +290,7 @@ void JavaSettingsController::setManualJava(const QString &path) {
                     log(tr("无法识别 Java 主版本：%1")
                             .arg(QDir::toNativeSeparators(absolute)));
                     InlineMessage::warning(
-                        m_ui->overlay(), tr("Java 不可用"),
+                        m_ui->overlay(), tr("这不是一份能用的 Java"),
                         tr("无法识别 %1 的 Java 主版本。\n请从 Java 安装目录的 bin 文件夹中选择可运行的 java.exe。")
                             .arg(QDir::toNativeSeparators(absolute)));
                     return;
@@ -370,7 +369,7 @@ void JavaSettingsController::refreshMemory() {
     const int cap = m_ui->getMemoryMaxSpin()->maximum();
     int xmx = m_settings->xmx();
     if (xmx > cap) {
-        log(tr("内存：%1 %2 MB 超过本机物理内存上限，已降为 %3 MB。")
+        log(tr("内存：%1 %2 MB 超过这台机器的物理内存上限，已降到 %3 MB。")
                 .arg(autoMode ? tr("自动给出的最大内存") : tr("已保存的最大内存"))
                 .arg(xmx)
                 .arg(cap));
@@ -378,7 +377,7 @@ void JavaSettingsController::refreshMemory() {
         xmx = cap;
     }
     if (clampXmsToXmx(xmx)) {
-        log(tr("内存：最小内存不能超过最大内存，已同步降为 %1 MB。").arg(xmx));
+        log(tr("内存：最小内存不能超过最大内存，已跟着降到 %1 MB。").arg(xmx));
     }
     if (m_settings->xmx() != beforeXmx || m_settings->xms() != beforeXms) {
         // 自动值变了才落盘（定时器每 2 秒跑一次，不能每趟都写注册表）。

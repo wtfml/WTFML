@@ -1,6 +1,6 @@
 /**
  * @file VersionIntegrity.cpp
- * @brief 「诊断」那套判据的实现（只报不装，见头文件里那几段说明）。
+ * @brief 「体检」那套判据的实现（只报不装，见头文件里那几段说明）。
  */
 
 #include "VersionIntegrity.hpp"

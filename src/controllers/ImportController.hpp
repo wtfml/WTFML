@@ -1,7 +1,6 @@
 #pragma once
 #include <QHash>
 #include <QObject>
-#include <QSet>
 #include "download/ResourceCatalog.hpp"
 #include "manage/ModpackImport.hpp"
 #include "operations/OperationReport.hpp"
@@ -16,7 +15,7 @@ public:
     void openImportReport(const QString &instanceId);
     void importModpackFromFile(const QString &zipPath, const QString &namePrefill);
     void importModpackOneClick(const QString &zipPath, const QString &confirmedInstanceName,
-                               Tasks::TaskId taskId, bool allowRename = true, const QString &coverCacheId = {});
+                               Tasks::TaskId taskId);
     bool applyModpackImport(const QString &zipPath, const QString &instanceName, const QByteArray &manifestJson, ModpackImport::Format format);
     bool installLocalResourceFile(const QString &versionId, ResourceCatalog::Kind kind, const QString &path, QString *problemOut);
     /// 这一批同类文件里用户按了「取消」：剩下的不再逐个问，直接停。
@@ -61,7 +60,7 @@ private:
     /// PCL 那种"压缩包里套一份 .mrpack"解出来的临时包：实例名 → 临时文件。
     /// 导入真的开始了才登记（提前退出那些路当场就删），结束（`versionDownloadFinished`，
     /// 成功失败都算）时删掉 —— 数据层在整段导入里还要读它。
-    QSet<QString> m_tempArchives;
+    QHash<QString, QString> m_tempArchives;
     /// 带自定义启动补丁的 MultiMC 包：实例名 → 原包路径。导入成功后把原包的
     /// `mmc-pack.json` / `patches/` / `instance.cfg` 留在实例的 `.wtfml/pack-source/`，
     /// 导出时才能把"特殊格式"原样带回去。

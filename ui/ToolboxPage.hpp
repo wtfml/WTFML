@@ -214,7 +214,7 @@ public:
     /// `server.properties` 那一整行 `motd=…`（controller 已经把非 ASCII 转成
     /// `\uXXXX` 了 —— 按 ISO-8859-1 读也不会坏）。
     void setTextMotd(const QString &motd);
-    /// 在原文那个光标处插一段（「插入自定义颜色」那颗按的：`§x§R§R§G§G§B§B` 是 controller
+    /// 在原文那个光标处插一段（「插自定颜色」那颗按的：`§x§R§R§G§G§B§B` 是 controller
     /// 按 `TextFormat` 的规矩算好递进来的，这一页不自己拼）。
     void insertTextAtCursor(const QString &text);
     /// 认不出来的那几种组件（`translate`、`score`、写错的 `#RRGGBB`）——**不猜**，就把这句摆出来。
@@ -420,7 +420,7 @@ private:
     /// 弹出切换浮层（面包屑上的工具名）。
     void openSwitchPopover();
     void syncHeader();
-    /// 附魔那一张表加一行（「添加一行」和"构造时先摆一行"走的是同一段）。
+    /// 附魔那一张表加一行（「加一行」和"构造时先摆一行"走的是同一段）。
     void appendAnvilRow();
     /// 删掉 / 加上一行之后重新摆一遍：第一行的「同上一件」去掉、悬停删除钮、窄时折行。
     void refreshAnvilRows();

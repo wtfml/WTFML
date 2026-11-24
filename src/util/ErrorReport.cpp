@@ -104,7 +104,7 @@ QString header(const Facts &facts, const QDateTime &now) {
                                ? QCoreApplication::translate("ErrorReport", "%1（异常终止）").arg(facts.exitCode)
                                : QString::number(facts.exitCode)));
     } else {
-        lines.append(field(QCoreApplication::translate("ErrorReport", "退出码"), QCoreApplication::translate("ErrorReport", "（导出时游戏仍在运行）")));
+        lines.append(field(QCoreApplication::translate("ErrorReport", "退出码"), QCoreApplication::translate("ErrorReport", "（导出时游戏还在运行）")));
     }
     return lines.join(QLatin1Char('\n'));
 }
@@ -138,8 +138,7 @@ QString text(const Facts &facts, const QDateTime &now, const QString &errors, co
                    // 被挤掉的那些**全是**错误行（再没有别的错误行留在窗里）：不写这一档，
                    // 标题就只能退回「共 0 行」，而下面那句"这一趟没有 ERROR 以上的输出"
                    // 和事实正好相反。
-                   ? QCoreApplication::translate("ErrorReport", "错误与致命（原始共 %1 行；"
-                                                                "正文已被日志行数上限截去）")
+                   ? QCoreApplication::translate("ErrorReport", "错误与致命（原始共 %1 行；正文已经被日志行数上限挤掉）")
                          .arg(facts.errorLines)
                    : QCoreApplication::translate("ErrorReport", "错误与致命（共 %1 行）").arg(facts.errorLines));
     out += sectionDivider(errorTitle);
@@ -147,11 +146,9 @@ QString text(const Facts &facts, const QDateTime &now, const QString &errors, co
     if (errors.isEmpty()) {
         // 照样写上那一段（理由见 .hpp）：空着的话看的人分不清"没出错"和"导出漏了"。
         out += facts.errorTruncated
-                   ? QCoreApplication::translate("ErrorReport", "（此段当前无内容：较早的行已被日志行数上限截"
-                                                                "去，原始共 %1 行。）")
+                   ? QCoreApplication::translate("ErrorReport", "（这一段里现在一行都没有：较早的几行已被日志行数上限挤掉，原始共 %1 行。）")
                          .arg(facts.errorLines)
-                   : QCoreApplication::translate("ErrorReport", "（此段无内容：本次无 ERROR 及以上级别的输出。"
-                                                                "日志正文见下文。）");
+                   : QCoreApplication::translate("ErrorReport", "（这一段里一行都没有：本次没有 ERROR 及以上的输出。日志本身在下面。）");
         out += QLatin1Char('\n');
     } else {
         out += errors;
@@ -166,7 +163,7 @@ QString text(const Facts &facts, const QDateTime &now, const QString &errors, co
     // 同上：只留了末尾一截时不能再叫「完整日志」—— 那份文件**不是**完整的。
     const QString logTitle =
         facts.logTruncated && !log.isEmpty()
-            ? QCoreApplication::translate("ErrorReport", "日志末尾（最近 %1 行 / 原始共 %2 行；未导出完整日志）")
+            ? QCoreApplication::translate("ErrorReport", "日志末尾（最近 %1 行 / 原始共 %2 行；完整日志没有导出）")
                   .arg(lineCountOf(log))
                   .arg(facts.totalLines)
             : QCoreApplication::translate("ErrorReport", "完整日志（共 %1 行）").arg(facts.totalLines);

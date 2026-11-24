@@ -194,7 +194,7 @@ void runHomeRecentCardTests() {
               "★ T36.2 第一行 = 当初那句显示名",
               labelText(&w, MainWindowUI::homeRecentNameLabelName()));
         check(labelText(&w, MainWindowUI::homeRecentDetailLabelName()) ==
-                  QStringLiteral("（游玩中）"),
+                  QStringLiteral("（还在玩）"),
               "★ T36.2 第二行只有一句结局注解（这一趟没有目标、也还没有时长）",
               labelText(&w, MainWindowUI::homeRecentDetailLabelName()));
         check(whenExpectation(t0).contains(

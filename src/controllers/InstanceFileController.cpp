@@ -7,7 +7,6 @@
 #include "manage/FolderManager.hpp"
 #include "util/WriteDirectoryGuard.hpp"
 #include "util/AppPaths.hpp"
-#include "util/SentenceJoin.hpp"
 #include "operations/OperationReport.hpp"
 #include <QUuid>
 
@@ -105,7 +104,7 @@ void InstanceFileController::endFileOperation(const QStringList &ids) {
 bool InstanceFileController::toggle(const QString &path, QString *problem) {
     if (const QString why = firstRefusal({path}); !why.isEmpty()) {
         if (problem) *problem = why;
-        else InlineMessage::warning(m_overlay, tr("修改失败"), why);
+        else InlineMessage::warning(m_overlay, tr("改动失败"), why);
         return false;
     }
     return toggleUnchecked(path, problem);
@@ -114,16 +113,16 @@ bool InstanceFileController::toggle(const QString &path, QString *problem) {
 bool InstanceFileController::toggleUnchecked(const QString &path, QString *problem) {
     const auto fail = [this, problem](const QString &text) {
         if (problem) *problem = text;
-        else InlineMessage::warning(m_overlay, tr("修改失败"), text);
+        else InlineMessage::warning(m_overlay, tr("改动失败"), text);
         return false;
     };
     const QFileInfo info(path);
     if (!info.exists())
-        return fail(tr("未找到「%1」。").arg(QDir::toNativeSeparators(path)));
+        return fail(tr("找不到「%1」。").arg(QDir::toNativeSeparators(path)));
     QString lockProblem;
     if (!WriteDirectoryGuard::acquire(path, &lockProblem)) return fail(lockProblem);
     if (info.isDir())
-        return fail(tr("「%1」是文件夹，无法启用 / 禁用。\n\n（文件夹被重命名后，其中的内容将无法被游戏读取。）")
+        return fail(tr("「%1」是一个文件夹，不能启用 / 禁用。\n\n（把一个文件夹改了名，它里面的东西会一起从游戏眼里消失。）")
                         .arg(QDir::toNativeSeparators(path)));
     const QString suffix = InstanceFilesPage::disabledSuffix();
     const QString target = info.fileName().endsWith(suffix, Qt::CaseInsensitive)
@@ -144,7 +143,7 @@ bool InstanceFileController::remove(const QString &path) {
     const QFileInfo info(path);
     if (!info.exists()) {
         InlineMessage::warning(m_overlay, tr("删除失败"),
-                               tr("未找到「%1」。").arg(QDir::toNativeSeparators(path)));
+                               tr("找不到「%1」。").arg(QDir::toNativeSeparators(path)));
         return false;
     }
     if (const QString why = firstRefusal({path}); !why.isEmpty()) {
@@ -184,7 +183,7 @@ bool InstanceFileController::removeUnchecked(const QString &path, QString *probl
     };
     const QFileInfo info(path);
     if (!info.exists())
-        return fail(tr("未找到「%1」。").arg(QDir::toNativeSeparators(path)));
+        return fail(tr("找不到「%1」。").arg(QDir::toNativeSeparators(path)));
     QString lockProblem;
     if (!WriteDirectoryGuard::acquire(path, &lockProblem)) return fail(lockProblem);
     // 进**回收站**：文件页上的东西（模组、资源包、存档里的一份文件）都是用户自己攒的，
@@ -222,7 +221,7 @@ void recordBatchReport(const QString &instanceId, const QString &title,
     }
     report.complete = report.failedFiles == 0;
     if (!report.complete) {
-        report.failureReason = QObject::tr("有 %1 项未完成。").arg(report.failedFiles);
+        report.failureReason = QObject::tr("有 %1 项没有完成。").arg(report.failedFiles);
     }
     const QString path = OperationReport::reportPath(AppPaths::minecraftDir(), report.id);
     QString problem;
@@ -235,7 +234,7 @@ void recordBatchReport(const QString &instanceId, const QString &title,
 void InstanceFileController::toggleMany(const QStringList &paths, bool disable) {
     if (paths.isEmpty()) return;
     if (const QString why = firstRefusal(paths); !why.isEmpty()) {
-        InlineMessage::warning(m_overlay, tr("修改失败"), why);
+        InlineMessage::warning(m_overlay, tr("改动失败"), why);
         return;
     }
     const QString suffix = InstanceFilesPage::disabledSuffix();
@@ -269,9 +268,9 @@ void InstanceFileController::toggleMany(const QStringList &paths, bool disable) 
                       disable ? tr("批量禁用 %1 项").arg(paths.size())
                               : tr("批量启用 %1 项").arg(paths.size()),
                       entries);
-    log(tr("%1：已处理 %2 个文件。").arg(disable ? tr("批量禁用") : tr("批量启用")).arg(changed));
+    log(tr("%1：动了 %2 个文件。").arg(disable ? tr("批量禁用") : tr("批量启用")).arg(changed));
     if (failed > 0)
-        InlineMessage::warning(m_overlay, tr("修改失败"),
+        InlineMessage::warning(m_overlay, tr("改动失败"),
                                tr("有 %1 个文件修改失败。\n\n%2")
                                    .arg(failed).arg(problems.join(QStringLiteral("\n"))));
 }
@@ -307,15 +306,17 @@ void InstanceFileController::removeMany(const QStringList &paths) {
                              ? tr("确定删除选中的 %1 个文件夹及其内容？文件将移至回收站。")
                                    .arg(paths.size())
                              : [&] {
-                                   QStringList sentences;
-                                   sentences << tr("确定删除选中的 %1 项？").arg(paths.size());
+                                   QString text =
+                                       tr("确定删除选中的 %1 项？").arg(paths.size());
                                    if (dirCount > 0)
-                                       sentences << tr("其中 %1 个为文件夹，其内容将一并删除。").arg(dirCount);
-                                   if (linkCount > 0)
-                                       sentences << tr("其中 %1 个为链接，仅删除链接本身，指向的目标不受影响。")
-                                                        .arg(linkCount);
-                                   sentences << tr("内容将移入回收站，可从回收站恢复。");
-                                   return joinSentences(sentences);
+                                       text += tr("其中 %1 个是文件夹（连同里面的东西一起删）")
+                                                   .arg(dirCount);
+                                   if (linkCount > 0) {
+                                       if (dirCount > 0) text += tr("，");
+                                       text += tr("%1 个是链接（只删链接本身，指向的东西不动）")
+                                                   .arg(linkCount);
+                                   }
+                                   return text + tr("。它们会进回收站，要恢复可以从那里找回来。");
                                }())));
     if (InlineMessage::ask(m_overlay, MessageKind::Question, tr("删除文件"), question,
                            {tr("删除"), tr("取消")}, 1, 0) != 0) return;
@@ -347,7 +348,7 @@ void InstanceFileController::removeMany(const QStringList &paths) {
     recordBatchReport(ids.isEmpty() ? QString() : ids.constFirst(),
                       tr("批量删除 %1 项").arg(paths.size()), entries);
     // 「项」而不是「个文件」：这一批里可能混着文件夹（见上面那一问）。
-    log(tr("批量删除：已删除 %1 项。").arg(removed));
+    log(tr("批量删除：删掉了 %1 项。").arg(removed));
     if (failed > 0)
         InlineMessage::warning(m_overlay, tr("删除失败"),
                                tr("%1 项删除失败：\n\n%2")
@@ -367,7 +368,7 @@ InstanceFileController::LifecycleResult InstanceFileController::applyLifecycleBa
         return result;
     }
     if (!QFileInfo(sourceRoot).isDir() || !plainLifecyclePath(sourceRoot)) {
-        result.problem = tr("列表目录不存在或经过链接，未修改任何文件。");
+        result.problem = tr("列表目录不存在或经过链接，未改动任何文件。");
         return result;
     }
     if (transferring && (!QFileInfo(destination).isDir() || !plainLifecyclePath(destination)

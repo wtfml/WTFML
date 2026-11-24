@@ -138,7 +138,7 @@ bool InstanceMaintenanceController::backupWorldLevelData(const QString &worldDir
     }
     const QString path = WorldFiles::levelDataPath(worldDir);
     if (!QFileInfo::exists(path)) {
-        return fail(QCoreApplication::translate("InstanceMaintenanceController", "此存档中无 level.dat。"));
+        return fail(QCoreApplication::translate("InstanceMaintenanceController", "这个存档里没有 level.dat。"));
     }
 
     const QString root = AppPaths::worldBackupDir();
@@ -236,8 +236,7 @@ QStringList InstanceMaintenanceController::migrateWorldBackupSlots(
         }
         const QFileInfo fromInfo(from);
         if (!fromInfo.isDir() || fromInfo.isSymLink() || fromInfo.isJunction()) {
-            problems.append(QCoreApplication::translate("InstanceMaintenanceController", "未移动存档备份：%1 "
-                                                                                         "不是普通目录。")
+            problems.append(QCoreApplication::translate("InstanceMaintenanceController", "存档备份没有搬：%1 不是一个普通目录。")
                                 .arg(QDir::toNativeSeparators(from)));
             continue;
         }

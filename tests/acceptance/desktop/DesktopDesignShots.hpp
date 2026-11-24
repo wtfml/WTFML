@@ -173,7 +173,7 @@ inline void seedHome(MainWindow &window, bool empty = false) {
         // 一个实例都没有时那一张（和 HomeQuickController 灌的空槽同形）：「还没有实例」+「下载游戏」。
         MainWindowUI::HomeQuickItem slot;
         slot.empty = true;
-        slot.name = QStringLiteral("暂无实例");
+        slot.name = QStringLiteral("还没有实例");
         window.ui()->setHomeQuickRows({slot}, {}, {});
         return;
     }

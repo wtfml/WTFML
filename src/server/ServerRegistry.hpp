@@ -62,7 +62,6 @@ struct Entry {
 
     QString gameVersion;    ///< 游戏版本（我们记的；反推出来的档没有）
     QString loaderVersion;  ///< 加载器版本（同上）
-    QString buildId;        ///< Paper/Purpur 构建号（同上）
     int port = -1;          ///< 端口（-1 = 读不出来 / 没这个文件）
     bool eulaAccepted = false;  ///< `eula.txt` 里写着接受了吗
 

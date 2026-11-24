@@ -26,9 +26,6 @@ void runAgentCredentialStoreTests();
 void runAgentContextTests();
 void runAgentLoopTests();
 void runAgentSkillsTests();
-void runAgentWorkspaceStoreTests();
-void runAgentTestLaunchTests();
-void runAgentRepairTests();
 void runAgentMarkdownTests();
 void runAgentPathPolicyTests();
 void runAgentEgressPolicyTests();
@@ -48,8 +45,6 @@ void runAgentWebPolicyTests();
 void runAgentWebToolsTests();
 void runAgentCommandToolsTests();
 void runAgentPerformanceTests();
-void runAgentInstancePathTests();
-void runAgentPathLayoutTests();
 
 
 // ---------------------------------------------------------------------------
@@ -209,9 +204,6 @@ int main(int argc, char **argv) {
     runAgentContextTests();
     runAgentLoopTests();
     runAgentSkillsTests();
-    runAgentWorkspaceStoreTests();
-    runAgentTestLaunchTests();
-    runAgentRepairTests();
     runAgentMarkdownTests();
     runAgentPathPolicyTests();
     runAgentEgressPolicyTests();
@@ -231,8 +223,6 @@ int main(int argc, char **argv) {
     runAgentWebToolsTests();
     runAgentCommandToolsTests();
     runAgentPerformanceTests();
-    runAgentInstancePathTests();
-    runAgentPathLayoutTests();
 
     out() << "agent: " << g_checks - g_failures << "/" << g_checks << "\n";
     return g_failures == 0 ? 0 : 1;

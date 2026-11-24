@@ -1,6 +1,5 @@
 #pragma once
 #include <QBuffer>
-#include <QCoreApplication>
 #include <QFileInfo>
 #include <QHash>
 #include <QImageReader>
@@ -136,17 +135,17 @@ try {
     }
     if (!completed) {
         process.kill(); process.waitForFinished(3000);
-        result.error = QCoreApplication::translate("ArmorTrimAssets", "读取预览资源超时或无法启动读取器。"); return result;
+        result.error = QStringLiteral("读取预览资源超时或无法启动读取器。"); return result;
     }
     if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
-        result.error = QCoreApplication::translate("ArmorTrimAssets", "无法读取预览资源，归档损坏或资源超过安全限制。"); return result;
+        result.error = QStringLiteral("无法读取预览资源，归档损坏或资源超过安全限制。"); return result;
     }
     const QByteArray bytes = process.readAllStandardOutput();
-    if (bytes.size() > 12 * 1024 * 1024) { result.error = QCoreApplication::translate("ArmorTrimAssets", "资源输出超过安全限制。"); return result; }
+    if (bytes.size() > 12 * 1024 * 1024) { result.error = QStringLiteral("资源输出超过安全限制。"); return result; }
     QJsonParseError error;
     const auto rows = QJsonDocument::fromJson(bytes, &error);
     if (error.error != QJsonParseError::NoError || !rows.isArray()) {
-        result.error = QCoreApplication::translate("ArmorTrimAssets", "预览资源清单无效。"); return result;
+        result.error = QStringLiteral("预览资源清单无效。"); return result;
     }
     for (const auto &row : rows.array()) {
         const auto object = row.toObject();
@@ -163,7 +162,7 @@ try {
     if (!result.images.contains(QStringLiteral("models/armor/iron_layer_1"))
         || !result.images.contains(QStringLiteral("trims/color_palettes/trim_palette"))) {
         result.images.clear();
-        result.error = QCoreApplication::translate("ArmorTrimAssets", "未找到受支持的盔甲纹理。请选择 Java 1.20 及以上、带原版纹理的客户端，或下载预览资源。");
+        result.error = QStringLiteral("未找到受支持的盔甲纹理。请选择 Java 1.20 及以上、带原版纹理的客户端，或下载预览资源。");
     }
     return result;
 }

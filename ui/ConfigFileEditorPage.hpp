@@ -171,10 +171,16 @@ public:
     static QString indexFilterPlaceholder();
     /// 「还原上一次」那颗按钮上的字。
     static QString restoreText();
+    /// 取回备份之后底下那行字（后面接"那份是什么时候的"）。
+    static QString restoredPrefix();
     /// 「条目」那颗按钮在"这份文件里没认出设置项"时为什么点不动（它那行说明）。
     static QString indexEmptyHint();
+    /// 只读时那行字的前缀（后面接原因）。验证工程拿它认"这一块现在只读"。
+    static QString readOnlyPrefix();
     /// 可编辑、还没存过的时候那行字。
     static QString hintText();
+    /// 存成功之后那行字的前缀。
+    static QString savedPrefix();
 
     /// 行号那一格现在有多宽（0 = 没有）。验证工程拿它量"行号真的留出位置了、而且行数变多
     /// 它会变宽"。

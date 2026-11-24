@@ -111,44 +111,6 @@ QString ServerSettingsController::worldDir(const QString &serverId) const {
                           : QDir(ServerRegistry::describe(serverId).dirPath).filePath(name);
 }
 
-QStringList ServerSettingsController::worlds(const QString &serverId) const {
-    const auto *field = ServerPropertiesForm::fieldFor(QStringLiteral("level-name"));
-    if (!field) return {};
-    const auto entry = ServerRegistry::describe(serverId);
-    if (entry.dirPath.isEmpty()) return {};
-    const QDir root(entry.dirPath);
-    QStringList result;
-    for (const QFileInfo &folder : root.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name)) {
-        if (folder.isSymLink() || folder.isJunction() ||
-            !ServerPropertiesForm::accepts(*field, folder.fileName(), nullptr, nullptr)) continue;
-        const QFileInfo level(QDir(folder.absoluteFilePath()).filePath(QStringLiteral("level.dat")));
-        if (level.isFile() && !level.isSymLink()) result.append(folder.fileName());
-    }
-    // 旧版 Bukkit 系服务端可能把主世界的维度放在两个同级目录中。
-    using Flavor = ServerInstall::Flavor;
-    if (entry.flavor == Flavor::Paper || entry.flavor == Flavor::Purpur || entry.flavor == Flavor::Spigot) {
-        const auto discovered = result;
-        for (const QString &name : discovered) {
-            for (const QString &suffix : {QStringLiteral("_nether"), QStringLiteral("_the_end")}) {
-                if (name.endsWith(suffix) && discovered.contains(name.chopped(suffix.size())))
-                    result.removeAll(name);
-            }
-        }
-    }
-    return result;
-}
-
-bool ServerSettingsController::hasSplitDimensions(const QString &serverId, const QString &world) const {
-    if (world.isEmpty()) return false;
-    const auto entry = ServerRegistry::describe(serverId);
-    using Flavor = ServerInstall::Flavor;
-    if (entry.flavor != Flavor::Paper && entry.flavor != Flavor::Purpur && entry.flavor != Flavor::Spigot)
-        return false;
-    const QDir dir(entry.dirPath);
-    return QFileInfo(dir.filePath(world + QStringLiteral("_nether"))).isDir() ||
-           QFileInfo(dir.filePath(world + QStringLiteral("_the_end"))).isDir();
-}
-
 QString ServerSettingsController::backupLabel(const QString &serverId) const {
     const QString name = worldName(serverId);
     return name.isEmpty() ? QString() : serverId + QLatin1Char('-') + name;
@@ -163,7 +125,7 @@ int ServerSettingsController::worldBackupCount(const QString &serverId) const {
     int count = 0;
     for (const QFileInfo &info : QDir(BackupFiles::backupDir(BackupFiles::Kind::World))
                                      .entryInfoList({QStringLiteral("*.zip")}, QDir::Files)) {
-        count += BackupFiles::matchesBackupPrefix(info.fileName(), prefix) ? 1 : 0;
+        count += info.fileName().startsWith(prefix, Qt::CaseInsensitive) ? 1 : 0;
     }
     return count;
 }
@@ -231,7 +193,7 @@ ServerPlayers::Content ServerSettingsController::readPlayers(const QString &serv
     if (path.isEmpty()) {
         ServerPlayers::Content content;
         content.ok = false;
-        content.problem = QCoreApplication::translate("ServerSettingsController", "未找到此服务端的目录。");
+        content.problem = QCoreApplication::translate("ServerSettingsController", "找不到这个服务端的目录。");
         return content;
     }
     QFile file(path);
@@ -255,7 +217,7 @@ bool ServerSettingsController::writePlayers(const QString &serverId, ServerPlaye
     if (!ServerWriteGuard::acquireFile(serverId, ServerPlayers::fileName(list), problemOut)) return false;
     const QString path = playersPath(serverId, list);
     if (path.isEmpty()) {
-        if (problemOut != nullptr) *problemOut = QCoreApplication::translate("ServerSettingsController", "未找到此服务端的目录。");
+        if (problemOut != nullptr) *problemOut = QCoreApplication::translate("ServerSettingsController", "找不到这个服务端的目录。");
         return false;
     }
     QDir().mkpath(QFileInfo(path).absolutePath());

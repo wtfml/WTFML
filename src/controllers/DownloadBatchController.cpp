@@ -62,11 +62,9 @@ void DownloadBatchController::load() {
             }
             if (sameIntent && (Tasks::isTerminalState(old.state) || old.state == Tasks::TaskState::Paused)) id = oldId;
         }
-        const auto intent = receipt.context.value("continuation").toObject();
-        const auto kind = intent.value("kind") == "modpack" ? Tasks::TaskKind::Import
-            : intent.isEmpty() ? Tasks::TaskKind::Download : Tasks::TaskKind::Install;
+        const bool hasContinuation = !receipt.context.value("continuation").toObject().isEmpty();
         const bool reused = id != Tasks::invalidTaskId();
-        if (!reused) id = m_activity->begin(kind,
+        if (!reused) id = m_activity->begin(hasContinuation ? Tasks::TaskKind::Install : Tasks::TaskKind::Download,
             receipt.context.value("title").toString(), receipt.context.value("target").toString());
         if (receipt.context.value("phase") == "continue-install") {
             if (reused) {

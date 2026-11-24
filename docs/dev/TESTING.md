@@ -272,10 +272,14 @@ CTest 的两种"排除 visual"选到的数量不同：`ctest -E visual` 按名�
 
 CTest 名：`wtfml.core-agent`、`wtfml.ui-agent`、`wtfml.main-window-agent`（`-Suite quick` 与 `window` 都包含）。每个测试用独立 `QTemporaryDir`，`AgentPaths` 通过 `QCoreApplication::setProperty("wtfml.testAgentDataDir", <临时目录>)` 隔离，QSettings 重定向到同一沙盒。
 
-- 覆盖：SSE/适配/错误与重试、会话与加密、凭据、上下文、路径矩阵与句柄级校验、审批矩阵、D11 外发、artifact 分离、实例锁、备份生命周期、文件/启动器/工作流/联网/命令工具、MCP 假服务器、诊断投影、页面与真主窗口集成、性能基线。
-- `verify_agent --mcp-fake-server` 是假 MCP 服务器的入口（同一可执行文件的隐藏模式），客户端用例用它起真子进程。
+- Stage 1A 覆盖：SSE、适配、会话、加密、凭据、上下文、Loop、技能、Markdown。
+- Stage 1B 覆盖：路径攻击矩阵与句柄级校验、外发边界表、审批矩阵、artifact 分离、实例锁、维护备份生命周期、文件工具引擎、Loop 工具调用/审批/拒绝回灌、UI 工具卡/审批卡；本地假服务器验证 400 错误体保留，工具线上名不含点号。
+- Stage 2B 覆盖：诊断字段白名单投影、19 个启动器工具的分派与审批、工作流计划校验/顺序闸/失败锁写/完成闸、多文件维护备份往返、模式胶囊与工作流状态行、真 MainWindow 里只读模式拒绝写工具。
+- Stage 2A 覆盖：MCP 帧与上限、`configHash`/身份变化失效、确认闸与重连确认、逐次审批与异步交付（`Pending` + completion sink）、stdout 垃圾行、崩溃不自动重启。`verify_agent --mcp-fake-server` 是假 MCP 服务器的入口（同一个可执行文件的隐藏模式），客户端用例用它起真子进程。
+- Stage 3 覆盖：地址策略（scheme/A-AAAA/私网各档/pinned-IP/content-type/HTML 转文本）、联网工具用假传输验审批与逐跳校验、固定诊断命令的开关/白名单/审批/真跑一条；G3 的真网/代理/证书项在人工清单里。
+- Stage 4：`AgentPerformanceTests.cpp` 打印 `[perf]` 基线与 `ui_check_agent` 的 `agent-page-2000-messages` 是长会话回归对照（数字见 `docs/dev/perf-notes/AGENT_STAGE4.md`）；发布前跑 `pwsh tools/check-agent-release.ps1`（明文密钥/假端点/`command.run`/审批闸/危险开关）。
 - junction 夹具建不出来时输出 `SKIP`，不计入通过。
-- 计数见 [TEST_RUN_HISTORY.md](../archive/TEST_RUN_HISTORY.md)；待人工验证清单见 [AGENT.md](../features/AGENT.md) §13.3 与 [ROADMAP](../ROADMAP.md)；记录写进 [ACCEPTANCE_LOG.md](../archive/ACCEPTANCE_LOG.md)。
+- 计数见 [TEST_RUN_HISTORY.md](../archive/TEST_RUN_HISTORY.md)；待人工测试项见 [Stage 1A](../features/AGENT_STAGE1A.md) / [Stage 1B](../features/AGENT_STAGE1B.md)。G1B 的脱敏/凭据文件/artifact 三项已在代码里修复，仍需复测 R1–R4、R6、R7 与 W4/W5、A1、P4、P5；网络错误单独延后。记录见 [ACCEPTANCE_LOG.md](../archive/ACCEPTANCE_LOG.md)。
 
 ## network-diag 在本机怎么跑
 

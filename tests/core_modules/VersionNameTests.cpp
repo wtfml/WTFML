@@ -12,37 +12,6 @@ int runVersionNameTests(const QString &sandbox) {
     parts.loaderName = loaderName;
     parts.loaderVersion = loaderVersion;
 
-    {
-        VersionDisplayParts instance = parts;
-        instance.realVersion = id;
-        for (const QString &folder : {id, QStringLiteral("1.20.1-forge"),
-                                     QStringLiteral("1.20.1-Forge_47.2.0"),
-                                     QStringLiteral("1.20.1-Forge 47.2.0")}) {
-            instance.id = folder;
-            const auto row = formatInstanceListRow(instance);
-            check(row.title == id && row.subtitle.isEmpty(), "默认实例左侧只显示游戏版本", folder);
-        }
-        instance.customName = QStringLiteral("我的整合包");
-        const auto renamed = formatInstanceListRow(instance);
-        check(renamed.title == instance.customName && renamed.subtitle == id,
-              "自定义名称优先，第二行只显示游戏版本");
-        instance.customName.clear();
-        instance.id = QStringLiteral("1.20.1-Forge-生存存档");
-        const auto legacy = formatInstanceListRow(instance);
-        check(legacy.title == instance.id && legacy.subtitle == id, "旧实例保留自定义目录名");
-        instance.id = QStringLiteral("1.20.1-OptiFine_I6");
-        instance.loaderName = QStringLiteral("OptiFine");
-        instance.loaderVersion = QStringLiteral("HD_U_I6");
-        const auto optiFine = formatInstanceListRow(instance);
-        check(optiFine.title == id && optiFine.subtitle.isEmpty(),
-              "OptiFine 的缩写目录名也按默认名称显示");
-        instance.id = id;
-        instance.loaderName.clear();
-        instance.loaderVersion.clear();
-        const auto vanilla = formatInstanceListRow(instance);
-        check(vanilla.title == id && vanilla.subtitle.isEmpty(), "未命名的原版实例只显示游戏版本");
-    }
-
     // I1 显示名的拼法是**固定的一份**（UI 问题 #14 删掉了「版本名格式」那四个开关）：
     // 名称槽 → 实际版本 → 加载器名。加载器版本**不进**显示名 —— 那正是原先四个开关的
     // 出厂默认（自定义名✓ 实际版本✓ 加载器名✓ 加载器版本✗），所以没改过设置的用户

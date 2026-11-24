@@ -568,7 +568,7 @@ void GameSessionController::onGameFinished(int sessionId, int exitCode, QProcess
     m_host.updateInstanceTreeRunState();
     m_host.updateBottomBar();
 
-    // 「隐藏启动器，游戏退出后自动恢复」那一档：见 applyLauncherBehaviourAfterLaunch()。
+    // 「收起启动器，游戏退出后自动回来」那一档：见 applyLauncherBehaviourAfterLaunch()。
     // 只有**为了启动游戏才藏起来**的窗口才会被叫回来 —— 用户自己最小化、自己收起来的
     // 窗口不该因为游戏退出就跳出来。
     //

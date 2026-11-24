@@ -157,7 +157,7 @@ void MainWindow::onGroupActionRequested(const QString &groupId, int action) {
         // 那些）—— 那是把实例放进一个空组的唯一入口（见 MainWindowUI::openGroupPicker()）。
         const QString selectedId = selectedVersionId(m_ui->getInstalledVersionCombo());
         if (selectedId.isEmpty()) {
-            InlineMessage::information(m_ui->overlay(), tr("移入分组"), tr("请先选择一个实例。"));
+            InlineMessage::information(m_ui->overlay(), tr("移入分组"), tr("先选中一个实例。"));
             return;
         }
         // 弹在**原来那颗齿轮**下面（用户看到的是"刚才那块框换了个内容"）。那一行理论上
@@ -223,7 +223,8 @@ void MainWindow::onGroupActionRequested(const QString &groupId, int action) {
         // 先问再删，而且说清**实例不会被删**：用户看到"删除"两个字时的第一反应就是怕
         // 连里面的东西一起没了，而这里确实不会（和对话框里那句一模一样）。
         const bool answer = InlineMessage::question(m_ui->overlay(), tr("删除分组"),
-            tr("将删除分组「%1」，其中 %2 个实例不会删除，将归入未分组。\n\n确定删除？")
+            tr("「%1」会被删除，组里的 %2 个实例不会被删掉，它们只是变成未分组。\n\n"
+               "确定要删除吗？")
                 .arg(row.name)
                 .arg(row.memberCount), tr("是"), tr("否"), false, /*destructive=*/true);
         if (answer) {
@@ -284,7 +285,7 @@ void MainWindow::clearGroupMembers(const QString &groupId, const QString &groupN
             tr("「%1」中的 %2 个实例未能移出：\n%3").arg(groupName).arg(keys.size() - moved).arg(error));
         return;
     }
-    appendLog(tr("已将「%1」中的 %2 个实例移出分组").arg(groupName).arg(moved));
+    appendLog(tr("已把「%1」里的 %2 个实例移出分组").arg(groupName).arg(moved));
 }
 
 bool MainWindow::setSelectedInstanceHomeGroup(const QString &groupId) {
@@ -297,7 +298,7 @@ bool MainWindow::setInstanceHomeGroup(const QString &versionId, const QString &g
     if (versionId.isEmpty()) {
         // 挑目标那个框只在"有选中的实例"时才点得动（groupActionEnabled 那一条），
         // 而菜单开着的时候那个实例可能被删掉了 —— 真走到这儿就说一句，别静默。
-        InlineMessage::information(m_ui->overlay(), tr("移入分组"), tr("请先选择一个实例。"));
+        InlineMessage::information(m_ui->overlay(), tr("移入分组"), tr("先选中一个实例。"));
         return false;
     }
     const QString key = instanceKey(versionId);
@@ -357,12 +358,12 @@ bool MainWindow::renameGroupTo(const QString &groupId, const QString &newName) {
     // 是反过来也成立的（那边给的是 main 这一侧拿不到的类型），所以这两句是各写一份的
     // —— 改了这边记得连那边一起改。
     if (name.isEmpty()) {
-        InlineMessage::warning(m_ui->overlay(), tr("重命名分组失败"), tr("组名不能为空。"));
+        InlineMessage::warning(m_ui->overlay(), tr("重命名分组失败"), tr("组名不能是空的。"));
         return false;
     }
     if (name.size() > GroupDialog::maxGroupNameLength()) {
         InlineMessage::warning(m_ui->overlay(), tr("重命名分组失败"),
-                             tr("组名最多 %1 个字，当前为 %2 个字。")
+                             tr("组名最多 %1 个字，现在有 %2 个。")
                                  .arg(GroupDialog::maxGroupNameLength())
                                  .arg(name.size()));
         return false;
@@ -370,7 +371,7 @@ bool MainWindow::renameGroupTo(const QString &groupId, const QString &newName) {
     for (const InstanceGroupStore::Group &group : groups) {
         if (group.id != groupId && group.name.compare(name, Qt::CaseInsensitive) == 0) {
             InlineMessage::warning(m_ui->overlay(), tr("重命名分组失败"),
-                                 tr("已存在名为「%1」的分组。").arg(group.name));
+                                 tr("已经有一个叫「%1」的组了。").arg(group.name));
             return false;
         }
     }

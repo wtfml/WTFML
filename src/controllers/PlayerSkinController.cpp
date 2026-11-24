@@ -102,7 +102,7 @@ void PlayerSkinController::reload(const QString &versionId) {
     // **未登录（压根没有当前账号）不走这一档**：没有身份就没有可记的地方（那张图要按
     // 账号记在盘上），也没人可挑。
     if (offlineIdentity()) {
-        // ⓪ **用户自己挑的那张最优先**（「账号与皮肤」里那颗「更换皮肤…」，见 OfflineSkin）。
+        // ⓪ **用户自己挑的那张最优先**（「账号与外观」里那颗「换一张…」，见 OfflineSkin）。
         // 这是一句明确的产品次序：手动挑过 = 用户说了算，游戏规矩算出来的那张只是"没有
         // 手动挑过时"的默认值。它不像官方默认皮肤那样跟着实例走 —— 换版本不该把用户
         // 亲自挑的那张换掉。
@@ -144,7 +144,7 @@ void PlayerSkinController::reload(const QString &versionId) {
         // 客户端，第三方安装器做的薄壳 JAR 就长那样）—— 都不值得报。Failed 才是真出错
         // （读 JAR 失败、写不出去），那种留一行日志，不然"怎么老是随机那张"无从查起。
         if (resolveResult == DefaultSkin::Result::Failed) {
-            emit logMessage(tr("计算离线默认皮肤失败：%1").arg(defaultReason));
+            emit logMessage(tr("算离线默认皮肤失败：%1").arg(defaultReason));
         }
 
         // ② 算不出来（没选实例，或加载器实例的 JAR 里没有原版贴图）就留着开头摆好的内置 Steve：
@@ -232,7 +232,7 @@ void PlayerSkinController::onProfileReady(const QString &uuid, const PlayerSkinP
     // 它俩本来就相等了 —— 写 uuid 是让"这份是谁的"在读者眼里只有一处出处）。
     if (!PlayerSkinStore::saveProfile(uuid, profile, &error)) {
         // 存不下来不影响这一次显示（贴图照样下、照样画），只是下次开窗要先重取一遍。
-        emit logMessage(tr("保存玩家外观档案失败：%1").arg(error));
+        emit logMessage(tr("存玩家外观档案失败：%1").arg(error));
     }
     // 披风那一格只在**地址真的换了**的时候才作废。
     //
@@ -302,7 +302,7 @@ void PlayerSkinController::onStoreFailed(const QString &message) {
     // 外观是**装饰**：取不到就静默退回默认外观。这是全仓唯一一处不弹窗的错误，
     // 理由（别的错误都让用户做不成他想做的事，而这个只是不好看）写在
     // PlayerSkinStore.hpp 文件头。但日志得留一行，否则真出问题无从查起。
-    emit logMessage(tr("获取玩家皮肤失败：%1").arg(message));
+    emit logMessage(tr("取玩家皮肤失败：%1").arg(message));
     m_skinFetchInFlight = false;
     if (m_skinPath.isEmpty()) {
         // 已经有真皮肤在屏幕上时**不改那句话**：多数失败是**披风**那一张（皮肤早就画
@@ -361,7 +361,7 @@ void PlayerSkinController::setCapeUrl(const QString &capeUrl) {
     if (hasProfile) {
         QString error;
         if (!PlayerSkinStore::saveProfile(uuid, m_skinProfile, &error)) {
-            emit logMessage(tr("保存玩家外观档案失败：%1").arg(error));
+            emit logMessage(tr("存玩家外观档案失败：%1").arg(error));
         }
     }
     if (m_skinPath.isEmpty()) {

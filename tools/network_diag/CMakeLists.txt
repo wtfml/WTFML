@@ -14,8 +14,6 @@ add_library(wtfml_network_diag_core STATIC
     ../../src/manage/InstanceFiles.cpp
     ../../src/launcher/VersionInheritance.cpp
     ../../src/util/ZipUtil.cpp
-    # InstanceFiles 的封面解码走 ImageDecode；漏了它这两个目标链接不过。
-    ../../src/util/ImageDecode.cpp ../../src/util/ImageDecode.hpp
     # 「从别的游戏文件夹里借文件」：DownloadManager 会调它。
     ../../src/download/LocalFileReuse.cpp ../../src/download/LocalFileReuse.hpp
     ../../src/download/ResumableDownload.cpp ../../src/download/ResumableDownload.hpp
@@ -23,9 +21,7 @@ add_library(wtfml_network_diag_core STATIC
 target_include_directories(wtfml_network_diag_core PUBLIC ../../src)
 target_link_libraries(wtfml_network_diag_core PUBLIC Qt6::Core Qt6::Network Qt6::Gui)
 if(WIN32)
-    # ImageDecode 走 WIC：ole32 起 COM、shlwapi 的 SHCreateMemStream、windowscodecs 是 WIC 本体。
-    # 和主工程 CMakeLists.txt 里同一段（见那里的说明）。
-    target_link_libraries(wtfml_network_diag_core PRIVATE crypt32 ole32 shlwapi windowscodecs)
+    target_link_libraries(wtfml_network_diag_core PRIVATE crypt32)
 endif()
 set_target_properties(wtfml_network_diag_core PROPERTIES AUTOMOC ON)
 add_executable(WTFMLNetworkDiag WIN32 main.cpp NetworkMonitor.hpp)

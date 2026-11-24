@@ -104,8 +104,8 @@ int UiLanguageChecks(MainWindowUI &ui, QTabWidget *tabs) {
               "装了英文翻译之后导航轨是 Home / Library / Download / Settings / Agent",
               navTexts(englishTabs).join(QLatin1Char('/')));
         check(englishUi.getLanguageCombo() != nullptr &&
-                  englishUi.getLanguageCombo()->itemText(0) == QStringLiteral("System default"),
-              "英文界面下「跟随系统」跟着翻成 System default");
+                  englishUi.getLanguageCombo()->itemText(0) == QStringLiteral("Follow system"),
+              "英文界面下「跟随系统」跟着翻成 Follow system");
         check(englishUi.getLanguageCombo() != nullptr &&
                   englishUi.getLanguageCombo()->itemText(2) == QStringLiteral("English"),
               "英文界面下 English 那一档仍写作 English",
@@ -133,10 +133,10 @@ int UiLanguageChecks(MainWindowUI &ui, QTabWidget *tabs) {
         auto *launch = englishWindow.findChild<QPushButton *>(QStringLiteral("homeCurrentLaunch"));
         check(launch != nullptr && launch->text() == QStringLiteral("Play"), "英文主页启动按钮显示 Play");
         englishUi.setHomeLaunchRunning(true);
-        check(launch != nullptr && launch->text() == QStringLiteral("Stop"), "英文主页运行时显示 Stop");
+        check(launch != nullptr && launch->text() == QStringLiteral("Stop game"), "英文主页运行时显示 Stop game");
 
         check(OverlayHost::backButtonText() == QStringLiteral("Back"), "英文内嵌页面显示 Back");
-        check(Theme::presetName(QStringLiteral("dark")) == QStringLiteral("Alpine Dusk"),
+        check(Theme::presetName(QStringLiteral("dark")) == QStringLiteral("Alpine Twilight"),
               "英文主题下拉框显示本地化预设名");
         check(PresetModReview::tr("确认模组预设") == QStringLiteral("Confirm mod preset"),
               "英文模组预设确认框使用自身翻译上下文");

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QFileInfo>
 #include <QDir>
@@ -55,7 +54,7 @@ public:
             return QStringLiteral("SHA1 verification failed");
         if (zip && sha1.isEmpty() && !ZipMagic::looksLikeZipHead(prefix))
             return QStringLiteral("Not a zip archive (expected a jar/zip body)");
-        if (!allowOverwrite && QFileInfo::exists(file.fileName())) return QCoreApplication::translate("StreamedFile", "目标文件已存在，未覆盖。请更换文件名或确认覆盖。");
+        if (!allowOverwrite && QFileInfo::exists(file.fileName())) return QStringLiteral("目标文件已存在，未覆盖。请更换文件名或确认覆盖。");
         if (commitGuard) { const auto problem = commitGuard(); if (!problem.isEmpty()) return problem; }
         if (!file.commit()) return file.errorString();
         return {};

@@ -52,7 +52,6 @@
 #pragma once
 
 #include <QByteArray>
-#include <QCoreApplication>
 #include <QString>
 #include <QStringList>
 
@@ -234,22 +233,22 @@ inline int gracefulStopSeconds(int modCount, qint64 worldBytes) {
 
 /// 「停止中」那一行小字（界面上那句"正在正常停下来"，带上还要等多久）。
 inline QString stoppingNote(int seconds) {
-    return QCoreApplication::translate("ServerRun", "正在停止服务端，等待保存数据（最多 %1 秒）。").arg(seconds);
+    return QStringLiteral("正在停止服务端，等待保存数据（最多 %1 秒）。").arg(seconds);
 }
 
 /// 宽限时间到了之后那一句 —— 说明那颗「强制结束」为什么现在亮了。
 inline QString forceKillNote(int seconds) {
-    return QCoreApplication::translate("ServerRun", "服务端在 %1 秒内未退出。可强制结束，但可能丢失未保存的存档数据。").arg(seconds);
+    return QStringLiteral("服务端在 %1 秒内未退出。可强制结束，但可能丢失未保存的存档数据。").arg(seconds);
 }
 
 /// 服务端目录里没有那个入口文件时，点「启动」看到的那句话。
 inline QString notInstalledMessage() {
-    return QCoreApplication::translate("ServerRun", "服务端安装不完整：缺少启动文件。请通过「修复」补全安装。");
+    return QStringLiteral("服务端安装不完整：缺少启动文件。请通过「修复」补全安装。");
 }
 
 /// EULA 那道闸上那句正文（**不替用户做决定**，见下面 `eulaPromptText()` 那段）。
 inline QString eulaLinkText() {
-    return QCoreApplication::translate("ServerRun", "打开《Minecraft 最终用户许可协议》原文");
+    return QStringLiteral("打开《Minecraft 最终用户许可协议》原文");
 }
 
 /// 原文地址。★ 只在用户点了那一行链接时才会被打开，我们**不会**自己去请求它。
@@ -267,18 +266,16 @@ inline QString eulaUrl() {
  * 点击跳转」）—— 他把同意两个字打在屏幕上之前得能真看见那是什么。
  */
 inline QString eulaPromptTitle() {
-    return QCoreApplication::translate("ServerRun", "Minecraft 最终用户许可协议");
+    return QStringLiteral("Minecraft 最终用户许可协议");
 }
 
 inline QString eulaPromptText() {
-    return QCoreApplication::translate("ServerRun", "首次启动 Minecraft 服务端前，"
-                                                    "需阅读并接受最终用户许可协议。"
-                                                    "仅当勾选协议并选择「同意并启动」时，才在 eula.txt 中写入 "
-                                                    "eula=true。");
+    return QStringLiteral("首次启动 Minecraft 服务端前，需阅读并接受最终用户许可协议。"
+                          "仅在勾选协议并选择「同意并启动」后，才会在 eula.txt 中写入 eula=true。");
 }
 
 inline QString eulaCheckBoxText() {
-    return QCoreApplication::translate("ServerRun", "我已阅读并同意《Minecraft 最终用户许可协议》");
+    return QStringLiteral("我已阅读并同意《Minecraft 最终用户许可协议》");
 }
 
 }  // namespace ServerRun

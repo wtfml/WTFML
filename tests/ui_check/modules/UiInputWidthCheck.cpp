@@ -49,7 +49,7 @@ int shortLimit(const InputProbe &p) {
 // 短值登记撤掉（最大宽度还原、数字框策略还原）再拍，得到「修前」，这一趟不做断言。
 const QHash<QString, QString> &shotKeys() {
     static const QHash<QString, QString> keys = {
-        {QStringLiteral("账号与皮肤"), QStringLiteral("account-offline")},
+        {QStringLiteral("账号与外观"), QStringLiteral("account-offline")},
         {QStringLiteral("下载·安装页"), QStringLiteral("install-name")},
         {QStringLiteral("新建服务端"), QStringLiteral("new-server")},
         {QStringLiteral("智能体设置"), QStringLiteral("agent-settings")},
@@ -223,7 +223,7 @@ int UiInputWidthCheck(QApplication &app) {
             {
                 AccountSkinDialog account;
                 inOverlay(
-                    &account, AccountSkinDialog::windowTitle(), QStringLiteral("账号与皮肤"),
+                    &account, AccountSkinDialog::windowTitle(), QStringLiteral("账号与外观"),
                     [&account] { account.showOfflineAddRow(); },  // 展开离线输入行，名字框才露出来
                     [&account, &tag] {
                         // 用户原话：离线账号名字最多 16 个字符，框不该横跨整个内容区；「添加」紧跟在框后面。

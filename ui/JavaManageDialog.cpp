@@ -73,7 +73,7 @@ QString JavaManageDialog::manualText() {
 }
 
 QString JavaManageDialog::autoRowText() {
-    return QCoreApplication::translate("JavaManageDialog", "自动（按版本选择）");
+    return QCoreApplication::translate("JavaManageDialog", "自动（按版本挑选）");
 }
 
 QString JavaManageDialog::useButtonText() {
@@ -125,7 +125,7 @@ JavaManageDialog::JavaManageDialog(QWidget *parent) : QDialog(parent) {
     m_autoUse = new QPushButton(useButtonText(), this);
     m_autoUse->setObjectName(autoUseButtonName());
     m_autoUse->setAutoDefault(false);
-    m_autoUse->setToolTip(QCoreApplication::translate("JavaManageDialog", "不固定 Java，启动时按版本要求自动选择。"));
+    m_autoUse->setToolTip(QCoreApplication::translate("JavaManageDialog", "不钉死任何一份，启动时按版本要求自己挑。"));
     grid->addWidget(m_autoUse, 0, 1, Qt::AlignTop);
     connect(m_autoUse, &QPushButton::clicked, this, &JavaManageDialog::useAutoRequested);
 
@@ -143,7 +143,7 @@ JavaManageDialog::JavaManageDialog(QWidget *parent) : QDialog(parent) {
         entry.use->setObjectName(useButtonName(major));
         entry.use->setAutoDefault(false);
         entry.use->setToolTip(
-            QCoreApplication::translate("JavaManageDialog", "将「全局」固定为 Java %1。").arg(major));
+            QCoreApplication::translate("JavaManageDialog", "把「全局」这一层钉死成 Java %1 这一份。").arg(major));
         grid->addWidget(entry.use, row, 1, Qt::AlignTop);
         // 按**值**接主版本号（不是按下标去翻 m_rows）：行序将来再怎么挪，
         // 这一颗点下去说的还是它自己那一行。
@@ -173,8 +173,7 @@ JavaManageDialog::JavaManageDialog(QWidget *parent) : QDialog(parent) {
     m_downloadAll->setObjectName(downloadAllButtonName());
     m_downloadAll->setAutoDefault(false);
     m_downloadAll->setToolTip(
-        QCoreApplication::translate("JavaManageDialog", "一次下载上方标记为「缺失」的全部 Java，"
-                                                        "已有的保持不变。"));
+        QCoreApplication::translate("JavaManageDialog", "把上面写着「缺失」的那些一次下完。已经有的那些不动。"));
     m_detect = new QPushButton(detectText(), this);
     m_detect->setObjectName(detectButtonName());
     // 「重新检测」= 重扫一遍（一般性）；上面那些「选用」「下载」都是确认性。

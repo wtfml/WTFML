@@ -56,19 +56,19 @@ void IntegrityController::submit(const QString &versionId, const BusyFacts &busy
     if (versionId.isEmpty() || scanning(versionId)) return;
     if (!m_scanVersionId.isEmpty()) {
         InlineMessage::information(m_overlay, tr("暂时无法操作"),
-            tr("「%1」正在进行完整性检查，请待其完成后再检查此实例。")
+            tr("「%1」正在做完整性检查，请完成后再检查这个实例。")
                 .arg(displayName(m_scanVersionId)));
         return;
     }
     if (busy.targetBeingModified) {
         InlineMessage::information(m_overlay, tr("暂时无法操作"),
-            tr("「%1」正在安装、导入或检查，请待其完成后再试。")
+            tr("「%1」正在安装、导入或检查，请完成后再试。")
                 .arg(displayName(versionId)));
         return;
     }
     if (busy.anotherDownloadRunning) {
         InlineMessage::information(m_overlay, tr("暂时无法操作"),
-                                   tr("已有下载或安装任务正在进行，请待其结束后再检查此实例。"));
+                                   tr("已有下载或安装任务正在进行，请结束后再检查这个实例。"));
         return;
     }
     const QString inheritanceProblem = m_versions->inheritanceProblem(versionId);
@@ -217,5 +217,5 @@ void IntegrityController::copyReport() {
     if (m_reportVersionId.isEmpty()) return;
     QGuiApplication::clipboard()->setText(
         VersionIntegrity::plainReport(m_report, displayName(m_reportVersionId)));
-    log(tr("完整性检查报告已复制到剪贴板。"));
+    log(tr("完整性检查报告已经复制到剪贴板。"));
 }

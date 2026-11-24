@@ -5,7 +5,6 @@
  */
 
 #include "FolderManager.hpp"
-#include "InstanceFiles.hpp"
 #include <QCoreApplication>
 #include <QThread>
 
@@ -288,7 +287,7 @@ bool moveToRecycleBin(const QString &path, QString *error) {
     };
 
     if (path.trimmed().isEmpty()) {
-        return fail(FolderManager::tr("未指定删除目标。"));
+        return fail(FolderManager::tr("没有指定要删除的东西。"));
     }
     const QFileInfo info(path);
 
@@ -306,7 +305,7 @@ bool moveToRecycleBin(const QString &path, QString *error) {
     const QString target = QDir::cleanPath(info.absoluteFilePath());
     if (QDir(target).isRoot()) {
         // 整块盘不是"一样东西"：真移进回收站等于把盘清空。
-        return fail(FolderManager::tr("「%1」为磁盘根目录，无法整体删除。").arg(target));
+        return fail(FolderManager::tr("「%1」是整块盘的根目录，不能整个删。").arg(target));
     }
 
 #if defined(Q_OS_WIN)
@@ -571,7 +570,7 @@ FolderManager::FolderManager(LauncherSettings *settings, QObject *parent)
     // 一律重新归一化一遍，免得界面里同一个目录以两种写法各占一行。
     const QStringList stored = m_settings != nullptr ? m_settings->folders() : QStringList();
     for (const QString &entry : stored) {
-        const QString path = gameFolderPathForSelection(entry);
+        const QString path = normalized(entry);
         // 等于自带那份的要丢掉：启动器被拷到 D:\MC\ 之后，用户添加的
         // D:\MC\.minecraft 会和自带那份撞上，留着就是列表里两条一模一样的路径。
         if (path.isEmpty() || path == defaultFolder() || m_userFolders.contains(path)) {
@@ -594,7 +593,7 @@ FolderManager::FolderManager(LauncherSettings *settings, QObject *parent)
         if (tab <= 0) {
             continue;  // 连分隔符都没有（手改的）：这一项读不出是给谁起的名字
         }
-        const QString path = gameFolderPathForSelection(entry.left(tab));
+        const QString path = normalized(entry.left(tab));
         const QString name = entry.mid(tab + 1);
         if (path.isEmpty() || name.isEmpty()) {
             continue;
@@ -602,7 +601,7 @@ FolderManager::FolderManager(LauncherSettings *settings, QObject *parent)
         m_names.insert(path, name);
     }
 
-    m_current = gameFolderPathForSelection(m_settings != nullptr ? m_settings->currentFolder() : QString());
+    m_current = normalized(m_settings != nullptr ? m_settings->currentFolder() : QString());
     if (m_current.isEmpty() || !QFileInfo(m_current).isDir()) {
         // 当前那一份不在盘上（U 盘今天没插、目录被删或被挪走）：这次先用自带那份。
         // **刻意不把盘上那个值改掉** —— 它可能只是今天没挂上，插回去还该接着用它。
@@ -653,16 +652,6 @@ QString FolderManager::normalized(const QString &path) {
 
 QString FolderManager::defaultFolder() { return normalized(AppPaths::defaultMinecraftDir()); }
 
-QString FolderManager::gameFolderPathForSelection(const QString &path) {
-    const QString selected = normalized(path);
-    if (selected.isEmpty()) return {};
-    if (QDir(InstanceFiles::canonicalPath(selected)).isRoot()) {
-        const QString wrapped = normalized(QDir(selected).filePath(QStringLiteral(".minecraft")));
-        return QDir(InstanceFiles::canonicalPath(wrapped)).isRoot() ? QString() : wrapped;
-    }
-    return selected;
-}
-
 bool FolderManager::isDefaultFolder(const QString &path) {
     const QString target = normalized(path);
     return !target.isEmpty() && target == defaultFolder();
@@ -712,13 +701,8 @@ QStringList FolderManager::folders() const {
 QString FolderManager::currentFolder() const { return m_current; }
 
 bool FolderManager::addFolder(const QString &path) {
-    if (path.isEmpty() || !QFileInfo(path).isDir()) {
-        return false;
-    }
-    const QString normalizedPath = normalized(path);
-    const QString target = gameFolderPathForSelection(normalizedPath);
-    if (target.isEmpty() || (target != normalizedPath && !QFileInfo(target).isDir()
-        && !QDir(normalizedPath).mkdir(QStringLiteral(".minecraft")) && !QFileInfo(target).isDir())) {
+    const QString target = normalized(path);
+    if (target.isEmpty() || !QFileInfo(target).isDir()) {
         return false;
     }
     // 自带那份、以及已经在列表里的：不重复追加，但它确实"现在在列表里"，所以算成功。
@@ -777,11 +761,11 @@ QString FolderManager::validateDisplayName(const QString &name) {
     // （见 LauncherSettings::folderNames()），放进去等于把一个名字劈成两半。
     for (const QChar ch : trimmed) {
         if (ch == QLatin1Char('\n') || ch == QLatin1Char('\r') || ch == QLatin1Char('\t')) {
-            return tr("名称不能包含换行。");
+            return tr("名字里不能有换行。");
         }
     }
     if (trimmed.length() > maxDisplayNameLength()) {
-        return tr("名称最多 %1 个字符。").arg(maxDisplayNameLength());
+        return tr("名字最多 %1 个字。").arg(maxDisplayNameLength());
     }
     return QString();
 }
@@ -824,7 +808,7 @@ bool FolderManager::deleteFolder(const QString &path, QString *error) {
     }
     if (!m_userFolders.contains(target)) {
         if (error != nullptr) {
-            *error = tr("此项已不在列表中。");
+            *error = tr("这一份已经不在列表里了。");
         }
         return false;
     }
@@ -869,7 +853,7 @@ void FolderManager::storeNames() {
 }
 
 bool FolderManager::setCurrentFolder(const QString &path) {
-    const QString target = gameFolderPathForSelection(path);
+    const QString target = normalized(path);
     if (target.isEmpty() || !QFileInfo(target).isDir() || !folders().contains(target)) {
         return false;
     }

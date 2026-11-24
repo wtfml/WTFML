@@ -208,7 +208,7 @@ static QString dependencyConsumerName() { return QStringLiteral("dependency"); }
 /// 「这种前置不用在详情页反复列它」—— 现在只排掉 **Fabric API**。
 ///
 /// 它**只影响展示清单**。安装判定仍走 `requiredDependenciesOf()`：
-/// 实例缺 Fabric API 时仍会进入「全部下载」。把它从真实依赖集合里删掉会让 UI
+/// 实例缺 Fabric API 时仍会进入「一起下载」。把它从真实依赖集合里删掉会让 UI
 /// 看起来干净，但最后装出一份缺前置的实例。
 ///
 /// NOTE: 同一条理由以后要隐藏别人时加进这张表就行，别污染真实依赖判定。
@@ -297,7 +297,10 @@ bool resolveDependency(const ResourceCatalog::Dependency &dependency,
     };
 
     if (versions.isEmpty()) {
-        return fail(QCoreApplication::translate("ModDependencies", "所选实例的游戏版本和加载器没有兼容的前置版本。"));
+        // 空的两种（那一发失败 / 这个项目在这个游戏版本+加载器下没有版本）在这一层分不开
+        // —— 分得开的那一位在调用方手上（那一发有没有报错）。**这句话两边都说得通**，
+        // 所以就把两边都说清楚，别替另一件下结论。
+        return fail(QCoreApplication::translate("ModDependencies", "无法获取兼容版本，请检查网络连接及目标版本支持情况。"));
     }
 
     const ResourceCatalog::VersionEntry *picked = nullptr;
@@ -359,28 +362,14 @@ Plan buildPlan(const QList<Lookup> &lookups,
             continue;
         }
 
-        QList<Resolved> choices;
+        Resolved resolved;
         QString why;
-        const auto &versions = answersIt.value();
-        if (lookup.dependency.versionId.isEmpty()) {
-            for (const auto &version : versions) {
-                const auto *file = version.primaryFile();
-                if (file && !file->url.isEmpty()) choices.append({lookup.dependency, version, *file, label});
-            }
-        }
-        if (choices.isEmpty()) {
-            Resolved resolved;
-            if (resolveDependency(lookup.dependency, versions, &resolved, &why)) {
-                resolved.title = label;
-                choices.append(resolved);
-            }
-        }
-        if (choices.isEmpty()) {
+        if (!resolveDependency(lookup.dependency, answersIt.value(), &resolved, &why)) {
             plan.unresolved.append(QCoreApplication::translate("ModDependencies", "%1：%2").arg(label, why));
             continue;
         }
-        plan.downloads.append(choices.first());
-        plan.choices.insert(projectId, choices);
+        resolved.title = label;
+        plan.downloads.append(resolved);
     }
     return plan;
 }
@@ -528,13 +517,13 @@ QString dependencyPromptHead(ResourceCatalog::Kind kind) {
                                                  : QCoreApplication::translate("ModDependencies", "此模组缺失必要的前置：");
 }
 
-QString dependencyPromptTitle() { return QCoreApplication::translate("ModDependencies", "部分前置未安装"); }
+QString dependencyPromptTitle() { return QCoreApplication::translate("ModDependencies", "还有前置没装"); }
 
 QString dependencyPromptText(ResourceCatalog::Kind kind, const QStringList &names) {
     if (names.isEmpty()) {
         return QString();
     }
-    return QCoreApplication::translate("ModDependencies", "%1\n\n%2\n\n是否一并下载？")
+    return QCoreApplication::translate("ModDependencies", "%1\n\n%2\n\n要一起下载吗？")
         .arg(dependencyPromptHead(kind), dependencyNameLines(names));
 }
 
@@ -552,17 +541,15 @@ QString dependencyPromptNoteText() {
     return QCoreApplication::translate("ModDependencies", "可以在设置中关闭此提示（设置 → 提示 →「检查前置模组」）。");
 }
 
-QString dependencyAllButtonText() { return QCoreApplication::translate("ModDependencies", "全部下载"); }
+QString dependencyAllButtonText() { return QCoreApplication::translate("ModDependencies", "一起下载"); }
 
-QString dependencyOnlyThisButtonText() {
-    return QCoreApplication::translate("ModDependencies", "仅下载此项");
-}
+QString dependencyOnlyThisButtonText() { return QCoreApplication::translate("ModDependencies", "只下这个"); }
 
 QString unresolvedNoteText(const QStringList &lines) {
     if (lines.isEmpty()) {
         return QString();
     }
-    return QCoreApplication::translate("ModDependencies", "以下前置无法一并下载：\n\n%1")
+    return QCoreApplication::translate("ModDependencies", "以下依赖缺少兼容版本：\n\n%1\n\n其余文件已下载。可在对应项目页面查找并手动安装依赖。")
         .arg(lines.join(QLatin1Char('\n')));
 }
 
@@ -576,14 +563,14 @@ QString detailPrerequisiteText(const QStringList &names) {
     }
     // 顿号连起来。**不截断**：前置一般就一两条，真遇上十条的（那种"全家桶"整合包里的
     // 核心模组）也该照实列全 —— 截断省下的那点宽度换来的是"还有一个是谁"。
-    return QCoreApplication::translate("ModDependencies", "此版本所需的前置：%1").arg(names.join(QCoreApplication::translate("ModDependencies", "、")));
+    return QCoreApplication::translate("ModDependencies", "这一版要装的前置：%1").arg(names.join(QCoreApplication::translate("ModDependencies", "、")));
 }
 
 QString detailPrerequisiteCountText(int count) {
     if (count <= 0) {
         return QString();
     }
-    return QCoreApplication::translate("ModDependencies", "此版本需要 %1 个前置模组（未获取到名称）。").arg(count);
+    return QCoreApplication::translate("ModDependencies", "这一版要 %1 个前置模组（名字没取到）。").arg(count);
 }
 
 QString updateUpToDateText() { return QCoreApplication::translate("ModDependencies", "已是最新"); }
@@ -593,8 +580,7 @@ QString updateOutdatedText() { return QCoreApplication::translate("ModDependenci
 QString updateUnknownText() { return QCoreApplication::translate("ModDependencies", "无法确认"); }
 
 QString updateSummaryText(int checked, int outdated) {
-    return QCoreApplication::translate("ModDependencies", "已检查 %1 个资源，%2 "
-                                                          "个有新版本。").arg(checked).arg(outdated);
+    return QCoreApplication::translate("ModDependencies", "检查了 %1 个资源，%2 个有新版本。").arg(checked).arg(outdated);
 }
 
 }  // namespace ModDependencies

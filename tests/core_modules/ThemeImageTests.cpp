@@ -104,7 +104,7 @@ void runThemeImageTests(const QString &sandbox) {
         }
         check(!keepBytes.isEmpty(), "V5v 前提：记下了现在那一份的字节");
         const QString broken = ThemeImage::store(slotA, notImage, &error);
-        check(broken.isEmpty() && error.contains(QStringLiteral("不是可打开的图片")),
+        check(broken.isEmpty() && error.contains(QStringLiteral("不是一张能打开的图片")),
               "V5v 一段文字当成图挑进来时如实拒绝（给用户的话里说清了是哪一张）", error);
         QByteArray afterBytes;
         {
@@ -129,7 +129,7 @@ void runThemeImageTests(const QString &sandbox) {
               "V5v 前提：造出一个超过 64 MB 的源文件",
               QStringLiteral("%1 字节").arg(QFileInfo(huge).size()));
         const QString tooBig = ThemeImage::store(slotA, huge, &error);
-        check(tooBig.isEmpty() && error.contains(QStringLiteral("过大")) &&
+        check(tooBig.isEmpty() && error.contains(QStringLiteral("太大")) &&
                   QFileInfo::exists(storedBig),
               "V5v 超过 64 MB 的源文件当场拒绝（拒绝的那一发也没动原来那张）", error);
 

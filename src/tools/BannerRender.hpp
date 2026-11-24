@@ -1,5 +1,4 @@
 #pragma once
-#include <QCoreApplication>
 #include <QHash>
 #include <QImage>
 #include <QPainter>
@@ -25,7 +24,7 @@ inline QImage compose(int baseColor, const QList<Banner::Layer> &layers,
         const auto dye = BeaconBeam::dyeColor(layer.colorIndex);
         const auto mask = textures.value(textureName(pattern.id));
         if (pattern.id.isEmpty() || !dye.isValid() || mask.isNull()) {
-            if (error) *error = QCoreApplication::translate("BannerRender", "缺少图案贴图：%1。请加载包含该图案的游戏 JAR。").arg(pattern.name);
+            if (error) *error = QStringLiteral("缺少图案贴图：%1。请加载包含该图案的游戏 JAR。").arg(pattern.name);
             return {};
         }
         // 原版旗面正面的 UV 为 64×64 纹理中的 (1,1,20,40)。加载器先归一化高清纹理。

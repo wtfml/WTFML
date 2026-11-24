@@ -16,7 +16,7 @@
  * ② 一条不缺 → 连一个请求都不多发；
  * ③ 有缺的 → 问一次"这几个号叫什么"，再逐条问"它有哪些版本"（筛的是**目标实例**的
  *    游戏版本 + 加载器）；
- * ④ 全问完 → 弹一个框，把缺的那几个列出来，两颗按钮：「全部下载」/「仅下载此项」；
+ * ④ 全问完 → 弹一个框，把缺的那几个列出来，两颗按钮：「一起下载」/「只下这个」；
  * ⑤ 一起下载 → 把 `Plan::downloads` 和主模组**并成一批**下。
  *
  * 判断那一半（缺哪些 / 去哪问 / 挑哪一版 / 挑不出来怎么说）全在 `ModDependencies` 里
@@ -61,8 +61,7 @@ public:
 
     /// 标题和版本按值收，选目标时的嵌套事件循环可能关闭详情页或刷新版本清单。
     void install(ResourceCatalog::Kind kind, QString displayTitle,
-                 ResourceCatalog::VersionEntry version, ResourceCatalog::Source source,
-                 const QString &projectIconId = {});
+                 ResourceCatalog::VersionEntry version, ResourceCatalog::Source source);
 
     /// 名字那一发回来了（`ResourceStore::projectsFinished`）。
     void onProjectsFinished(const QString &requestKey, const QList<ResourceCatalog::Hit> &hits,
@@ -84,8 +83,7 @@ private:
     bool targetStillAvailable(const InstallTarget &target);
     void installNow(ResourceCatalog::Kind kind, const QString &displayTitle,
                     const ResourceCatalog::VersionEntry &version,
-                    const QList<ModDependencies::Resolved> &extras, const InstallTarget &target,
-                    const QString &projectIconId = {});
+                    const QList<ModDependencies::Resolved> &extras, const InstallTarget &target);
 
     /// 正在跑的这一趟前置检查（**只有一趟**：用户连点两下"下载"时第二下不该再起一趟 ——
     /// 两趟会各问一遍、各弹一个框，而第一趟已经弹着的那个框正转着嵌套事件循环）。

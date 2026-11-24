@@ -477,7 +477,7 @@ int MwVersionActivationChecks(MainWindow &window, QTreeWidget * &versionTree, QS
                           loaderSubText(loaderRow(kForgeRow)).isEmpty(),
                       "进安装页之后加载器回到「不装」（不继承上一个实例的选择）",
                       loaderSubText(loaderRow(kForgeRow)).isEmpty()
-                          ? QStringLiteral("不安装")
+                          ? QStringLiteral("不装")
                           : loaderSubText(loaderRow(kForgeRow)));
 
                 // 收拾：翻回树那一层、把那条（要是假的）版本号拿掉

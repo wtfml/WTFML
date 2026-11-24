@@ -162,7 +162,7 @@ WorldSettingsPage::WorldSettingsPage(QWidget *parent) : QWidget(parent) {
 
     m_rename = new QPushButton(renameText(), this);
     m_rename->setObjectName(renameButtonName());
-    m_rename->setToolTip(tr("修改存档的文件夹名称，游戏世界列表中显示的也是该名称。"));
+    m_rename->setToolTip(tr("改这个存档的文件夹名。游戏的世界列表里显示的也是它。"));
     Theme::markButton(m_rename, Theme::ButtonKind::Neutral);
     connect(m_rename, &QPushButton::clicked, this, &WorldSettingsPage::renameRequested);
     actions->addWidget(m_rename);
@@ -207,7 +207,7 @@ WorldSettingsPage::WorldSettingsPage(QWidget *parent) : QWidget(parent) {
 
     m_delete = new QPushButton(deleteText(), this);
     m_delete->setObjectName(deleteButtonName());
-    m_delete->setToolTip(tr("删除此世界及其全部文件，删除前会确认。"));
+    m_delete->setToolTip(tr("删除这个世界及其全部文件，会先确认。"));
     // 红：这一档叫「不可撤销（如修改存档，删除实例）」—— 这一颗删的就是一整个
     // 存档目录（里面的 region 是几十上百 MB 的游玩记录，删了拿不回来）。
     Theme::markButton(m_delete, Theme::ButtonKind::Danger);
@@ -290,12 +290,12 @@ WorldSettingsPage::WorldSettingsPage(QWidget *parent) : QWidget(parent) {
     m_allowCommands = new ToggleSwitch(m_fileBody);
     m_allowCommands->setObjectName(allowCommandsName());
     fileBody->addLayout(makeOptionRow(m_fileBody, tr("允许作弊"), m_allowCommands,
-                                      tr("开启后，此世界中可使用指令（单人游戏也需开启作弊）。")));
+                                      tr("打开之后，这个世界里能用指令（单机也要开作弊）。")));
 
     m_hardcore = new ToggleSwitch(m_fileBody);
     m_hardcore->setObjectName(hardcoreName());
     fileBody->addLayout(makeOptionRow(m_fileBody, tr("极限模式"), m_hardcore,
-                                      tr("极限模式：死亡一次后无法继续游玩此世界。")));
+                                      tr("极限模式：死一次这个世界就不能再玩了。")));
 
     m_difficulty = new QComboBox(m_fileBody);
     m_difficulty->setObjectName(difficultyName());
@@ -546,7 +546,7 @@ QString WorldSettingsPage::rulesSourceHint(bool hasRules) {
     return tr("存档尚未保存游戏规则。列表显示游戏默认值，保存时仅写入修改过的规则。");
 }
 QString WorldSettingsPage::defaultedHintText() {
-    return tr("存档中无此项：当前显示游戏默认值，仅在修改后写入。");
+    return tr("这个存档里没有这一项：屏幕上显示的是游戏默认值，修改后才会写入。");
 }
 QString WorldSettingsPage::notGzippedText() {
     // 同上：`**不是**` 那两个星号会原样画在屏幕上，改成「不是」。
@@ -696,9 +696,9 @@ void WorldSettingsPage::refreshFileHints() {
         tr("存档信息中保存的世界名称。");
     m_nameEdit->setToolTip(tip(nameWhat, m_view.hasLevelName));
     m_allowCommands->setToolTip(
-        tip(tr("开启后，此世界中可使用指令（单人游戏也需开启作弊）。"), m_view.hasAllowCommands));
+        tip(tr("打开之后，这个世界里能用指令（单机也要开作弊）。"), m_view.hasAllowCommands));
     m_hardcore->setToolTip(
-        tip(tr("极限模式：死亡一次后无法继续游玩此世界。"), m_view.hasHardcore));
+        tip(tr("极限模式：死一次这个世界就不能再玩了。"), m_view.hasHardcore));
     m_difficulty->setToolTip(
         tip(tr("0 和平 / 1 简单 / 2 普通 / 3 困难。"), m_view.hasDifficulty));
 }
@@ -1028,7 +1028,7 @@ void WorldSettingsPage::refreshSaveEnabled() {
     }
     m_save->setEnabled(ok);
     m_save->setToolTip(ok ? QString()
-                          : tr("有一条规则的值为空或不是整数，请修正后再保存（游戏读取到无效值时会静默使用默认值）。"));
+                          : tr("有一条规则的值是空的，或不是整数；请改好后再保存（游戏读到坏值会静悄悄按默认值来）。"));
 }
 
 WorldSettingsPage::WorldView WorldSettingsPage::editedView() const {
@@ -1111,7 +1111,7 @@ WorldSettingsPage::Delta WorldSettingsPage::deltaFromOpened() const {
 
 void WorldSettingsPage::refreshNote() {
     if (m_unreadable) {
-        m_note->setText(tr("%1\n此世界当前仅可查看和备份：无法读取存档内容，因此不会写入任何内容。")
+        m_note->setText(tr("%1\n这个世界现在只能看和备份：无法读取存档内容，所以不会写入任何内容。")
                             .arg(m_unreadableReason));
         return;
     }

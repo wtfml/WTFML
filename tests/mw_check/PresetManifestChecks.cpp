@@ -89,14 +89,11 @@ int runPresetManifestChecks() {
     check(presetRow(list, idA) && presetRow(list, idB) && presetRow(list, idC),
           "grouped preset list lists every catalog entry as a row");
     auto *name = page->findChild<QLineEdit *>(PresetManagePage::nameEditName());
-    auto *tabs = page->findChild<QListWidget *>(QStringLiteral("presetDetailNav"));
-    const auto *editTab = tabs ? tabs->item(1) : nullptr;
-    check(editTab != nullptr, "preset details offer an editing tab");
-    const auto canEdit = [editTab] { return editTab && editTab->flags().testFlag(Qt::ItemIsEnabled); };
+    auto *save = page->findChild<QPushButton *>(PresetManagePage::saveDetailsButtonName());
     auto *create = page->findChild<QPushButton *>(PresetManagePage::newButtonName());
     bool input = false;
     QTimer::singleShot(0, page, [&] { input = true; });
-    check(pump([&] { return input; }) && page->isBusy() && name->text().isEmpty() && !canEdit(),
+    check(pump([&] { return input; }) && page->isBusy() && name->text().isEmpty() && !save->isEnabled(),
           "input remains responsive and stale detail editing is disabled during read");
     list->setCurrentItem(presetRow(list, idB));
     list->setCurrentItem(presetRow(list, idC));
@@ -104,11 +101,11 @@ int runPresetManifestChecks() {
     check(pump([&] { return c->calls == 1; }) && b->calls == 0 && page->isBusy() && name->text().isEmpty(),
           "rapid selection reads only latest pending manifest and discards old detail");
     c->release.release();
-    check(pump([&] { return !controller.detailsLoading(); }) && !page->isBusy() && canEdit() &&
+    check(pump([&] { return !controller.detailsLoading(); }) && !page->isBusy() && save->isEnabled() &&
           name->text() == QStringLiteral("content-") + idC, "latest detail alone restores matching editor");
 
     list->setCurrentItem(nullptr);
-    check(page->currentPresetId().isEmpty() && name->text().isEmpty() && !canEdit(),
+    check(page->currentPresetId().isEmpty() && name->text().isEmpty() && !save->isEnabled(),
           "clearing current index removes stale details without enabling writes");
     list->setCurrentItem(presetRow(list, idA));
     check(pump([&] { return a->calls == 2; }), "filter invalidation fixture is reading");
@@ -116,7 +113,7 @@ int runPresetManifestChecks() {
     check(page->currentPresetId().isEmpty() && !page->isBusy() && create->isEnabled(),
           "filtering out selection cancels requested detail and restores create action immediately");
     a->release.release();
-    check(pump([&] { return !controller.detailsLoading(); }) && name->text().isEmpty() && !canEdit(),
+    check(pump([&] { return !controller.detailsLoading(); }) && name->text().isEmpty() && !save->isEnabled(),
           "late detail cannot repopulate an empty filtered selection");
 
     check(page->captureChoice().vanillaOptions && page->captureChoice().vanillaKeys,
@@ -135,7 +132,7 @@ int runPresetManifestChecks() {
                    ? layer->accessibleName()
                    : QString();
     };
-    check(pump([&] { return !controller.detailsLoading(); }) && !page->isBusy() && !canEdit() &&
+    check(pump([&] { return !controller.detailsLoading(); }) && !page->isBusy() && !save->isEnabled() &&
           create->isEnabled() && readError().contains(QStringLiteral("fixture read failure")) &&
           page->findChild<QLabel *>(QStringLiteral("presetMetaLabel"))->text().contains(QStringLiteral("无法读取")),
           "failed manifest read reports reason without enabling stale editor");

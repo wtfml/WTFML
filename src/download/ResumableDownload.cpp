@@ -1,6 +1,4 @@
 #include "ResumableDownload.hpp"
-
-#include "../util/AppPaths.hpp"
 #include <QCoreApplication>
 #include "../net/RequestBudget.hpp"
 #include "DownloadManager.hpp"
@@ -14,6 +12,7 @@
 #include <QLockFile>
 #include <QRegularExpression>
 #include <QSaveFile>
+#include <QStandardPaths>
 #include <QThread>
 #include <QTimer>
 #include <algorithm>
@@ -83,7 +82,7 @@ qint64 ResumableDownload::lowSpeedWindowMs() {
 }
 
 QString ResumableDownload::cacheDirectory(const QUrl &url, const QString &target, const QString &root) {
-    const QString base = root.isEmpty() ? AppPaths::localCacheRoot() + QStringLiteral("/range-downloads") : root;
+    const QString base = root.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QStringLiteral("/range-downloads") : root;
     return QDir(base).filePath(hashText(url.toEncoded() + '\n' + QFileInfo(target).absoluteFilePath().toUtf8()));
 }
 

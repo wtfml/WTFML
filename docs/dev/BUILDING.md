@@ -80,8 +80,6 @@ Windows 系统 DLL。
 | 启动器状态、账户表 | `HKCU\Software\WTFML`（令牌是 DPAPI 加密后落盘的） |
 | 图标 / 主题图 / 备份等缓存 | `<数据目录>/cache/` |
 | 智能体会话（全局，不跟游戏文件夹） | `%LOCALAPPDATA%\WTFML\agent\sessions`；API Key 在 Windows 凭据管理器/DPAPI |
-| 智能体其它数据（artifacts / 备份 / MCP 配置） | `%LOCALAPPDATA%\WTFML\agent\{artifacts,backups,mcp}` |
-| 断点续传缓存（启动器级，不跟游戏文件夹） | `%LOCALAPPDATA%\WTFML\cache\range-downloads` |
 
 同一个数据目录同时只允许一个启动器窗口。第二个进程在写日志、开主窗口之前就会被拒绝并退出；
 边界细节见 [DIRECTORY_SESSION_LOCK.md](../features/DIRECTORY_SESSION_LOCK.md)。

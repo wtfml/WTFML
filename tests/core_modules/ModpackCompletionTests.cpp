@@ -31,11 +31,7 @@ void runModpackCompletionTests(const QString &sandbox) {
     writeFileAt(root + "/config.txt", "keep-config");
     QString error;
     const QString archive = root + "/pack.zip";
-    const QString coverFixture = root + "/cover.png";
-    QImage cover(16, 16, QImage::Format_ARGB32);
-    cover.fill(Qt::blue);
-    check(cover.save(coverFixture) && ZipUtil::createZip(archive, {
-              {"overrides/config/test.txt", root + "/config.txt"}, {"overrides/icon.png", coverFixture}}, &error),
+    check(ZipUtil::createZip(archive, {{"overrides/config/test.txt", root + "/config.txt"}}, &error),
           "ZG8 准备覆盖内容测试包", error);
     ModpackImport::Pack pack;
     pack.format = ModpackImport::Format::CurseForge;
@@ -78,10 +74,6 @@ void runModpackCompletionTests(const QString &sandbox) {
                 VersionManager::ModpackStage::Verifying};
             check(stages == expectedStages,
                   "ZG8 导入期间按顺序发出原版加载器/清单文件/解压覆盖/校验收尾四个阶段信号");
-            const QImage importedCover(InstanceFiles::modpackCoverPath(QStringLiteral("completion-test")));
-            check(!importedCover.isNull() && importedCover.pixelColor(8, 8) == Qt::blue &&
-                      !QFileInfo::exists(AppPaths::versionIconPath(QStringLiteral("completion-test"))),
-                  "ZG8 导入自动使用包内封面，独立于用户选的图标");
         }
         QFile report(target + QStringLiteral("/wtfml.import-report.json"));
         check(report.open(QIODevice::ReadOnly), "ZG8 每次收尾都有持久报告");
@@ -240,70 +232,6 @@ void runModpackCompletionTests(const QString &sandbox) {
               "ZG8 元数据提交失败时持久报告也保留未完成");
         check(QFileInfo::exists(dir + "/mods/manual.jar") && QFileInfo::exists(dir + "/config/test.txt"),
               "ZG8 提交失败不删除已补齐文件和覆盖内容");
-    }
-    {
-        FakeIconServer server;
-        server.status = 404;
-        server.body = modBytes;
-        server.headers = QByteArrayLiteral("Connection: close\r\n");
-        const bool listening = server.start();
-        check(listening, "ZG11 模拟整合包文件下载服务");
-        if (listening) {
-            const QString id = QStringLiteral("retry-in-place");
-            const QString instancePath = AppPaths::versionDir(id);
-            ModpackImport::Pack retryPack = pack;
-            retryPack.filesNotDistributable = 0;
-            retryPack.fileIssues.clear();
-            const QString url = QStringLiteral("http://127.0.0.1:%1/file").arg(server.server.serverPort());
-            retryPack.files = {{QStringLiteral("mods/retry-file.bin"), {url}, hash(modBytes), modBytes.size()}};
-            VersionManager manager;
-            manager.setUseMirror(false);
-            manager.setVersionManifestUrlOverride(QUrl::fromLocalFile(root + "/index.json").toString());
-            QJsonObject manifestContinuation;
-            QObject::connect(manager.downloads(), &DownloadManager::batchStarted, &manager, [&] {
-                const QJsonObject intent = manager.downloadContinuation();
-                if (intent.contains("importMarker")) manifestContinuation = intent;
-            });
-            QString resultText;
-            const auto waitForImport = [&](const std::function<void()> &start, bool expected) {
-                QEventLoop loop;
-                int terminals = 0;
-                bool success = false;
-                QObject::connect(&manager, &VersionManager::versionDownloadFinished, &loop,
-                    [&](const QString &finished, bool ok, const QString &message) {
-                        if (finished != id) return;
-                        ++terminals;
-                        success = ok;
-                        resultText = message;
-                        loop.quit();
-                    });
-                QTimer::singleShot(10000, &loop, &QEventLoop::quit);
-                QTimer::singleShot(0, &loop, start);
-                loop.exec();
-                return terminals == 1 && success == expected;
-            };
-            check(waitForImport([&] { manager.importModpack(archive, id, retryPack, {}, fingerprint); }, false) &&
-                      manager.canRetryDownload() && manager.retryModpackInstance() == id &&
-                      InstanceFiles::isUnfinishedImport(id) && !QFileInfo::exists(instancePath + "/config/test.txt"),
-                  "ZG11 清单下载失败保留原安装，且尚未解压覆盖文件");
-            check(manifestContinuation.value("kind") == "modpack" &&
-                      manifestContinuation.value("instance") == id && manifestContinuation.value("root") == root &&
-                      manifestContinuation.value("archive") == archive &&
-                      manifestContinuation.value("importMarker").toObject().value("exists").toBool(),
-                  "ZG11 下载恢复记录关联原整合包、实例、游戏目录及未完成标记");
-            AppPaths::setMinecraftDir(root + QStringLiteral("/other-game-root"));
-            check(!manager.canRetryDownload() && !manager.retryDownload(), "ZG11 切换游戏目录后拒绝继续旧安装");
-            AppPaths::setMinecraftDir(root);
-            server.status = 200;
-            bool started = false;
-            const bool complete = waitForImport([&] { started = manager.retryDownload(&error); }, true);
-            check(complete && started && server.requests == 2 &&
-                      !manager.canRetryDownload() && !InstanceFiles::isUnfinishedImport(id) &&
-                      QFileInfo::exists(instancePath + "/mods/retry-file.bin") &&
-                      QFileInfo::exists(instancePath + "/config/test.txt"),
-                  "ZG11 只重试失败文件，随后在同一实例解压并提交完整安装",
-                  QStringLiteral("requests=%1; %2 %3").arg(server.requests).arg(resultText, error));
-        }
     }
     AppPaths::setMinecraftDir(previousRoot);
 }

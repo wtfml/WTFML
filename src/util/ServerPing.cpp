@@ -388,7 +388,7 @@ SrvOutcome lookupSrv(const QString &host, int budgetMs) {
     }
     if (lookup.error() != QDnsLookup::NoError) {
         if (lookup.error() == QDnsLookup::NotFoundError) {
-            outcome.error = QCoreApplication::translate("ServerPing", "无 SRV 记录");
+            outcome.error = QCoreApplication::translate("ServerPing", "没有 SRV 记录");
         } else {
             outcome.error = QCoreApplication::translate("ServerPing", "SRV 查询失败");
         }
@@ -408,7 +408,7 @@ SrvOutcome lookupSrv(const QString &host, int budgetMs) {
     }
     SrvRecord picked;
     if (!pickSrvRecord(candidates, QRandomGenerator::global()->generate(), &picked)) {
-        outcome.error = QCoreApplication::translate("ServerPing", "无可用的 SRV 记录");
+        outcome.error = QCoreApplication::translate("ServerPing", "没有能用的 SRV 记录");
         return outcome;
     }
     outcome.found = true;
@@ -460,19 +460,19 @@ Resolution resolve(const QString &text, int budgetMs) {
 QString kindName(Kind kind) {
     switch (kind) {
     case Kind::Ok:
-        return QCoreApplication::translate("ServerPing", "已连通");
+        return QCoreApplication::translate("ServerPing", "通了");
     case Kind::InvalidAddress:
         return QCoreApplication::translate("ServerPing", "服务器地址格式无效");
     case Kind::HostNotFound:
-        return QCoreApplication::translate("ServerPing", "未找到主机");
+        return QCoreApplication::translate("ServerPing", "找不到主机");
     case Kind::Refused:
         return QCoreApplication::translate("ServerPing", "连接被拒");
     case Kind::Unreachable:
-        return QCoreApplication::translate("ServerPing", "网络不可达");
+        return QCoreApplication::translate("ServerPing", "网络不通");
     case Kind::NoAnswer:
-        return QCoreApplication::translate("ServerPing", "服务器无响应");
+        return QCoreApplication::translate("ServerPing", "服务器没有响应");
     case Kind::ConnectionLost:
-        return QCoreApplication::translate("ServerPing", "连接中断");
+        return QCoreApplication::translate("ServerPing", "连接断了");
     case Kind::Protocol:
         return QCoreApplication::translate("ServerPing", "服务器响应格式无效");
     case Kind::Other:
@@ -651,7 +651,7 @@ QString connectionErrorText(int socketError) {
     case QAbstractSocket::ConnectionRefusedError:
         return QCoreApplication::translate("ServerPing", "连接被拒绝");
     case QAbstractSocket::HostNotFoundError:
-        return QCoreApplication::translate("ServerPing", "未找到主机");
+        return QCoreApplication::translate("ServerPing", "找不到主机");
     case QAbstractSocket::SocketTimeoutError:
     case QAbstractSocket::NetworkError:
         return QCoreApplication::translate("ServerPing", "连接超时");
@@ -726,7 +726,7 @@ Status ping(const QString &address) {
     socket.write(packet(requestBody));
     if (!socket.waitForBytesWritten(left())) {
         status.kind = Kind::ConnectionLost;
-        status.error = QCoreApplication::translate("ServerPing", "无法发送（连接刚建立即中断）");
+        status.error = QCoreApplication::translate("ServerPing", "发不出去（连接刚建立就断了）");
         return status;
     }
 
@@ -766,7 +766,7 @@ Status ping(const QString &address) {
             if (socket.error() == QAbstractSocket::SocketTimeoutError ||
                 socket.error() == QAbstractSocket::UnknownSocketError) {
                 status.kind = Kind::NoAnswer;
-                status.error = QCoreApplication::translate("ServerPing", "已连接，但服务器无响应（等待超时）");
+                status.error = QCoreApplication::translate("ServerPing", "已连接，但服务器没有响应（等待超时）");
                 status.timedOut = true;
             } else {
                 status.kind = kindForSocketError(socket.error());
@@ -782,7 +782,7 @@ Status ping(const QString &address) {
     int packetId = 0;
     if (!readVarInt(buffer, &pos, &packetId) || packetId != 0x00) {
         status.kind = Kind::Protocol;
-        status.error = QCoreApplication::translate("ServerPing", "服务器未返回状态包");
+        status.error = QCoreApplication::translate("ServerPing", "服务器答的不是状态包");
         return status;
     }
     int jsonLength = 0;
@@ -798,7 +798,7 @@ Status ping(const QString &address) {
     const QJsonDocument document = QJsonDocument::fromJson(buffer.mid(pos, jsonLength));
     if (!document.isObject()) {
         status.kind = Kind::Protocol;
-        status.error = QCoreApplication::translate("ServerPing", "服务器响应不是有效的 JSON");
+        status.error = QCoreApplication::translate("ServerPing", "服务器答的不是一段 JSON");
         return status;
     }
     const QJsonObject root = document.object();

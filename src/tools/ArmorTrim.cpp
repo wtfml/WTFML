@@ -68,7 +68,7 @@ const TrimPatternRow kPatterns[] = {
 
 const char *kParts[] = {QT_TRANSLATE_NOOP("ArmorTrim", "头盔"), QT_TRANSLATE_NOOP("ArmorTrim", "胸甲"), QT_TRANSLATE_NOOP("ArmorTrim", "护腿"), QT_TRANSLATE_NOOP("ArmorTrim", "靴子")};
 
-/// 盔甲材质：id / 中文名。
+/// 盔甲材质：id / 中文名 / 全名里那个QT_TRANSLATE_NOOP("ArmorTrim", "前缀")。
 struct ArmorMaterialRow {
     const char *id;
     const char *name;
@@ -88,24 +88,6 @@ constexpr int kArmorMaterialCount =
 
 /// 海龟壳那个材质的下标（**只认头盔**那一条判据就靠它）。
 constexpr int kTurtleShell = kArmorMaterialCount - 1;
-
-// 完整物品名：材质 + 部位的**整名**，照游戏 `zh_cn.json` 的 `item.minecraft.*_helmet` 那一列写。
-// 皮革那四件叫「帽子 / 外套 / 裤子 / 靴子」，其余材质是「头盔 / 胸甲 / 护腿 / 靴子」；
-// 拼 `armorMaterialName()` + `partName()` 拼不出这个差别。海龟壳不在表里（见下）。
-const char *const kArmorPieceNames[kArmorMaterialCount - 1][kPartCount] = {
-    {QT_TRANSLATE_NOOP("ArmorTrim", "皮革帽子"), QT_TRANSLATE_NOOP("ArmorTrim", "皮革外套"),
-     QT_TRANSLATE_NOOP("ArmorTrim", "皮革裤子"), QT_TRANSLATE_NOOP("ArmorTrim", "皮革靴子")},
-    {QT_TRANSLATE_NOOP("ArmorTrim", "锁链头盔"), QT_TRANSLATE_NOOP("ArmorTrim", "锁链胸甲"),
-     QT_TRANSLATE_NOOP("ArmorTrim", "锁链护腿"), QT_TRANSLATE_NOOP("ArmorTrim", "锁链靴子")},
-    {QT_TRANSLATE_NOOP("ArmorTrim", "铁头盔"), QT_TRANSLATE_NOOP("ArmorTrim", "铁胸甲"),
-     QT_TRANSLATE_NOOP("ArmorTrim", "铁护腿"), QT_TRANSLATE_NOOP("ArmorTrim", "铁靴子")},
-    {QT_TRANSLATE_NOOP("ArmorTrim", "金头盔"), QT_TRANSLATE_NOOP("ArmorTrim", "金胸甲"),
-     QT_TRANSLATE_NOOP("ArmorTrim", "金护腿"), QT_TRANSLATE_NOOP("ArmorTrim", "金靴子")},
-    {QT_TRANSLATE_NOOP("ArmorTrim", "钻石头盔"), QT_TRANSLATE_NOOP("ArmorTrim", "钻石胸甲"),
-     QT_TRANSLATE_NOOP("ArmorTrim", "钻石护腿"), QT_TRANSLATE_NOOP("ArmorTrim", "钻石靴子")},
-    {QT_TRANSLATE_NOOP("ArmorTrim", "下界合金头盔"), QT_TRANSLATE_NOOP("ArmorTrim", "下界合金胸甲"),
-     QT_TRANSLATE_NOOP("ArmorTrim", "下界合金护腿"), QT_TRANSLATE_NOOP("ArmorTrim", "下界合金靴子")},
-};
 
 bool validTrimMaterial(int index) { return index >= 0 && index < kTrimMaterialCount; }
 bool validPattern(int index) { return index >= 0 && index < kPatternCount; }
@@ -210,7 +192,7 @@ QString armorPieceName(int armorMaterial, int part) {
     if (armorMaterial == kTurtleShell) {
         return QCoreApplication::translate("ArmorTrim", "海龟壳");
     }
-    return QCoreApplication::translate("ArmorTrim", kArmorPieceNames[armorMaterial][part]);
+    return QStringLiteral("%1%2").arg(armorMaterialName(armorMaterial), partName(part));
 }
 
 bool armorMaterialFitsPart(int armorMaterial, int part) {
@@ -265,7 +247,7 @@ Plan plan(int armorMaterial, int part, int patternIndex, int trimMaterial, int p
 
     // 一句话把"从哪来"和"再要一枚拿什么换"说完 —— 这两样是用户看这页真正要查的。
     // 模板本身和那七颗钻石不必写：前者就是这一枚，后者谁都备得住。
-    result.notes.append(QCoreApplication::translate("ArmorTrim", "此%1来源：%2；复制需%3。")
+    result.notes.append(QCoreApplication::translate("ArmorTrim", "这枚%1来自：%2；复制用%3。")
                             .arg(templateName, pattern.source, pattern.duplicate));
     if (pattern.since != QStringLiteral("1.20")) {
         result.notes.append(QCoreApplication::translate("ArmorTrim", "%1 纹饰模板自 Java 版 %2 起可用。")
@@ -318,8 +300,7 @@ Plan plan(int armorMaterial, int part, int patternIndex, int trimMaterial, int p
     result.materials.append(QStringLiteral("%1 × %2").arg(armor).arg(pieces));
 
     if (pieces > 1) {
-        result.notes.append(QCoreApplication::translate("ArmorTrim",
-                                                        "每锻造一件消耗一个模板：%1 件共需 %1 个。")
+        result.notes.append(QCoreApplication::translate("ArmorTrim", "模板每打一件消耗一个：%1 件共需 %1 个。")
                                 .arg(pieces));
     }
     result.summary = QCoreApplication::translate("ArmorTrim", "%1 / %2纹饰的%3 × %4")
@@ -331,12 +312,12 @@ Plan plan(int armorMaterial, int part, int patternIndex, int trimMaterial, int p
 
 QString Plan::detailText() const {
     if (!ok) {
-        return error.isEmpty() ? QCoreApplication::translate("ArmorTrim", "无法生成方案。") : error;
+        return error.isEmpty() ? QCoreApplication::translate("ArmorTrim", "排不出来。") : error;
     }
     QStringList lines;
     lines.append(summary);
     lines.append(QString());
-    lines.append(QCoreApplication::translate("ArmorTrim", "步骤："));
+    lines.append(QCoreApplication::translate("ArmorTrim", "一步一步："));
     for (const QString &step : steps) {
         lines.append(QStringLiteral("• %1").arg(step));
     }

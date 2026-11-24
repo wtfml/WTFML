@@ -291,12 +291,12 @@ Plan plan(int baseColorIndex, const QList<Layer> &layers, const QString &version
 
 QString Plan::detailText() const {
     if (!ok) {
-        return error.isEmpty() ? QCoreApplication::translate("Banner", "无法生成方案。") : error;
+        return error.isEmpty() ? QCoreApplication::translate("Banner", "排不出来。") : error;
     }
     QStringList lines;
     lines.append(summary);
     lines.append(QString());
-    lines.append(QCoreApplication::translate("Banner", "步骤："));
+    lines.append(QCoreApplication::translate("Banner", "一步一步："));
     for (const QString &step : steps) {
         lines.append(QStringLiteral("• %1").arg(step));
     }

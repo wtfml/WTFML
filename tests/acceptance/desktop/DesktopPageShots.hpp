@@ -239,9 +239,9 @@ inline QWidget *worldPage(MainWindow &w, bool open, bool confirm) {
     w.ui()->overlay()->setPageTitle(page->breadcrumbTitle());
     if (confirm) {
         QTimer::singleShot(200, &w, [&w] {
-            InlineMessage::ask(w.ui()->overlay(), MessageKind::Question, QStringLiteral("修改存档文件"),
+            InlineMessage::ask(w.ui()->overlay(), MessageKind::Question, QStringLiteral("改动存档文件"),
                                QStringLiteral("将直接修改“New World”的存档名称、游戏模式、难度及规则。建议先备份存档信息。"),
-                               {QStringLiteral("取消"), QStringLiteral("创建备份"), QStringLiteral("继续修改")},
+                               {QStringLiteral("取消"), QStringLiteral("先创建备份"), QStringLiteral("继续修改")},
                                1, 2, false, QStringLiteral("备份当前 level.dat，不修改存档。"));
         });
     }
@@ -355,7 +355,7 @@ inline QList<Shot> shots() {
             return prompt(w, [](OverlayHost *host) {
                 InlineMessage::question(host, QStringLiteral("改过还没保存"),
                     QStringLiteral("这个文件刚才改的地方还没写到盘上，离开就会丢掉这些改动。\n\n要丢掉吗？"),
-                    QStringLiteral("放弃更改"), QStringLiteral("留在这儿"), false);
+                    QStringLiteral("丢掉改动"), QStringLiteral("留在这儿"), false);
             });
         }});
         if (dark) {

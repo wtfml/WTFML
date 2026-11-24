@@ -17,7 +17,6 @@
 #include "download/ModDependencies.hpp"
 #include "download/ResourceCatalog.hpp"
 #include "InlineMessage.hpp"
-#include "util/AppPaths.hpp"
 
 using namespace MainWindowViewData;
 
@@ -469,7 +468,7 @@ void ResourcePageController::downloadVersion(const QString &versionId) {
             // 和树上点第三层那一下**是同一件事**（选哪个实例、落到哪个目录、加载器那道闸、
             // 整合包下完接导入，全在那边那一个函数里）。
             m_owner.installResourceVersion(m_state.kind, m_state.title, entry,
-                                   m_state.source, m_state.iconKey);
+                                   m_state.source);
             return;
         }
     }
@@ -505,17 +504,18 @@ void ResourcePageController::onDownloadFinished(const QString &label, bool succe
     // 不会开始（界面上那句「已经装进实例里了」也永远等不到）。失败时留着这一单，重试
     // 成功那一发照样认领得到；用户再也不重试的话，它只是内存里一条记录（若用户主动
     // 取消，则由下面的 userCancelled 分支清掉）。
-    const Tasks::TaskId ledgerTask = m_owner.m_downloadTaskLedger->task();
-    const bool ownsPendingImport = !label.isEmpty() && ledgerTask != Tasks::invalidTaskId() &&
-        label == m_owner.m_downloadTaskLedger->resourceLabel() &&
-        m_owner.m_pendingModpackImports.value(label).taskId == ledgerTask;
-    if (success && ownsPendingImport) {
+    if (success && m_owner.m_pendingModpackImports.contains(label)) {
         const MainWindow::PendingModpackImport pending = m_owner.m_pendingModpackImports.take(label);
-        const Tasks::TaskId activeTask = ledgerTask;
-        m_owner.m_downloadTaskLedger->clear();
-        if (pending.gameRoot != AppPaths::minecraftDir()) {
-            m_owner.finishTask(activeTask, false, MainWindow::tr("请切换回原游戏目录后重试本次安装。"));
-            return;
+        const bool sameLedgerTask =
+            !m_owner.m_downloadTaskLedger->resourceLabel().isEmpty()
+            && label == m_owner.m_downloadTaskLedger->resourceLabel()
+            && m_owner.m_downloadTaskLedger->task() != Tasks::invalidTaskId();
+        const Tasks::TaskId activeTask =
+            sameLedgerTask ? m_owner.m_downloadTaskLedger->task() : pending.taskId;
+        if (sameLedgerTask) {
+            m_owner.m_downloadTaskLedger->clearTask();
+            m_owner.m_downloadTaskLedger->setResourceLabel(QString());
+            m_owner.m_downloadTaskLedger->clearOwnerIf(activeTask);
         }
         if (activeTask != Tasks::invalidTaskId() && m_owner.m_activityCenter->tasks()->has(activeTask)) {
             Tasks::TaskManager *tasks = m_owner.m_activityCenter->tasks();
@@ -537,10 +537,8 @@ void ResourcePageController::onDownloadFinished(const QString &label, bool succe
         // 马上就会 beginBatch() 开新的一批 —— 在别人的信号栈里开批次会崩
         // （取证见 build/tools/crashdump/，VersionManager 里那几处
         // deferXxxStep 是同一个理由）。
-        m_owner.beginFolderSwitchHold();
         QTimer::singleShot(0, this, [this, pending, activeTask] {
-            m_owner.importModpackOneClick(pending.path, pending.instanceName, activeTask, pending.coverCacheId);
-            m_owner.endFolderSwitchHold();
+            m_owner.importModpackOneClick(pending.path, pending.instanceName, activeTask);
         });
         return;
     }
@@ -551,12 +549,12 @@ void ResourcePageController::onDownloadFinished(const QString &label, bool succe
         const Tasks::TaskId task = m_owner.m_downloadTaskLedger->task();
         m_owner.m_downloadTaskLedger->clearTask();
         m_owner.m_downloadTaskLedger->setResourceLabel(QString());
-        if (!userCancelled && !success && ownsPendingImport) {
+        if (!userCancelled && !success && m_owner.m_pendingModpackImports.contains(label)) {
             m_owner.m_activityCenter->tasks()->setStepState(
                 task, 0, Tasks::TaskStepState::Failed, errorMessage);
         }
         if (userCancelled) {
-            if (ownsPendingImport) {
+            if (m_owner.m_pendingModpackImports.contains(label)) {
                 m_owner.m_pendingModpackImports.remove(label);
             }
             m_owner.m_activityCenter->tasks()->cancel(task);

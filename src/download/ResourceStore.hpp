@@ -103,7 +103,6 @@ public:
                 ResourceCatalog::Source source, const QString &query,
                 const QString &gameVersion = QString(), const QString &loader = QString(),
                 const QString &category = QString());
-    void cancelSearch(ResourceCatalog::Kind kind, ResourceCatalog::Source source);
 
     /**
      * @brief 问一个资源在某个游戏版本下有哪些版本可下。
@@ -115,7 +114,7 @@ public:
      *
      * 结果走 versionsFinished。**三条路要分得开**：失败（problem 非空）/ 问到了但一条都没有
      * （versions 空、problem 空）/ 正常 —— 前两条在界面上是两句不同的话
-     * （加载器树那边「无可用版本」和「列表获取失败」踩过同一个坑）。
+     * （加载器树那边「无可用版本」和「列表没取到」踩过同一个坑）。
      */
     /// Resolve a Modrinth release whose dependency supplies no project identity.
     /// Uses the same request-key cancellation and bounded transport as version lists.

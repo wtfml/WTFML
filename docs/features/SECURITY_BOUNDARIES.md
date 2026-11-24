@@ -71,7 +71,7 @@ PNG、BMP、WebP 等格式的头部信息可能声明超大分辨率，引发解
 - 逐次确认：配置文件、完整文件名清单、其他文本、全局实例完整列表；没有会话级目录放行。
 - 硬阻断：凭据文件、凭据存储、二进制内容。
 - 严格模式把自动读取类别改为逐次确认，硬阻断不变。
-- `AgentRedaction` 当前方案：键名按 `_`、`-`、`.` 和小写/数字后接大写切词根；命中 `password/passwd/pwd/secret/token/credential(s)/cookie/csrf/session/apikey` 或相邻 `api/key`、`private/key`、`access/key` 时遮值；值少于 6 字符不遮；固定形态覆盖 Bearer、`sk-`、JWT、`AKIA…`、PEM 私钥块。完整说明见 [AGENT.md](AGENT.md) §5.6.2.1。
+- `AgentRedaction` 当前方案：键名按 `_`、`-`、`.` 和小写/数字后接大写切词根；命中 `password/passwd/pwd/secret/token/credential(s)/cookie/csrf/session/apikey` 或相邻 `api/key`、`private/key`、`access/key` 时遮值；值少于 6 字符不遮；固定形态覆盖 Bearer、`sk-`、JWT、`AKIA…`、PEM 私钥块。完整说明见 [AGENT.md](AGENT.md) §8.2。
 - 凭据文件名按 dotenv 家族（`.env`、`*.env`、`*.env.*`）、证书后缀（`pem/key/p12/pfx/jks`）和 `credential`/`secret`/`token`/`apikey`/`api_key`/`api-key` 词根判定；不命中的文件名进入普通文本审批。
 
 ### 4.3 文件工具与审批
@@ -92,24 +92,6 @@ PNG、BMP、WebP 等格式的头部信息可能声明超大分辨率，引发解
 - 工作流只读模式拒绝一切写工具；要求计划的模式里，写工具必须等于**已批准计划的当前一步**，跳步被拒绝；某一步失败后写工具全部锁住。
 - `workflow.finish` 本地核对计划/验证步/证据，缺一项就拒绝；模型不能靠自然语言声称完成。
 - 维护备份路径全部是实例目录内的相对路径；恢复前先做快照，恢复时拒绝绝对路径与 `..`；只恢复 `owner=agent` 的备份。
-
-### 4.4.1 测试启动（Stage 5.1）
-
-- 只在会话锁定的实例上工作；实例正在运行时拒绝。工作区由 `VersionManager::copyInstanceFrom()` 复制到 `<游戏根>/cache/agent-workspaces/<id>/`，登记和日志在 `%LOCALAPPDATA%/WTFML/agent/workspaces/`；物理目录只删登记过且路径匹配的那一份。
-- 不改原实例：启动参数复用 `LauncherManager::generateJvmArguments()`，但 `--gameDir` 指工作区；`assets`/`libraries` 只读共享；`options.txt`/`natives` 写在工作区。
-- 离线测试身份 `WTFML-Test`，不刷新令牌、不连服务器、不下载 Java；`quickPlay.world` 只接受工作区 `saves/` 里已有的世界。
-- 拒绝 `-javaagent`、`-agentlib`、`-agentpath`、`-Xbootclasspath` 等能加载本地代码的 JVM 参数；不静默剔除。
-- 每次独立调用先审批；每个启动器窗口一次只允许一个测试启动；超时/取消/关窗用 Job Object 清理进程树；模型只拿脱敏日志引用和证据 id，原始日志留在本地。
-- 成功/失败工作区默认保留，供后续事务或人工排查；不自动删除未知目录。
-
-### 4.4.2 修复事务（Stage 5.2）
-
-- `repair.begin` 的工作区仍走 `AgentWorkspaceStore` 的 id/路径校验；源实例正在运行或安装时拒绝。一个实例同时只允许一个活动事务。
-- 事务只记 `mods/config/defaultconfigs/options` 的基线哈希和 `settings` 增量；不提交世界/存档。
-- 提交前逐个核对源文件 SHA-256 等于基线；不等于就拒绝并点名文件。原文件先备份到 `agent/transactions/<id>/backups/`，再原子替换，写后回读哈希；失败按已应用文件备份回滚。
-- 事务活动期间，不带 `workspaceId` 的 `fs.write`/`mods.setEnabled`/`settings.set` 和 `backup.restore` 拒绝，防止原件在工作区验证期间漂移。
-- 事务日志、差异和备份只在本地；模型只拿事务 id、相对路径、哈希和验证结果。提交/回滚报告不包含绝对路径。
-- 限制：复制/提交的当前实现没有独立取消；关闭启动器会等待当前后台操作；启动恢复扫描尚未接到 UI，只有 `repair.status` 能列出中断事务。
 
 ### 4.5 MCP（Stage 2A，stdio）
 

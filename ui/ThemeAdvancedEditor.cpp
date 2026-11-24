@@ -73,7 +73,7 @@ ThemeAdvancedEditor::ThemeAdvancedEditor(QWidget *parent) : QWidget(parent), m_s
     reset->setObjectName("themePartReset");
     Theme::markButton(reset, Theme::ButtonKind::Ghost);
     form->addRow(reset);
-    auto *hint = new QLabel(tr("仅调整配色，不改变背景图片。遮罩无文字设置。"), body);
+    auto *hint = new QLabel(tr("只调整配色，不改变背景图片。遮罩没有文字设置。"), body);
     hint->setWordWrap(true);
     form->addRow(hint);
     connect(reset, &QPushButton::clicked, this, [this] { resetPart(m_part->currentData().toInt()); });

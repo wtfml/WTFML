@@ -40,22 +40,6 @@
  * 不同，共用一份状态就会有一份的中文变乱码；
  * 3. startGame() 返回的是"这次会话的 id"，不是"成功了没有"。0 才是失败。
  */
-/// 一次启动用的路径根。空指针 = 沿用 AppPaths 的当前数据根（普通启动）。
-///
-/// 智能体测试启动把 `versionDir` 指到隔离工作区，`gameRoot`/`libraries`/`assets`
-/// 仍指向用户当前游戏根（只读共享）：这样 `--gameDir` 与工作区隔离，而
-/// classpath/assets 不必整份复制。`jarPath` 是客户端 jar 的真实路径；
-/// `siblingJarDir` 是实例目录里其余 jar 的扫描目录（工作区副本）。
-struct LaunchRoots {
-    QString gameRoot;
-    QString versionDir;
-    QString librariesDir;
-    QString assetsDir;
-    QString nativesDir;
-    QString jarPath;
-    QString siblingJarDir;
-};
-
 class LauncherManager : public QObject {
     Q_OBJECT
 
@@ -180,8 +164,7 @@ public:
                                      const QString &playerUuid = QString(),
                                      const GameWindowSettings &window = GameWindowSettings(),
                                      const ScreenWorkArea &screen = ScreenWorkArea(),
-                                     const QuickPlay::Target &quickPlay = QuickPlay::Target(),
-                                     const LaunchRoots *roots = nullptr) const;
+                                     const QuickPlay::Target &quickPlay = QuickPlay::Target()) const;
 
     /**
      * @brief 启动一个 Minecraft 游戏进程（新增一份会话）。

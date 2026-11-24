@@ -12,20 +12,13 @@
 #pragma once
 
 #include "agent/AgentBackupIndex.hpp"
-#include "agent/AgentLaunchHost.hpp"
-#include "agent/AgentRepairHost.hpp"
 #include "agent/AgentLauncherHost.hpp"
 
-#include <memory>
-
 class MainWindow;
-class AgentTestLaunchRunner;
-class AgentRepairRunner;
 
-class AgentLauncherHostImpl final : public AgentLauncherHost, public AgentLaunchHost, public AgentRepairHost {
+class AgentLauncherHostImpl final : public AgentLauncherHost {
 public:
     explicit AgentLauncherHostImpl(MainWindow *owner);
-    ~AgentLauncherHostImpl() override;
 
     bool instanceList(QList<AgentDiagnosticProjection::InstanceFacts> *items,
                       QString *problem) override;
@@ -59,18 +52,6 @@ public:
     bool upgradeInspect(const QString &instanceId, QJsonObject *data, QString *problem) override;
     bool openPage(const QString &page, const QString &instanceId, QString *problem) override;
 
-    // ---------- 测试启动（异步） ----------
-    bool startTestLaunch(const QString &instanceId, const QString &workspaceId,
-                         const AgentTestLaunchOptions &options, const Completion &done,
-                         QString *problem) override;
-    void cancelTestLaunch() override;
-
-    // ---------- 修复事务（异步） ----------
-    bool beginTransaction(const QString &instanceId, const QStringList &scopes,
-                          const BeginCompletion &done, QString *problem) override;
-    bool finishTransaction(const QString &transactionId, bool commit,
-                           const FinishCompletion &done, QString *problem) override;
-
 private:
     AgentDiagnosticProjection::InstanceFacts factsFor(const QString &instanceId) const;
     QString modsDir(const QString &instanceId) const;
@@ -78,6 +59,4 @@ private:
 
     MainWindow *m_owner = nullptr;
     AgentBackupIndex m_maintenance;
-    std::unique_ptr<AgentTestLaunchRunner> m_testLaunchRunner;
-    std::unique_ptr<AgentRepairRunner> m_repairRunner;
 };

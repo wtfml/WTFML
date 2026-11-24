@@ -210,7 +210,7 @@
 #include "manage/InstanceGroupStore.hpp"
 #include "manage/ModpackExport.hpp"
 #include "manage/ModpackImport.hpp"
-// 离线账号自己挑的那张皮肤（「账号与皮肤」→「更换皮肤…」）。
+// 离线账号自己挑的那张皮肤（「账号与外观」→「换一张…」）。
 #include "manage/OfflineSkin.hpp"
 #include "manage/PlayerSkinStore.hpp"
 #include "manage/VersionDisplay.hpp"
@@ -478,8 +478,7 @@ MainWindow::MainWindow(QWidget *parent)
             },
             // 页头那句「N 份预设」：和「当前文件夹：…（N 个实例）」是页头同一格，
             // 换档时由 MainWindowUI 自己换着写（见 setInstanceMode）。
-            [this](const QString &text) { m_ui->setPresetSubtitle(text); },
-            [this](bool visible) { m_ui->setPresetDetailVisible(visible); }},
+            [this](const QString &text) { m_ui->setPresetSubtitle(text); }},
         this);
     m_presetController->setEditorPrompt([this](const QString &title, const QString &text, const QStringList &buttons) {
         return InlineMessage::ask(m_ui->overlay(), MessageKind::Question, title, text, buttons, buttons.size()-1, buttons.size()-1);
@@ -495,10 +494,7 @@ MainWindow::MainWindow(QWidget *parent)
         this);
     m_crashReports = new CrashReportController(
         m_activityCenter, m_ui->overlay(), this,
-        CrashReportController::Host{
-            [this](const QString &text) { appendLog(text); },
-            [this](const QString &context) { askAgentAboutCrash(context); }},
-        this);
+        CrashReportController::Host{[this](const QString &text) { appendLog(text); }}, this);
     // 工具箱那九件小工具：页面、算术、线程全在那个 controller 里，这儿只有
     // "建它"和"把导航轨底部那颗『工具箱』接到它身上"两句话。
     m_toolboxController = new ToolboxController(
@@ -527,11 +523,8 @@ MainWindow::MainWindow(QWidget *parent)
             [this](InstanceSettingsDialog *dialog, const QString &worldDir) {
                 showWorldSettingsPage(dialog, worldDir);
             },
-            [this](const QString &serverId) {
-                if (m_serverSettings->isShowing(serverId)) m_serverSettings->refreshIfShowing(serverId);
-                else refreshServerList();
-            },
-            // 还原一份实例期间它算「正在处理文件」：不能启动、不能删（见 restoreInstance()）。
+            [this](const QString &serverId) { m_serverSettings->refreshIfShowing(serverId); },
+            // 还原一份实例期间它算「正在搬文件」：不能启动、不能删（见 restoreInstance()）。
             [this](const QString &id, bool busy) {
                 if (busy) {
                     markFileOperationBusy(id);
@@ -543,10 +536,7 @@ MainWindow::MainWindow(QWidget *parent)
             // 服务端世界正在备份 / 还原：那一个服务端不能启动、不能删（见
             // `ServerRunController::fileBusy()` / `removeServer()` 那两道闸）。服务端不是
             // 实例，记不进 `installingVersionIds()`。
-            [this](const QString &id, bool busy) {
-                m_serverRun->setFileBusy(id, busy);
-                m_serverSettings->refreshRunStateIfShowing(id);
-            }},
+            [this](const QString &id, bool busy) { m_serverRun->setFileBusy(id, busy); }},
         this);
     m_serverPingController = new ServerPingController(
         ServerPingController::Host{
@@ -805,12 +795,7 @@ MainWindow::MainWindow(QWidget *parent)
                 if (ok && m_toolboxController && m_toolboxController->ownsDownloadTask(id)) {
                     m_toolboxController->resumeDownloadTask(id); return;
                 }
-                if (ok && m_downloadBatches && m_downloadBatches->owns(id)) {
-                    const auto task = m_activityCenter->tasks()->snapshot(id);
-                    if (task.kind == Tasks::TaskKind::Import && retryWouldWork(task)) retryTaskFromDetail(key);
-                    else m_downloadBatches->resume(id);
-                    return;
-                }
+                if (ok && m_downloadBatches && m_downloadBatches->owns(id)) { m_downloadBatches->resume(id); return; }
                 if (ok && m_presetController && m_presetController->ownsModTask(id)) { m_presetController->resumeModDownload(id); return; }
                 if (!ok || m_fileRecovery == nullptr) return;
                 const Tasks::TaskSnapshot task = m_activityCenter->tasks()->snapshot(id);
@@ -1285,7 +1270,7 @@ QTreeWidgetItem *MainWindow::addResourcePlaceholderRow(QTreeWidget *tree, const 
     }
     auto *item = new QTreeWidgetItem(tree);
     item->setText(MainWindowUI::versionTreeKeyColumn(), text);
-    // 灰的（禁用）—— 和加载器树里「正在获取…」「列表获取失败」那两行是同一种样子、
+    // 灰的（禁用）—— 和加载器树里「正在获取…」「列表没取到」那两行是同一种样子、
     // 也是同一种意思："这一行不是能点的东西"。判据见 onResourceItemActivated 开头。
     // NOTE: 不用 setFlags(Qt::ItemIsEnabled) 那一套"能看不能选"：代理是看 enabled 位
     // 整行淡 50% 的（见 VersionTreeDelegate 里 rowOpacity），禁用位才是"灰"的唯一出处。
@@ -1321,8 +1306,8 @@ void MainWindow::refreshDownloadCategory(int row) {
     m_downloadFilter->refreshDownloadCategory(row);
 }
 
-QList<ResourceCatalog::Source> MainWindow::downloadFilterSources(ResourceCatalog::Kind kind) const {
-    return m_downloadFilter->downloadFilterSources(kind);
+ResourceCatalog::Source MainWindow::downloadFilterSource(ResourceCatalog::Kind kind) const {
+    return m_downloadFilter->downloadFilterSource(kind);
 }
 
 QString MainWindow::downloadFilterGameVersion(ResourceCatalog::Kind kind) const {
@@ -1394,10 +1379,10 @@ void MainWindow::downloadResourceVersion(QTreeWidgetItem *item) {
 
 void MainWindow::installResourceVersion(ResourceCatalog::Kind kind, const QString &displayTitle,
                                         ResourceCatalog::VersionEntry version,
-                                        ResourceCatalog::Source source, const QString &projectIconId) {
+                                        ResourceCatalog::Source source) {
     // 薄壳：缺前置那一趟、以及"下到哪儿"全在 `ResourceInstallController`（见那边头文件
     // 第一段 —— 这一趟的形状和每一条判断的理由都写在那儿）。
-    m_resourceInstall->install(kind, displayTitle, version, source, projectIconId);
+    m_resourceInstall->install(kind, displayTitle, version, source);
 }
 
 // ---------- 装前置时"装进哪个实例、按哪个版本筛" ----------
@@ -1494,7 +1479,7 @@ void MainWindow::openInstallPresetPicker() {
 // 在 `src/MainWindowLaunch.cpp`（同一个类，另一个翻译单元）。
 
 
-// ---------- 「账号与皮肤」那一扇（登录 / 切号 / 皮肤 / 披风）----------
+// ---------- 「账号与外观」那一扇（登录 / 切号 / 皮肤 / 披风）----------
 // 在 `src/MainWindowAccount.cpp`（同一个类，另一个翻译单元）。
 
 

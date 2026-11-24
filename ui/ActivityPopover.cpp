@@ -118,17 +118,9 @@ public:
         setAttribute(Qt::WA_Hover);
     }
 protected:
-    void mousePressEvent(QMouseEvent *event) override {
-        if (m_onClick && event->button() == Qt::LeftButton) {
-            event->accept();
-            return;
-        }
-        QWidget::mousePressEvent(event);
-    }
     void mouseReleaseEvent(QMouseEvent *event) override {
         if (m_onClick && event->button() == Qt::LeftButton && rect().contains(event->position().toPoint())) {
             const auto fn = m_onClick;  // 回调里可能把整块面板删掉：先拷一份
-            event->accept();
             fn();
             return;
         }
@@ -333,8 +325,7 @@ void ActivityPopover::rebuild() {
         QPushButton *clear = nullptr;
         if (m_handlers.clearFinished) {
             clear = textButton(QCoreApplication::translate("ActivityPopover", "清除"), clearButtonName(), m_body);
-            clear->setToolTip(QCoreApplication::translate("ActivityPopover", "清除已结束记录，"
-                                                                             "不影响已下载的文件"));
+            clear->setToolTip(QCoreApplication::translate("ActivityPopover", "清除已结束记录，不影响下载好的文件"));
             connect(clear, &QPushButton::clicked, this, [this] {
                 if (m_handlers.clearFinished) m_handlers.clearFinished();
                 refresh();

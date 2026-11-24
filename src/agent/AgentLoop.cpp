@@ -123,7 +123,7 @@ Agent::Error AgentLoop::configurationError() const {
         return error;
     }
     if (m_config.apiKey.isEmpty() && m_config.profile.authMode != QLatin1String("none")) {
-        error.message = QStringLiteral("无可用的 API Key，请先在设置中配置。");
+        error.message = QStringLiteral("没有可用的 API Key，请先在设置里配置。");
         return error;
     }
     return {};

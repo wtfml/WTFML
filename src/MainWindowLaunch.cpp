@@ -80,7 +80,7 @@ void MainWindow::onVersionsFetched(const QStringList &versions) {
         // 拉清单失败时 DownloadManager 也会发这个信号，发的是**上一次成功的结果**
         // （首次拉取就失败才是空的），所以这一支实际拦的是"从来没拉到过"。别让用户
         // 对着一棵永远空的树等下去 —— 日志里说清楚，树上那四条照样在（它们本来就是空的）。
-        appendLog(tr("在线版本列表获取失败，请检查网络连接。"));
+        appendLog(tr("在线版本列表获取失败（网络异常？）。"));
         return;
     }
     appendLog(tr("已更新在线版本列表 (%1 个版本)。").arg(versions.size()));
@@ -133,7 +133,7 @@ void MainWindow::updateHomeRecent() {
                 const QString loader = instanceLoaderName(parts, m_versionManager, &loaderVersion);
                 instance.version = QStringLiteral("Minecraft %1 / %2")
                     .arg(parts.realVersion.isEmpty() ? parts.id : parts.realVersion,
-                         loader.isEmpty() ? tr("原版")
+                         loader.isEmpty() ? QStringLiteral("原版")
                                           : (loader + QLatin1Char(' ') + loaderVersion).trimmed());
             }
             // 主页封面：用户挑过图标就用挑的那张，没挑就按实例名稳定配色的等距方块（设计稿 cover）。
@@ -181,7 +181,7 @@ QList<MainWindowUI::HomePickerInstance> MainWindow::currentFolderInstancePickerR
         row.searchKeywords =
             QStringList{part.customName, part.realVersion, loader, loaderVersion, title}.join(QLatin1Char(' '));
         row.subtitle = QStringLiteral("%1 %2")
-                           .arg(loader.isEmpty() ? tr("原版") : loader,
+                           .arg(loader.isEmpty() ? QStringLiteral("原版") : loader,
                                 part.realVersion.isEmpty() ? part.id : part.realVersion)
                            .trimmed();
         row.icon = m_instancePageMarks.value(part.id);
@@ -256,7 +256,7 @@ void MainWindow::openHomeInstancePicker() {
             row.title = id;
             row.loaderKey = loaderFromId(id);
             row.searchKeywords = folder.title;
-            row.subtitle = row.loaderKey.isEmpty() ? tr("原版") : row.loaderKey;
+            row.subtitle = row.loaderKey.isEmpty() ? QStringLiteral("原版") : row.loaderKey;
             row.icon = QIcon(VersionIcons::grassBlock(MainWindowUI::instanceTreeIconSize()));
             instances.append(row);
         }

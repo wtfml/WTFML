@@ -292,7 +292,7 @@ void runInstanceStartActionsTests() {
                 check(refused.title == QStringLiteral("暂时无法操作"),
                       "T19.3 那句话的标题是「暂时无法操作」", refused.title);
                 check(refused.text.contains(
-                          QStringLiteral("已有下载或安装任务正在进行，请待其结束后再检查此实例。")),
+                          QStringLiteral("已有下载或安装任务正在进行，请结束后再检查这个实例。")),
                       "T19.3 正文说清是「另有一批在跑」（不是一句笼统的忙）", refused.text);
             }
             check(readBytesAt(jarPathB) == bogusJarB,
@@ -352,7 +352,7 @@ void runInstanceStartActionsTests() {
                                                    : answerer4.answered.at(0).title);
                 check(!answerer4.answered.isEmpty() &&
                           answerer4.answered.at(0).text.contains(
-                              QStringLiteral("实例「%1」的文件已齐全。").arg(displayB)),
+                              QStringLiteral("实例「%1」的文件都齐了。").arg(displayB)),
                       "★ T19.6 那句话说的是**下拉框里那个显示名** —— 收尾必须是「先清 "
                       "「补全」那一档占用、再 setDownloadUiBusy(false)」：反过来这一趟刷新时"
                       "它还被滤着，名字就只能退回裸目录名",
@@ -436,7 +436,7 @@ void runInstanceStartActionsTests() {
                       "底栏那根进度条也停不下来）");
                 check(combo->findData(emptyId) == before3,
                       "T19.7 它也没被当成「正在装的那一个」从列表里滤掉");
-                check(newLogContains(QStringLiteral("无法校验 %1 的文件：未找到 version.json")
+                check(newLogContains(QStringLiteral("无法校验 %1 的文件：找不到 version.json")
                                          .arg(emptyId)),
                       "T19.7 日志里留了一行（命令行那侧看得到）");
             }
@@ -474,7 +474,7 @@ void runInstanceStartActionsTests() {
                     const PromptAnswerer::Answered &one = answerer5.answered.at(0);
                     check(one.text.contains(QDir::toNativeSeparators(scriptPath)),
                           "T19.9 正文把落点写全了（用户要照着双击它）", one.text);
-                    check(one.text.contains(QStringLiteral("此脚本使用离线身份")),
+                    check(one.text.contains(QStringLiteral("这一份用的是离线身份")),
                           "★ T19.9 离线那一趟的备注：说清游戏里就是这个名字", one.text);
                     check(one.text.contains(QStringLiteral("导出的是本次启动使用的参数")),
                           "T19.9 最后那句「改了要再导一遍」的依据也在", one.text);
@@ -596,7 +596,7 @@ void runInstanceStartActionsTests() {
                       answerer6.answered.isEmpty() ? QStringLiteral("没弹")
                                                    : answerer6.answered.at(0).title);
                 check(!answerer6.answered.isEmpty() &&
-                          answerer6.answered.at(0).text.contains(QStringLiteral("未找到版本")),
+                          answerer6.answered.at(0).text.contains(QStringLiteral("找不到版本")),
                       "T19.11 正文说清是版本信息拿不到",
                       answerer6.answered.isEmpty() ? QString() : answerer6.answered.at(0).text);
                 check(!QFile::exists(missingPath),
@@ -628,7 +628,7 @@ void runInstanceStartActionsTests() {
                                                    : answerer7.answered.at(0).title);
                 check(!answerer7.answered.isEmpty() &&
                           answerer7.answered.at(0).text.contains(
-                              QStringLiteral("需要登录令牌")),
+                              QStringLiteral("要先能拿到登录令牌")),
                       "★ T19.12 而且点明了是**令牌**的问题（导一份没有令牌的脚本 = 导一份"
                       "起不来的脚本，所以宁可一份都不导）",
                       answerer7.answered.isEmpty() ? QString() : answerer7.answered.at(0).text);

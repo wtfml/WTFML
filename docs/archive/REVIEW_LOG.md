@@ -94,9 +94,3 @@
 ## 2026-11-19　英文分支复核
 
 2026-11-19｜复核 `i18n-phase1` 最新七个提交至 `9ecc07bc` 并构建动态 Release｜程序构建和英文隔离启动通过，生成 6748 条译文，语言专项与英文离屏巡检 2/2 通过｜启动和设置页语言默认值不一致，三条英文译文占位符有误，独立巡检目标缺少翻译资源且加载失败时悄悄用中文继续。
-2026-11-19｜复核智能体日志/崩溃报告路径｜游戏以 `--gameDir versions/<id>` 启动（LauncherManager），所以 latest.log 与 crash-reports 在实例目录；原实现查数据根，症状是"报告明明在却读不到"。改为 `AgentInstancePaths` 单一出处，实例目录优先、数据根兜底，标签保持相对路径｜同名崩溃报告跨两处时只取实例目录那一份。
-
-2026-11-23｜核对远端 `dev` 最新提交 `e59441d5`｜本地与远端一致，`core-launch` 370 项通过｜仅出现 `F3 + C` 字样的日志也会触发手动崩溃提示，快捷键说明等内容存在误判可能。
-2026-11-23｜复核 `%LOCALAPPDATA%` 的全部用法｜除桌面/文档/图片那几个用户目录外，启动器自己的落点只剩 `AppPaths::localDataRoot()`（智能体 agent、续传 cache、目录会话锁兜底）；`QStandardPaths::AppLocalDataLocation`/`CacheLocation` 已不再用于 WTFML 自有数据｜旧版三层路径由启动时的一次性迁移处理，迁移函数不递归删除。
-2026-11-23｜顺手补 `tools/network_diag` 的链接源｜origin/dev 上 `InstanceFiles.cpp` 已用到 `ImageDecode`，但那个目标的源清单与系统库（ole32/shlwapi/windowscodecs）没跟上，`WTFML_BUILD_NETWORK_DIAG=ON` 时链接不过；补上后 `WTFMLNetworkDiag --self-test` 通过｜这一处与本次路径改动无关，是合并 origin/dev 后带出来的。
-2026-11-23｜压缩智能体文档｜把 AGENT.md 与 7 篇分阶段文档（Stage 1A/1B/2A/2B/3/3_4 验收/4）合成一篇 `docs/features/AGENT.md`：保留现行行为、工具与上限、审批与外发、存储、提示词、测试入口和 8 条核心人工验证，删掉过程记录与逐条验收清单；链接引用同步改到合并后的文档，源码注释里的小节编号保持不变｜`check-doc-links` / `check-repo-layout` / `check-test-modules` / `check-agent-release` 通过，`verify_agent` 808/808。

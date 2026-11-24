@@ -54,8 +54,8 @@ void ListRowDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
     const QRect r = option.rect;
     const bool hovered = rowHovered(option);
     // 行尾按钮：悬停，或者键盘走到这一行（PCL 的做法：键盘导航到达时同样露出行内按钮）。
-    const bool showActions = inlineRowActions() &&
-        (hovered || (option.state.testFlag(QStyle::State_Enabled) && Theme::isKeyboardCurrentRow(option, index)));
+    const bool showActions =
+        hovered || (option.state.testFlag(QStyle::State_Enabled) && Theme::isKeyboardCurrentRow(option, index));
     const bool selected = option.state.testFlag(QStyle::State_Selected);
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing, true);
@@ -91,25 +91,20 @@ void ListRowDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
     if (!pix.isNull())
         painter->drawPixmap(QRect(cover.center().x() - inner / 2 + 1, cover.center().y() - inner / 2 + 1, inner, inner), pix);
 
-    // 管理列表的类型列和悬停操作共享右侧空间。
+    // 右侧：悬停时快捷操作，否则元信息
     int textRight = r.right() - kPad;
     const QVariant metaIcon = index.data(MetaIconRole);
-    const QString meta = index.data(MetaRole).toString();
-    const bool centered = m_centeredMeta || metaIcon.isValid();
-    if (centered && (!meta.isEmpty() || metaIcon.isValid())) {
+    if (metaIcon.isValid()) {
+        // 设计稿 manage：加载器那一列钉在行宽 46% 处，图标 16 + 字，悬停时照常显示。
         const int x = r.left() + r.width() * 46 / 100;
-        const int right = showActions ? actionRect(r, Action::Folder).left() - kGap : r.right() - kPad;
-        if (x + 16 <= right && metaIcon.isValid()) {
-            const QPixmap icon = metaIcon.value<QIcon>().pixmap(32, 32);
-            if (!icon.isNull()) painter->drawPixmap(QRect(x, r.center().y() - 8, 16, 16), icon);
-        }
+        const QPixmap icon = metaIcon.value<QIcon>().pixmap(32, 32);
+        if (!icon.isNull()) painter->drawPixmap(QRect(x, r.center().y() - 8, 16, 16), icon);
         QFont f = option.font;
         f.setPixelSize(Theme::textSize(Theme::TextRole::Caption));
         painter->setFont(f);
         painter->setPen(t.secondary);
-        const int width = qBound(0, right - (x + 22), r.width() / 4);
-        painter->drawText(QRect(x + 22, r.top(), width, r.height()), Qt::AlignVCenter | Qt::AlignLeft,
-                          painter->fontMetrics().elidedText(meta, Qt::ElideRight, width));
+        painter->drawText(QRect(x + 22, r.top(), qMax(0, r.right() - x - 22), r.height()), Qt::AlignVCenter | Qt::AlignLeft,
+                          painter->fontMetrics().elidedText(index.data(MetaRole).toString(), Qt::ElideRight, r.width() / 4));
         textRight = x - kGap;
     }
     if (showActions) {
@@ -143,8 +138,9 @@ void ListRowDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
         painter->setPen(ink);
         painter->drawText(QRect(startX + iconW + gap, launch.top(), textW + 2, launch.height()),
                           Qt::AlignVCenter | Qt::AlignLeft, text);
-        textRight = qMin(textRight, actionRect(r, Action::Folder).left() - kGap);
-    } else if (!centered) {
+        if (!metaIcon.isValid()) textRight = actionRect(r, Action::Folder).left() - kGap;
+    } else if (!metaIcon.isValid()) {
+        const QString meta = index.data(MetaRole).toString();
         if (!meta.isEmpty()) {
             QFont f = option.font;
             f.setPixelSize(Theme::textSize(Theme::TextRole::Caption));
@@ -195,7 +191,7 @@ bool ListRowDelegate::helpEvent(QHelpEvent *event, QAbstractItemView *view, cons
     if (event == nullptr || event->type() != QEvent::ToolTip) return QStyledItemDelegate::helpEvent(event, view, option, index);
     QString tip;
     const QStringList actionTips = index.data(ActionTipRole).toStringList();
-    if (inlineRowActions() && actionTips.size() == 3) {
+    if (actionTips.size() == 3) {
         const Action actions[] = {Action::Folder, Action::More, Action::Launch};
         for (int i = 0; i < 3; ++i)
             if (actionRect(option.rect, actions[i]).contains(event->pos())) tip = actionTips.at(i);
@@ -219,7 +215,7 @@ bool ListRowDelegate::helpEvent(QHelpEvent *event, QAbstractItemView *view, cons
 
 bool ListRowDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, const QStyleOptionViewItem &option,
                                   const QModelIndex &index) {
-    if (inlineRowActions() && event->type() == QEvent::MouseButtonRelease) {
+    if (event->type() == QEvent::MouseButtonRelease) {
         const auto *mouse = static_cast<QMouseEvent *>(event);
         if (mouse->button() == Qt::LeftButton) {
             for (const Action a : {Action::Folder, Action::More, Action::Launch}) {

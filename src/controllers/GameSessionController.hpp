@@ -102,7 +102,7 @@ public:
         std::function<void(int sessionId)> exportGameErrorReport;
         /// 启动器现在占着的那块几何（日志窗要摆到它**旁边**，别一上来就压住它）。
         std::function<QRect()> launcherFrame;
-        /// 「隐藏启动器，游戏退出后自动恢复」那一档：把窗口叫回来了。
+        /// 「收起启动器，游戏退出后自动回来」那一档：把窗口叫回来了。
         std::function<void()> restoreWindowAfterGame;
     };
 

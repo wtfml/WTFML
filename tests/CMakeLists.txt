@@ -133,21 +133,6 @@ set(PROJECT_SOURCES
     ${REPO_ROOT}/src/agent/AgentLoop.hpp
     ${REPO_ROOT}/src/agent/AgentSkill.cpp
     ${REPO_ROOT}/src/agent/AgentSkill.hpp
-    ${REPO_ROOT}/src/agent/AgentPromptLibrary.cpp
-    ${REPO_ROOT}/src/agent/AgentPromptLibrary.hpp
-    ${REPO_ROOT}/src/agent/AgentWorkspaceStore.cpp
-    ${REPO_ROOT}/src/agent/AgentWorkspaceStore.hpp
-    ${REPO_ROOT}/src/agent/AgentLaunchHost.hpp
-    ${REPO_ROOT}/src/agent/AgentTestLaunch.cpp
-    ${REPO_ROOT}/src/agent/AgentTestLaunch.hpp
-    ${REPO_ROOT}/src/agent/AgentTestLaunchToolEngine.cpp
-    ${REPO_ROOT}/src/agent/AgentTestLaunchToolEngine.hpp
-    ${REPO_ROOT}/src/agent/AgentRepairHost.hpp
-    ${REPO_ROOT}/src/agent/AgentRepairTransaction.cpp
-    ${REPO_ROOT}/src/agent/AgentRepairTransaction.hpp
-    ${REPO_ROOT}/src/agent/AgentRepairToolEngine.cpp
-    ${REPO_ROOT}/src/agent/AgentRepairToolEngine.hpp
-    ${REPO_ROOT}/assets/agent/agent.qrc
     ${REPO_ROOT}/src/agent/AgentWinPath.cpp
     ${REPO_ROOT}/src/agent/AgentWinPath.hpp
     ${REPO_ROOT}/src/agent/AgentEgressPolicy.cpp
@@ -189,8 +174,6 @@ set(PROJECT_SOURCES
     ${REPO_ROOT}/src/agent/McpManager.hpp
     ${REPO_ROOT}/src/agent/AgentMcpToolEngine.cpp
     ${REPO_ROOT}/src/agent/AgentMcpToolEngine.hpp
-    ${REPO_ROOT}/src/agent/AgentInstancePaths.cpp
-    ${REPO_ROOT}/src/agent/AgentInstancePaths.hpp
     ${REPO_ROOT}/src/agent/AgentWebPolicy.cpp
     ${REPO_ROOT}/src/agent/AgentWebPolicy.hpp
     ${REPO_ROOT}/src/agent/AgentWebTransport.hpp

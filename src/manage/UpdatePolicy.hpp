@@ -1,15 +1,15 @@
 /**
  * @file UpdatePolicy.hpp
- * @brief 「忽略此版本」「固定此版本」—— 更新中心里那两档"别再提示我"的
+ * @brief 「忽略这一版」「固定这一版」—— 更新中心里那两档"别再提示我"的
  * 判据，以及它们在盘上存的那一份（`<数据目录>/wtfml.updates`）。
  *
  * 【两档不是一回事，所以是两条记录、不是一条】
  *
- * * **忽略某一版**（`ignoreVersionId`）：用户在"可更新"那一行上按下的是「忽略此版本」——
+ * * **忽略某一版**（`ignoreVersionId`）：用户在"可更新"那一行上按下的是「忽略这一版」——
  * 意思很具体："**这一版**我不想要，别拿它来提示我"。所以记的是**要换上的那一版的 id**，
  * 判据是"这一趟要换上的还是它吗"。作者过两天发了更新的那一版，这一条**自己就回来了**
  * （那正是用户想要的：他不讨厌新版本，他讨厌**这**一个）。
- * * **固定某一版**（`pinnedSha1`）：用户按下的是「固定此版本」——意思是"我就停在这儿了，
+ * * **固定某一版**（`pinnedSha1`）：用户按下的是「固定这一版」——意思是"我就停在这儿了，
  * 不再提示更新"。所以记的是**盘上那一份当时的内容 sha1**，判据是"盘上还是那一份吗"。
  * 用 sha1 而不是版本号，是因为**判据手上只有 sha1**：更新检测靠反查 sha1 认人
  * （见 `InstanceIconLookup` / `ModDependencies::judgeUpdate`），"盘上这一条是版本
@@ -45,9 +45,9 @@ namespace UpdatePolicy {
 
 /// 某一个文件的记录。**两个都空 = 这一条没有记录**（别在表里留空壳，见 `setIgnored()`）。
 struct Entry {
-    /// 「忽略此版本」：要跳过的**那一版**的 id（`ResourceCatalog::VersionEntry::id`）。
+    /// 「忽略这一版」：要跳过的**那一版**的 id（`ResourceCatalog::VersionEntry::id`）。
     QString ignoreVersionId;
-    /// 「固定此版本」：用户按下那一刻盘上那一份的内容 sha1（小写十六进制）。
+    /// 「固定这一版」：用户按下那一刻盘上那一份的内容 sha1（小写十六进制）。
     QString pinnedSha1;
 
     bool isEmpty() const { return ignoreVersionId.isEmpty() && pinnedSha1.isEmpty(); }
@@ -91,10 +91,10 @@ bool pinIsStale(const Entry &entry, const QString &currentSha1);
 int dropStalePins(Store &store, const QString &instanceId,
                   const QHash<QString, QString> &currentSha1ByKey);
 
-/// 记/取消「忽略此版本」。@p targetVersionId 传空 = 取消这一条忽略。
+/// 记/取消「忽略这一版」。@p targetVersionId 传空 = 取消这一条忽略。
 void setIgnored(Store &store, const QString &instanceId, const QString &key,
                 const QString &targetVersionId);
-/// 记/取消「固定此版本」。@p pinnedSha1 传空 = 取消固定。
+/// 记/取消「固定这一版」。@p pinnedSha1 传空 = 取消固定。
 void setPinned(Store &store, const QString &instanceId, const QString &key,
                const QString &pinnedSha1);
 

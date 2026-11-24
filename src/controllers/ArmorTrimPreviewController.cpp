@@ -209,7 +209,7 @@ void ArmorTrimPreviewController::load(const QStringList &archives,bool verifyCac
             if(!verifyCache && QFileInfo::exists(cachePath()) && result->source!=cachePath()) {
                 load({cachePath()},true); return;
             }
-            status(result->error.isEmpty()?tr("无可用资源，请选择本地 JAR 或下载预览资源。"):result->error);
+            status(result->error.isEmpty()?tr("没有可用资源，请选择本地 JAR 或下载预览资源。"):result->error);
             return;
         }
         m_images=result->images; m_source=result->source;
@@ -222,7 +222,7 @@ void ArmorTrimPreviewController::load(const QStringList &archives,bool verifyCac
 }
 
 void ArmorTrimPreviewController::download() {
-    if(m_overlay==nullptr) { status(tr("当前无法打开确认提示，请稍后再试。")); return; }
+    if(m_overlay==nullptr) { status(tr("现在开不了确认提示，请稍后再试。")); return; }
     // 「不出现独立窗口」：这一问和别处一样开在内容区中间（宽度只有一套，见 OverlayHost）。
     // EULA 那一行是**可点的链接**，点了由这里开浏览器 —— 光摆一串网址没人会去读。
     InlineMessageBox question(MessageKind::Question,tr("下载预览资源"),

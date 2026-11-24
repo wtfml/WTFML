@@ -490,7 +490,7 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
         if (key == QStringLiteral("worldbackup")) {
             action(tr("返回存档"), [this]() { showPage(QStringLiteral("save")); })
                 ->setObjectName(QStringLiteral("instanceWorldBackupBack"));
-            hint(tr("仅备份所选世界。"));
+            hint(tr("备份只覆盖选中的世界。"));
             auto *list = new QListWidget(page);
             list->setObjectName(QStringLiteral("instanceWorldBackupList"));
             m_lifecycleLists.insert(key, list);
@@ -533,7 +533,7 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
                 context->setWordWrap(true);
                 context->setTextInteractionFlags(Qt::TextSelectableByMouse);
                 layout->addWidget(context);
-                hint(tr("原地更新将先创建完整快照，确认后开始。"));
+                hint(tr("原地更新会先创建完整快照，确认后才开始。"));
             } else {
                 hint(tr("仅增量复制文件，不覆盖同名项；请确保双方游戏均已退出。"));
             }
@@ -632,7 +632,7 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
             connect(items, &QListWidget::itemChanged, this,
                     [this, key] { updateTransferApplyState(key); });
 
-            auto *apply = action(upgrade ? tr("创建升级副本…") : tr("迁移…"), [this, key]() {
+            auto *apply = action(upgrade ? tr("创建升级副本…") : tr("搬过去…"), [this, key]() {
                 emit transferApplyRequested(key, transferTarget(key), transferSelectedKeys(key));
             });
             apply->setObjectName(transferApplyButtonName(key));

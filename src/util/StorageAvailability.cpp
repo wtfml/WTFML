@@ -41,7 +41,7 @@ QString nearestExistingAncestor(const QString &path)
 QString StorageAvailability::unavailableReason(const QString &path)
 {
     if (path.isEmpty()) {
-        return QObject::tr("未获取到路径。");
+        return QObject::tr("没有拿到要用的路径。");
     }
 
     const QString probe = nearestExistingAncestor(path);
@@ -54,12 +54,12 @@ QString StorageAvailability::unavailableReason(const QString &path)
     if (!storage.isValid() || storage.rootPath().isEmpty()) {
         // 卷本身认不出来：盘符不在了（U 盘/移动硬盘拔掉后，盘符跟着消失）。
         // 这时连 rootPath() 都是空的，所以话里只能用探到的那个路径。
-        return QObject::tr("未找到「%1」所在的磁盘（盘符可能已不存在）。")
+        return QObject::tr("找不到「%1」所在的磁盘（盘符可能已经不在了）。")
             .arg(QDir::toNativeSeparators(probe));
     }
     if (!storage.isReady()) {
         // 卷还在系统里登记着，但没就绪：常见于网络盘断开、盘刚拔出还没注销干净。
-        return QObject::tr("「%1」所在的磁盘当前未就绪（可能已断开连接）。")
+        return QObject::tr("「%1」所在的磁盘现在没有就绪（可能已经断开连接）。")
             .arg(QDir::toNativeSeparators(probe));
     }
     return QString();

@@ -110,7 +110,6 @@ public:
         /// 预设页页头那句副标题（「N 份预设」）。空 = 这个宿主没有页头（验证工程那种宿主）。
         /// 和实例页那句「当前文件夹：…（N 个实例）」是同一条路：页头说明由这一层灌。
         std::function<void(const QString &)> presetSubtitle = {};
-        std::function<void(bool)> presetDetailVisible = {};
         /// Optional thread-safe reader for isolated tests; production reads PresetStore.
         std::function<Presets::CatalogSnapshot(const QString &)> readCatalog = {};
         std::function<Presets::ManifestSnapshot(const QString &, const QString &)> readManifest = {};
@@ -123,7 +122,7 @@ public:
 
     /// 刷新管理页（实例页切到「预设」那一档时调用；页面是常驻的，这里只重新灌数据）。
     void open();
-    void openEditor(const QString &id = QString(), bool draft = false, int section = -1);
+    void openEditor(const QString &id = QString(), bool draft = false);
     bool leaveEditor();
     void captureForEditor(const QString &instanceId);
     void setEditorPrompt(std::function<int(const QString &, const QString &, const QStringList &)> prompt) { m_editorPrompt = std::move(prompt); }

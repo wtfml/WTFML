@@ -438,7 +438,7 @@ void runModpackExportTests() {
         {
             const QString cancelled = root.filePath(QStringLiteral("T21 取消的.mrpack"));
             const QList<PromptAnswerer::Answered> answered = runExport(idA, cancelled, {1});
-            check(answered.size() == 1 && answered.at(0).title == QStringLiteral("是否继续导出"),
+            check(answered.size() == 1 && answered.at(0).title == QStringLiteral("继续导出吗"),
                   "★ T21.4 接口挂了（HTTP 500）时**先问一句**，不是默默导出一个全是 overrides 的包"
                   "（也不是当成错误直接停下 —— 断网照样能出包）",
                   answered.isEmpty() ? QStringLiteral("没弹") : answered.at(0).title);
@@ -485,7 +485,7 @@ void runModpackExportTests() {
         {
             const QString packB = root.filePath(QStringLiteral("T21 认不出.mrpack"));
             const QList<PromptAnswerer::Answered> answered = runExport(idB, packB, {0, 0});
-            check(answered.size() == 2 && answered.at(0).title == QStringLiteral("是否继续导出"),
+            check(answered.size() == 2 && answered.at(0).title == QStringLiteral("继续导出吗"),
                   "★ T21.5 一个都没认出来时也问一句（不是错误弹窗：包是能用的，"
                   "只是启动器不能替收包的人单独更新或者去重）",
                   answered.isEmpty() ? QStringLiteral("没弹") : answered.at(0).title);

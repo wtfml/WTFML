@@ -2,7 +2,7 @@
  * @file AgentSecretStore.hpp
  * @brief 模型服务凭据的唯一落点：Windows 凭据管理器主路径 + DPAPI 后备。
  *
- * 规则（docs/features/AGENT.md §5.2）：
+ * 规则（docs/features/AGENT.md §5.2 / G1A）：
  * - 两条路都失败 ⇒ **拒绝保存并保留旧值**，绝不降级成明文/QSettings 明文；
  * - 读不到就报不可用，不猜；
  * - 后备值解开后如果凭据管理器可写，就迁过去再删旧值；

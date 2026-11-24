@@ -325,8 +325,8 @@ int UiOverlayGeometryChecks(QMainWindow &window, MainWindowUI &ui, QTabWidget * 
         // 内部滚 —— 一个装着七十个实例的列表要是照条数长，卡片会长到把按钮行挤出屏幕。
         {
             InlineMessageBox listBox(
-                MessageKind::Question, QStringLiteral("选择目标实例"),
-                QStringLiteral("请选择目标实例或其他文件夹。"),
+                MessageKind::Question, QStringLiteral("装到哪个实例里"),
+                QStringLiteral("这几个文件装进哪一个实例？"),
                 QStringList{QStringLiteral("确定"), QStringLiteral("取消")}, 0, -1);
             const QStringList two{QStringLiteral("1.20.1"), QStringLiteral("1.19.4")};
             QListWidget *list = listBox.setList(two, 1);
@@ -475,8 +475,8 @@ int UiOverlayGeometryChecks(QMainWindow &window, MainWindowUI &ui, QTabWidget * 
             // ③ 正常一档：预选第 2 行、点「确定」⇒ true + 那一行。
             answerPick(0, /*clearRowFirst=*/false);
             int picked = -1;
-            const bool pickOk = InlineMessage::pickFromList(overlay, QStringLiteral("选择目标实例"),
-                                                            QStringLiteral("请选择目标实例或其他文件夹。"),
+            const bool pickOk = InlineMessage::pickFromList(overlay, QStringLiteral("装到哪个实例里"),
+                                                            QStringLiteral("这几个文件装进哪一个实例？"),
                                                             targets, 2, &picked);
             check(pickOk && picked == 2, "点「确定」⇒ true，挑中的就是预选那一行",
                   QStringLiteral("ok=%1 row=%2").arg(pickOk).arg(picked));
@@ -488,8 +488,8 @@ int UiOverlayGeometryChecks(QMainWindow &window, MainWindowUI &ui, QTabWidget * 
             // ④ 点「取消」⇒ false（和"什么都没选"同一个结果）。
             answerPick(1, /*clearRowFirst=*/false);
             int cancelledRow = 7;
-            check(!InlineMessage::pickFromList(overlay, QStringLiteral("选择目标实例"),
-                                               QStringLiteral("请选择目标实例或其他文件夹。"), targets,
+            check(!InlineMessage::pickFromList(overlay, QStringLiteral("装到哪个实例里"),
+                                               QStringLiteral("这几个文件装进哪一个实例？"), targets,
                                                0, &cancelledRow) &&
                       cancelledRow == -1,
                   "点「取消」⇒ false + rowOut 归 -1", QString::number(cancelledRow));
@@ -498,8 +498,8 @@ int UiOverlayGeometryChecks(QMainWindow &window, MainWindowUI &ui, QTabWidget * 
             // 选了第 0 行。替用户挑一个，比让他再选一次糟得多。
             answerPick(0, /*clearRowFirst=*/true);
             int noneRow = 5;
-            check(!InlineMessage::pickFromList(overlay, QStringLiteral("选择目标实例"),
-                                               QStringLiteral("请选择目标实例或其他文件夹。"), targets,
+            check(!InlineMessage::pickFromList(overlay, QStringLiteral("装到哪个实例里"),
+                                               QStringLiteral("这几个文件装进哪一个实例？"), targets,
                                                1, &noneRow) &&
                       noneRow == -1,
                   "★ 点了「确定」但一行都没选中 ⇒ false（不替用户挑第 0 行）",

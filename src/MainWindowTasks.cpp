@@ -39,7 +39,6 @@
 #include "download/DownloadManager.hpp"
 #include "launcher/LauncherManager.hpp"
 #include "manage/VersionManager.hpp"
-#include "util/AppPaths.hpp"
 
 #include <QDateTime>
 #include <QList>
@@ -308,14 +307,6 @@ void MainWindow::cancelTaskFromDetail(const QString &key) {
             cancelLaunch(task);
             return;
         }
-        if (task.kind == Tasks::TaskKind::Import && Tasks::isActiveState(task.state)
-            && m_versionManager != nullptr && m_versionManager->isModpackImporting()) {
-            const int choice = InlineMessage::ask(
-                m_ui->overlay(), MessageKind::Question, tr("取消安装整合包"),
-                tr("整合包仍在安装。取消后已下载的文件会保留，但实例不会完成安装。\n\n确认取消？"),
-                QStringList{tr("继续安装"), tr("取消安装")}, 0, 1);
-            if (choice != 1) return;
-        }
     }
     // 「实例更新」父任务：准备阶段这一颗接到真的那一批下载上（文件事务阶段流程会把
     // 能力位关掉，所以这里不会把提交中的副本/快照打断）。
@@ -408,7 +399,7 @@ void MainWindow::retryTaskFromDetail(const QString &key) {
         || (m_serverInstall != nullptr && m_serverInstall->ownsDownloadBatch())) {
         InlineMessage::information(
             m_ui->overlay(), tr("暂时无法操作"),
-            tr("已有下载或安装任务正在进行，请待其结束后再重试这些文件。"));
+            tr("已有下载或安装任务正在进行，请结束后再重试这几个文件。"));
         return;
     }
     // 重试也要在任务中心里看得见：账本里原来那一件已经是终态了（终态只落一次），
@@ -419,49 +410,19 @@ void MainWindow::retryTaskFromDetail(const QString &key) {
     // 那一条终态。名字从数据层取（`retryBatchLabel()`），因为 retryDownload() 一进去
     // 就把失败清单吃掉了；空名字 = 版本文件那一路，终态走 `versionDownloadFinished`。
     const QString retryLabel = m_versionManager->retryBatchLabel();
-    const QString resumeInstance = m_versionManager->retryModpackInstance();
-    const auto pending = m_pendingModpackImports.find(retryLabel);
-    const bool retryArchive = pending != m_pendingModpackImports.end() && pending->taskId == retryId;
-    if (retryArchive && pending->gameRoot != AppPaths::minecraftDir()) {
-        InlineMessage::information(m_ui->overlay(), tr("暂时无法操作"),
-                                   tr("请切换回原游戏目录后重试本次安装。"));
-        return;
-    }
-    QList<Tasks::TaskStep> steps = retryTask.steps;
-    for (Tasks::TaskStep &step : steps) {
-        if (step.state == Tasks::TaskStepState::Failed) {
-            step.state = Tasks::TaskStepState::Running;
-            step.note.clear();
-        }
-        step.transferPercent = -1;
-    }
     const Tasks::TaskId newTask = beginTask(
-        retryTask.kind, tr("重试：%1").arg(retryTask.title), retryTask.targetId, steps);
+        retryTask.kind, tr("重试：%1").arg(retryTask.title), retryTask.targetId);
     m_downloadTaskLedger->adopt(newTask);
     m_downloadTaskLedger->setResourceLabel(retryLabel);
-    if (retryArchive) pending->taskId = newTask;
-    if (!resumeInstance.isEmpty()) {
-        if (steps.size() >= 6) markOneClickModpack(resumeInstance);
-        m_installOccupancy.setBatch(InstallOccupancy::Batch::Import, resumeInstance);
-        m_downloadTaskLedger->resetProgressThrottle();
-        setDownloadUiBusy(true);
-    }
-    QString problem;
-    if (!m_versionManager->retryDownload(&problem)) {
-        if (retryArchive) m_pendingModpackImports[retryLabel].taskId = retryId;
-        m_activityCenter->tasks()->fail(newTask, problem.isEmpty() ? tr("无法重试下载。") : problem);
+    if (!m_versionManager->retryDownload()) {
+        // 正常走不到（忙态上面刚问过）：别在账本里留一条永远"进行中"的行。
+        m_activityCenter->tasks()->fail(newTask, tr("无法重试下载。"));
         m_downloadTaskLedger->clear();
-        if (!resumeInstance.isEmpty()) {
-            takeOneClickModpack(resumeInstance);
-            m_installOccupancy.clearFor(resumeInstance);
-            setDownloadUiBusy(false);
-        }
         return;
     }
     // 那一格失败清单**刚被这一按吃掉了**（`retryDownload()` 自己 reset）⇒ 号也跟着
     // 松开，不然同一颗按钮留在页上还能再点一次（再点一次什么都不会发生）。
-    m_activityCenter->markRetryConsumed(retryId);
-    if (m_downloadBatches && m_downloadBatches->owns(retryId)) m_downloadBatches->cancel(retryId);
+    m_activityCenter->markRetryConsumed();
     appendLog(tr("正在重试上次未下载的文件…"));
 }
 

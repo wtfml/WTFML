@@ -6,7 +6,6 @@
 #include "ServerSettingsPage.hpp"
 
 #include <QComboBox>
-#include <QFileDialog>
 #include <QFont>
 #include <QFontDatabase>
 #include <QFontMetrics>
@@ -19,10 +18,8 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QScrollArea>
-#include <QSignalBlocker>
 #include <QSpinBox>
 #include <QStackedWidget>
-#include <QTextCursor>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 #include <QVBoxLayout>
@@ -175,21 +172,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
         m_titleLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
         layout->addWidget(m_titleLabel, 1);
         m_statusLabel = makeMutedLabel(row, MainWindowUI::serverSettingsStatusName());
-        layout->addWidget(m_statusLabel);
-        auto addAction = [&](const QString &label, Theme::ButtonKind kind, auto signal) {
-            auto *button = new QPushButton(label, row);
-            Theme::markButton(button, kind);
-            connect(button, &QPushButton::clicked, this, signal);
-            layout->addWidget(button);
-            return button;
-        };
-        addAction(tr("打开目录"), Theme::ButtonKind::Neutral, &ServerSettingsPage::openDirectoryRequested);
-        m_consoleButton = addAction(tr("控制台"), Theme::ButtonKind::Neutral, &ServerSettingsPage::consoleRequested);
-        m_startButton = addAction(tr("启动服务端"), Theme::ButtonKind::Primary, [this] {
-            if (m_running) emit stopRequested();
-            else emit startRequested();
-        });
-        m_startButton->setObjectName(QStringLiteral("serverSettingsStart"));
+        layout->addWidget(m_statusLabel, 0);
         box->addWidget(row);
     }
 
@@ -213,38 +196,26 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
     QFont navFont = m_sectionList->font();
     navFont = Theme::textFont(navFont, Theme::TextRole::Body);
     m_sectionList->setFont(navFont);
-    auto addEntry = [&](QTreeWidgetItem *parentItem, const QString &title, Section section, int kind = -1) {
-        auto *item = parentItem ? new QTreeWidgetItem(parentItem, {title})
-                                : new QTreeWidgetItem(m_sectionList, {title});
-        item->setData(0, Qt::UserRole, static_cast<int>(section));
-        item->setSizeHint(0, QSize(0, 34));
-        QFont font = navFont;
-        font.setBold(parentItem == nullptr);
-        item->setFont(0, font);
-        if (section == Section::Count) item->setFlags(Qt::ItemIsEnabled);
-        else if (kind >= 0) {
-            item->setData(0, Qt::UserRole + 1, kind);
-            m_contentSections.insert(kind, item);
-        } else m_sections.insert(static_cast<int>(section), item);
-        return item;
-    };
-    addEntry(nullptr, tr("概览"), Section::Overview);
-    addEntry(nullptr, tr("启动设置"), Section::Launch);
-    addEntry(nullptr, tr("设置"), Section::Common);
-    auto *worlds = addEntry(nullptr, tr("世界与玩家"), Section::Count);
-    addEntry(worlds, tr("世界"), Section::Backups);
-    addEntry(worlds, tr("玩家"), Section::Players);
-    auto *content = addEntry(nullptr, tr("内容管理"), Section::Count);
-    for (const int index : {1, 2, 0}) {
-        addEntry(content, MainWindowUI::serverSettingsContentKindTitle(index), Section::Content, index);
+    for (int i = 0; i < MainWindowUI::serverSettingsSectionCount(); ++i) {
+        auto *item = new QTreeWidgetItem(m_sectionList, {MainWindowUI::serverSettingsSectionTitle(i)});
+        item->setData(0, Qt::UserRole, i);
+        if (i == static_cast<int>(Section::Players)) {
+            for (int j = 0; j < MainWindowUI::serverSettingsPlayerListCount(); ++j) {
+                auto *child = new QTreeWidgetItem(item, {MainWindowUI::serverSettingsPlayerListTitle(j)});
+                child->setData(0, Qt::UserRole, i);
+                child->setData(0, Qt::UserRole + 1, j);
+            }
+        } else if (i == static_cast<int>(Section::Content)) {
+            for (int j = 0; j < MainWindowUI::serverSettingsContentKindCount(); ++j) {
+                auto *child = new QTreeWidgetItem(item, {MainWindowUI::serverSettingsContentKindTitle(j)});
+                child->setData(0, Qt::UserRole, i);
+                child->setData(0, Qt::UserRole + 1, j);
+            }
+        }
+        item->setSizeHint(0, QSize(0, item->childCount() > 0 ? 32 : 36));
+        for (int j = 0; j < item->childCount(); ++j)
+            item->child(j)->setSizeHint(0, QSize(0, 36));
     }
-    auto *maintenance = addEntry(nullptr, tr("维护"), Section::Count);
-    addEntry(maintenance, tr("诊断与补全"), Section::Check);
-    addEntry(maintenance, tr("日志"), Section::Logs);
-    addEntry(maintenance, tr("原始文本"), Section::RawText);
-    addEntry(maintenance, tr("迁移"), Section::Migration);
-    addEntry(maintenance, tr("升级"), Section::Upgrade);
-    m_sectionList->expandAll();
     {
         auto *column = new QWidget(this);
         auto *layout = new QVBoxLayout(column);
@@ -380,21 +351,6 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
     // ---------- ④ 世界备份 ----------
     {
         auto *layout = addSectionPage(m_stack, QString());
-        auto *tools = new QHBoxLayout;
-        tools->addStretch();
-        m_worldSelector = new QComboBox;
-        m_worldSelector->setObjectName(QStringLiteral("serverSettingsWorldSelector"));
-        m_worldSelector->setAccessibleName(tr("世界"));
-        tools->addWidget(m_worldSelector);
-        m_activateWorld = new QPushButton(tr("设为启动世界"));
-        m_activateWorld->setObjectName(QStringLiteral("serverSettingsActivateWorld"));
-        tools->addWidget(m_activateWorld);
-        connect(m_worldSelector, &QComboBox::currentIndexChanged, this, [this] {
-            refreshSectionActions();
-            emit worldChanged();
-        });
-        connect(m_activateWorld, &QPushButton::clicked, this, &ServerSettingsPage::activateWorldRequested);
-        layout->addLayout(tools);
         m_backupNote = makeNoteLabel(nullptr, QString());
         m_backupNote->setObjectName(MainWindowUI::serverSettingsBackupNoteName());
         layout->addWidget(m_backupNote);
@@ -415,7 +371,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
                 [this](QTreeWidgetItem *, QTreeWidgetItem *) { refreshBackupActions(); });
         connect(m_backupList, &QTreeWidget::itemDoubleClicked, this,
                 [this](QTreeWidgetItem *item, int) {
-                    if (m_editable && !m_splitWorldBackup && item != nullptr) {
+                    if (m_editable && item != nullptr) {
                         emit restoreBackupRequested(item->data(0, Qt::UserRole).toString());
                     }
                 });
@@ -481,20 +437,6 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
     // 这里只把 `PlayerRow` 摆出来、把"用户点了加/移除"报出去。
     {
         auto *layout = addSectionPage(m_stack, QString());
-        auto *tools = new QHBoxLayout;
-        tools->addStretch();
-        m_playerSelector = new QComboBox;
-        m_playerSelector->setObjectName(QStringLiteral("serverSettingsPlayerSelector"));
-        m_playerSelector->setAccessibleName(tr("玩家名单"));
-        for (int index = 0; index < MainWindowUI::serverSettingsPlayerListCount(); ++index) {
-            m_playerSelector->addItem(MainWindowUI::serverSettingsPlayerListTitle(index));
-        }
-        tools->addWidget(m_playerSelector);
-        layout->addLayout(tools);
-        connect(m_playerSelector, &QComboBox::currentIndexChanged, this, [this](int index) {
-            setPlayerList(index);
-            emit playerListChanged(index);
-        });
         m_playerNote = makeNoteLabel(nullptr, QString());
         m_playerNote->setObjectName(MainWindowUI::serverSettingsPlayerNoteName());
         layout->addWidget(m_playerNote);
@@ -603,102 +545,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
         layout->addWidget(row);
     }
 
-    {
-        auto *layout = addSectionPage(m_stack, QStringLiteral("serverSettingsOverview"));
-        m_overviewType = makeNoteLabel(nullptr, {});
-        m_overviewDirectory = makeNoteLabel(nullptr, {});
-        layout->addWidget(m_overviewType);
-        layout->addWidget(m_overviewDirectory);
-        layout->addStretch();
-    }
-    {
-        auto *layout = addSectionPage(m_stack, QStringLiteral("serverSettingsLaunch"));
-        auto *java = new QHBoxLayout;
-        m_launchJava = new QLineEdit;
-        m_launchJava->setObjectName(QStringLiteral("serverSettingsJava"));
-        m_launchJava->setAccessibleName(tr("Java 路径"));
-        m_launchJava->setPlaceholderText(tr("跟随全局 Java 设置"));
-        m_launchBrowse = new QPushButton(tr("浏览…"));
-        java->addWidget(new QLabel(tr("Java 路径")));
-        java->addWidget(m_launchJava, 1);
-        java->addWidget(m_launchBrowse);
-        connect(m_launchBrowse, &QPushButton::clicked, this, [this] {
-            const QString path = QFileDialog::getOpenFileName(this, tr("选择 Java 可执行文件"), m_launchJava->text());
-            if (!path.isEmpty()) m_launchJava->setText(path);
-        });
-        layout->addLayout(java);
-        auto *memory = new QHBoxLayout;
-        m_launchMemory = new QSpinBox;
-        m_launchMemory->setObjectName(QStringLiteral("serverSettingsMemory"));
-        m_launchMemory->setRange(0, 1048576);
-        m_launchMemory->setSuffix(QStringLiteral(" MB"));
-        m_launchMemory->setSpecialValueText(tr("跟随全局设置"));
-        memory->addWidget(new QLabel(tr("最大内存")));
-        memory->addWidget(m_launchMemory);
-        memory->addStretch();
-        layout->addLayout(memory);
-        m_launchJvm = new QLineEdit;
-        m_launchJvm->setObjectName(QStringLiteral("serverSettingsJvm"));
-        m_launchJvm->setAccessibleName(tr("JVM 参数"));
-        m_launchJvm->setPlaceholderText(QStringLiteral("-XX:+UseG1GC -Dfile.encoding=UTF-8"));
-        layout->addWidget(new QLabel(tr("JVM 参数")));
-        layout->addWidget(m_launchJvm);
-        m_launchSave = new QPushButton(tr("保存启动设置"));
-        m_launchSave->setObjectName(QStringLiteral("serverSettingsSaveLaunch"));
-        layout->addWidget(m_launchSave, 0, Qt::AlignRight);
-        layout->addStretch();
-        connect(m_launchSave, &QPushButton::clicked, this, &ServerSettingsPage::launchSaveRequested);
-        for (auto *edit : {m_launchJava, m_launchJvm}) {
-            connect(edit, &QLineEdit::textChanged, this, &ServerSettingsPage::refreshSectionActions);
-        }
-        connect(m_launchMemory, &QSpinBox::valueChanged, this, &ServerSettingsPage::refreshSectionActions);
-    }
-    {
-        auto *layout = addSectionPage(m_stack, QStringLiteral("serverSettingsLogs"));
-        auto *refresh = new QPushButton(tr("刷新日志"));
-        layout->addWidget(refresh, 0, Qt::AlignRight);
-        connect(refresh, &QPushButton::clicked, this, &ServerSettingsPage::refreshLogRequested);
-        m_log = new QPlainTextEdit;
-        m_log->setReadOnly(true);
-        m_log->setLineWrapMode(QPlainTextEdit::NoWrap);
-        layout->addWidget(m_log, 1);
-    }
-    {
-        auto *layout = addSectionPage(m_stack, QStringLiteral("serverSettingsMigration"));
-        layout->addWidget(makeNoteLabel(nullptr, tr("将服务端目录打包，包括世界、名单和配置。请先停止服务端。")));
-        m_migration = new QPushButton(tr("导出迁移包…"));
-        m_migrationImport = new QPushButton(tr("导入迁移包…"));
-        auto *actions = new QHBoxLayout;
-        actions->addWidget(m_migration);
-        actions->addWidget(m_migrationImport);
-        actions->addStretch();
-        layout->addLayout(actions);
-        connect(m_migration, &QPushButton::clicked, this, &ServerSettingsPage::migrationRequested);
-        connect(m_migrationImport, &QPushButton::clicked, this, &ServerSettingsPage::migrationImportRequested);
-        layout->addStretch();
-    }
-    {
-        auto *layout = addSectionPage(m_stack, QStringLiteral("serverSettingsUpgrade"));
-        layout->addWidget(makeNoteLabel(nullptr, tr("安装新版本到独立的服务端副本。原服务端及存档会保留。")));
-        auto addInput = [&](const QString &title) {
-            auto *edit = new QLineEdit;
-            edit->setAccessibleName(title);
-            layout->addWidget(new QLabel(title));
-            layout->addWidget(edit);
-            return edit;
-        };
-        m_upgradeVersion = addInput(tr("目标游戏版本"));
-        m_upgradeLoader = addInput(tr("目标加载器版本"));
-        m_upgradeInstaller = addInput(tr("目标安装器版本"));
-        m_upgradeBuild = addInput(tr("目标构建号（可留空）"));
-        m_upgrade = new QPushButton(tr("创建升级副本"));
-        layout->addWidget(m_upgrade, 0, Qt::AlignLeft);
-        connect(m_upgrade, &QPushButton::clicked, this, &ServerSettingsPage::upgradeRequested);
-        connect(m_upgradeVersion, &QLineEdit::textChanged, this, &ServerSettingsPage::refreshSectionActions);
-        layout->addStretch();
-    }
-
-    // ---------- 配置保存带 ----------
+    // ---------- 底下那条保存带 ----------
     {
         auto *row = new QWidget(this);
         auto *layout = new QHBoxLayout(row);
@@ -717,8 +564,16 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
         Theme::markButton(m_saveButton, Theme::ButtonKind::Neutral);
         m_saveButton->setCursor(Qt::PointingHandCursor);
         connect(m_saveButton, &QPushButton::clicked, this, &ServerSettingsPage::saveRequested);
-        layout->addWidget(m_revertButton);
-        layout->addWidget(m_saveButton);
+        auto *navigation = qobject_cast<QVBoxLayout *>(m_sectionList->parentWidget()->layout());
+        navigation->setSpacing(8);
+        navigation->addWidget(m_revertButton);
+        navigation->addWidget(m_saveButton);
+        m_startButton = new QPushButton(tr("启动服务端"), m_sectionList->parentWidget());
+        m_startButton->setObjectName(QStringLiteral("serverSettingsStart"));
+        Theme::markButton(m_startButton, Theme::ButtonKind::Primary);
+        m_startButton->setCursor(Qt::PointingHandCursor);
+        connect(m_startButton, &QPushButton::clicked, this, &ServerSettingsPage::startRequested);
+        navigation->addWidget(m_startButton);
         box->addWidget(row);
     }
 
@@ -735,22 +590,25 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
             return;
         }
         const int row = item->data(0, Qt::UserRole).toInt();
-        if (row == static_cast<int>(Section::Count)) return;
-        if (row == static_cast<int>(Section::Content)) {
+        if (item->parent() != nullptr) {
             const int index = item->data(0, Qt::UserRole + 1).toInt();
-            setContentKind(index);
-            emit contentKindChanged(index);
+            if (row == static_cast<int>(Section::Players)) {
+                setPlayerList(index);
+                emit playerListChanged(index);
+            } else if (row == static_cast<int>(Section::Content)) {
+                setContentKind(index);
+                emit contentKindChanged(index);
+            }
         }
         // **切页之前**发：`MainWindow` 要借这一下把"表单补丁"和"原始文本"合起来
         // （见 .hpp 文件头那段），合完再让右栏翻过去。
         emit sectionChanged(row);
         m_stack->setCurrentIndex(row);
-        refreshSaveBar();
     });
     connectRowActivation(m_sectionList, [](QTreeWidgetItem *item) {
         if (item->childCount() > 0) item->setExpanded(!item->isExpanded());
     }, [](const QTreeWidgetItem *item) { return item && item->childCount() > 0; });
-    setSection(Section::Overview);
+    m_sectionList->setCurrentItem(m_sectionList->topLevelItem(static_cast<int>(Section::Common)));
 }
 
 // ---------------------------------------------------------------------------
@@ -762,84 +620,6 @@ void ServerSettingsPage::setServerName(const QString &name) {
         m_titleLabel->setText(name);
     }
     setWindowTitle(name.isEmpty() ? windowTitle() : name);
-}
-
-void ServerSettingsPage::setOverview(const QString &typeVersion, const QString &directory) {
-    m_overviewType->setText(typeVersion);
-    m_overviewDirectory->setText(directory);
-}
-
-void ServerSettingsPage::setRunButtons(bool running, bool stopping) {
-    m_running = running;
-    m_stopping = stopping;
-    refreshSaveBar();
-}
-
-void ServerSettingsPage::setLaunchSettings(const LaunchSettings &settings) {
-    m_savedLaunch = settings;
-    m_launchJava->setText(settings.javaPath);
-    m_launchMemory->setValue(settings.memoryMb);
-    m_launchJvm->setText(settings.jvmArguments);
-    refreshSectionActions();
-}
-
-ServerSettingsPage::LaunchSettings ServerSettingsPage::launchSettings() const {
-    return {m_launchJava->text().trimmed(), m_launchMemory->value(), m_launchJvm->text().trimmed()};
-}
-
-void ServerSettingsPage::setWorlds(const QStringList &worlds, const QString &selected, const QString &startup,
-                                  const QString &pending) {
-    const QSignalBlocker blocker(m_worldSelector);
-    m_startupWorld = pending.isEmpty() ? startup : pending;
-    m_worldSelector->clear();
-    for (const QString &name : worlds) {
-        const QString label = name == startup ? tr("%1（启动世界）").arg(name)
-            : name == pending ? tr("%1（待保存）").arg(name) : name;
-        m_worldSelector->addItem(label, name);
-    }
-    int index = m_worldSelector->findData(selected);
-    if (index < 0) index = m_worldSelector->findData(startup);
-    if (index >= 0) m_worldSelector->setCurrentIndex(index);
-    refreshSectionActions();
-}
-
-QString ServerSettingsPage::selectedWorld() const {
-    return m_worldSelector->currentData().toString();
-}
-
-void ServerSettingsPage::setSplitWorldBackup(bool split) {
-    m_splitWorldBackup = split;
-    m_backupNowButton->setText(split ? tr("备份完整服务端…") : MainWindowUI::serverSettingsBackupNowText());
-    if (split) m_backupNote->setText(m_backupNote->text() + QLatin1Char('\n') +
-        tr("该世界的下界或末地在独立目录中。请用完整服务端备份同时保留这些维度。"));
-    refreshBackupActions();
-}
-
-void ServerSettingsPage::setContentCapabilities(bool mods, bool plugins) {
-    m_contentSections.value(0)->setHidden(!mods);
-    m_contentSections.value(2)->setHidden(!plugins);
-    if (m_contentSections.value(m_contentKindIndex)->isHidden()) setContentKind(1);
-}
-
-void ServerSettingsPage::setLogText(const QString &text) {
-    m_log->setPlainText(text);
-    m_log->moveCursor(QTextCursor::End);
-}
-
-QString ServerSettingsPage::upgradeVersion() const { return m_upgradeVersion->text().trimmed(); }
-QString ServerSettingsPage::upgradeLoader() const { return m_upgradeLoader->text().trimmed(); }
-QString ServerSettingsPage::upgradeInstaller() const { return m_upgradeInstaller->text().trimmed(); }
-QString ServerSettingsPage::upgradeBuild() const { return m_upgradeBuild->text().trimmed(); }
-
-void ServerSettingsPage::setUpgradeFields(const QString &version, const QString &loader,
-                                         const QString &installer, const QString &build, bool available) {
-    m_upgradeVersion->clear();
-    m_upgradeVersion->setPlaceholderText(version);
-    m_upgradeLoader->setText(loader);
-    m_upgradeInstaller->setText(installer);
-    m_upgradeBuild->setText(build);
-    m_upgradeAvailable = available;
-    refreshSectionActions();
 }
 
 void ServerSettingsPage::setStatusText(const QString &text) {
@@ -955,7 +735,6 @@ void ServerSettingsPage::setEditable(bool editable, const QString &reason) {
     refreshCheckActions();
     refreshContentActions();
     refreshPlayerActions();
-    refreshSectionActions();
     refreshSaveBar();
 }
 
@@ -1017,9 +796,9 @@ void ServerSettingsPage::setContentKind(int kindIndex) {
     m_contentKindIndex = kindIndex;
     if (m_stack && m_stack->currentIndex() == static_cast<int>(Section::Content)) {
         const QSignalBlocker blocker(m_sectionList);
-        auto *item = m_contentSections.value(kindIndex);
-        item->parent()->setExpanded(true);
-        m_sectionList->setCurrentItem(item);
+        auto *group = m_sectionList->topLevelItem(static_cast<int>(Section::Content));
+        group->setExpanded(true);
+        m_sectionList->setCurrentItem(group->child(kindIndex));
     }
     refreshContentActions();
 }
@@ -1136,8 +915,12 @@ void ServerSettingsPage::setPlayerList(int listIndex) {
     if (listIndex < 0 || listIndex >= MainWindowUI::serverSettingsPlayerListCount()) return;
     // 程序摆的那一下**不算用户换页**（`MainWindow` 会紧接着自己刷一遍行）。
     m_playerListIndex = listIndex;
-    const QSignalBlocker blocker(m_playerSelector);
-    m_playerSelector->setCurrentIndex(listIndex);
+    if (m_stack && m_stack->currentIndex() == static_cast<int>(Section::Players)) {
+        const QSignalBlocker blocker(m_sectionList);
+        auto *group = m_sectionList->topLevelItem(static_cast<int>(Section::Players));
+        group->setExpanded(true);
+        m_sectionList->setCurrentItem(group->child(listIndex));
+    }
     if (m_playerAddButton != nullptr) {
         m_playerAddButton->setText(MainWindowUI::serverSettingsPlayerAddText(listIndex));
     }
@@ -1265,12 +1048,17 @@ void ServerSettingsPage::setSection(Section section) {
     // **不发 `sectionChanged`**：这是程序摆的（"开页时摆到某一页"/"从体检的出路按钮跳
     // 过去"），不是用户点的那一发 —— 发出去的话 `MainWindow` 会再合一次两边的编辑。
     m_settingSection = true;
-    auto *item = section == Section::Content ? m_contentSections.value(m_contentKindIndex) : m_sections.value(index);
-    if (item && item->parent()) item->parent()->setExpanded(true);
+    auto *item = m_sectionList->topLevelItem(index);
+    if (section == Section::Players) {
+        item->setExpanded(true);
+        item = item->child(m_playerListIndex);
+    } else if (section == Section::Content) {
+        item->setExpanded(true);
+        item = item->child(m_contentKindIndex);
+    }
     m_sectionList->setCurrentItem(item);
     m_settingSection = false;
     m_stack->setCurrentIndex(index);
-    refreshSaveBar();
 }
 
 ServerSettingsPage::Section ServerSettingsPage::section() const {
@@ -1536,33 +1324,17 @@ void ServerSettingsPage::refreshSaveBar() {
     // 改过点什么 —— 没改过就按下去是白按（而且会把"保存"这两个字的份量花掉）。
     // 在跑的时候一律点不动。
     const bool dirty = !dirtyValues().isEmpty() || m_rawEdited;
-    m_saveNote->parentWidget()->setVisible(section() == Section::Common ||
-        section() == Section::RawText || section() == Section::Backups || dirty);
     if (m_saveButton != nullptr) {
         m_saveButton->setEnabled(m_editable && m_saveAllowed && dirty);
     }
     if (m_startButton != nullptr) {
-        m_startButton->setText(m_running ? tr("停止服务端") : tr("启动服务端"));
-        const bool pending = dirty || (m_launchJava && launchSettingsChanged());
-        m_startButton->setEnabled(m_running ? !m_stopping : m_editable && !pending);
-        m_startButton->setToolTip(!m_running && pending ? tr("请先保存或放弃修改") : QString());
+        m_startButton->setEnabled(m_editable && !dirty);
+        m_startButton->setToolTip(!m_editable ? tr("服务端正在运行")
+                                            : dirty ? tr("请先保存或放弃修改") : QString());
     }
     if (m_revertButton != nullptr) {
         m_revertButton->setEnabled(m_editable && dirty);
     }
-}
-
-void ServerSettingsPage::refreshSectionActions() {
-    m_launchJava->setReadOnly(!m_editable);
-    m_launchBrowse->setEnabled(m_editable);
-    m_launchMemory->setEnabled(m_editable);
-    m_launchJvm->setReadOnly(!m_editable);
-    m_launchSave->setEnabled(m_editable && launchSettingsChanged());
-    m_activateWorld->setEnabled(m_editable && !selectedWorld().isEmpty() && selectedWorld() != m_startupWorld);
-    m_migration->setEnabled(m_editable);
-    m_migrationImport->setEnabled(m_editable);
-    m_upgrade->setEnabled(m_editable && m_upgradeAvailable && !upgradeVersion().isEmpty());
-    refreshSaveBar();
 }
 
 void ServerSettingsPage::refreshBackupActions() {
@@ -1570,7 +1342,7 @@ void ServerSettingsPage::refreshBackupActions() {
     // 恢复 / 删除都是"动盘上那些文件"的事 ⇒ 服务端在跑的时候一并点不动（它正开着世界里的
     // 文件在写）。
     if (m_restoreButton != nullptr) {
-        m_restoreButton->setEnabled(m_editable && picked && !m_splitWorldBackup);
+        m_restoreButton->setEnabled(m_editable && picked);
     }
     if (m_deleteBackupButton != nullptr) {
         m_deleteBackupButton->setEnabled(m_editable && picked);

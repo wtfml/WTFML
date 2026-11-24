@@ -13,7 +13,6 @@ int main(int argc, char **argv) {
  const QString metaDir=QStringLiteral(REPO_ROOT_PATH)+"/tests/meta";
     runToolboxExtraTests();
     runTextFormatTests();
-    runSentenceJoinTests();
     runCoordConvertTests();
     runFileHashTests();
     runAnvilPlannerTests();

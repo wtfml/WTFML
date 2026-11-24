@@ -153,8 +153,6 @@ public:
     /// 顺手转小写是因为官方一律小写，大写进去查不到人。认不出来（不是 32 位十六进制）
     /// 返回空串，调用方据此当"没有 uuid"处理。
     static QString uuidKey(const QString &uuid);
-    /// @param key uuidKey() 返回的档案 ID。
-    static QUrl profileRequestUrl(const QString &key);
 
     /// 某个 uuid 的档案缓存路径：`<skinsDir>/profile-<uuidKey>.json`。
     /// uuid 认不出来时返回空串（**不是**拼出一个野路径）。

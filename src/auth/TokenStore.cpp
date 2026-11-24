@@ -10,7 +10,6 @@
 #include "util/DirectorySessionLock.hpp"
 #include "util/SettingsSyncRetry.hpp"
 
-#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDebug>
 #include <QJsonDocument>
@@ -91,7 +90,7 @@ bool TokenStore::writeJson(const QString &key, const QJsonObject &json, QString 
     const QByteArray rawData = QJsonDocument(json).toJson(QJsonDocument::Compact);
     const QByteArray stored = protect(rawData.toBase64());
     if (stored.isEmpty()) {
-        if (errorOut) *errorOut = QCoreApplication::translate("TokenStore", "无法保护登录凭据，未写入，原数据保留。");
+        if (errorOut) *errorOut = QStringLiteral("无法保护登录凭据，未写入，原数据保留。");
         return false;
     }
     QString fileName;

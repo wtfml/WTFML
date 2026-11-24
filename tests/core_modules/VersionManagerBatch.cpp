@@ -415,44 +415,6 @@ int runVersionManagerBatch(QCoreApplication &app, const QString &sandbox) {
     check(!QFile::exists(loaderDir + "/" + loaderId + ".jar"),
           "G5.9 加载器实例自己的目录里**没有**多出一个 jar（区别 ③ 的另一半）");
 
-    section("G6. Forge 安装前补全原版");
-    const QString diskRoot = QDir::rootPath();
-    check(FolderManager::gameFolderPathForSelection(diskRoot).compare(
-              QDir(diskRoot).filePath(QStringLiteral(".minecraft")), Qt::CaseInsensitive) == 0,
-          "选择卷根目录时只使用该卷的 .minecraft 子目录");
-    const auto vanillaDetail = synth::makeRemote(remoteDir, QStringLiteral("g6-version.json"),
-                                                QJsonDocument(vanillaJson).toJson());
-    const auto manifest = synth::makeRemote(remoteDir, QStringLiteral("g6-manifest.json"),
-        QJsonDocument(QJsonObject{{QStringLiteral("versions"), QJsonArray{QJsonObject{
-            {QStringLiteral("id"), vanillaId}, {QStringLiteral("type"), QStringLiteral("release")},
-            {QStringLiteral("url"), vanillaDetail.url}}}}}).toJson());
-    const QString vanillaJarPath = vanillaDir + "/" + vanillaId + ".jar";
-    const QString vanillaJsonPath = vanillaDir + "/" + vanillaId + ".json";
-    writeFileAt(vanillaJarPath, QByteArray(vanillaJar.size, 'x'));
-    check(QFile::remove(vanillaJsonPath), "模拟原版 JSON 缺失与客户端 JAR 内容损坏");
-    vm.setUseMirror(false);
-    vm.downloads()->setVersionManifestUrlOverride(manifest.url);
-    bool parentReady = false;
-    const auto observe = QObject::connect(&vm, &VersionManager::loaderInstallMessage, &loop,
-        [&](const QString &text) {
-            if (!text.contains(QStringLiteral("已就绪，正在启动 Forge 安装器"))) return;
-            parentReady = QFile::exists(vanillaJsonPath) &&
-                          readBytes(vanillaJarPath) == QByteArrayLiteral("g5-vanilla-jar-body");
-            // 在安装器下载排队前取消。测试只使用本地夹具提供的原版文件。
-            QTimer::singleShot(0, &vm, [&vm] { vm.cancelActiveDownload(); });
-        });
-    finished = false;
-    emissions = 0;
-    QTimer deadline;
-    deadline.setSingleShot(true);
-    QObject::connect(&deadline, &QTimer::timeout, &loop, &QEventLoop::quit);
-    deadline.start(10000);
-    vm.installLoaderVersion(vanillaId, VersionManager::LoaderKind::Forge, {}, QStringLiteral("52.1.20"));
-    if (!finished) loop.exec();
-    QObject::disconnect(observe);
-    check(finished && emissions == 1 && parentReady,
-          "Forge 开始下载安装器前，先恢复原版 JSON 及损坏的客户端 JAR", lastMessage);
-
     return g_failures == 0 ? 0 : 1;
 }
 

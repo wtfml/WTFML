@@ -2,7 +2,6 @@
 #include "ui_check/modules/UiInstanceFilesTestHelpers.hpp"
 
 #include <algorithm>
-#include <QScopeGuard>
 void runDependencyAndBatchTests() {
     // 那两项设置在盘上的名字。和 T25 一个规矩：这一节量的是"盘上那个键"，
     // 而 `LauncherSettings` 里那两个常量在匿名命名空间里、外面看不见，所以字面量写这儿。
@@ -139,14 +138,10 @@ void runDependencyAndBatchTests() {
                                       "\"dependency_type\":\"required\"},"
                                       "{\"project_id\":\"DEPPROJB\",\"version_id\":null,"
                                       "\"dependency_type\":\"required\"}]")));
-    const QByteArray newestDependency = versionJson(
-        QStringLiteral("D2"), QStringLiteral("2.1.0"), QStringLiteral("前置乙-新版.jar"),
-        apiRoot + QStringLiteral("/dep-b-latest.jar"), QByteArrayLiteral("[]"));
-    const QByteArray olderDependency = versionJson(
-        QStringLiteral("D1"), QStringLiteral("2.0.0"), QStringLiteral("前置乙.jar"),
-        depFileUrl, QByteArrayLiteral("[]"));
-    api.modrinthVersionListByProject.insert(depProject,
-        newestDependency.chopped(1) + ',' + olderDependency.mid(1));
+    api.modrinthVersionListByProject.insert(
+        depProject,
+        versionJson(QStringLiteral("D1"), QStringLiteral("2.0.0"), QStringLiteral("前置乙.jar"),
+                    depFileUrl, QByteArrayLiteral("[]")));
     // 兜底：别的项目号来问版本就是空表（这一节只会问上面那两个，写这个是防"某一条走岔了
     // 却拿到别人的版本"那种最难查的夹具事故）。
     api.modrinthVersionListReply = QByteArrayLiteral("[]");
@@ -226,8 +221,7 @@ void runDependencyAndBatchTests() {
         // @param tag 这一趟的标签（断言里那句人话的前缀）。
         // @param expectDepPrompt 这一趟期不期待那个前置弹窗（决定脚本点哪一颗按钮）。
         // @param expectedPrompts 这一趟一共该弹几条（等不到就超时，断言自己会红）。
-        const auto runPass = [&](const QString &tag, bool expectDepPrompt, int expectedPrompts,
-                                 int dependencyButton = 1) {
+        const auto runPass = [&](const QString &tag, bool expectDepPrompt, int expectedPrompts) {
             PassResult r;
             const QStringList requestsBefore = api.requests;
             // 上一趟收掉的那一页是 `deleteLater()` 走的（`DeferredDelete`），
@@ -276,19 +270,7 @@ void runDependencyAndBatchTests() {
             // 404 是必然的）点「确定」。第二趟（开关关掉）只会弹后者。
             auto *installed = w.ui()->getInstalledVersionCombo();
             installed->setCurrentIndex(installed->findData(idV));
-            PromptAnswerer answerer(expectDepPrompt ? QList<int>{dependencyButton, 0} : QList<int>{0});
-            struct DependencyPicker final : QObject {
-                bool eventFilter(QObject *watched, QEvent *event) override {
-                    if (event->type() != QEvent::Show) return false;
-                    auto *box = qobject_cast<InlineMessageBox *>(watched);
-                    auto *select = box ? box->findChild<QComboBox *>() : nullptr;
-                    if (select && select->count() == 2 && select->currentText() == QStringLiteral("2.1.0"))
-                        select->setCurrentText(QStringLiteral("2.0.0"));
-                    return false;
-                }
-            } dependencyPicker;
-            qApp->installEventFilter(&dependencyPicker);
-            const auto removePicker = qScopeGuard([&] { qApp->removeEventFilter(&dependencyPicker); });
+            PromptAnswerer answerer(expectDepPrompt ? QList<int>{1, 0} : QList<int>{0});
             QTimer pickerAnswerer;
             QObject::connect(&pickerAnswerer, &QTimer::timeout, [&] {
                 auto *box = currentPrompt();
@@ -434,7 +416,6 @@ void runDependencyAndBatchTests() {
         // 「一起下载」按下去之后：前置那一份**真的被排进了这一批**（它的地址出现在请求里）。
         bool askedDepProject = false;
         bool gotDepFile = false;
-        bool gotLatestDependency = false;
         bool gotModFile = false;
         for (const QString &line : on.newRequests) {
             if (line.contains(QStringLiteral("/v2/projects?")) && line.contains(depProject)) {
@@ -443,13 +424,10 @@ void runDependencyAndBatchTests() {
             if (line.contains(QStringLiteral("/dep-b.jar"))) {
                 gotDepFile = true;
             }
-            if (line.contains(QStringLiteral("/dep-b-latest.jar"))) gotLatestDependency = true;
             if (line.contains(QStringLiteral("/mod-c.jar"))) {
                 gotModFile = true;
             }
         }
-        check(gotDepFile && !gotLatestDependency,
-              "前置版本下拉框选了 2.0.0 后，实际下载选中的文件");
         check(askedDepProject,
               "★★ T31.1 点完那一版之后，产品**真的去问过**那条前置「你有哪些版本」"
               "（`GET /v2/projects?ids=DEPPROJB`）—— 这一发是「要不要一起下」那条路的第一步",
@@ -473,22 +451,6 @@ void runDependencyAndBatchTests() {
               "★★ T31.1 而且下进的是**这个实例的 mods/**（日志里那行带着它的绝对路径），"
               "前置也落在同一个目录",
               destNative);
-
-        QByteArray wrongLoader = newestDependency;
-        wrongLoader.replace("\"fabric\"", "\"forge\"");
-        const QByteArray savedDependencies = api.modrinthVersionListByProject.value(depProject);
-        api.modrinthVersionListByProject.insert(depProject, wrongLoader);
-        api.requests.clear();
-        const PassResult missing = runPass(QStringLiteral("T31.1b"), true, 1, 0);
-        check(missing.depPromptButtons == QStringList{QStringLiteral("取消"),
-                                                    ModDependencies::dependencyOnlyThisButtonText()} &&
-                  missing.depPromptText.contains(QStringLiteral("没有兼容的前置版本")) &&
-                  !missing.depPromptText.contains(QStringLiteral("已下载")),
-              "T31.1b 接口返回其他加载器的文件时提示无兼容前置，下载前只提供取消和仅下载主模组");
-        check(std::none_of(missing.newRequests.cbegin(), missing.newRequests.cend(), [](const auto &line) {
-                  return line.contains(QStringLiteral(".jar"));
-              }), "T31.1b 取消后主模组和前置都未发下载请求");
-        api.modrinthVersionListByProject.insert(depProject, savedDependencies);
 
         // ================= 第二趟：设置里关掉之后 =================
         //

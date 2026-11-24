@@ -2,7 +2,6 @@
 #include <QHash>
 #include <QObject>
 #include <QPixmap>
-#include <QSet>
 #include "download/ResourceCatalog.hpp"
 
 class MainWindow;
@@ -15,8 +14,7 @@ public:
     explicit ResourceSearchController(MainWindow *owner);
     void startResourceSearch(ResourceCatalog::Kind kind);
     void fillResourceHitRows(QTreeWidget *tree, ResourceCatalog::Kind kind,
-                                      const ResourceCatalog::SearchResult &result,
-                                      bool combined = false);
+                                     const ResourceCatalog::SearchResult &result);
     void onResourceSearchFinished(const QString &requestKey,
                                          const ResourceCatalog::SearchResult &result);
     void onResourceIconReady(const QString &iconId, const QPixmap &icon);
@@ -32,12 +30,5 @@ public:
     void downloadResourceVersion(QTreeWidgetItem *item);
 private:
     MainWindow &m_owner;
-    struct SearchBatch {
-        QString query;
-        QSet<ResourceCatalog::Source> pending;
-        QStringList problems;
-        bool combined = false;
-        bool hasHits = false;
-    };
-    QHash<QString, SearchBatch> m_searchBatches;
+    QHash<QString, QString> m_resourceQueries;
 };

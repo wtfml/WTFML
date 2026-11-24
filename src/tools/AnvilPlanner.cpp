@@ -295,7 +295,7 @@ Plan plan(const QList<Unit> &units, bool includeRename) {
         }
     }
     if (!unknown.isEmpty()) {
-        plan.error = QCoreApplication::translate("AnvilPlanner", "以下附魔不在表内，无法计算：%1。").arg(unknown.join(QCoreApplication::translate("AnvilPlanner", "、")));
+        plan.error = QCoreApplication::translate("AnvilPlanner", "这几条附魔不在表里，算不了：%1。").arg(unknown.join(QCoreApplication::translate("AnvilPlanner", "、")));
         return plan;
     }
 

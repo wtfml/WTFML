@@ -15,14 +15,11 @@
 #include <QJsonObject>
 #include <QJsonParseError>
 #include <QLatin1Char>
-#include <QSaveFile>
 #include <QSet>
 #include <iterator>
 
 #include "../launcher/VersionInheritance.hpp"
 #include "../util/AppPaths.hpp"
-#include "../util/ImageDecode.hpp"
-#include "../util/WriteDirectoryGuard.hpp"
 #include "../util/ZipUtil.hpp"
 
 #if defined(Q_OS_WIN)
@@ -139,7 +136,7 @@ bool isReservedDeviceName(const QString &stem) {
 
 QString validatePathSegment(const QString &segment) {
     if (segment.isEmpty()) {
-        return QCoreApplication::translate("InstanceFiles", "名称不能为空。");
+        return QCoreApplication::translate("InstanceFiles", "名字不能是空的。");
     }
 
     // `/` `\` 排在最前面判，理由写在 .hpp 里：它们同时是路径分隔符，放过去就是
@@ -149,8 +146,7 @@ QString validatePathSegment(const QString &segment) {
     // 但这种名字在盘上确实建得出来，之后就再也说不清那是哪个实例了。
     for (const QChar ch : segment) {
         if (ch.unicode() < 0x20 || QStringLiteral("<>:\"/\\|?*").contains(ch)) {
-            return QCoreApplication::translate("InstanceFiles", "名称不能包含 < > : \" / \\ | ? * 等字符，"
-                                                                "也不能包含制表符、换行等控制字符。");
+            return QCoreApplication::translate("InstanceFiles", "名字里不能有 < > : \" / \\ | ? * 这些字符，也不能有制表符、换行这类控制字符。");
         }
     }
 
@@ -334,7 +330,7 @@ QString validateRenameTarget(const QString &rawName, const QString &currentId) {
 
     const QString name = rawName.trimmed();
     if (name == currentId) {
-        return QCoreApplication::translate("InstanceFiles", "新名称与当前名称相同，无需修改。");
+        return QCoreApplication::translate("InstanceFiles", "新名字和现在一样，没有改动的必要。");
     }
 
     // 重名比较不区分大小写，理由见 .hpp。`entry` 用磁盘上的真实拼写，
@@ -349,8 +345,7 @@ QString validateRenameTarget(const QString &rawName, const QString &currentId) {
     for (const QString &entry : entries) {
         if (entry.compare(name, Qt::CaseInsensitive) == 0 &&
             entry.compare(currentId, Qt::CaseInsensitive) != 0) {
-            return QCoreApplication::translate("InstanceFiles", "已存在名为「%1」的实例，"
-                                                                "请更换名称。").arg(entry);
+            return QCoreApplication::translate("InstanceFiles", "已经有一个叫“%1”的实例了，换一个名字。").arg(entry);
         }
     }
 
@@ -533,60 +528,6 @@ QString jarPath(const QString &versionId) {
     return AppPaths::versionDir(jarOwnerId(versionId)) + QLatin1Char('/') + jarName(versionId);
 }
 
-QList<QPair<QString, QImage>> readGameItemIcons(const QStringList &jars) {
-    static const struct { const char *id; const char *legacyId; const char *label; } items[] = {
-        {"diamond", "diamond", QT_TRANSLATE_NOOP("InstanceSettingsDialog", "钻石")},
-        {"emerald", "emerald", QT_TRANSLATE_NOOP("InstanceSettingsDialog", "绿宝石")},
-        {"apple", "apple", QT_TRANSLATE_NOOP("InstanceSettingsDialog", "苹果")},
-        {"compass_00", "compass_00", QT_TRANSLATE_NOOP("InstanceSettingsDialog", "指南针")},
-        {"book", "book_normal", QT_TRANSLATE_NOOP("InstanceSettingsDialog", "书")},
-        {"ender_pearl", "ender_pearl", QT_TRANSLATE_NOOP("InstanceSettingsDialog", "末影珍珠")},
-        {"iron_ingot", "iron_ingot", QT_TRANSLATE_NOOP("InstanceSettingsDialog", "铁锭")},
-        {"redstone", "redstone_dust", QT_TRANSLATE_NOOP("InstanceSettingsDialog", "红石粉")},
-    };
-    const QString modern = QStringLiteral("assets/minecraft/textures/item/%1.png");
-    const QString legacy = QStringLiteral("assets/minecraft/textures/items/%1.png");
-    QStringList paths;
-    for (const auto &item : items) {
-        paths << modern.arg(QLatin1String(item.id)) << legacy.arg(QLatin1String(item.legacyId));
-    }
-    const auto metadata = ZipUtil::readMetadataBatch(jars, paths);
-    QList<QPair<QString, QImage>> choices;
-    for (const auto &item : items) {
-        const QString modernPath = modern.arg(QLatin1String(item.id));
-        const QString legacyPath = legacy.arg(QLatin1String(item.legacyId));
-        for (const QString &jar : jars) {
-            const auto archive = metadata.constFind(jar);
-            if (archive == metadata.cend()) continue;
-            auto image = ImageDecode::decode(archive->entries.value(modernPath), {256, 65536});
-            if (image.isNull()) image = ImageDecode::decode(archive->entries.value(legacyPath), {256, 65536});
-            if (image.isNull()) continue;
-            // 像素对齐放大保存，使小图在列表中仍保持原版纹理的边缘。
-            choices.append({QCoreApplication::translate("InstanceSettingsDialog", item.label),
-                            image.scaled(128, 128, Qt::KeepAspectRatio, Qt::FastTransformation)});
-            break;
-        }
-    }
-    return choices;
-}
-
-QString modpackCoverPath(const QString &versionId) {
-    return AppPaths::versionDir(versionId) + QLatin1Char('/') + QLatin1String(kModpackCoverFileName);
-}
-
-bool saveIconImage(const QString &path, const QImage &image, QString *errorOut) {
-    if (!WriteDirectoryGuard::acquire(QFileInfo(path).absolutePath(), errorOut)) return false;
-    QSaveFile file(path);
-    if (!file.open(QIODevice::WriteOnly) || !image.save(&file, "PNG") || !file.commit()) {
-        if (errorOut != nullptr) {
-            *errorOut = QCoreApplication::translate("InstanceFiles", "无法保存图标到 %1：%2")
-                            .arg(QDir::toNativeSeparators(path), file.errorString());
-        }
-        return false;
-    }
-    return true;
-}
-
 QString jarRelativePath(const QString &versionId) {
     return QStringLiteral("versions/%1/%2").arg(jarOwnerId(versionId), jarName(versionId));
 }
@@ -622,8 +563,7 @@ int mainClassJavaMajor(const QString &versionId, const QString &mainClass) {
             // （R11）：class 文件再大也不会到这个数，而一个同名的巨无霸条目不该在每次
             // 启动扫描时把内存和临时目录一起撑起来。
             if (ZipUtil::readEntry(jar, entryName, &bytes, nullptr,
-                                   QCoreApplication::translate("InstanceFiles", "读取客户端 JAR "
-                                                                                "中的主类"), 1024 * 1024) !=
+                                   QCoreApplication::translate("InstanceFiles", "读客户端 JAR 里的主类"), 1024 * 1024) !=
                 ZipUtil::EntryStatus::Ok) {
                 continue;  // 这个 jar 里没有这个类（或者读不动）—— 换下一个
             }
@@ -839,8 +779,7 @@ QStringList migrateInstanceCacheDirs(const QString &oldId, const QString &newId,
     // 名字都是先过 validateDirName()／validateRenameTarget() 的；这里再挡一次纯属自卫 ——
     // 下面拿它拼路径，空串拼出来是**根目录本身**，那会把整个 cache 根当成一个格子搬走。
     if (badName(oldId) || badName(newId)) {
-        problems.append(QCoreApplication::translate("InstanceFiles", "未移动缓存备份：%1 → %2 "
-                                                                     "中有一项不能用作目录名。")
+        problems.append(QCoreApplication::translate("InstanceFiles", "缓存备份没有搬：%1 → %2 里有一个不能当目录名用。")
                             .arg(oldId, newId));
         return problems;
     }
@@ -867,7 +806,7 @@ QStringList migrateInstanceCacheDirs(const QString &oldId, const QString &newId,
             continue;  // 没备份过（绝大多数实例都是这样）
         }
         if (!fromInfo.isDir() || fromInfo.isSymLink() || fromInfo.isJunction()) {
-            problems.append(QCoreApplication::translate("InstanceFiles", "未移动缓存备份：%1 不是普通目录。")
+            problems.append(QCoreApplication::translate("InstanceFiles", "缓存备份没有搬：%1 不是一个普通目录。")
                                 .arg(QDir::toNativeSeparators(from)));
             continue;
         }

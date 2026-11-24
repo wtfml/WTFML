@@ -313,13 +313,13 @@ QString fallbackReason() {
     const Mode chosen = settings.chosen;
     if (chosen == Mode::Solid) return QString();
     if (settings.highContrast) {
-        return QCoreApplication::translate("Glass", "系统已启用高对比度，使用纯色。");
+        return QCoreApplication::translate("Glass", "系统开着高对比度，用纯色。");
     }
     if (settings.transparencyOff) {
-        return QCoreApplication::translate("Glass", "系统已关闭透明效果，使用纯色。");
+        return QCoreApplication::translate("Glass", "系统关了透明效果，用纯色。");
     }
     if ((chosen == Mode::Acrylic || chosen == Mode::Mica) && !settings.systemBackdrop)
-        return QCoreApplication::translate("Glass", "需要 Windows 11 22H2 或更高版本，已改用风景背景。");
+        return QCoreApplication::translate("Glass", "需要 Windows 11 22H2 或更新，已改用风景底。");
     return QString();
 }
 

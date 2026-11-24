@@ -386,7 +386,7 @@ bool verifyFileDigest(const QString &path, qint64 expectedSize, const QString &e
     }
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        if (problem != nullptr) *problem = QCoreApplication::translate("InstanceUpgrade", "无法读取：%1").arg(path);
+        if (problem != nullptr) *problem = QCoreApplication::translate("InstanceUpgrade", "读不了：%1").arg(path);
         return false;
     }
     QCryptographicHash hash(QCryptographicHash::Sha1);
@@ -522,9 +522,7 @@ bool applyCoreToCandidate(const Request &r, const Core &core, const QString &can
         result->problem = QCoreApplication::translate("InstanceUpgrade", "无法读取原实例设置，未继续升级。"); return false;
     }
     if (metaStatus == InstanceMetaFile::Status::BadVersion) {
-        result->problem = QCoreApplication::translate("InstanceUpgrade", "原实例设置的格式版"
-                                                                         "本高于当前启动器，"
-                                                                         "未继续升级。"); return false;
+        result->problem = QCoreApplication::translate("InstanceUpgrade", "原实例设置的格式版本比这个启动器新，未继续升级。"); return false;
     }
     auto json = core.mergedJson;
     json.insert("id", r.instanceId);
@@ -644,15 +642,14 @@ bool applyCoreToCandidate(const Request &r, const Core &core, const QString &can
             }
             QString problem;
             if (!verifyFileDigest(one.stagedPath, one.size, one.sha1, &problem)) {
-                result->problem = QCoreApplication::translate("InstanceUpgrade", "适配模组未通过校验，"
-                                                                                 "本次更新已整体回滚：%1")
+                result->problem = QCoreApplication::translate("InstanceUpgrade", "适配模组未通过校验，整趟更新已回滚：%1")
                                       .arg(problem);
                 return false;
             }
             if (!one.replaces.isEmpty()) {
                 const QString oldPath = QDir(modsPath).filePath(one.replaces);
                 if (redirected(oldPath)) {
-                    result->problem = QCoreApplication::translate("InstanceUpgrade", "待替换的旧模组是链接，未作修改：%1").arg(one.replaces);
+                    result->problem = QCoreApplication::translate("InstanceUpgrade", "要替换的旧模组是链接，未动它：%1").arg(one.replaces);
                     return false;
                 }
                 if (QFileInfo::exists(oldPath) && !QFile::remove(oldPath)) {
@@ -662,9 +659,7 @@ bool applyCoreToCandidate(const Request &r, const Core &core, const QString &can
                 }
             }
             if (!copyReplacementIntoCandidate(one, modsPath, &problem)) {
-                result->problem =
-                    QCoreApplication::translate("InstanceUpgrade", "适配模组写入失败，本次更新已整体回滚：%1")
-                        .arg(problem);
+                result->problem = QCoreApplication::translate("InstanceUpgrade", "适配模组写入失败，整趟更新已回滚：%1").arg(problem);
                 return false;
             }
             replacementNames.insert(one.fileName);
@@ -778,7 +773,7 @@ static Result prepareAndCommitImpl(Request r, const Core &core, const std::funct
         return result;
     }
     if (!problem.isEmpty() || files.isEmpty()) {
-        result.problem = problem.isEmpty() ? QCoreApplication::translate("InstanceUpgrade", "原实例为空。") : problem; return result;
+        result.problem = problem.isEmpty() ? QCoreApplication::translate("InstanceUpgrade", "原实例是空的。") : problem; return result;
     }
     r.originalFingerprint = fingerprint(files);
     result.copiedFiles = files.size();
@@ -884,7 +879,7 @@ static Result prepareCopyAndCommitImpl(Request r, const Core &core, const QStrin
         return result;
     }
     if (QFileInfo::exists(original) || QFileInfo::exists(candidate)) {
-        result.problem = QCoreApplication::translate("InstanceUpgrade", "目标实例名已存在，未覆盖任何文件。");
+        result.problem = QCoreApplication::translate("InstanceUpgrade", "目标实例名已经存在，未覆盖任何文件。");
         return result;
     }
     if (core.mergedJson.value("mainClass").toString().isEmpty() || core.gameVersion.isEmpty()
@@ -900,7 +895,7 @@ static Result prepareCopyAndCommitImpl(Request r, const Core &core, const QStrin
     const auto files = BackupFiles::collectFiles(sourceDir, {}, &problem, cancelled);
     if (stopped()) return cancelResult(QCoreApplication::translate("InstanceUpgrade", "已取消复制。"));
     if (!problem.isEmpty() || files.isEmpty()) {
-        result.problem = problem.isEmpty() ? QCoreApplication::translate("InstanceUpgrade", "源实例为空。") : problem;
+        result.problem = problem.isEmpty() ? QCoreApplication::translate("InstanceUpgrade", "源实例是空的。") : problem;
         return result;
     }
     r.originalFingerprint = fingerprint(files);
@@ -1000,7 +995,7 @@ static Result prepareCopyAndCommitImpl(Request r, const Core &core, const QStrin
     const auto newFiles = BackupFiles::collectFiles(candidate, {}, &problem, cancelled);
     if (stopped()) return cancelResult(QCoreApplication::translate("InstanceUpgrade", "已取消，更新副本未发布。"));
     if (!problem.isEmpty() || newFiles.isEmpty()) {
-        result.problem = problem.isEmpty() ? QCoreApplication::translate("InstanceUpgrade", "更新副本无文件。") : problem;
+        result.problem = problem.isEmpty() ? QCoreApplication::translate("InstanceUpgrade", "更新副本没有文件。") : problem;
         return result;
     }
     result.problem = checkTree(candidate);
@@ -1018,7 +1013,7 @@ static Result prepareCopyAndCommitImpl(Request r, const Core &core, const QStrin
     if (progress) progress(Stage::Publish);
     if (stopped()) return cancelResult(QCoreApplication::translate("InstanceUpgrade", "已取消发布。"));
     if (QFileInfo::exists(original)) {
-        result.problem = QCoreApplication::translate("InstanceUpgrade", "复制期间已出现同名的目标实例，未覆盖。");
+        result.problem = QCoreApplication::translate("InstanceUpgrade", "目标实例名在复制期间被创建，未覆盖。");
         return result;
     }
     if (!QDir().rename(candidate, original)) {
@@ -1042,11 +1037,11 @@ static Result prepareCopyAndCommitImpl(Request r, const Core &core, const QStrin
     result.requiresReload = true;
     if (!QFileInfo::exists(rejected) && QDir().rename(original, rejected)
         && writeJournal(r, QStringLiteral("copy_rejected"), QString())) {
-        result.problem = QCoreApplication::translate("InstanceUpgrade", "更新副本发布后校验失败，已保留在被拒绝目录：%1")
-                             .arg(rejected);
+        result.problem = QCoreApplication::translate("InstanceUpgrade", "更新副本发布后校验失败，已保留在被拒绝目录：")
+            + rejected;
     } else {
-        result.problem = QCoreApplication::translate("InstanceUpgrade", "升级副本校验失败，自动撤回也未完成。请检查以下内容：%1")
-                             .arg(original);
+        result.problem = QCoreApplication::translate("InstanceUpgrade", "升级副本校验失败，自动撤回也未完成。请检查以下内容：")
+            + original;
     }
     return result;
 }
@@ -1216,7 +1211,7 @@ static Result commitPreparedImpl(const Request &r, const std::function<void(Stag
         return result;
     }
     if (!problem.isEmpty() || newFiles.isEmpty()) {
-        result.problem = problem.isEmpty() ? QCoreApplication::translate("InstanceUpgrade", "暂存版本无文件。") : problem;
+        result.problem = problem.isEmpty() ? QCoreApplication::translate("InstanceUpgrade", "暂存版本没有文件。") : problem;
         return result;
     }
     const auto oldFiles = BackupFiles::collectFiles(original, {}, &problem, cancelled);
@@ -1431,12 +1426,11 @@ QStringList recoverInterrupted(const QString &gameDir) {
                 && json.value("transactionId").toString() == id) {
                 const QString snapshot = json.value("snapshotZip").toString();
                 messages.append(
-                    snapshot.isEmpty()
-                        ? QCoreApplication::translate("InstanceUpgrade", "升级事务 %1（实例 %2）未找到匹配的游戏根指纹，未自动恢复；请使用完整 ZIP 快照恢复。")
-                              .arg(id, json.value("instanceId").toString())
-                        : QCoreApplication::translate("InstanceUpgrade", "升级事务 %1（实例 %2）未找到匹配的游戏根指纹，未自动恢复；请使用完整 ZIP 快照 %3 恢复。")
-                              .arg(id, json.value("instanceId").toString(),
-                                   QFileInfo(snapshot).fileName()));
+                    QCoreApplication::translate("InstanceUpgrade", "升级事务 %1（实例 %2）找不到匹配的游戏根指纹，未自动恢复；" "请使用完整 ZIP 快照%3恢复。")
+                        .arg(id, json.value("instanceId").toString(),
+                             snapshot.isEmpty()
+                                 ? QString()
+                                 : QStringLiteral(" %1 ").arg(QFileInfo(snapshot).fileName())));
             }
             continue;
         }

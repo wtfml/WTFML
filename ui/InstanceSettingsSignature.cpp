@@ -29,7 +29,7 @@ QStringList signatureOf(const Inputs &inputs) {
            << inputs.iconSignature
            << QStringLiteral("group:") + inputs.groupId
            << QStringLiteral("pin:%1").arg(inputs.pinned ? 1 : 0);
-    // 「显示页面」：一条一格 `key=0/1`。这样"张三关掉、李四打开"和"两个人都动了但
+    // 「显示哪些页」：一条一格 `key=0/1`。这样"张三关掉、李四打开"和"两个人都动了但
     // 拼起来一样"分得开；顺序由调用方定，见头文件那条 NOTE。
     QStringList pageFlags;
     pageFlags.reserve(inputs.pageChecks.size());

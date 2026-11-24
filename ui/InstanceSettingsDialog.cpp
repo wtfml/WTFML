@@ -15,7 +15,6 @@
  * 拆开之后别的 .cpp 看不见 —— 匿名命名空间是内部链接）。
  */
 #include "InstanceSettingsDialog.hpp"
-#include "MainWindowPageLayout.hpp"
 #include "InstanceSettingsSignature.hpp"
 #include "InstanceSettingsPageChoices.hpp"
 #include "ResourcePackPage.hpp"
@@ -111,6 +110,8 @@ constexpr int kChoiceComboWidth = 110;
 constexpr int kNavListExtraWidth = 28;
 /// 两栏之间空多少。和整页外边距那一档（12）同一档。
 constexpr int kColumnSpacing = 16;
+/// 页眉实例名的字号下限：从 Display 26 往下收到这一号，再放不下才省略。
+constexpr int kHeaderTitleMinPixelSize = 20;
 /// 单独拿出来用时的初始大小。宽是"一列导航 + 一块还放得下两列表格的内容"量出来的
 /// （见 .cpp 构造函数里那句 NOTE：嵌进覆盖层时这个数不作数）。
 constexpr int kDialogWidth = 820;
@@ -196,19 +197,35 @@ InstanceSettingsDialog::InstanceSettingsDialog(const QString &instanceName,
     outer->setSpacing(10);
 
     // UI 7b 页眉（设计稿 instance-*）：图标 + 实例名 + 一行元信息 | 打开目录（扁平）+ 启动实例（这一页唯一的实心钮）。
-    const auto identity = MainWindowPageLayout::makeDetailHeader(this);
-    auto *header = identity.widget;
+    auto *header = new QWidget(this);
     header->setObjectName(QStringLiteral("instanceSettingsHeader"));
-    auto *headerLine = identity.line;
-    m_headerIcon = identity.icon;
+    auto *headerLine = new QHBoxLayout(header);
+    headerLine->setContentsMargins(4, 0, 4, 4);
+    headerLine->setSpacing(14);
+    m_headerIcon = new QLabel(header);
     m_headerIcon->setObjectName(QStringLiteral("instanceHeaderIcon"));
+    m_headerIcon->setFixedSize(48, 48);
     m_headerIcon->setScaledContents(true);
-    m_headerTitle = identity.title;
+    headerLine->addWidget(m_headerIcon);
+    auto *headerText = new QVBoxLayout;
+    headerText->setSpacing(2);
+    m_headerTitle = new ElidedLabel(header);
     m_headerTitle->setText(instanceName);
     m_headerTitle->setObjectName(QStringLiteral("instanceHeaderTitle"));
-    m_headerMeta = identity.meta;
+    Theme::markDisplay(m_headerTitle, Theme::textFont(m_headerTitle->font(), Theme::TextRole::Display));
+    // 长名先收字号（Display 26 → 20），再放不下才省略、悬停看全名；高度按 26 钉死，页眉不随名字变高矮。
+    m_headerTitle->setFitPixelRange(Theme::textSize(Theme::TextRole::Display), kHeaderTitleMinPixelSize);
+    headerText->addWidget(m_headerTitle);
+    m_headerMeta = new QLabel(header);
     m_headerMeta->setObjectName(headerMetaName());
+    {
+        QPalette pal = m_headerMeta->palette();
+        pal.setColor(QPalette::WindowText, Theme::tokens().secondary);
+        m_headerMeta->setPalette(pal);
+    }
     m_headerMeta->hide();  // 由 setHeaderMeta() 填；没填就不占行
+    headerText->addWidget(m_headerMeta);
+    headerLine->addLayout(headerText, 1);
     auto *folder = new QToolButton(header);
     folder->setObjectName(QStringLiteral("instanceHeaderFolder"));
     folder->setAutoRaise(true);
@@ -266,7 +283,6 @@ InstanceSettingsDialog::InstanceSettingsDialog(const QString &instanceName,
                 if (item != nullptr && !item->data(0, Qt::UserRole).toString().isEmpty())
                     showPage(item->data(0, Qt::UserRole).toString());
             });
-
     m_navigationTree->installEventFilter(this);
     // 组头那几行（「内容管理」「世界与联机」「创作工具」「维护」）：**整行**点下去就是
     // 展开 / 收起。原来只有最左边那颗小箭头管用 —— 组头不可选中、整行又没有别的动作，
@@ -372,8 +388,6 @@ InstanceSettingsDialog::InstanceSettingsDialog(const QString &instanceName,
     // 左栏那一列灌第一遍（内容和第一页都归它管）。**排在 watchEditors() 之后**：它会在
     // 那一列上挑一条（程序化 setCurrentRow()），接上接线之后才走"选中 → 换页"那条正常路。
     rebuildEntryList();
-    // 默认页（概览）已经摆完。之后用户/调用方切到「模组」才允许自动检查更新。
-    m_autoCheckArmed = true;
     // 起点 = 现在这一份（灌值那一串 setChecked/setText 都已经跑完）。不记这一笔的话，
     // 打开页面之后的第一次交互会把"整份值"当成一次改动写一遍盘。
     m_lastSignature = valueSignature();
@@ -772,9 +786,12 @@ void InstanceSettingsDialog::applyPageKey(const QString &requestedKey) {
     if (InstanceFilesPage *page = m_filesPages.value(key)) {
         page->refresh();
     }
-    // 构造期先把默认页摆好（m_autoCheckArmed 还是 false），这一步可能经过「模组」页，
-    // 但那时不跑全量检查；构造结束之后用户真正切到「模组」才发。
-    if (key == QStringLiteral("mod") && !alreadyHere && m_autoCheckArmed) {
+    // 点进去就自动测速。**排在 refresh() 之后**：这一页刚露出来
+    // 时先有那张表（表里那几行是这一页本来就有的东西），再谈"连上去问一遍"。
+    //
+    // NOTE: 这一发走的是**键**不是行号 ⇒ 左栏那一列怎么变（勾掉一条、可用性变了）都不影响
+    // 它：只要有人摆到「服务器列表」那一页上，它就该发。
+    if (key == QStringLiteral("mod") && !alreadyHere) {
         QTimer::singleShot(0, this, [this] { emit checkUpdatesRequested(); });
     }
     if (key == serverPageKey() && !alreadyHere) {
@@ -1049,16 +1066,16 @@ QString InstanceSettingsDialog::filesHint(const QString &key) {
 
 QString InstanceSettingsDialog::filesEmptyText(const QString &key) {
     if (key == QStringLiteral("mod")) {
-        return tr("暂无模组，可通过「%1」添加。").arg(filesDownloadText(key));
+        return tr("暂无模组，可通过“%1”添加。").arg(filesDownloadText(key));
     }
     if (key == QStringLiteral("resourcepack")) {
-        return tr("暂无资源包，可通过「%1」添加。").arg(filesDownloadText(key));
+        return tr("暂无资源包，可通过“%1”添加。").arg(filesDownloadText(key));
     }
     if (key == QStringLiteral("datapack")) {
-        return tr("暂无数据包，可通过「%1」添加。").arg(filesDownloadText(key));
+        return tr("暂无数据包，可通过“%1”添加。").arg(filesDownloadText(key));
     }
     if (key == QStringLiteral("shader")) {
-        return tr("暂无光影，可通过「%1」添加。").arg(filesDownloadText(key));
+        return tr("暂无光影，可通过“%1”添加。").arg(filesDownloadText(key));
     }
     if (key == QStringLiteral("schematic")) {
         return tr("暂无结构或原理图");
@@ -1124,7 +1141,7 @@ QString InstanceSettingsDialog::filesDownloadTip(const QString &key) {
         return QString();
     }
     // 提示里得说清"这一页会关掉"：用户按它是为了**换个地方**，不是就地多出一个东西。
-    return tr("打开「%1」下载页。").arg(texts.at(index));
+    return tr("打开“%1”下载页。").arg(texts.at(index));
 }
 
 QString InstanceSettingsDialog::filesDownloadCategoryKey(const QString &key) {
@@ -1170,7 +1187,7 @@ QString InstanceSettingsDialog::filesResourceTip(const QString &title) {
     }
     // 和 filesDownloadTip() 同一句话的规矩：**说清这一页会关掉** —— 用户点它是为了换个
     // 地方，不是就地多出一个东西。
-    return tr("打开「%1」下载页。").arg(title);
+    return tr("打开“%1”下载页。").arg(title);
 }
 
 // 那几页底下不挂说明文字，所以这里也没有一段讲"行尾那颗 ⓘ"的小字。要再挂说明，写的时候
@@ -1538,7 +1555,6 @@ void InstanceSettingsDialog::setIcon(const QString &icon, const QPixmap &default
     // 初值不是"本地那张"就把那一份丢掉：留着它只会让人以为挑过了。
     if (m_iconChoice != localIconValue()) {
         m_pickedIconPath.clear();
-        m_pickedIconImage = QImage();
     }
     refreshIconRow();
 }
@@ -1646,7 +1662,7 @@ void InstanceSettingsDialog::refreshGroupMenuState() {
     const QString name = m_chosenGroupIndex >= 0 && m_chosenGroupIndex < m_groupRows.size()
                              ? m_groupRows.at(m_chosenGroupIndex)->text()
                              : ungroupedGroupText();
-    m_groupButton->setToolTip(tr("当前归属分组「%1」。单击可更换分组。").arg(name));
+    m_groupButton->setToolTip(tr("现在归在「%1」里。点开可以换一组。").arg(name));
 }
 
 void InstanceSettingsDialog::popUpMenuBelow(QWidget *menu, const QWidget *anchor) {
@@ -1675,18 +1691,16 @@ QString InstanceSettingsDialog::iconChoice() const { return m_iconChoice; }
 QString InstanceSettingsDialog::pickedIconPath() const { return m_pickedIconPath; }
 
 void InstanceSettingsDialog::markPickedIconSaved() {
-    if (m_pickedIconPath.isEmpty() && m_pickedIconImage.isNull()) {
+    if (m_pickedIconPath.isEmpty()) {
         return;
     }
     // 那一份字节现在就是实例目录里的图标 ⇒ 它成了「本地那张」的画法。不换的话，这一格
     // 下一次重画会退回**上一张**本地图（`m_localIconMark` 是 setIcon() 灌的旧值）。
-    const QPixmap picked = m_pickedIconImage.isNull() ? QPixmap(m_pickedIconPath)
-                                                      : QPixmap::fromImage(m_pickedIconImage);
+    const QPixmap picked(m_pickedIconPath);
     if (!picked.isNull()) {
         m_localIconMark = picked;
     }
     m_pickedIconPath.clear();
-    m_pickedIconImage = QImage();
     // 签名跟着挪到"本地那张"这一档，否则下一次任何改动都会拿 `local` 去和
     // `local|源路径` 比，白触发一次写盘（内容其实一模一样）。
     m_lastSignature = valueSignature();
@@ -1722,8 +1736,8 @@ void InstanceSettingsDialog::refreshIconRow() {
     // ② 内置候选 → 那一张。
     // ③ 本地那一档 → 调用方解好的那张；它要是空的（文件没了）→ 退回默认那张。
     // ④ 默认 → 调用方算好的 defaultMark。
-    QPixmap mark = QPixmap::fromImage(m_pickedIconImage);
-    if (mark.isNull() && !m_pickedIconPath.isEmpty()) {
+    QPixmap mark;
+    if (!m_pickedIconPath.isEmpty()) {
         const QPixmap picked(m_pickedIconPath);
         if (!picked.isNull()) {
             mark = picked;
@@ -2229,7 +2243,6 @@ void InstanceSettingsDialog::watchPage(QWidget *page) {
     // —— 无害：那个函数按 `valueSignature()` 去重，而那几个值不在签名里，所以一次盘都
     // 不会写。按"这一页上的哪些下拉框"去筛是**多一条会过期的名单**，不值当。
     for (QComboBox *combo : page->findChildren<QComboBox *>()) {
-        if (combo == m_javaRuntimeCombo) continue;  // Java 路径在选中或编辑完成时保存。
         connect(combo, &QComboBox::currentIndexChanged, this,
                 &InstanceSettingsDialog::notifyEdited, Qt::UniqueConnection);
     }
@@ -2251,7 +2264,7 @@ void InstanceSettingsDialog::watchPage(QWidget *page) {
 
     // NOTE: 【上面两条按类型的线接不到两种改动，各自在动手的地方补一发 notifyEdited()】
     // ①「浏览…」选完 java.exe：那是 `setText()`（程序化，不发 editingFinished）；
-    // ②「选择图片…」挑完图：`clicked` 在**框弹出来之前**就发完了，等用户挑完，
+    // ②「选一张图片…」挑完图：`clicked` 在**框弹出来之前**就发完了，等用户挑完，
     // 那一发早过去了（值是在那之后才变的）。
     // 往这一页再加"点一下、然后弹个系统框问点什么"的按钮时，记住同一件事。
 }
@@ -2278,10 +2291,7 @@ QStringList InstanceSettingsDialog::valueSignature() const {
     inputs.iconSignature = m_pickedIconPath.isEmpty()
                                ? iconChoice()
                                : localIconValue() + QLatin1Char('|') + m_pickedIconPath;
-    if (!m_pickedIconImage.isNull()) {
-        inputs.iconSignature += QLatin1Char('|') + QString::number(m_pickedIconImage.cacheKey());
-    }
-    // 「显示页面」按 optionalPageKeys() 的**顺序**摆（不能按 QHash 的遍历顺序）。
+    // 「显示哪些页」按 optionalPageKeys() 的**顺序**摆（不能按 QHash 的遍历顺序）。
     for (const QString &key : optionalPageKeys()) {
         const QCheckBox *check = m_pageChecks.value(key);
         inputs.pageChecks.append({key, check != nullptr && check->isChecked()});

@@ -1055,7 +1055,7 @@ bool AuthManager::fetchPlayerProfile(const QString &mcToken, QString *name, QStr
     // 404 在这一步的意思很具体：令牌是好的，但这个账户没买过 Minecraft（或者买游戏的是
     // 另一个账户）。这条要单独说 —— 否则用户看到的是"登录失败"，会以为是密码或者网络问题。
     if (result.status == 404) {
-        *errorMessage = tr("此微软账号无 Minecraft 游戏档案。\n请使用已购买游戏且已创建档案的账号登录。");
+        *errorMessage = tr("此微软账号没有 Minecraft 游戏档案。\n请使用已购买游戏且已创建档案的账号登录。");
         if (failureKind) *failureKind = RefreshFailureKind::Other;
         return false;
     }

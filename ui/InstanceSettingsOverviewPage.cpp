@@ -196,12 +196,6 @@ void InstanceSettingsDialog::setupOverviewPage(const QString &instanceId) {
         m_changeIconButton->setToolTip(iconHint());
         connect(m_changeIconButton, &QPushButton::clicked, this,
                 [this]() {
-                    if (m_gameIconGrid->count() == 0 && !m_gameIconsLoading) {
-                        m_gameIconsLoading = true;
-                        m_gameIconStatus->setText(tr("正在读取游戏物品图标…"));
-                        m_gameIconStatus->show();
-                        emit gameIconChoicesRequested();
-                    }
                     equalizeCandidateWidths(m_iconButtons);
                     popUpMenuBelow(m_iconMenu, m_changeIconButton);
                 });
@@ -227,7 +221,7 @@ void InstanceSettingsDialog::setupOverviewPage(const QString &instanceId) {
     //
     // **图标**：十档 —— 默认 + 八个内置候选 + 本地那张。内置那八张是版本分类 / 加载器的
     // 标志图（不用担心侵权），另外允许用户自己挑一张本地图片。**每一档都有对应的按钮**
-    // （八个候选各一颗、「恢复默认」、「选择图片…」），没有"换过去就回不来"的死角。
+    // （八个候选各一颗、「恢复默认」、「选一张图片…」），没有"换过去就回不来"的死角。
     //
     // NOTE: 那一排按钮**不是**当前值的出处（它们只是 m_iconChoice 的一幅画）—— 理由见 .hpp
     // 里 setIcon() 上面那一段：本地那一档没有控件能表示它。
@@ -247,14 +241,6 @@ void InstanceSettingsDialog::setupOverviewPage(const QString &instanceId) {
         auto *box = new QVBoxLayout(menu);
         box->setContentsMargins(kMenuPadding, kMenuPadding, kMenuPadding, kMenuPadding);
         box->setSpacing(kMenuRowSpacing);
-
-        m_gameIconStatus = new QLabel(menu);
-        m_gameIconStatus->setWordWrap(true);
-        m_gameIconStatus->hide();
-        box->addWidget(m_gameIconStatus);
-        m_gameIconGrid = new QGridLayout;
-        m_gameIconGrid->setSpacing(4);
-        box->addLayout(m_gameIconGrid);
 
         auto *candidates = new QGridLayout;
         candidates->setSpacing(4);
@@ -286,7 +272,6 @@ void InstanceSettingsDialog::setupOverviewPage(const QString &instanceId) {
                 // 它现在还在原处，而实例目录里那份要等这一次改动落到盘上才被换掉
                 // （见 pickedIconPath()）。
                 m_pickedIconPath.clear();
-                m_pickedIconImage = QImage();
                 refreshIconRow();
                 // 挑完就收：这颗按钮是"选一个"，不是"切换一个开关"。留着框开着挡住的
                 // 正是用户接下来要看的地方（那一行里的预览）。
@@ -315,7 +300,6 @@ void InstanceSettingsDialog::setupOverviewPage(const QString &instanceId) {
             }
             m_iconChoice = localIconValue();
             m_pickedIconPath = picked;
-            m_pickedIconImage = QImage();
             refreshIconRow();
             // 这一发 `clicked` **在框弹出来之前**就发完了（用户挑完图是那之后的事）
             // ⇒ 改完自己补一发（见 .hpp 里 watchEditors() 那段 NOTE 点的第二处）。
@@ -333,7 +317,6 @@ void InstanceSettingsDialog::setupOverviewPage(const QString &instanceId) {
             // 这个实例就不会跟着换标志了，而他要的明明是"默认"。
             m_iconChoice.clear();
             m_pickedIconPath.clear();
-            m_pickedIconImage = QImage();
             refreshIconRow();
             m_iconMenu->close();
         });
@@ -376,7 +359,7 @@ void InstanceSettingsDialog::setupOverviewPage(const QString &instanceId) {
         grid->addWidget(MainWindowPageLayout::makeSettingRow(this, m_lastLaunchLabel, QString(), nullptr), row++, 0, 1, 2);
         auto *resetPlayTime = new QPushButton(tr("重置"), this);
         resetPlayTime->setObjectName(QStringLiteral("instancePlayTimeReset"));
-        resetPlayTime->setToolTip(tr("清除此实例已记录的累计游玩时间和上次游玩时长。"));
+        resetPlayTime->setToolTip(tr("清掉这个实例已记录的累计游玩时间和上次游玩时长。"));
         Theme::markButton(resetPlayTime, Theme::ButtonKind::Danger);
         connect(resetPlayTime, &QPushButton::clicked, this,
                 &InstanceSettingsDialog::resetPlayTimeRequested);
@@ -619,7 +602,7 @@ void InstanceSettingsDialog::setupOverviewPage(const QString &instanceId) {
                         row++, 0, 1, 2);
     }
 
-    // ---------- 「显示页面」----------
+    // ---------- 「显示哪些页」----------
     //
     // 「概览里调整是否显示」：七条一条一个勾选框（顺序见 optionalPageKeys()），勾/不勾
     // 直接决定左栏那一列里有没有这一条；勾掉的记在实例自己的 wtfml.meta 里（见
@@ -672,37 +655,4 @@ void InstanceSettingsDialog::setupOverviewPage(const QString &instanceId) {
         grid->addWidget(MainWindowPageLayout::makeSettingRow(this, MainWindowPageLayout::makeSettingRowTitle(showPagesLabelText(), this), QString(), cell, true), row++, 0, 1, 2);
     }
 
-}
-
-void InstanceSettingsDialog::setGameIconChoices(const QList<QPair<QString, QImage>> &choices) {
-    m_gameIconsLoading = false;
-    m_gameIconStatus->setVisible(choices.isEmpty());
-    if (choices.isEmpty()) {
-        m_gameIconStatus->setText(tr("客户端文件中无可用的物品图标。"));
-        return;
-    }
-
-    QList<QToolButton *> buttons;
-    for (const auto &[name, image] : choices) {
-        auto *button = new QToolButton(this);
-        button->setText(name);
-        button->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-        button->setIconSize(QSize(kIconCandidateSize, kIconCandidateSize));
-        button->setIcon(QIcon(QPixmap::fromImage(image).scaled(button->iconSize(), Qt::KeepAspectRatio,
-                                                              Qt::FastTransformation)));
-        Theme::markButton(button, Theme::ButtonKind::Neutral);
-        connect(button, &QToolButton::clicked, this, [this, image] {
-            m_iconChoice = localIconValue();
-            m_pickedIconPath.clear();
-            m_pickedIconImage = image;
-            refreshIconRow();
-            m_iconMenu->close();
-            notifyEdited();
-        });
-        const int i = buttons.size();
-        buttons.append(button);
-        m_gameIconGrid->addWidget(button, i / kIconCandidatesPerRow, i % kIconCandidatesPerRow);
-    }
-    equalizeCandidateWidths(buttons);
-    if (m_iconMenu->isVisible()) popUpMenuBelow(m_iconMenu, m_changeIconButton);
 }

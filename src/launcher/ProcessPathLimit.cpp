@@ -1,6 +1,5 @@
 #include "ProcessPathLimit.hpp"
 
-#include <QCoreApplication>
 #include <QDir>
 
 namespace ProcessPathLimit {
@@ -28,9 +27,8 @@ QString tooLongHint(const QStringList &paths) {
         return QString();
     }
     // 提示里放整条路径：那正是用户要去改的那一条，截断反而让人无从下手。
-    return QCoreApplication::translate("ProcessPathLimit", "\n%1 有 %2 个字符，超过 Windows 启动进程时 260 "
-                                                           "字符的路径上限。\n请将 Java "
-                                                           "或实例移到层级较浅的目录（例如 D:/MC）后重试。")
+    return QStringLiteral("\n%1 有 %2 个字符，超过了 Windows 起进程时 260 字符的路径上限。"
+                          "\n把 Java 或实例挪到浅一点的目录（比如 D:/MC）再试。")
         .arg(QDir::toNativeSeparators(*longest), QString::number(longest->size()));
 }
 

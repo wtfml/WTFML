@@ -84,46 +84,6 @@ QPalette cardChromePalette() {
 
 }  // namespace
 
-OverlayHost::PageBreadcrumb OverlayHost::makePageBreadcrumb(QWidget *parent) {
-    auto *header = new QWidget(parent);
-    header->setFixedHeight(pageHeaderHeight());
-    auto *headerLayout = new QHBoxLayout(header);
-    headerLayout->setContentsMargins(0, 6, 0, 0);
-    // 间距 0：「返回」右侧那 8px 是按钮自己的内边距（悬停底要留着），「/」右边再补 8 与之对称
-    // （原先布局间距 4 叠在内边距上，返回到斜杠 12、斜杠到标题 4，r104 看着左空右挤）。
-    headerLayout->setSpacing(0);
-    auto *backButton = new QPushButton(backButtonText(), header);
-    backButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    // 「← 返回」= 往回走（一般性那一档）—— 全应用每一页顶上那一颗都是它。
-    Theme::markButton(backButton, Theme::ButtonKind::Ghost);
-    backButton->setProperty("wtfmlCrumb", true);
-    backButton->setFixedHeight(28);
-    const auto crumbFont = [](QWidget *w) {
-        QFont f = w->font();
-        f.setPixelSize(13);
-        f.setBold(false);
-        w->setFont(f);
-    };
-    crumbFont(backButton);
-    const auto backIcon = [backButton]() {
-        backButton->setIcon(QIcon(VersionIcons::line(QStringLiteral("chevL"), 14, Theme::tokens().secondary, 2.0)));
-    };
-    backButton->setIconSize(QSize(14, 14));
-    backIcon();
-    Theme::follow(backButton, backIcon);
-    headerLayout->addWidget(backButton);
-    auto *slash = new QLabel(QStringLiteral("/"), header);
-    crumbFont(slash);
-    slash->setForegroundRole(QPalette::PlaceholderText);
-    slash->setContentsMargins(0, 0, 8, 0);
-    headerLayout->addWidget(slash);
-    auto *title = new QLabel(header);
-    crumbFont(title);
-    headerLayout->addWidget(title);
-    headerLayout->addStretch(1);
-    return {header, backButton, title};
-}
-
 OverlayHost::OverlayHost(QWidget *anchor, QWidget *parent) : QWidget(parent), m_anchor(anchor) {
     setObjectName(overlayHostName());
     // **不进任何布局**：一进布局就会把锚点挤走（那是"分成上下两半"，不是"浮在上面"）。
@@ -138,19 +98,53 @@ OverlayHost::OverlayHost(QWidget *anchor, QWidget *parent) : QWidget(parent), m_
         m_veil = new ScrimVeil(parent, this);
     }
 
+    // ---------- 页眉（常驻：返回箭头 + 标题） ----------
     m_pageFrame = new QWidget(this);
     m_pageLayout = new QVBoxLayout(m_pageFrame);
     m_pageLayout->setContentsMargins(0, 0, 0, 0);
     m_pageLayout->setSpacing(0);
 
-    const auto breadcrumb = makePageBreadcrumb(m_pageFrame);
-    breadcrumb.widget->layout()->setContentsMargins(kOverlayPageSide - 10, 6, kOverlayPageSide, 0);
-    m_backButton = breadcrumb.back;
+    QWidget *header = new QWidget(m_pageFrame);
+    header->setFixedHeight(pageHeaderHeight());
+    QHBoxLayout *headerLayout = new QHBoxLayout(header);
+    // 面包屑（tokens-extra §1）：「‹ 返回」文字按钮 + 「/」+ 当前页，左缘比正文多出按钮内边距。
+    headerLayout->setContentsMargins(kOverlayPageSide - 10, 6, kOverlayPageSide, 0);
+    // 间距 0：「返回」右侧那 8px 是按钮自己的内边距（悬停底要留着），「/」右边再补 8 与之对称
+    // （原先布局间距 4 叠在内边距上，返回到斜杠 12、斜杠到标题 4，r104 看着左空右挤）。
+    headerLayout->setSpacing(0);
+    m_backButton = new QPushButton(backButtonText(), header);
     m_backButton->setObjectName(overlayBackButtonName());
+    m_backButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     m_backButton->setToolTip(tr("未保存的改动会丢失。"));
-    m_titleLabel = breadcrumb.title;
+    // 「← 返回」= 往回走（一般性那一档）—— 全应用每一页顶上那一颗都是它。
+    Theme::markButton(m_backButton, Theme::ButtonKind::Ghost);
+    m_backButton->setProperty("wtfmlCrumb", true);
+    m_backButton->setFixedHeight(28);
+    const auto crumbFont = [](QWidget *w) {
+        QFont f = w->font();
+        f.setPixelSize(13);
+        f.setBold(false);
+        w->setFont(f);
+    };
+    crumbFont(m_backButton);
+    const auto backIcon = [this]() {
+        m_backButton->setIcon(QIcon(VersionIcons::line(QStringLiteral("chevL"), 14, Theme::tokens().secondary, 2.0)));
+    };
+    m_backButton->setIconSize(QSize(14, 14));
+    backIcon();
+    Theme::follow(m_backButton, backIcon);
+    headerLayout->addWidget(m_backButton);
+    auto *slash = new QLabel(QStringLiteral("/"), header);
+    crumbFont(slash);
+    slash->setForegroundRole(QPalette::PlaceholderText);
+    slash->setContentsMargins(0, 0, 8, 0);
+    headerLayout->addWidget(slash);
+    m_titleLabel = new QLabel(header);
     m_titleLabel->setObjectName(overlayTitleLabelName());
-    m_pageLayout->addWidget(breadcrumb.widget);
+    crumbFont(m_titleLabel);
+    headerLayout->addWidget(m_titleLabel);
+    headerLayout->addStretch(1);
+    m_pageLayout->addWidget(header);
 
     m_pageContent = new QWidget(m_pageFrame);
     m_pageContent->setObjectName(overlayPageContentName());
@@ -1054,7 +1048,7 @@ bool OverlayHost::eventFilter(QObject *watched, QEvent *event) {
         switch (event->type()) {
         case QEvent::ChildAdded:
             // 塞进来的东西**必须能看见**。Qt 的规矩是"显式 hide 过的会一直是藏着的"，
-            // 而调用方给的多半正是"上次关掉时被 hide 过"的那个对话框（「账号与皮肤」
+            // 而调用方给的多半正是"上次关掉时被 hide 过"的那个对话框（「账号与外观」
             // 就是长驻的那一个）。不翻出来的症状是**页面开了、里面是空的，而且不报错** ——
             // 更阴的是布局里那个 `QWidgetItem::isEmpty()` 会因此返回 true（Qt 认的就是
             // `isHidden()` 这一位），于是这个控件连"有多高"都不算数。

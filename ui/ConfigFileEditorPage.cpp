@@ -260,7 +260,7 @@ ConfigFileEditorPage::ConfigFileEditorPage(QWidget *parent) : QWidget(parent) {
     m_history = new QPushButton(tr("历史版本"), this);
     m_history->setObjectName(QStringLiteral("configFileHistory"));
     Theme::markButton(m_history, Theme::ButtonKind::Neutral);
-    m_history->setToolTip(tr("按时间选择此文件的备份；载入后点击保存方可写入。"));
+    m_history->setToolTip(tr("按时间选择这个文件的备份；载入后需点击保存才会写回。"));
     connect(m_history, &QPushButton::clicked, this, [this] {
         if (m_hasFile && m_backupAvailable && isEditable()) emit historyRequested(m_path);
     });
@@ -320,7 +320,7 @@ ConfigFileEditorPage::ConfigFileEditorPage(QWidget *parent) : QWidget(parent) {
 
     m_editor = new CodeEditor(this);
     m_editor->setObjectName(editorName());
-    m_editor->setPlaceholderText(tr("（此文件为空）"));
+    m_editor->setPlaceholderText(tr("（这个文件是空的）"));
     m_editor->setMinimumHeight(kEditorMinHeight);
     middle->addWidget(m_editor, 1);
     outer->addLayout(middle, 1);
@@ -496,8 +496,8 @@ void ConfigFileEditorPage::markSaved() {
     // （不抹掉的话，下一次 refreshNote() 还会说"取回来的、按保存才写回盘上"——而它已经
     // 写回去了）。
     m_restoredFrom.clear();
-    m_note->setText(QCoreApplication::translate("ConfigFileEditorPage", "已保存（%1）")
-                        .arg(QTime::currentTime().toString(QStringLiteral("HH:mm:ss"))));
+    m_note->setText(savedPrefix() + QTime::currentTime().toString(QStringLiteral("HH:mm:ss")) +
+                    QCoreApplication::translate("ConfigFileEditorPage", "）"));
 }
 
 void ConfigFileEditorPage::refreshNote() {
@@ -507,22 +507,21 @@ void ConfigFileEditorPage::refreshNote() {
         return;
     }
     if (!m_loaded.utf8Ok) {
-        m_note->setText(QCoreApplication::translate("ConfigFileEditorPage", "只读：%1")
-                            .arg(QCoreApplication::translate("ConfigFileEditorPage", "文件使用非 UTF-8 编码。为保护内容，已按只读方式打开。")));
+        m_note->setText(readOnlyPrefix() +
+                        tr("文件使用非 UTF-8 编码。为保护内容，已按只读方式打开。"));
         return;
     }
     if (m_loaded.tooBig) {
-        m_note->setText(QCoreApplication::translate("ConfigFileEditorPage", "只读：%1")
-                            .arg(QCoreApplication::translate("ConfigFileEditorPage", "文件超过 %1 MB 的编辑上限，已按只读方式打开。")
-                                     .arg(ConfigFileText::editableByteLimit() / (1024 * 1024))));
+        m_note->setText(readOnlyPrefix() +
+                        tr("文件超过 %1 MB 的编辑上限，已按只读方式打开。")
+                            .arg(ConfigFileText::editableByteLimit() / (1024 * 1024)));
         return;
     }
     // 取回来那一份得**说明白**：框里的内容和刚打开时不一样了，而盘上还是旧的。不说的话，
     // 用户会以为"还原"已经落盘了（那是这一页唯一一处"正文变了但盘上没变"的情形）。
     if (!m_restoredFrom.isEmpty()) {
-        m_note->setText(QCoreApplication::translate("ConfigFileEditorPage", "已恢复上次保存前的内容（%1）")
-                            .arg(m_restoredFrom)
-                        + QCoreApplication::translate("ConfigFileEditorPage", "，选择「保存」后写入文件。"));
+        m_note->setText(restoredPrefix() + m_restoredFrom + QCoreApplication::translate("ConfigFileEditorPage", "）") +
+                        tr("，选择「保存」后写入文件。"));
         return;
     }
     m_note->setText(hintText());
@@ -599,7 +598,7 @@ int ConfigFileEditorPage::rebuildIndex() {
         QStringList tip;
         tip << entry.path;
         if (!entry.range.isEmpty()) {
-            tip << QCoreApplication::translate("ConfigFileEditorPage", "范围：%1").arg(entry.range);
+            tip << QCoreApplication::translate("ConfigFileEditorPage", "范围：") + entry.range;
         }
         if (!entry.note.isEmpty()) {
             tip << entry.note;
@@ -815,9 +814,12 @@ QString ConfigFileEditorPage::backText() { return QCoreApplication::translate("C
 QString ConfigFileEditorPage::saveText() { return QCoreApplication::translate("ConfigFileEditorPage", "保存"); }
 QString ConfigFileEditorPage::openFolderText() { return QCoreApplication::translate("ConfigFileEditorPage", "打开文件夹"); }
 QString ConfigFileEditorPage::indexToggleText() { return QCoreApplication::translate("ConfigFileEditorPage", "条目"); }
-QString ConfigFileEditorPage::indexFilterPlaceholder() { return QCoreApplication::translate("ConfigFileEditorPage", "搜索条目…"); }
+QString ConfigFileEditorPage::indexFilterPlaceholder() { return QCoreApplication::translate("ConfigFileEditorPage", "在条目里找…"); }
 QString ConfigFileEditorPage::restoreText() { return QCoreApplication::translate("ConfigFileEditorPage", "还原上一次"); }
+QString ConfigFileEditorPage::restoredPrefix() { return QCoreApplication::translate("ConfigFileEditorPage", "已恢复上次保存前的内容（"); }
 QString ConfigFileEditorPage::indexEmptyHint() { return QCoreApplication::translate("ConfigFileEditorPage", "文件中未找到可编辑的设置项"); }
+QString ConfigFileEditorPage::readOnlyPrefix() { return QCoreApplication::translate("ConfigFileEditorPage", "只读："); }
 QString ConfigFileEditorPage::hintText() {
     return QCoreApplication::translate("ConfigFileEditorPage", "选择「保存」后写入文件。保留原文件的换行格式和 BOM。");
 }
+QString ConfigFileEditorPage::savedPrefix() { return QCoreApplication::translate("ConfigFileEditorPage", "已保存（"); }

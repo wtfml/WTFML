@@ -1,7 +1,6 @@
 #pragma once
 #include "Banner.hpp"
 #include "GameVersion.hpp"
-#include <QCoreApplication>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -27,32 +26,32 @@ inline QJsonObject encode(const Design &design) {
 }
 inline bool decode(const QByteArray &bytes, Design *out, QString *error) {
     const auto fail = [&](const QString &text) { if (error) *error = text; return false; };
-    if (!out || bytes.size() > 64 * 1024) return fail(QCoreApplication::translate("BannerDesign", "设计文件过大或参数无效。"));
+    if (!out || bytes.size() > 64 * 1024) return fail(QStringLiteral("设计文件过大或参数无效。"));
     QJsonParseError parse;
     const auto doc = QJsonDocument::fromJson(bytes, &parse);
     if (parse.error != QJsonParseError::NoError)
-        return fail(QCoreApplication::translate("BannerDesign", "JSON 格式错误（字节 %1）：%2").arg(parse.offset).arg(parse.errorString()));
+        return fail(QStringLiteral("JSON 格式错误（字节 %1）：%2").arg(parse.offset).arg(parse.errorString()));
     const auto object = doc.object();
     if (!doc.isObject() || object.value("format") != QJsonValue(QStringLiteral("wtfml-banner"))
         || object.value("schemaVersion") != QJsonValue(1) || !object.value("base").isString()
         || !object.value("version").isString() || !object.value("layers").isArray())
-        return fail(QCoreApplication::translate("BannerDesign", "不是受支持的 WTFML 旗帜设计文件。"));
+        return fail(QStringLiteral("不是受支持的 WTFML 旗帜设计文件。"));
     const auto colorIndex = [](const QString &id) {
         for (int i = 0; i < Banner::colorCount(); ++i) if (Banner::colorId(i) == id) return i;
         return -1;
     };
     Design design;
     design.base = colorIndex(object.value("base").toString()); design.version = object.value("version").toString();
-    if (design.base < 0 || !versions().contains(design.version)) return fail(QCoreApplication::translate("BannerDesign", "底色或目标版本无效。"));
+    if (design.base < 0 || !versions().contains(design.version)) return fail(QStringLiteral("底色或目标版本无效。"));
     const auto layers = object.value("layers").toArray();
-    if (layers.size() > Banner::kMaxLayers) return fail(QCoreApplication::translate("BannerDesign", "旗帜最多支持 6 层纹样。"));
+    if (layers.size() > Banner::kMaxLayers) return fail(QStringLiteral("旗帜最多支持 6 层纹样。"));
     for (const auto &value : layers) {
         const auto layer = value.toObject();
         if (!value.isObject() || !layer.value("pattern").isString() || !layer.value("color").isString())
-            return fail(QCoreApplication::translate("BannerDesign", "图层字段类型无效。"));
+            return fail(QStringLiteral("图层字段类型无效。"));
         const int pattern = Banner::patternIndexById(layer.value("pattern").toString());
         const int color = colorIndex(layer.value("color").toString());
-        if (pattern < 0 || color < 0) return fail(QCoreApplication::translate("BannerDesign", "设计包含无法识别的图案或颜色。"));
+        if (pattern < 0 || color < 0) return fail(QStringLiteral("设计包含无法识别的图案或颜色。"));
         design.layers.append(QStringLiteral("%1:%2").arg(pattern).arg(color));
     }
     *out = design;

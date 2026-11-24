@@ -54,7 +54,7 @@ void InstallPageController::openPage(const QString &gameVersion) {
     m_owner.m_ui->getInstallTargetLabel()->setText(MainWindowUI::installTargetText(gameVersion));
     // 默认名跟着"选中的加载器"走（没选就是原版号本身）—— updateLoaderRows() 会顺手
     // 把它算出来，所以这里先摆状态、再让它收尾。
-    // 注意每次进安装页都**回到「不安装（纯原版）」**：上一个实例选的是哪条加载器跟这一个
+    // 注意每次进安装页都**回到「不装（纯原版）」**：上一个实例选的是哪条加载器跟这一个
     // 没关系，留着的话下一个版本会顶着一个"上次顺手选的 Forge"进来。
     m_selectedLoader = MainWindowUI::modLoaderNoneIndex();
     // 钉住的版本号同理：换了一个游戏版本，上一份能装的版本就完全不是这一份了
@@ -76,7 +76,7 @@ void InstallPageController::openPage(const QString &gameVersion) {
     // 四个加载器能装哪些版本：**进这一页就全问出去**，不能"点开了再获取"。点开哪条
     // 现拉哪条会留下"点不开了"的状态（见 fillLoaderVersionItems() 里那段 NOTE）。
     requestAllLoaderVersions();
-    // 名称框里的默认值：勾的是「不安装」时就是原版号本身（那正是"装原版"这条老路）。
+    // 名称框里的默认值：勾的是「不装」时就是原版号本身（那正是"装原版"这条老路）。
     updateInstallName();
 
     // 实例预设那一行：摘要按 `m_presetChoices` 刷一遍。
@@ -156,12 +156,12 @@ void InstallPageController::updateLoaderRows() {
     // 那棵树的样子**全部**在这一处决定（别处一个 setText/setData 都不许写）：
     // · 选中的那一条：第二行小字写它选的那一格（版本号 / 「最新版」/「稳定版」）；
     // · 其余几条加载器：第二行小字写「与 X 不兼容」；
-    // · 「不安装（纯原版）」那条：没有第二行（它不是加载器，不跟谁冲突）；它仍然存在，
+    // · 「不装（纯原版）」那条：没有第二行（它不是加载器，不跟谁冲突）；它仍然存在，
     // 但**不画在界面上**（只留内部状态，见 MainWindowUI 里那段 NOTE）。
     // NOTE: 选中某一条之后，**其余几条加载器变灰、也点不开**（选中之后其余几条不能
     // 点开）。改选别的加载器先点**当前这条行尾的 ×**
-    // —— 那一下退回「不安装（纯原版）」，其余几条重新亮起来（那条内部条目本身不画，
-    // 界面上没有重复的「不安装」选项可点）；换版本则点当前这条底下的版本号。
+    // —— 那一下退回「不装（纯原版）」，其余几条重新亮起来（那条内部条目本身不画，
+    // 界面上没有重复的「不装」选项可点）；换版本则点当前这条底下的版本号。
     // 本启动器一次只装一个加载器，所以"不兼容"说的是"两个不能同时装"，而灰掉
     // 说的是"这一下点了也不会变成装它"。
     const int selected = selectedLoader();
@@ -200,15 +200,15 @@ void InstallPageController::updateLoaderRows() {
         // 角色是 rowSubTextRole()：空串 = 那一行不画第二行小字（代理那边统一处理）。
         item->setData(MainWindowUI::loaderTreeKeyColumn(), MainWindowUI::rowSubTextRole(), subText);
         // 选中的那条加载器：行尾（箭头左边）画一个「取消」小叉 —— 点它 = 不装这个加载器了、
-        // 退回「不安装（纯原版）」（选中之后在展开箭头左侧摆一个小叉，点它就是取消安装
-        // 这个加载器）。**只有这一条**有这个叉：其余几条（包括「不安装」）没有"要取消的东西"。
+        // 退回「不装（纯原版）」（选中之后在展开箭头左侧摆一个小叉，点它就是取消安装
+        // 这个加载器）。**只有这一条**有这个叉：其余几条（包括「不装」）没有"要取消的东西"。
         // 点它的那一下由 MainWindow::eventFilter 接（几何是 VersionTreeDelegate::clearRect()）。
         item->setData(MainWindowUI::loaderTreeKeyColumn(), MainWindowUI::rowClearRole(),
                       isLoader && hasLoader && i == selected);
         // 灰那几条：选中了某个加载器之后**其余几条加载器**不可用（见上面那段 NOTE）。
         // 顺手把灰掉的那条**收起来** —— 收着的时候它底下的版本号看不见，而"展开着一份
         // 版本列表、整条却是灰的"看着像"点得动、只是不让点"（点一下才知道不是）。
-        // 「不安装（纯原版）」不参与：它不是加载器（isLoader 为假），而且是那条退路。
+        // 「不装（纯原版）」不参与：它不是加载器（isLoader 为假），而且是那条退路。
         if (isLoader) {
             const bool locked = hasLoader && i != selected;
             if (locked && item->isExpanded()) {
@@ -220,7 +220,7 @@ void InstallPageController::updateLoaderRows() {
 }
 
 void InstallPageController::selectLoader(int loaderIndex) {
-    // 「不安装（纯原版）」和四个加载器都是合法值；表外的值（界面表和枚举哪天对不上）
+    // 「不装（纯原版）」和四个加载器都是合法值；表外的值（界面表和枚举哪天对不上）
     // 一律当作"没选加载器"—— 宁可装成原版，也不要拿着一个不认识的下标去猜加载器。
     VersionManager::LoaderKind kind = VersionManager::LoaderKind::Fabric;
     m_selectedLoader = VersionManager::loaderKindFromIndex(loaderIndex, &kind)
@@ -231,7 +231,7 @@ void InstallPageController::selectLoader(int loaderIndex) {
     updateInstallName();
     // NOTE: **这里不发任何请求**。"有哪些版本"是进安装页时一次性全问好的
     // （见 requestAllLoaderVersions()：不能点开了再获取）。走这一句的只有两条路：点一条**版本号**（选中它爹那条加载器）、
-    // 点「不安装（纯原版）」那一条。点一条加载器**不再**选中它（那一下只展开/收起，
+    // 点「不装（纯原版）」那一条。点一条加载器**不再**选中它（那一下只展开/收起，
     // 见 onLoaderTreeClicked() 上面那段）—— 点一下就去碰那棵树会造成"点不开了"，别再走回去。
 }
 
@@ -248,7 +248,7 @@ void InstallPageController::requestAllLoaderVersions() {
     for (int i = 0; i < MainWindowUI::modLoaderOptionTexts().size(); ++i) {
         VersionManager::LoaderKind kind = VersionManager::LoaderKind::Fabric;
         if (!VersionManager::loaderKindFromIndex(i, &kind)) {
-            continue;  // 「不安装（纯原版）」那一条：原版没有加载器版本可问
+            continue;  // 「不装（纯原版）」那一条：原版没有加载器版本可问
         }
         QTreeWidgetItem *item = loaderItem(i);
         if (item == nullptr) {
@@ -390,7 +390,7 @@ void InstallPageController::onLoaderVersionsFetched(const QString &gameVersion, 
         return;
     }
     if (!success) {
-        // 拉不到：那一条底下**只留那两档**，外加一条灰的「列表获取失败」把话说到 ——
+        // 拉不到：那一条底下**只留那两档**，外加一条灰的「列表没取到」把话说到 ——
         // 不钉版本这条路是不需要这份列表的（安装器自己会挑，问的是另一份东西：
         // promotions / maven 清单，见 installLoaderVersion 那条路），所以"列不出来"不该把
         // 安装整件事堵死，但也不能一声不吭。
@@ -415,7 +415,7 @@ void InstallPageController::onLoaderVersionsFetched(const QString &gameVersion, 
                 LoadingState::beginRow(loader, MainWindowUI::loaderVersionFetchingText());
                 m_owner.m_versionManager->requestLoaderVersions(m_gameVersion, kind);
             });
-        m_owner.appendLog(MainWindow::tr("未获取到 %1 在 %2 上的版本列表：%3")
+        m_owner.appendLog(MainWindow::tr("%1 在 %2 上有哪些版本没取到：%3")
                       .arg(VersionManager::loaderDisplayName(kind), gameVersion, errorMessage));
         return;
     }
@@ -423,7 +423,7 @@ void InstallPageController::onLoaderVersionsFetched(const QString &gameVersion, 
         // **问到了、就是没有**（四种加载器上都可能：Forge 还没支持某个刚发的快照）。
         // 这时候底下**不留那两档**（列表里没有能装的版本，就不保留「自动」那两档）：
         // 留着它等于让用户挑一条必然装不出来的路 —— 安装那条路会以"X 还没有支持 Y 的版本"
-        // 收场，那一下本来在这一眼就该说完（这种情况摆「无可用版本」而不是「列表获取失败」）。
+        // 收场，那一下本来在这一眼就该说完（这种情况摆「无可用版本」而不是「列表没取到」）。
         //
         // NOTE: 起"**有预览版、没有正式版**"的那种版本**不算**这一支 ——
         // 「beta 版虽然不稳定，但是也能使用」，所以那一份列表非空、照列，
@@ -590,7 +590,7 @@ void InstallPageController::openPresetPicker() {
             return out;
         }
         if (instanceName.isEmpty()) {
-            out.status = MainWindow::tr("请先在上方填写版本名称。");
+            out.status = MainWindow::tr("先在上面填好版本名称。");
             out.problem = true;
             return out;
         }
@@ -607,7 +607,7 @@ void InstallPageController::openPresetPicker() {
             return out;
         }
         if (!preview.ok) {
-            out.status = MainWindow::tr("无法计算此计划。");
+            out.status = MainWindow::tr("这一份算不出计划。");
             out.problem = true;
             return out;
         }
@@ -888,7 +888,7 @@ void InstallPageController::openPresetPicker() {
 
 void InstallPageController::installClicked() {
     if (m_owner.m_downloadInFlight) {
-        m_owner.appendLog(MainWindow::tr("已有下载任务正在进行，请待其结束后再试。"));
+        m_owner.appendLog(MainWindow::tr("已有下载任务正在进行，请等它结束。"));
         return;
     }
     // NOTE: 必须写 this-> —— 局部变量在它自己的初始化式里就已经可见，裸 gameVersion() 会解析成那个变量。
@@ -896,7 +896,7 @@ void InstallPageController::installClicked() {
     if (gameVersion.isEmpty()) {
         // 正常走不到（安装页只能从树里一个具体版本进来）。真走到了就是界面状态错了，
         // 宁可不做 —— 猜一个版本装下去会装到用户没点过的东西上。
-        InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("未选择版本"),
+        InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("没有选中版本"),
                              MainWindow::tr("未指定原版依赖，请返回版本列表重新选择。"));
         return;
     }
@@ -904,7 +904,7 @@ void InstallPageController::installClicked() {
     const QString name = m_owner.m_ui->getInstallNameEdit()->text().trimmed();
     const QString invalid = InstanceFiles::validateDirName(name);
     if (!invalid.isEmpty()) {
-        InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("名称不可用"), invalid);
+        InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("名字不能用"), invalid);
         return;
     }
 
@@ -919,10 +919,8 @@ void InstallPageController::installClicked() {
         const bool sameAsVanilla = name == gameVersion;
         const auto answer = InlineMessage::question(m_owner.m_ui->overlay(), sameAsVanilla ? MainWindow::tr("版本已存在") : MainWindow::tr("实例已存在"),
             sameAsVanilla
-                ? MainWindow::tr("版本 %1 已下载。\n是否校验并修复缺失或损坏的文件？").arg(name)
-                : MainWindow::tr("实例「%1」已安装。\n"
-                                 "是否校验并修复缺失或损坏的文件？").arg(name), MainWindow::tr("是"),
-                  MainWindow::tr("否"), true);
+                ? MainWindow::tr("版本 %1 已经下载过了。\n是否校验并修复缺失或损坏的文件？").arg(name)
+                : MainWindow::tr("实例「%1」已经装过了。\n是否校验并修复缺失或损坏的文件？").arg(name), MainWindow::tr("是"), MainWindow::tr("否"), true);
         if (!answer) {
             m_owner.appendLog(MainWindow::tr("已取消对 %1 的校验。").arg(name));
             return;
@@ -983,7 +981,7 @@ void InstallPageController::installClicked() {
                     m_owner.m_ui->overlay(), MainWindow::tr("无法应用此预设"),
                     MainWindow::tr("%1「%2」：%3")
                         .arg(title, preview.presetName,
-                             why.isEmpty() ? MainWindow::tr("无法计算此计划。") : why));
+                             why.isEmpty() ? MainWindow::tr("这一份算不出计划。") : why));
                 return;
             }
             // 每一份自己那一道「覆盖」闸：装好之后按这一格决定要不要再问一次。
@@ -1043,7 +1041,7 @@ bool InstallPageController::pickInstallerJava(const QString &gameVersion, int lo
     // 加载器本来就会把原版补齐，而"要哪个 Java"从那份 json 里读最准，猜一个主版本比不猜更
     // 危险（见启动那条路上"拿不到 version.json 就不能猜"那段注释）。
     // 参数收下标、在这里翻一次枚举（和界面别处同一处翻译，见 VersionManager 里那段注释）。
-    // 翻不出来 = 没勾加载器 / 勾的是「不安装」：一个外部安装器都不跑，直接放行。
+    // 翻不出来 = 没勾加载器 / 勾的是「不装」：一个外部安装器都不跑，直接放行。
     VersionManager::LoaderKind kind = VersionManager::LoaderKind::Fabric;
     if (!VersionManager::loaderKindFromIndex(loaderIndex, &kind)) {
         return true;
@@ -1063,13 +1061,12 @@ bool InstallPageController::pickInstallerJava(const QString &gameVersion, int lo
     QString javaReason;
     if (!m_owner.m_javaSettings->installerJavaFor(requiredJavaMajor, configuredJava, &installerJava,
                                           &javaReason)) {
-        m_owner.appendLog(MainWindow::tr("无法获取此版本所需的 Java：%1").arg(javaReason));
-        InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("Java 版本过低"), javaReason);
+        m_owner.appendLog(MainWindow::tr("这个版本要的 Java 拿不到：%1").arg(javaReason));
+        InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("Java 版本不够"), javaReason);
         return false;
     }
     if (installerJava != configuredJava) {
-        m_owner.appendLog(MainWindow::tr("此版本需要 Java %1，"
-                                         "安装时将改用 %2").arg(requiredJavaMajor).arg(installerJava));
+        m_owner.appendLog(MainWindow::tr("这个版本要 Java %1，装的时候改用 %2").arg(requiredJavaMajor).arg(installerJava));
     }
     *out = installerJava;
     return true;

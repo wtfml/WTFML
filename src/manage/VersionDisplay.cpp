@@ -8,7 +8,6 @@
 
 #include <QDate>
 #include <QDateTime>
-#include <QRegularExpression>
 #include <QStringList>
 
 #include <algorithm>
@@ -91,37 +90,6 @@ QString formatVersionName(const VersionDisplayParts &parts) {
     appendIfNew(loaderName);
 
     return chosen.join(QLatin1Char('-'));
-}
-
-InstanceListRowText formatInstanceListRow(const VersionDisplayParts &parts) {
-    const QString id = sanitizeComponent(parts.id);
-    const QString gameVersion = sanitizeComponent(parts.realVersion);
-    const QString loader = sanitizeComponent(parts.loaderName);
-    const QString loaderVersion = sanitizeComponent(parts.loaderVersion);
-    const QString loaderText = loaderVersion.isEmpty() ? loader : loader + QLatin1Char(' ') + loaderVersion;
-
-    const QString name = sanitizeComponent(parts.customName);
-    if (!name.isEmpty()) {
-        return {name, gameVersion};
-    }
-    if (gameVersion.isEmpty()) {
-        return {id, {}};
-    }
-
-    // 旧实例的名字可能只在目录里。识别常见的默认目录名，其余目录名沿用为标题。
-    static const QRegularExpression separators(QStringLiteral("[ _-]+"));
-    const auto normalized = [](QString text) { return text.replace(separators, QStringLiteral("-")).toCaseFolded(); };
-    const QString folder = normalized(id);
-    const QString version = normalized(gameVersion);
-    const QString versionWithLoader = normalized(gameVersion + QLatin1Char('-') + loader);
-    const QString versionWithLoaderBuild = normalized(gameVersion + QLatin1Char('-') + loaderText);
-    const bool shortOptiFineId = loader.compare(QLatin1String("OptiFine"), Qt::CaseInsensitive) == 0
-        && loaderVersion.startsWith(QLatin1String("HD_U_"), Qt::CaseInsensitive)
-        && folder == normalized(gameVersion + QLatin1Char('-') + loader + QLatin1Char('-') + loaderVersion.mid(5));
-    if (folder == version || folder == versionWithLoader || folder == versionWithLoaderBuild || shortOptiFineId) {
-        return {gameVersion, {}};
-    }
-    return {id, gameVersion};
 }
 
 QString launchStatusName(const VersionDisplayParts &parts) {

@@ -421,9 +421,9 @@ int runInstanceGroupTests(const QString &sandbox) {
               "Q9b assign 和 replaceGroups 报的是同一句话（都是那份文件读不懂的真因）",
               QStringLiteral("assign=[%1] replace=[%2]").arg(assignError, replaceError));
         check(!assignError.isEmpty() &&
-                  !assignError.contains(QStringLiteral("未找到指定分组")),
-              "Q9b 报的不是「未找到指定分组」（那是被挡住的那个假因）", assignError);
-        check(!assignError.contains(QStringLiteral("未指定要分组的实例")),
+                  !assignError.contains(QStringLiteral("找不到指定分组")),
+              "Q9b 报的不是「找不到指定分组」（那是被挡住的那个假因）", assignError);
+        check(!assignError.contains(QStringLiteral("没有指定要给哪个实例分组")),
               "Q9b 也不是判错成「空键」那条内部错误");
         check(readBytes() == broken, "Q9b 拒绝之后文件逐字节没动");
     }

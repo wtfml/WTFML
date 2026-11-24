@@ -216,7 +216,7 @@ void runDroppedFileTests() {
               "★★ T30.5 不在对应那一页 ⇒ 弹的就是用户点名那句话（`模组` 是**认出来的**类型，"
               "不是后缀）",
               g_modalText);
-        check(g_modalTitle == QStringLiteral("安装到此实例") && g_modalWasWarning == false,
+        check(g_modalTitle == QStringLiteral("装进这个实例") && g_modalWasWarning == false,
               "T30.5 那句话框的标题是「装进这个实例」（不是报错那一档）", g_modalTitle);
         check(exists(instanceDir + QStringLiteral("/mods/第二个模组.jar")),
               "T30.5 答「继续」⇒ 文件真的进了 mods/");
@@ -268,7 +268,7 @@ void runDroppedFileTests() {
             dropFilesOn(page, {sameName});
             QApplication::processEvents();
         });
-        check(g_modalTitle.contains(QStringLiteral("已存在同名项")) &&
+        check(g_modalTitle.contains(QStringLiteral("已经有一个同名的")) &&
                   g_modalText.contains(QStringLiteral("本来就有的.jar")) &&
                   g_modalText.contains(QStringLiteral("跳过已有项")) &&
                   g_modalText.contains(QStringLiteral("取消")),

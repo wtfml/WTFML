@@ -50,7 +50,7 @@ int UiSettingsShotsCheck(QApplication &app) {
             combo->setCurrentIndex(current);
         };
         fill(ui.getGameWindowModeCombo(), {QStringLiteral("窗口化"), QStringLiteral("最大化"), QStringLiteral("全屏")});
-        fill(ui.getLauncherBehaviourCombo(), {QStringLiteral("隐藏启动器"), QStringLiteral("保持打开"), QStringLiteral("退出启动器")});
+        fill(ui.getLauncherBehaviourCombo(), {QStringLiteral("收起启动器"), QStringLiteral("保持打开"), QStringLiteral("退出启动器")});
         fill(ui.getProcessPriorityCombo(), {QStringLiteral("正常"), QStringLiteral("较高"), QStringLiteral("较低")});
         fill(ui.getDownloadSourceCombo(), {QStringLiteral("优先官方源"), QStringLiteral("优先镜像"), QStringLiteral("仅官方")});
         fill(ui.getDownloadConcurrencyCombo(), {QStringLiteral("8 个"), QStringLiteral("16 个"), QStringLiteral("32 个")});

@@ -110,7 +110,7 @@ void OpenAiCompatibleClient::begin(const Agent::ModelRequest &request, bool conn
     if (request.apiKey.isEmpty() && request.authMode != QLatin1String("none")) {
         Agent::Error error;
         error.kind = Agent::ErrorKind::NoConfiguration;
-        error.message = QStringLiteral("无可用的 API Key，请先在设置中配置。");
+        error.message = QStringLiteral("没有可用的 API Key，请先在设置里配置。");
         emit failed(request.requestId, error);
         return;
     }

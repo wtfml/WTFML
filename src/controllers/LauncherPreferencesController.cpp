@@ -42,7 +42,7 @@ void LauncherPreferencesController::downloadConcurrencyChanged() {
     m_settings->setDownloadConcurrency(
         m_ui->getDownloadConcurrencyCombo()->currentData().toInt());
     syncDownloadConcurrency();
-    log(tr("下载：同时最多下载 %1 个文件（对正在下载的队列同样生效，已在下载的文件不会被中止）。")
+    log(tr("下载：同时最多 %1 个文件在下载（对正在下的这一批也生效，已经在下的那几个不会被叫停）。")
             .arg(m_settings->downloadConcurrency()));
 }
 
@@ -53,7 +53,7 @@ void LauncherPreferencesController::downloadSpeedLimitChanged() {
     syncDownloadSpeedLimit();
     const qint64 limit = m_settings->downloadSpeedLimit();
     log(limit > 0
-            ? tr("下载：速度上限 %1 KB/s（对正在下载的队列同样生效）。")
+            ? tr("下载：速度上限 %1 KB/s（对正在下的这一批也生效）。")
                   .arg(limit / 1024)
             : tr("下载：不再限制速度。"));
 }
@@ -68,7 +68,7 @@ void LauncherPreferencesController::downloadProxyModeChanged() {
     syncDownloadProxy();
     switch (m_settings->proxyMode()) {
     case DownloadProxy::Mode::Direct:
-        log(tr("网络：不使用代理（直连）。"));
+        log(tr("网络：不走代理（直连）。"));
         break;
     case DownloadProxy::Mode::Manual:
         log(tr("网络：使用手动指定的代理（%1）。")
@@ -92,7 +92,7 @@ void LauncherPreferencesController::downloadProxyManualChanged() {
     // 而不是把整条网络掐掉。
     if (m_settings->proxyMode() == DownloadProxy::Mode::Manual && !text.isEmpty() &&
         !DownloadProxy::parseManual(text, &endpoint, &error)) {
-        InlineMessage::warning(m_ui->overlay(), tr("代理地址无效"), error);
+        InlineMessage::warning(m_ui->overlay(), tr("代理地址写得不对"), error);
         syncDownloadProxy();
         return;
     }
@@ -116,21 +116,21 @@ void LauncherPreferencesController::downloadAutoIntoInstanceChanged() {
     const bool on = m_ui->getDownloadAutoIntoInstanceCheck()->isChecked();
     m_settings->setDownloadAutoIntoInstance(on);
     log(on ? tr("从实例设置下载的模组将直接保存到该实例。")
-           : tr("下载：无论从何处进入，每次都询问保存位置。"));
+           : tr("下载：不管从哪儿点进来的，每次都会问存哪儿。"));
 }
 
 void LauncherPreferencesController::warnMissingDependenciesChanged() {
     const bool on = m_ui->getWarnMissingDependenciesCheck()->isChecked();
     m_settings->setWarnMissingDependencies(on);
-    log(on ? tr("下载：下载模组 / 光影包前，先检查目标实例是否缺少前置。")
+    log(on ? tr("下载：点下载模组 / 光影包时会先检查那个实例缺不缺前置。")
            : tr("仅下载所选版本，跳过依赖检查。"));
 }
 
 void LauncherPreferencesController::showGameLogChanged() {
     const bool show = m_ui->getShowGameLogCheck()->isChecked();
     m_settings->setShowGameLog(show);
-    log(show ? tr("游戏日志：启动游戏时打开日志窗口。")
-             : tr("游戏日志：不再自动打开日志窗口。"));
+    log(show ? tr("游戏日志：启动游戏时会开一个日志窗。")
+             : tr("游戏日志：不再自动开日志窗。"));
 }
 
 void LauncherPreferencesController::warnDuplicateLaunchChanged() {

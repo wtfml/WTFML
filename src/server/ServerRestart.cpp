@@ -25,7 +25,7 @@ bool isAbnormal(Why why) {
 QString whyName(Why why) {
     switch (why) {
     case Why::UserStop:
-        return QCoreApplication::translate("ServerRestart", "用户手动停止");
+        return QCoreApplication::translate("ServerRestart", "你自己停的");
     case Why::CleanExit:
         return QCoreApplication::translate("ServerRestart", "正常退出");
     case Why::Crash:

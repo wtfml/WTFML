@@ -788,7 +788,7 @@ struct ImageFitInfo {
 
 const ImageFitInfo kImageFitInfos[] = {
     {"cover", QT_TRANSLATE_NOOP("Theme", "填满并裁剪")},
-    {"contain", QT_TRANSLATE_NOOP("Theme", "完整显示")},
+    {"contain", QT_TRANSLATE_NOOP("Theme", "完整放下")},
     {"stretch", QT_TRANSLATE_NOOP("Theme", "拉伸填满")},
     {"tile", QT_TRANSLATE_NOOP("Theme", "平铺")},
 };
@@ -875,10 +875,10 @@ const RoleInfo kRoleInfos[] = {
     {"window", QT_TRANSLATE_NOOP("Theme", "内容区底色"), QPalette::Window},
     {"base", QT_TRANSLATE_NOOP("Theme", "输入框/列表底色"), QPalette::Base},
     {"alternateBase", QT_TRANSLATE_NOOP("Theme", "隔行底色"), QPalette::AlternateBase},
-    {"text", QT_TRANSLATE_NOOP("Theme", "输入框/列表文字"), QPalette::Text},
+    {"text", QT_TRANSLATE_NOOP("Theme", "输入框/列表里的字"), QPalette::Text},
     {"windowText", QT_TRANSLATE_NOOP("Theme", "正文"), QPalette::WindowText},
     {"button", QT_TRANSLATE_NOOP("Theme", "按钮底色"), QPalette::Button},
-    {"buttonText", QT_TRANSLATE_NOOP("Theme", "按钮文字"), QPalette::ButtonText},
+    {"buttonText", QT_TRANSLATE_NOOP("Theme", "按钮上的字"), QPalette::ButtonText},
     {"highlight", QT_TRANSLATE_NOOP("Theme", "选中/悬停"), QPalette::Highlight},
     {"highlightedText", QT_TRANSLATE_NOOP("Theme", "选中项文字"), QPalette::HighlightedText},
     {"placeholderText", QT_TRANSLATE_NOOP("Theme", "次要文字"), QPalette::PlaceholderText},

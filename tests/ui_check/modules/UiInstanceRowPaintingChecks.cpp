@@ -696,9 +696,9 @@ int UiInstanceRowPaintingChecks() {
               "★ Z14 空表**不摆一片空白**：摆一句「这个资源一个版本都没发过」"
               "（那条说明自己算一条顶层条目）",
               page.placeholderText());
-        page.setPlaceholder(QStringLiteral("正在读取版本列表…"));
-        check(page.placeholderText() == QStringLiteral("正在读取版本列表…") &&
-                  page.groupTitleAt(0) == QStringLiteral("正在读取版本列表…"),
+        page.setPlaceholder(QStringLiteral("正在读版本列表…"));
+        check(page.placeholderText() == QStringLiteral("正在读版本列表…") &&
+                  page.groupTitleAt(0) == QStringLiteral("正在读版本列表…"),
               "★ Z14 「正在读…」那句是同一条路摆上去的（代理给顶层画粗体，"
               "和下载页那四张表里「没取到」那句一个形状）",
               page.groupTitleAt(0));

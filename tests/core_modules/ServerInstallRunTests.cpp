@@ -177,7 +177,7 @@ void runServerInstallRunTests() {
               "★★ ZY3 那一步收尾时的小字把**构建号**说出来（用户得知道装的是哪一条）",
               fill.detail);
 
-        // 上游上游未标注稳定版时：退回最新那条，但**必须说出来** —— 不然用户以为手上这个是稳定版。
+        // 上游没标稳定档时：退回最新那条，但**必须说出来** —— 不然用户以为手上这个是稳定版。
         const QByteArray onlyAlpha = R"([
             {"id": 231, "channel": "ALPHA", "downloads": {"server:default": {
                 "name": "paper-1.21.4-231.jar", "url": "https://example.invalid/231.jar",
@@ -192,13 +192,13 @@ void runServerInstallRunTests() {
                   alpha.plan.downloads.first().url.endsWith(QStringLiteral("232.jar")),
               "★★ ZY3 一条稳定档都没有 ⇒ 退回最新那条（不是「一条都下不了」）",
               alpha.problem);
-        check(alpha.detail.contains(QStringLiteral("上游未标注稳定版")),
+        check(alpha.detail.contains(QStringLiteral("没标稳定档")),
               "★★ ZY3 而且那句小字**明说**这不是稳定档（用户不能以为手上这个是稳的）",
               alpha.detail);
 
         const ServerInstallRun::Fill none =
             ServerInstallRun::fillDownloads(request, plan, QByteArray("[]"));
-        check(!none.ok && none.problem.contains(QStringLiteral("未发布此游戏版本的构建")),
+        check(!none.ok && none.problem.contains(QStringLiteral("没给这个游戏版本发过构建")),
               "★ ZY3 空列表 ⇒ 明说「这个版本没有构建」（换个版本，不是重试）", none.problem);
 
         const ServerInstallRun::Fill wrongShape =
@@ -340,10 +340,10 @@ void runServerInstallRunTests() {
         forge.loaderVersion = QStringLiteral("47.2.0");
         const ServerInstall::Plan forgePlan = ServerInstall::planFor(forge);
         const QStringList forgeSteps = ServerInstallRun::stepNames(forge, forgePlan);
-        check(forgeSteps.contains(QStringLiteral("运行安装器")),
+        check(forgeSteps.contains(QStringLiteral("跑安装器")),
               "★★ ZY7 要跑安装器的档多一格「跑安装器」（用户得看得见机器在干活）",
               forgeSteps.join(QLatin1Char('|')));
-        check(forgeSteps.indexOf(QStringLiteral("运行安装器")) == forgeSteps.size() - 2,
+        check(forgeSteps.indexOf(QStringLiteral("跑安装器")) == forgeSteps.size() - 2,
               "★ ZY7 它在核对那一步**前面**（顺序：下载 → 跑安装器 → 核对）",
               forgeSteps.join(QLatin1Char('|')));
 

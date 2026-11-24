@@ -1,5 +1,4 @@
 #pragma once
-#include <QCoreApplication>
 #include <QList>
 #include <QString>
 #include <QStringList>
@@ -75,10 +74,10 @@ inline bool parseManual(const QString &raw, Endpoint *out, QString *error = null
         if (error) *error = why;
         return false;
     };
-    if (out == nullptr) return fail(QCoreApplication::translate("DownloadProxy", "内部错误：未接收到解析结果"));
+    if (out == nullptr) return fail(QStringLiteral("内部错误：没有接住解析结果"));
     QString text = raw.trimmed();
     if (text.isEmpty()) {
-        return fail(QCoreApplication::translate("DownloadProxy", "手动代理须填写地址，例如 127.0.0.1:7890。"));
+        return fail(QStringLiteral("手动代理要填一个地址，例如 127.0.0.1:7890。"));
     }
     // 前缀（协议）。没有前缀 = HTTP 代理。
     bool socks5 = false;
@@ -90,13 +89,12 @@ inline bool parseManual(const QString &raw, Endpoint *out, QString *error = null
             scheme == QStringLiteral("socks")) {
             socks5 = true;
         } else if (scheme != QStringLiteral("http") && scheme != QStringLiteral("https")) {
-            return fail(QCoreApplication::translate("DownloadProxy", "仅支持 http:// 和 socks5:// "
-                                                                     "两种前缀（省略前缀时按 HTTP 处理）。"));
+            return fail(QStringLiteral("只认 http:// 和 socks5:// 两种前缀（不写前缀就是 HTTP）。"));
         }
     }
     // 地址里不该再有路径 / 查询串 —— 那是把"要访问的网址"填进来了。
     if (text.contains(QLatin1Char('/'))) {
-        return fail(QCoreApplication::translate("DownloadProxy", "代理地址仅填写主机和端口，不含路径。"));
+        return fail(QStringLiteral("代理地址只要主机和端口，不要带路径。"));
     }
     QString host;
     QString portText;
@@ -104,35 +102,34 @@ inline bool parseManual(const QString &raw, Endpoint *out, QString *error = null
         // IPv6：[::1]:7890
         const int close = text.indexOf(QLatin1Char(']'));
         if (close < 0) {
-            return fail(QCoreApplication::translate("DownloadProxy", "IPv6 地址须用方括号括起，例如 [::1]:7890。"));
+            return fail(QStringLiteral("IPv6 地址要用方括号包起来，例如 [::1]:7890。"));
         }
         host = text.mid(1, close - 1).trimmed();
         if (close + 1 >= text.size() || text.at(close + 1) != QLatin1Char(':')) {
-            return fail(QCoreApplication::translate("DownloadProxy", "须填写端口，例如 [::1]:7890。"));
+            return fail(QStringLiteral("要写端口，例如 [::1]:7890。"));
         }
         portText = text.mid(close + 2).trimmed();
     } else {
         const int colon = text.lastIndexOf(QLatin1Char(':'));
         if (colon < 0) {
-            return fail(QCoreApplication::translate("DownloadProxy", "须填写端口，例如 127.0.0.1:7890。"));
+            return fail(QStringLiteral("要写端口，例如 127.0.0.1:7890。"));
         }
         host = text.left(colon).trimmed();
         portText = text.mid(colon + 1).trimmed();
     }
     if (host.isEmpty()) {
-        return fail(QCoreApplication::translate("DownloadProxy", "主机部分为空。"));
+        return fail(QStringLiteral("主机那一截是空的。"));
     }
     for (const QChar ch : host) {
         if (ch.isSpace() || ch == QLatin1Char('@') || ch == QLatin1Char('#') ||
             ch == QLatin1Char('?') || ch == QLatin1Char('\\')) {
-            return fail(QCoreApplication::translate("DownloadProxy", "主机部分含无法识别的字符，"
-                                                                     "仅支持主机名或 IP。"));
+            return fail(QStringLiteral("主机那一截里有不认识的字符，只要主机名或 IP。"));
         }
     }
     bool ok = false;
     const int port = portText.toInt(&ok);
     if (!ok || port < 1 || port > 65535) {
-        return fail(QCoreApplication::translate("DownloadProxy", "端口须为 1~65535 之间的整数。"));
+        return fail(QStringLiteral("端口要是 1~65535 之间的整数。"));
     }
     if (out) {
         out->host = host;

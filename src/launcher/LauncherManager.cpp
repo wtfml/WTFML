@@ -274,7 +274,7 @@ bool LauncherManager::checkPreLaunch(const QString &versionId, QStringList *erro
             const QString storageProblem = StorageAvailability::unavailableReason(basePath);
             errors->append(storageProblem.isEmpty()
                                ? tr("无法创建 Minecraft 目录：%1").arg(basePath)
-                               : tr("游戏目录所在的磁盘当前不可用：%1\n%2")
+                               : tr("游戏目录所在的磁盘现在不可用：%1\n%2")
                                      .arg(QDir::toNativeSeparators(basePath), storageProblem));
         }
         return false;
@@ -287,7 +287,7 @@ bool LauncherManager::checkPreLaunch(const QString &versionId, QStringList *erro
     const QString storageProblem = StorageAvailability::unavailableReason(basePath);
     if (!storageProblem.isEmpty()) {
         if (errors) {
-            errors->append(tr("游戏目录所在的磁盘当前不可用：%1\n%2")
+            errors->append(tr("游戏目录所在的磁盘现在不可用：%1\n%2")
                                .arg(QDir::toNativeSeparators(basePath), storageProblem));
         }
         return false;
@@ -502,31 +502,8 @@ QStringList LauncherManager::generateJvmArguments(const QString &token, const QS
                                                   const QString &playerUuid,
                                                   const GameWindowSettings &window,
                                                   const ScreenWorkArea &screen,
-                                                  const QuickPlay::Target &quickPlay,
-                                                  const LaunchRoots *roots) const {
+                                                  const QuickPlay::Target &quickPlay) const {
     if (!offlineMode) SecretRedactor::remember(token);
-
-    // 普通启动（roots == nullptr）逐字节沿用 AppPaths 的当前数据根；测试启动把
-    // versionDir 指到工作区，其余共享路径仍来自当前游戏根。所有派生路径都从这里取，
-    // 不在函数体里再散写 AppPaths。
-    const auto versionDir = [&]() {
-        return roots != nullptr ? roots->versionDir : AppPaths::versionDir(versionId);
-    };
-    const auto assetsDir = [&]() {
-        return roots != nullptr ? roots->assetsDir : AppPaths::assetsDir();
-    };
-    const auto librariesDirFor = [&]() {
-        return roots != nullptr ? roots->librariesDir : AppPaths::libraryDir();
-    };
-    const auto nativesDirFor = [&]() {
-        return roots != nullptr ? roots->nativesDir : AppPaths::nativesDir(versionId);
-    };
-    const auto jarPath = [&]() {
-        return roots != nullptr ? roots->jarPath : InstanceFiles::jarPath(versionId);
-    };
-    const auto siblingJarDir = [&]() {
-        return roots != nullptr ? roots->siblingJarDir : versionDir();
-    };
     // 分辨率那两个数**这一层不再自己判**：哪些数要发、发不发，全在 gameWindowArguments()
     // 那个纯函数里 —— 它是纯的，验证工程能直接把三档 + 屏幕尺寸喂进去看发出来什么。
     //
@@ -636,7 +613,7 @@ QStringList LauncherManager::generateJvmArguments(const QString &token, const QS
     //
     // 绝对路径的基准是 AppPaths::minecraftDir()，和 startGame() 里那个 setWorkingDirectory
     // 无关了 —— cwd 换成版本目录（PCL 那种）不再需要同时改这里。
-    const QString minecraftRoot = roots != nullptr ? roots->gameRoot : AppPaths::minecraftDir();
+    const QString minecraftRoot = AppPaths::minecraftDir();
     const auto absoluteEntry = [&minecraftRoot](const QString &relative) {
         return QDir::toNativeSeparators(QDir(minecraftRoot).absoluteFilePath(relative));
     };
@@ -652,22 +629,18 @@ QStringList LauncherManager::generateJvmArguments(const QString &token, const QS
     // NOTE: 只判 gameDir 和 jar：natives 那一份是 ensure() 按"真实的 natives 目录存不存在"
     // 建的（不存在就不建），跟着 needsNativesDir 走 —— 那边真缺了会在下面
     // hasNativeLibraries() 那一句里现原形（qWarning），不会静默发一条错路径出去。
-    // roots != nullptr（测试启动）不做 Java 8 的 ASCII 别名：工作区路径由启动器生成，
-    // 且 1.20.1 一类测试目标不需要 Java 8。普通启动行为不变。
-    const AsciiPathAlias::Paths asciiAlias =
-        roots == nullptr ? AsciiPathAlias::pathsFor(versionId) : AsciiPathAlias::Paths{};
-    const QString realGameDir = versionDir();
-    const QString realJarPath = jarPath();
+    const AsciiPathAlias::Paths asciiAlias = AsciiPathAlias::pathsFor(versionId);
+    const QString realGameDir = AppPaths::versionDir(versionId);
+    const QString realJarPath = InstanceFiles::jarPath(versionId);
     const bool useAsciiAlias =
-        roots == nullptr && AsciiPathAlias::needed(javaMajorVersion, {realGameDir, realJarPath}) &&
+        AsciiPathAlias::needed(javaMajorVersion, {realGameDir, realJarPath}) &&
         AsciiPathAlias::isReady(asciiAlias);
     if (useAsciiAlias) {
         qDebug() << "Java 8 + 非 ASCII 路径：改用 ASCII 别名" << asciiAlias.root;
     }
     const QString gameDirForJava =
-        roots != nullptr ? QDir::toNativeSeparators(versionDir())
-        : useAsciiAlias ? QDir::toNativeSeparators(asciiAlias.gameDir)
-                        : QDir::toNativeSeparators(AppPaths::versionDir(versionId));
+        useAsciiAlias ? QDir::toNativeSeparators(asciiAlias.gameDir)
+                      : QDir::toNativeSeparators(AppPaths::versionDir(versionId));
     // 实例目录顶层某个 jar 在 classpath 上该用的路径（要不要走别名都在这里一处判）。
     // `ownerId` 是**必填**的。这个 lambda 不能自己调
     // `jarOwnerId(versionId)`：下面"兄弟 jar"那一圈读的是 `versionDir(versionId)` 里的
@@ -676,15 +649,7 @@ QStringList LauncherManager::generateJvmArguments(const QString &token, const QS
     // 目录、拼出来的路径却指回原版目录。轻则那个 jar 不在 classpath 上（主类找不到，症状
     // 和这个功能要修的 bug 一模一样），重则**同名不同物**：原版目录里恰好有个同名 jar 时
     // 塞进 classpath 的是另一个文件。读取方和拼路径方必须是同一个目录。
-    const auto classpathJarFor = [&](const QString &ownerId, const QString &fileName,
-                                     bool sibling = false) {
-        if (roots != nullptr) {
-            if (sibling) {
-                return QDir::toNativeSeparators(
-                    QDir(siblingJarDir()).absoluteFilePath(fileName));
-            }
-            if (ownerId == versionId) return QDir::toNativeSeparators(roots->jarPath);
-        }
+    const auto classpathJarFor = [&](const QString &ownerId, const QString &fileName) {
         return useAsciiAlias ? QDir::toNativeSeparators(asciiAlias.jarFor(fileName))
                              : absoluteEntry(
                                    QStringLiteral("versions/%1/%2").arg(ownerId, fileName));
@@ -746,7 +711,7 @@ QStringList LauncherManager::generateJvmArguments(const QString &token, const QS
     // NOTE: 走了 ASCII 别名时这里换成别名里那一份（它是个联接，指的还是同一个目录）——
     // -Djava.library.path 是**递给 Java 看**的路径，非 ASCII 一样会被它认岔。
     if (needsNativesDir) {
-        const QString nativesDir = useAsciiAlias ? asciiAlias.nativesDir : nativesDirFor();
+        const QString nativesDir = useAsciiAlias ? asciiAlias.nativesDir : nativesDirectory(versionId);
         if (hasNativeLibraries(nativesDir)) {
             const QString nativePath = QDir::toNativeSeparators(nativesDir);
             args << QStringLiteral("-Djava.library.path=%1").arg(nativePath);
@@ -795,19 +760,8 @@ QStringList LauncherManager::generateJvmArguments(const QString &token, const QS
     // （工程里没有引入 —— 读 zip 一律借 PowerShell，而这里每次启动都要查，不能再起进程）。
     // 万一某个 jar 的**内容**里恰好有这串字节，后果也只是多加一个无害的 jar。
     if (!mainClassEntry.isEmpty()) {
-        const QString instanceDir = siblingJarDir();
-        QStringList siblingJars;
-        if (roots != nullptr) {
-            siblingJars =
-                QDir(instanceDir).entryList(QStringList{QStringLiteral("*.jar")}, QDir::Files);
-            // 工作区副本里的客户端 jar 是源客户端的复制；classpath 已经用了源 jar，
-            // 不能再把副本当兄弟 jar 加一遍（同名类进两次）。
-            siblingJars.removeAll(versionId + QStringLiteral(".jar"));
-            const QString sourceJarName = QFileInfo(roots->jarPath).fileName();
-            if (!sourceJarName.isEmpty()) siblingJars.removeAll(sourceJarName);
-        } else {
-            siblingJars = InstanceFiles::scanDir(versionId).jarNames;
-        }
+        const QString instanceDir = AppPaths::versionDir(versionId);
+        const QStringList siblingJars = InstanceFiles::scanDir(versionId).jarNames;
         // 循环不变量：主类那串字节只算一次（不能每轮 `toUtf8()` 重来一遍）。
         const QByteArray mainClassBytes = mainClassEntry.toUtf8();
         for (const QString &jar : siblingJars) {
@@ -815,7 +769,7 @@ QStringList LauncherManager::generateJvmArguments(const QString &token, const QS
             // 加进 classpath 的是要递给 Java 的那一个路径（Java 8 时是别名，见上面）。
             const QString full = QDir::toNativeSeparators(instanceDir + QLatin1Char('/') + jar);
             // 这些 jar 就在**实例自己**的目录里（`instanceDir` 上面那句），owner 传 versionId。
-            const QString jarPath = classpathJarFor(versionId, jar, /*sibling=*/true);
+            const QString jarPath = classpathJarFor(versionId, jar);
             if (classpathSeen.contains(jarPath.toCaseFolded())) {
                 continue;  // 已经在 classpath 上了（客户端 jar 自己，或者别的路径已经把
                            // 同一个文件加过一遍）—— 别再进一遍
@@ -849,8 +803,8 @@ QStringList LauncherManager::generateJvmArguments(const QString &token, const QS
     // 和上面那条 -Djava.library.path 同一个数（差别只在这里要 native 分隔符）：它在
     // version.json 里是 `${natives_directory}`，1.13～1.16 那几代的行星/Forge 就靠它。
     const QString nativesDir = QDir::toNativeSeparators(
-        useAsciiAlias ? asciiAlias.nativesDir : nativesDirFor());
-    const QString librariesDir = librariesDirFor();
+        useAsciiAlias ? asciiAlias.nativesDir : nativesDirectory(versionId));
+    const QString librariesDir = AppPaths::libraryDir();
 
     QHash<QString, QString> placeholders;
     placeholders[QStringLiteral("natives_directory")] = nativesDir;
@@ -980,7 +934,7 @@ QStringList LauncherManager::generateJvmArguments(const QString &token, const QS
 
         args << QStringLiteral("--username") << username << QStringLiteral("--version")
              << versionId << QStringLiteral("--gameDir") << gameDirForJava
-             << QStringLiteral("--assetsDir") << assetsDir()
+             << QStringLiteral("--assetsDir") << AppPaths::assetsDir()
              << QStringLiteral("--assetIndex") << assetIndexId << QStringLiteral("--uuid")
              << fakeUuid << QStringLiteral("--accessToken")
              << QStringLiteral("0")  // 离线模式使用的虚假令牌
@@ -1002,7 +956,7 @@ QStringList LauncherManager::generateJvmArguments(const QString &token, const QS
 
         args << QStringLiteral("--username") << username << QStringLiteral("--version")
              << versionId << QStringLiteral("--gameDir") << gameDirForJava
-             << QStringLiteral("--assetsDir") << assetsDir()
+             << QStringLiteral("--assetsDir") << AppPaths::assetsDir()
              << QStringLiteral("--assetIndex") << assetIndexId
              << QStringLiteral("--uuid") << uuid << QStringLiteral("--accessToken") << token
              << QStringLiteral("--userType") << QStringLiteral("msa");
@@ -1047,9 +1001,9 @@ QStringList LauncherManager::generateJvmArguments(const QString &token, const QS
     gamePlaceholders[QStringLiteral("auth_player_name")] = username;
     gamePlaceholders[QStringLiteral("version_name")] = versionId;
     gamePlaceholders[QStringLiteral("game_directory")] =
-        QDir::toNativeSeparators(versionDir());
+        QDir::toNativeSeparators(AppPaths::versionDir(versionId));
     gamePlaceholders[QStringLiteral("assets_root")] =
-        QDir::toNativeSeparators(assetsDir());
+        QDir::toNativeSeparators(AppPaths::assetsDir());
     gamePlaceholders[QStringLiteral("assets_index_name")] = assetIndexId;
     gamePlaceholders[QStringLiteral("auth_uuid")] = argUuid;
     gamePlaceholders[QStringLiteral("auth_access_token")] = argToken;
@@ -1158,7 +1112,7 @@ int LauncherManager::startGame(const QStringList &arguments, const EffectiveJava
     // 都不该挂在某个实例名下（被拦下的是"又开一个"这件事本身，不是某个实例）。
     if (runningCount() >= maxConcurrentSessions()) {
         qWarning() << "Too many game sessions already running:" << runningCount();
-        emit processError(0, tr("同时运行的游戏已有 %1 个（上限 %2），请关闭部分游戏后再启动。")
+        emit processError(0, tr("同时运行的游戏已经有 %1 个了（上限 %2），先关掉几个再启动。")
                                  .arg(runningCount())
                                  .arg(maxConcurrentSessions()));
         return 0;
@@ -1203,8 +1157,8 @@ int LauncherManager::startGame(const QStringList &arguments, const EffectiveJava
         if (program.isEmpty()) {
             qWarning() << "Java executable not found on PATH and no path is configured.";
             emit processError(sessionId,
-                              tr("未找到 Java：设置中未指定 Java 路径，系统 PATH 中也无 java。请在「设置 → "
-                                 "启动 → Java 管理」中指定 Java。"));
+                              tr("没有找到 Java：设置里没有指定 Java 路径，系统 PATH 上也没"
+                                 "有 java。请在「设置 → 启动 → Java 管理」里指定一份。"));
             discardSession(sessionId, /*abandoned=*/true);
             return 0;
         }
@@ -1223,7 +1177,7 @@ int LauncherManager::startGame(const QStringList &arguments, const EffectiveJava
         // 长路径这一档 `QFileInfo::exists()` 本身就看不穿（没开 LongPathsEnabled 时它
         // 走的就是 CreateFile 那一套），所以"没找到"可能只是路径太长。补一句，别让用户
         // 对着一条明明存在的 java.exe 反复核对。
-        emit processError(sessionId, tr("未找到 Java 可执行文件：%1").arg(program) +
+        emit processError(sessionId, tr("Java可执行文件未找到：%1").arg(program) +
                                         ProcessPathLimit::tooLongHint({program}));
         discardSession(sessionId, /*abandoned=*/true);
         return 0;
@@ -1262,15 +1216,14 @@ int LauncherManager::startGame(const QStringList &arguments, const EffectiveJava
     process->setArguments(arguments);
 
     // 相对配置和模组资源必须在 --gameDir 下解析，不能让 FancyMenu/MCEF 读共享根中的文件。
-    const int gameDirIndex = arguments.indexOf(QStringLiteral("--gameDir"));
-    QString isolatedPath = gameDirIndex >= 0 && gameDirIndex + 1 < arguments.size()
-        ? arguments.at(gameDirIndex + 1) : QString();
-    if (isolatedPath.isEmpty()) isolatedPath = AppPaths::versionDir(versionId);
+    QString isolatedPath = AppPaths::versionDir(versionId);
     QDir().mkpath(isolatedPath);
-    process->setWorkingDirectory(isolatedPath);
-    qDebug() << "Working directory:" << isolatedPath;
-    // 第一次启动这个版本时，让游戏界面语言跟随系统。测试启动的 --gameDir 是工作区，
-    // 这里必须跟着它写，不能回落到原实例目录。
+    const int gameDirIndex = arguments.indexOf(QStringLiteral("--gameDir"));
+    const QString workingDirectory = gameDirIndex >= 0 && gameDirIndex + 1 < arguments.size()
+        ? arguments.at(gameDirIndex + 1) : isolatedPath;
+    process->setWorkingDirectory(workingDirectory);
+    qDebug() << "Working directory:" << workingDirectory;
+    // 第一次启动这个版本时，让游戏界面语言跟随系统
     ensureInitialOptions(isolatedPath);
     qDebug() << "Isolated game directory:" << isolatedPath;
 
@@ -1307,7 +1260,7 @@ int LauncherManager::startGame(const QStringList &arguments, const EffectiveJava
         }
         emit processError(sessionId,
                           tr("无法启动游戏进程：%1").arg(startReason) +
-                              ProcessPathLimit::tooLongHint({program, isolatedPath}));
+                              ProcessPathLimit::tooLongHint({program, workingDirectory}));
         discardSession(sessionId, /*abandoned=*/true);
         return 0;
     }
@@ -1320,7 +1273,7 @@ int LauncherManager::startGame(const QStringList &arguments, const EffectiveJava
     m_sessions[sessionId].info.processId = static_cast<qint64>(process->processId());
     m_sessions[sessionId].info.startedAtMs = QDateTime::currentMSecsSinceEpoch();
     emit gameStarted(sessionId);
-    emit processOutput(sessionId, tr("游戏已启动（进程 ID：%1）").arg(process->processId()));
+    emit processOutput(sessionId, tr("游戏已启动（进程ID：%1）").arg(process->processId()));
     return sessionId;
 }
 

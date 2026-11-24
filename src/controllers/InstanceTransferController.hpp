@@ -24,7 +24,7 @@ public:
         std::function<QString(const QString &, const QString &)> instanceDirForKey;
         std::function<void()> refreshInstances;
         std::function<void(const QString &)> log;
-        /// 后台拷树期间把源实例记进/摘出「正在处理文件」名单（产品那边就是
+        /// 后台拷树期间把源实例记进/摘出「正在搬文件」名单（产品那边就是
         /// `FileOperationOccupancy`（主窗口那份状态））。不记的话，复制跑到一半用户
         /// 照样能启动这一份 —— 游戏一边写存档、拷树一边读，副本里就是半截世界。
         std::function<void(const QString &, bool)> setFileOperationBusy;

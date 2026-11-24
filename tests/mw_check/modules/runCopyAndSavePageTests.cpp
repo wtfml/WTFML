@@ -170,7 +170,7 @@ void runCopyAndSavePageTests() {
                                   Q_ARG(QString, elsewhere.path()),
                                   Q_ARG(QString, QStringLiteral("副本A")));
         check(!ok, "T27.3 目标重名 → 拒绝");
-        // 重名是**数据层**报上来的（copyInstance 那句"已存在名为…"），走的是 critical；
+        // 重名是**数据层**报上来的（copyInstance 那句"已经有一个叫…"），走的是 critical；
         // 而名字不合法那两条是这一层自己判的，走 warning。两条路的"严重程度"在这里是分开
         // 断言的 —— 标题颜色跟着 kind 走，混起来用户就分不清"我输错了"和"盘上出事了"。
         check(g_modalTitle == QStringLiteral("复制实例失败"),
@@ -192,7 +192,7 @@ void runCopyAndSavePageTests() {
         check(!ok, "T27.3 名字里带分隔符 → 拒绝");
         check(g_modalWasWarning && g_modalTitle == QStringLiteral("复制实例"),
               "T27.3 名字不合法是这一层判的（warning + 标题就是「复制实例」）", g_modalTitle);
-        check(g_modalText.contains(QStringLiteral("不能包含")), "T27.3 原因里说的是字符那一条",
+        check(g_modalText.contains(QStringLiteral("不能有")), "T27.3 原因里说的是字符那一条",
               g_modalText);
         check(!QFileInfo::exists(elsewhere.path() + QStringLiteral("/versions/a")),
               "★ T27.3 而且一个目录都没建出来");
@@ -202,7 +202,7 @@ void runCopyAndSavePageTests() {
                                   Q_RETURN_ARG(bool, ok), Q_ARG(QString, id),
                                   Q_ARG(QString, elsewhere.path()), Q_ARG(QString, QString()));
         check(!ok, "T27.3 空名字 → 拒绝");
-        check(g_modalText.contains(QStringLiteral("副本名称不能为空")), "T27.3 空名字那句话直接明了",
+        check(g_modalText.contains(QStringLiteral("副本得有个名字")), "T27.3 空名字那句话直接明了",
               g_modalText);
 
         // ---- ★ 目标落在**源实例目录自己里面** → 拒绝（ 补的第四道闸）----
@@ -330,7 +330,7 @@ void runCopyAndSavePageTests() {
                                   Q_ARG(QString, id));
         bool busyRefused = false;
         for (const PromptAnswerer::Answered &one : answerer.answered) {
-            if (one.title == QStringLiteral("正在处理文件")
+            if (one.title == QStringLiteral("正在搬文件")
                 || one.text.contains(QStringLiteral("正在后台复制"))) {
                 busyRefused = true;
                 break;
@@ -687,7 +687,7 @@ void runCopyAndSavePageTests() {
                                   Q_ARG(QString, versionDir + QStringLiteral("/saves/改过名的")),
                                   Q_ARG(QString, QStringLiteral("导进来的")));
         check(!ok, "T27.5 和另一个世界重名 → 拒绝");
-        check(g_modalText.contains(QStringLiteral("已存在名为")), "T27.5 原因说清了重名",
+        check(g_modalText.contains(QStringLiteral("已经有一个叫")), "T27.5 原因说清了重名",
               g_modalText);
         check(QFileInfo::exists(versionDir + QStringLiteral("/saves/改过名的/level.dat")),
               "★ T27.5 被挡住时那一个原样还在");
@@ -1141,10 +1141,10 @@ void runCopyAndSavePageTests() {
                 check(boxAsks.size() == 1,
                       "★★ T27.7 展开那个框**一共一问**（就是那句备份警告）",
                       QString::number(boxAsks.size()));
-                check(askTitle(boxAsks, 0) == QStringLiteral("修改存档文件"),
+                check(askTitle(boxAsks, 0) == QStringLiteral("改动存档文件"),
                       "★★ T27.7 展开弹的是那一句备份警告", askTitle(boxAsks, 0));
                 check(askButtons(boxAsks, 0) ==
-                          QStringList({QStringLiteral("取消"), QStringLiteral("创建备份"),
+                          QStringList({QStringLiteral("取消"), QStringLiteral("先创建备份"),
                                        QStringLiteral("继续修改")}),
                       "★★ T27.7 那三颗是「取消 / 先创建备份 / 继续修改」（用户要的那颗备份就在"
                       "这一问里，写进存档的「继续修改」排最后）",
@@ -1236,8 +1236,8 @@ void runCopyAndSavePageTests() {
                       "★★ T27.7 改过还没存就按返回 ⇒ 必须问一句（不许悄悄丢掉）",
                       dirtyAsks.isEmpty() ? QStringLiteral("<一句都没问>") : askTitle(dirtyAsks, 0));
                 check(askButtons(dirtyAsks, 0) ==
-                          QStringList({QStringLiteral("放弃更改"),
-                                       QStringLiteral("继续编辑")}),
+                          QStringList({QStringLiteral("返回并丢掉"),
+                                       QStringLiteral("留下来继续改")}),
                       "★ T27.7 那两颗是「返回并丢掉 / 留下来继续改」（默认那颗是留下）",
                       askButtons(dirtyAsks, 0).join(QLatin1Char('/')));
                 check(world == nullptr || !world->isHidden(),

@@ -169,7 +169,7 @@ void DownloadCompletionController::onFinished(const QString &versionId, bool suc
             for (int i = 0; i < importSteps.size(); ++i) {
                 tasks->setStepState(importTaskId, i, Tasks::TaskStepState::Done);
             }
-            tasks->setDetail(importTaskId, MainWindow::tr("已安装"));
+            tasks->setDetail(importTaskId, MainWindow::tr("已装好"));
         } else if (!userCancelled) {
             for (int i = 0; i < importSteps.size(); ++i) {
                 if (importSteps.at(i).state == Tasks::TaskStepState::Running) {
@@ -267,8 +267,8 @@ void DownloadCompletionController::onFinished(const QString &versionId, bool suc
                 };
                 const int action = InlineMessage::ask(
                     weakOwner->m_ui->overlay(), MessageKind::Information,
-                    MainWindow::tr("整合包已安装"), errorMessage,
-                    {MainWindow::tr("查看实例"), MainWindow::tr("立即启动"), MainWindow::tr("确定")},
+                    MainWindow::tr("整合包已装好"), errorMessage,
+                    {MainWindow::tr("查看实例"), MainWindow::tr("立即启动"), MainWindow::tr("知道了")},
                     0, -1);
                 if (action == 0) {
                     applySelection();
@@ -333,7 +333,7 @@ void DownloadCompletionController::onFinished(const QString &versionId, bool suc
             // 预设没落上：安装本身成了，所以**不改标题**（「安装失败」是假话），
             // 但那一句必须是 warning 的颜色 —— 用户这会儿最该看见的正是它。
             if (!presetApplyProblem.isEmpty()) {
-                InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("安装完成，但预设应用失败"),
+                InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("安装完成，但预设没有应用上"),
                                        resultMessage);
             } else {
                 InlineMessage::information(m_owner.m_ui->overlay(), MainWindow::tr("安装完成"), resultMessage);
@@ -366,14 +366,14 @@ void DownloadCompletionController::onFinished(const QString &versionId, bool suc
             }
             m_owner.updateStartButtonText();
             InlineMessage::information(m_owner.m_ui->overlay(), MainWindow::tr("检查完成"),
-                                       MainWindow::tr("实例「%1」的文件已齐全。\n\n%2")
+                                       MainWindow::tr("实例「%1」的文件都齐了。\n\n%2")
                                            .arg(displayName, errorMessage));
         } else if (userCancelled) {
             m_owner.appendLog(TextMarks::failed(tr("实例「%1」的文件校验已由用户取消。").arg(displayName)));
         } else {
             m_owner.appendLog(TextMarks::failed(tr("实例「%1」的文件没补齐：%2").arg(displayName, errorMessage)));
-            InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("文件未补齐"),
-                                   MainWindow::tr("未能获取实例「%1」的部分文件。\n\n%2")
+            InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("文件没补齐"),
+                                   MainWindow::tr("未能取得实例「%1」的部分文件。\n\n%2")
                                        .arg(displayName, errorMessage));
         }
         return;

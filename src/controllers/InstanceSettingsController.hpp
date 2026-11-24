@@ -40,7 +40,6 @@
 
 #pragma once
 
-#include <QImage>
 #include <QJsonObject>
 #include <QObject>
 #include <QString>
@@ -123,7 +122,6 @@ public:
         QString iconChoice;
         /// 用户**这一次**刚挑的那张本地图（空串 = 这次没挑，别动盘上那份）。
         QString pickedIconPath;
-        QImage pickedIconImage;
         /// 挑的那张真落盘成功之后，上面那一格该写成什么（见实现里那段 NOTE）。
         QString localIconValue;
         /// 左栏显示哪几页（顶层对象，空对象 = 七条全显示 ⇒ 删键）。

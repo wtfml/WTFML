@@ -6,7 +6,7 @@ int UiLaunchPromptsChecks(MainWindowUI &ui) {
             const QString noteText =
                 QStringLiteral("可以在设置中关闭此提示（设置页「启动提醒」→「重复启动」）。");
             InlineMessageBox box(
-                MessageKind::Warning, QStringLiteral("已有相同的游戏进程正在运行"),
+                MessageKind::Warning, QStringLiteral("已经有一个相同的运行中游戏进程了！"),
                 QStringLiteral("这个实例上已经有一份游戏在跑了，开第二份会同时打开同一份存档。"),
                 QStringList{QStringLiteral("取消"), QStringLiteral("仍要启动")}, -1, -1);
             box.setNote(noteText);

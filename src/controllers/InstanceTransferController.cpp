@@ -78,7 +78,7 @@ bool InstanceTransferController::copyInstance(const QString &sourceId,
                                                const QString &newName) {
     const QString name = newName.trimmed();
     if (name.isEmpty()) {
-        InlineMessage::warning(m_overlay, tr("复制实例"), tr("副本名称不能为空。"));
+        InlineMessage::warning(m_overlay, tr("复制实例"), tr("副本得有个名字。"));
         return false;
     }
     const QString nameProblem = InstanceFiles::validateDirName(name);
@@ -94,7 +94,7 @@ bool InstanceTransferController::copyInstance(const QString &sourceId,
     }
     if (m_host.isBeingModified && m_host.isBeingModified(sourceId)) {
         InlineMessage::warning(m_overlay, tr("复制实例"),
-                               tr("「%1」正在下载，请待安装完成后再复制。")
+                               tr("「%1」正在下载，等它装完再复制。")
                                    .arg(displayName(sourceId)));
         return false;
     }
@@ -129,7 +129,7 @@ void InstanceTransferController::announceCopySuccess(const QString &sourceId,
     const bool sameFolder = isCurrentGameFolder(destGameFolder);
     if (sameFolder) {
         InlineMessage::information(m_overlay, tr("复制实例"),
-                                   tr("已复制「%1」，可在实例列表中查看。").arg(name));
+                                   tr("「%1」已经复制好了，就在实例列表里。").arg(name));
     } else {
         InlineMessage::information(
             m_overlay, tr("复制实例"),
@@ -150,7 +150,7 @@ void InstanceTransferController::copyInstanceInBackground(
     };
     const QString name = newName.trimmed();
     if (name.isEmpty()) {
-        failNow(tr("复制实例"), tr("副本名称不能为空。"));
+        failNow(tr("复制实例"), tr("副本得有个名字。"));
         return;
     }
     const QString nameProblem = InstanceFiles::validateDirName(name);
@@ -161,8 +161,8 @@ void InstanceTransferController::copyInstanceInBackground(
     if (m_copyBusy) {
         // NOTE: 这不是"忙"的那一条正常路径 —— 界面上那颗按钮在复制期间还能按，所以得挡。
         InlineMessage::information(m_overlay, tr("复制实例"),
-                                   tr("已有实例正在复制，请待其完成后再试。"));
-        done(false, tr("已有实例正在复制。"));
+                                   tr("已经有一份实例正在复制，等它完成后再试。"));
+        done(false, tr("已经有一份实例正在复制。"));
         return;
     }
     if (m_launcher->isVersionRunning(sourceId)) {
@@ -173,7 +173,7 @@ void InstanceTransferController::copyInstanceInBackground(
     }
     if (m_host.isBeingModified && m_host.isBeingModified(sourceId)) {
         failNow(tr("复制实例"),
-                tr("「%1」正在下载，请待安装完成后再复制。").arg(displayName(sourceId)));
+                tr("「%1」正在下载，等它装完再复制。").arg(displayName(sourceId)));
         return;
     }
     const QString sourceDir = AppPaths::versionDir(sourceId);
@@ -191,7 +191,7 @@ void InstanceTransferController::copyInstanceInBackground(
         return;
     }
     const QList<Tasks::TaskStep> steps{
-        Tasks::TaskStep{tr("规划：检查名称与目标文件夹"), Tasks::TaskStepState::Done, {}},
+        Tasks::TaskStep{tr("规划：检查名字与目标文件夹"), Tasks::TaskStepState::Done, {}},
         Tasks::TaskStep{tr("执行：复制实例目录"), Tasks::TaskStepState::Running, {}},
         Tasks::TaskStep{tr("验证：核对副本的 jar / json / meta"),
                         Tasks::TaskStepState::Pending, {}},
@@ -209,11 +209,11 @@ void InstanceTransferController::copyInstanceInBackground(
         if (m_host.setTaskCapabilities) {
             Tasks::TaskCapabilities caps;
             caps.cancelBlockedReason =
-                tr("复制须保证副本完整，中途停止会留下不完整的实例目录；此任务不支持取消。");
+                tr("复制要保证副本是一整份，中途停下会留下半份实例目录；这一项不支持取消。");
             m_host.setTaskCapabilities(m_copyTaskId, caps);
         }
     }
-    log(tr("开始复制实例 %1 → %2…").arg(displayName(sourceId), name));
+    log(tr("开始复制实例 %1 → %2 …").arg(displayName(sourceId), name));
     m_copyBusy = true;
     // 拷树在后台跑，这段时间必须有"忙"标记：否则源实例照样能被
     // 启动（游戏一边写存档、这一边读 ⇒ 副本里是半截世界）、能被删、能再改设置。
@@ -281,12 +281,12 @@ void InstanceTransferController::copyInstanceInBackground(
                                       + QStringLiteral(".json"));
                 QString verifyProblem;
                 if (!QFileInfo(destDir).isDir()) {
-                    verifyProblem = tr("后台复制已报告完成，但目标目录不存在：%1")
+                    verifyProblem = tr("后台复制说完成了，但目标目录不在：%1")
                                         .arg(QDir::toNativeSeparators(destDir));
                 } else if (sourceHadJson
                            && !QFileInfo::exists(destDir + QLatin1Char('/') + name
                                                  + QStringLiteral(".json"))) {
-                    verifyProblem = tr("副本中的版本 json 未同步重命名（%1.json 不存在）。")
+                    verifyProblem = tr("副本里的版本 json 没跟着改名（%1.json 不在）。")
                                         .arg(name);
                 } else if (!QFileInfo::exists(destDir + QLatin1Char('/')
                                               + AppPaths::versionMetaFileName())) {
@@ -329,12 +329,12 @@ bool InstanceTransferController::importWorld(const QString &instanceId,
                                              const QString &name) {
     if (m_launcher && m_launcher->isVersionRunning(instanceId)) {
         InlineMessage::warning(m_overlay, tr("导入世界"),
-                               tr("游戏正在运行，请关闭游戏后再导入存档。"));
+                               tr("游戏正在运行，先关闭游戏再导入存档。"));
         return false;
     }
     if (m_host.isBeingModified && m_host.isBeingModified(instanceId)) {
         InlineMessage::warning(m_overlay, tr("导入世界"),
-                               tr("实例正在安装或处理文件，请待其完成后再导入存档。"));
+                               tr("实例正在安装或处理文件，完成后再导入存档。"));
         return false;
     }
     const QString savesDir = m_host.instanceDirForKey
@@ -362,7 +362,7 @@ void InstanceTransferController::importWorldInBackground(
     };
     if ((m_launcher && m_launcher->isVersionRunning(instanceId)) ||
         (m_host.isBeingModified && m_host.isBeingModified(instanceId))) {
-        reject(tr("实例正在运行或处理文件，请待其完成后再导入存档。"));
+        reject(tr("实例正在运行或处理文件，完成后再导入存档。"));
         return;
     }
     const QString savesDir = m_host.instanceDirForKey
@@ -376,7 +376,7 @@ void InstanceTransferController::importWorldInBackground(
     OperationReport::ConflictPolicy policy = OperationReport::ConflictPolicy::Cancel;
     if (QFileInfo::exists(savesDir + QLatin1Char('/') + name.trimmed())) {
         const int choice = InlineMessage::ask(
-            m_overlay, MessageKind::Question, tr("已存在同名世界"),
+            m_overlay, MessageKind::Question, tr("已经有一个同名的世界"),
             tr("此实例中已存在世界「%1」。\n\n选择「跳过已有项」会保留原存档。")
                 .arg(name.trimmed()),
             {tr("取消"), tr("跳过已有项")}, 0, -1, false);
@@ -501,7 +501,7 @@ void InstanceTransferController::importWorldInBackground(
             if (cancelledByUser) {
                 // 取消不是失败：账本收成 Cancelled（不亮红点），也不弹失败提示。
                 if (m_host.markTaskCancelled) m_host.markTaskCancelled(task);
-                log(tr("已取消导入世界：%1（已复制的暂存内容保留，可继续）").arg(name));
+                log(tr("导入世界已取消：%1（已拷好的暂存保留，可继续）").arg(name));
             } else {
                 if (m_host.finishTask) m_host.finishTask(task, result.ok, result.problem);
                 log(result.ok ? tr("导入世界：%1 → %2（%3）")
@@ -520,7 +520,7 @@ void InstanceTransferController::importWorldInBackground(
             }
             if (m_host.refreshInstances) m_host.refreshInstances();
             if (whenDone) {
-                whenDone(result.ok, cancelledByUser ? tr("已取消，未发布的暂存内容已保留（可继续）。")
+                whenDone(result.ok, cancelledByUser ? tr("已取消，未发布的暂存保留着（可以继续）。")
                                                     : result.problem);
             }
             if (!result.ok && !cancelledByUser) {
@@ -590,7 +590,7 @@ void InstanceTransferController::deleteWorldInBackground(
     if (m_host.isBeingModified && m_host.isBeingModified(instanceId)) {
         const QString who =
             m_host.displayName ? m_host.displayName(instanceId) : instanceId;
-        reject(tr("「%1」正被另一项操作占用（安装、导入、复制、备份或还原），请在其结束后再删除此世界。")
+        reject(tr("「%1」正在被另一项操作占用（安装、导入、复制、备份或还原），等它结束之后再删这个世界。")
                    .arg(who));
         return;
     }
@@ -606,7 +606,7 @@ void InstanceTransferController::deleteWorldInBackground(
     if (m_host.setTaskCapabilities) {
         Tasks::TaskCapabilities caps;
         caps.cancelBlockedReason =
-            tr("删除中途停止会留下不完整的世界，比完整删除更难清理；此任务不支持取消。");
+            tr("删除到一半停下会留下不完整的世界，比删完更难收拾；这一项不支持取消。");
         m_host.setTaskCapabilities(task, caps);
     }
     if (m_host.setTaskDetail) m_host.setTaskDetail(task, tr("正在删除世界文件。"));
@@ -676,8 +676,7 @@ bool InstanceTransferController::renameWorld(const QString &instanceId,
     // 收尾却照样报成功 —— 一份看着成功、其实是残的备份比失败更糟。
     if (m_host.isBeingModified && m_host.isBeingModified(instanceId)) {
         InlineMessage::warning(m_overlay, tr("重命名世界"),
-                               tr("「%1」正被另一项操作占用（安装、导入、复制、备份或还原），"
-                                  "请在其结束后再重命名此世界。")
+                               tr("「%1」正在被另一项操作占用（安装、导入、复制、备份或还原），等它结束之后再改这个世界。")
                                    .arg(displayName(instanceId)));
         return false;
     }
@@ -686,7 +685,7 @@ bool InstanceTransferController::renameWorld(const QString &instanceId,
         InlineMessage::warning(m_overlay, tr("重命名世界"), error);
         return false;
     }
-    log(tr("重命名世界：%1 → %2").arg(QDir::toNativeSeparators(worldDir), newName.trimmed()));
+    log(tr("世界改名：%1 → %2").arg(QDir::toNativeSeparators(worldDir), newName.trimmed()));
     return true;
 }
 

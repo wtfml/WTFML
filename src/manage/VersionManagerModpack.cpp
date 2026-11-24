@@ -23,8 +23,6 @@
 #include "VersionManager.hpp"
 #include <QCoreApplication>
 #include "VersionManagerInternals.hpp"
-#include "download/ResourceStore.hpp"
-#include "util/ImageDecode.hpp"
 
 #include <QDateTime>
 #include <QDebug>
@@ -94,10 +92,6 @@ bool VersionManager::loaderKindForDependencyKey(const QString &key, LoaderKind *
     return false;
 }
 
-void VersionManager::allowPartialModpackImport() {
-    if (m_modpackInstall.active()) m_modpackInstall.allowPartial = true;
-}
-
 void VersionManager::importModpack(const QString &zipPath, const QString &instanceId,
                                    const ModpackImport::Pack &pack,
                                    const QString &installerJavaPath,
@@ -111,7 +105,7 @@ void VersionManager::importModpack(const QString &zipPath, const QString &instan
     // 两个状态机同时开着，谁先收到别人那批文件的信号就说不清了。
     if (m_modpackInstall.active() || m_loaderInstall.active() || downloadManager->isBusy()) {
         emit versionDownloadFinished(instanceId, false,
-                                     tr("已有下载或安装任务正在进行，请待其结束后再导入。"));
+                                     tr("已有下载或者安装任务正在进行，请等它结束再导入。"));
         return;
     }
 
@@ -147,16 +141,12 @@ void VersionManager::importModpack(const QString &zipPath, const QString &instan
         pack.declaredFileCount != 0 && (!pack.pendingRefs.isEmpty() || pack.fileIssues.isEmpty())) {
         emit versionDownloadFinished(
             instanceId, false,
-            tr("无法从 CurseForge 获取此整合包文件的下载地址，导入已取消。请重试。若问题持续，请在「设置 → "
-               "下载」中填写个人 CurseForge API 密钥。"));
+            tr("无法从 CurseForge 获取此整合包文件的下载地址，导入已取消。请重试。若问题持续，请在「设置 → 下载」中填写自己的 CurseForge API 密钥。"));
         return;
     }
 
     m_modpackInstall = ModpackInstall();
     m_modpackInstall.zipPath = zipPath;
-    const QFileInfo archive(zipPath);
-    m_modpackInstall.archiveSize = archive.size();
-    m_modpackInstall.archiveModifiedMs = archive.lastModified().toMSecsSinceEpoch();
     m_modpackInstall.instanceId = instanceId;
     m_modpackInstall.pack = pack;
     m_modpackInstall.manifestFingerprint = manifestFingerprint;
@@ -176,8 +166,8 @@ void VersionManager::importModpack(const QString &zipPath, const QString &instan
         emit modpackImportStageChanged(
             ModpackStage::LoaderAndVanilla,
             pack.patchedRuntime.isEmpty()
-                ? tr("正在准备原版 %1…").arg(pack.gameVersion)
-                : tr("正在准备原版 %1 与专用运行库…").arg(pack.gameVersion));
+                ? tr("正在准备原版 %1...").arg(pack.gameVersion)
+                : tr("正在准备原版 %1 与专用运行库...").arg(pack.gameVersion));
         emit modpackImportMessage(pack.patchedRuntime.isEmpty()
             ? tr("整合包未声明加载器，正在安装原版 %1…").arg(pack.gameVersion)
             : tr("将使用整合包内的启动补丁。正在补齐原版 %1，随后安装专用运行库…").arg(pack.gameVersion));
@@ -190,7 +180,7 @@ void VersionManager::importModpack(const QString &zipPath, const QString &instan
     m_modpackInstall.phase = ModpackInstall::Phase::InstallingLoader;
     emit modpackImportStageChanged(
         ModpackStage::LoaderAndVanilla,
-        tr("正在安装 %1 %2 与原版 %3…")
+        tr("正在安装 %1 %2 与原版 %3...")
             .arg(loaderKnown ? loaderDisplayName(kind) : pack.loaderKey, pack.loaderVersion, pack.gameVersion));
     // 钉死版本（最后一个参数）：整合包说装哪个就装哪个。装加载器那条路自己会把原版补齐
     // （它要基于原版才跑得起来），所以这一步不用再管父版本。
@@ -269,15 +259,15 @@ void VersionManager::startModpackFiles() {
     m_currentVersionDownloading = id;  // 这一批的"名字"（兜底终态那条路要用）
     emit modpackImportStageChanged(
         ModpackStage::ModpackFiles,
-        files.isEmpty() ? tr("无额外模组文件，准备解压覆盖文件…")
-                        : tr("正在下载整合包清单文件（共 %1 个）…").arg(files.size()));
+        files.isEmpty() ? tr("无额外模组文件，准备解压覆盖文件...")
+                        : tr("正在下载整合包清单文件（共 %1 个）...").arg(files.size()));
     if (!m_modpackInstall.pack.patchedRuntime.isEmpty()) {
         emit modpackImportMessage(tr("正在补齐专用运行库和客户端文件，之后将解压整合包…"));
     } else if (files.isEmpty()) {
         // 零下载是合法的（纯 overrides 的包、MultiMC 实例、直接压进来的 .minecraft）。
         // 这批作业一条都不发，直接走 endOwnBatch() → onAllDownloadsFinished() 那条路。
         emit modpackImportMessage(
-            tr("整合包无待下载文件，正在解压内置文件…"));
+            tr("整合包没有待下载文件，正在解压内置文件…"));
     } else {
         emit modpackImportMessage(tr("开始下载清单中的 %1 个文件。通过 SHA-1 校验的本地文件会复用…")
                                       .arg(files.size()));
@@ -309,8 +299,7 @@ void VersionManager::extractModpackOverrides() {
     }
     const QString id = m_modpackInstall.instanceId;
     m_modpackInstall.phase = ModpackInstall::Phase::ExtractingOverrides;
-    emit modpackImportStageChanged(ModpackStage::ExtractingOverrides, tr("正在解压覆盖文件（config、资源包、"
-                                                                         "光影等）…"));
+    emit modpackImportStageChanged(ModpackStage::ExtractingOverrides, tr("正在解压覆盖文件（config、资源包、光影等）..."));
 
     // 两个前缀一起解，顺序 = 优先级：Modrinth 的规矩是 client-overrides **盖过** overrides，
     // "谁在后谁赢"这一条是格式的一部分，不能调换。
@@ -342,9 +331,7 @@ void VersionManager::extractModpackOverrides() {
     const auto result = std::make_shared<Result>();
     const QString archive = m_modpackInstall.zipPath;
     const QString destination = AppPaths::versionDir(id);
-    QStringList excludes = m_modpackInstall.pack.extractExcludes;
-    excludes.append(QStringLiteral("icon.png"));
-    excludes.append(QLatin1String(InstanceFiles::kModpackCoverFileName));
+    const QStringList excludes = m_modpackInstall.pack.extractExcludes;
     m_modpackOverridesFailure.clear();
     auto *watcher = new QFutureWatcher<void>(this);
     connect(watcher, &QFutureWatcher<void>::finished, this,
@@ -377,54 +364,20 @@ void VersionManager::extractModpackOverrides() {
     watcher->setFuture(m_modpackOverridesWork);
 }
 
-namespace {
-
-QImage readModpackCover(const QString &archive, const ModpackImport::Pack &pack,
-                        const std::function<bool()> &cancelled) {
-    QStringList roots{QString()};
-    if (!pack.overridesDir.isEmpty()) roots.append(pack.overridesDir + QLatin1Char('/'));
-    if (!pack.clientOverridesDir.isEmpty()) roots.append(pack.clientOverridesDir + QLatin1Char('/'));
-    if (pack.overridesDir.endsWith(QLatin1String("/.minecraft"))) {
-        roots.append(pack.overridesDir.section(QLatin1Char('/'), 0, -2) + QLatin1Char('/'));
-    }
-    QStringList paths;
-    for (const QString &root : roots) {
-        for (const QString &name : {QStringLiteral("icon.png"), QStringLiteral("cover.png"),
-                                    QStringLiteral("pack.png"), QStringLiteral("logo.png")}) {
-            paths.append(root + name);
-        }
-    }
-    const auto files = ZipUtil::readMetadataBatch({archive}, paths, nullptr, cancelled).value(archive).entries;
-    for (const QString &path : paths) {
-        const QImage image = ImageDecode::decode(files.value(path), {1024, 1024 * 1024});
-        if (!image.isNull()) return image;
-    }
-
-    if (pack.coverCacheId.isEmpty() || cancelled()) return {};
-    const QString cachePath = ResourceStore::iconCachePath(pack.coverCacheId);
-    QFile cache(cachePath);
-    if (cachePath.isEmpty() || !cache.open(QIODevice::ReadOnly) || cache.size() > 1024 * 1024) return {};
-    return ImageDecode::decode(cache.read(1024 * 1024), {1024, 1024 * 1024});
-}
-
-}  // namespace
-
 void VersionManager::finishModpackImport() {
     const QString id = m_modpackInstall.instanceId;
     const auto pack = m_modpackInstall.pack;
     const auto fingerprint = m_modpackInstall.manifestFingerprint;
     const auto destination = AppPaths::versionDir(id);
     const auto dataRoot = AppPaths::minecraftDir();
-    const auto archive = m_modpackInstall.zipPath;
-    const bool needsCover = !QFileInfo::exists(InstanceFiles::modpackCoverPath(id));
     QString planError;
     const auto core = integrityPlan(id, &planError);
     m_modpackInstall.phase = ModpackInstall::Phase::VerifyingCompletion;
-    emit modpackImportStageChanged(ModpackStage::Verifying, tr("正在校验文件并完成实例写入…"));
+    emit modpackImportStageChanged(ModpackStage::Verifying, tr("正在校验文件并完成实例写入..."));
     m_modpackOverridesCancelled = std::make_shared<std::atomic_bool>(false);
     m_modpackOverridesFailure.clear();
     const auto cancelled = m_modpackOverridesCancelled;
-    struct Result { QList<ModpackImport::FileIssue> issues; QImage cover; QString error; };
+    struct Result { QList<ModpackImport::FileIssue> issues; QString error; };
     const auto result = std::make_shared<Result>();
     emit modpackImportMessage(tr("正在校验文件并保存安装记录（可取消，最长 900 秒）…"));
     auto *watcher = new QFutureWatcher<void>(this);
@@ -436,7 +389,7 @@ void VersionManager::finishModpackImport() {
             failModpackImport(reason); return;
         }
         if (!result->error.isEmpty()) { failModpackImport(result->error); return; }
-        commitModpackImport(result->issues, result->cover);
+        commitModpackImport(result->issues);
     });
     m_modpackOverridesWork = QtConcurrent::run([=] {
         QElapsedTimer timer; timer.start();
@@ -450,32 +403,28 @@ void VersionManager::finishModpackImport() {
         if (checked.cancelled || stop()) { result->error = tr("最终校验已取消或超时，安装保持未完成"); return; }
         for (const auto &issue : pack.fileIssues)
             if (!checked.suppliedPaths.contains(issue.path)) result->issues.append(issue);
-        if (needsCover && !stop()) result->cover = readModpackCover(archive, pack, stop);
     });
     watcher->setFuture(m_modpackOverridesWork);
 }
 
-void VersionManager::commitModpackImport(const QList<ModpackImport::FileIssue> &issues, const QImage &cover) {
+void VersionManager::commitModpackImport(const QList<ModpackImport::FileIssue> &issues) {
     // 要用的字段先取出来：reset() 会把它们一起清掉（忘了取的表现是那句话里名字变空的）。
     const QString id = m_modpackInstall.instanceId;
     const ModpackImport::Pack pack = m_modpackInstall.pack;
     const int skipped = pack.filesSkipped;
     const int notDistributable = pack.filesNotDistributable;
+    const int missing = pack.filesMissing;
     const int extracted = m_modpackInstall.extractedEntries;
     const QString archivePath = m_modpackInstall.zipPath;
 
-    const bool complete = issues.isEmpty();
+    const bool complete = issues.isEmpty() && notDistributable + missing <= pack.fileIssues.size();
     QString reportProblem;
     if (!ModpackInstallReport::write(AppPaths::versionDir(id), pack, issues, complete, &reportProblem)) {
         failModpackImport(tr("无法保存导入结果，保留未完成状态：%1").arg(reportProblem));
         return;
     }
-    const QString coverPath = InstanceFiles::modpackCoverPath(id);
-    if (!cover.isNull() && !QFileInfo::exists(coverPath)) {
-        QString coverError;
-        if (!InstanceFiles::saveIconImage(coverPath, cover, &coverError)) emit modpackImportMessage(coverError);
-    }
-    if (!complete && !m_modpackInstall.allowPartial) {
+    if (!complete) {
+        // 必须在写 meta、移除 importing 标记之前终止，否则缺文件也会变成正常实例。
         QStringList details;
         for (const auto &issue : issues) details.append(ModpackInstallReport::description(issue));
         failModpackImport(tr("整合包安装尚未完成。已下载的文件和已应用的覆盖文件均已保留。\n\n%1\n\n逐项清单：%2\n补齐后可在报告中选择「完成安装」。如果旧安装缺少有效的安装记录，请用原整合包和原实例名称继续导入。")
@@ -483,16 +432,13 @@ void VersionManager::commitModpackImport(const QList<ModpackImport::FileIssue> &
                  QDir::toNativeSeparators(AppPaths::versionDir(id) + QStringLiteral("/wtfml.import-report.json"))));
         return;
     }
-    // 用户已经在「有文件需要补齐」里选了「继续安装其余内容」：其余文件校验通过后
-    // 先把实例按“缺件”完成，报告仍保留 complete=false。用户可以启动，报告里再补齐。
 
     // 自检：装完的东西得真的能被列表认出来。判据用**读侧那一份**（InstanceFiles::
     // resolveInstance），不自己再判一遍 —— "装是装了、列表里看不见"这个症状这个项目已经
     // 撞过两次（见 InstanceFiles.hpp 里 recognized() 那段），所以这里宁可多问一句。
     const InstanceFiles::Resolved resolved = InstanceFiles::resolveInstance(id);
     if (!resolved.recognized()) {
-        failModpackImport(tr("文件已全部安装，但 %1 未被识别为实例，启动列表中不会显示。请检查 %2 中的版本 "
-                             "JSON，或移除该目录后重新导入。")
+        failModpackImport(tr("文件已全部安装，但 %1 未被识别为实例，启动列表中不会显示。请检查 %2 中的版本 JSON，或移走该目录后重新导入。")
                               .arg(id, AppPaths::versionDir(id)));
         return;
     }
@@ -527,41 +473,22 @@ void VersionManager::commitModpackImport(const QList<ModpackImport::FileIssue> &
     // MultiMC/Prism 包：把原包身份留在实例里（导出时原样带回 patches）。
     if (!pack.patchedRuntime.isEmpty()) {
         if (ModpackImport::preserveMultiMCSource(archivePath, AppPaths::versionDir(id))) {
-            emit modpackImportMessage(tr("已将原包的启动补丁保存到实例目录（导出时可原样带回）。"));
+            emit modpackImportMessage(tr("已把原包的启动补丁保存在实例目录（导出时可以原样带回）。"));
         }
     }
     // 少装了什么必须说出来（跳过的文件、解开的覆盖文件）—— 用户看不到的那部分最容易
     // 变成"进了游戏才发现少个 mod"。
     QString extra;
     if (skipped > 0) {
-        extra += tr("（清单中有 %1 个文件已按整合包说明跳过：仅供服务端使用、无下载地址，"
-                    "或其本身为需单独安装的整合包）")
+        extra += tr("（清单里有 %1 个文件按包里的说明跳过了：只给服务端用、没有下载地址、或者它自己是一个要单独装的整合包）")
                      .arg(skipped);
     }
     if (extracted > 0) {
-        extra += tr("（已解压 %1 个覆盖文件）").arg(extracted);
+        extra += tr("（解开了 %1 个覆盖文件）").arg(extracted);
     }
     // 到这里已通过逐项校验；不要仍把用户手动补齐的内容称作缺失。
     if (notDistributable > 0) {
         extra += tr("\n\n已校验通过 %1 个本地手动补齐文件。").arg(notDistributable);
-    }
-    if (!complete) {
-        QStringList names;
-        for (const auto &issue : issues) {
-            if (names.size() >= 6) break;
-            const QString project = issue.projectWebUrl.section(QLatin1Char('/'), -1);
-            names.append(!issue.fileName.isEmpty()
-                             ? issue.fileName
-                             : (project.isEmpty() ? tr("项目 %1").arg(issue.ref.projectId)
-                                                  : project));
-        }
-        QString listed = names.join(QStringLiteral("、") // i18n-ignore
-        );
-        if (issues.size() > names.size()) listed += tr(" 等");
-        extra += tr("\n\n有 %1 个文件未能自动获取：%2。实例已按缺失文件状态完成导入，可先启动；补齐这些文件后，"
-                    "在导入报告中选择「完成安装」。")
-                     .arg(issues.size())
-                     .arg(listed);
     }
     // 这一种格式自带的话：MultiMC 实例导入了什么、没导入什么，lwjgl3ify 为什么会起不来。
     // 这条必须落在**终态**里 —— 用户装完就往下走，不会再翻日志。
@@ -572,7 +499,7 @@ void VersionManager::commitModpackImport(const QList<ModpackImport::FileIssue> &
     const QString displayName = formatVersionName(displayParts(id));
     m_modpackInstall.reset();
     emit versionDownloadFinished(id, true,
-                                 tr("整合包「%1」已导入，实例列表中名称为「%2」。%3")
+                                 tr("整合包「%1」导入好了，实例列表里叫「%2」。%3")
                                      .arg(pack.name, displayName.isEmpty() ? id : displayName, extra));
 }
 
@@ -592,24 +519,11 @@ void VersionManager::failModpackImport(const QString &reason) {
 
     const QString id = m_modpackInstall.instanceId;
     QString finalReason = reason;
-    if (retryModpackInstance() == id) {
-        finalReason += QStringLiteral("\n\n") + tr("在任务中心选择「重试」可继续安装此实例。");
-    }
     if (QFileInfo::exists(InstanceFiles::importMarkerPath(id))) {
         QList<ModpackImport::FileIssue> candidates = m_modpackInstall.pack.fileIssues;
-        // 只把**看起来就不在盘上 / 大小不对**的文件列进报告。失败路径刻意不在 UI 线程
-        // 哈希几 GB 文件，但也不能把已经下好的 433 个文件全当成“下载未完成”摆给用户 ——
-        // 那会变成一份要人逐个点进去下载的假清单。大小对得上的留给后台“重新校验”确认。
-        const QString instanceRoot = AppPaths::versionDir(id);
-        for (const auto &file : m_modpackInstall.pack.files) {
-            const QFileInfo onDisk(QDir(instanceRoot).filePath(file.path));
-            const bool present = onDisk.exists() &&
-                                 (file.size < 0 || onDisk.size() == file.size);
-            if (present) continue;
-            candidates.append({
-                {file.curseForgeProjectId, file.curseForgeFileId}, QFileInfo(file.path).fileName(),
-                file.path, file.sha1, file.size, tr("下载未完成或文件校验未通过")});
-        }
+        for (const auto &file : m_modpackInstall.pack.files) candidates.append({
+            {file.curseForgeProjectId, file.curseForgeFileId}, QFileInfo(file.path).fileName(),
+            file.path, file.sha1, file.size, tr("下载未完成或文件校验未通过")});
         // 失败路径不再在 UI 线程哈希几 GB 文件；报告保留候选，后台“重新校验”确认哪些已在盘上。
         const auto issues = candidates;
         QString reportProblem;
@@ -637,8 +551,8 @@ void VersionManager::installNamedVanilla(const QString &instanceId, const QStrin
         // NOTE: 忙的时候除了那句话，**也必须发终态信号** —— 界面在点下去那一刻就进了忙态，
         // 只发一条消息的话按钮再也亮不回来（"加载器安装还没接通"那一段踩过同样的坑，
         // 见 installLoaderVersion() 里 loaderInstallSupported 那道闸口旁边的注释）。
-        emit instanceInstallMessage(tr("已有安装或下载正在进行，请待其结束。"));
-        emit versionDownloadFinished(instanceId, false, tr("已有安装或下载正在进行，请待其结束。"));
+        emit instanceInstallMessage(tr("已有安装或下载正在进行，请等它结束。"));
+        emit versionDownloadFinished(instanceId, false, tr("已有安装或下载正在进行，请等它结束。"));
         return;
     }
     if (instanceId.trimmed().isEmpty() || gameVersion.isEmpty()) {
@@ -646,7 +560,7 @@ void VersionManager::installNamedVanilla(const QString &instanceId, const QStrin
         // 一个空名字会变成 `versions/` 本身，那是把整个游戏目录当实例目录用。
         qWarning() << "installNamedVanilla called with an empty name or game version";
         emit versionDownloadFinished(instanceId, false,
-                                     tr("实例名或原版版本号为空，未开始安装。"));
+                                     tr("实例名或原版版本号是空的，没有开始安装。"));
         return;
     }
 
@@ -678,14 +592,14 @@ void VersionManager::installNamedLoader(const QString &instanceId, const QString
                                        const QString &javaPath) {
     if (m_namedInstance.active() || m_loaderInstall.active() || m_modpackInstall.active() ||
         downloadManager->isBusy()) {
-        emit instanceInstallMessage(tr("已有安装或下载正在进行，请待其结束。"));
-        emit versionDownloadFinished(instanceId, false, tr("已有安装或下载正在进行，请待其结束。"));
+        emit instanceInstallMessage(tr("已有安装或下载正在进行，请等它结束。"));
+        emit versionDownloadFinished(instanceId, false, tr("已有安装或下载正在进行，请等它结束。"));
         return;
     }
     if (instanceId.trimmed().isEmpty() || gameVersion.isEmpty()) {
         qWarning() << "installNamedLoader called with an empty name or game version";
         emit versionDownloadFinished(instanceId, false,
-                                     tr("实例名或原版版本号为空，未开始安装。"));
+                                     tr("实例名或原版版本号是空的，没有开始安装。"));
         return;
     }
     if (!loaderInstallSupported(kind)) {
@@ -825,7 +739,7 @@ bool VersionManager::writeVersionJson(const QString &versionId, const QString &d
     }
     if (!file.commit()) {
         if (errorOut != nullptr) {
-            *errorOut = tr("写入 %1 失败（%2）。").arg(jsonPath, file.errorString());
+            *errorOut = tr("写 %1 的时候失败了（%2）。").arg(jsonPath, file.errorString());
         }
         qWarning() << "Failed to commit version JSON to" << jsonPath;
         return false;
@@ -854,6 +768,6 @@ void VersionManager::adoptInstallerVersion(const QString &version) {
         QFileInfo(QUrl(m_loaderInstall.installerUrl).path()).fileName();
 
     deferLoaderStep(LoaderInstall::Phase::FetchingInstallerList,
-                    [this] { prepareInstallerParent(); });
+                    [this] { startInstallerDownload(); });
 }
 

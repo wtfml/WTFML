@@ -14,14 +14,8 @@
 #include "VersionIcons.hpp"
 
 InstanceGroupDelegate::InstanceGroupDelegate(QObject *parent) : ListRowDelegate(parent) {
-    setCenteredMeta(true);
     // 选中带只有卡片那一圈：告诉样式别涂左边那截分支区（见 Theme.cpp 里 PE_PanelItemViewRow 那段）。
     if (auto *view = qobject_cast<QWidget *>(parent)) view->setProperty("wtfmlCardSelection", true);
-}
-
-bool InstanceGroupDelegate::usesListRow(const QModelIndex &index) const {
-    return !index.data(MainWindowUI::groupIdRole()).isValid() &&
-        (inlineRowActions() || index.data(CoverRole).isValid());
 }
 
 int InstanceGroupDelegate::rowHeight() const {
@@ -102,7 +96,7 @@ bool InstanceGroupDelegate::helpEvent(QHelpEvent *event, QAbstractItemView *view
     // 没画那一排的树（`setInlineRowActions(false)`，预设页）一句都不说 —— 那些格子在上面
     // 根本没画，在这儿说话等于"指着一块空白弹出了「进入实例设置」"。组头那一格（齿轮）
     // 仍然照说。
-    if (inlineRowActions() && event != nullptr && event->type() == QEvent::ToolTip) {
+    if (m_inlineRowActions && event != nullptr && event->type() == QEvent::ToolTip) {
         const QString tip = rowActionTip(index, option.rect, event->pos());
         if (!tip.isEmpty()) {
             Popups::showTooltip(tip, event->globalPos(), view);
@@ -114,16 +108,16 @@ bool InstanceGroupDelegate::helpEvent(QHelpEvent *event, QAbstractItemView *view
             return true;
         }
     }
-    if (usesListRow(index)) return ListRowDelegate::helpEvent(event, view, option, index);
     // 兜底：条目自己写 `Qt::ToolTipRole` 的老路（基类就干这个）。
     return QStyledItemDelegate::helpEvent(event, view, option, index);
 }
 
 void InstanceGroupDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
                                   const QModelIndex &index) const {
-    // 实例与正常预设共用封面、标题和类型列的画法。
-    if (usesListRow(index)) {
-        ListRowDelegate::paint(painter, option, index);
+    // 实例那几行（没有组 id 那个 role 的）：背景/选中/文字/图标**仍然交给基类画**，
+    // 这一层只在它画完之后，在行尾补上那三颗按钮（右起：齿轮 / 上箭头 / 垃圾桶，见文件头）。
+    if (!index.data(MainWindowUI::groupIdRole()).isValid() && m_inlineRowActions) {
+        ListRowDelegate::paint(painter, option, index);  // 实例页：设计稿列表行
         return;
     }
     if (!index.data(MainWindowUI::groupIdRole()).isValid()) {
@@ -249,7 +243,7 @@ void InstanceGroupDelegate::paint(QPainter *painter, const QStyleOptionViewItem 
     // 这一位下面还要用两次（悬停底色 + 行尾那颗齿轮，见下面那两段），所以在这儿
     // 读成一个名字 —— 读的仍然是**传进来**那一份，时序和上面那句一模一样。
     const bool rowHovered = (option.state & QStyle::State_MouseOver) != 0;
-    if (!inlineRowActions() && rowHovered && (index.flags() & Qt::ItemIsEnabled) != 0) {
+    if (!m_inlineRowActions && rowHovered && (index.flags() & Qt::ItemIsEnabled) != 0) {
         painter->fillRect(opt.rect, Theme::rowHoverFill(option.palette.color(QPalette::Base)));
     }
     opt.state &= ~QStyle::State_MouseOver;
@@ -279,7 +273,7 @@ void InstanceGroupDelegate::paint(QPainter *painter, const QStyleOptionViewItem 
     QFont mainFont = option.font;
     mainFont.setBold(true);
     QColor groupInk = palette.color(QPalette::WindowText);
-    if (inlineRowActions()) {  // 实例页组头 = 设计稿 .group-label：辅助档 13 半粗、次要色（tokens-r2 分组头）
+    if (m_inlineRowActions) {  // 实例页组头 = 设计稿 .group-label：辅助档 13 半粗、次要色（tokens-r2 分组头）
         mainFont = Theme::textFont(option.font, Theme::TextRole::Caption);
         mainFont.setWeight(QFont::DemiBold);
         groupInk = Theme::tokens().secondary;
@@ -332,7 +326,7 @@ QSize InstanceGroupDelegate::sizeHint(const QStyleOptionViewItem &option,
         opt.font = bold;
     }
     const QSize size = QStyledItemDelegate::sizeHint(opt, index);
-    if (usesListRow(index)) {
+    if (!isGroup && m_inlineRowActions) {
         return QSize(size.width(), ListRowDelegate::rowHeight());
     }
     if (!isGroup) {
@@ -342,12 +336,12 @@ QSize InstanceGroupDelegate::sizeHint(const QStyleOptionViewItem &option,
     if (index.data(MainWindowUI::rowGroupGearRole()).toBool()) {
         extra += MainWindowUI::instanceGroupGearSize() + 6 + 6;
     }
-    return QSize(size.width() + extra, groupRowHeight());
+    return QSize(size.width() + extra, m_inlineRowActions ? groupRowHeight() : rowHeight());
 }
 
 bool InstanceGroupDelegate::editorEvent(QEvent *event, QAbstractItemModel *model,
                                         const QStyleOptionViewItem &option, const QModelIndex &index) {
-    if (usesListRow(index))
+    if (m_inlineRowActions && !index.data(MainWindowUI::groupIdRole()).isValid())
         return ListRowDelegate::editorEvent(event, model, option, index);
     return QStyledItemDelegate::editorEvent(event, model, option, index);
 }

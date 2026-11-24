@@ -1,14 +1,7 @@
 #include "Support.hpp"
-#include "LoadingState.hpp"
-#include <QScopeGuard>
 void runDownloadFilterTests() {
     FakeResourceApi api;
     check(api.start(), "ZI0 本地假接口起来了");
-    FakeResourceApi modrinth;
-    check(modrinth.start(), "ZI0 Modrinth 本地假接口起来了");
-    modrinth.searchBody = QByteArrayLiteral(R"({"hits":[{
-        "project_id":"1546263","title":"同号项目","slug":"same-id","versions":["1.21.1"]
-    }],"offset":0,"limit":20,"total_hits":1})");
     // 正文里**故意不给图标**（没有 logo 那一项）：给了的话 fillResourceHitRows 会顺手
     // requestIcon()，而那条地址在 media.forgecdn.net 上 —— 那就成了真外网。没有可用地址时
     // store 发的是一个空图标、一个请求都不发（见 ResourceStore::requestIcon 最后那一段）。
@@ -22,18 +15,9 @@ void runDownloadFilterTests() {
     // 接口根地址是 MainWindow **构造那一刻**从 QSettings 读进去的（LauncherSettings 构造 +
     // 构造里那句 syncCurseForgeSettings），所以必须"先写 ini、再造窗口"（和 AA10 同一个做法）。
     const QString kBaseKey = QStringLiteral("Launcher/CurseForgeApiBase");
-    const QString modrinthKey = QStringLiteral("Launcher/ModrinthApiBase");
-    const QVariant previousModrinth = QSettings().value(modrinthKey);
-    const auto restoreModrinth = qScopeGuard([&] {
-        QSettings sandbox;
-        if (previousModrinth.isValid()) sandbox.setValue(modrinthKey, previousModrinth);
-        else sandbox.remove(modrinthKey);
-        sandbox.sync();
-    });
     {
         QSettings sandbox;
         sandbox.setValue(kBaseKey, api.baseUrl());
-        sandbox.setValue(modrinthKey, modrinth.baseUrl().chopped(1) + QLatin1Char('2'));
         sandbox.sync();
     }
     // 身份：一个**新加的离线账号**（外观走本地，不发请求）。
@@ -89,9 +73,9 @@ void runDownloadFilterTests() {
             return count;
         };
 
-        check(sourceCombo->count() == ResourceCatalog::allSources().size() + 1 &&
-                  sourceCombo->findData(QStringLiteral("all")) >= 0,
-              "ZI1 「来源」含两个单站入口和「全部来源」",
+        // ---- ZI1. 灌进去的选项：来源两项，且默认停在 Modrinth ----
+        check(sourceCombo->count() == ResourceCatalog::allSources().size(),
+              "ZI1 「来源」框里就是 allSources() 那几项（没有「全部」—— 一个页面上只搜一家）",
               QString::number(sourceCombo->count()));
         check(sourceCombo->currentData().toString() ==
                   ResourceCatalog::sourceKey(ResourceCatalog::Source::Modrinth),
@@ -113,7 +97,6 @@ void runDownloadFilterTests() {
         check(cfIndex >= 0, "ZI2 来源框里找得到 CurseForge 那一项");
         api.requests.clear();
         const int searchesBeforeSource = searchLogs();
-        loaderCombo->setCurrentIndex(loaderCombo->findData(QStringLiteral("forge")));
         sourceCombo->setCurrentIndex(cfIndex);
         QApplication::processEvents();
         const QList<ResourceCatalog::FilterOption> cfLoaders =
@@ -134,8 +117,8 @@ void runDownloadFilterTests() {
         }
         check(typesSwapped, "ZI2 「类型」那几项也跟着换（Modrinth 是 slug、CF 是类目号）",
               QStringLiteral("框里 %1 项").arg(typeCombo->count()));
-        check(loaderCombo->currentData().toString() == QStringLiteral("1") && typeCombo->currentIndex() == 0,
-              "ZI2 保留 Forge 并换用 CurseForge 的筛选键，类型回到「全部」");
+        check(loaderCombo->currentIndex() == 0 && typeCombo->currentIndex() == 0,
+              "ZI2 两项都退回「全部」（拿 A 家的号去问 B 家会搜出个空的，而且不报错）");
         // NOTE: 这一下是**程序**改的（`setCurrentIndex`），不是用户在框里挑的。用户真挑一项时
         // Qt 还会再发一发 `activated`，而那一发**要搜**（见 ZI10）——
         // 所以这一条量的是"中间态不搜"，不是"换来源不搜"。
@@ -423,69 +406,18 @@ void runDownloadFilterTests() {
                   .arg(searchLogs() - searchesBefore)
                   .arg(api.requests.join(QStringLiteral("|"))));
 
-        // 先切到 Modrinth 的选项，再模拟用户切回本地假接口上的 CurseForge。
-        sourceCombo->setCurrentIndex(sourceCombo->findData(
-            ResourceCatalog::sourceKey(ResourceCatalog::Source::Modrinth)));
-        loaderCombo->setCurrentIndex(loaderCombo->findData(QStringLiteral("forge")));
+        // 来源这一格：挑**当前**那一项（CurseForge）—— 换到 Modrinth 那一项的地址是写死的真
+        // 外网，这一趟是离线量。用户在下拉里点已经选中的那一项，Qt 照样发 activated。
         searchesBefore = searchLogs();
         api.requests.clear();
         pickFromCombo(sourceCombo, cfIndex);
         const bool sourcePicked = pumpUntil([&api] { return !api.requests.isEmpty(); }, 10000);
-        check(sourcePicked && searchLogs() - searchesBefore == 1 &&
-                  api.lastRequest().contains(QStringLiteral("modLoaderType=1")) &&
-                  api.lastRequest().contains(QStringLiteral("gameVersion=26.9")),
-              "ZI10 切换来源只搜一发，保留 Forge 和游戏版本",
+        check(sourcePicked && searchLogs() - searchesBefore == 1,
+              "ZI10 挑一项「来源」也立刻搜一发（挑的还是当前那一项时也算）",
               QStringLiteral("搜了 %1 发：%2")
                   .arg(searchLogs() - searchesBefore)
                   .arg(api.requests.join(QStringLiteral("|"))));
         QApplication::processEvents();
-
-        const int allIndex = sourceCombo->findData(QStringLiteral("all"));
-        const int column = MainWindowUI::versionTreeKeyColumn();
-        const auto rowForSource = [&](ResourceCatalog::Source source) -> QTreeWidgetItem * {
-            for (int i = 0; i < tree->topLevelItemCount(); ++i) {
-                auto *row = tree->topLevelItem(i);
-                if (row->data(column, MainWindowUI::resourceSourceRole()).toString() == ResourceCatalog::sourceKey(source))
-                    return row;
-            }
-            return nullptr;
-        };
-        api.requests.clear();
-        modrinth.requests.clear();
-        modrinth.searchDelayMs = 1200;
-        versionCombo->setCurrentText(QStringLiteral("1.21.1"));
-        pickFromCombo(sourceCombo, allIndex);
-        const bool early = pumpUntil([&] { return rowForSource(ResourceCatalog::Source::CurseForge) != nullptr; }, 10000);
-        auto *cfRow = rowForSource(ResourceCatalog::Source::CurseForge);
-        check(early && !rowForSource(ResourceCatalog::Source::Modrinth),
-              "ZI11 先返回的来源立即显示，另一个来源继续加载");
-        if (cfRow) cfRow->setExpanded(true);
-        check(pumpUntil([&] { return rowForSource(ResourceCatalog::Source::Modrinth) != nullptr; }, 10000),
-              "ZI11 两个来源的结果都进入同一列表");
-        auto *mrRow = rowForSource(ResourceCatalog::Source::Modrinth);
-        check(cfRow && rowForSource(ResourceCatalog::Source::CurseForge) == cfRow && cfRow->isExpanded() &&
-                  mrRow && cfRow->data(column, Qt::UserRole) == mrRow->data(column, Qt::UserRole) &&
-                  cfRow->data(column, MainWindowUI::rowSubTextRole()).toString().contains(QStringLiteral("CurseForge")) &&
-                  mrRow->data(column, MainWindowUI::rowSubTextRole()).toString().contains(QStringLiteral("Modrinth")),
-              "ZI11 同号项目保留各自来源，已有结果行保持展开");
-        const QString decodedRequest = QUrl::fromPercentEncoding(modrinth.lastRequest().toUtf8());
-        check(api.lastRequest().contains(QStringLiteral("gameVersion=1.21.1")) &&
-                  api.lastRequest().contains(QStringLiteral("modLoaderType=1")) &&
-                  !api.lastRequest().contains(QStringLiteral("categoryId=")) &&
-                  decodedRequest.contains(QStringLiteral("versions:1.21.1")) &&
-                  decodedRequest.contains(QStringLiteral("categories:forge")) &&
-                  ui->getDownloadFilterTypeBox(key)->isHidden(),
-              "ZI11 两站请求分别使用各自的版本与加载器键，隐藏站点专属分类");
-
-        modrinth.searchDelayMs = 0;
-        api.searchStatus = 503;
-        searchButton->click();
-        check(pumpUntil([&] {
-                  return rowForSource(ResourceCatalog::Source::Modrinth) &&
-                         tree->topLevelItemCount() == 2 &&
-                         tree->topLevelItem(1)->data(0, LoadingState::rowLoadingRole()).toLongLong() == -1;
-              }, 10000), "ZI11 一站失败时保留另一站结果和单独的重试提示");
-        api.searchStatus = 200;
     }
 
     // 还回去：产品自己从不写这个键，验证工程也不能给它留在沙盒的 ini 里

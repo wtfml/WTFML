@@ -83,7 +83,7 @@
 
 ## 2026-11-10　Agent 功能人工验收（Stage 1A / 1B）
 
-设计与实现见 [AGENT.md](../features/AGENT.md)。测试 provider 为 DeepSeek `deepseek-flash`，用专用可撤销 key；分支 `agent-development`。
+设计与实现见 [AGENT.md](../features/AGENT.md)、[AGENT_STAGE1A.md](../features/AGENT_STAGE1A.md)、[AGENT_STAGE1B.md](../features/AGENT_STAGE1B.md)。测试 provider 为 DeepSeek `deepseek-flash`，用专用可撤销 key；分支 `agent-development`。
 
 **G1A（无工具聊天）：除网络错误外通过。**
 - 范围：启动与导航（五颗顶部导航、900×620）、API/URL 校验（拒绝远程明文 HTTP、userinfo/查询串/片段，本地 HTTP 需显式勾选）、凭据遮挡与 Windows 凭据管理器存储（`WTFML/Agent/<profileId>`）、聊天生命周期（停止保留部分内容标"已中断"、切会话/切页取消在飞请求、关窗有界退出、删除会话先取消）、会话存储与 DPAPI 加密（`%LOCALAPPDATA%\WTFML\agent\sessions\`，加密失败保留明文、解密失败绝不回退明文）、无文件工具/无 MCP。日志、会话、错误卡片、导出里没有明文 key。
@@ -260,29 +260,3 @@ python tools/acceptance_directory_boundary.py --exe <WTFMinecraftLauncher.exe> -
 2026-11-19｜智能体 Stage 3（联网 + 固定诊断命令）交付待人工验收｜`verify_agent` 749/749、`ui_check_agent` 75/75、`mw_check_agent` 76/76；G3 真网/代理/证书项未做｜搜索只支持 SearXNG；诊断命令只在 PATH 上找可执行文件；`command.run` 未开放。
 2026-11-19｜智能体 Stage 4 收口：回归、性能基线、发布检查、文档｜core 15/15、window 3/3、network 6/6、ci-ui 23/23；`verify_agent` 767、`ui_check_agent` 77、`mw_check_agent` 76；`check-agent-release.ps1` PASS；智能体页 2000 条消息重摆 3820 ms、会话 2000 条加密往返 91 ms｜首轮 core 红的 `core-resources` 是工作区里 `known-sets.json` 被检出成 CRLF（仓库为 LF），恢复后通过；视觉套件未跑。
 2026-11-21｜启动、任务中心、实例列表和资源选择器修复｜`core`、`activity-selection`、`instance-upgrade`、`ui`、`ui-refresh`、`launch-card`、`main-window` 通过；主页跨文件夹切换与游玩时长断言通过；选择器深浅色样张在 `build/tmp-WTFML-issues-picker-shots-f79e`｜`instance-upgrade` 单独复跑通过，首轮与 `main-window` 并行时出现过一次临时目录相关失败。
-2026-11-22｜版本列表、依赖选择、离线名称、搜索排序、自动内存、Forge 原版补全和卷根目录保护｜核心回归 5/5，资源搜索和依赖下载专项通过，`verify_install vm-batch` 验证 Forge 下载前修复原版 JAR 与 JSON，并核对卷根目录映射｜Forge 回归使用本地文件模拟，在启动外部安装器之前取消。
-2026-11-22｜修复外观请求、加载器换源、资源筛选与下载日志｜启动器构建成功，核心回归 5/5，筛选、资源来源、资源详情和下载重试专项通过｜DNS 换源用模拟回复验证，正版账号与真实上游待复测。
-2026-11-22｜设置页清除缓存与首次使用测试｜启动器构建、双窗口档案隔离、缓存确认与数据保留、智能体凭据和窗口框架检查通过｜主窗口套件的披风刷新期间可应用断言失败，新增缓存断言通过。
-2026-11-22｜任务中心下载字节与步骤进度、长报告预览、版本检查排队与 CurseForge 无首字节重试｜启动器构建，`core-downloads`、`core-activity`、`core-resources`、`ui-refresh` 通过｜重试使用模拟回复验证，RLCraft 实际线路待复测。
-2026-11-22｜任务小窗定位整页任务、整合包下载失败原地续装与跨重启恢复意图｜启动器构建，`core-resources` 和 `ui-refresh` 通过，模拟下载失败后补齐原实例并完成解压校验｜最新 RLCraft 日志已经完成导入，后续启动停在旧模组下载依赖的 Java 证书校验。
-2026-11-22｜实例启动设置增加本机 Java 选单｜启动器构建，`core-java`、`ui-refresh`、`input-widths` 通过｜同为 Java 8 的两份运行时分别列出，载入清单时保留跟随全局，选中后才保存实例覆盖。
-2026-11-22｜实例 Java 选单合并到原路径输入框｜启动器构建，`ui-refresh` 和 `input-widths` 通过｜检测结果到达时保留框内路径。使用日志里的 Java 8u51 直接请求同一依赖可复现证书校验错误。
-2026-11-22｜修复智能体读不到崩溃报告/游戏日志（查的是数据根，实际在实例目录）｜`logs.tail` 与 `crash.list` 改为实例目录优先、数据根兜底、同名去重；`diagnostics.startup` 的 crashDir 与 `diagnostics.crash` 的日志来源同规则；新增 `AgentInstancePathTests`（16 条）与 mw_check 真窗口用例（7 条）；`verify_agent` 783/783、`mw_check_agent` 83/83｜路径判据收进 `AgentInstancePaths`，以后改 `--gameDir` 规则只改这一处。
-
-2026-11-23｜客户端实例列表按有无自定义名称显示一行或两行｜Windows x64 构建和隔离启动通过，`core-instances` 1864 项和目录切换专项通过｜未命名实例可悬停查看累计游玩时长。
-
-2026-11-23｜客户端实例封面支持本地游戏物品与自动整合包封面，左侧版本文字去除重复加载器信息｜Windows x64 构建和隔离启动通过，`core-instances`、`core-resources`、`ui-refresh` 通过｜旧版书和红石粉使用旧贴图名，默认包封面与手动图标分别保存。
-
-2026-11-23｜统一本地数据路径到 `%LOCALAPPDATA%\WTFML` 一层（智能体 `agent/`、断点续传 `cache/`），不再出现三层 WTFML｜新增 `AppPaths::localDataRoot()` 作为唯一出处，`AgentPaths::dataDir()` 与 `DownloadCache::root()` 改走它；启动时一次性迁移旧的三层目录；新增 `AgentPathLayoutTests` 22 条；`verify_agent` 806/806｜旧目录只在搬空后 rmdir，新位置已有内容时不动旧的；测试隔离（`wtfml.testAgentDataDir`）下不迁移。
-
-2026-11-23｜修复游戏设置预设编辑器右栏文字重影｜修复前新增断言复现，修复后 `install-layout`、`design-defaults`、Windows x64 构建与隔离启动通过｜透明输入控件下方的表格代理曾重复绘制原始值。
-
-2026-11-23｜预设详情左栏直接显示编辑标签｜`install-layout`、`preset-install`、Windows x64 构建与隔离启动通过｜编辑标签共用一份文档，取消离开时恢复原标签。
-
-2026-11-23｜预设详情与实例设置统一页头和左右栏布局｜`install-layout`、`lifecycle`、`preset-install`、Windows x64 构建与隔离启动通过｜返回预设列表时恢复文件夹路径和模式切换。
-
-2026-11-24｜服务端列表增加筛选和搜索，预设列表改为左分类右搜索｜`install-layout`、`main-window` 3182 项、Windows x64 构建与隔离启动通过｜运行中筛选随服务端起停更新，最小窗口下仅折行左侧预设分类。
-
-2026-11-24｜服务端与预设采用实例列表的彩色方块封面和类型列｜`install-layout`、`main-window`、`preset-install`、Windows x64 构建与隔离启动通过｜颜色按标识稳定分配，服务端类型列可显示加载器版本或构建号，预设类型列显示类别。
-
-2026-11-24｜服务端左栏按管理对象分组并接入启动参数、世界选择、插件管理和维护操作｜`main-window` 3192/3192、服务端界面 94/94、`core-servers` 796/796、`core-instances` 1869/1869，Windows x64 构建与隔离启动通过｜独立维度用整服迁移包备份，导入防覆盖，升级使用同类型副本。

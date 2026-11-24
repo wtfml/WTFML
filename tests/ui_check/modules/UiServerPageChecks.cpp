@@ -121,7 +121,7 @@ int UiServerPageChecks(InstanceSettingsDialog &dialog) {
             timedOut.tested = true;
             timedOut.online = false;
             timedOut.timedOut = true;
-            timedOut.error = QStringLiteral("已连接，但服务器无响应（等待超时）");
+            timedOut.error = QStringLiteral("已连接，但服务器没有响应（等待超时）");
             check(Dlg::serverStatusLines(timedOut) == QStringList({Dlg::serverTimeoutText()}),
                   "★ U10L 超时 ⇒ 那一格只写「超时」两个字（理由是给排查看的，不进这一格）",
                   Dlg::serverStatusLines(timedOut).join(QStringLiteral("︱")));
@@ -663,7 +663,7 @@ int UiServerPageChecks(InstanceSettingsDialog &dialog) {
             Dlg::ServerRowStatus cachedRefused = cachedTimeout;
             cachedRefused.timedOut = false;
             check(Dlg::serverStatusLines(cachedRefused) ==
-                      QStringList({QStringLiteral("无法连接")}),
+                      QStringList({QStringLiteral("没连上")}),
                   "★ U10L 而老缓存（不知道上一次是怎么没通的）写「没连上」"
                   "—— 不是替它编一句「超时」",
                   Dlg::serverStatusLines(cachedRefused).join(QStringLiteral("︱")));

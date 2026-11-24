@@ -148,7 +148,7 @@ QString Report::summaryText() const {
         text += QCoreApplication::translate("OperationReport", "；未完成 %1").arg(unfinishedFiles());
     }
     if (!complete) {
-        text += QCoreApplication::translate("OperationReport", "；本次未完成收尾");
+        text += QCoreApplication::translate("OperationReport", "；本次未收尾");
     }
     return text;
 }
@@ -167,7 +167,7 @@ QString Report::failureText(const QString &path) const {
     }
     lines.append(QCoreApplication::translate("OperationReport", "结果：%1").arg(summaryText()));
     if (!stagingDir.isEmpty()) {
-        lines.append(QCoreApplication::translate("OperationReport", "暂存：%1（继续时将复用，不再重新复制）")
+        lines.append(QCoreApplication::translate("OperationReport", "暂存：%1（继续时会复用它，不会重新拷一遍）")
                          .arg(QDir::toNativeSeparators(stagingDir)));
     }
     QStringList unfinished;
@@ -388,7 +388,7 @@ Report loadReport(const QString &path, bool *ok, QString *problem) {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
         if (problem != nullptr) {
-            *problem = QCoreApplication::translate("OperationReport", "无法读取报告：%1").arg(QDir::toNativeSeparators(path));
+            *problem = QCoreApplication::translate("OperationReport", "读不到报告：%1").arg(QDir::toNativeSeparators(path));
         }
         return Report();
     }

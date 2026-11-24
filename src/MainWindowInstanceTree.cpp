@@ -47,22 +47,12 @@ using namespace MainWindowViewData;
 
 namespace {
 
-void applyInstanceListRow(QTreeWidgetItem *item, const QString &id, InstanceListRowText labels,
-                          const LaunchHistory::PlayTime &playTime, bool running, bool busy) {
-    QString tooltip = QDir::toNativeSeparators(AppPaths::versionDir(id));
+QString instanceSubtitle(const VersionDisplayParts &parts, const LaunchHistory::PlayTime &playTime) {
+    QString subtitle = parts.realVersion.isEmpty() ? parts.id : parts.realVersion;
     if (playTime.totalMs > 0) {
-        tooltip += QLatin1Char('\n') + MainWindow::tr("游玩 %1").arg(LaunchHistory::playTimeText(playTime.totalMs));
+        subtitle += QStringLiteral(" · ") + MainWindow::tr("游玩 %1").arg(LaunchHistory::playTimeText(playTime.totalMs));
     }
-    if (running) {
-        labels.title += MainWindowUI::instanceRunningSuffixText();
-    }
-    if (busy) {
-        labels.title += MainWindow::tr("（文件操作中）");
-        tooltip = MainWindow::tr("正在处理实例文件，完成后可再次启动或修改。");
-    }
-    item->setText(0, labels.title);
-    item->setData(0, ListRowDelegate::SubtitleRole, labels.subtitle);
-    item->setToolTip(0, tooltip);
+    return subtitle;
 }
 
 }  // namespace
@@ -205,23 +195,12 @@ void MainWindow::applyInstalledVersions(const QStringList &installed,
     // 敲一个字都要重灌树，那一条路不许再扫盘），然后重灌一遍。筛选条件此刻是什么样，
     // 那一趟自己会读（`instanceFilterQuery()`）。
     m_instancePageParts = managementParts;
-    m_instancePageRowTexts.clear();
-    m_instancePageRowTexts.reserve(managementParts.size());
     m_instancePageMarks.clear();
     m_instancePageMarks.reserve(managementParts.size());
-    m_instancePageCovers.clear();
-    m_instancePageCovers.reserve(managementParts.size());
     for (const VersionDisplayParts &part : managementParts) {
-        VersionDisplayParts rowParts = part;
-        if (rowParts.realVersion.trimmed().isEmpty()) {
-            rowParts.realVersion = m_versionManager->instanceGameVersion(part.id);
-        }
-        rowParts.loaderName = instanceLoaderName(part, m_versionManager, &rowParts.loaderVersion);
-        m_instancePageRowTexts.insert(part.id, formatInstanceListRow(rowParts));
         m_instancePageMarks.insert(part.id, QIcon(instanceRowMark(
                                                   part, m_versionManager,
                                                   MainWindowUI::instanceTreeIconSize())));
-        m_instancePageCovers.insert(part.id, QIcon(instanceCoverMark(part, 48)));
     }
     rebuildInstanceTree();
 
@@ -427,11 +406,11 @@ void MainWindow::rebuildInstanceTree() {
         rest.parts = ungrouped;
         buckets.append(rest);
     }
-    fillInstanceTree(tree, buckets, m_instancePageMarks, pinnedGroupId, pinnedInstanceIds);
+    fillInstanceTree(tree, buckets, runningVersionIds(),
+                     m_instancePageMarks, pinnedGroupId, pinnedInstanceIds);
     QHash<QString, VersionDisplayParts> partOf;
     for (const VersionDisplayParts &part : shown) partOf.insert(part.id, part);
     const auto completedPlayTimes = m_launchHistory->completedPlayTimes();
-    const QSet<QString> runningIds = runningVersionIds();
     for (QTreeWidgetItemIterator it(tree); *it != nullptr; ++it) {
         // 列表行第二行与行尾（ListRowDelegate）：游戏版本 / 加载器。
         const auto found = partOf.constFind(instanceIdOf(*it));
@@ -439,19 +418,26 @@ void MainWindow::rebuildInstanceTree() {
             QString loaderVersion;
             const QString loader = instanceLoaderName(*found, m_versionManager, &loaderVersion);
             const auto playTime = completedPlayTimes.value(m_versionManager->instanceId(found->id));
-            applyInstanceListRow(*it, found->id, m_instancePageRowTexts.value(found->id), playTime,
-                                 runningIds.contains(found->id), m_fileOperationOccupancy.contains(found->id));
+            (*it)->setData(0, ListRowDelegate::SubtitleRole, instanceSubtitle(*found, playTime));
             (*it)->setData(0, ListRowDelegate::MetaRole,
                            loader.isEmpty() ? tr("原版") : (loader + QLatin1Char(' ') + loaderVersion).trimmed());
-            // 加载器列始终用版本或加载器行标，封面是独立的一张图。
+            // 封面：用户挑过图标用挑的那张，没挑按实例名稳定配色的等距方块（和主页一致）；
+            // 加载器那一列的小图标用不带自选图标的那张行标（铁砧 / 草方块 / 快照…）。
             const QIcon mark = m_instancePageMarks.value(found->id);
             VersionDisplayParts plain = *found;
             plain.icon.clear();
-            (*it)->setData(0, ListRowDelegate::CoverRole, m_instancePageCovers.value(found->id));
+            (*it)->setData(0, ListRowDelegate::CoverRole,
+                           found->icon.isEmpty()
+                               ? QIcon(VersionIcons::isoBlock(VersionIcons::isoBlockKindFor((*it)->text(0)), 48))
+                               : mark);
             (*it)->setData(0, ListRowDelegate::MetaIconRole,
                            found->icon.isEmpty() ? mark
                                                  : QIcon(instanceRowMark(plain, m_versionManager,
                                                                          MainWindowUI::instanceTreeIconSize())));
+        }
+        if (m_fileOperationOccupancy.contains(instanceIdOf(*it))) {
+            (*it)->setText(0, (*it)->text(0) + tr("（文件操作中）"));
+            (*it)->setToolTip(0, tr("正在处理实例文件，完成后可再次启动或修改。"));
         }
     }
     syncTreeToCombo(m_ui->getInstalledVersionCombo(), tree);
@@ -508,14 +494,20 @@ void MainWindow::updateInstanceTreeRunState() {
     // 挡信号：改的是文字，不该被当成"用户在树里点了什么"（树上的点击会同步到下拉框）。
     const QSignalBlocker blocker(tree);
     const auto completedPlayTimes = m_launchHistory->completedPlayTimes();
-    const QSet<QString> runningIds = runningVersionIds();
     QTreeWidgetItemIterator it(tree);
     while (*it != nullptr) {
         const QString id = instanceIdOf(*it);
         if (!id.isEmpty()) {
+            // 重新拼一遍而不是"在旧文本上加减后缀"：加减法要认得旧文本长什么样。
+            // 每回从头拼，和整棵重灌（refreshInstalledVersions()）的结果就一定一样。
+            const auto parts = m_versionManager->displayParts(id);
+            QString text = instanceTreeItemText(parts, m_launcherManager->isVersionRunning(id));
+            if (m_fileOperationOccupancy.contains(id)) {
+                text += tr("（文件操作中）");
+            }
+            (*it)->setText(0, text);
             const auto playTime = completedPlayTimes.value(m_versionManager->instanceId(id));
-            applyInstanceListRow(*it, id, m_instancePageRowTexts.value(id), playTime,
-                                 runningIds.contains(id), m_fileOperationOccupancy.contains(id));
+            (*it)->setData(0, ListRowDelegate::SubtitleRole, instanceSubtitle(parts, playTime));
         }
         ++it;
     }

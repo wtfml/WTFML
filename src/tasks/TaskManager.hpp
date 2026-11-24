@@ -115,7 +115,6 @@ public:
 
     /// 记字节进度。下载那一类两样都记：百分比按单位算，详情里那句"2.8 MB / 18 MB"按字节。
     bool setBytes(TaskId id, qint64 bytesDone, qint64 bytesTotal);
-    bool setBatchTransfer(TaskId id, int done, int total, qint64 bytesDone, qint64 bytesTotal);
 
     /// 改某一项**允许**什么操作。装上加载器之后中途变成"不能取消了"就是这么来的）。
     bool setCapabilities(TaskId id, const TaskCapabilities &capabilities);

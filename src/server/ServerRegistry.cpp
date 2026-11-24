@@ -191,7 +191,7 @@ Entry describe(const QString &serverId, QString *problemOut) {
 
     if (!QDir(entry.dirPath).exists()) {
         entry.name = serverId;
-        entry.note = QCoreApplication::translate("ServerRegistry", "目录已不存在");
+        entry.note = QCoreApplication::translate("ServerRegistry", "目录不在了");
         if (problemOut != nullptr) {
             *problemOut = entry.note;
         }
@@ -209,7 +209,6 @@ Entry describe(const QString &serverId, QString *problemOut) {
     entry.name = info.name.isEmpty() ? serverId : info.name;
     entry.gameVersion = info.gameVersion;
     entry.loaderVersion = info.loaderVersion;
-    entry.buildId = info.buildId;
 
     // 2) 盘上现在有哪些文件（认 flavor 和判"装好了没有"都用它）。
     const QStringList rootFiles = rootFileNames(entry.dirPath);
@@ -225,8 +224,7 @@ Entry describe(const QString &serverId, QString *problemOut) {
         // `.wtfml-server` 说得清，见 `ServerModel::inferFlavorFromPaths()` 那段）。
         entry.flavor = ServerModel::inferFlavorFromPaths(relPaths);
         entry.flavorKnown = false;
-        notes.append(QCoreApplication::translate("ServerRegistry", "此类型由目录中的文件推断得出（%1），"
-                                                                   "点击确认")
+        notes.append(QCoreApplication::translate("ServerRegistry", "这一档是从目录里的文件反推的（%1），点一下确认")
                          .arg(ServerInstall::flavorName(entry.flavor)));
     }
 
@@ -278,7 +276,7 @@ ServerModel::Info readMeta(const QString &serverId, QString *problemOut) {
     }
     if (!file.open(QIODevice::ReadOnly)) {
         if (problemOut != nullptr) {
-            *problemOut = QCoreApplication::translate("ServerRegistry", "无法读取 %1").arg(ServerModel::formatTag());
+            *problemOut = QCoreApplication::translate("ServerRegistry", "读不了 %1").arg(ServerModel::formatTag());
         }
         return ServerModel::Info{};
     }
@@ -288,8 +286,7 @@ ServerModel::Info readMeta(const QString &serverId, QString *problemOut) {
     if (file.size() > 4 * 1024 * 1024) {
         file.close();
         if (problemOut != nullptr) {
-            *problemOut = QCoreApplication::translate("ServerRegistry", "%1 体积异常，不像有效记录（%2 字节），"
-                                                                        "已按无法读取处理")
+            *problemOut = QCoreApplication::translate("ServerRegistry", "%1 大得不像一份记录（%2 字节），已按读不懂处理")
                               .arg(ServerModel::formatTag())
                               .arg(file.size());
         }
@@ -324,7 +321,7 @@ bool writeMeta(const QString &serverId, const ServerModel::Info &info, QString *
     QSaveFile file(AppPaths::serverMetaPath(serverId));
     if (!file.open(QIODevice::WriteOnly)) {
         if (problemOut != nullptr) {
-            *problemOut = QCoreApplication::translate("ServerRegistry", "无法写入 %1：%2")
+            *problemOut = QCoreApplication::translate("ServerRegistry", "写不了 %1：%2")
                               .arg(ServerModel::formatTag(), file.errorString());
         }
         return false;
@@ -460,7 +457,7 @@ bool createServer(const QString &serverId, const ServerModel::Info &info, QStrin
     if (!writableServer(serverId, problemOut)) return false;
     if (serverId.isEmpty()) {
         if (problemOut != nullptr) {
-            *problemOut = QCoreApplication::translate("ServerRegistry", "请输入服务端名称");
+            *problemOut = QCoreApplication::translate("ServerRegistry", "要给这个服务端起个名字");
         }
         return false;
     }
@@ -484,7 +481,7 @@ bool removeServer(const QString &serverId, QString *problemOut) {
         || serverId.contains(QLatin1Char('\\')) || serverId == QLatin1String(".")
         || serverId == QLatin1String("..")) {
         if (problemOut != nullptr) {
-            *problemOut = QCoreApplication::translate("ServerRegistry", "该名称不能删除");
+            *problemOut = QCoreApplication::translate("ServerRegistry", "这个名字不能删");
         }
         return false;
     }
@@ -495,7 +492,7 @@ bool removeServer(const QString &serverId, QString *problemOut) {
     // 闸二：解出来的路径必须**严格在根目录底下**（防止 `serverId` 里塞了 `..` 之类）。
     if (!isStrictlyInside(rootDir(), dir)) {
         if (problemOut != nullptr) {
-            *problemOut = QCoreApplication::translate("ServerRegistry", "此路径不在服务端目录内，未做修改");
+            *problemOut = QCoreApplication::translate("ServerRegistry", "这个路径不在服务端目录底下，没动它");
         }
         return false;
     }
@@ -550,8 +547,7 @@ bool acceptEula(const QString &serverId, QString *problemOut) {
     QSaveFile file(eulaPath(serverId));
     if (!file.open(QIODevice::WriteOnly)) {
         if (problemOut != nullptr) {
-            *problemOut = QCoreApplication::translate("ServerRegistry", "无法写入 eula.txt：%1")
-                              .arg(file.errorString());
+            *problemOut = QCoreApplication::translate("ServerRegistry", "写不了 eula.txt：%1").arg(file.errorString());
         }
         return false;
     }
@@ -580,8 +576,7 @@ ServerModel::Properties readProperties(const QString &serverId, QString *problem
     }
     if (!file.open(QIODevice::ReadOnly)) {
         if (problemOut != nullptr) {
-            *problemOut = QCoreApplication::translate("ServerRegistry", "无法读取 server.properties：%1")
-                              .arg(file.errorString());
+            *problemOut = QCoreApplication::translate("ServerRegistry", "读不了 server.properties：%1").arg(file.errorString());
         }
         return ServerModel::Properties{};
     }
@@ -610,8 +605,7 @@ bool writeProperties(const QString &serverId, const ServerModel::Properties &pro
     QSaveFile file(propertiesPath(serverId));
     if (!file.open(QIODevice::WriteOnly)) {
         if (problemOut != nullptr) {
-            *problemOut = QCoreApplication::translate("ServerRegistry", "无法写入 server.properties：%1")
-                              .arg(file.errorString());
+            *problemOut = QCoreApplication::translate("ServerRegistry", "写不了 server.properties：%1").arg(file.errorString());
         }
         return false;
     }

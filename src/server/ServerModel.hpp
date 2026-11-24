@@ -27,7 +27,6 @@
 #pragma once
 
 #include <QByteArray>
-#include <QCoreApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -72,19 +71,19 @@ enum class Status {
 inline QString statusName(Status status) {
     switch (status) {
     case Status::NotInstalled:
-        return QCoreApplication::translate("ServerModel", "未安装");
+        return QStringLiteral("未安装");
     case Status::Ready:
-        return QCoreApplication::translate("ServerModel", "可启动");
+        return QStringLiteral("可启动");
     case Status::Starting:
-        return QCoreApplication::translate("ServerModel", "启动中");
+        return QStringLiteral("启动中");
     case Status::Running:
-        return QCoreApplication::translate("ServerModel", "运行中");
+        return QStringLiteral("运行中");
     case Status::Stopping:
-        return QCoreApplication::translate("ServerModel", "停止中");
+        return QStringLiteral("停止中");
     case Status::Stopped:
-        return QCoreApplication::translate("ServerModel", "已停止");
+        return QStringLiteral("已停止");
     case Status::Crashed:
-        return QCoreApplication::translate("ServerModel", "异常退出");
+        return QStringLiteral("异常退出");
     }
     return QString();
 }
@@ -155,7 +154,7 @@ inline QString eulaFileText(bool accepted) {
     text += QStringLiteral("#By changing the setting below to TRUE you are indicating your "
                            "agreement to our EULA (https://aka.ms/MinecraftEULA).\n");
     text += QStringLiteral("#\n");
-    text += QStringLiteral("#我们（启动器）是在用户主动勾选之后才写这一行的，见 ServerModel 的文件头。\n");  // i18n-ignore
+    text += QStringLiteral("#我们（启动器）是在用户主动勾选之后才写这一行的，见 ServerModel 的文件头。\n");
     text += QStringLiteral("eula=%1\n").arg(accepted ? QStringLiteral("true")
                                                     : QStringLiteral("false"));
     return text;
@@ -596,7 +595,6 @@ struct Info {
     QString javaPath;
     /// 内存上限 MB（<= 0 = 用启动器默认那档）。
     int memoryMb = 0;
-    QString jvmArguments;
     /// 异常退出之后自动拉起（`ServerRestart`）。出厂**关着**：没问过用户的事不替他做。
     bool restartOnCrash = false;
     /// 连着自动重启几次就收手（判据 / 上下限在 `ServerRestart::normalizeMaxAttempts()`）。
@@ -605,7 +603,7 @@ struct Info {
     bool isEmpty() const {
         return serverId.isEmpty() && name.isEmpty() && gameVersion.isEmpty()
                && loaderVersion.isEmpty() && installerVersion.isEmpty() && buildId.isEmpty()
-               && javaPath.isEmpty() && memoryMb <= 0 && jvmArguments.isEmpty();
+               && javaPath.isEmpty() && memoryMb <= 0;
     }
 };
 
@@ -631,7 +629,6 @@ inline QStringList ownedMetaKeys() {
             QStringLiteral("loaderVersion"),    QStringLiteral("installerVersion"),
             QStringLiteral("buildId"),          QStringLiteral("javaPath"),
             QStringLiteral("memoryMb"),         QStringLiteral("restartOnCrash"),
-            QStringLiteral("jvmArguments"),
             QStringLiteral("restartMaxAttempts")};
 }
 
@@ -665,9 +662,6 @@ inline QByteArray toJson(const Info &info) {
     }
     if (info.memoryMb > 0) {
         object.insert(QStringLiteral("memoryMb"), info.memoryMb);
-    }
-    if (!info.jvmArguments.isEmpty()) {
-        object.insert(QStringLiteral("jvmArguments"), info.jvmArguments);
     }
     // 重启策略：只写跟出厂那一档不一样的（关着 / 三次是缺省 —— 老文件一个字节都不变）。
     if (info.restartOnCrash) {
@@ -725,7 +719,6 @@ inline Info fromJson(const QByteArray &bytes, bool *ok = nullptr) {
     info.buildId = object.value(QStringLiteral("buildId")).toString();
     info.javaPath = object.value(QStringLiteral("javaPath")).toString();
     info.memoryMb = object.value(QStringLiteral("memoryMb")).toInt(0);
-    info.jvmArguments = object.value(QStringLiteral("jvmArguments")).toString();
     info.restartOnCrash = object.value(QStringLiteral("restartOnCrash")).toBool(false);
     info.restartMaxAttempts = ServerRestart::normalizeMaxAttempts(
         object.value(QStringLiteral("restartMaxAttempts"))

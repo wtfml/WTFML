@@ -330,9 +330,8 @@ void InstanceSettingsDialog::buildFilePage(const QString &key) {
                 connect(files, &InstanceFilesPage::detailRequested, this,
                         [this, key](const QString &path) { emit fileResourceRequested(key, path); });
                 // 这里**不转** `updateCheckRequested`：那一页顶上「可更新」在没查过的
-                // 时候根本不摆出来（**没检查的时候先隐藏可更新按钮**）。更新检查由
-                // 「模组」页进入时自动触发（`checkUpdatesRequested()` 那条线），
-                // 概览页没有这颗按钮。
+                // 时候根本不摆出来（**没检查的时候先隐藏可更新按钮**）。检查更新这一栏
+                // 只有「概览」那一颗（`checkUpdatesRequested()` 那条线）。
 
                 // 批量那三发：**判据同上**（这三件事只在那四页上谈得上）。
                 // NOTE: 转发上去的三个动作全**不改盘** —— 问不问那句、怎么落盘、落完要不要

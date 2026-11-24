@@ -180,7 +180,7 @@ const QList<Field> &commonFields() {
               QCoreApplication::translate("ServerPropertiesForm", "该距离内的生物与方块会进行模拟"),
               Kind::Number, QStringLiteral("10"), 3, 32, {}, false},
         Field{QStringLiteral("player-idle-timeout"), QCoreApplication::translate("ServerPropertiesForm", "挂机踢出（分钟）"),
-              QCoreApplication::translate("ServerPropertiesForm", "玩家无操作超过该时长后踢出；0 = 不踢出"),
+              QCoreApplication::translate("ServerPropertiesForm", "玩家无操作多久后被踢出；0 = 不踢出"),
               Kind::Number, QStringLiteral("0"), 0, 1440, {}, false},
     };
     return fields;
@@ -242,10 +242,10 @@ bool accepts(const Field &field, const QString &raw, QString *normalized, QStrin
                 return fail(QObject::tr("世界目录名不能为空。"));
             }
             if (trimmed == QStringLiteral(".") || trimmed == QStringLiteral("..")) {
-                return fail(QObject::tr("「%1」不能用作目录名。").arg(trimmed));
+                return fail(QObject::tr("「%1」不能当目录名。").arg(trimmed));
             }
             if (hasIllegalPathChar(trimmed)) {
-                return fail(QObject::tr("世界目录名不能包含 / \\ : * ? \" < > | 等字符（将用作文件夹名）。"));
+                return fail(QObject::tr("世界目录名里不能有 / \\ : * ? \" < > | 这类字符" "（它要当文件夹名用）。"));
             }
         }
         if (normalized != nullptr) {
@@ -256,7 +256,7 @@ bool accepts(const Field &field, const QString &raw, QString *normalized, QStrin
     case Kind::Number: {
         qlonglong value = 0;
         if (!strictInt(trimmed, &value)) {
-            return fail(QObject::tr("请输入整数（%1 ~ %2）。")
+            return fail(QObject::tr("这里要填一个整数（%1 ~ %2）。")
                             .arg(field.min)
                             .arg(field.max));
         }
@@ -274,7 +274,7 @@ bool accepts(const Field &field, const QString &raw, QString *normalized, QStrin
     case Kind::Switch: {
         bool on = false;
         if (!switchValue(trimmed, &on)) {
-            return fail(QObject::tr("该项仅支持开启或关闭。"));
+            return fail(QObject::tr("该项只有开、关两档。"));
         }
         if (normalized != nullptr) {
             *normalized = on ? QStringLiteral("true") : QStringLiteral("false");

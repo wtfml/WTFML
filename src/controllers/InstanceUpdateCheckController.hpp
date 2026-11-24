@@ -45,7 +45,6 @@ private:
         /// 所以一发请求判两条。**反查那一趟回来之后才有它**（那时才知道哪个文件是哪个项目）。
         QHash<QString, QList<ModDependencies::InstalledItem>> itemsByKey;
         QSet<QString> waitingKeys;
-        QSet<QString> activeVersionKeys;
         /// NOTE: 同一个 sha1 底下可能挂着**两条路径**（`X.jar` 和 `X.jar.disabled`）——
         /// 那一发只问一次，两条照同一份答案判。
         QHash<QString, QHash<QString, QList<ModDependencies::InstalledItem>>> batchItems;
@@ -87,7 +86,6 @@ private:
         QThread *thread = nullptr;
     };
     UpdateCheckRun m_updateCheck;
-    void dispatchVersionChecks();
     QHash<QString, QPointer<InstanceSettingsDialog>> m_pendingChecks;
     QHash<QString, QString> m_lastIncompleteReports;
 };

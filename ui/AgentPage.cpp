@@ -985,7 +985,7 @@ void AgentPage::setStreaming(bool streaming) {
 void AgentPage::setConfigured(bool configured, const QString &statusText) {
     m_configured = configured;
     if (!statusText.isEmpty()) m_statusText = statusText;
-    // 未配置：顶上一颗警示胶囊（点了开 API 设置），空状态换成「请先配置 API」，输入岛停用。
+    // 未配置：顶上一颗警示胶囊（点了开 API 设置），空状态换成「先配置 API」，输入岛停用。
     m_apiWarn->setVisible(!configured);
     m_apiWarn->setText(m_statusText.startsWith(QCoreApplication::translate("AgentPage", "配置无效")) ? QCoreApplication::translate("AgentPage", "API 配置无效")
                                                                         : QCoreApplication::translate("AgentPage", "API 未配置"));
@@ -1108,7 +1108,7 @@ void AgentPage::showEmptyState(bool empty) { m_emptyState->setVisible(empty); }
 void AgentPage::updateEmptyState() {
     const bool empty = m_views.isEmpty() && m_toolCards.isEmpty() && m_approvalCard == nullptr;
     m_emptyState->setVisible(empty);
-    m_emptyTitle->setText(m_configured ? QCoreApplication::translate("AgentPage", "开始对话") : QCoreApplication::translate("AgentPage", "请先配置 API"));
+    m_emptyTitle->setText(m_configured ? QCoreApplication::translate("AgentPage", "有什么想问的？") : QCoreApplication::translate("AgentPage", "先配置 API"));
     m_emptyText->setText(m_configured ? QCoreApplication::translate("AgentPage", "可查看关联实例的文件；写入文件前会先征得确认。")
                                       : QCoreApplication::translate("AgentPage", "填写服务地址和密钥后即可开始对话。"));
     m_emptyAction->setVisible(!m_configured);

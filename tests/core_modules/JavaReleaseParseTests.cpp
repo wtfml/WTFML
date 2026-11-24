@@ -39,21 +39,6 @@ void runJavaReleaseParseTests() {
           QStringLiteral("真实 release 文件（JAVA_VERSION 后面还跟着 MODULES 等行）"),
           QString::number(GlobalJavaSettings::majorVersionFromReleaseFile(realistic)));
 
-    {
-        QTemporaryDir fixture;
-        const QString legacy = fixture.filePath(QStringLiteral("java8-old/bin/java.exe"));
-        const QString updated = fixture.filePath(QStringLiteral("java8-new/bin/java.exe"));
-        writeFileAt(legacy, "fixture");
-        writeFileAt(updated, "fixture");
-        writeFileAt(fixture.filePath(QStringLiteral("java8-old/release")), "JAVA_VERSION=\"1.8.0_51\"\n");
-        writeFileAt(fixture.filePath(QStringLiteral("java8-new/release")), "JAVA_VERSION=\"1.8.0_422\"\n");
-        const auto options = GlobalJavaSettings::scanAvailableJavaPaths(fixture.path()).value(8);
-        check(options.count(legacy) == 1 && options.count(updated) == 1,
-              QStringLiteral("实例 Java 选单保留同一主版本的不同运行时"));
-        check(GlobalJavaSettings::scanLocalJavaVersions(fixture.path()).value(8) == legacy,
-              QStringLiteral("自动选择仍沿用原本的同版本优先顺序"));
-    }
-
     // 真机对账：本机扫出来的每个运行时，两个来源必须说同一个版本。
     GlobalJavaSettings settings;
     const QMap<int, QString> found = settings.scanLocalJavaVersions();

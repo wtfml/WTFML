@@ -592,8 +592,7 @@ Tasks::TaskId BackupController::startRestore(const QString &zipPath,
                                               const QString &title, const QString &targetId,
                                               const QString &successTitle,
                                               const QString &refreshServerId,
-                                              const QString &failureTitle,
-                                              bool newTargetOnly) {
+                                              const QString &failureTitle) {
     QList<Tasks::TaskStep> steps{{tr("读清单"), Tasks::TaskStepState::Running, {}},
                                  {tr("备份当前实例"), Tasks::TaskStepState::Pending, {}},
                                  {tr("解出备份里的文件"), Tasks::TaskStepState::Pending, {}},
@@ -619,7 +618,7 @@ Tasks::TaskId BackupController::startRestore(const QString &zipPath,
         m_thread->wait();
         m_thread = nullptr;
     }
-    m_thread = QThread::create([this, zipPath, targetParentDir, successTitle, failureTitle, newTargetOnly] {
+    m_thread = QThread::create([this, zipPath, targetParentDir, successTitle, failureTitle] {
         // 还原也接上和创建备份同一条停止条件（关窗 / 整项 600 秒预算）。
         // 快照、暂存解压和校验均可停；仅最终改名发布/回滚的短临界区不可取消。
         QElapsedTimer elapsed;
@@ -627,7 +626,7 @@ Tasks::TaskId BackupController::startRestore(const QString &zipPath,
         const auto result = BackupFiles::restoreBackup(
             zipPath, targetParentDir, [this, &elapsed] {
                 return m_abort.loadRelaxed() != 0 || elapsed.elapsed() >= 600000;
-            }, {}, newTargetOnly ? BackupFiles::RestoreTarget::NewOnly : BackupFiles::RestoreTarget::Replace);
+            });
         // 同 startWrite()：关窗不发，用户取消照常收尾。
         if (m_abort.loadRelaxed() == 0 || m_userCancelled.load(std::memory_order_relaxed)) {
             QMetaObject::invokeMethod(this, [this, result, successTitle, failureTitle] {

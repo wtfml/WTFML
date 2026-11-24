@@ -332,48 +332,6 @@ int MwAgentChecks(QApplication &app) {
         check(controller->mcpManager()->tools().isEmpty(), "真窗口：没有 MCP 工具时清单为空");
     }
 
-    // 崩溃报告与游戏日志在实例目录里（游戏以 --gameDir versions/<id> 启动）。
-    {
-        const QString instanceRoot = AppPaths::versionDir(QStringLiteral("mw-stage2"));
-        QDir().mkpath(instanceRoot + QStringLiteral("/crash-reports"));
-        QDir().mkpath(instanceRoot + QStringLiteral("/logs"));
-        QFile crash(instanceRoot + QStringLiteral("/crash-reports/crash-2026-01-01_00.00.00-client.txt"));
-        check(crash.open(QIODevice::WriteOnly), "真窗口：造一份实例崩溃报告", crash.fileName());
-        crash.write("java.lang.OutOfMemoryError: Java heap space\n");
-        crash.close();
-        QFile gameLog(instanceRoot + QStringLiteral("/logs/latest.log"));
-        check(gameLog.open(QIODevice::WriteOnly), "真窗口：造一份实例 latest.log",
-              gameLog.fileName());
-        gameLog.write("[12:00:00] [main/INFO]: instance log\n");
-        gameLog.close();
-
-        Agent::ToolCall crashCall;
-        crashCall.id = QStringLiteral("mw-crash-1");
-        crashCall.name = QStringLiteral("crash.list");
-        crashCall.arguments = QJsonObject{{QStringLiteral("detail"), QStringLiteral("full")}};
-        const AgentToolResult crashList = controller->compositeEngine()->invoke(crashCall);
-        check(crashList.status == AgentToolResult::Status::ApprovalRequired,
-              "真窗口：崩溃报告文件名清单要审批");
-        const AgentToolResult crashApproved = controller->compositeEngine()->resolveApproval(
-            crashList.approval.value(QStringLiteral("approvalId")).toString(), true);
-        check(crashApproved.status == AgentToolResult::Status::Ok,
-              "真窗口：crash.list 读得到实例目录里的崩溃报告",
-              crashApproved.summary);
-        check(crashApproved.summary.contains(QStringLiteral("1 份")),
-              "真窗口：只统计到 1 份崩溃报告", crashApproved.summary);
-
-        Agent::ToolCall logCall;
-        logCall.id = QStringLiteral("mw-log-1");
-        logCall.name = QStringLiteral("logs.tail");
-        logCall.arguments = QJsonObject{{QStringLiteral("lines"), 20}};
-        const AgentToolResult logResult = controller->compositeEngine()->invoke(logCall);
-        check(logResult.status == AgentToolResult::Status::Ok,
-              "真窗口：logs.tail 读得到实例目录的 latest.log", logResult.summary);
-        check(logResult.data.value(QStringLiteral("content")).toString().contains(
-                  QStringLiteral("instance log")),
-              "真窗口：读到的是实例目录那份日志");
-    }
-
     // Stage 3：联网与诊断命令都接上了；诊断命令默认关闭，联网工具每次都要审批。
     {
         Agent::ToolCall commandCall;

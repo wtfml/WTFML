@@ -568,7 +568,7 @@ public:
         QString line1;
         if (failed) {
             reason->setText(card.reason);
-            stopAt->setText(QCoreApplication::translate("MainWindowUI", "停止于「%1」").arg(card.stage));
+            stopAt->setText(QCoreApplication::translate("MainWindowUI", "停在「%1」").arg(card.stage));
             line1 = card.reason;
             mark->finish(false);
         } else if (card.phase == Phase::Succeeded) {
@@ -1930,8 +1930,17 @@ QWidget *MainWindowUI::setupInstancePage() {
             auto *row = new QHBoxLayout(instanceFilterRow);
             row->setContentsMargins(0, 0, 0, 0);
             row->setSpacing(kFilterRowSpacing);
-            instanceSearchEdit = makeListFilterSearch(instanceFilterRow, instanceSearchName(),
-                                                        instanceSearchPlaceholder());
+            instanceSearchEdit = new QLineEdit(instanceFilterRow);
+            instanceSearchEdit->setObjectName(instanceSearchName());
+            instanceSearchEdit->setPlaceholderText(instanceSearchPlaceholder());
+            addSearchIcon(instanceSearchEdit);
+            // 一个 ✕（一行一次清干净）。**不加**"清空搜索"那颗独立按钮：要的是
+            // "清空搜索恢复原展开状态"，而那一格自己就带着这个动作，再摆一颗是同一件事
+            // 说两遍。
+            instanceSearchEdit->setClearButtonEnabled(true);
+            instanceSearchEdit->setFixedWidth(280);  // 设计稿：搜索框靠右、定宽，chip 在左
+            instanceSearchEdit->setFixedHeight(Theme::chipHeight());
+            instanceSearchEdit->setProperty("wtfmlChipHeight", true);
 
             // 四颗 chip **全都建着**（和下载页左栏那六个分类、文件页那四颗筛子同一套做法）：
             // 会变的是"露不露"和"亮不亮"，不是"有没有这一颗"—— 建/不建会让"这一页该有什么"
@@ -1959,7 +1968,7 @@ QWidget *MainWindowUI::setupInstancePage() {
         QWidget::setTabOrder(importModpackButton, groupInstanceButton);
         QWidget::setTabOrder(instanceFilterButtons.last(), instanceSearchEdit);
 
-        // 「无符合筛选条件的实例」那一行：摆在这儿（筛选行下面、树上面）而不是树的
+        // 「没有符合筛选条件的实例」那一行：摆在这儿（筛选行下面、树上面）而不是树的
         // 下边 —— 筛空了的时候树是空的，那句话直接跟着筛选行读下来才对得上"是上面那些
         // 条件把它滤没的"。平时收着（`setVisible(false)`，连位置都不占）。
         instanceNoMatchLabel = new QLabel(instanceNoMatchText(), clientPage);
@@ -2131,32 +2140,6 @@ QWidget *MainWindowUI::setupInstancePage() {
         serverLayout->setContentsMargins(0, 0, 0, 0);
         serverLayout->setSpacing(kFilterRowSpacing);
 
-        auto *serverFilterRow = new QWidget(serverPage);
-        serverFilterRow->setObjectName(serverFilterRowName());
-        auto *serverFilters = new QHBoxLayout(serverFilterRow);
-        serverFilters->setContentsMargins(0, 0, 0, 0);
-        serverFilters->setSpacing(kFilterRowSpacing);
-        const QStringList serverFilterTexts{
-            instanceFilterText(InstanceFilterButton::Vanilla),
-            QCoreApplication::translate("MainWindowUI", "插件"),
-            instanceFilterText(InstanceFilterButton::Modded),
-            QCoreApplication::translate("MainWindowUI", "运行中"),
-        };
-        for (int i = 0; i < serverFilterTexts.size(); ++i) {
-            const auto which = static_cast<ServerFilterButton>(i);
-            auto *chip = new QPushButton(serverFilterTexts.at(i), serverFilterRow);
-            chip->setObjectName(serverFilterButtonName(which));
-            chip->setCheckable(true);
-            Theme::markChipButton(chip);
-            serverFilterButtons.append(chip);
-            serverFilters->addWidget(chip);
-        }
-        serverFilters->addStretch(1);
-        serverSearchEdit = makeListFilterSearch(serverFilterRow, serverSearchName(),
-            QCoreApplication::translate("MainWindowUI", "搜索服务端名称、版本号或类型"));
-        serverFilters->addWidget(serverSearchEdit);
-        serverLayout->addWidget(serverFilterRow);
-
         serverEmptyLabel = new QLabel(serverEmptyText(), serverPage);
         serverEmptyLabel->setObjectName(serverEmptyLabelName());
         markTextRole(serverEmptyLabel, Theme::secondaryTextRoleValue());
@@ -2255,24 +2238,6 @@ void MainWindowUI::setPresetSubtitle(const QString &text) {
     showInstanceFolderText();
 }
 
-void MainWindowUI::setPresetDetailVisible(bool visible) {
-    presetDetailVisible = visible;
-    if (!instanceModeStack) return;
-    auto *page = tabWidget->widget(instancesTabIndex());
-    if (!page) return;
-    const bool detail = instanceMode == InstanceMode::Preset && visible;
-    if (auto *header = page->findChild<QWidget *>(pageHeaderName(QStringLiteral("instance"))))
-        header->setVisible(!detail);
-    if (auto *modes = page->findChild<QWidget *>(instanceModeRowName()))
-        modes->setVisible(!detail);
-
-    auto *workspace = instanceModeStack->parentWidget()->layout();
-    workspace->setContentsMargins(kSurfacePadding, detail ? 0 : kSurfacePadding,
-                                  kSurfacePadding, kSurfacePadding);
-    page->layout()->setContentsMargins(kPageMargin, detail ? 0 : kPageMargin,
-                                       kPageMargin, kPageMargin);
-}
-
 void MainWindowUI::setServerFormIntro(const QString &text) {
     if (serverFormIntroLabel != nullptr) {
         serverFormIntroLabel->setText(text);
@@ -2302,7 +2267,6 @@ void MainWindowUI::setInstanceMode(InstanceMode mode) {
     // 导入整合包只在客户端 / 服务端标签露面，预设标签收起。
     if (importModpackButton) importModpackButton->setVisible(mode != InstanceMode::Preset);
     instanceMode = mode;
-    setPresetDetailVisible(presetDetailVisible);
     // 页头路径行三个标签都有：换档只是换一份底稿。
     showInstanceFolderText();
     for (int i = 0; i < instanceModeButtons.size(); ++i) {
@@ -2326,7 +2290,7 @@ void MainWindowUI::setHomeQuickRows(const QList<HomeQuickItem> &current,
     };
     // ---------- 左下启动区（设计稿 r2 home.html .launch）----------
     // 「当前实例」眉题 + 实例名（手写 40）+ 元信息一行，三样合成一块可点的面（点开实例切换弹层）；
-    // 下面「启动游戏」+ 实例设置。一个实例都没有时：「暂无实例」+「下载游戏」。
+    // 下面「启动游戏」+ 实例设置。一个实例都没有时：「还没有实例」+「下载游戏」。
     if (homeQuickCurrentSection != nullptr && homeQuickCurrentRow != nullptr) {
         closeHomeInstancePicker();  // 它贴着的那一块马上要重建
         if (m_launchRow != nullptr) {
@@ -2376,9 +2340,9 @@ void MainWindowUI::setHomeQuickRows(const QList<HomeQuickItem> &current,
             }
             auto *name = new ElidedLabel(block);
             name->setObjectName(QStringLiteral("homeCurrentName"));
-            name->setText(item.empty ? QCoreApplication::translate("MainWindowUI", "暂无实例") : item.name);
+            name->setText(item.empty ? QCoreApplication::translate("MainWindowUI", "还没有实例") : item.name);
             name->setMinimumWidth(1);
-            // 零实例：「暂无实例」只是一句状态，用普通字阶（16），大标题才是这一屏唯一的手写大字。
+            // 零实例：「还没有实例」只是一句状态，用普通字阶（16），大标题才是这一屏唯一的手写大字。
             name->setMinimumHeight(item.empty ? 28 : 52);
             if (item.empty) {
                 name->setFont(Theme::textFont(name->font(), Theme::TextRole::Heading));

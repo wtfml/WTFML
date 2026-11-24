@@ -95,7 +95,6 @@
   "PresetSnapshotScaleTests.cpp": "presets",
   "ToolboxExtraTests.cpp": "toolbox",
   "TextFormatTests.cpp": "toolbox",
-  "SentenceJoinTests.cpp": "toolbox",
   "CoordConvertTests.cpp": "toolbox",
   "FileHashTests.cpp": "toolbox",
   "AnvilPlannerTests.cpp": "toolbox",
@@ -115,9 +114,6 @@
   "AgentContextTests.cpp": "agent",
   "AgentLoopTests.cpp": "agent",
   "AgentSkillsTests.cpp": "agent",
-  "AgentWorkspaceStoreTests.cpp": "agent",
-  "AgentTestLaunchTests.cpp": "agent",
-  "AgentRepairTests.cpp": "agent",
   "AgentMarkdownTests.cpp": "agent",
   "AgentPathPolicyTests.cpp": "agent",
   "AgentEgressPolicyTests.cpp": "agent",
@@ -137,8 +133,6 @@
   "AgentWebToolsTests.cpp": "agent",
   "AgentCommandToolsTests.cpp": "agent",
   "AgentPerformanceTests.cpp": "agent",
-  "AgentInstancePathTests.cpp": "agent",
-  "AgentPathLayoutTests.cpp": "agent",
   "DailyQuoteTests.cpp": "resources",
   "HomeGreetingTests.cpp": "resources"
 }

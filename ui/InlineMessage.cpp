@@ -534,7 +534,6 @@ QWidget *InlineMessageBox::setContent(QWidget *content, int preferredWidth) {
 
 void InlineMessageBox::showEvent(QShowEvent *event) {
     QDialog::showEvent(event);
-    m_shown = true;
     if (m_lineEdit == nullptr) {
         // `setContent()` 那一档：那块东西里**第一个输入框**接着这一下（同一条规矩、
         // 同一个理由 —— 用户点开"挑一个颜色"，直接打字就该进那一格）。
@@ -782,7 +781,7 @@ QColor pickColor(OverlayHost *host, const QString &title, const QString &text,
 
     box.setContent(content);
     // 这一行小字要在 execPrompt **之前**补（见 setNote() 那段）。
-    box.setNote(QObject::tr("可手动输入色号：`#rrggbb`（六位）或 `#aarrggbb`（八位，含透明度），`#` 可省略。"));
+    box.setNote(QObject::tr("色号可以手打：`#rrggbb`（六位）或 `#aarrggbb`（八位，带透明度），也可以不带 `#`。"));
 
     // 现在这一格认不认得出一个色 —— **唯一出处**：预览块和「确定」那颗按钮都靠它。
     QPushButton *accept = box.buttonAt(0);

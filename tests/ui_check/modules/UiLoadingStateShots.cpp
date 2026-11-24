@@ -76,10 +76,10 @@ int UiLoadingStateShots(QApplication &app) {
         page.resize(900, 620);
         page.show();
         pump(50);
-        page.setPlaceholder(QStringLiteral("正在读取版本列表…"));
+        page.setPlaceholder(QStringLiteral("正在读版本列表…"));
         pump(50);
         save(&page, QStringLiteral("1-resource-detail-before"));
-        page.setLoading(QStringLiteral("正在读取版本列表…"));
+        page.setLoading(QStringLiteral("正在读版本列表…"));
         shown();
         save(&page, QStringLiteral("1-resource-detail-loading"));
         page.setFailed(QStringLiteral("没取到版本列表：连接超时"), [] {});

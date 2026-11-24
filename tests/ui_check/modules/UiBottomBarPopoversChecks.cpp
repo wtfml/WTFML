@@ -109,7 +109,7 @@ int UiBottomBarPopoversChecks(QMainWindow &window, MainWindowUI &ui, QTabWidget 
                     // 才有得量。
                     MainWindowUI::PanelAction log;
                     log.text = MainWindowUI::bottomBarPanelLogText();
-                    log.tooltip = QStringLiteral("打开本次游戏的日志窗口");
+                    log.tooltip = QStringLiteral("打开这一场游戏的日志窗");
                     game.actions << power << gear << log;
                     rows << game;
 

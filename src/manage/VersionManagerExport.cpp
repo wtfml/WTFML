@@ -201,19 +201,19 @@ QString loaderKeyExportProblem(const QString &key, const QString &version) {
     const QString shown =
         version.trimmed().isEmpty() ? QString() : QStringLiteral(" %1").arg(version.trimmed());
     return QObject::tr("不支持导出使用「%1」（%2）加载器的整合包。")
-        .arg(key, shown.trimmed().isEmpty() ? QObject::tr("无版本号") : shown.trimmed());
+        .arg(key, shown.trimmed().isEmpty() ? QObject::tr("没有版本号") : shown.trimmed());
 }
 
 /// Modrinth 那一发没成时那句话。
 QString modrinthLookupFailureText(const HttpClient::Reply &reply) {
     if (!reply.networkError.isEmpty()) {
-        return QObject::tr("向 Modrinth 请求文件信息时连接失败：%1").arg(reply.networkError);
+        return QObject::tr("问 Modrinth 要文件信息时没连上：%1").arg(reply.networkError);
     }
     if (reply.status == HttpClient::kStatusTooManyRequests) {
         // 限流那一句的唯一出处（见 HttpClient::throttledText）。
-        return HttpClient::throttledText(QObject::tr("向 Modrinth 请求文件信息"));
+        return HttpClient::throttledText(QObject::tr("问 Modrinth 要文件信息"));
     }
-    return QObject::tr("Modrinth 接口返回 HTTP %1。").arg(reply.status);
+    return QObject::tr("Modrinth 的接口回了 HTTP %1。").arg(reply.status);
 }
 
 /// 一发问多少条。两条路都定 100：正文小、重来代价小，而一个大包（几百条）也就三四发。
@@ -466,7 +466,7 @@ QString VersionManager::instanceLoaderInfo(const QString &instanceId, QString *k
     }
     const QString start = instanceId.trimmed();
     if (start.isEmpty()) {
-        return tr("未指定实例名，无法确定要导出的实例。");
+        return tr("没有给出实例名，不知道要导出哪一个实例。");
     }
 
     // 在线清单那一份（没取到就是空表），只给 loaderIdParts 里 Forge 那一条用：那条的判据
@@ -824,7 +824,7 @@ VersionManager::InstanceTraits VersionManager::instanceTraits(const QString &ins
 QString VersionManager::lookupModrinthVersionFiles(
     const QStringList &sha1s, QHash<QString, ModpackExport::ModrinthHit> *out) {
     if (out == nullptr) {
-        return tr("内部错误：未指定结果输出位置。");
+        return tr("内部错误：没有给出放结果的地方。");
     }
     out->clear();
     if (sha1s.isEmpty()) {
@@ -875,7 +875,7 @@ QString VersionManager::lookupModrinthVersionFiles(
 QString VersionManager::lookupCurseForgeFingerprints(
     const QList<quint32> &fingerprints, QHash<quint32, ModpackExport::CurseForgeHit> *out) {
     if (out == nullptr) {
-        return tr("内部错误：未指定结果输出位置。");
+        return tr("内部错误：没有给出放结果的地方。");
     }
     out->clear();
     if (fingerprints.isEmpty()) {
@@ -906,14 +906,14 @@ QString VersionManager::lookupCurseForgeFingerprints(
             HttpClient::kDefaultTimeoutMs, headers);
         if (!reply.ok()) {
             if (!reply.networkError.isEmpty()) {
-                return tr("向 CurseForge 请求文件信息时连接失败：%1\n\n%2")
+                return tr("问 CurseForge 要文件信息时没连上：%1\n\n%2")
                     .arg(reply.networkError, curseForgeKeyHint(hasKey));
             }
             if (reply.status == HttpClient::kStatusTooManyRequests) {
-                return HttpClient::throttledText(tr("向 CurseForge 请求文件信息"));
+                return HttpClient::throttledText(tr("问 CurseForge 要文件信息"));
             }
             const QString apiError = reply.json.value(QStringLiteral("error")).toString().trimmed();
-            return tr("CurseForge 接口返回 HTTP %1%2\n\n%3")
+            return tr("CurseForge 的接口回了 HTTP %1%2\n\n%3")
                 .arg(reply.status)
                 .arg(apiError.isEmpty() ? QString() : tr("（%1）").arg(apiError), curseForgeKeyHint(hasKey));
         }
@@ -961,13 +961,13 @@ QString VersionManager::writePackArchive(const ModpackExport::ExportPlan &plan,
                                          const std::function<bool()> &cancelled) {
     if (plan.cancelled) {
         // 用户叫停：整份 plan 都作废（overrides 里可能有半截的东西），什么都不写。
-        return tr("导出已取消。");
+        return tr("导出已经取消了。");
     }
     if (!plan.problem.isEmpty()) {
         return plan.problem;
     }
     if (targetZip.trimmed().isEmpty()) {
-        return tr("未指定导出文件。");
+        return tr("没有指定导出到哪个文件。");
     }
     if (plan.instanceDir.trimmed().isEmpty()) {
         // 认不出来的那些文件只有相对路径，取不出盘上那一份 —— 硬打出来的包会缺东西，而
@@ -985,13 +985,13 @@ QString VersionManager::writePackArchive(const ModpackExport::ExportPlan &plan,
         QDir(staging.path()).absoluteFilePath(ModpackExport::indexFileName(plan.spec.format));
     QSaveFile manifest(manifestPath);
     if (!manifest.open(QIODevice::WriteOnly)) {
-        return tr("无法写入整合包的清单文件 %1。").arg(QDir::toNativeSeparators(manifestPath));
+        return tr("写不了整合包的清单文件 %1。").arg(QDir::toNativeSeparators(manifestPath));
     }
     // QSaveFile 的 commit() 在失败时**不会**把目标文件留在盘上（和 writeVersionJson 同一个
     // 理由：这里坏掉的后果是打出一个清单半截的包）。
     manifest.write(ModpackExport::buildIndexFile(plan.spec));
     if (!manifest.commit()) {
-        return tr("无法写入整合包的清单文件 %1。").arg(QDir::toNativeSeparators(manifestPath));
+        return tr("写不了整合包的清单文件 %1。").arg(QDir::toNativeSeparators(manifestPath));
     }
 
     // 「先写 .part、成功了再改名」：用户中途关掉启动器、或者磁盘满了，盘上留下的是一个
@@ -1015,7 +1015,7 @@ QString VersionManager::writePackArchive(const ModpackExport::ExportPlan &plan,
     if (!ZipUtil::createZip(partPath, ModpackExport::archiveEntries(plan, manifestPath), &error,
                             cancelled)) {
         QFile::remove(partPath);
-        if (cancelled && cancelled()) return tr("导出已取消。");
+        if (cancelled && cancelled()) return tr("导出已经取消了。");
         return error.isEmpty() ? tr("打包失败。") : error;
     }
     // 收尾不能直接用 `QFile::rename(partPath, targetZip)`：Qt 6.10 的 QFile::rename 走的是
@@ -1032,7 +1032,7 @@ QString VersionManager::writePackArchive(const ModpackExport::ExportPlan &plan,
     if (hadTarget) {
         if (!QFile::rename(targetZip, backupPath)) {
             // 挪不开就**一个字节都不动**：新包留在 .part 上，把它的位置说出来。
-            return tr("无法移除原文件 %1，已保留原文件。\n新整合包位于 %2。")
+            return tr("无法移走原文件 %1，已保留原文件。\n新整合包位于 %2。")
                 .arg(QDir::toNativeSeparators(targetZip),
                      QDir::toNativeSeparators(partPath));
         }

@@ -65,8 +65,6 @@ private:
         // ModToggle
         QString fileName;
         bool enable = true;
-        QString workspaceId;
-        QString transactionId;
         // BackupCreate / BackupRestore
         AgentHostBackupPlan plan;
         QString reason;

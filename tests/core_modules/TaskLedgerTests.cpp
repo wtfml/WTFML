@@ -159,12 +159,6 @@ void runTaskLedgerTests() {
             check(!read.hasFailure && read.id == 1,
                   "AL3 看过了之后：红点灭掉、这一格回到那件正在跑的下载",
                   QString::number(read.id));
-            tasks[0].batchTransfer = true;
-            tasks[0].doneUnits = 12;
-            tasks[0].totalUnits = 48;
-            const Tasks::TaskSummary transfer = Tasks::collapsedSummary(tasks, unread, now, windowMs);
-            check(transfer.hasFailure && transfer.id == 1 && transfer.percent == 25,
-                  "AL3 下载可测时显示下载百分比，同时保留未读失败红点");
         }
 
         // 未读的失败**不受**「刚完成」时间窗限制：过了窗口它照样占着这一格（导航收起时角标挂在它的环上），

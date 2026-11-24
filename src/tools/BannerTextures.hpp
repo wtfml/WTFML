@@ -1,6 +1,5 @@
 #pragma once
 #include <QBuffer>
-#include <QCoreApplication>
 #include <QHash>
 #include <QImageReader>
 #include <QJsonArray>
@@ -48,10 +47,10 @@ try {
         QStringLiteral("-EncodedCommand"), QString::fromLatin1(encoded.toBase64())});
     if (!process.waitForStarted(5000) || !process.waitForFinished(30000)) {
         process.kill(); process.waitForFinished(3000);
-        result.error = QCoreApplication::translate("BannerTextures", "读取旗帜贴图超时或无法启动读取器。"); return result;
+        result.error = QStringLiteral("读取旗帜贴图超时或无法启动读取器。"); return result;
     }
     if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
-        result.error = QCoreApplication::translate("BannerTextures", "无法读取归档中的旗帜贴图，或贴图超过安全限制。"); return result;
+        result.error = QStringLiteral("无法读取归档中的旗帜贴图，或贴图超过安全限制。"); return result;
     }
     const auto rows = QJsonDocument::fromJson(process.readAllStandardOutput()).array();
     for (const auto &row : rows) {
@@ -64,13 +63,7 @@ try {
         const auto image = reader.read();
         if (!image.isNull()) result.images.insert(object.value("name").toString(), image.scaled(64, 64));
     }
-    if (result.images.isEmpty()) result.error = QCoreApplication::translate("BannerTextures", "未找到受支持"
-                                                                                              "的 Java "
-                                                                                              "旗帜贴图，"
-                                                                                              "请选择原版客"
-                                                                                              "户端 JAR "
-                                                                                              "或包含旗帜贴"
-                                                                                              "图的资源包。");
+    if (result.images.isEmpty()) result.error = QStringLiteral("没有找到受支持的 Java 旗帜贴图，请选择原版客户端 JAR 或包含旗帜贴图的资源包。");
     return result;
 }
 }

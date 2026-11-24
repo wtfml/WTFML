@@ -133,7 +133,7 @@ void LaunchHistoryController::startPlayTime(int sessionId, const QString &versio
     if (needsId) {
         stableId = versions.ensureInstanceId(versionId);
         if (stableId.isEmpty()) {
-            emit logMessage(tr("无法记录「%1」的游玩时长：实例 ID 无法写入。").arg(versionId));
+            emit logMessage(tr("无法记录「%1」的游玩时长：实例 ID 写不进去。").arg(versionId));
             return;
         }
     }
@@ -171,7 +171,7 @@ void LaunchHistoryController::finishPlayTime(int sessionId, qint64 tickMs) {
     auto counter = m_playTimeCounters.find({path, stableId});
     if (counter == m_playTimeCounters.end() || !counter->finish(sessionId, tickMs)) return;
     if (!LaunchHistory::savePlayTime(path, stableId, counter->completed())) {
-        emit logMessage(tr("无法保存游玩时长：%1 无法写入。").arg(QDir::toNativeSeparators(path)));
+        emit logMessage(tr("无法保存游玩时长：%1 写不进去。").arg(QDir::toNativeSeparators(path)));
     }
 }
 

@@ -52,7 +52,7 @@ const Recipe kRecipes[] = {
     {QT_TRANSLATE_NOOP("Brewing", "隐身药水"), QT_TRANSLATE_NOOP("Brewing", "发酵蜘蛛眼"), QT_TRANSLATE_NOOP("Brewing", "隐身"), 9, false, true, false, 2, nullptr, 180, 480},
     // 荧石粉给的是**迟缓 IV**（不是 II）—— 这是唯一一种升级跳两级的药水。
     {QT_TRANSLATE_NOOP("Brewing", "迟缓药水"), QT_TRANSLATE_NOOP("Brewing", "发酵蜘蛛眼"), QT_TRANSLATE_NOOP("Brewing", "迟缓"), 0, false, true, true, 4, nullptr, 90, 240, 20},
-    {QT_TRANSLATE_NOOP("Brewing", "缓降药水"), QT_TRANSLATE_NOOP("Brewing", "幻翼膜"), QT_TRANSLATE_NOOP("Brewing", "缓降"), -1, false, true, false, 2, nullptr, 90, 240},
+    {QT_TRANSLATE_NOOP("Brewing", "缓降药水"), QT_TRANSLATE_NOOP("Brewing", "幻翼膜"), QT_TRANSLATE_NOOP("Brewing", "缓降"), -1, true, true, false, 2, nullptr, 90, 240},
     {QT_TRANSLATE_NOOP("Brewing", "虚弱药水"), QT_TRANSLATE_NOOP("Brewing", "发酵蜘蛛眼"), QT_TRANSLATE_NOOP("Brewing", "虚弱"), -1, true, true, false, 2, nullptr, 90, 240},
     {QT_TRANSLATE_NOOP("Brewing", "神龟药水"), QT_TRANSLATE_NOOP("Brewing", "海龟壳"), QT_TRANSLATE_NOOP("Brewing", "海龟大师"), -1, false, true, true, 2, nullptr, 20, 40, 20},
     // 1.21 加的四瓶：都从**粗制的药水**来（不是水瓶直做），也没有延长 / II 级版本。
@@ -198,8 +198,7 @@ QString Plan::detailText() const {
         lines << QStringLiteral("%1. %2").arg(i + 1).arg(steps.at(i));
     }
     if (directFromWater) {
-        lines << QCoreApplication::translate("Brewing", "特殊路径：此药水可直接用水瓶酿造，"
-                                                        "无需先制作粗制的药水。");
+        lines << QCoreApplication::translate("Brewing", "特殊路径：这一瓶直接从水瓶酿，不需要先做粗制的药水。");
     }
     lines << QCoreApplication::translate("Brewing", "材料：%1").arg(materials.join(QCoreApplication::translate("Brewing", "、")));
     return lines.join(QLatin1Char('\n'));
@@ -231,7 +230,7 @@ Plan plan(int potionIndex, bool extended, bool level2, Form form, int bottles) {
         return result;
     }
     if (bottles < 1 || bottles > maxBottles()) {
-        result.error = QCoreApplication::translate("Brewing", "瓶数须为 1 – %1（当前为 %2）。")
+        result.error = QCoreApplication::translate("Brewing", "瓶数只能是 1 – %1（%2 不在这个范围里）。")
                            .arg(maxBottles())
                            .arg(bottles);
         return result;
@@ -319,14 +318,14 @@ Plan plan(int potionIndex, bool extended, bool level2, Form form, int bottles) {
                                 .arg(name)
                                 .arg(ingredientCounts.value(name) * result.operations);
     }
-    result.materials << QCoreApplication::translate("Brewing", "烈焰粉（燃料） × %1（1 个烈焰粉可酿造 20 次）")
+    result.materials << QCoreApplication::translate("Brewing", "烈焰粉（燃料） × %1（1 个烈焰粉可酿 20 次）")
                             .arg(blazePowderFor(result.operations));
 
     result.ok = true;
     result.directFromWater = target.fromWater;
     const QString effectName = QCoreApplication::translate("Brewing", kRecipes[potionIndex].effectName);
     result.effect = effectText(target, effectName, extended, level2, form);
-    result.summary = QCoreApplication::translate("Brewing", "产出：%1 × %2 瓶（酿造 %3 次）")
+    result.summary = QCoreApplication::translate("Brewing", "产出：%1 × %2 瓶（酿 %3 次）")
                          .arg(nameWithModifiers(target.name, extended, level2, form,
                                                 target.upgradedLevel))
                          .arg(bottles)

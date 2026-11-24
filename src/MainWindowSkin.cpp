@@ -139,7 +139,7 @@ QPixmap MainWindow::accountFacePixmap(const SavedAccount &account, int pixelSize
             }
         }
     } else {
-        // ③ 离线账号优先用**他自己挑的那张**（「账号与皮肤」→「更换皮肤…」，见 OfflineSkin）。
+        // ③ 离线账号优先用**他自己挑的那张**（「账号与外观」→「换一张…」，见 OfflineSkin）。
         // 它排在这里是为了和 PlayerSkinController::reload() 的次序一致：那个函数里手动
         // 挑的也排在随机 / 算出来的前面。次序不一致的症状就是"主页是这张、面板是那张"。
         const QPixmap manualFace = faceFromTexture(OfflineSkin::skinPathFor(account.uuid));
@@ -193,7 +193,7 @@ void MainWindow::updateSkinHint() {
         if (!facts.offline) {
             hint->setText(MainWindowUI::skinHintLoadedText(name, facts.hasCape));
         } else if (facts.offlineCustomSkin) {
-            // 用户自己挑的那张（「账号与皮肤」→「更换皮肤…」）：这是明确的选择，既不是
+            // 用户自己挑的那张（「账号与外观」→「换一张…」）：这是明确的选择，既不是
             // "某个实例算出来的"，所以有它自己那一句。
             hint->setText(MainWindowUI::skinHintOfflineCustomSkinText(name));
         } else if (!facts.offlineDefaultSkinVersionId.isEmpty()) {

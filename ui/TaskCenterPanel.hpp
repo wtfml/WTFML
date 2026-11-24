@@ -58,7 +58,6 @@ struct Step {
     QString name;
     StepState state = StepState::Pending;
     QString note;
-    int percent = -1;
 };
 
 /// 这一项**当下允许哪些操作**。和 `Tasks::TaskCapabilities` 一一对应（唯一翻译点 =
@@ -96,7 +95,7 @@ struct Item {
     /// 不显示假百分比」——"已下载多少"那句走 `detail`）。
     int percent = -1;
     /// 字节级进度那一句（"已下载 12.3 MB / 45.6 MB"）。空 = 这一项不按字节记账。
-    /// 活动行及详情页显示这项，文件个数另从 detail 读取。
+    /// **只有详情页用它**：面板上那一行装不下（那一行小字是 `detail`）。
     QString bytesText;
     State state = State::Queued;
     /// 用户**还没看过**的一次失败：行尾挂一个红点（看见之后由 MainWindow 撤掉）。
@@ -197,7 +196,6 @@ public:
 
     /// 作为覆盖层里的完整工作区使用。此时不做屏幕定位，也没有 Popup 的点击外部关闭语义。
     void showEmbedded();
-    void revealTask(const QString &key);
     QWidget *headerActions() const { return m_toolbar; }
 
     /// 内容变了重画一遍（面板开着的时候 MainWindow 会喊）。**不重播滑入动效** ——

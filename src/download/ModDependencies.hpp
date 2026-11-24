@@ -112,7 +112,7 @@ QString projectsKeyFor(const QString &consumer, const QStringList &projectIds,
 ///
 /// 它是依赖解析和安装的真值来源：只过滤 optional / incompatible / embedded
 /// 和没有 projectId 的坏数据。不要在这里为了精简 UI 隐藏真实依赖，否则
-/// `missingRequiredDependencies()` 也会看不见它，用户选「全部下载」时反而不会装。
+/// `missingRequiredDependencies()` 也会看不见它，用户选「一起下载」时反而不会装。
 ///
 /// 同一个项目在清单里出现两次时**只留第一条**（按项目号去重）：两发同钥匙的版本请求
 /// 在 `ResourceStore` 那边第二发会把第一发掐掉、而且不回调，按条数等回信的一方
@@ -203,8 +203,6 @@ bool resolveDependency(const ResourceCatalog::Dependency &dependency,
 struct Plan {
     /// 要下的（每条一版一文件）。
     QList<Resolved> downloads;
-    /// 可选版本按项目号存放，首项为默认下载，作者指定的版本只有一项。
-    QHash<QString, QList<Resolved>> choices;
     /// 解不开的那些，**一条一句中文**（每句都带上是哪个前置 —— 只说"有一个前置没找到"
     /// 等于没说，用户手上没有任何线索）。
     QStringList unresolved;
@@ -397,10 +395,10 @@ QString dependencyPromptUnknownText(ResourceCatalog::Kind kind, const QStringLis
 /// `InlineMessage::ask(...)` 的 note，验证工程拿它断言 —— 别在别处再写一遍。
 QString dependencyPromptNoteText();
 
-/// 「全部下载」（用户 要的那个"一键下载所有缺少的依赖"）。
+/// 「一起下载」（用户 要的那个"一键下载所有缺少的依赖"）。
 QString dependencyAllButtonText();
 
-/// 「仅下载此项」（一起下载的反面 —— 用户得能说"不"）。
+/// 「只下这个」（一起下载的反面 —— 用户得能说"不"）。
 QString dependencyOnlyThisButtonText();
 
 /// 下完了但有几个没解开时那一句（空表回空串 = 不显示）。

@@ -230,7 +230,7 @@ int UiConfigEditorChecks() {
             check(editor.editor() != nullptr && editor.editor()->isReadOnly(),
                   "★ U11b 编辑框本身也是 readOnly（不只是藏了一颗按钮）");
             check(editor.noteLabel() != nullptr &&
-                      editor.noteLabel()->text().startsWith(QStringLiteral("只读：")),
+                      editor.noteLabel()->text().startsWith(ConfigFileEditorPage::readOnlyPrefix()),
                   "★ U11b 底下那行字换成了只读那一档、而且说清了为什么",
                   editor.noteLabel() != nullptr ? editor.noteLabel()->text() : QString());
             check(!editor.isDirty(), "U11b 只读的那一份也是干净的");
@@ -1459,7 +1459,7 @@ int UiConfigEditorChecks() {
                   "已经被盖掉了，再想回去没有路",
                   QStringLiteral("脏=%1").arg(int(editor.isDirty())));
             check(editor.noteLabel()->text().startsWith(
-                      QStringLiteral("已恢复上次保存前的内容（")) &&
+                      ConfigFileEditorPage::restoredPrefix()) &&
                       editor.noteLabel()->text().contains(QStringLiteral("2026-09-27 14:30:12")),
                   "★★ U11g 底下那行字**说清这一份是哪来的、还没写回盘上**（它是这一页唯一"
                   "一处「正文变了但盘上没变」的情形，不说的话用户会以为已经落盘了）",
@@ -1479,7 +1479,7 @@ int UiConfigEditorChecks() {
             editor.restoreContent(older, QStringLiteral("2026-09-27 14:30:12"));
             editor.markSaved();
             check(!editor.isDirty() &&
-                      editor.noteLabel()->text().startsWith(QStringLiteral("已保存（")),
+                      editor.noteLabel()->text().startsWith(ConfigFileEditorPage::savedPrefix()),
                   "★★ U11g 存成功之后那行字换成「已保存（时:分:秒）」，**不再说「取回来的、还没"
                   "写回盘上」**（它已经写回去了）",
                   editor.noteLabel()->text());

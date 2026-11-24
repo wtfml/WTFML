@@ -387,7 +387,7 @@ int MwTaskSummaryChecks(MainWindow &window) {
         c = MainWindow::launchCardFor(t, true);
         check(c.stage == QStringLiteral("等待游戏窗口") && c.total == 0, "AB7 等待游戏启动 = 等待游戏窗口（不定进度）", c.stage);
         t.state = Tasks::TaskState::Failed;
-        t.errorSummary = QStringLiteral("游戏进程未启动");
+        t.errorSummary = QStringLiteral("游戏进程没有启动");
         c = MainWindow::launchCardFor(t, true);
         check(c.phase == Phase::Failed && c.reason == t.errorSummary && c.stage == QStringLiteral("等待游戏窗口"),
               "AB7 失败带原因 = 启动失败，停在当时那一段", c.reason);

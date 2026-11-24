@@ -688,9 +688,9 @@ public:
     static QString stateFilterText(StateFilter filter) {
         switch (filter) {
         case StateFilter::Enabled:
-            return QCoreApplication::translate("InstanceFilesPage", "启用", "state filter");
+            return QCoreApplication::translate("InstanceFilesPage", "启用");
         case StateFilter::Disabled:
-            return QCoreApplication::translate("InstanceFilesPage", "禁用", "state filter");
+            return QCoreApplication::translate("InstanceFilesPage", "禁用");
         case StateFilter::Update:
             return QCoreApplication::translate("InstanceFilesPage", "可更新");
         case StateFilter::All:
@@ -700,7 +700,7 @@ public:
     }
     /// 筛完一条都不剩时那句（搜索词或状态把这一页筛空了）。**和"目录本来就是空的"那句
     /// 是两回事**（见 m_emptyText）：这一句底下那一排筛选还露着，用户正要靠它改回来。
-    static QString noMatchText() { return QCoreApplication::translate("InstanceFilesPage", "无符合条件的条目。"); }
+    static QString noMatchText() { return QCoreApplication::translate("InstanceFilesPage", "没有符合条件的条目。"); }
 
     // ---------- 批量管理那两处的字----------
 
@@ -749,7 +749,7 @@ public:
     static QString selectionPickTip(SelectionAction action) {
         switch (action) {
         case SelectionAction::SelectAll:
-            return QCoreApplication::translate("InstanceFilesPage", "选择当前筛选出的全部条目。");
+            return QCoreApplication::translate("InstanceFilesPage", "选中当前筛出来的全部条目。");
         case SelectionAction::InvertAll:
             return QCoreApplication::translate("InstanceFilesPage", "反选当前列表。");
         case SelectionAction::ClearAll:

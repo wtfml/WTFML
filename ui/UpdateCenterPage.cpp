@@ -340,7 +340,7 @@ void UpdateCenterPage::rebuild() {
                             [this, path] { emit updateRequested(QStringList{path}); });
                     lineLayout->addWidget(one);
 
-                    // ②「忽略此版本」/「不再忽略」
+                    // ②「忽略这一版」/「不再忽略」
                     const bool ignored = row.suppress == Suppress::Ignored;
                     auto *ignore = makeRowChip(
                         line,
@@ -353,7 +353,7 @@ void UpdateCenterPage::rebuild() {
                     });
                     lineLayout->addWidget(ignore);
 
-                    // ③「固定此版本」/「不再固定」
+                    // ③「固定这一版」/「不再固定」
                     const bool pinned = row.suppress == Suppress::Pinned;
                     auto *pin = makeRowChip(line,
                                             pinned ? MainWindowUI::updateCenterRowPinUndoText()

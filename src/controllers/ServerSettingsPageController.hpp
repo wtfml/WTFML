@@ -70,7 +70,7 @@ public:
 
     /// 用户按了「保存」：原文 + 表单补丁 → `server.properties`。
     void save();
-    /// 用户按了「放弃更改」：把这一页按盘上那一份重新摆一遍（**不碰盘**）。
+    /// 用户按了「放弃改动」：把这一页按盘上那一份重新摆一遍（**不碰盘**）。
     void revert();
     /// 跑一遍体检（开页 / 保存之后 / 用户点了「重新检查」），把结论摆到那一页上。
     /// 顺带把端口那一次真监听的结论记下来（它不是个"随时都准"的事实）。
@@ -91,7 +91,6 @@ public:
     ServerSettingsPage *settingsPage() const { return m_page; }
     /// 这一页现在能不能改（服务端在跑 = 不能）。
     bool editable() const { return m_editable; }
-    QString selectedWorld() const;
     /// 这一页此刻说的就是 @p serverId 吗（**认这一格，不许去问"列表上现在选中谁"**）。
     bool isShowing(const QString &serverId) const {
         return m_page != nullptr && !m_serverId.isEmpty() && m_serverId == serverId;
@@ -104,12 +103,6 @@ private:
     /// 把"这个服务端现在在不在跑"翻到页面上：状态那两句 + 只读闸（唯一出处）。
     /// `refresh()` 与 `refreshRunStateIfShowing()` 都走这里，免得两边的措辞和判据分叉。
     void applyRunState(ServerSettingsPage *page, const QString &serverId);
-    void refreshWorlds();
-    void refreshLogs();
-    void saveLaunchSettings();
-    void exportMigration();
-    void importMigration();
-    void createUpgradeCopy();
 
     MainWindow &m_owner;
     /// 这一页（懒建一次、之后复用，和控制台那一页同一路数）。
@@ -118,7 +111,6 @@ private:
     QString m_serverId;
     /// 这一页现在能不能改（服务端在跑 = 不能）。
     bool m_editable = true;
-    bool m_copyingUpgrade = false;
     /// 体检里"那个端口现在有人占着吗"的结论（`ServerPortCheck::stateOf()` 那一发）。
     /// **开页 / 重新检查 / 保存之后**各查一次 —— 用户可能刚把占着它的那个程序关掉。
     ServerPortCheck::State m_portState = ServerPortCheck::State::Unknown;

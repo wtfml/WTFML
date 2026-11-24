@@ -178,7 +178,7 @@ void runOperationReportTests() {
         cancel.conflictPolicy = OperationReport::ConflictPolicy::Cancel;
         const auto refused = WorldFiles::importWorld(world, saves, QStringLiteral("Same"), cancel);
         check(!refused.ok && refused.conflict
-                  && refused.problem.contains(QStringLiteral("已存在名为")),
+                  && refused.problem.contains(QStringLiteral("已经有一个叫")),
               "RO5 同名冲突选「取消」：明确拒绝，不覆盖");
     }
     {

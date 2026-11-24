@@ -70,14 +70,14 @@ MainWindow::JavaMismatchAnswer MainWindow::askAboutJavaMismatch(
     const JavaMismatchDialog::Choice choice = dialog.choice();
 
     if (choice == JavaMismatchDialog::Choice::Abort) {
-        appendLog(tr("已取消启动：「%1」指定的是 Java %2，而此版本要求 Java %3。")
+        appendLog(tr("已取消启动：「%1」指定的是 Java %2，而这个版本要求 Java %3。")
                       .arg(instanceDisplayName(versionId))
                       .arg(actualMajor)
                       .arg(expectedMajor));
         return JavaMismatchAnswer::AbortLaunch;
     }
 
-    // 「不再提醒此实例」是用户刚点下的一下**表态**，立刻落盘才对得上他的意思
+    // 「以后不再提醒这个实例」是用户刚点下的一下**表态**，立刻落盘才对得上他的意思
     // （等他下次想起来去「实例设置…」里关，那个框会一直问下去）。
     //
     // NOTE: 写失败**只记日志、不拦启动**。这是全程唯一一处"错误不弹窗"：存不下一个
@@ -94,7 +94,7 @@ MainWindow::JavaMismatchAnswer MainWindow::askAboutJavaMismatch(
                 &error)) {
             appendLog(tr("无法保存「不再提醒」设置：%1").arg(error));
         } else {
-            appendLog(tr("「%1」将不再提醒 Java 版本不符。").arg(instanceDisplayName(versionId)));
+            appendLog(tr("「%1」以后不再提醒 Java 版本不符。").arg(instanceDisplayName(versionId)));
         }
     }
 

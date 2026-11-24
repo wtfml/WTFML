@@ -204,7 +204,7 @@ void InstanceGroupStore::ensureLoaded() const {
         // 用户手改或者文件坏了 —— 两种都不该被我们悄悄抹掉。
         qWarning() << "Instance group file has an unknown version" << version << ":" << path;
         m_unreadableReason =
-            tr("%1 由更新版本的启动器写入（格式版本 %2），当前版本无法解析，未修改该文件。")
+            tr("%1 是更新版本的启动器写的（格式版本 %2），这一版无法解析，没有改动它。")
                 .arg(path)
                 .arg(version);
         return;
@@ -380,7 +380,7 @@ bool InstanceGroupStore::setGroupExpanded(const QString &groupId, bool expanded,
     // 空 id 是调用方的 bug（拿一个空的组 id 过来），不是用户操作失误。静默放过的话，
     // 表现是"点了那一下没反应"，而真正的原因（谁传了个空的）就查不出来了。
     if (groupId.isEmpty()) {
-        return fail(tr("内部错误：未指定要修改展开状态的分组。"));
+        return fail(tr("内部错误：没有指定要改哪个分组的展开状态。"));
     }
 
     ensureLoaded();
@@ -392,7 +392,7 @@ bool InstanceGroupStore::setGroupExpanded(const QString &groupId, bool expanded,
     const auto found = std::find_if(list.begin(), list.end(),
                                     [&groupId](const Group &group) { return group.id == groupId; });
     if (found == list.end()) {
-        return fail(tr("未找到指定分组，请刷新分组列表。"));
+        return fail(tr("找不到指定分组，请刷新分组列表。"));
     }
     if (found->expanded == expanded) {
         // 已经就是这个状态了（比如双击那两发里第二发又点了一次）：不写盘。
@@ -415,7 +415,7 @@ bool InstanceGroupStore::setGroupPinned(const QString &groupId, bool pinned, QSt
     // 空 id 是调用方的 bug（拿一个空的组 id 过来），不是用户操作失误 —— 和
     // setGroupExpanded() 那段同一个判据、同一句话的形状。
     if (groupId.isEmpty()) {
-        return fail(tr("内部错误：未指定要修改收藏状态的分组。"));
+        return fail(tr("内部错误：没有指定要改哪个分组的收藏状态。"));
     }
 
     ensureLoaded();
@@ -427,7 +427,7 @@ bool InstanceGroupStore::setGroupPinned(const QString &groupId, bool pinned, QSt
     const auto found = std::find_if(list.begin(), list.end(),
                                     [&groupId](const Group &group) { return group.id == groupId; });
     if (found == list.end()) {
-        return fail(tr("未找到指定分组，请刷新分组列表。"));
+        return fail(tr("找不到指定分组，请刷新分组列表。"));
     }
     if (found->pinned == pinned) {
         // 已经就是这个状态了：不写盘（和 setGroupExpanded() 那条空操作同一条规矩）。
@@ -457,7 +457,7 @@ bool InstanceGroupStore::assign(const QString &instanceKey, const QString &group
     // 空键是调用方的 bug（比如拿着一个"当前没选中"的空 id 过来），不是用户操作失误。
     // 静默写进去的后果是文件里多一条谁都认不出来的归属，所以直接拒。
     if (instanceKey.isEmpty()) {
-        return fail(tr("内部错误：未指定要分组的实例。"));
+        return fail(tr("内部错误：没有指定要给哪个实例分组。"));
     }
 
     ensureLoaded();
@@ -478,7 +478,7 @@ bool InstanceGroupStore::assign(const QString &instanceKey, const QString &group
             std::find_if(known.constBegin(), known.constEnd(),
                          [&groupId](const Group &group) { return group.id == groupId; });
         if (found == known.constEnd()) {
-            return fail(tr("未找到指定分组，请刷新分组列表。"));
+            return fail(tr("找不到指定分组，请刷新分组列表。"));
         }
     }
 
@@ -499,7 +499,7 @@ bool InstanceGroupStore::pinInstance(const QString &instanceKey, QString *errorO
     };
 
     if (instanceKey.isEmpty()) {
-        return fail(tr("内部错误：未指定要收藏的实例。"));
+        return fail(tr("内部错误：没有指定要收藏哪个实例。"));
     }
 
     ensureLoaded();
@@ -549,7 +549,7 @@ bool InstanceGroupStore::unpinInstance(const QString &instanceKey, QString *erro
     };
 
     if (instanceKey.isEmpty()) {
-        return fail(tr("内部错误：未指定要取消收藏的实例。"));
+        return fail(tr("内部错误：没有指定要取消收藏哪个实例。"));
     }
 
     ensureLoaded();
@@ -601,7 +601,7 @@ bool InstanceGroupStore::setInstanceHomeGroup(const QString &instanceKey, const 
     };
 
     if (instanceKey.isEmpty()) {
-        return fail(tr("内部错误：未指定要分组的实例。"));
+        return fail(tr("内部错误：没有指定要给哪个实例分组。"));
     }
 
     ensureLoaded();
@@ -630,7 +630,7 @@ bool InstanceGroupStore::setInstanceHomeGroup(const QString &instanceKey, const 
             std::find_if(known.constBegin(), known.constEnd(),
                          [&groupId](const Group &group) { return group.id == groupId; });
         if (found == known.constEnd()) {
-            return fail(tr("未找到指定分组，请刷新分组列表。"));
+            return fail(tr("找不到指定分组，请刷新分组列表。"));
         }
     }
 

@@ -23,7 +23,6 @@
 #include "settings/GlobalJavaSettings.hpp"
 
 #include <QJsonObject>
-#include <QProcess>
 #include <QTimer>
 
 ServerRunController::ServerRunController(MainWindow *owner) : QObject(owner), m_owner(*owner) {}
@@ -48,10 +47,10 @@ void ServerRunController::start(const QString &serverId, bool automatic) {
     if (m_fileBusy.contains(serverId)) {
         if (automatic) {
             // 自动重启是它自己起的（用户没在等这一下），不弹窗，记一行就够。
-            m_owner.appendLog(MainWindow::tr("%1 的世界正在备份或还原，本次未自动重启。").arg(serverId));
+            m_owner.appendLog(MainWindow::tr("%1 的世界正在备份或者还原，这一次没有自动重启。").arg(serverId));
         } else {
             InlineMessage::information(
-                m_owner.m_ui->overlay(), MainWindow::tr("暂时无法启动"),
+                m_owner.m_ui->overlay(), MainWindow::tr("暂时不能启动"),
                 MainWindow::tr("世界存档正在备份或还原。请等待操作完成后再启动。"));
         }
         return;
@@ -70,7 +69,7 @@ void ServerRunController::start(const QString &serverId, bool automatic) {
     }
     // 闸②：已经在跑了（同一行连点两下、或者右键菜单里又点了一次）。
     if (process->isRunning()) {
-        m_owner.appendLog(MainWindow::tr("%1 已在运行。").arg(serverId));
+        m_owner.appendLog(MainWindow::tr("%1 已经在跑了。").arg(serverId));
         return;
     }
     // 闸③：EULA。**只有用户自己勾了才写**（见 ensureServerEula）。
@@ -96,7 +95,7 @@ void ServerRunController::start(const QString &serverId, bool automatic) {
     const ServerInstall::Plan plan = m_owner.serverLaunchPlan(serverId, &problem);
     if (!plan.ok) {
         m_owner.finishTask(m_startupTasks.take(serverId), false, problem);
-        InlineMessage::critical(m_owner.m_ui->overlay(), MainWindow::tr("无法启动此服务端"), problem);
+        InlineMessage::critical(m_owner.m_ui->overlay(), MainWindow::tr("起不了这个服务端"), problem);
         return;
     }
     // 闸⑤：java。判据和装加载器/装服务端那两条路**同一套**（版本 json 里的 `javaVersion`
@@ -115,25 +114,24 @@ void ServerRunController::start(const QString &serverId, bool automatic) {
     }
     QString javaReason;
     if (!m_owner.m_javaSettings->installerJavaFor(requiredJavaMajor, configuredJava, &java, &javaReason)) {
-        m_owner.appendLog(MainWindow::tr("无法获取启动此服务端所需的 Java：%1").arg(javaReason));
+        m_owner.appendLog(MainWindow::tr("起这个服务端要的 Java 拿不到：%1").arg(javaReason));
         m_owner.finishTask(m_startupTasks.take(serverId), false, javaReason);
-        InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("Java 版本过低"), javaReason);
+        InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("Java 版本不够"), javaReason);
         return;
     }
     if (java != configuredJava) {
-        m_owner.appendLog(MainWindow::tr("此服务端需要 Java %1，"
-                                         "启动时将使用 %2").arg(requiredJavaMajor).arg(java));
+        m_owner.appendLog(MainWindow::tr("这个服务端要 Java %1，起的时候用 %2").arg(requiredJavaMajor).arg(java));
     }
 
     // 那条命令 + 宽限那两个入参（模组数量 / 存档大小，见 ServerRun.hpp 那张表）。
     // 内存：这一个自己配过就用它，没配过（`memoryMb <= 0`，见 `ServerModel::Info` 那句）
     // 就跟全局那一档 —— 和上面 java 的规矩一样。
     const int memoryMb = info.memoryMb > 0 ? info.memoryMb : m_owner.m_javaSettings->xmx();
-    const QStringList arguments = ServerRun::launchArguments(plan, memoryMb, QProcess::splitCommand(info.jvmArguments));
+    const QStringList arguments = ServerRun::launchArguments(plan, memoryMb);
     const int mods = m_owner.countServerMods(entry.dirPath);
     const qint64 worldBytes = m_owner.serverWorldBytes(entry.dirPath);
     const int gracefulMs = ServerRun::gracefulStopMs(mods, worldBytes);
-    m_owner.appendLog(MainWindow::tr("启动服务端 %1：%2 个模组、存档 %3 MB，停止时最多等待 %4 秒。")
+    m_owner.appendLog(MainWindow::tr("起服务端 %1：%2 个模组、存档 %3 MB，停下来最多等 %4 秒。")
                   .arg(shown)
                   .arg(mods)
                   .arg(worldBytes / (1024 * 1024))
@@ -228,12 +226,12 @@ void ServerRunController::onExited(const QString &serverId, int exitCode) {
     m_owner.updateServerRow(serverId);
     m_owner.updateServerConsole();
     if (exitCode == 0 && !zeroStartupFailure) {
-        m_owner.appendLog(MainWindow::tr("%1 已退出。").arg(shown));
+        m_owner.appendLog(MainWindow::tr("%1 已经退出。").arg(shown));
         return;
     }
     if (process != nullptr && process->wasForceKilled()) {
         // "你让我强杀的"和"它自己崩了"是两件事 —— 后者才该弹一个预警框。
-        m_owner.appendLog(MainWindow::tr("%1 已被强制结束。").arg(shown));
+        m_owner.appendLog(MainWindow::tr("%1 已经被强制结束。").arg(shown));
         return;
     }
     const QString exitReason = zeroStartupFailure ? MainWindow::tr("未完成启动（进程退出码 0）")
@@ -260,7 +258,7 @@ void ServerRunController::onExited(const QString &serverId, int exitCode) {
             if (fresh != nullptr && fresh->isRunning()) {
                 return;  // 用户在这几秒里自己又起来了
             }
-            m_owner.appendLog(MainWindow::tr("%1：正在自动重启。").arg(shown));
+            m_owner.appendLog(MainWindow::tr("%1：自动重启来了。").arg(shown));
             start(serverId, /*automatic=*/true);
         });
         return;
@@ -272,7 +270,7 @@ void ServerRunController::onExited(const QString &serverId, int exitCode) {
     // 「错误既进入日志，也在用户当前流程中可见」：日志那一半上面已经写了，这一半是
     // 弹窗 —— 用户点了启动之后常常就去干别的了，不弹一下他看不见。
     InlineMessage::warning(
-        m_owner.m_ui->overlay(), MainWindow::tr("此服务端已退出"),
+        m_owner.m_ui->overlay(), MainWindow::tr("这个服务端退出了"),
         MainWindow::tr("「%1」%2。\n\n右键该服务端并选择「打开控制台」，可查看退出前的日志。")
             .arg(shown, exitReason));
 }

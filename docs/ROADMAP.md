@@ -22,7 +22,7 @@
 | 英文本地化 | 待精修 | 统一 Minecraft 术语和界面用词，校对长提示并核对英文布局 |
 | 真机 7-Zip | 环境受限 | 本机无 `7z.exe`，需正常桌面会话/安装后复跑 |
 
-下一步可选：预设子清单批量写盘（先测量再改）；hover 过渡收口；外部样本/网络/桌面会话齐备后补 U8、实网、7-Zip；G1B 复测（见 §4）；智能体按 Stage 5 的 S5.3 起步（见 §4）。
+下一步可选：预设子清单批量写盘（先测量再改）；hover 过渡收口；外部样本/网络/桌面会话齐备后补 U8、实网、7-Zip；G1B 复测（见 §4）。
 
 ## 2. P0 与已确认回归
 
@@ -36,16 +36,15 @@
 
 ## 4. 智能体（Agent）
 
-现行行为、工具上限与待人工验证清单见 [AGENT](features/AGENT.md)，安全边界见 [SECURITY_BOUNDARIES](features/SECURITY_BOUNDARIES.md)，人工记录见 [ACCEPTANCE_LOG](archive/ACCEPTANCE_LOG.md)。Stage 5 的接口、阶段顺序与验收见 [AGENT_AUTONOMY](dev/AGENT_AUTONOMY.md)。
+现行行为见 [AGENT](features/AGENT.md)、[Stage 1A](features/AGENT_STAGE1A.md)、[Stage 1B](features/AGENT_STAGE1B.md)、[Stage 2B](features/AGENT_STAGE2B.md)、[Stage 2A](features/AGENT_STAGE2A.md)、[Stage 3](features/AGENT_STAGE3.md)、[Stage 4](features/AGENT_STAGE4.md)，安全边界见 [SECURITY_BOUNDARIES](features/SECURITY_BOUNDARIES.md)，人工记录见 [ACCEPTANCE_LOG](archive/ACCEPTANCE_LOG.md)。
 
-- [ ] **Stage 5 诊断与模组（P1）**：S5.0 提示词外置、S5.1 隔离测试启动、S5.2 修复事务已完成；下一阶段 S5.3 `diagnostics.crashSnapshot`、`logs.search`、`logs.readRange`、`crash.readFull` 与崩溃规则库；S5.4 `mods.analyzeCompatibility`、`mods.verifyFiles`、`mods.installFix`、`instance.repairCore`；S5.5 依赖感知 `mods.bisect`。
-- [ ] **Stage 5 收口（P1/P2）**：S5.6 Prompt V2 与知识分层、自由对话工具白名单；S5.7 Auto-safe 事务授权需产品确认并新增 D12；修复病例库为 P2。
-- [ ] **G1B 人工复测**：真实路径/junction/长路径、真实文件系统竞争/占用，以及脱敏变体、凭据文件识别、artifact 取回边界、重启后审批作废、提交阶段删除。
+- [ ] **G1B 人工复测**：B1、B2、B3 已在代码里修复；复测 R1–R4、R6、R7，补做 W4/W5、A1、P4、P5，以及真实路径/junction/长路径、真实文件系统竞争/占用。P0/P1 清零前不进入 Stage 2。
 - [ ] **网络错误验收**：401/403、429、断网、流中断、重定向、TLS 证书错误、代理、400 错误体；清单见 ACCEPTANCE_LOG 的「延后：网络错误」一节。
-- [ ] **A1–A8 人工验证**（清单见 [AGENT](features/AGENT.md) §13.3）：真实模型、真实实例的体检/急救/备份、真实 MCP、真实联网与代理/证书、诊断命令清理、凭据与换用户、干净机器启动与高 DPI/读屏。
-- [ ] **Stage 3 剩余**：资源搜索/安装/更新工具、Brave/Tavily provider、HTTP/SSE MCP（若批准）。
-- [ ] **智能体未覆盖项**：单会话工具调用总数、artifact 单会话配额、联网工具的会话放行、日志字段投影（用户名/启动参数/硬件指纹）。
-- [ ] **长会话渲染**：2000 条消息一次重摆约 3.8 s，按 perf-notes 决定懒加载/邻居窗口渲染。
+- [ ] **G2B 人工验收**：崩溃急救的「发现 → 计划 → 批准 → 执行 → 验证 → 回退」、计划跳步被拦、失败后锁写、备份创建/恢复、诊断字段白名单。清单见 [AGENT_STAGE2B](features/AGENT_STAGE2B.md) §6。
+- [ ] **G2A 人工验收**：真实 Node/Python MCP 服务器的首次启动确认、配置修改、可执行文件替换、重连确认、工具逐次审批、崩溃不自动重启、进程清理。清单见 [AGENT_STAGE2A](features/AGENT_STAGE2A.md) §7。
+- [ ] **G3 人工验收**：DNS 多地址/重绑定、系统代理已配置仍直连、证书主机名校验、真实搜索与真实固定诊断命令。清单见 [AGENT_STAGE3_4_ACCEPTANCE](features/AGENT_STAGE3_4_ACCEPTANCE.md)。
+- [ ] **Stage 3 剩余项**：资源搜索/安装/更新工具、Brave/Tavily provider、HTTP/SSE MCP（若批准）。
+- [ ] **G4 人工验收**：真机发布物、真机/实网、高 DPI/读屏、长路径/中文路径/受限权限、换用户解密、视觉套件与样张。自动化回归、性能基线与发布检查已完成，结果见 [AGENT_STAGE4](features/AGENT_STAGE4.md)；清单见 [AGENT_STAGE3_4_ACCEPTANCE](features/AGENT_STAGE3_4_ACCEPTANCE.md) 的 G4 一节。
 
 ## 5. P2：性能与体验
 

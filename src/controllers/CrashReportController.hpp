@@ -34,8 +34,6 @@ public:
 
     struct Host {
         std::function<void(const QString &)> log;
-        /// 「使用智能体询问」：把这次崩溃的摘要交给智能体页。空 = 没接。
-        std::function<void(const QString &)> askAgent;
     };
 
     CrashReportController(ActivityCenterController *activity, OverlayHost *overlay,
@@ -66,7 +64,6 @@ public:
 
     int sessionIdForTask(Tasks::TaskId id) const;
     void exportReport(const QString &key);
-    void exportFullLog(const QString &key);
     void openReportsDirectory();
 
 private:
@@ -78,7 +75,6 @@ private:
         QDateTime startedAt;
         QString errorExcerpt;
         QString logTail;
-        QString fullLog;
         int errorLines = 0;
         int totalLines = 0;
     };
@@ -91,7 +87,6 @@ private:
     static QString exportDirectory();
     static QString writeExportFile(const QString &path, const QString &text);
     void log(const QString &message) const;
-    void showCrashDialog(Tasks::TaskId id, int overlayRetry = 0);
 
     ActivityCenterController *m_activity = nullptr;
     OverlayHost *m_overlay = nullptr;

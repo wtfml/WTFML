@@ -55,6 +55,7 @@
 #include <QTimer>
 #include <QUrl>
 
+#include "../download/DownloadRetryPolicy.hpp"
 #include "../download/InstallerFailure.hpp"
 #include "../download/LegacyForgeInstall.hpp"
 #include "../download/LoaderMeta.hpp"
@@ -78,9 +79,11 @@ QString replyReason(QNetworkReply *reply, const QString &jobError) {
     return reply != nullptr ? reply->errorString() : jobError;
 }
 
-bool failedMirrorRedirect(QNetworkReply *reply, const QUrl &entry) {
-    return reply && reply->error() == QNetworkReply::HostNotFoundError &&
-           !reply->url().host().isEmpty() && reply->url().host() != entry.host();
+/// 这一发算不算"换个源再试试"：没回复（含排队到点）算，传输出错按既有判据，
+/// 在飞时被作业按截止掐掉也算 —— 和版本表那条路（`onLoaderVersionsReply`）同一个口径。
+bool transientJobFailure(QNetworkReply *reply) {
+    return reply == nullptr || DownloadRetryPolicy::transientReply(reply) ||
+           reply->property(RequestBudget::kDeadlineExpiredProperty).toBool();
 }
 
 }  // namespace
@@ -169,12 +172,24 @@ bool VersionManager::isLoaderInstalling() const { return m_loaderInstall.active(
 void VersionManager::requestLoaderVersions(const QString &gameVersion, LoaderKind kind) {
     const QString wanted = gameVersion.trimmed();
 
-    auto &slot = m_loaderVersionRequests[int(kind)];
+    // **同一个加载器**上上一发还在飞就先掐掉（换了游戏版本、或者同一局重新问一遍）——
+    // 换局之后旧那一发回来会把上一局的版本号填进这一局的列表里。abort 之后 finished()
+    // 照样会来一发，回复处理函数靠"这一个指针还是我手上这个吗"把它丢掉。
+    // 别的加载器在飞的那几发**不动**：四个各占一格，四条一起问是正常的（见头里那段）。
+    LoaderVersionRequest &slot = m_loaderVersionRequests[int(kind)];
     ++slot.generation;
-    for (const auto &job : std::as_const(slot.jobs)) delete job.data();
-    slot.jobs.clear();
-    slot.error.clear();
-    slot.emptyResult = false;
+    delete slot.queued.data();
+    slot.queued = nullptr;
+    if (slot.reply != nullptr) {
+        // **先摘指针，再 abort()** —— 顺序不能换。abort() 有可能**当场**把 finished()
+        // 发出来（回复已经在手上、只是还没被处理时就是这一种）。那一发进来时这一格里
+        // 若还是旧指针，onLoaderVersionsReply() 的 "还是我手上这一发吗"当场判成"是" ⇒
+        // 我们自己掐掉的那一发被当成一次真回复，
+        // 给用户弹一句「拿不到 X 的版本列表（Operation canceled）」。用户什么都没做错。
+        QNetworkReply *stale = slot.reply;
+        slot.reply = nullptr;
+        stale->abort();
+    }
     slot.gameVersion = wanted;
 
     if (wanted.isEmpty()) {
@@ -188,7 +203,15 @@ void VersionManager::requestLoaderVersions(const QString &gameVersion, LoaderKin
         return;
     }
 
-    // NeoForge 和 OptiFine 同时查询两个入口。OptiFine 按设置的优先顺序排队，回复按各自格式解析。
+    // OptiFine 的列表**必须跟着下载源**走：列出来的版本要能用同一个源装下去。镜像那条路的
+    // 地址最后两段是 type/patch（见 LoaderMeta::optifineMirrorPathFromEdition），官方那条路
+    // 得先过广告页拿 token —— 两份列表混着用就会"列出来了但下不了"。
+    //
+    // 另外三个没这个问题（Fabric 只有官方一个源；两份 maven 清单官方就是发布处），一律走官方。
+    // NOTE: 两份 maven 清单这里**不换镜像**，和安装那条路（fetchInstallerList，镜像挑不出来
+    // 再退官方）不一样。那条教训是实测的：镜像上那份 Forge 版本表是旧文件（1782 B、
+    // 最新只到 1.15.2），照着它列会给用户一个"1.16 以后都没有 Forge"的假结论。
+    // 列表这件事对"全不全"比对"快不快"敏感得多，所以宁可直接问官方。
     QString url;
     // "这一发走没走镜像"**只在这里读一次**，然后一路带到解析那一步去（同一次读的结果）：
     // 解析那边若再读一遍 downloadManager->useMirror()，两次之间用户点一下开关就会出现
@@ -208,18 +231,15 @@ void VersionManager::requestLoaderVersions(const QString &gameVersion, LoaderKin
         url = LoaderMeta::neoforgeMavenMetadataUrl();
         break;
     case LoaderKind::OptiFine:
-        fromMirror = downloadManager->mirrorPreferred();
+        fromMirror = downloadManager->useMirror();
         url = fromMirror ? LoaderMeta::optifineMirrorListUrl(wanted)
                          : LoaderMeta::optifineDownloadsPageUrl();
         break;
     }
-    const QString alternateUrl = kind == LoaderKind::OptiFine
-        ? (fromMirror ? LoaderMeta::optifineDownloadsPageUrl()
-                      : LoaderMeta::optifineMirrorListUrl(wanted))
-        : loaderVersionsMirrorFallback(kind, url);
-    slot.pending = alternateUrl.isEmpty() ? 1 : 2;
+    // 这两格跟着**这一局**重来：上一局退到镜像没有、官方地址是哪一条。
+    slot.officialUrl = url;
+    slot.mirrorFallbackUsed = false;
     fetchLoaderVersions(kind, url, fromMirror);
-    if (!alternateUrl.isEmpty()) fetchLoaderVersions(kind, alternateUrl, !fromMirror);
 }
 
 QString VersionManager::loaderVersionsMirrorFallback(LoaderKind kind,
@@ -246,51 +266,85 @@ QNetworkAccessManager *VersionManager::loaderNetworkManager() {
     return loaderNetwork;
 }
 
-void VersionManager::fetchLoaderVersions(LoaderKind kind, const QString &url, bool fromMirror,
-                                         bool canRetryRedirect) {
-    QNetworkRequest request{QUrl(url)};
+void VersionManager::fetchLoaderVersions(LoaderKind kind, const QString &url, bool fromMirror) {
+    const QUrl target(url);
+    QNetworkRequest request(target);
+    request.setTransferTimeout(30000);
     auto &slot = m_loaderVersionRequests[int(kind)];
+    slot.fromMirror = fromMirror;
     const auto generation = slot.generation;
-    const auto index = slot.jobs.size();
-    slot.jobs.append(RequestBudget::ControlGet::start(this, loaderNetworkManager(), request, 30000,
-        [this, kind, generation, index, url, fromMirror, canRetryRedirect](
-            QNetworkReply *reply, const QString &error) {
+    slot.queued = RequestBudget::ControlGet::start(this, loaderNetworkManager(), request, 30000,
+        [this, kind, generation](QNetworkReply *reply, const QString &error) {
             auto &current = m_loaderVersionRequests[int(kind)];
             if (current.generation != generation) return;
-            current.jobs[index] = nullptr;
-            if (kind == LoaderKind::NeoForge && fromMirror && canRetryRedirect &&
-                failedMirrorRedirect(reply, QUrl(url))) {
-                fetchLoaderVersions(kind, url, true, false);
+            current.queued = nullptr;
+            if (!reply) {
+                emit loaderVersionsFetched(current.gameVersion, kind, false, {}, error);
                 return;
             }
-            --current.pending;
-            const QString gameVersion = current.gameVersion;
-            const QByteArray body = reply && reply->isOpen() ? reply->readAll() : QByteArray();
-            const int status = reply ? reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() : 0;
-            LoaderVersionParse parsed;
-            if ((kind == LoaderKind::Fabric || kind == LoaderKind::Quilt) &&
-                LoaderMeta::isUnsupportedGameVersionMetaReply(kind == LoaderKind::Quilt, status, body)) {
-                current.emptyResult = true;
-            } else if (reply && reply->error() == QNetworkReply::NoError) {
-                parsed = parseLoaderVersions(kind, gameVersion, body, fromMirror);
-                current.emptyResult |= parsed.error.isEmpty() && parsed.versions.isEmpty();
-            } else {
-                parsed.error = tr("无法获取 %1 %2 的版本列表（%3）。请检查网络后重试。")
-                    .arg(loaderDisplayName(kind), gameVersion, replyReason(reply, error));
-            }
-            if (!parsed.error.isEmpty() && (!fromMirror || current.error.isEmpty())) current.error = parsed.error;
-            if (parsed.versions.isEmpty() && current.pending > 0) return;
+            current.reply = reply;
+            onLoaderVersionsReply(kind, reply);
+        });
+}
 
-            // 空镜像列表不能抢在官方的完整列表前结束这一轮。
-            for (const auto &job : std::as_const(current.jobs)) delete job.data();
-            current.jobs.clear();
-            if (!parsed.versions.isEmpty() || current.emptyResult) {
-                emit loaderVersionsFetched(gameVersion, kind, true, parsed.versions, {});
+void VersionManager::onLoaderVersionsReply(LoaderKind kind, QNetworkReply *reply) {
+    reply->deleteLater();
+    // 这一发还是我手上这一发吗？不是就说明调用方已经换了目标（abort 掉的那一发也会走到
+    // 这里），这份回复没人要了。
+    QHash<int, LoaderVersionRequest>::iterator slot = m_loaderVersionRequests.find(int(kind));
+    if (slot == m_loaderVersionRequests.end() || slot->reply != reply) {
+        return;
+    }
+    // 先把字段抄下来再清空那一格：下面几条 emit 都要用它们，清空之后就没得读了。
+    const QString gameVersion = slot->gameVersion;
+    // 走没走镜像读的是**这一发问出去时**记下的那一个（不是现在这个开关值）。
+    const bool fromMirror = slot->fromMirror;
+    slot->reply = nullptr;
+
+    // 先判设备开没开再读：超时回来的那条已经不 open，readAll() 会往 stderr 甩 warning。
+    const int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    const QByteArray body = reply->isOpen() ? reply->readAll() : QByteArray();
+
+    // Fabric 对不支持的游戏版本回 HTTP 400 + `[]`，Quilt 回 HTTP 404 + `{"code":"not_found"}`：
+    // 二者都是"该版本确实没有可用加载器"，按空列表（success=true）交回，而不是报网络错误。
+    if ((kind == LoaderKind::Fabric || kind == LoaderKind::Quilt) &&
+        LoaderMeta::isUnsupportedGameVersionMetaReply(kind == LoaderKind::Quilt, httpStatus, body)) {
+        emit loaderVersionsFetched(gameVersion, kind, true, LoaderMeta::LoaderVersionList(),
+                                   QString());
+        return;
+    }
+
+    if (reply->error() != QNetworkReply::NoError) {
+        // 官方那条**连不上**时往镜像退一次（只 NeoForge，理由见
+        // loaderVersionsMirrorFallback()）。判"连不上"用的是下载那条路同一个
+        // transientReply()：超时 / 连接被掐 / HTTP/2 断流都算，404、证书不对、
+        // 用户取消不算 —— 那些换镜像也帮不上忙。只退一次，镜像再失败就照实报。
+        if (!slot->mirrorFallbackUsed && (DownloadRetryPolicy::transientReply(reply) ||
+            reply->property(RequestBudget::kDeadlineExpiredProperty).toBool())) {
+            const QString fallback = loaderVersionsMirrorFallback(kind, slot->officialUrl);
+            if (!fallback.isEmpty()) {
+                slot->mirrorFallbackUsed = true;
+                qInfo() << "Loader version list from" << slot->officialUrl << "failed ("
+                        << reply->errorString() << "); retrying through the mirror:" << fallback;
+                fetchLoaderVersions(kind, fallback, /*fromMirror=*/true);
                 return;
             }
-            const QString problem = current.error;
-            emit loaderVersionsFetched(gameVersion, kind, false, {}, problem);
-        }));
+        }
+        emit loaderVersionsFetched(
+            gameVersion, kind, false, LoaderMeta::LoaderVersionList(),
+            tr("拿不到 %1 %2 的版本列表（%3）。检查网络后重试。")
+                .arg(loaderDisplayName(kind), gameVersion,
+                     reply->property(RequestBudget::kDeadlineExpiredProperty).toBool() ? tr("请求超时") : reply->errorString()));
+        return;
+    }
+
+    const LoaderVersionParse parsed = parseLoaderVersions(kind, gameVersion, body, fromMirror);
+    if (!parsed.error.isEmpty()) {
+        emit loaderVersionsFetched(gameVersion, kind, false, LoaderMeta::LoaderVersionList(),
+                                   parsed.error);
+        return;
+    }
+    emit loaderVersionsFetched(gameVersion, kind, true, parsed.versions, QString());
 }
 
 VersionManager::LoaderVersionParse VersionManager::parseLoaderVersions(
@@ -322,10 +376,6 @@ VersionManager::LoaderVersionParse VersionManager::parseLoaderVersions(
         entries = LoaderMeta::listForgeVersions(body, gameVersion);
         break;
     case LoaderKind::NeoForge:
-        if (!LoaderMeta::isMavenVersionMetadata(body)) {
-            result.error = tr("NeoForge 的版本列表无法解析。");
-            return result;
-        }
         entries = LoaderMeta::listNeoForgeVersions(body, gameVersion);
         break;
     case LoaderKind::OptiFine:
@@ -341,12 +391,8 @@ VersionManager::LoaderVersionParse VersionManager::parseLoaderVersions(
             }
             entries = LoaderMeta::listOptifineVersionsFromMirror(doc.array(), gameVersion);
         } else {
-            const QString html = QString::fromUtf8(body);
-            if (!LoaderMeta::isOptifineDownloadsPage(html)) {
-                result.error = tr("OptiFine 的下载页无法解析。");
-                return result;
-            }
-            entries = LoaderMeta::listOptifineVersionsFromDownloadsPage(html, gameVersion);
+            entries = LoaderMeta::listOptifineVersionsFromDownloadsPage(QString::fromUtf8(body),
+                                                                       gameVersion);
         }
         break;
     }
@@ -358,7 +404,7 @@ VersionManager::LoaderVersionParse VersionManager::parseLoaderVersions(
     // 版本列表是空的）。四种加载器里都是**真结论**：比如 Forge 还没支持某个刚发的
     // 快照、OptiFine 只发了预览版 —— 不是网络问题、也不是清单读不懂，重试一百次
     // 还是这个答案。两种答案在数据上分得开：**空列表 = 就是没有**（界面写「无可用版本」、
-    // 底下连那两档都不留）、**success=false = 没问到**（界面写「列表获取失败」、
+    // 底下连那两档都不留）、**success=false = 没问到**（界面写「列表没取到」、
     // 底下留着那两档，因为"让安装器自己挑"那条路不依赖这份列表）。
     return result;
 }
@@ -368,7 +414,7 @@ void VersionManager::installLoaderVersion(const QString &gameVersion, LoaderKind
                                          const QString &pinnedLoaderVersion) {
     if (m_loaderInstall.active()) {
         qWarning() << "A loader install is already running, refusing to start another.";
-        emit loaderInstallMessage(tr("已有加载器正在安装，请待其结束后再试。"));
+        emit loaderInstallMessage(tr("已经有一个加载器正在安装，等它结束再试。"));
         return;
     }
     if (!loaderInstallSupported(kind)) {
@@ -379,7 +425,7 @@ void VersionManager::installLoaderVersion(const QString &gameVersion, LoaderKind
         return;
     }
     if (downloadManager->isBusy()) {
-        emit loaderInstallMessage(tr("已有下载任务正在进行，请待其结束后再试。"));
+        emit loaderInstallMessage(tr("已有下载任务正在进行，请等它结束。"));
         return;
     }
     QString lockProblem;
@@ -388,7 +434,7 @@ void VersionManager::installLoaderVersion(const QString &gameVersion, LoaderKind
         return;
     }
 
-    m_loaderInstall.reset();
+    m_loaderInstall = LoaderInstall();
     if (installerProcess) {
         installerProcess->setProperty("wtfmlCertificateRetried", false);
         // 卡死重起只给一次（见 kInstallerStallTimeoutMs）；这两个计数每次新安装都从零开始。
@@ -514,11 +560,11 @@ void VersionManager::onFabricLoaderListReply(QNetworkReply *reply, const QString
     if (!doc.isArray()) {
         if (m_loaderInstall.kind == LoaderKind::Quilt &&
             LoaderMeta::isUnsupportedGameVersionMetaReply(true, httpStatus, body)) {
-            failLoaderInstall(tr("%1 暂无支持 %2 的加载器（获取到的列表为空）。")
+            failLoaderInstall(tr("%1 还没有支持 %2 的加载器（拿到的列表是空的）。")
                                   .arg(m_loaderInstall.loaderName, m_loaderInstall.gameVersion));
             return;
         }
-        failLoaderInstall(tr("无法获取 %1 的加载器列表（%2）。请检查网络后重试。")
+        failLoaderInstall(tr("拿不到 %1 的加载器列表（%2）。检查网络后重试。")
                               .arg(m_loaderInstall.gameVersion, replyReason(reply, jobError)));
         return;
     }
@@ -549,7 +595,7 @@ void VersionManager::onFabricLoaderListReply(QNetworkReply *reply, const QString
         m_loaderInstall.kind == LoaderKind::Quilt
             ? LoaderMeta::quiltLoaderId(m_loaderInstall.gameVersion, pick.version)
             : LoaderMeta::fabricLoaderId(m_loaderInstall.gameVersion, pick.version);
-    emit loaderInstallMessage(tr("已选择 %1 %2（%3）。")
+    emit loaderInstallMessage(tr("挑中 %1 %2（%3）。")
                                   .arg(m_loaderInstall.loaderName, pick.version,
                                        pickChannelDetail(m_loaderInstall.channel, pick.stable)));
     m_loaderInstall.phase = LoaderInstall::Phase::FetchingProfile;
@@ -581,7 +627,7 @@ void VersionManager::onFabricProfileReply(QNetworkReply *reply, const QString &j
     QJsonParseError parseError;
     const QJsonDocument doc = QJsonDocument::fromJson(body, &parseError);
     if (reply == nullptr || reply->error() != QNetworkReply::NoError || !doc.isObject()) {
-        failLoaderInstall(tr("无法获取 %1 %2 的 profile（%3）。")
+        failLoaderInstall(tr("拿不到 %1 %2 的 profile（%3）。")
                               .arg(m_loaderInstall.loaderName, m_loaderInstall.loaderVersion,
                                    replyReason(reply, jobError)));
         return;
@@ -596,12 +642,12 @@ void VersionManager::onFabricProfileReply(QNetworkReply *reply, const QString &j
     if (!check.ok()) {
         switch (check.problem) {
         case LoaderMeta::ProfileProblem::BadId:
-            failLoaderInstall(tr("%1 %2 的 profile 中的版本 id 不可用（%3），未安装。")
+            failLoaderInstall(tr("%1 %2 的 profile 里的版本 id 不能用（%3），没有安装。")
                                   .arg(m_loaderInstall.loaderName,
                                        m_loaderInstall.loaderVersion, check.id));
             return;
         case LoaderMeta::ProfileProblem::WrongParent:
-            failLoaderInstall(tr("%1 %2 的 profile 基于「%3」而非「%4」，未安装。")
+            failLoaderInstall(tr("%1 %2 的 profile 是基于「%3」的，不是「%4」，没有安装。")
                                   .arg(m_loaderInstall.loaderName,
                                        m_loaderInstall.loaderVersion, check.parent,
                                        m_loaderInstall.gameVersion));
@@ -609,7 +655,7 @@ void VersionManager::onFabricProfileReply(QNetworkReply *reply, const QString &j
         case LoaderMeta::ProfileProblem::None:
             break;  // ok() 已经是 true，到不了这里
         }
-        failLoaderInstall(tr("%1 %2 的 profile 未通过检查，未安装。")
+        failLoaderInstall(tr("%1 %2 的 profile 没通过检查，没有安装。")
                               .arg(m_loaderInstall.loaderName, m_loaderInstall.loaderVersion));
         return;
     }
@@ -625,6 +671,23 @@ void VersionManager::onFabricProfileReply(QNetworkReply *reply, const QString &j
 
 void VersionManager::startParentOrLoaderFiles() {
     const QString parent = m_loaderInstall.gameVersion;
+    // "原版装过没有"看的是**磁盘上那两份文件**：版本 json（启动路径 getVersionJson →
+    // 继承链要读的就是它）和客户端 jar（启动时真正要喂给 JVM 的那个）。两个都要：
+    // - 只有目录、没有 json：老下载残骸。以为"装好了"的话，这个加载器版本启动时
+    // 会报"版本信息缺失"。
+    // - 有 json、没有 jar：**我们自己的下载残骸** —— downloadVersion() 是先写 json
+    // 再下 jar 的，jar 那一批失败就剩这个形态。以为"装好了"的话，用户拿到的是
+    // 一个启动不起来、而且看不出为什么的加载器版本。
+    // 判成"没装"正好走上补齐那条路：downloadVersion() 会校验并只补缺的那些文件，
+    // 不是重下一遍。
+    if (QFile::exists(InstanceFiles::jsonPath(parent)) &&
+        QFile::exists(InstanceFiles::jarPath(parent))) {
+        emit loaderInstallMessage(
+            tr("原版 %1 已安装，继续安装 %2 的文件。").arg(parent, m_loaderInstall.loaderName));
+        startLoaderFiles();
+        return;
+    }
+
     emit loaderInstallMessage(
         tr("正在安装原版 %1 的客户端 JAR、运行库和资源…").arg(parent));
     m_loaderInstall.phase = LoaderInstall::Phase::WaitingParentJson;
@@ -634,7 +697,7 @@ void VersionManager::startParentOrLoaderFiles() {
 void VersionManager::startLoaderFiles() {
     const QString id = m_loaderInstall.loaderId;
     if (id.isEmpty() || !versionJsons.contains(id)) {
-        failLoaderInstall(tr("%1 的 profile 未就绪，安装中止。").arg(m_loaderInstall.loaderName));
+        failLoaderInstall(tr("%1 的 profile 没准备好，安装中止。").arg(m_loaderInstall.loaderName));
         return;
     }
     m_loaderInstall.phase = LoaderInstall::Phase::WaitingLoaderFiles;
@@ -648,55 +711,51 @@ void VersionManager::startLoaderFiles() {
 // ---------------------------------------------------------------------------
 
 void VersionManager::fetchInstallerList() {
-    if (m_loaderInstall.kind == LoaderKind::NeoForge) {
-        m_loaderInstall.listOfficialUrl = LoaderMeta::neoforgeMavenMetadataUrl();
-        const QString mirror = loaderVersionsMirrorFallback(m_loaderInstall.kind, m_loaderInstall.listOfficialUrl);
-        m_loaderInstall.listPending = mirror.isEmpty() ? 1 : 2;
-        requestInstallerList(m_loaderInstall.listOfficialUrl);
-        if (!mirror.isEmpty()) requestInstallerList(mirror);
-        return;
-    }
-    m_loaderInstall.listOfficialUrl = LoaderMeta::forgePromotionsUrl();
+    // 两个接口一个回 JSON、一个回 XML，但都是"GET 一段文本，从里面挑一个版本号"，
+    // 所以共用这一条路，分派放在回复处理里按 kind 做。
+    // 版本表本身也走镜像：Forge 那份 1.7 KB 在 files.minecraftforge.net 上，NeoForge 那份
+    // 63 KB 在 maven.neoforged.net 上，两个 host 都在 DownloadManager::mirrorUrl() 里认得了。
+    // NOTE: 这条路**不是** downloadManager 发的（它只是 GET 一段文本、没有落盘），所以镜像
+    // 得在这儿自己换一次 —— downloadFile() 那条路不会替它换。
+    m_loaderInstall.listOfficialUrl =
+        m_loaderInstall.kind == LoaderKind::Forge ? LoaderMeta::forgePromotionsUrl()
+                                                  : LoaderMeta::neoforgeMavenMetadataUrl();
     const QString url = downloadManager->endpoint(m_loaderInstall.listOfficialUrl);
     m_loaderInstall.listRequestWasMirror = (url != m_loaderInstall.listOfficialUrl);
+    m_loaderInstall.listRetriedOfficial = false;
+    // 开局就落在镜像上的话，之后官方也失败时**不再**往镜像退（退过一次就够）。
+    m_loaderInstall.listMirrorTried = m_loaderInstall.listRequestWasMirror;
     requestInstallerList(url);
 }
 
-void VersionManager::requestInstallerList(const QString &url, bool canRetryRedirect) {
+void VersionManager::requestInstallerList(const QString &url) {
     // NOTE: 这里必须写成"先落到一个具名变量"，不能写成 QNetworkRequest request(QUrl(url)) ——
     // 那个形状在 C++ 里会被当成函数声明（most vexing parse），报的错还很难认
     // （"request 不是类类型"）。
     const QUrl target(url);
     QNetworkRequest request(target);
-    const bool fromMirror = url != m_loaderInstall.listOfficialUrl;
-    const auto index = m_loaderInstall.listJobs.size();
-    m_loaderInstall.listJobs.append(RequestBudget::ControlGet::start(this, loaderNetworkManager(), request, 30000,
-        [this, index, url, fromMirror, canRetryRedirect](QNetworkReply *reply, const QString &jobError) {
-            m_loaderInstall.listJobs[index] = nullptr;
-            if (m_loaderInstall.kind == LoaderKind::NeoForge && fromMirror && canRetryRedirect &&
-                failedMirrorRedirect(reply, QUrl(url))) {
-                requestInstallerList(url, false);
-                return;
-            }
-            onInstallerListReply(reply, jobError, fromMirror);
-        }));
+    RequestBudget::ControlGet::start(this, loaderNetworkManager(), request, 30000,
+        [this](QNetworkReply *reply, const QString &jobError) {
+            onInstallerListReply(reply, jobError);
+        });
 }
 
 bool VersionManager::retryInstallerListFromOfficial() {
     // 只在"这一发是镜像发的、而且还没退过"的时候成立。退过一次还是挑不出来，那就是
     // 官方那份里真的没有 —— 不能再往回退，否则镜像、官方来回转。
-    if (!m_loaderInstall.listRequestWasMirror) {
+    if (!m_loaderInstall.listRequestWasMirror || m_loaderInstall.listRetriedOfficial) {
         return false;
     }
+    m_loaderInstall.listRetriedOfficial = true;
     m_loaderInstall.listRequestWasMirror = false;
     emit loaderInstallMessage(
-        tr("镜像源版本列表未找到适用于 %2 的 %1，已切换至官方源。")
+        tr("镜像源版本列表未找到 %2，已切换至官方源重新获取。")
             .arg(m_loaderInstall.loaderName, m_loaderInstall.gameVersion));
     requestInstallerList(m_loaderInstall.listOfficialUrl);
     return true;
 }
 
-void VersionManager::onInstallerListReply(QNetworkReply *reply, const QString &jobError, bool fromMirror) {
+void VersionManager::onInstallerListReply(QNetworkReply *reply, const QString &jobError) {
     if (reply != nullptr) {
         reply->deleteLater();
     }
@@ -706,18 +765,33 @@ void VersionManager::onInstallerListReply(QNetworkReply *reply, const QString &j
     }
 
     const QByteArray body = reply != nullptr && reply->isOpen() ? reply->readAll() : QByteArray();
-    const bool neoForge = m_loaderInstall.kind == LoaderKind::NeoForge;
-    if (neoForge) --m_loaderInstall.listPending;
-    LoaderMeta::LoaderPick pick;
-    const bool hasReply = reply && reply->error() == QNetworkReply::NoError;
-    if (!hasReply) {
-        if (!neoForge && retryInstallerListFromOfficial()) return;
-        const QString reason = replyReason(reply, jobError);
-        if (!fromMirror || m_loaderInstall.listError.isEmpty()) {
-            m_loaderInstall.listError = reason;
+    if (reply == nullptr || reply->error() != QNetworkReply::NoError) {
+        if (retryInstallerListFromOfficial()) {
+            return;
         }
-        if (neoForge && m_loaderInstall.listPending > 0) return;
-    } else if (!neoForge) {
+        if (!m_loaderInstall.listMirrorTried && transientJobFailure(reply)) {
+            const QString fallback = loaderVersionsMirrorFallback(
+                m_loaderInstall.kind, m_loaderInstall.listOfficialUrl);
+            if (!fallback.isEmpty()) {
+                m_loaderInstall.listMirrorTried = true;
+                m_loaderInstall.listRequestWasMirror = true;
+                // 官方这条**已经**试过了（就是刚失败的这一发），镜像那条别再往回弹。
+                m_loaderInstall.listRetriedOfficial = true;
+                emit loaderInstallMessage(
+                    tr("官方源连接失败（%2），已切换至镜像源重试。")
+                        .arg(m_loaderInstall.loaderName, replyReason(reply, jobError)));
+                requestInstallerList(fallback);
+                return;
+            }
+        }
+        failLoaderInstall(tr("拿不到 %1 %2 的版本表（%3）。检查网络后重试。")
+                              .arg(m_loaderInstall.loaderName, m_loaderInstall.gameVersion,
+                                   replyReason(reply, jobError)));
+        return;
+    }
+
+    LoaderMeta::LoaderPick pick;
+    if (m_loaderInstall.kind == LoaderKind::Forge) {
         QJsonParseError parseError;
         const QJsonDocument doc = QJsonDocument::fromJson(body, &parseError);
         if (!doc.isObject()) {
@@ -727,7 +801,6 @@ void VersionManager::onInstallerListReply(QNetworkReply *reply, const QString &j
         pick = LoaderMeta::pickForgeVersion(doc.object(), m_loaderInstall.gameVersion,
                                             m_loaderInstall.channel);
     } else {
-        m_loaderInstall.listHadOfficialReply |= !fromMirror;
         pick = LoaderMeta::pickNeoForgeVersion(body, m_loaderInstall.gameVersion,
                                                m_loaderInstall.channel);
     }
@@ -735,14 +808,7 @@ void VersionManager::onInstallerListReply(QNetworkReply *reply, const QString &j
     if (!pick.ok()) {
         // 挑不出来有两种可能：镜像那份是旧的（**多数情况**，见 listOfficialUrl 的注释），
         // 或者上游真的还没支持这个游戏版本。先问一次官方那份，两个都没有才是后者。
-        if ((neoForge && m_loaderInstall.listPending > 0) ||
-            (!neoForge && retryInstallerListFromOfficial())) {
-            return;
-        }
-        if ((!neoForge || !m_loaderInstall.listHadOfficialReply) && !m_loaderInstall.listError.isEmpty()) {
-            failLoaderInstall(tr("无法获取 %1 %2 的版本表（%3）。请检查网络后重试。")
-                                  .arg(m_loaderInstall.loaderName, m_loaderInstall.gameVersion,
-                                       m_loaderInstall.listError));
+        if (retryInstallerListFromOfficial()) {
             return;
         }
         // 和 Fabric 那条一样：这不是网络问题，也**不能**退回"装原版"——用户要的是带
@@ -752,8 +818,7 @@ void VersionManager::onInstallerListReply(QNetworkReply *reply, const QString &j
         return;
     }
 
-    m_loaderInstall.cancelListRequests();
-    emit loaderInstallMessage(tr("已选择 %1 %2（%3）。")
+    emit loaderInstallMessage(tr("挑中 %1 %2（%3）。")
                                   .arg(m_loaderInstall.loaderName, pick.version,
                                        pickChannelDetail(m_loaderInstall.channel, pick.stable)));
     // 剩下的（loaderId / 安装器地址 / 文件名 / 排下一轮）和"整合包钉死版本"那条路共用一份：
@@ -767,7 +832,7 @@ void VersionManager::startInstallerDownload() {
     // 最后两段是 type/patch、只能用它在版本表里挑中的那个文件名。版本目录名那边不这么干
     // 是另一回事：那个名字是别的启动器认的，不能改。
     if (m_loaderInstall.installerFileName.isEmpty()) {
-        failLoaderInstall(tr("未获取到 %1 安装器的文件名，安装中止。")
+        failLoaderInstall(tr("没有拿到 %1 安装器的文件名，安装中止。")
                               .arg(m_loaderInstall.loaderName));
         return;
     }
@@ -795,16 +860,15 @@ void VersionManager::startInstallerDownload() {
     // 安装器 jar 也走镜像（6 MB 上下，是这条路上最大的一笔）。镜像上那份和官方是同一个
     // 文件。installerUrl 本身**不改**：盘上那个文件名是从它切的，
     // 两条路上游的文件名一模一样。
-    const QString officialUrl = m_loaderInstall.installerUrl;
-    const QString installerUrl = downloadManager->endpoint(officialUrl);
-    QString fallbackUrl = officialUrl;
-    // NeoForge release 在镜像上沿用同一 Maven 坐标。首选官方也保留镜像这条退路。
-    if (m_loaderInstall.kind == LoaderKind::NeoForge && installerUrl == officialUrl &&
-        !downloadManager->isMirrorDemoted()) {
-        fallbackUrl = DownloadManager::mirrorUrl(officialUrl);
-    }
+    const QString installerUrl =
+        downloadManager->useMirror()
+            ? downloadManager->endpoint(m_loaderInstall.installerUrl)
+            : m_loaderInstall.installerUrl;
+    // 第六个参数是官方那条地址：安装器 jar 是这条路上最大的一笔（6 MB 上下），
+    // 镜像取不回来时按官方再试一次，比整条安装从头再来划算。
     downloadManager->downloadFile(installerUrl, m_loaderInstall.installerPath,
-                                  QString(), -1, VerifyMode::ExistsOnly, fallbackUrl);
+                                  QString(), -1, VerifyMode::ExistsOnly,
+                                  m_loaderInstall.installerUrl);
     endOwnBatch();
 }
 
@@ -952,8 +1016,7 @@ void VersionManager::runInstaller() {
     const bool looksLikePath = program.contains(QLatin1Char('/')) ||
                                program.contains(QLatin1Char('\\'));
     if (looksLikePath && !QFileInfo::exists(program)) {
-        failLoaderInstall(tr("未找到 Java 可执行文件（%1），无法启动 %2 的安装器。\n请在「设置」中指定 Java，"
-                             "或确保系统 PATH 中包含 java。")
+        failLoaderInstall(tr("找不到 Java 可执行文件（%1），%2 的安装器起不来。\n到「设置」里指定一个 Java，或者让系统 PATH 上有 java。")
                               .arg(program, m_loaderInstall.loaderName));
         return;
     }
@@ -1089,14 +1152,14 @@ void VersionManager::writeLegacyProfile(const QJsonObject &parentJson) {
     // 两个条目都从 cache/installers/ 下那份安装器 jar 里读（只读，不动别的任何东西）。
     QByteArray profileBytes;
     QString error;
-    const QString readWhat = tr("读取 %1 的安装说明").arg(m_loaderInstall.installerFileName);
+    const QString readWhat = tr("读 %1 的安装说明").arg(m_loaderInstall.installerFileName);
     const ZipUtil::EntryStatus profileStatus = ZipUtil::readEntry(
         m_loaderInstall.installerPath, QStringLiteral("install_profile.json"), &profileBytes,
         &error, readWhat);
     if (profileStatus != ZipUtil::EntryStatus::Ok) {
         // NotFound 那一档 errorOut 是空的（没有细节可给）—— 自己说一句。
         failWithProblem(profileStatus == ZipUtil::EntryStatus::NotFound
-                            ? tr("jar 中无 install_profile.json")
+                            ? tr("jar 里没有 install_profile.json 这个文件")
                             : error);
         return;
     }
@@ -1108,7 +1171,7 @@ void VersionManager::writeLegacyProfile(const QJsonObject &parentJson) {
         QString reason;
         switch (plan.problem) {
         case Problem::NotJson:
-            reason = tr("该文件不是有效的 JSON（已损坏）");
+            reason = tr("该文件不是一份 JSON（已损坏）");
             break;
         case Problem::ModernProfile:
             reason = tr("安装器中缺少 install 或 versionInfo 字段。此格式应通过安装器的命令行安装。");
@@ -1117,13 +1180,13 @@ void VersionManager::writeLegacyProfile(const QJsonObject &parentJson) {
             reason = tr("install 字段缺少 %1").arg(plan.detail);
             break;
         case Problem::UnknownPath:
-            reason = tr("install.path「%1」无法生成安全的 maven 路径").arg(plan.detail);
+            reason = tr("install.path「%1」拼不出一个安全的 maven 路径").arg(plan.detail);
             break;
         case Problem::NoParent:
             reason = tr("继承字段 inheritsFrom 和 install.minecraft 均为空，无法确定原版游戏版本");
             break;
         case Problem::NoLibraries:
-            reason = tr("其库表为空");
+            reason = tr("它的库表是空的");
             break;
         case Problem::None:
             break;
@@ -1147,11 +1210,11 @@ void VersionManager::writeLegacyProfile(const QJsonObject &parentJson) {
     QByteArray universal;
     const ZipUtil::EntryStatus universalStatus = ZipUtil::readEntry(
         m_loaderInstall.installerPath, plan.universalEntry, &universal, &error,
-        tr("读取 %1 中的 %2").arg(m_loaderInstall.installerFileName, plan.universalEntry),
+        tr("读 %1 里的 %2").arg(m_loaderInstall.installerFileName, plan.universalEntry),
         64LL * 1024 * 1024);
     if (universalStatus != ZipUtil::EntryStatus::Ok) {
         failWithProblem(universalStatus == ZipUtil::EntryStatus::NotFound
-                            ? tr("jar 中无 %1").arg(plan.universalEntry)
+                            ? tr("jar 里没有 %1 这个文件").arg(plan.universalEntry)
                             : error);
         return;
     }
@@ -1174,7 +1237,7 @@ void VersionManager::writeLegacyProfile(const QJsonObject &parentJson) {
         }
         file.write(universal);
         if (!file.commit()) {
-            failWithProblem(tr("写入 %1 失败（%2）").arg(universalTarget, file.errorString()));
+            failWithProblem(tr("写 %1 的时候失败了（%2）").arg(universalTarget, file.errorString()));
             return;
         }
     }
@@ -1196,7 +1259,8 @@ void VersionManager::writeLegacyProfile(const QJsonObject &parentJson) {
             .arg(plan.droppedFromParent)
             .arg(m_loaderInstall.gameVersion));
 
-    // 切换批次时从下一轮事件循环开始，避开当前元数据回调。
+    // 和安装器那条路一样：装完接着把原版补齐（安装器不下资源文件，我们更不会）。这一批
+    // 是从"刚收到原版 json"那条栈上起的，排到下一轮（同 startParentCompletion 那边）。
     const QString parent = m_loaderInstall.gameVersion;
     m_loaderInstall.phase = LoaderInstall::Phase::WaitingParentFiles;
     deferLoaderStep(LoaderInstall::Phase::WaitingParentFiles, [this, parent] {
@@ -1216,12 +1280,11 @@ void VersionManager::startInstallerProcess() {
     m_loaderInstall.phase = LoaderInstall::Phase::RunningInstaller;
     if (optifine) {
         emit loaderInstallMessage(
-            tr("正在运行 %1 %2 的安装器…（安装器本身为图形程序，此处使用其无界面入口；此步骤耗时最长："
-               "需将原版客户端 jar 复制到新版本目录，并放置两个库）")
+            tr("正在运行 %1 %2 的安装器...（它本身是个图形程序，我们用的是它的无界面入口；这一步最慢：它要把原版的客户端 jar 抄进新版本目录，再把两个库放好）")
                 .arg(m_loaderInstall.loaderName, m_loaderInstall.loaderVersion));
     } else {
         emit loaderInstallMessage(
-            tr("正在运行 %1 %2 的安装器…（此步骤耗时最长：需下载十余个库，并对原版客户端 jar 打两遍补丁）")
+            tr("正在运行 %1 %2 的安装器...（这一步最慢：它要下十几个库，还要把原版的客户端 jar 打两遍补丁）")
                 .arg(m_loaderInstall.loaderName, m_loaderInstall.loaderVersion));
     }
 
@@ -1368,7 +1431,7 @@ void VersionManager::onInstallerTick() {
                                   ? tr("%1 安装器已运行 %2 秒…")
                                         .arg(m_loaderInstall.loaderName)
                                         .arg(elapsed / 1000)
-                                  : tr("%1 的安装器仍在运行（%2 秒）：%3")
+                                  : tr("%1 的安装器还在跑（%2 秒）：%3")
                                         .arg(m_loaderInstall.loaderName)
                                         .arg(elapsed / 1000)
                                         .arg(last));
@@ -1465,7 +1528,7 @@ void VersionManager::onInstallerFinished(int exitCode, bool crashed) {
     }
 
     if (crashed) {
-        failLoaderInstall(tr("%1 %2 的安装器被强制结束（非自行退出）。\n其最后输出：\n%3")
+        failLoaderInstall(tr("%1 %2 的安装器被强行结束了（不是它自己退出的）。\n它最后打出来的是：\n%3")
                               .arg(name, version, installerOutputTail(m_installerOutput)));
         return;
     }
@@ -1493,8 +1556,7 @@ void VersionManager::onInstallerFinished(int exitCode, bool crashed) {
     const QString id = m_loaderInstall.loaderId;
     const QJsonObject produced = readVersionJsonAt(InstanceFiles::jsonPath(id));
     if (produced.isEmpty()) {
-        failLoaderInstall(tr("%1 %2 的安装器已运行结束（退出码 0），但 %3 中未出现 %4，无法定位安装目录。"
-                             "\n其最后输出：\n%5")
+        failLoaderInstall(tr("%1 %2 的安装器跑完了（退出码 0），但 %3 里没有出现 %4，无法定位安装目录。\n它最后打出来的是：\n%5")
                               .arg(name, version, AppPaths::versionDir(id),
                                    id + QStringLiteral(".json"),
                                    installerOutputTail(m_installerOutput)));
@@ -1508,12 +1570,28 @@ void VersionManager::onInstallerFinished(int exitCode, bool crashed) {
                                   .arg(name, version, check.id, id));
             return;
         }
-        failLoaderInstall(tr("%1 %2 生成的版本基于「%3」，与所选的「%4」不一致，未登记为已安装。")
+        failLoaderInstall(tr("%1 %2 装出来的版本是基于「%3」的，不是我们选的「%4」，没有记成装好。")
                               .arg(name, version, check.parent, m_loaderInstall.gameVersion));
         return;
     }
 
-    finishLoaderInstall(true, tr("%1 %2 安装完成（%3）。").arg(name, version, id));
+    emit loaderInstallMessage(tr("%1 %2 安装完成（%3）。").arg(name, version, id));
+    startParentCompletion();
+}
+
+void VersionManager::startParentCompletion() {
+    // 安装器**不下资源文件**（assets）：它自己那份 json 是给启动器读的，资源是启动器的事。
+    // 少了那一半，用户拿到的是一个能装模组、但一进游戏就崩的版本。
+    //
+    // Forge 还会连原版的 json 都不写（只在 versions/<原版>/ 留下一份 sha1 与官方一致的
+    // 客户端 jar），NeoForge 会留 json + jar 两份。所以这里**不看原版装没装**，一律走
+    // 一遍 downloadVersion()：它写 json、校验客户端 jar 与库（已有就跳过，不是重下）、
+    // 再把资源下全。NeoForge 那种"已经齐了"的情况下它也只是校验 + 补资源。
+    const QString parent = m_loaderInstall.gameVersion;
+    m_loaderInstall.phase = LoaderInstall::Phase::WaitingParentJson;
+    emit loaderInstallMessage(tr("%1 已安装，正在补齐原版 %2 的资源文件…")
+                                  .arg(m_loaderInstall.loaderName, parent));
+    fetchVersionDetails(parent);
 }
 
 // ---------------------------------------------------------------------------
@@ -1529,22 +1607,28 @@ void VersionManager::onInstallerFinished(int exitCode, bool crashed) {
 // * 它的版本目录名**我们算不出来**（安装器按自己那份 jar 里的版本号拼的）→ 装完去盘上认。
 
 void VersionManager::fetchOptifineVersionList() {
-    requestOptifineVersionList(downloadManager->mirrorPreferred(), true);
-}
-
-void VersionManager::requestOptifineVersionList(bool fromMirror, bool canRetry) {
+    // 两个源是**两份不同的数据**：镜像是一条 JSON 接口（一个游戏版本一页），官方只有那张
+    // 203 KB 的下载页可读（每个游戏版本一节）。连"哪一条是正式版"的挑法都不一样，所以
+    // 回复也不共用处理，各走各的（见 LoaderMeta.hpp 里那两个纯函数）。
+    //
+    // NOTE: 走哪条源在**发请求这里决定一次**，然后原样传进回复处理函数，那边**不再重新读**。
+    // 若两边各读一次 useMirror()，这中间用户去设置页换一下「下载源」（安装卡着不动
+    // 时他多半会去换），回复回来就会**按另一条源的格式去解** —— HTML 当 JSON 解，
+    // 报出来是"版本表读不懂"；JSON 当下载页解，报出来是"还没有支持这个版本的正式版"
+    // （而它明明有，只是我们根本没看）。两句话都在指向错误的方向。
+    // 问的是 mirrorPreferred() 而不是 useMirror()：镜像被降级（太慢）那段时间里，
+    // 这张表也不该再去问镜像 —— 和 Forge 安装器那条 `--mirror` 是同一个判据。
+    const bool fromMirror = downloadManager->mirrorPreferred();
     const QUrl url(fromMirror ? LoaderMeta::optifineMirrorListUrl(m_loaderInstall.gameVersion)
                               : LoaderMeta::optifineDownloadsPageUrl());
     QNetworkRequest request(url);
-    const auto index = m_loaderInstall.listJobs.size();
-    m_loaderInstall.listJobs.append(RequestBudget::ControlGet::start(this, loaderNetworkManager(), request, 30000,
-        [this, index, fromMirror, canRetry](QNetworkReply *reply, const QString &jobError) {
-            m_loaderInstall.listJobs[index] = nullptr;
-            onOptifineVersionListReply(reply, fromMirror, canRetry, jobError);
-        }));
+    RequestBudget::ControlGet::start(this, loaderNetworkManager(), request, 30000,
+        [this, fromMirror](QNetworkReply *reply, const QString &jobError) {
+            onOptifineVersionListReply(reply, fromMirror, jobError);
+        });
 }
 
-void VersionManager::onOptifineVersionListReply(QNetworkReply *reply, bool fromMirror, bool canRetry,
+void VersionManager::onOptifineVersionListReply(QNetworkReply *reply, bool fromMirror,
                                                 const QString &jobError) {
     if (reply != nullptr) {
         reply->deleteLater();
@@ -1556,11 +1640,7 @@ void VersionManager::onOptifineVersionListReply(QNetworkReply *reply, bool fromM
 
     const QByteArray body = reply != nullptr && reply->isOpen() ? reply->readAll() : QByteArray();
     if (reply == nullptr || reply->error() != QNetworkReply::NoError) {
-        if (canRetry) {
-            requestOptifineVersionList(!fromMirror, false);
-            return;
-        }
-        failLoaderInstall(tr("无法获取 %1 %2 的版本表（%3）。请检查网络后重试。")
+        failLoaderInstall(tr("拿不到 %1 %2 的版本表（%3）。检查网络后重试。")
                               .arg(m_loaderInstall.loaderName, m_loaderInstall.gameVersion,
                                    replyReason(reply, jobError)));
         return;
@@ -1571,10 +1651,6 @@ void VersionManager::onOptifineVersionListReply(QNetworkReply *reply, bool fromM
         QJsonParseError parseError;
         const QJsonDocument doc = QJsonDocument::fromJson(body, &parseError);
         if (!doc.isArray()) {
-            if (canRetry) {
-                requestOptifineVersionList(false, false);
-                return;
-            }
             failLoaderInstall(tr("OptiFine 的版本表无法解析（%1）。").arg(parseError.errorString()));
             return;
         }
@@ -1587,10 +1663,6 @@ void VersionManager::onOptifineVersionListReply(QNetworkReply *reply, bool fromM
     }
 
     if (!pick.ok()) {
-        if (canRetry) {
-            requestOptifineVersionList(!fromMirror, false);
-            return;
-        }
         // 和另外三条一样：这不是网络问题，也**不能**退回"装原版"。NOTE: 到了这一步就只剩
         // "**稳定档**上一条正式版都没有"这一种可能（预览版在「最新版」那一档也会列、也装，
         // 所以官方页那一节里只有预览版的情况在那一档是能装下去的）—— 那句提示得把
@@ -1598,7 +1670,7 @@ void VersionManager::onOptifineVersionListReply(QNetworkReply *reply, bool fromM
         // NOTE: 这句话里**不引界面那两行的原文** —— 数据层不认识 ui/MainWindowUI.hpp
         // （那一层依赖是单向的），引一次就等于为了五个字把两层拧在一起。
         failLoaderInstall(
-            tr("%1 暂无支持 %2 的稳定版。可在列表中选择包含预览版的最新版本。")
+            tr("%1 没有支持 %2 的稳定版。可在列表中选择包含预览版的最新版本。")
                 .arg(m_loaderInstall.loaderName, m_loaderInstall.gameVersion));
         return;
     }
@@ -1612,7 +1684,7 @@ void VersionManager::onOptifineVersionListReply(QNetworkReply *reply, bool fromM
     // 于是这句说明会写成"稳定那一档……退回了最新的那个"—— 那正是官方页上那一节只有预览版
     // 的情况，是真话。两个源共用这一句，只有"哪一条"那半句分源（两份数据的挑法不一样）。
     emit loaderInstallMessage(
-        tr("已选择 %1 %2（%3）。")
+        tr("挑中 %1 %2（%3）。")
             .arg(m_loaderInstall.loaderName, edition,
                  m_loaderInstall.channel == LoaderMeta::LoaderChannel::Newest
                      ? (LoaderMeta::isOptifinePreviewFile(pick.fileName)
@@ -1656,7 +1728,7 @@ void VersionManager::adoptOptifineEdition(const QString &edition,
 
     if (fromMirror) {
         if (!mirrorPath.ok()) {
-            failLoaderInstall(tr("未找到 %1 版本 %2 的下载地址。请选择其他版本。")
+            failLoaderInstall(tr("找不到 %1 版本 %2 的下载地址。请选择其他版本。")
                                   .arg(m_loaderInstall.loaderName, edition));
             return;
         }
@@ -1665,7 +1737,7 @@ void VersionManager::adoptOptifineEdition(const QString &edition,
         m_loaderInstall.installerUrl = LoaderMeta::optifineMirrorFileUrl(
             m_loaderInstall.gameVersion, mirrorPath.type, mirrorPath.patch);
         deferLoaderStep(LoaderInstall::Phase::FetchingInstallerList,
-                        [this] { prepareInstallerParent(); });
+                        [this] { ensureParentForOptifine(); });
         return;
     }
 
@@ -1679,12 +1751,10 @@ void VersionManager::adoptOptifineEdition(const QString &edition,
 void VersionManager::fetchOptifineDownloadToken() {
     const QUrl url(LoaderMeta::optifineAdPageUrl(m_loaderInstall.installerFileName));
     QNetworkRequest request(url);
-    const auto index = m_loaderInstall.listJobs.size();
-    m_loaderInstall.listJobs.append(RequestBudget::ControlGet::start(this, loaderNetworkManager(), request, 30000,
-        [this, index](QNetworkReply *reply, const QString &jobError) {
-            m_loaderInstall.listJobs[index] = nullptr;
+    RequestBudget::ControlGet::start(this, loaderNetworkManager(), request, 30000,
+        [this](QNetworkReply *reply, const QString &jobError) {
             onOptifineDownloadTokenReply(reply, jobError);
-        }));
+        });
 }
 
 void VersionManager::onOptifineDownloadTokenReply(QNetworkReply *reply, const QString &jobError) {
@@ -1697,14 +1767,7 @@ void VersionManager::onOptifineDownloadTokenReply(QNetworkReply *reply, const QS
 
     const QByteArray body = reply != nullptr && reply->isOpen() ? reply->readAll() : QByteArray();
     if (reply == nullptr || reply->error() != QNetworkReply::NoError) {
-        const QString edition = m_loaderInstall.loaderVersion;
-        const auto mirrorPath = LoaderMeta::optifineMirrorPathFromEdition(edition);
-        if (mirrorPath.ok()) {
-            m_loaderInstall.phase = LoaderInstall::Phase::FetchingInstallerList;
-            adoptOptifineEdition(edition, mirrorPath, true);
-            return;
-        }
-        failLoaderInstall(tr("无法获取 %1 %2 的下载地址（%3）。请检查网络后重试。")
+        failLoaderInstall(tr("拿不到 %1 %2 的下载地址（%3）。检查网络后重试。")
                               .arg(m_loaderInstall.loaderName, m_loaderInstall.loaderVersion,
                                    replyReason(reply, jobError)));
         return;
@@ -1714,21 +1777,33 @@ void VersionManager::onOptifineDownloadTokenReply(QNetworkReply *reply, const QS
                                                              m_loaderInstall.installerFileName);
     if (url.isEmpty()) {
         // 抠不出来就**不猜**：宁可报"拿不到下载地址"，也不给用户下一个不知道是什么的文件。
-        failLoaderInstall(tr("未能在 %1 的广告页中识别出 %2 的下载地址，未安装。请稍后重试；若持续失败，"
-                             "请尝试在设置中切换下载源。")
+        failLoaderInstall(tr("%1 的广告页上没认出 %2 那条下载地址，没有安装。过一会儿重试；若持续失败，请尝试在设置中切换下载源。")
                               .arg(m_loaderInstall.loaderName, m_loaderInstall.installerFileName));
         return;
     }
 
     m_loaderInstall.installerUrl = url;
     deferLoaderStep(LoaderInstall::Phase::FetchingInstallerToken,
-                    [this] { prepareInstallerParent(); });
+                    [this] { ensureParentForOptifine(); });
 }
 
-void VersionManager::prepareInstallerParent() {
-    // 外部安装器会直接读取原版客户端。先走启动器的校验下载，修复上次中断留下的半截 JAR。
-    m_loaderInstall.preparingInstallerParent = true;
-    startParentOrLoaderFiles();
+void VersionManager::ensureParentForOptifine() {
+    // 判据和 startParentOrLoaderFiles() 完全一样（版本 json + 客户端 jar 两份都在盘上），
+    // 但**理由和方向都不一样**：那边是"原版在就直接下加载器自己的文件"，这边是"原版不在就
+    // 先补 —— 安装器要拿那份客户端 jar 当输入，它不在的话安装器起不来"。
+    const QString parent = m_loaderInstall.gameVersion;
+    if (QFile::exists(InstanceFiles::jsonPath(parent)) &&
+        QFile::exists(InstanceFiles::jarPath(parent))) {
+        emit loaderInstallMessage(tr("原版 %1 已安装，直接运行 %2 的安装器。")
+                                      .arg(parent, m_loaderInstall.loaderName));
+        startInstallerDownload();
+        return;
+    }
+
+    emit loaderInstallMessage(tr("%1 安装器需要原版 %2 的客户端 JAR，正在安装原版…")
+                                  .arg(m_loaderInstall.loaderName, parent));
+    m_loaderInstall.phase = LoaderInstall::Phase::WaitingParentJson;
+    fetchVersionDetails(parent);
 }
 
 QString VersionManager::optifineWorkRoot() const {
@@ -1786,7 +1861,7 @@ bool VersionManager::prepareOptifineWorkDir(QString *errorOut) {
     const QString jarFrom = InstanceFiles::jarPath(parent);
     if (!QFile::exists(jsonFrom) || !QFile::exists(jarFrom)) {
         if (errorOut != nullptr) {
-            *errorOut = tr("原版 %1 的文件不完整（安装器需要将 %2 / %3 复制到临时目录），未安装。")
+            *errorOut = tr("原版 %1 的文件不全（%2 / %3 这两份要拷进临时目录给安装器用），没有安装。")
                             .arg(parent, jsonFrom, jarFrom);
         }
         return false;
@@ -1794,7 +1869,7 @@ bool VersionManager::prepareOptifineWorkDir(QString *errorOut) {
     if (!QFile::copy(jsonFrom, destDir + QLatin1Char('/') + parent + QStringLiteral(".json")) ||
         !QFile::copy(jarFrom, destDir + QLatin1Char('/') + parent + QStringLiteral(".jar"))) {
         if (errorOut != nullptr) {
-            *errorOut = tr("复制原版 %1 的版本 json / 客户端 jar 到临时目录失败，未安装。")
+            *errorOut = tr("把原版 %1 的版本 json / 客户端 jar 拷进临时目录时失败了，没有安装。")
                             .arg(parent);
         }
         return false;
@@ -1849,7 +1924,7 @@ void VersionManager::adoptOptifineProducts() {
                                                    QLatin1Char('/') + id +
                                                    QStringLiteral(".json"));
     if (produced.isEmpty()) {
-        failLoaderInstall(tr("%1 %2 的安装器生成了目录 %3，但其中无 %4.json，未安装。")
+        failLoaderInstall(tr("%1 %2 的安装器装出了 %3 这个目录，但里面没有 %4.json，没有安装。")
                               .arg(name, version, id, id));
         return;
     }
@@ -1861,7 +1936,7 @@ void VersionManager::adoptOptifineProducts() {
                                   .arg(name, version, check.id, id));
             return;
         }
-        failLoaderInstall(tr("%1 %2 生成的版本基于「%3」，与所选的「%4」不一致，未安装。")
+        failLoaderInstall(tr("%1 %2 装出来的版本是基于「%3」的，不是我们选的「%4」，没有安装。")
                               .arg(name, version, check.parent, m_loaderInstall.gameVersion));
         return;
     }
@@ -1880,7 +1955,7 @@ void VersionManager::adoptOptifineProducts() {
     // 的话，中途失败留下的是一份谁都看不见的库；反过来留下的会是一个半成品版本。
     const QString tmpLibs = optifineWorkMinecraftDir() + QStringLiteral("/libraries/optifine");
     if (!QDir(tmpLibs).exists()) {
-        failLoaderInstall(tr("%1 %2 生成的版本目录缺少其库（临时目录中无 %3），此类版本启动时会报找不到类，未安装。")
+        failLoaderInstall(tr("%1 %2 装出来的版本目录里少了它的库（临时目录里没有 %3），这样的版本启动时会报找不到类，没有安装。")
                               .arg(name, version, tmpLibs));
         return;
     }
@@ -1901,7 +1976,9 @@ void VersionManager::adoptOptifineProducts() {
     m_loaderInstall.loaderId = id;
     m_loaderInstall.loaderVersion = id.mid(prefix.size());
 
-    finishLoaderInstall(true, tr("%1 %2 安装完成（%3）。").arg(name, m_loaderInstall.loaderVersion, id));
+    emit loaderInstallMessage(
+        tr("%1 %2 安装完成（%3）。").arg(name, m_loaderInstall.loaderVersion, id));
+    startParentCompletion();
 }
 
 void VersionManager::finishLoaderInstall(bool success, const QString &message) {

@@ -2,10 +2,10 @@
  * @file ServerContent.hpp
  * @brief 服务端「内容」那一页的**判据层**（「内容管理」）。
  *
- * 服务端内容按目录区分：
+ * 服务端要装东西只有两个地方：
  *
- * * `mods/` 里的 `.jar` —— 模组；
- * * `plugins/` 里的 `.jar` —— 插件；
+ * * `mods/` 里的 `.jar` —— 模组和插件（Paper/Spigot 的插件也是往这里扔，只是游戏侧
+ * 现在还没把"插件"单独分出来）；
  * * `<世界>/datapacks/` 里的 `.zip` —— 数据包（世界目录 = `server.properties` 的
  * `level-name`）。
  *
@@ -32,11 +32,10 @@
 
 namespace ServerContent {
 
-/// 内容类型。数值与界面子项的类型标识一致。
+/// 内容的两类。**下标就是界面上那个下拉框的下标**。
 enum class Kind {
     Mods = 0,       ///< 模组（`mods/` 里的 `.jar`）
     Datapacks = 1,  ///< 数据包（世界目录下的 `datapacks/` 里的 `.zip`）
-    Plugins = 2,    ///< 插件（`plugins/` 里的 `.jar`）
 };
 
 /// 有几类（界面下拉框的上限）。

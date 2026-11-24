@@ -34,7 +34,7 @@ State stateOf(int port, QString *problemOut) {
     // （权限、网卡没了、系统把它划进了保留段）一律 Unknown —— 见文件头那段。
     if (probe.serverError() == QAbstractSocket::AddressInUseError) {
         if (problemOut != nullptr) {
-            *problemOut = QObject::tr("该端口当前已被其他程序占用。");
+            *problemOut = QObject::tr("这个端口现在有别的程序在用。");
         }
         return State::InUse;
     }

@@ -81,22 +81,8 @@
 using namespace VersionManagerInternals;
 
 QJsonObject VersionManager::downloadContinuation() const {
-    if (!m_ownBatchOpen || m_resourceDownload.running) return {};
+    if (!m_ownBatchOpen || m_resourceDownload.running || m_modpackInstall.active()) return {}; // Import reports own their continuation.
     QJsonObject intent{{"root", AppPaths::minecraftDir()}};
-    if (m_modpackInstall.active()) {
-        intent.insert("kind", "modpack");
-        intent.insert("instance", m_modpackInstall.instanceId);
-        intent.insert("archive", QFileInfo(m_modpackInstall.zipPath).absoluteFilePath());
-        intent.insert("coverCacheId", m_modpackInstall.pack.coverCacheId);
-        intent.insert("archiveSize", QString::number(m_modpackInstall.archiveSize));
-        intent.insert("archiveModifiedMs", QString::number(m_modpackInstall.archiveModifiedMs));
-        if (m_modpackInstall.phase == ModpackInstall::Phase::DownloadingFiles) {
-            const auto marker = DownloadCheckpoint::fingerprint(InstanceFiles::importMarkerPath(m_modpackInstall.instanceId));
-            if (!marker.value("exists").toBool()) return {};
-            intent.insert("importMarker", marker);
-        }
-        return intent;
-    }
     QString instance;
     if (m_namedInstance.active()) {
         instance = m_namedInstance.instanceId;
@@ -454,55 +440,13 @@ void VersionManager::unwindDownloadBatch(const QString &reason) {
 }
 
 bool VersionManager::canCancelDownload() const {
-    if (downloadManager->isBusy() ||
-        (m_modpackInstall.active() && m_modpackOverridesWork.isRunning())) {
-        return true;
-    }
-    // 加载器安装的“拉版本表 / 找安装器 / 等原版 json”这几段没有下载批次，但
-    // 还停在网络请求上，用户点取消完全可以停下。真正不能停的只有安装器进程
-    // （ProbingInstallerOptions / RunningInstaller）和写 json 那一下。
-    if (m_loaderInstall.active()) {
-        switch (m_loaderInstall.phase) {
-        case LoaderInstall::Phase::FetchingList:
-        case LoaderInstall::Phase::FetchingProfile:
-        case LoaderInstall::Phase::FetchingInstallerList:
-        case LoaderInstall::Phase::FetchingInstallerToken:
-        case LoaderInstall::Phase::WaitingInstallerJar:
-        case LoaderInstall::Phase::WaitingParentJson:
-        case LoaderInstall::Phase::WaitingParentBefore:
-        case LoaderInstall::Phase::WaitingParentFiles:
-        case LoaderInstall::Phase::WaitingLoaderFiles:
-            return true;
-        default:
-            break;
-        }
-    }
-    return false;
+    return downloadManager->isBusy() || (m_modpackInstall.active() && m_modpackOverridesWork.isRunning());
 }
 
 bool VersionManager::cancelActiveDownload() {
     if (m_modpackInstall.active() && m_modpackOverridesWork.isRunning()) {
         failModpackImport(tr("已取消最终解压或校验。已安装文件保留，实例仍未完成。"));
         return true;
-    }
-    if (!downloadManager->isBusy() && m_loaderInstall.active()) {
-        switch (m_loaderInstall.phase) {
-        case LoaderInstall::Phase::FetchingList:
-        case LoaderInstall::Phase::FetchingProfile:
-        case LoaderInstall::Phase::FetchingInstallerList:
-        case LoaderInstall::Phase::FetchingInstallerToken:
-        case LoaderInstall::Phase::WaitingInstallerJar:
-        case LoaderInstall::Phase::WaitingParentJson:
-        case LoaderInstall::Phase::WaitingParentBefore:
-        case LoaderInstall::Phase::WaitingParentFiles:
-        case LoaderInstall::Phase::WaitingLoaderFiles: {
-            const QString loaderName = m_loaderInstall.loaderName;
-            failLoaderInstall(tr("已取消安装 %1。").arg(loaderName));
-            return true;
-        }
-        default:
-            break;
-        }
     }
     if (!downloadManager->isBusy()) {
         return false;
@@ -515,54 +459,23 @@ bool VersionManager::cancelActiveDownload() {
     return true;
 }
 
-bool VersionManager::canRetryDownload() const {
-    return m_failedBatch.valid &&
-           (!m_failedBatch.modpack.active() || m_failedBatch.gameRoot == AppPaths::minecraftDir());
-}
+bool VersionManager::canRetryDownload() const { return m_failedBatch.valid; }
 
 QString VersionManager::retryBatchLabel() const {
     return m_failedBatch.valid ? m_failedBatch.label : QString();
 }
 
-QString VersionManager::retryModpackInstance() const {
-    return m_failedBatch.modpack.instanceId;
-}
-
-QString VersionManager::retryModpackArchive() const {
-    return m_failedBatch.modpack.zipPath;
-}
-
-bool VersionManager::retryDownload(QString *problem) {
-    if (!canRetryDownload() || m_failedBatch.jobs.isEmpty()) {
+bool VersionManager::retryDownload() {
+    if (!m_failedBatch.valid || m_failedBatch.jobs.isEmpty()) {
         return false;
     }
-    if (m_ownBatchOpen || downloadManager->isBusy() || m_loaderInstall.active() ||
-        m_modpackInstall.active() || m_namedInstance.active() || m_resourceDownload.running) {
+    if (downloadManager->isBusy()) {
         // 一次一批（和 downloadVersion / repairVersionFiles / downloadResourceFiles 是同一条
         // 规矩）。硬叠上去的话两份进度会互相盖，而"取消"那一刻也说不清在取消谁。
         qWarning() << "A download batch is already running, refusing to retry.";
         return false;
     }
     const FailedBatch batch = m_failedBatch;
-    if (batch.modpack.active()) {
-        if (!DirectorySessionLock::acquire(batch.gameRoot, problem)) return false;
-        const QFileInfo archive(batch.modpack.zipPath);
-        const auto verdict = InstanceFiles::checkImportTargetName(
-            batch.modpack.instanceId, problem, batch.modpack.manifestFingerprint);
-        if (verdict == InstanceFiles::ImportNameVerdict::Taken) return false;
-        if (batch.modpack.phase == ModpackInstall::Phase::DownloadingFiles &&
-            verdict != InstanceFiles::ImportNameVerdict::OkResume) {
-            if (problem) *problem = tr("原实例的未完成安装记录已不在，请用原整合包重新导入。");
-            return false;
-        }
-        if (!archive.isFile() || archive.size() != batch.modpack.archiveSize ||
-            archive.lastModified().toMSecsSinceEpoch() != batch.modpack.archiveModifiedMs) {
-            if (problem) *problem = tr("原整合包文件已移动或更改，请用原整合包继续安装。");
-            return false;
-        }
-        m_modpackInstall = batch.modpack;
-        m_loaderInstall = batch.loader;
-    }
     m_failedBatch.reset();
 
     // 把"这一批叫什么"照原样摆回去。收尾那一段（`onAllDownloadsFinished()` 的末尾）就是靠
@@ -666,14 +579,14 @@ QString VersionManager::resolveCurseForgeFiles(ModpackImport::Pack *pack,
     const auto failureText = [hasKey](const HttpClient::Reply &reply) {
         const QString hint = curseForgeKeyHint(hasKey);
         if (!reply.networkError.isEmpty()) {
-            return tr("向 CurseForge 请求文件清单时连接失败：%1\n\n%2").arg(reply.networkError, hint);
+            return tr("问 CurseForge 要文件清单时没连上：%1\n\n%2").arg(reply.networkError, hint);
         }
         if (reply.status == HttpClient::kStatusTooManyRequests) {
-            return HttpClient::throttledText(tr("向 CurseForge 请求文件清单"));
+            return HttpClient::throttledText(tr("问 CurseForge 要文件清单"));
         }
         const QString apiError =
             reply.json.value(QStringLiteral("error")).toString().trimmed();
-        return tr("CurseForge 接口返回 HTTP %1%2\n\n%3")
+        return tr("CurseForge 的接口回了 HTTP %1%2\n\n%3")
             .arg(reply.status)
             .arg(apiError.isEmpty() ? QString() : tr("（%1）").arg(apiError), hint);
     };
@@ -802,7 +715,7 @@ void VersionManager::downloadVersion(const QString &versionId, const QString &de
     }
     if (downloadManager->isBusy()) {
         qWarning() << "A download batch is already running, refusing to start another.";
-        emit versionDownloadFinished(versionId, false, tr("已有下载任务正在进行，请待其结束后再试。"));
+        emit versionDownloadFinished(versionId, false, tr("已有下载任务正在进行，请等它结束。"));
         return;
     }
 
@@ -893,7 +806,7 @@ void VersionManager::repairVersionFiles(const QString &versionId,
     }
     if (downloadManager->isBusy()) {
         qWarning() << "A download batch is already running, refusing to start another.";
-        emit versionDownloadFinished(versionId, false, tr("已有下载任务正在进行，请待其结束后再试。"));
+        emit versionDownloadFinished(versionId, false, tr("已有下载任务正在进行，请等它结束。"));
         return;
     }
     // 这一批会覆盖 `versions/<id>/<id>.jar`，还会动**全体版本共用**的 `libraries/`
@@ -984,7 +897,7 @@ bool VersionManager::prefetchAssetDirectorResources(const QString &versionId) {
     if (!summary.refusal.isEmpty()) {
         // 超上限：**一个字节都不写**，而且要说清是哪套、多大。
         emit versionDownloadFinished(versionId, false,
-                                     tr("未预取「%1」：%2").arg(summary.note, summary.refusal));
+                                     tr("「%1」没有预取：%2").arg(summary.note, summary.refusal));
         return false;
     }
     if (summary.upToDate) {
@@ -1009,7 +922,7 @@ bool VersionManager::prefetchAssetDirectorResources(const QString &versionId) {
     const AssetDirectorKnownSet::Plan plan = AssetDirectorKnownSet::plan(*set, assetsRoot);
     if (!plan.refusal.isEmpty()) {
         emit versionDownloadFinished(versionId, false,
-                                     tr("未预取「%1」：%2").arg(set->note, plan.refusal));
+                                     tr("「%1」没有预取：%2").arg(set->note, plan.refusal));
         return false;
     }
 
@@ -1115,12 +1028,12 @@ bool VersionManager::downloadResourceFiles(const QString &destinationDir,
     // beginBatch() 与 endBatch() 之间提前 return，m_batchOpen 就永远是 true）。
     // 每一道都要发终态信号 —— 界面那边点一下就在等一个结果，不发就等于"点了没反应"。
     if (destinationDir.isEmpty()) {
-        emit resourceDownloadFinished(label, false, tr("未指定下载目标。"));
+        emit resourceDownloadFinished(label, false, tr("没有说清要下到哪儿去。"));
         return false;
     }
     if (downloadManager->isBusy()) {
         qWarning() << "A download batch is already running, refusing to start another.";
-        emit resourceDownloadFinished(label, false, tr("已有下载任务正在进行，请待其结束后再试。"));
+        emit resourceDownloadFinished(label, false, tr("已有下载任务正在进行，请等它结束。"));
         return false;
     }
     // 那三套安装状态机在**它们的批次之间**是不忙的（比如正在拉版本表、跑安装器），
@@ -1129,13 +1042,13 @@ bool VersionManager::downloadResourceFiles(const QString &destinationDir,
     // 和 importModpack() / installLoaderVersion() 入口那三道闸同一个道理。
     if (m_loaderInstall.active() || m_modpackInstall.active() || m_namedInstance.active()) {
         emit resourceDownloadFinished(label, false,
-                                      tr("已有下载或安装任务正在进行，请待其结束后再安装。"));
+                                      tr("已有下载或者安装任务正在进行，请等它结束再装。"));
         return false;
     }
     if (files.isEmpty()) {
         // 正常走不到（能点的那条版本一定有个 primary 文件），但"这个版本一个文件都没有"
         // 是接口允许的状态 —— 那时候要当场说清，而不是开一个空批次等一个永远不来的收尾。
-        emit resourceDownloadFinished(label, false, tr("此版本无可下载的文件。"));
+        emit resourceDownloadFinished(label, false, tr("这个版本没有可下载的文件。"));
         return false;
     }
     // 落点那块盘不在：同 downloadVersion() 里那一段。资源下载的目的地可能是
@@ -1362,7 +1275,7 @@ QString VersionManager::inheritanceProblem(const QString &versionId) const {
             // 这句话必须点明"要去装原版"，而不是套用那句"请重新下载该版本" —— 用户照
             // 后者做，下载的还是这个加载器版本（它的 json 本来就不含原版那份东西），
             // 于是问题原样复现。
-            return tr("版本「%1」基于「%2」，但本机未安装「%2」，无法启动。\n请先安装原版「%2」，再启动此版本。")
+            return tr("版本「%1」基于「%2」，但本机没有安装「%2」，启动不了。\n请先安装原版「%2」，再启动这个版本。")
                 .arg(versionId, parentId);
         }
     }
@@ -1477,7 +1390,7 @@ bool VersionManager::renameInstance(const QString &oldId, const QString &newName
 
     const QString oldDir = AppPaths::versionDir(oldId);
     if (!QDir(oldDir).exists()) {
-        return fail(tr("未找到实例目录 %1。").arg(QDir::toNativeSeparators(oldDir)));
+        return fail(tr("找不到实例目录 %1。").arg(QDir::toNativeSeparators(oldDir)));
     }
     // 实例目录本身是 junction / 符号链接时**拒绝改名**。
     //
@@ -1569,7 +1482,7 @@ bool VersionManager::renameInstance(const QString &oldId, const QString &newName
     // 更糊涂（而且那本来就不该算一次失败 —— 没有自己的 jar 不是错误）。
     if (QFileInfo::exists(oldJarPath)) {
         if (!renameOnto(oldJarPath, newJarPath)) {
-            return rollbackAndFail(tr("无法将 %1 重命名为 %2。请检查是否被其他程序占用。")
+            return rollbackAndFail(tr("无法把 %1 改名成 %2（可能有别的程序正开着它）。")
                                        .arg(QDir::toNativeSeparators(oldJarPath),
                                             QDir::toNativeSeparators(newJarPath)));
         }
@@ -1578,7 +1491,7 @@ bool VersionManager::renameInstance(const QString &oldId, const QString &newName
 
     if (QFileInfo::exists(oldJsonPath)) {
         if (!renameOnto(oldJsonPath, newJsonPath)) {
-            return rollbackAndFail(tr("无法将 %1 重命名为 %2。请检查是否被其他程序占用。")
+            return rollbackAndFail(tr("无法把 %1 改名成 %2（可能有别的程序正开着它）。")
                                        .arg(QDir::toNativeSeparators(oldJsonPath),
                                             QDir::toNativeSeparators(newJsonPath)));
         }
@@ -1586,7 +1499,7 @@ bool VersionManager::renameInstance(const QString &oldId, const QString &newName
     }
 
     if (!QDir().rename(oldDir, newDir)) {
-        return rollbackAndFail(tr("无法将目录 %1 重命名为 %2。请检查是否被其他程序占用。")
+        return rollbackAndFail(tr("无法把目录 %1 改名成 %2（可能有别的程序正开着它）。")
                                    .arg(QDir::toNativeSeparators(oldDir),
                                         QDir::toNativeSeparators(newDir)));
     }
@@ -1621,7 +1534,7 @@ bool VersionManager::copyInstanceFrom(const QString &sourceDir, const QString &s
     // 当前工作目录下算，而启动器的工作目录不一定是 exe 旁边那一份 —— 那就会往一个谁也
     // 说不清的地方拷一份实例出来。这一条不是形式。
     if (target.isEmpty()) {
-        return fail(tr("未指定目标游戏目录。"));
+        return fail(tr("没有指定要复制到哪个游戏目录。"));
     }
     if (!WriteDirectoryGuard::acquire(sourceDir, errorOut)
         || !DirectorySessionLock::acquire(target, errorOut)) return false;
@@ -1649,12 +1562,12 @@ bool VersionManager::copyInstanceFrom(const QString &sourceDir, const QString &s
     }
 
     if (!QDir(sourceDir).exists()) {
-        return fail(tr("未找到实例目录 %1。").arg(QDir::toNativeSeparators(sourceDir)));
+        return fail(tr("找不到实例目录 %1。").arg(QDir::toNativeSeparators(sourceDir)));
     }
 
     const QDir root(target);
     if (!root.exists()) {
-        return fail(tr("未找到目标目录 %1。").arg(QDir::toNativeSeparators(target)));
+        return fail(tr("找不到目标目录 %1。").arg(QDir::toNativeSeparators(target)));
     }
 
     // **目标不能落在源实例目录里面**（含"就是它自己"这一档）。这一条在
@@ -1679,7 +1592,7 @@ bool VersionManager::copyInstanceFrom(const QString &sourceDir, const QString &s
     // 所在的那个游戏文件夹 + 同一个名字"这条路在这里被挡下来 —— 不然下面那个 exists()
     // 也会挡，但报的是"已经有一个叫 X 的实例了"，而真正的原因是"那就是它自己"。
     if (QDir(destDir) == QDir(sourceDir)) {
-        return fail(tr("目标与源实例「%1」相同，未复制。").arg(name));
+        return fail(tr("「%1」就是这一份自己，没有复制。").arg(name));
     }
     if (QFileInfo::exists(destDir)) {
         return fail(tr("目标游戏目录中已存在名为「%1」的实例，请更换名称后重试。").arg(name));
@@ -1700,7 +1613,7 @@ bool VersionManager::copyInstanceFrom(const QString &sourceDir, const QString &s
     const QString stagingParent = versionsDir + QStringLiteral("/.wtfml-staging");
     const QFileInfo stagingParentInfo(stagingParent);
     if (stagingParentInfo.isJunction() || stagingParentInfo.isSymLink()) {
-        return fail(tr("暂存目录 %1 是链接，未复制副本。")
+        return fail(tr("暂存目录 %1 是一根链接，没有往那里拷副本。")
                         .arg(QDir::toNativeSeparators(stagingParent)));
     }
     if (!QDir().mkpath(stagingParent)) {
@@ -1721,7 +1634,7 @@ bool VersionManager::copyInstanceFrom(const QString &sourceDir, const QString &s
 
     QString copyProblem;
     if (!copyTreeWithoutFollowingLinks(sourceDir, stagingDir, {}, &copyProblem)) {
-        return fail(tr("复制 %1 时中断，未生成副本。\n原因：%2%3")
+        return fail(tr("复制 %1 的时候中断了，这一份没有做出来。\n原因：%2%3")
                         .arg(QDir::toNativeSeparators(sourceDir), copyProblem, removePartial()));
     }
 
@@ -1835,7 +1748,7 @@ bool VersionManager::deleteInstance(const QString &versionId, QString *errorOut)
         // 用户点的是"删掉它"，而它不在盘上说明列表和磁盘不是同一份东西，说清楚比装作
         // 删成功了好（不然"我明明删了"和"它本来就没有"从此分不开）。
         if (errorOut != nullptr) {
-            *errorOut = tr("此实例的目录已不存在：%1").arg(QDir::toNativeSeparators(dir));
+            *errorOut = tr("这个实例的目录已经不在了：%1").arg(QDir::toNativeSeparators(dir));
         }
         return false;
     }
@@ -2040,9 +1953,14 @@ void VersionManager::onVersionJsonFetched(const QJsonObject &versionJson) {
                                 [this, versionJson] { writeLegacyProfile(versionJson); });
                 return;
             }
+            // OptiFine 这一路是"**装之前**先把原版下全"（它的安装器要拿原版的客户端 jar 当
+            // 输入），所以它用另一个 phase 记着：那一批结束时该起安装器，而不是收尾。
+            // 另外三个都是"装完再补原版"，走 WaitingParentFiles。
+            const bool beforeOptifineInstaller = m_loaderInstall.kind == LoaderKind::OptiFine &&
+                                                 m_loaderInstall.loaderId.isEmpty();
             const LoaderInstall::Phase parentPhase =
-                m_loaderInstall.preparingInstallerParent ? LoaderInstall::Phase::WaitingParentBefore
-                                                        : LoaderInstall::Phase::WaitingParentFiles;
+                beforeOptifineInstaller ? LoaderInstall::Phase::WaitingParentBefore
+                                        : LoaderInstall::Phase::WaitingParentFiles;
             m_loaderInstall.phase = parentPhase;
             // 这批原版文件是从"刚收到原版那份 json"的这条栈上起的（上面那条信号链一路都是
             // 同步的）：排到下一轮再起。相位上面已经定好了，守卫要认的就是它。
@@ -2101,7 +2019,7 @@ void VersionManager::onVersionJsonFetched(const QJsonObject &versionJson) {
     if (m_modpackInstall.active() &&
         m_modpackInstall.phase == ModpackInstall::Phase::WaitingParentJson &&
         pending == m_modpackInstall.pack.gameVersion) {
-        failModpackImport(tr("无法获取原版 %1 的版本信息，整合包未导入（请检查网络后重试）。")
+        failModpackImport(tr("拿不到原版 %1 的版本信息，整合包没有导入（检查网络后重试）。")
                               .arg(pending));
         return;
     }
@@ -2109,7 +2027,7 @@ void VersionManager::onVersionJsonFetched(const QJsonObject &versionJson) {
     // 安装流程在等原版那份 json：这次失败就是安装失败，而不是"某个人请求的版本没取到"。
     if (m_loaderInstall.phase == LoaderInstall::Phase::WaitingParentJson &&
         pending == m_loaderInstall.gameVersion) {
-        failLoaderInstall(tr("无法获取原版 %1 的版本信息，%2 未安装。").arg(
+        failLoaderInstall(tr("拿不到原版 %1 的版本信息，%2 没有安装。").arg(
             pending, m_loaderInstall.loaderName));
         return;
     }
@@ -2240,7 +2158,7 @@ void VersionManager::onAllDownloadsFinished(bool success) {
                 message = stats.skipped > 0
                               ? tr("无需下载：%1 个文件均已存在（已跳过）。")
                                     .arg(stats.skipped)
-                              : tr("无需下载文件。");
+                              : tr("没有需要下载的文件。");
             }
         } else if (stats.reused > 0 && stats.skipped > 0) {
             message = tr("已下载 %1 个文件，另有 %2 个从本机其他游戏目录复用、%3 个已存在。全部就绪。")
@@ -2276,21 +2194,23 @@ void VersionManager::onAllDownloadsFinished(bool success) {
             StorageAvailability::unavailableReason(AppPaths::minecraftDir());
         if (!storageProblem.isEmpty()) {
             message += QLatin1String("\n\n")
-                       + tr("目标磁盘当前不可用：%1\n请重新连接后再试。").arg(storageProblem);
+                       + tr("目标磁盘现在不可用：%1\n接回去之后再试。").arg(storageProblem);
         }
     }
 
     // 「失败任务保存失败文件列表和原始 URL 来源，重试只重做失败项」：在这里把那一份
     // 记下来（DownloadManager 那边刚收完尾，失败清单还是这一批的）。
     //
-    // 整合包同时保存安装阶段，使重试后的同一个完成信号继续驱动原来的安装。
+    // **只有"纯下文件"的批次留**：加载器安装 / 整合包导入 / 带名字的实例那三条路上，
+    // 重下几个文件补不回来（加载器的安装器进程还得再跑一次、导入还得解压覆盖），
+    // 露一颗点了修不好的「重试」比不露更糟。判据问的就是那三个状态机活没活着。
     if (success) {
         m_failedBatch.reset();
     } else {
         const bool plainFilesOnly = !m_loaderInstall.active() && !m_modpackInstall.active()
                                     && !m_namedInstance.active();
         m_failedBatch.reset();
-        if (plainFilesOnly || m_modpackInstall.active()) {
+        if (plainFilesOnly) {
             m_failedBatch.jobs = downloadManager->failedJobs();
             // 一个失败作业都没登记上（比如 `scheduleFile()` 那两道"地址是空的"早退）⇒
             // 没有可重做的，别露那颗按钮。
@@ -2298,14 +2218,6 @@ void VersionManager::onAllDownloadsFinished(bool success) {
             m_failedBatch.resource = m_resourceDownload.running;
             m_failedBatch.label = m_resourceDownload.label;
             m_failedBatch.id = m_currentVersionDownloading;
-            if (m_modpackInstall.active() && m_failedBatch.jobs.size() == stats.failed && m_failedBatch.valid) {
-                m_failedBatch.gameRoot = AppPaths::minecraftDir();
-                m_failedBatch.modpack = m_modpackInstall;
-                m_failedBatch.loader = m_loaderInstall;
-                m_failedBatch.loader.listJobs.clear();
-            } else if (!plainFilesOnly) {
-                m_failedBatch.reset();
-            }
         }
     }
 
@@ -2332,7 +2244,9 @@ void VersionManager::onAllDownloadsFinished(bool success) {
             return;
         }
 
-        // 原版文件校验通过后才下载并运行外部安装器。
+        // OptiFine 独有的一段：这一批是"装之前先把原版下全"那一次，下完才轮到安装器
+        // （它的安装器要拿原版的客户端 jar 当输入）。Forge/NeoForge 那边原版是**最后**
+        // 补的，所以它们永远走不到这里。
         if (m_loaderInstall.phase == LoaderInstall::Phase::WaitingParentBefore) {
             if (!success) {
                 failLoaderInstall(tr("原版 %1 文件不完整，未安装 %2。请先补齐原版文件再重试。\n%3")
@@ -2343,7 +2257,6 @@ void VersionManager::onAllDownloadsFinished(bool success) {
             emit loaderInstallMessage(tr("原版 %1 已就绪，正在启动 %2 安装器…")
                                           .arg(m_loaderInstall.gameVersion,
                                                m_loaderInstall.loaderName));
-            m_loaderInstall.preparingInstallerParent = false;
             deferLoaderStep(LoaderInstall::Phase::WaitingParentBefore,
                             [this] { startInstallerDownload(); });
             return;

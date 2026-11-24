@@ -76,8 +76,6 @@ QString AgentCompositeToolEngine::gate(const QString &internalName) const {
     if (skill.readOnly && isWriteRisk(toolSpec.risk)) {
         return QStringLiteral("当前模式（%1）是只读模式，不能执行写操作。").arg(skill.name);
     }
-    // rollback 是失败后的收尾动作；commit 仍由工具自己要求和验证证据与逐次审批。
-    if (internalName == QStringLiteral("repair.finish")) return QString();
     if (m_workflow->stage() == AgentWorkflowStage::Failed &&
         internalName != QStringLiteral("workflow.finish") && isWriteRisk(toolSpec.risk)) {
         return QStringLiteral("工作流已经失败，不能继续写入；请先说明失败原因并重新提交计划。");

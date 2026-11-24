@@ -148,7 +148,7 @@ void runToolboxExtraTests() {
                   && !Beacon::sharedBaseText(4, 1).contains(QStringLiteral("3 块玻璃")),
               "★★ ZAI1b 一颗信标要 5 块玻璃（合成表那一圈），不是 3 块",
               Beacon::sharedBaseText(4, 1));
-        check(Beacon::sharedBaseText(4, 10).contains(QStringLiteral("信标数量须在")),
+        check(Beacon::sharedBaseText(4, 10).contains(QStringLiteral("超出范围")),
               "ZAI1b 超过 9 颗时说清楚");
     }
 
@@ -245,11 +245,9 @@ void runToolboxExtraTests() {
         // 隐身 = 夜视 + 发酵蜘蛛眼；夜视 = 粗制的药水 + 金胡萝卜。
         int invisibility = -1;
         int weakness = -1;
-        int slowFalling = -1;
         for (int i = 0; i < Brewing::potionCount(); ++i) {
             if (Brewing::potionAt(i).name == QStringLiteral("隐身药水")) invisibility = i;
             if (Brewing::potionAt(i).name == QStringLiteral("虚弱药水")) weakness = i;
-            if (Brewing::potionAt(i).name == QStringLiteral("缓降药水")) slowFalling = i;
         }
         check(invisibility >= 0 && weakness >= 0, "ZAI4 表里有隐身和虚弱");
         if (invisibility >= 0) {
@@ -282,17 +280,6 @@ void runToolboxExtraTests() {
                   "★★ ZAI4 虚弱的材料只有水瓶和发酵蜘蛛眼（不补下界疣）",
                   plan.materials.join(QStringLiteral("、")));
         }
-
-        const Brewing::Plan slowFallingPlan =
-            Brewing::plan(slowFalling, false, false, Brewing::Form::Normal);
-        check(slowFallingPlan.ok && !slowFallingPlan.directFromWater
-                  && slowFallingPlan.steps.size() == 2
-                  && slowFallingPlan.steps.at(0) == QStringLiteral("水瓶 + 下界疣 → 粗制的药水")
-                  && slowFallingPlan.steps.at(1) == QStringLiteral("粗制的药水 + 幻翼膜 → 缓降药水")
-                  && slowFallingPlan.materials.contains(QStringLiteral("下界疣 × 1"))
-                  && slowFallingPlan.materials.contains(QStringLiteral("幻翼膜 × 1")),
-              "ZAI4 缓降先做粗制的药水，再加幻翼膜",
-              slowFallingPlan.detailText());
 
         const Brewing::Plan bad = Brewing::plan(-1, false, false, Brewing::Form::Normal);
         check(!bad.ok && !bad.error.isEmpty(),
@@ -328,14 +315,14 @@ void runToolboxExtraTests() {
         check(six.materials.contains(QStringLiteral("水瓶 × 6")),
               "★★ ZAI3b 水瓶按瓶数备（6 瓶 ⇒ 水瓶 × 6）",
               six.materials.join(QStringLiteral("、")));
-        check(six.detailText().contains(QStringLiteral("6 瓶（酿造 2 次）"))
+        check(six.detailText().contains(QStringLiteral("6 瓶（酿 2 次）"))
                   && six.detailText().contains(QStringLiteral("材料：水瓶 × 6"))
                   && six.detailText().contains(
-                         QStringLiteral("烈焰粉（燃料） × 1（1 个烈焰粉可酿造 20 次）"))
+                         QStringLiteral("烈焰粉（燃料） × 1（1 个烈焰粉可酿 20 次）"))
                   && !six.detailText().contains(QStringLiteral("玻璃瓶")),
               "★★ ZAI3b 明细里写清瓶数、酿造次数与燃料用量（不再列玻璃瓶）",
               six.detailText().left(200));
-        check(six.summary.contains(QStringLiteral("6 瓶（酿造 2 次）")),
+        check(six.summary.contains(QStringLiteral("6 瓶（酿 2 次）")),
               "★ ZAI3b 总述里也带上产物的瓶数", six.summary);
 
         // 力量药水的材料本身就是烈焰粉：材料一行是配方，燃料另起一行，两笔不能混。
@@ -345,7 +332,7 @@ void runToolboxExtraTests() {
                 Brewing::plan(strength, false, false, Brewing::Form::Normal);
             check(strengthPlan.materials.contains(QStringLiteral("烈焰粉 × 1"))
                       && strengthPlan.materials.contains(
-                             QStringLiteral("烈焰粉（燃料） × 1（1 个烈焰粉可酿造 20 次）")),
+                             QStringLiteral("烈焰粉（燃料） × 1（1 个烈焰粉可酿 20 次）")),
                   "★★ ZAI3b 力量药水：配方里的烈焰粉与燃料那笔分开写",
                   strengthPlan.materials.join(QStringLiteral("、")));
         }
@@ -490,7 +477,7 @@ void runToolboxExtraTests() {
                       && hasMaterial(p, QStringLiteral("水瓶 × 3"))
                       && hasMaterial(p, QStringLiteral("下界疣 × 1"))
                       && hasMaterial(p, QStringLiteral("糖 × 1"))
-                      && p.summary == QStringLiteral("产出：迅捷药水 × 3 瓶（酿造 1 次）")
+                      && p.summary == QStringLiteral("产出：迅捷药水 × 3 瓶（酿 1 次）")
                       && p.effect == QStringLiteral("迅捷 I · 3:00")
                       && p.detailText().contains(p.summary)
                       && p.detailText().contains(QStringLiteral("效果：") + p.effect),
@@ -503,7 +490,7 @@ void runToolboxExtraTests() {
             check(p.ok && p.steps == QStringList{QStringLiteral("水瓶 + 发酵蜘蛛眼 → 虚弱药水")}
                       && p.directFromWater && hasMaterial(p, QStringLiteral("水瓶 × 3"))
                       && hasMaterial(p, QStringLiteral("发酵蜘蛛眼 × 1"))
-                      && p.summary == QStringLiteral("产出：虚弱药水 × 3 瓶（酿造 1 次）")
+                      && p.summary == QStringLiteral("产出：虚弱药水 × 3 瓶（酿 1 次）")
                       && p.effect == QStringLiteral("虚弱 I · 1:30")
                       && p.detailText().contains(QStringLiteral("特殊路径"))
                       && !p.detailText().contains(QStringLiteral("下界疣")),
@@ -517,7 +504,7 @@ void runToolboxExtraTests() {
                       && p.steps.last()
                              == QStringLiteral("迅捷药水 + 红石粉 → 迅捷药水（延长）")
                       && hasMaterial(p, QStringLiteral("红石粉 × 1"))
-                      && p.summary == QStringLiteral("产出：迅捷药水（延长） × 1 瓶（酿造 1 次）")
+                      && p.summary == QStringLiteral("产出：迅捷药水（延长） × 1 瓶（酿 1 次）")
                       && p.effect == QStringLiteral("迅捷 I · 8:00"),
                   "★★ ZAI6 延长（红石）：材料多一行红石粉，效果时长 8:00", p.detailText());
         }
@@ -528,7 +515,7 @@ void runToolboxExtraTests() {
             check(p.ok
                       && p.steps.last() == QStringLiteral("迅捷药水 + 荧石粉 → 迅捷药水 II")
                       && hasMaterial(p, QStringLiteral("荧石粉 × 1"))
-                      && p.summary == QStringLiteral("产出：迅捷药水 II × 1 瓶（酿造 1 次）")
+                      && p.summary == QStringLiteral("产出：迅捷药水 II × 1 瓶（酿 1 次）")
                       && p.effect == QStringLiteral("迅捷 II · 1:30"),
                   "★★ ZAI6 增强（荧石）：等级 II、时长 1:30", p.detailText());
         }
@@ -539,7 +526,7 @@ void runToolboxExtraTests() {
             check(p.ok
                       && p.steps.last() == QStringLiteral("迅捷药水 + 火药 → 喷溅型迅捷药水")
                       && hasMaterial(p, QStringLiteral("火药 × 1"))
-                      && p.summary == QStringLiteral("产出：喷溅型迅捷药水 × 1 瓶（酿造 1 次）")
+                      && p.summary == QStringLiteral("产出：喷溅型迅捷药水 × 1 瓶（酿 1 次）")
                       && p.effect == QStringLiteral("迅捷 I · 3:00"),
                   "★★ ZAI6 喷溅（火药）：结果格式与普通一致", p.detailText());
         }
@@ -554,7 +541,7 @@ void runToolboxExtraTests() {
                              == QStringLiteral("喷溅型迅捷药水 + 龙息 → 滞留型迅捷药水")
                       && hasMaterial(p, QStringLiteral("火药 × 1"))
                       && hasMaterial(p, QStringLiteral("龙息 × 1"))
-                      && p.summary == QStringLiteral("产出：滞留型迅捷药水 × 1 瓶（酿造 1 次）")
+                      && p.summary == QStringLiteral("产出：滞留型迅捷药水 × 1 瓶（酿 1 次）")
                       && p.effect == QStringLiteral("迅捷 I · 0:45"),
                   "★★ ZAI6 滞留（龙息）：先火药再龙息，效果时长按四分之一（0:45）", p.detailText());
         }
@@ -792,17 +779,6 @@ void runToolboxExtraTests() {
               "★★ ZAJ3 海龟壳只认头盔（别的部位连名字都拼不出来）");
         check(ArmorTrim::armorPieceName(4, 1) == QStringLiteral("钻石胸甲"),
               "★ ZAJ3 盔甲全名 = 材质 + 部位", ArmorTrim::armorPieceName(4, 1));
-        // 皮革那四件是「帽子 / 外套 / 裤子 / 靴子」，不是拼出来的「皮革头盔」那一套。
-        check(ArmorTrim::armorPieceName(0, 0) == QStringLiteral("皮革帽子")
-                  && ArmorTrim::armorPieceName(0, 1) == QStringLiteral("皮革外套")
-                  && ArmorTrim::armorPieceName(0, 2) == QStringLiteral("皮革裤子")
-                  && ArmorTrim::armorPieceName(0, 3) == QStringLiteral("皮革靴子"),
-              "★★ ZAJ3 皮革四件用的是游戏里的那四个名字（不是「皮革头盔」）",
-              ArmorTrim::armorPieceName(0, 0) + QStringLiteral(" / ") + ArmorTrim::armorPieceName(0, 1)
-                  + QStringLiteral(" / ") + ArmorTrim::armorPieceName(0, 2) + QStringLiteral(" / ")
-                  + ArmorTrim::armorPieceName(0, 3));
-        check(ArmorTrim::armorPieceName(3, 0) == QStringLiteral("金头盔"),
-              "★ ZAJ3 金头盔（其余材质就是材质 + 部位）", ArmorTrim::armorPieceName(3, 0));
         check(ArmorTrim::trimMaterialAt(0).item == QStringLiteral("紫水晶碎片")
                   && ArmorTrim::trimMaterialAt(9).item == QStringLiteral("红石粉"),
               "★ ZAJ3 每种纹饰材料在锻造台里摆的那件东西写在表里",
@@ -934,7 +910,7 @@ void runToolboxExtraTests() {
 
         const ArmorTrim::Plan set = ArmorTrim::plan(4, 1, coast, 0, 4);
         check(set.ok && set.materials.contains(QStringLiteral("海岸纹饰模板 × 4"))
-                  && set.notes.join(QStringLiteral(" / ")).contains(QStringLiteral("每锻造一件消耗一个模板")),
+                  && set.notes.join(QStringLiteral(" / ")).contains(QStringLiteral("每打一件消耗一个")),
               "★★ ZAJ4 做 4 件 ⇒ 模板也是 4 份（模板不是一次性解锁）",
               set.notes.join(QStringLiteral(" / ")));
 
@@ -993,10 +969,10 @@ void runToolboxExtraTests() {
               "★ ZAJ5 图案下标越界 ⇒ 复制材料是空串（不编一个方块出来）");
 
         const ArmorTrim::Plan single = ArmorTrim::plan(4, 1, coast, 0, 1);
-        check(single.notes.join(QStringLiteral(" / ")).contains(QStringLiteral("此海岸纹饰模板来源：沉船")),
+        check(single.notes.join(QStringLiteral(" / ")).contains(QStringLiteral("这枚海岸纹饰模板来自：沉船")),
               "★★ ZAJ5 单件计划里也写清模板从哪儿来",
               single.notes.join(QStringLiteral(" / ")));
-        check(single.notes.join(QStringLiteral(" / ")).contains(QStringLiteral("复制需圆石"))
+        check(single.notes.join(QStringLiteral(" / ")).contains(QStringLiteral("复制用圆石"))
                   && !single.notes.join(QStringLiteral(" / ")).contains(QStringLiteral("以游戏内配方为准")),
               "★★ ZAJ5 来源和复制材料写在同一句里，不再留一句「以游戏内配方为准」",
               single.notes.join(QStringLiteral(" / ")));

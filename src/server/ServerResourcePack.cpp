@@ -49,7 +49,7 @@ EntriesCheck checkEntries(const QStringList &entries) {
         names.append(normalized(entry));
     }
     if (names.isEmpty()) {
-        result.problem = QCoreApplication::translate("ServerResourcePack", "压缩包内无文件。");
+        result.problem = QCoreApplication::translate("ServerResourcePack", "压缩包没有文件。");
         return result;
     }
 
@@ -100,7 +100,7 @@ Inspect inspect(const QString &zipPath) {
     QStringList entries;
     QString error;
     const ZipUtil::EntryStatus status =
-        ZipUtil::listEntries(zipPath, &entries, &error, QCoreApplication::translate("ServerResourcePack", "读取资源包"));
+        ZipUtil::listEntries(zipPath, &entries, &error, QCoreApplication::translate("ServerResourcePack", "读这个资源包"));
     if (status == ZipUtil::EntryStatus::NotAnArchive) {
         result.problem = QCoreApplication::translate("ServerResourcePack", "无法打开资源包。请选择格式正确且完整的 ZIP 文件。");
         return result;
@@ -126,8 +126,7 @@ Inspect inspect(const QString &zipPath) {
     const FileHash::Result hash =
         FileHash::digestOfFile(zipPath, FileHash::Algorithm::Sha1);
     if (!hash.ok) {
-        result.problem = QCoreApplication::translate("ServerResourcePack", "无法计算此文件"
-                                                                           "的 SHA-1：%1").arg(hash.error);
+        result.problem = QCoreApplication::translate("ServerResourcePack", "算不出这个文件的 SHA-1：%1").arg(hash.error);
         return result;
     }
     result.ok = true;
@@ -138,7 +137,7 @@ Inspect inspect(const QString &zipPath) {
 
 QString fileCountText(const Inspect &inspect) {
     if (inspect.fileCount <= 0) {
-        return QCoreApplication::translate("ServerResourcePack", "压缩包内无文件");
+        return QCoreApplication::translate("ServerResourcePack", "包里没有文件");
     }
     return QCoreApplication::translate("ServerResourcePack", "%1 个文件").arg(inspect.fileCount);
 }

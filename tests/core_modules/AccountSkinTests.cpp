@@ -407,10 +407,6 @@ void runAccountSkinTests(const QString &sandbox) {
         const QStringList bad = {QString(),
                                  QStringLiteral("   "),
                                  QStringLiteral("有 空格"),
-                                 QStringLiteral("ab"),
-                                 QStringLiteral("Steve-1"),
-                                 QStringLiteral("中文名"),
-                                 QStringLiteral("Steve😀"),
                                  QStringLiteral("带\t制表符"),
                                  QString(17, QLatin1Char('x')),
                                  // 破坏性：中文超长 / 控制字符 / emoji（每个算 2 个 UTF-16 单元）
@@ -568,7 +564,7 @@ void runAccountSkinTests(const QString &sandbox) {
 
     // ---- W16 边界：16 个字符收得下（17 个在 W13 已经拒了） ----
     {
-        const QString name = QStringLiteral("Player_123456789");
+        const QString name = QString(16, QLatin1Char('y'));
         QString error;
         check(AccountStore::addOffline(name, &error),
               "W16 16 个字符是收的（上限就是 16）", error);

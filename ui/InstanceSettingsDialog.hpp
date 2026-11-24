@@ -42,7 +42,6 @@
 #include <QIcon>  // ServerRowStatus 里那一枚（服务器图标）
 #include <QImage>  // 截图缩略图缓存（m_lifecycleThumbCache）
 #include <QJsonObject>  // pageChoices() / setPageChoices()（"藏起来的那几页"）
-#include <QMap>
 #include <QList>
 #include <QPair>
 #include <QPixmap>
@@ -900,8 +899,6 @@ public:
     /// 那一段）。这一层碰不了盘（ui/ 够不着 AppPaths），也**不该**碰：它手上的是
     /// "用户挑了这张"，"这张要不要真的占住那个文件名"是落盘那一侧的决定。
     QString pickedIconPath() const;
-    const QImage &pickedIconImage() const { return m_pickedIconImage; }
-    void setGameIconChoices(const QList<QPair<QString, QImage>> &choices);
 
     /// 用户挑的那张图**已经真的落进实例目录了**（由调用方在写盘成功之后叫）。
     ///
@@ -974,8 +971,6 @@ public:
     static QString windowHeightField() { return QStringLiteral("windowHeight"); }
 
     static QString javaPathEditName() { return QStringLiteral("instanceJavaPathEdit"); }
-    static QString javaRuntimeComboName() { return QStringLiteral("instanceJavaRuntimeCombo"); }
-    void setJavaRuntimeChoices(const QMap<int, QStringList> &choices);
     static QString browseJavaButtonName() {
         return QStringLiteral("instanceBrowseJavaButton");
     }
@@ -1026,7 +1021,7 @@ public:
     static QString iconCandidateButtonName(int index) {
         return QStringLiteral("instanceIconCandidate%1").arg(index);
     }
-    /// 浮层里的「选择图片…」（开的是 Windows 自己的文件选择框）。
+    /// 浮层里的「选一张图片…」（开的是 Windows 自己的文件选择框）。
     static QString iconPickButtonName() { return QStringLiteral("instanceIconPickButton"); }
     /// 浮层里的「恢复默认」。
     static QString iconResetButtonName() { return QStringLiteral("instanceIconResetButton"); }
@@ -1165,9 +1160,7 @@ public:
     static QString repairFilesText() { return QCoreApplication::translate("InstanceSettingsDialog", "补全版本文件"); }
     /// 两颗按钮的 tooltip，以及那一行下面那句合起来的说明。
     static QString exportScriptHint() {
-        return QCoreApplication::translate("InstanceSettingsDialog",
-                                           "导出独立启动脚本。微软账号脚本不保存令牌，"
-                                           "运行时需提供 WTFML_MC_ACCESS_TOKEN。");
+        return QCoreApplication::translate("InstanceSettingsDialog", "导出独立启动脚本。正版脚本不保存令牌，运行时需提供 WTFML_MC_ACCESS_TOKEN。");
     }
     static QString repairFilesHint() {
         return QCoreApplication::translate("InstanceSettingsDialog", "校验并补齐客户端、库和资源；下载或安装期间不可执行。");
@@ -1388,7 +1381,7 @@ public:
     /// 超时那一档在界面上**就写这两个字**，不加别的解释。
     ///
     /// NOTE: 和 `Status::timedOut` 那一位配着用 —— 那一位才是判据，这一句只是写出来的字。
-    /// 那一格窄（`ResizeToContents`），而「它没答话」和「网络不可达」这两个理由对这个
+    /// 那一格窄（`ResizeToContents`），而「它没答话」和「网络不通」这两个理由对这个
     /// 格子的读者（想点进去玩的人）是同一件事：现在连不上。
     static QString serverTimeoutText() { return QCoreApplication::translate("InstanceSettingsDialog", "超时"); }
     /// 右键服务器行弹出的菜单：objectName 与三项的文字（验证工程按它们取控件）。
@@ -1425,9 +1418,7 @@ public:
     static QString maskedServerAddress(const QString &address);
     static QString serverEmptyText() { return QCoreApplication::translate("InstanceSettingsDialog", "暂无服务器"); }
     /// 服务器名字那一格是空的的时候顶上什么字。servers.dat 里的 name 真能是空串。
-    static QString unnamedMark() {
-        return QCoreApplication::translate("InstanceSettingsDialog", "（未命名）");
-    }
+    static QString unnamedMark() { return QCoreApplication::translate("InstanceSettingsDialog", "（无名）"); }
 
     /// 「光影包」那一页用不上时那句话（唯一出处，验证工程也按它核对）。
     static QString shaderUnavailableText();
@@ -1441,7 +1432,7 @@ public:
     /// 「用不上」和勾选表的悬停提示都走它，别再各写一遍 if 链。
     static QString pageUnavailableText(const QString &key);
 
-    // ---- 「显示页面」那张勾选表（概览页最下面）----
+    // ---- 「显示哪些页」那张勾选表（概览页最下面）----
     //
     // 七条一条一个勾选框（顺序见 optionalPageKeys()），**不可用的那一条不勾、灰着、
     // tooltip 说为什么**。勾/不勾直接决定左栏那一列里有没有这一页。
@@ -1451,7 +1442,7 @@ public:
         return QStringLiteral("instanceSettingsShowPage-") + key;
     }
     /// 那一小块的字（**它的行名**）。
-    static QString showPagesLabelText() { return QCoreApplication::translate("InstanceSettingsDialog", "显示页面"); }
+    static QString showPagesLabelText() { return QCoreApplication::translate("InstanceSettingsDialog", "显示哪些页"); }
     /// 可用那几条的 tooltip（"勾上左边那一列里就有这一页…"）。
     static QString pageShownHint();
 
@@ -1466,7 +1457,7 @@ public:
     /// 实例操作 → 导出页的主动作。
     static QString exportText() { return QCoreApplication::translate("InstanceSettingsDialog", "导出整合包…"); }
     /// 浮层里那两个动作按钮上的字。
-    static QString iconPickText() { return QCoreApplication::translate("InstanceSettingsDialog", "选择图片…"); }
+    static QString iconPickText() { return QCoreApplication::translate("InstanceSettingsDialog", "选一张图片…"); }
     static QString iconResetText() { return QCoreApplication::translate("InstanceSettingsDialog", "恢复默认"); }
     /// 八个内置候选在界面上叫什么（顺序与 VersionIcons::iconCandidateKeys() 一一对应；
     /// 后四个故意同一个字：加载器名在设置页 / 安装页里就叫这个）。
@@ -1593,8 +1584,6 @@ protected:
     void dropEvent(QDropEvent *event) override;
 
 signals:
-    void gameIconChoicesRequested();
-    void javaRuntimeChoicesRequested();
     /// @p key 那一页**刚建出来**（第一次切过去，见 ensurePage()）。
     ///
     /// 给"要在某一页的控件上接线"的调用方用：页是懒建的，开页那一刻 `findChild()` 摸到的
@@ -1670,10 +1659,7 @@ signals:
     void exportPresetRequested();
 
     /**
-     * @brief 用户切进「模组」页时触发资源更新检查。
-     *
-     * 打开设置时默认停在概览，构造期不会发；只有真正进入「模组」页才发。
-     * 概览页没有「检查更新」按钮。
+     * @brief 用户点了概览那一栏的「检查更新」。
      *
      * NOTE: **不传实例 id** —— 这一页就是某个实例的设置页（`setInstanceDir()` / 那一份
      * wtfml.meta 都是它的），接的人从自己那边认（MainWindow 在 openInstanceSettings
@@ -1794,7 +1780,7 @@ signals:
     /// 同一个做法：按钮在页里发，接的人在对话框上接。
     void upgradeRecheckRequested();
 
-    /// 用户按了「迁移…」/「创建升级副本…」。**只发意图，不写盘**：路径闸、运不运
+    /// 用户按了「搬过去…」/「创建升级副本…」。**只发意图，不写盘**：路径闸、运不运
     /// 行、要不要问名字都在 controller 那一层。
     /// @param key `migration` / `upgrade`
     /// @param targetId 下拉框里选中的那个（空串 = 还没选目标）
@@ -1970,7 +1956,7 @@ signals:
      * 认出那一条（**按值匹配，不按下标** —— 见 ServerListFile 那段）。
      *
      * NOTE: 名字给的是 `serverNameRole()` 里那一份，**不是**屏幕上显示的那一格 —— 空的
-     * 名字屏幕上写的是「（未命名）」，那是我们编的话，不能拿去当数据。
+     * 名字屏幕上写的是「（无名）」，那是我们编的话，不能拿去当数据。
      */
     void editServerRequested(const QString &name, const QString &address);
 
@@ -2211,9 +2197,6 @@ private:
     // / 左栏**唯一**那一列。当前行 = 界面上当前摆着的那一页。
     QListWidget *m_pageList = nullptr;
     QTreeWidget *m_navigationTree = nullptr;
-    /// 构造期把默认页（概览）摆好之前不许自动跑全量更新检查；之后用户切到「模组」
-    /// 才发。只在构造末尾置真。
-    bool m_autoCheckArmed = false;
     QHash<QString, QListWidget *> m_lifecycleLists;
     /// 「Replay」/「结构」选中一行之后底下那一格（键 → 标签），以及它现在讲的是哪一条。
     /// @see lifecycleFileInfoLabelName() / setLifecycleInfoText()
@@ -2295,7 +2278,7 @@ private:
     QHash<QString, bool> m_pageAvailable;
     /// 用户**勾掉的**那几页（键 → false，见 pageChoices()）。只装显式选择，不写"默认值"。
     QJsonObject m_pageOverrides;
-    /// 「显示页面」那七条（键 → 勾选框，顺序同 optionalPageKeys()）。
+    /// 「显示哪些页」那七条（键 → 勾选框，顺序同 optionalPageKeys()）。
     QHash<QString, QCheckBox *> m_pageChecks;
 
     /// 「实例名」那一格（见 instanceName()）。现在长在「概览」栏里。
@@ -2417,10 +2400,6 @@ private:
     QString m_iconChoice;
     /// 用户刚挑的那张图在盘上的原处（没挑过 = 空）。拷进实例目录是调用方的事。
     QString m_pickedIconPath;
-    QImage m_pickedIconImage;
-    QGridLayout *m_gameIconGrid = nullptr;
-    QLabel *m_gameIconStatus = nullptr;
-    bool m_gameIconsLoading = false;
     /// 「默认」和「本地那张」两档画什么。setIcon() 灌进来，之后不变。
     QPixmap m_defaultIconMark;
     QPixmap m_localIconMark;
@@ -2454,7 +2433,6 @@ private:
     /// —— 见 .hpp 里 setPinned() 那段。
     QString m_pinnedGroupId;
     QLineEdit *m_javaPathEdit = nullptr;
-    QComboBox *m_javaRuntimeCombo = nullptr;
     QSpinBox *m_memoryMaxSpin = nullptr;
     MemorySlider *m_memoryMaxSlider = nullptr;
     QSpinBox *m_memoryMinSpin = nullptr;

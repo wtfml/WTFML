@@ -213,26 +213,18 @@ void InstanceUpdateCheckController::onUpdateCheckLookupFinished(const InstanceIc
         return;
     }
 
-    dispatchVersionChecks();
-}
-
-void InstanceUpdateCheckController::dispatchVersionChecks() {
-    // 给其它元数据请求留出 Control 名额。项目轮到出发时再开始请求计时。
-    constexpr qsizetype maxActive = 2;
-    const QSet<QString> pending = m_updateCheck.waitingKeys;
-    for (const QString &key : pending) {
-        if (m_updateCheck.activeVersionKeys.size() >= maxActive) break;
-        if (!m_updateCheck.waitingKeys.contains(key) || m_updateCheck.activeVersionKeys.contains(key)) continue;
-        requestUpdateCheckVersions(key);
+    // 逐个项目问版本列表。**一把钥匙一发**，互相不撞。
+    for (auto it = m_updateCheck.itemsByKey.constBegin();
+         it != m_updateCheck.itemsByKey.constEnd(); ++it) {
+        requestUpdateCheckVersions(it.key());
     }
 }
 
 void InstanceUpdateCheckController::requestUpdateCheckVersions(const QString &requestKey) {
     const QList<ModDependencies::InstalledItem> items = m_updateCheck.itemsByKey.value(requestKey);
-    if (items.isEmpty() || m_updateCheck.activeVersionKeys.contains(requestKey)) {
+    if (items.isEmpty()) {
         return; // 这一把底下没人 = 不是这一趟的钥匙，不发
     }
-    m_updateCheck.activeVersionKeys.insert(requestKey);
     // 目标（游戏版本 / 加载器）每次现算：它读的是实例自己那几份文件，而这一趟的实例
     // 就在 `m_updateCheck.instanceId` 上。
     const ModDependencies::Target target =
@@ -247,6 +239,8 @@ void InstanceUpdateCheckController::requestUpdateCheckVersions(const QString &re
     }
     const QString projectId = dash > 0 ? any.iconKey.mid(dash + 1) : any.iconKey;
     const QString itemLoader = any.loaderApplies ? target.loader : QString();
+    // 先记账再发：答案回来时按 `waitingKeys` 认"是不是这一趟等的"，漏记就是"判了不算"。
+    m_updateCheck.waitingKeys.insert(requestKey);
     m_owner.m_resourceStore->fetchVersions(requestKey, projectId, source, target.gameVersion, itemLoader);
 }
 
@@ -306,6 +300,7 @@ void InstanceUpdateCheckController::onUpdateCheckLatestFinished(
     // **一条结论都不给** —— 它既不在 `itemsByKey`（不会被问、不会被判），也不在
     // `verdicts` 里 ⇒ 报告里凭空少一行、`checked` 数也比盘上的文件少。屏幕上完全
     // 看不出来（其余几条都正常），正是这一套最怕的那种"安静地少一条"。
+    QStringList refire;
     for (auto it = m_updateCheck.fallbackItems.constBegin();
          it != m_updateCheck.fallbackItems.constEnd(); ++it) {
         QList<ModDependencies::InstalledItem> unanswered;
@@ -325,10 +320,16 @@ void InstanceUpdateCheckController::onUpdateCheckLatestFinished(
         // 同一个项目的**另一条**（比如它底下还有一个只有 CurseForge 认出来的文件）如果
         // 已经发出去过了，就不再发第二发 —— 答案本来就是同一份（版本列表是按项目问的），
         // 而 `onUpdateCheckVersionsFinished()` 是按**答案回来时**那一组来判的，照样判得到。
-        m_updateCheck.waitingKeys.insert(it.key());
+        if (!m_updateCheck.waitingKeys.contains(it.key())) {
+            refire.append(it.key());
+        }
     }
+    // 先清空再发：`requestUpdateCheckVersions()` 会往 `waitingKeys` 里加，而这两件事的顺序
+    // 反过来就是"刚记上的账又被这一句抹掉"（也免得一边遍历 `fallbackItems` 一边动它）。
     m_updateCheck.fallbackItems.clear();
-    dispatchVersionChecks();
+    for (const QString &key : refire) {
+        requestUpdateCheckVersions(key);
+    }
 
     if (m_updateCheck.waitingKeys.isEmpty()) {
         finishUpdateCheck(m_updateCheck.instanceId);
@@ -338,7 +339,7 @@ void InstanceUpdateCheckController::onUpdateCheckLatestFinished(
 void InstanceUpdateCheckController::onUpdateCheckVersionsFinished(const QString &requestKey,
                                               const QList<ResourceCatalog::VersionEntry> &versions,
                                               const QString &problem) {
-    if (!m_updateCheck.activeVersionKeys.remove(requestKey)) {
+    if (!m_updateCheck.waitingKeys.contains(requestKey)) {
         return; // 不是这一趟等的（详情页那一发 / 前置那一趟 / 已经判过的那把）
     }
     m_updateCheck.waitingKeys.remove(requestKey);
@@ -353,7 +354,6 @@ void InstanceUpdateCheckController::onUpdateCheckVersionsFinished(const QString 
             m_updateCheck.latestByPath.insert(item.path, answer.first());
         }
     }
-    dispatchVersionChecks();
     // 这一节手上这两样是两条**互相独立**的线：`waitingKeys` 是"一项目一发"那一拨
     // （CurseForge 那些），`pendingBatchKeys` 是 Modrinth 那一拨的批量那几发。只看
     // `waitingKeys` 的话，一个**两家都有**的实例上（一部分走批量、一部分走单发）
@@ -489,10 +489,8 @@ void InstanceUpdateCheckController::finishUpdateCheck(QString instanceId) {
         const QString details = problems.join(QLatin1Char('\n'));
         if (m_lastIncompleteReports.value(instanceId) == details) return;
         m_lastIncompleteReports.insert(instanceId, details);
-        const auto task = m_owner.m_activityCenter->begin(
-            Tasks::TaskKind::Other,
-            MainWindow::tr("资源更新检查 / %1").arg(m_owner.instanceDisplayName(instanceId)),
-            instanceId);
+        const auto task = m_owner.m_activityCenter->begin(Tasks::TaskKind::Other,
+            MainWindow::tr("资源更新检查"), instanceId);
         m_owner.m_activityCenter->finish(task, false,
             MainWindow::tr("更新检查结果可能不完整") + QLatin1Char('\n') + summary + QLatin1Char('\n') + details, false);
     } else {

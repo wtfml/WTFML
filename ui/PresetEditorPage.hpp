@@ -14,16 +14,14 @@ class PresetModEditor;
 
 // One in-memory document; no sub-page writes to disk.
 //
-// 已有预设可从详情左栏直接编辑。新建等独立入口由 `OverlayHost::showPage()` 打开整页。
-// `reject()` 把离开请求交给控制器，统一检查未保存的修改。
+// ★ 它是一个**整页**（`QDialog`，由 `OverlayHost::showPage()` 铺到内容区上），打开它的方式
+// 和「实例设置」同一套外壳：页眉（返回箭头 + 标题）由覆盖层自己搭，左上角不再有自己那颗
+// 「返回」按钮。`reject()` 被接管 —— 它**不关页**，只把"用户要走了"交给控制器，
+// 由控制器问"保存为草稿 / 保存为预设 / 不保存"，然后才 `accept()` 收页。
 class PresetEditorPage final : public QDialog {
   public:
-    enum class Presentation { FullPage, Embedded };
-    explicit PresetEditorPage(const QJsonObject &document, QWidget *parent = nullptr,
-                              Presentation presentation = Presentation::FullPage);
-    static QStringList sectionTitles();
-    void selectSection(int section);
-    /// 返回箭头 / Esc：由控制器统一检查未保存的修改。
+    explicit PresetEditorPage(const QJsonObject &document, QWidget *parent = nullptr);
+    /// 返回箭头 / Esc：交给控制器（它决定保存不保存，再由它 accept()）。
     void reject() override;
     QJsonObject document() const;
     void setDocument(const QJsonObject &document);

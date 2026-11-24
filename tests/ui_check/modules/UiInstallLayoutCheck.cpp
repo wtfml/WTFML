@@ -1,14 +1,9 @@
 #include "Support.hpp"
-#include "ListRowDelegate.hpp"
 #include "PresetEditorPage.hpp"
-#include "PresetManagePage.hpp"
 #include "PresetOptionsEditor.hpp"
 #include "NewServerPage.hpp"
 #include <QDoubleSpinBox>
 #include <QKeyEvent>
-#include <QPainter>
-#include <QSpinBox>
-#include <QStyleOptionViewItem>
 #include "PresetInstallPicker.hpp"
 #include "LoadingState.hpp"
 #include <QJsonArray>
@@ -144,121 +139,6 @@ int UiInstallLayoutCheck(QApplication &app) {
                 QDir().mkpath(QStringLiteral("build/install-previews"));
                 window.grab().save(QStringLiteral("build/install-previews/install-%1.png").arg(size.width()));
             }
-        }
-        {
-            const bool preview = app.arguments().contains(QStringLiteral("--install-layout-preview"));
-            ui.getTabWidget()->setCurrentIndex(MainWindowUI::instancesTabIndex());
-            window.resize(1150, 720);
-            ui.setInstanceMode(MainWindowUI::InstanceMode::Server);
-            app.processEvents();
-            auto *serverFilterRow = window.findChild<QWidget *>(MainWindowUI::serverFilterRowName());
-            auto *serverSearch = ui.getServerSearchEdit();
-            auto *serverTypeChip = ui.getServerFilterButton(MainWindowUI::ServerFilterButton::Vanilla);
-            expect(serverFilterRow && serverSearch && serverTypeChip && serverFilterRow->isVisible() &&
-                       serverTypeChip->geometry().top() == serverSearch->geometry().top() &&
-                       serverTypeChip->geometry().left() == 0 &&
-                       serverSearch->geometry().right() == serverFilterRow->rect().right(),
-                   "server filters and search align to the left and right of the same row");
-            if (preview) {
-                QDir().mkpath("build/install-previews");
-                auto *server = new QTreeWidgetItem(ui.getServerList(), {QStringLiteral("生存服务器")});
-                const int color = VersionIcons::isoBlockKindFor(QStringLiteral("survival-server"));
-                server->setData(0, ListRowDelegate::CoverRole, QIcon(VersionIcons::isoBlock(color, 48)));
-                server->setData(0, ListRowDelegate::SubtitleRole, QStringLiteral("可启动"));
-                server->setData(0, ListRowDelegate::MetaRole, QStringLiteral("Paper 1.21.1 #111"));
-                server->setData(0, ListRowDelegate::MetaIconRole, QIcon(VersionIcons::loaderMark(5, 32)));
-                ui.getServerEmptyLabel()->hide();
-                expect(window.grab().save("build/install-previews/server-filters.png"), "server filter preview saved");
-            }
-
-            ui.setInstanceMode(MainWindowUI::InstanceMode::Preset);
-            auto *host = ui.getInstancePresetPage();
-            PresetManagePage details(host);
-            details.setWindowFlags(Qt::Widget);
-            host->layout()->addWidget(&details);
-            QObject::connect(&details, &PresetManagePage::detailVisibilityChanged, &details,
-                             [&ui](bool visible) { ui.setPresetDetailVisible(visible); });
-            details.enableEditorTabs();
-            PresetManagePage::PresetItem preset;
-            preset.id = QStringLiteral("layout-test");
-            preset.name = QStringLiteral("生存画面设置");
-            preset.categoryKey = QStringLiteral("game");
-            preset.categoryText = QStringLiteral("游戏设置");
-            details.setPresets({preset}, {}, preset.id);
-            details.showPreset(preset.id, preset.name, {}, QStringLiteral("Game settings"), {});
-            details.setCategories({{"game", "游戏设置"}, {"mods", "模组"}, {"resources", "资源包"},
-                                   {"data", "数据包"}, {"shaders", "光影包"}, {"legacy", "旧版", true},
-                                   {"composite", "综合预设", true}, {"draft", "草稿", true}});
-            details.show();
-            app.processEvents();
-            auto *presets = details.findChild<QTreeWidget *>(PresetManagePage::presetListName());
-            const auto *presetRow = presets ? presets->currentItem() : nullptr;
-            const QIcon expectedCover(VersionIcons::isoBlock(VersionIcons::isoBlockKindFor(preset.id), 48));
-            expect(presetRow && presetRow->parent() &&
-                       presetRow->data(0, ListRowDelegate::CoverRole).value<QIcon>().pixmap(48).toImage() ==
-                           expectedCover.pixmap(48).toImage() &&
-                       presetRow->data(0, ListRowDelegate::MetaRole).toString() == preset.categoryText &&
-                       presets->visualItemRect(presetRow).height() == ListRowDelegate::rowHeight() &&
-                       presets->visualItemRect(presetRow).left() == presets->visualItemRect(presetRow->parent()).left(),
-                   "preset rows use the instance cover, category column and aligned compact list geometry");
-            auto *presetFilterRow = details.findChild<QWidget *>("presetFilterRow");
-            auto *presetSearch = details.findChild<QLineEdit *>("presetSearchEdit");
-            auto *firstChip = details.findChild<QPushButton *>(PresetManagePage::categoryChipName(QString()));
-            auto *lastChip = details.findChild<QPushButton *>(PresetManagePage::categoryChipName("draft"));
-            expect(presetFilterRow && presetSearch && firstChip && lastChip &&
-                       firstChip->mapTo(presetFilterRow, QPoint()).y() == presetSearch->y() &&
-                       lastChip->mapTo(presetFilterRow, QPoint()).y() == presetSearch->y() &&
-                       presetSearch->geometry().right() == presetFilterRow->rect().right(),
-                   "preset categories and search fit on one aligned row at a regular width");
-            if (preview) {
-                expect(window.grab().save("build/install-previews/preset-filters.png"), "preset filter preview saved");
-            }
-            window.resize(900, 590);
-            app.processEvents();
-            if (presetFilterRow && presetSearch && firstChip && lastChip) {
-                const QRect lastRect(lastChip->mapTo(presetFilterRow, QPoint()), lastChip->size());
-                expect(lastRect.top() > firstChip->mapTo(presetFilterRow, QPoint()).y() &&
-                           presetFilterRow->rect().contains(lastRect) && lastRect.right() < presetSearch->x(),
-                       "preset categories wrap inside the left side at minimum width");
-            }
-            window.resize(1150, 720);
-            auto *instancePage = ui.getTabWidget()->widget(MainWindowUI::instancesTabIndex());
-            auto *catalogHeader = instancePage->findChild<QWidget *>(MainWindowUI::pageHeaderName(QStringLiteral("instance")));
-            auto *catalogModes = instancePage->findChild<QWidget *>(MainWindowUI::instanceModeRowName());
-            presets->itemClicked(presets->currentItem(), 0);
-            details.show();
-            app.processEvents();
-            auto *nav = details.findChild<QListWidget *>("presetDetailNav");
-            auto *header = details.findChild<QWidget *>("presetDetailHeader");
-            auto *action = details.findChild<QPushButton *>(PresetManagePage::applyButtonName());
-            auto *title = details.findChild<QLabel *>("presetDetailTitle");
-            expect(catalogHeader && catalogHeader->isHidden() && catalogModes && catalogModes->isHidden(),
-                   "preset details replace the catalog heading and mode switches");
-            expect(header && action && header->isAncestorOf(action) && title && title->text() == preset.name &&
-                       nav && nav->width() == InstanceSettingsDialog::navigationTreeWidth(),
-                   "preset details put the preset name and apply action above an instance-width sidebar");
-            if (preview) {
-                QDir().mkpath("build/install-previews");
-                expect(window.grab().save("build/install-previews/preset-detail-overview.png"),
-                       "preset detail overview preview saved");
-            }
-            QObject::connect(&details, &PresetManagePage::editSectionRequested, &details,
-                             [&details, &preset](const QString &id, int section) {
-                auto *editor = new PresetEditorPage({{"id", id}, {"name", preset.name}}, &details,
-                                                    PresetEditorPage::Presentation::Embedded);
-                editor->selectSection(section);
-                details.embedEditor(editor);
-            });
-            if (preview && nav) {
-                nav->setCurrentRow(2);
-                app.processEvents();
-                expect(window.grab().save("build/install-previews/preset-detail-editor.png"),
-                       "embedded preset editor preview saved");
-                details.removeEmbeddedEditor();
-            }
-            details.findChild<QPushButton *>("presetBackButton")->click();
-            expect(catalogHeader && !catalogHeader->isHidden() && catalogModes && !catalogModes->isHidden(),
-                   "returning from preset details restores the complete catalog heading");
         }
         {
             ui.setInstanceMode(MainWindowUI::InstanceMode::Preset);
@@ -466,34 +346,6 @@ int UiInstallLayoutCheck(QApplication &app) {
                 for (int row=0;row<table->rowCount();++row) if (table->item(row,0)->text()==key) return row;
                 return -1;
             };
-            const int fov = rowFor(QStringLiteral("fov"));
-            if (fov >= 0) {
-                auto *value = table->item(fov, 1);
-                const QModelIndex index = table->indexFromItem(value);
-                const auto paintCell = [&](bool selected) {
-                    QImage image(210, 48, QImage::Format_ARGB32_Premultiplied);
-                    image.fill(Qt::transparent);
-                    QStyleOptionViewItem option;
-                    option.initFrom(table);
-                    option.widget = table;
-                    option.rect = image.rect();
-                    option.state.setFlag(QStyle::State_Selected, selected);
-                    QPainter painter(&image);
-                    table->itemDelegate()->paint(&painter, option, index);
-                    painter.end();
-                    return image;
-                };
-                const QString raw = value->text();
-                const QImage normal = paintCell(false);
-                const QImage selected = paintCell(true);
-                value->setText(QString());
-                const bool valueIsNotPainted = paintCell(false) == normal && paintCell(true) == selected;
-                value->setText(raw);
-                auto *angle = qobject_cast<QSpinBox *>(table->cellWidget(fov, 1));
-                expect(raw == QStringLiteral("0.0") && angle && angle->text() == QStringLiteral("70°") &&
-                           valueIsNotPainted && normal != selected,
-                       "preset value editor draws the formatted value without the raw value underneath");
-            } else expect(false, "field of view option exists");
             const int gamma = rowFor("gamma");
             auto *brightness = detailed.findChild<QDoubleSpinBox *>("presetValue_gamma");
             expect(gamma>=0 && brightness && !brightness->isEnabled(), "unselected settings cannot be edited accidentally");

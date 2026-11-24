@@ -7,7 +7,7 @@
  * 避免点击区域与画出来的位置错位。
  *
  * 实例行（实例页）按 ListRowDelegate 画：40 封面 + 两行字 + 行尾元信息，悬停换成文件夹 / 更多 / 启动，
- * 实例和预设共用行布局。预设的操作在详情页，因此关闭行内快捷操作。
+ * 点中由 MainWindow::eventFilter 认下后发 actionTriggered。预设页那棵树关掉行内操作，仍走旧的单行画法。
  */
 #pragma once
 
@@ -21,6 +21,15 @@ class InstanceGroupDelegate : public ListRowDelegate {
 
 public:
     explicit InstanceGroupDelegate(QObject *parent = nullptr);
+
+    /// 组里那些行**行尾那三颗**（齿轮 / 置顶箭头 / 垃圾桶）画不画。默认画（实例页）。
+    ///
+    /// 预设页那棵树也挂这个代理（两处的组头、悬停底色、选中带子要和实例页逐字一样），
+    /// 但那些动作长在右边那一栏的按钮上 —— 组里再挂一排，屏幕上会多出三格"点下去没有
+    /// 去处"的图标，而 `MainWindow::eventFilter` 那边根本没接预设树。关掉之后正文的截断
+    /// 边界跟着挪到行尾（见 paint()），不关的话名字会被一条看不见的空位压短。
+    void setInlineRowActions(bool on) { m_inlineRowActions = on; }
+    bool inlineRowActions() const { return m_inlineRowActions; }
 
     /// 行高。默认 `MainWindowUI::instanceTreeRowHeight()`（实例页那一档）。
     ///
@@ -96,7 +105,7 @@ protected:
                      const QModelIndex &index) override;
 
 private:
-    bool usesListRow(const QModelIndex &index) const;
+    bool m_inlineRowActions = true;
     /// 0 = 走 `MainWindowUI::instanceTreeRowHeight()`（实例页那一档）。
     int m_rowHeight = 0;
 

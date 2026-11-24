@@ -179,10 +179,6 @@ set(SOURCE_FILES
     ${REPO_ROOT}/src/controllers/ThemeSettingsController.cpp
     ${REPO_ROOT}/src/controllers/AgentController.cpp
     ${REPO_ROOT}/src/controllers/AgentLauncherHostImpl.cpp
-    ${REPO_ROOT}/src/controllers/AgentTestLaunchRunner.cpp
-    ${REPO_ROOT}/src/controllers/AgentTestLaunchRunner.hpp
-    ${REPO_ROOT}/src/controllers/AgentRepairRunner.cpp
-    ${REPO_ROOT}/src/controllers/AgentRepairRunner.hpp
     ${REPO_ROOT}/src/controllers/PlayerSkinController.cpp
     # 「上一次启动」那本账的驱动层（同上）：少了这一个文件会在链接那一步报一串
     # `LaunchHistoryController::…` 的 undefined reference（它调的 ServerListFile / NbtUtil

@@ -1217,7 +1217,7 @@ return runVersionManagerFetchFail(app);
         };
 
         for (const bool offline : {true, false}) {
-            const QString branch = offline ? QStringLiteral("离线") : QStringLiteral("微软");
+            const QString branch = offline ? QStringLiteral("离线") : QStringLiteral("正版");
             GlobalJavaSettings s;
             const QStringList args = launcher.generateJvmArguments(
                 QStringLiteral("fake-token"), QStringLiteral("1.19"), QStringLiteral("1"),

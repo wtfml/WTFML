@@ -1,6 +1,5 @@
 #include "LogFileReader.hpp"
 
-#include <QCoreApplication>
 #include <QFile>
 #include <QFileInfo>
 #include <QStringDecoder>
@@ -69,7 +68,7 @@ Loaded load(const QString &path, qint64 maxBytes) {
     if (plain.isEmpty()) return result;
     QFile file(plain);
     if (!file.open(QIODevice::ReadOnly)) {
-        result.problem = QCoreApplication::translate("LogFileReader", "无法打开此文件：%1").arg(file.errorString());
+        result.problem = QStringLiteral("打不开这个文件：%1").arg(file.errorString());
         return result;
     }
     const qint64 size = file.size();
@@ -100,7 +99,7 @@ Counted countLines(const QString &path) {
     if (plain.isEmpty()) return result;
     QFile file(plain);
     if (!file.open(QIODevice::ReadOnly)) {
-        result.problem = QCoreApplication::translate("LogFileReader", "无法打开此文件：%1").arg(file.errorString());
+        result.problem = QStringLiteral("打不开这个文件：%1").arg(file.errorString());
         return result;
     }
     constexpr qint64 kChunk = 1 << 20;

@@ -33,7 +33,6 @@
 #include "controllers/InstanceIconController.hpp"
 #include "controllers/InstanceUpdateCheckController.hpp"
 #include "controllers/IntegrityController.hpp"
-#include "manage/VersionManager.hpp"
 #include "controllers/LaunchController.hpp"
 #include "controllers/PresetController.hpp"
 #include "controllers/ServerRunController.hpp"
@@ -131,7 +130,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
             // （已经有一条提示开着；提示不叠提示，见 InlineMessage::ask）。那时候底下什么
             // 反馈都没有 —— 用户点关闭、窗口不动、也没有一句解释，只能再点一次。照旧不关
             // （启动还在半路），但把原因说出来；那条提示答完以后再点关闭会照常问。
-            appendLog(tr("已暂缓关闭：仍有提示未处理，请处理后重新关闭。"));
+            appendLog(tr("关闭被搁置：还有一条提示没答完，答完再关一次。"));
             event->ignore();
             return;
         }
@@ -140,22 +139,6 @@ void MainWindow::closeEvent(QCloseEvent *event) {
             return;
         }
         m_launchController->abortStart(LaunchController::StartCancelSource::LauncherClosing);
-    }
-
-    if (m_versionManager != nullptr && m_versionManager->isModpackImporting()) {
-        const int choice = InlineMessage::ask(
-            m_ui->overlay(), MessageKind::Question, tr("正在安装整合包"),
-            tr("整合包仍在安装。此时关闭启动器将取消安装，已下载的文件会保留。\n\n确认关闭？"),
-            QStringList{tr("取消并关闭"), tr("继续安装")}, 1, 0);
-        if (choice < 0) {
-            appendLog(tr("已暂缓关闭：仍有提示未处理，请处理后重新关闭。"));
-            event->ignore();
-            return;
-        }
-        if (choice != 0) {
-            event->ignore();
-            return;
-        }
     }
 
     if (games.isEmpty() && serverIds.isEmpty()) {
@@ -202,7 +185,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
         // 所以给 -1。
         const int choice = InlineMessage::ask(
             m_ui->overlay(), MessageKind::Question, tr("游戏正在运行"), text,
-            QStringList{tr("关闭启动器"), tr("取消")}, 1, -1);
+            QStringList{tr("关掉启动器"), tr("取消")}, 1, -1);
         if (choice != 0) {
             event->ignore();
             return;
@@ -251,7 +234,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
                 }
             }
             if (notStopped.isEmpty()) {
-                appendLog(tr("已关闭启动器，服务端已停止。"));
+                appendLog(tr("已关掉启动器，服务端已经停下来。"));
             } else {
                 appendLog(tr("启动器已关闭，但服务端 %1 未正常停止。最近的存档修改可能未保存。")
                               .arg(notStopped.join(QStringLiteral("、"))));
@@ -262,7 +245,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
             for (const QString &id : serverIds) {
                 m_serverWorkspace->detach(id);
             }
-            appendLog(tr("已关闭启动器，服务端继续运行。"));
+            appendLog(tr("已关掉启动器，服务端继续在跑。"));
         }
     }
 
@@ -271,7 +254,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
         // 紧接着就是析构链，交出去那一步必须在那之前做完（见 LauncherManager::detachRunningGame）。
         m_launchHistory->finishAllPlayTimes();
         m_launcherManager->detachRunningGame();
-        appendLog(tr("已关闭启动器，游戏继续运行。"));
+        appendLog(tr("已关掉启动器，游戏继续在跑。"));
     }
     if (WindowMotion::interceptClose(this, event, m_closeFog)) return;
     QMainWindow::closeEvent(event);

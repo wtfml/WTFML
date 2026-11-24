@@ -8,7 +8,6 @@
 #include <cmath>
 
 #include "manage/ModpackImport.hpp"  // curseForgeApiBase() —— CurseForge 那张接口根地址的唯一出处
-#include "../../ui/UiLanguage.hpp"  // isEnglish()：下载量按界面语言换单位
 
 #include <algorithm>
 
@@ -678,7 +677,9 @@ QString searchUrl(Kind kind, const QString &query, int offset, int limit,
         }
         params.append(QStringLiteral("index=") + QString::number(qMax(0, offset)));
         params.append(QStringLiteral("pageSize=") + QString::number(qBound(1, limit, 50)));
-        // 先按总下载量倒序取一页。有搜索词时 ResourceStore 再按名称和项目短名分组。
+        // 排序：按**总下载量**倒序（界面那一页默认搜的就是「最热门」，两处口径要一致）。
+        // `sortOrder=desc` 不能省 —— 这一家的默认方向是 asc，那样头一条会变成"这一类里
+        // 最没人用的"。
         params.append(QStringLiteral("sortField=6"));
         params.append(QStringLiteral("sortOrder=desc"));
 
@@ -732,8 +733,8 @@ SearchResult parseSearch(const QByteArray &json) {
         // 把接口自己的那句话带出去 —— 它比"搜索失败"有用得多。
         const QString description = root.value(QStringLiteral("description")).toString();
         result.problem = description.isEmpty()
-                             ? QCoreApplication::translate("ResourceCatalog", "返回内容不是搜索结果（缺少 hits）")
-                             : QCoreApplication::translate("ResourceCatalog", "接口返回：%1").arg(description);
+                             ? QCoreApplication::translate("ResourceCatalog", "这不是一份搜索结果（里面没有 hits）")
+                             : QCoreApplication::translate("ResourceCatalog", "接口说：%1").arg(description);
         return result;
     }
 
@@ -766,7 +767,7 @@ SearchResult parseSearch(const QByteArray &json) {
     }
 
     // 一条都没有**不算错** —— "搜不到"和"没搜成"是两句话，界面上得分开说
-    // （同一个坑在加载器树那边踩过：详见 MainWindow 里「无可用版本」与「列表获取失败」）。
+    // （同一个坑在加载器树那边踩过：详见 MainWindow 里「无可用版本」与「列表没取到」）。
     result.ok = true;
     return result;
 }
@@ -788,8 +789,8 @@ SearchResult parseCurseForgeSearch(const QByteArray &json) {
         // 两条都带出去：接口自己的那句话优先，没有就如实说形状不对。
         const QString apiError = root.value(QStringLiteral("error")).toString();
         result.problem = !apiError.isEmpty()
-                             ? QCoreApplication::translate("ResourceCatalog", "接口返回：%1").arg(apiError)
-                             : QCoreApplication::translate("ResourceCatalog", "返回内容不是搜索结果（缺少 data）");
+                             ? QCoreApplication::translate("ResourceCatalog", "接口说：%1").arg(apiError)
+                             : QCoreApplication::translate("ResourceCatalog", "这不是一份搜索结果（里面没有 data）");
         return result;
     }
 
@@ -1209,25 +1210,6 @@ QString formatDownloads(qint64 downloads) {
     }
     // 单位只在这里换一次。界面上列表那一行、详情、以及将来别处显示的下载量都读它，
     // 否则"1234567 次"和"123 万次"会在同一个界面上各说各的。
-    if (UiLanguage::isEnglish()) {
-        // 英文没有万 / 亿：千进位，一位小数、单位字母紧跟数字（`12.3K`）。K / M / B
-        // 是固定写法，不走翻译。四舍五入后到 1000 的进到下一个单位（999 950 →
-        // `1.0M`），不出 `1000.0K`。
-        if (downloads < 10000) {
-            return QString::number(downloads);
-        }
-        static constexpr qint64 steps[] = {1000, 1000000, 1000000000};
-        static constexpr const char *suffixes[] = {"K", "M", "B"};
-        int unit = downloads >= steps[2] ? 2 : (downloads >= steps[1] ? 1 : 0);
-        // 一位小数的那个位 → 整数（四舍五入）。除法先做，`downloads * 10` 会溢出。
-        qint64 tenths = (downloads + steps[unit] / 20) / (steps[unit] / 10);
-        if (tenths >= 10000 && unit < 2) {  // 999 950 → 1000.0K：进到下一个单位
-            ++unit;
-            tenths = (downloads + steps[unit] / 20) / (steps[unit] / 10);
-        }
-        return QString::number(tenths / 10) + QLatin1Char('.') + QString::number(tenths % 10) +
-               QLatin1String(suffixes[unit]);
-    }
     if (downloads >= 100000000) {
         return QCoreApplication::translate("ResourceCatalog", "%1 亿").arg(downloads / 100000000.0, 0, 'f', 1);
     }
@@ -1386,7 +1368,7 @@ QString versionRowSubText(const VersionEntry &version) {
     }
     // 下载量：0 = 接口没给这一栏（见 VersionEntry::downloads），那一截省掉。
     if (version.downloads > 0) {
-        bits.append(QCoreApplication::translate("ResourceCatalog", "下载 %1 次").arg(formatDownloads(version.downloads)));
+        bits.append(QCoreApplication::translate("ResourceCatalog", "下载 %1次").arg(formatDownloads(version.downloads)));
     }
     const QString updated = relativeTimeText(version.datePublished);
     if (!updated.isEmpty()) {
@@ -1466,7 +1448,7 @@ QString hitMetaLine(const Hit &hit) {
     }
     // 下载量：0 = 接口没给这一栏（见 Hit::downloads），那一截省掉 —— 不写"下载 0 次"。
     if (hit.downloads > 0) {
-        bits.append(QCoreApplication::translate("ResourceCatalog", "下载 %1 次").arg(formatDownloads(hit.downloads)));
+        bits.append(QCoreApplication::translate("ResourceCatalog", "下载 %1次").arg(formatDownloads(hit.downloads)));
     }
     const QString updated = relativeTimeText(hit.updatedIso);
     if (!updated.isEmpty()) {

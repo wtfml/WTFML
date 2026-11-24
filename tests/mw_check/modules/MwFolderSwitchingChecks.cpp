@@ -240,9 +240,10 @@ int MwFolderSwitchingChecks(const QDir &root, MainWindow &window) {
                           instanceItems.first()->data(0, Qt::UserRole).toString() ==
                               QStringLiteral("1.7.10"),
                       "列的就是那一份里的 1.7.10");
-                check(!instanceItems.isEmpty() && instanceItems.first()->text(0) == QStringLiteral("1.7.10") &&
-                          instanceItems.first()->data(0, ListRowDelegate::SubtitleRole).toString().isEmpty(),
-                      "未命名的实例只显示一行版本号");
+                check(!instanceItems.isEmpty() &&
+                          !instanceItems.first()->data(0, ListRowDelegate::SubtitleRole).toString()
+                               .contains(QStringLiteral("游玩")),
+                      "没有游玩记录的实例只显示原有副标题");
                 auto *versions = w7.findChild<VersionManager *>();
                 const QString stableId = versions ? versions->ensureInstanceId(QStringLiteral("1.7.10")) : QString();
                 const qint64 playedMs = 75 * 60 * 1000;
@@ -278,10 +279,9 @@ int MwFolderSwitchingChecks(const QDir &root, MainWindow &window) {
                           QStringLiteral("picker=%1 list=%2 root=%3 pill=%4 rows=%5")
                               .arg(picker != nullptr).arg(list != nullptr).arg(manager->currentFolder(),
                                   pill ? pill->text() : QString()).arg(rows.size()));
-                    check(rows.size() == 1 && rows.first()->data(0, ListRowDelegate::SubtitleRole).toString().isEmpty() &&
-                              rows.first()->toolTip(0).contains(
-                                  QStringLiteral("游玩 %1").arg(LaunchHistory::playTimeText(playedMs))),
-                          "未命名实例有游玩记录时仍只显示一行，悬停可查看时长");
+                    check(rows.size() == 1 && rows.first()->data(0, ListRowDelegate::SubtitleRole).toString()
+                              .contains(QStringLiteral("游玩 %1").arg(LaunchHistory::playTimeText(playedMs))),
+                          "有游玩记录的实例在副标题显示游玩时长");
                     if (!sameDir(manager->currentFolder(), otherRoot)) manager->setCurrentFolder(otherRoot);
                 }
                 // 同上：判据从"那个按钮亮了"搬到"齿轮里那一项亮了"（就是同一件事，
@@ -358,7 +358,7 @@ int MwFolderSwitchingChecks(const QDir &root, MainWindow &window) {
                 if (folderListView != nullptr && removeEntry != nullptr &&
                     removeEntry->isEnabled()) {
                     const int removalsBefore =
-                        countOccurrences(messagesSnapshot(), QStringLiteral("已从列表中移除文件夹"));
+                        countOccurrences(messagesSnapshot(), QStringLiteral("已从列表里移除文件夹"));
                     // 先安排人点「是」。那个确认框是这一步**唯一**说清"不删文件"的地方，
                     // 不点它这一步走不完（点掉窗 = 取消，什么都没发生）。
                     answerNextPrompt(0);
@@ -371,8 +371,8 @@ int MwFolderSwitchingChecks(const QDir &root, MainWindow &window) {
                     // 点掉它 → exec() 返回、processEvents() 才回来。
                     removeEntry->click();
                     QApplication::processEvents();
-                    check(g_modalTitle == QStringLiteral("从列表中移除文件夹"),
-                          "P+ 点下去弹的是「从列表中移除文件夹」的确认框", g_modalTitle);
+                    check(g_modalTitle == QStringLiteral("从列表里移除文件夹"),
+                          "P+ 点下去弹的是「从列表里移除文件夹」的确认框", g_modalTitle);
                     check(g_modalText.contains(QStringLiteral("从启动器列表中移除")) &&
                               g_modalText.contains(QStringLiteral("目录和其中的文件将保留")),
                           "P+ 确认框把「只动列表、盘上文件不动」写死了", g_modalText);
@@ -391,9 +391,9 @@ int MwFolderSwitchingChecks(const QDir &root, MainWindow &window) {
                               QFile::exists(otherRoot + QStringLiteral("/versions/1.7.10/"
                                                                      "1.7.10.jar")),
                           "P+ 那一份目录本身、以及里面的实例文件也都还在", otherRoot);
-                    check(countOccurrences(messagesSnapshot(), QStringLiteral("已从列表中移除文件夹")) ==
+                    check(countOccurrences(messagesSnapshot(), QStringLiteral("已从列表里移除文件夹")) ==
                               removalsBefore + 1,
-                          "P+ 日志说的是「已从列表中移除文件夹」，不是「已删除文件夹」");
+                          "P+ 日志说的是「已从列表里移除文件夹」，不是「已删除文件夹」");
                     check(countOccurrences(messagesSnapshot(), QStringLiteral("已删除文件夹")) == 0,
                           "P+ 整条路上一次「已删除文件夹」都没写过");
                 }
@@ -837,7 +837,7 @@ int MwFolderSwitchingChecks(const QDir &root, MainWindow &window) {
                 answerNextPrompt(0);
                 QWidget *removeMenu = openMenuOf(gearOf(otherTitle));
                 clickAction(removeMenu, MainWindowUI::FolderActionRemove);
-                check(g_modalTitle == QStringLiteral("从列表中移除文件夹"),
+                check(g_modalTitle == QStringLiteral("从列表里移除文件夹"),
                       "P2 齿轮里那一项弹的就是「移除」那个确认框（不是悄悄就动了列表）",
                       g_modalTitle);
                 check(folderListView->count() == 3, "P2 那一行从列表里没了",
@@ -866,7 +866,7 @@ int MwFolderSwitchingChecks(const QDir &root, MainWindow &window) {
                                            MainWindowUI::folderRowSubtitleName(vanishedRow))
                                      : nullptr;
                 check(vanishedSubtitle != nullptr &&
-                          vanishedSubtitle->text().endsWith(QStringLiteral("（目录已不存在）")),
+                          vanishedSubtitle->text().endsWith(QStringLiteral("（目录不在了）")),
                       "P2 那一行下面缀上了「（目录不在了）」（光看路径看不出这一份扫不出东西）",
                       vanishedSubtitle != nullptr ? vanishedSubtitle->text() : QString());
 
@@ -874,7 +874,7 @@ int MwFolderSwitchingChecks(const QDir &root, MainWindow &window) {
                 QWidget *openGoneMenu = openMenuOf(gearOf(vanishedTitle));
                 clickAction(openGoneMenu, MainWindowUI::FolderActionOpen);
                 check(g_modalTitle == QStringLiteral("打开游戏目录") &&
-                          g_modalText.contains(QStringLiteral("未找到")),
+                          g_modalText.contains(QStringLiteral("找不到")),
                       "P2 对着一个不在盘上的目录按「打开」：弹一句照实的，不静默什么都不做",
                       g_modalTitle + QStringLiteral(" / ") + g_modalText);
 
@@ -902,7 +902,7 @@ int MwFolderSwitchingChecks(const QDir &root, MainWindow &window) {
                 clickAction(doomedMenu, MainWindowUI::FolderActionDelete);
                 check(countOccurrences(messagesSnapshot(), QStringLiteral("已删除游戏目录")) ==
                           deletedBefore + 1,
-                      "P2 日志说的是「已删除游戏文件夹」（和「已从列表中移除文件夹」是两句）");
+                      "P2 日志说的是「已删除游戏文件夹」（和「已从列表里移除文件夹」是两句）");
                 check(!QFileInfo(doomedRoot).exists() && !QFile::exists(doomedFile),
                       "P2 **盘上那个目录连同里面的文件真的没了**（这才是「删除」）", doomedRoot);
                 check(folderListView->count() == 1, "P2 删完只剩自带那份了",

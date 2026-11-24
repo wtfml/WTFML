@@ -97,7 +97,7 @@ Content parse(List list, const QByteArray &json) {
     const QJsonDocument document = QJsonDocument::fromJson(json, &error);
     if (error.error != QJsonParseError::NoError) {
         content.ok = false;
-        content.problem = QCoreApplication::translate("ServerPlayers", "%1 无法解析（%2）；未修改该文件。")
+        content.problem = QCoreApplication::translate("ServerPlayers", "%1 无法解析（%2）；没有改动它。")
                               .arg(fileName(list), error.errorString());
         return content;
     }
@@ -252,7 +252,7 @@ QString expiryText(const Entry &entry, const QDateTime &now) {
         return QCoreApplication::translate("ServerPlayers", "到 %1").arg(expires);
     }
     if (moment < now) {
-        return QCoreApplication::translate("ServerPlayers", "已过期（%1）")
+        return QCoreApplication::translate("ServerPlayers", "已经过期（%1）")
             .arg(moment.toString(QStringLiteral("yyyy-MM-dd HH:mm")));
     }
     return QCoreApplication::translate("ServerPlayers", "到 %1").arg(moment.toString(QStringLiteral("yyyy-MM-dd HH:mm")));

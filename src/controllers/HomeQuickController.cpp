@@ -52,7 +52,7 @@ HomeQuickController::Rows HomeQuickController::build(
 
     // 「当前」不是另一份持久化状态：它严格来自主页启动下拉框当前选中的实例，和真正按下
     // 启动按钮时会启动谁保持同一个来源（有实例必有当前实例，见 resolveCurrentInstance()）。
-    // 一个实例都没有时才是空的那一张（「暂无实例」+「下载游戏」）。
+    // 一个实例都没有时才是空的那一张（「还没有实例」+「下载游戏」）。
     if (const auto current = installedById.constFind(currentId); current != installedById.constEnd()) {
         rows.current.append(makeItem(current.value()));
     } else if (!installed.isEmpty()) {
@@ -60,7 +60,7 @@ HomeQuickController::Rows HomeQuickController::build(
     } else {
         MainWindowUI::HomeQuickItem slot;
         slot.empty = true;
-        slot.name = QObject::tr("暂无实例");
+        slot.name = QObject::tr("还没有实例");
         rows.current.append(slot);
     }
 

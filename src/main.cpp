@@ -11,7 +11,6 @@
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
-#include <QFileInfo>
 #include <QLocale>
 #include <QStyleFactory>
 #include <QTextStream>
@@ -31,7 +30,6 @@
 #include "../ui/AppIcon.hpp" // 窗口 / 任务栏图标（自绘标题栏里不画，见那个文件头）
 #include "../ui/Theme.hpp"   // 主题从盘上读回来、铺开（见下面那段 NOTE）
 #include "../ui/UiLanguage.hpp" // 界面语言：解析设置值、装翻译（见下面那段）
-#include "agent/AgentPaths.hpp"
 #include "util/AppPaths.hpp"
 #include "util/SecretRedactor.hpp"
 #include "util/DownloadDiagnostics.hpp"
@@ -45,23 +43,18 @@ class TimingApplication final : public QApplication {
 public:
     using QApplication::QApplication;
     bool notify(QObject *receiver, QEvent *event) override {
-        if (!m_traceUiEvents || QThread::currentThread() != thread()) {
-            return QApplication::notify(receiver, event);
-        }
+        if (QThread::currentThread() != thread()) return QApplication::notify(receiver, event);
         const QPointer<QObject> guard(receiver);
         const int kind = int(event->type());
         QElapsedTimer elapsed;
         elapsed.start();
         const bool result = QApplication::notify(receiver, event);
         const qint64 ms = elapsed.elapsed();
-        if (ms >= 50) qInfo() << "[UI event]" << kind << ms << "ms"
+        if (ms > 8) qInfo() << "[UI event]" << kind << ms << "ms"
                            << (guard ? guard->metaObject()->className() : "deleted")
                            << (guard ? guard->objectName() : QString());
         return result;
     }
-
-private:
-    const bool m_traceUiEvents = qEnvironmentVariableIntValue("WTFML_UI_EVENT_TRACE") == 1;
 };
 
 /// 这一次启动的日志文件。**它开没开就是唯一那份状态**：没开 = 还早，先攒着（见下面那段
@@ -87,9 +80,9 @@ FileLogState &fileLogState() {
 /// 这个 exe 是 **GUI 子系统**（见 CMakeLists 里那两行 set_target_properties）：
 /// 双击启动时不会弹黑框。代价是"那些话没人看得见"，所以要有个地方补上：出问题的时候能查。
 ///
-/// 落在 `<数据目录>/logs/wtfml.log`。**每次启动前先把上一次那份改名留档**
-/// （`wtfml-YYYYMMDD-HHmmss.log`），再新开本次的 `wtfml.log`：和游戏日志并排放，
-/// 但不会因为重开一次启动器就把上一次的现场抹掉。旧档只保留最近 10 份。
+/// 落在 `<数据目录>/logs/wtfml.log`，**每次启动截断重写**：和 Minecraft 自己的
+/// `logs/latest.log` 一个习惯（上次那份不保留），也就和它并排放在一个目录里 ——
+/// "启动器说了什么"和"游戏说了什么"翻起来都在那儿。
 ///
 /// NOTE: **第一条消息来得比"当前游戏文件夹"还早** —— 最早那几句是 QApplication 构造时
 /// 字体库打的（`QFontDatabase: Cannot find font directory ...`），那时
@@ -126,53 +119,17 @@ void installFileLog() {
     });
 }
 
-/// 上一次的 `wtfml.log` 改名留档，并按时间清掉太老的旧档。
-/// 改名失败（文件被占用、目录只读）时什么都不做，调用方会退回追加写，至少不丢这一次。
-void rotateFileLog(const QString &path) {
-    const QFileInfo current(path);
-    if (!current.exists() || current.size() <= 0) {
-        return;
-    }
-    const QDateTime stamp = current.lastModified().isValid()
-                                ? current.lastModified()
-                                : QDateTime::currentDateTime();
-    const QString base = path.left(path.size() - 4);  // 去掉 ".log"
-    QString target = QStringLiteral("%1-%2.log").arg(base, stamp.toString(QStringLiteral("yyyyMMdd-HHmmss")));
-    for (int suffix = 2; QFileInfo::exists(target); ++suffix) {
-        target = QStringLiteral("%1-%2-%3.log").arg(base, stamp.toString(QStringLiteral("yyyyMMdd-HHmmss"))).arg(suffix);
-    }
-    if (!QFile::rename(path, target)) {
-        return;
-    }
-    // 只留最近 10 份。QDir::Time 是按修改时间从新到旧。
-    const QFileInfoList old = QDir(current.absolutePath()).entryInfoList(
-        {QStringLiteral("wtfml-*.log")}, QDir::Files, QDir::Time);
-    for (int i = 10; i < old.size(); ++i) {
-        QFile::remove(old.at(i).absoluteFilePath());
-    }
-}
-
-/// 现在可以把日志写进盘上了：建目录、把上一次的留档、开本次文件、把之前攒下的行补进去。
+/// 现在可以把日志写进盘上了：建目录、开文件、把之前攒下的行一起补进去。
 /// 调用点见 main()（排在窗口 show() 之后 —— 那一刻"当前游戏文件夹"才是定下来的）。
 void openFileLog() {
     auto &state = fileLogState();
     QMutexLocker guard(&state.mutex);
     const QString dir = AppPaths::minecraftDir() + QStringLiteral("/logs");
     QDir().mkpath(dir);
-    const QString path = dir + QStringLiteral("/wtfml.log");
-    rotateFileLog(path);
-    state.file.setFileName(path);
-    // 正常情况刚轮转过，文件不存在，用 Truncate 新建；轮转失败时退回 Append，绝不截断旧日志。
-    const bool rotatedAway = !QFileInfo::exists(path);
-    QIODevice::OpenMode mode = QIODevice::WriteOnly;
-    mode |= rotatedAway ? QIODevice::Truncate : QIODevice::Append;
+    state.file.setFileName(dir + QStringLiteral("/wtfml.log"));
     // 开不了就只是不写（见 installFileLog 的 NOTE）；攒下的行照样丢掉，不再越攒越多。
-    if (state.file.open(mode)) {
+    if (state.file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         state.stream.setDevice(&state.file);
-        if (!rotatedAway) {
-            state.stream << QStringLiteral("\n===== WTFML %1 =====\n")
-                                .arg(QDateTime::currentDateTime().toString(Qt::ISODate));
-        }
         for (const QString &line : state.pending) {
             // 同上：补写这一批只在启动时发生一次，用 `\n` + 循环末尾一次 flush 就够。
             state.stream << line << QLatin1Char('\n');
@@ -247,20 +204,6 @@ int main(int argc, char *argv[]) {
         qCritical().noquote() << acceptanceProblem;
         return 2;
     }
-    QString firstRunRoot;
-    const QLatin1String firstRunOption(IsolatedProfile::firstRunOption);
-    for (const QString &argument : app.arguments().mid(1)) {
-        if (!argument.startsWith(firstRunOption)) continue;
-        if (acceptance.enabled() || !firstRunRoot.isEmpty()) {
-            qCritical() << "Expected a single isolated first-run profile.";
-            return 2;
-        }
-        firstRunRoot = argument.mid(firstRunOption.size());
-        if (!IsolatedProfile::configureFirstRun(firstRunRoot)) {
-            qCritical() << "Cannot open the isolated first-run profile.";
-            return 2;
-        }
-    }
 
     // 界面语言：**排在所有界面创建之前**（`MainWindow`、提示窗、日志窗都按这一份翻译
     // 建自己的字）。源文是中文，所以只有英文要装翻译 —— 那一份 .qm 由 lrelease 在构建时
@@ -286,8 +229,7 @@ int main(int argc, char *argv[]) {
     // 清掉：只认 ProgID 是本程序的那几个键/值，别的程序和用户自己设的默认值一律不动。
     // 验收档不碰真实的 HKCU\Software\Classes：要连清理一起验，就把 WTFML_ASSOC_CLASSES_ROOT
     // 指到临时子键（和自检同一条缝）。
-    if (firstRunRoot.isEmpty() &&
-        (!acceptance.enabled() || !qEnvironmentVariableIsEmpty("WTFML_ASSOC_CLASSES_ROOT"))) {
+    if (!acceptance.enabled() || !qEnvironmentVariableIsEmpty("WTFML_ASSOC_CLASSES_ROOT")) {
         QStringList associationProblems;
         const int removed = FileAssociations::cleanupLegacyAssociations(&associationProblems);
         if (removed > 0) {
@@ -343,19 +285,7 @@ int main(int argc, char *argv[]) {
     WheelFocusFilter::install(app);
 
 
-    // 旧版把智能体与下载缓存放在 `<LOCALAPPDATA>/WTFML/WTFML/...` 三层下面；启动时搬一次到
-    // `<LOCALAPPDATA>/WTFML/agent`、`/cache`。搬不动只记一句，不挡启动。
-    {
-        QString migrateProblem;
-        if (AgentPaths::migrateLegacyDataDir(&migrateProblem) && !migrateProblem.isEmpty()) {
-            qWarning().noquote() << migrateProblem;
-        }
-    }
-
     MainWindow window;
-    if (!firstRunRoot.isEmpty()) {
-        window.setWindowTitle(QCoreApplication::translate("MainWindow", "WTFML · 首次使用测试"));
-    }
     if (acceptance.enabled() && acceptance.windowWidth > 0) {
         window.resize(acceptance.windowWidth, acceptance.windowHeight);
     }

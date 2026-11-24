@@ -299,7 +299,7 @@ void runServerPingTests() {
               "ZH5 连接被拒 = 「连接被拒绝」",
               ServerPing::connectionErrorText(QAbstractSocket::ConnectionRefusedError));
         check(ServerPing::connectionErrorText(QAbstractSocket::HostNotFoundError)
-                  .contains(QStringLiteral("未找到")),
+                  .contains(QStringLiteral("找不到")),
               "ZH5 域名解析不了 = 「找不到主机」",
               ServerPing::connectionErrorText(QAbstractSocket::HostNotFoundError));
         check(ServerPing::connectionErrorText(QAbstractSocket::SocketTimeoutError)
@@ -586,8 +586,8 @@ void runServerPingTests() {
         // 设成 SocketTimeoutError，所以产品那一侧是**按走到哪一步**分的话术，不是照 error()
         // 翻表 —— 这条断言钉的就是那个区分。
         check(!status.ok && status.error.contains(QStringLiteral("超时")) &&
-                  status.error.contains(QStringLiteral("无响应")),
-              "ZH8 没人回答 = 「已连接，但服务器无响应（等待超时）」",
+                  status.error.contains(QStringLiteral("没有响应")),
+              "ZH8 没人回答 = 「已连接，但服务器没有响应（等待超时）」",
               QStringLiteral("「%1」").arg(status.error));
         // 界面上那一格对超时只写两个字（用户 ：「超时的只写超时」），判据是
         // 这一位 —— 所以它必须是**真的判定出来的**，而不是界面上拿 error 那句话的前缀猜的。
@@ -617,7 +617,7 @@ void runServerPingTests() {
         garbage.startAndWait();
         const ServerPing::Status bad =
             ServerPing::ping(QStringLiteral("127.0.0.1:%1").arg(garbage.port));
-        check(!bad.ok && bad.error.contains(QStringLiteral("不是有效的 JSON")),
+        check(!bad.ok && bad.error.contains(QStringLiteral("不是一段 JSON")),
               "ZH9 正文不是 JSON（比如中间隔了个网关）", QStringLiteral("「%1」").arg(bad.error));
         waitFakeServer(garbage);
 
@@ -642,8 +642,8 @@ void runServerPingTests() {
         notStatus.startAndWait();
         const ServerPing::Status wrongId =
             ServerPing::ping(QStringLiteral("127.0.0.1:%1").arg(notStatus.port));
-        check(!wrongId.ok && wrongId.error.contains(QStringLiteral("未返回状态包")),
-              "ZH9 包 id 不是 0x00 = 「未返回状态包」",
+        check(!wrongId.ok && wrongId.error.contains(QStringLiteral("不是状态包")),
+              "ZH9 包 id 不是 0x00 = 「不是状态包」",
               QStringLiteral("「%1」").arg(wrongId.error));
         waitFakeServer(notStatus);
 

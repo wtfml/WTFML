@@ -50,8 +50,6 @@
 #include <QSpinBox>
 #include <QStackedWidget>
 #include <QStandardPaths>
-#include <QStyledItemDelegate>
-#include <QStyleOptionViewItem>
 #include <QTimer>
 #include <QToolButton>
 #include <QTreeWidget>
@@ -92,19 +90,6 @@ constexpr int kAppendJvmArgsHeight = 76;
 
 using namespace InstanceSettingsDialogInternals;
 
-namespace {
-class JavaRuntimeChoiceDelegate final : public QStyledItemDelegate {
-public:
-    using QStyledItemDelegate::QStyledItemDelegate;
-
-protected:
-    void initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const override {
-        QStyledItemDelegate::initStyleOption(option, index);
-        option->text = index.data(Qt::UserRole).toString();
-    }
-};
-}
-
 /// 「启动」那一栏（Java 路径 / 内存 / 窗口 / 高级选项 / 两颗按钮）。
 void InstanceSettingsDialog::setupLaunchPage(const GlobalValues &global, const QStringList &appendJvmArgs,
                                              bool warnJavaMismatch,
@@ -126,47 +111,48 @@ void InstanceSettingsDialog::setupLaunchPage(const GlobalValues &global, const Q
                                        tr("留空时使用全局 Java。"));
         row += 2;
         auto *choiceRow = choiceRowOf(javaPathField());
-        m_javaRuntimeCombo = new WheelSafeComboBox(cell);
-        m_javaRuntimeCombo->setObjectName(javaRuntimeComboName());
-        m_javaRuntimeCombo->setEditable(true);
-        m_javaRuntimeCombo->setInsertPolicy(QComboBox::NoInsert);
-        m_javaRuntimeCombo->setAccessibleName(tr("选择本机 Java"));
-        m_javaRuntimeCombo->setToolTip(tr("正在检测 Java…"));
-        m_javaRuntimeCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
-        m_javaRuntimeCombo->setItemDelegate(new JavaRuntimeChoiceDelegate(m_javaRuntimeCombo));
-        m_javaRuntimeCombo->view()->setTextElideMode(Qt::ElideMiddle);
-        InputSizing::longValue(m_javaRuntimeCombo, "java.exe 路径：深度不定");  // i18n-ignore
-        m_javaPathEdit = m_javaRuntimeCombo->lineEdit();
+        m_javaPathEdit = new QLineEdit(cell);
         m_javaPathEdit->setObjectName(javaPathEditName());
-        InputSizing::longValue(m_javaPathEdit, "java.exe 路径：深度不定");  // i18n-ignore
+            InputSizing::longValue(m_javaPathEdit, "java.exe 路径：深度不定");  // i18n-ignore
         m_javaPathEdit->setPlaceholderText(tr("java.exe 的完整路径"));
 
-        const auto applyPath = [this](const QString &path) {
-            if (path.isEmpty()) return;
-            m_javaPathEdit->setText(path);
-            setChoiceCustom(javaPathField(), true);
-            notifyEdited();
-        };
-        connect(m_javaRuntimeCombo, &QComboBox::activated, this, [this, applyPath](int index) {
-            applyPath(m_javaRuntimeCombo->itemText(index));
-        });
         auto *browse = new QPushButton(tr("浏览…"), cell);
         Theme::markButton(browse, Theme::ButtonKind::Neutral);
         browse->setObjectName(browseJavaButtonName());
-        connect(browse, &QPushButton::clicked, this, [this, applyPath]() {
-            applyPath(QFileDialog::getOpenFileName(
+        connect(browse, &QPushButton::clicked, this, [this]() {
+            // 模态，验证工程驱动不了它 —— 那一半是"问路径"，可测的那一半是这个框里的
+            // 文字（override() 直接读它）。和 GroupDialog 里问组名的拆法一样。
+            // NOTE: "驱动不了"的原因和内嵌提示那几条不一样：这里开的是 **Windows 自己的
+            // 文件选择框**，不是我们的窗。**全项目一共 16 处**：
+            // MainWindow.cpp 十一处（选文件夹 / 选整合包 / 挑各处的目录与文件）、
+            // AccountSkinDialog.cpp 一处（选皮肤图）、这个文件四处（选 java.exe / 选实例图标 /
+            // 导出整合包的保存框 / 导出 .bat 的保存框）。理由和取舍见 MainWindow.cpp 里
+            // onAddFolderClicked() 上面那一段。
+            const QString picked = QFileDialog::getOpenFileName(
                 this, tr("选择 java.exe"), m_javaPathEdit->text(),
-                tr("Java 可执行文件 (java.exe);;所有文件 (*)")));
+                tr("Java 可执行文件 (java.exe);;所有文件 (*)"));
+            if (!picked.isEmpty()) {
+                m_javaPathEdit->setText(picked);
+                // 选了一个具体文件 = 用户明确要这个，顺手把这一行切成「自定义」。
+                // 不切的话他选了路径、这一行还在"跟随全局"，这一次选择等于什么都没发生。
+                setChoiceCustom(javaPathField(), true);
+                // 这两句都是**程序化**改值（`setText` 不发 editingFinished，
+                // `setChoiceCustom` 自己挡着信号）⇒ watchEditors() 那几条按类型的线一条
+                // 都不响。改完自己补一发（见 .hpp 里 watchEditors() 那段 NOTE 里点名的
+                // 两处，这是第一处）。
+                notifyEdited();
+            }
         });
+        // NOTE: 这颗按钮**贴着它那个框**摆、不挪到别处 —— 它改的就是这个框里的字。
+        // 全项目唯一一颗这样的按钮，所以它是这一套里唯一不能独自成行的。
         auto *pathGrid = newActionGrid();
-        pathGrid->addWidget(m_javaRuntimeCombo, 0, 0, 1, 2);
+        pathGrid->addWidget(m_javaPathEdit, 0, 0, 1, 2);
         prepareActionButton(browse);
         pathGrid->addWidget(browse, 0, 2);
         for (int column = 0; column < kActionButtonsPerRow; ++column) {
             pathGrid->setColumnStretch(column, 1);
         }
         choiceRow->addLayout(pathGrid, 1);
-        QTimer::singleShot(0, this, &InstanceSettingsDialog::javaRuntimeChoicesRequested);
     }
 
     // ---------- 内存：最大 / 最小 / 分配方式 ----------
@@ -516,24 +502,11 @@ void InstanceSettingsDialog::setupLaunchPage(const GlobalValues &global, const Q
 }
 
 
-void InstanceSettingsDialog::setJavaRuntimeChoices(const QMap<int, QStringList> &choices) {
-    if (!m_javaRuntimeCombo) return;
-    const QString pathBeforeScan = m_javaPathEdit->text();
-    const QSignalBlocker block(m_javaRuntimeCombo);
-    m_javaRuntimeCombo->clear();
-    for (auto it = choices.cbegin(); it != choices.cend(); ++it) {
-        for (const QString &path : it.value()) {
-            const QString display = QDir::toNativeSeparators(path);
-            m_javaRuntimeCombo->addItem(path, QStringLiteral("Java %1 · %2").arg(it.key()).arg(display));
-            m_javaRuntimeCombo->setItemData(m_javaRuntimeCombo->count() - 1, display, Qt::ToolTipRole);
-        }
-    }
-    m_javaRuntimeCombo->setCurrentIndex(m_javaRuntimeCombo->findText(pathBeforeScan));
-    m_javaRuntimeCombo->setEditText(pathBeforeScan);
-    m_javaRuntimeCombo->setToolTip(m_javaRuntimeCombo->count() > 0 ? tr("选择本机 Java") : tr("未检测到本机 Java"));
-}
-
-/// 启动页在首次打开时建，控件就位后再灌保存的值。
+/// 把构造函数那份「现状」灌进「启动」这一页。
+///
+/// 这一页是**第一次切过去才建**的（见 `ensurePage()`），所以灌值不能留在构造函数里：
+/// 页晚建，值就跟着页一起灌。顺序不能动 —— 条的另一半要等数字框到位、每一行那句提示
+/// 要等所有值灌完才刷（段落里各自的理由都还留着）。
 void InstanceSettingsDialog::applyLaunchValues(const Override &current, const GlobalValues &global) {
     // 这一位先立起来：下面 `refreshHints()` 有一道"页还没建就别碰控件"的闸。
     m_launchPageBuilt = true;

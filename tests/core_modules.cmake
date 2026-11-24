@@ -218,7 +218,6 @@ set_tests_properties(wtfml.core-presets PROPERTIES LABELS "core;core-presets;ci-
 add_library(core_cases_toolbox OBJECT
  core_modules/ToolboxExtraTests.cpp
  core_modules/TextFormatTests.cpp
- core_modules/SentenceJoinTests.cpp
  core_modules/CoordConvertTests.cpp
  core_modules/FileHashTests.cpp
  core_modules/AnvilPlannerTests.cpp
@@ -242,9 +241,6 @@ add_library(core_cases_agent OBJECT
  core_modules/AgentContextTests.cpp
  core_modules/AgentLoopTests.cpp
  core_modules/AgentSkillsTests.cpp
- core_modules/AgentWorkspaceStoreTests.cpp
- core_modules/AgentTestLaunchTests.cpp
- core_modules/AgentRepairTests.cpp
  core_modules/AgentMarkdownTests.cpp
  core_modules/AgentPathPolicyTests.cpp
  core_modules/AgentEgressPolicyTests.cpp
@@ -264,8 +260,6 @@ add_library(core_cases_agent OBJECT
  core_modules/AgentWebToolsTests.cpp
  core_modules/AgentCommandToolsTests.cpp
  core_modules/AgentPerformanceTests.cpp
- core_modules/AgentInstancePathTests.cpp
- core_modules/AgentPathLayoutTests.cpp
 )
 wtfml_core_compile(core_cases_agent)
 list(APPEND WTFML_CORE_CASE_OBJECTS $<TARGET_OBJECTS:core_cases_agent>)

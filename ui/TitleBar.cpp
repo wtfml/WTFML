@@ -613,9 +613,9 @@ void TitleBar::layoutForWidth(int w) {
     m_logo->move(logoX, kRailTopPadding + (kBrandHeight - kLogoSize) / 2);
     const QString action = isCollapsed() ? tr("展开导航") : tr("收起导航");
     m_logo->setCursor(m_narrow ? Qt::ArrowCursor : Qt::PointingHandCursor);
-    m_logo->setToolTip(m_narrow ? tr("加宽窗口后方可展开") : action);
+    m_logo->setToolTip(m_narrow ? tr("窗口加宽后才能展开") : action);
     m_logo->setAccessibleName(action);
-    m_logo->setAccessibleDescription(m_narrow ? tr("加宽窗口后方可展开") : QString());
+    m_logo->setAccessibleDescription(m_narrow ? tr("窗口加宽后才能展开") : QString());
     update();
 }
 

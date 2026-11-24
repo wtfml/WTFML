@@ -174,7 +174,7 @@ public slots:
     /// NOTE: 「收藏组」光看那五个字不知道打开会怎样 —— 所以紧挨着它写一句。
     /// **要短**（40 个汉字以内）：右边那张卡片只占半张窗，说明一长就折成好几行。
     static QString pinnedHintText() {
-        return tr("收藏的实例同时显示在此分组和主页快速启动区。");
+        return tr("收藏的实例会同时显示在这个组和主页快速启动区。");
     }
     static QString restoreDefaultsButtonName() {
         return QStringLiteral("restoreDefaultsButton");
@@ -186,7 +186,7 @@ public slots:
     /// 而且它和实例数一起挤在同一行里。超过这个长度的名字只会被省略号截掉，
     /// 挡下来是为了让用户当场知道"名字太长了"，而不是过一会儿才发现看不全。
     ///
-    /// NOTE: 组行行尾那颗齿轮里的「重命名分组…」也归它管（那是另一条改名的路，
+    /// NOTE: 组行行尾那颗齿轮里的「重命名这一组…」也归它管（那是另一条改名的路，
     /// MainWindow::renameGroupTo()）—— 两个入口必须是同一把尺子，不然"从这个口
     /// 进去能起 32 个字的名字、从那个口进不去"。
     static int maxGroupNameLength() { return 32; }

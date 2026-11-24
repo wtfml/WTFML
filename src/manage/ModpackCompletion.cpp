@@ -133,7 +133,7 @@ bool capture(const QString &instance, const QString &dataRoot, const ModpackImpo
         if (repairPaths.contains(relative)) continue;
         if (!add(instance, relative, {}, -1)) return abort(QObject::tr("覆盖文件校验失败：%1").arg(relative));
     }
-    if (files.isEmpty() || (stop && stop())) return abort(QObject::tr("无可验证文件或已取消"));
+    if (files.isEmpty() || (stop && stop())) return abort(QObject::tr("没有可验证文件或已取消"));
     // 缺项必须完整保存；不能从“剩余零条”推断此前每一步已经完成。
     QJsonArray issues;
     for (const auto &issue : pack.fileIssues) issues.append(QJsonObject{
@@ -146,7 +146,7 @@ bool capture(const QString &instance, const QString &dataRoot, const ModpackImpo
         {"packName", pack.name}, {"gameVersion", pack.gameVersion}, {"loaderKey", pack.loaderKey},
         {"loaderVersion", pack.loaderVersion}, {"files", files}, {"issues", issues}};
     if (!markerMatches(instance, proof) || !save(instance + '/' + proofName, proof))
-        return abort(QObject::tr("无法保存安装凭据，本次未安装"));
+        return abort(QObject::tr("无法保存安装凭据，本次没有安装"));
     return true;
 }
 

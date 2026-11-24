@@ -647,8 +647,6 @@ public:
 
     bool isBusy() const;
     DownloadStats stats() const;
-    /// 本批已写入或正在接收的正文大小。总量为 -1 时仍有文件大小未知。
-    QPair<qint64, qint64> batchByteProgress() const;
 
     // 工具方法：哈希/校验，以及把 version JSON 解析成上面那些结构体（版本清单和单个
     // 版本 JSON 各一个入口）。留在 public 是给验证工程用的 —— 它会直接调
@@ -929,12 +927,6 @@ private:
     int m_doneJobs = 0;
     int m_failedJobs = 0;
     int m_skippedJobs = 0;
-    struct FileByteProgress {
-        qint64 received = 0;
-        qint64 size = -1;
-    };
-    QHash<QString, FileByteProgress> m_batchFileBytes;
-    void updateBatchFileBytes(const QString &path, qint64 received, qint64 size = -1);
     QStringList m_failedPaths;
     /// 这一批里"体检点过名"的那几条（见 setFlaggedPaths()）。按路径认人，beginBatch() 清空。
     QStringList m_flaggedPaths;
@@ -1182,7 +1174,7 @@ private:
     /// 把一条"发出去之后一直没有动静、而且大概永远不会结束"的回复**判失败**，自己做完整套
     /// 记账。为什么不能只 abort() 了等它自己走 finished：这条路的整个前提就是"它可能永远
     /// 不结束"，指着 abort 收尾等于把整批挂死（见 kNoProgressGiveUpMs）。
-    void failWedgedDownload(QNetworkReply *reply, qint64 giveUpMs);
+    void failWedgedDownload(QNetworkReply *reply);
     /// 日志里给一条回复起个名字：文件作业是落地路径，元数据作业是「版本清单」/「版本 json」。
     /// 元数据作业不在 activeDownloads 里，只打那里的路径会打成空串。
     QString jobLabel(QNetworkReply *reply) const;

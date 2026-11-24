@@ -115,12 +115,6 @@ int main(int argc, char *argv[]) {
     // 换掉它会把整份基线的像素重新洗一遍。
     Theme::setSpec(Theme::presetSpec(QStringLiteral("emerald")));
 
-    if (app.arguments().contains(QStringLiteral("--server-settings-check"))) {
-        const int result = UiServerSettingsChecks();
-        std::printf("\nServer settings assertions: %d passed, %d failed\n", g_pass, g_fail);
-        return result != 0 ? result : g_fail == 0 ? 0 : 1;
-    }
-
     QMainWindow window;
     MainWindowUI ui(&window);
 
@@ -2434,7 +2428,7 @@ int main(int argc, char *argv[]) {
                   "（**不是**离线登录 —— 那种状态点开始会被「请先登录」挡回来）",
                   accountType->text());
             // 三种说法本身钉一遍：**三种而不是两种**是这次特意定的（见 .hpp 那段 NOTE）。
-            check(MainWindowUI::accountTypeOnlineText() == QStringLiteral("微软") &&
+            check(MainWindowUI::accountTypeOnlineText() == QStringLiteral("正版") &&
                       MainWindowUI::accountTypeOfflineText() == QStringLiteral("离线") &&
                       MainWindowUI::accountTypeNotLoggedInText() == QStringLiteral("未登录"),
                   "三种说法分别是 正版 / 离线 / 未登录（说明删减清单 §4）");
