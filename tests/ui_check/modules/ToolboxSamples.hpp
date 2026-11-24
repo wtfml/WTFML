@@ -119,9 +119,9 @@ inline void fillToolboxSamples(ToolboxPage &page, ToolboxPage::Tool tool) {
         page.setBrewingForms({demoText("普通", "Normal"), demoText("喷溅型", "Splash"), demoText("滞留型", "Lingering")});
         page.setBrewingVersions({QString(), QStringLiteral("1.21"), QStringLiteral("1.20")});
         page.setBrewingResult(demoText(
-            "产出：迅捷药水 × 1 瓶（酿 1 次）\n效果：迅捷 I · 3:00\n"
+            "产出：迅捷药水 × 1 瓶（酿造 1 次）\n效果：迅捷 I · 3:00\n"
             "步骤（共 2 步）：\n1. 水瓶 + 下界疣 → 粗制的药水\n2. 粗制的药水 + 糖 → 迅捷药水\n"
-            "材料：水瓶 × 1、下界疣 × 1、糖 × 1、烈焰粉（燃料） × 1（1 个烈焰粉可酿 20 次）",
+            "材料：水瓶 × 1、下界疣 × 1、糖 × 1、烈焰粉（燃料） × 1（1 个烈焰粉可酿造 20 次）",
             "Output: Potion of Swiftness × 1 (1 brew)\nEffect: Speed I · 3:00\n"
             "Steps (2 total):\n1. Water Bottle + Nether Wart → Awkward Potion\n2. Awkward Potion + Sugar → Potion of Swiftness\n"
             "Ingredients: Water Bottle × 1, Nether Wart × 1, Sugar × 1, Blaze Powder (fuel) × 1 (1 Blaze Powder fuels 20 brews)"));

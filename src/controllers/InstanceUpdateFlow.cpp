@@ -187,9 +187,9 @@ void InstanceUpdateFlow::attach(MainWindow *owner, InstanceSettingsDialog *dialo
     modeRow->addWidget(new QLabel(QObject::tr("2. 更新方式"), selectors)); modeRow->addWidget(mode, 1); modeRow->addWidget(copyName, 1);
     modeRow->setContentsMargins(0, 0, 0, 0);
     auto *modePanel = new QWidget(page); modePanel->setLayout(modeRow);
-    auto *note = new QLabel(QObject::tr("兼容声明不是运行保证。未知项必须明确选择处理方式，不会自动禁用；"
-                                     "只有平台明确给出目标发行版的模组才提供「替换为平台适配版」，"
-                                     "必要前置会自动补齐，替换失败会整趟回滚。"), page);
+    auto *note = new QLabel(QObject::tr("兼容声明不是运行保证。未知项必须明确选择处理方式，"
+                                        "不会自动禁用；只有平台明确给出目标发行版的模组才提供「替换为"
+                                        "平台适配版」，必要前置会自动补齐，替换失败时整个更新流程回滚。"), page);
     note->setWordWrap(true);
     auto *status = new QLabel(page); status->setObjectName("instanceUpdateStatus"); status->setWordWrap(true);
     auto *start = new QPushButton(QObject::tr("开始更新"), page); start->setObjectName("instanceUpdateStart");
@@ -246,7 +246,7 @@ void InstanceUpdateFlow::attach(MainWindow *owner, InstanceSettingsDialog *dialo
         Theme::follow(panel, paintPanel);
     }
     // 空的时候在面板正中写一句灰字，不留一块空框。
-    auto *stepsEmpty = new QLabel(QObject::tr("点击“开始更新”后在这里显示进度"), steps->viewport());
+    auto *stepsEmpty = new QLabel(QObject::tr("点击「开始更新」后在此处显示进度"), steps->viewport());
     stepsEmpty->setObjectName("instanceUpdateExecutionStepsEmpty");
     stepsEmpty->setForegroundRole(QPalette::PlaceholderText);
     stepsEmpty->setAlignment(Qt::AlignCenter);
@@ -293,11 +293,11 @@ void InstanceUpdateFlow::attach(MainWindow *owner, InstanceSettingsDialog *dialo
             if (!requested) owner->m_downloadTaskLedger->setUserCancelInFlight(false);
             else state->prepCancelled = true;
             status->setText(requested ? QObject::tr("已请求取消核心准备，原实例未改变。")
-                : QObject::tr("当前安装阶段暂不能取消，请等待阶段结束。")); return false;
+                : QObject::tr("当前安装阶段暂时无法取消，请待该阶段结束。")); return false;
         }
         if (state->downloading) {
             if (state->modInstaller) state->modInstaller->cancel();
-            status->setText(QObject::tr("已请求取消下载适配模组；停下后整趟更新不会执行。"));
+            status->setText(QObject::tr("已请求取消下载适配模组；下载停止后更新流程将不再执行。"));
             return false;
         }
         if (state->executing) { status->setText(QObject::tr("正在提交文件，请等待完成。")); return false; }
@@ -467,8 +467,8 @@ void InstanceUpdateFlow::attach(MainWindow *owner, InstanceSettingsDialog *dialo
                          QList<UpgradeReport::Row> rows = UpgradeReport::fromAssessmentRows(raw);
                          if (rows.isEmpty()) {
                              UpgradeReport::Row pending;
-                             pending.name = QObject::tr("还没有检查结果");
-                             pending.detail = QObject::tr("选好目标版本后会自动检查；这一页只显示检查过的项。");
+                             pending.name = QObject::tr("暂无检查结果");
+                             pending.detail = QObject::tr("选择目标版本后自动检查；此页仅显示已检查的项目。");
                              pending.bucket = UpgradeReport::Bucket::Unknown;
                              pending.required = false;
                              rows.append(pending);
@@ -515,7 +515,7 @@ void InstanceUpdateFlow::attach(MainWindow *owner, InstanceSettingsDialog *dialo
                          if (customLaunch
                              && !InlineMessage::question(
                                  owner->m_ui->overlay(),
-                                 QObject::tr("这个整合包带自定义启动配置"),
+                                 QObject::tr("此整合包含自定义启动配置"),
                                  QObject::tr("升级后，主类、JVM 参数或专用库可能与新版本不兼容，导致实例无法启动。\n\n建议先备份实例。确认继续？"),
                                  QObject::tr("仍要继续"), QObject::tr("取消"), false)) {
                              return;
@@ -575,12 +575,13 @@ void InstanceUpdateFlow::attach(MainWindow *owner, InstanceSettingsDialog *dialo
             .arg(pending)
             .arg(mode->currentData().toBool() ? QObject::tr("更新当前实例：完整快照并校验后替换，保留回滚。")
                 : QObject::tr("创建更新副本：%1，原实例保持不变。").arg(name))
-            .arg(!copyValid ? QObject::tr("\n副本名称无效或已经存在，请修改。") : !correctRoot ? QObject::tr("\n游戏目录已改变，请关闭向导重新进入。") : QString())
+            .arg(!copyValid ? QObject::tr("\n副本名称无效或已存在，请修改。") : !correctRoot ? QObject::tr("\n游戏目录已改变，请关闭向导后重新进入。") : QString())
             .arg(mode->currentData().toBool()
                 ? QObject::tr("更新当前实例：先创建并逐文件校验完整 ZIP 快照（约需 2 倍实例空间），原目录另行保留，可用「回滚上次更新…」恢复。")
                 : QObject::tr("创建独立副本并逐文件校验，约需一份实例空间；保留源实例，不重复创建 ZIP 快照。"));
         if (replaced > 0) {
-            summaryText += QObject::tr("\n\n将下载并替换 %1 个模组；必要前置失败或任一替换失败时整趟回滚，并写出原因报告。")
+            summaryText += QObject::tr("\n\n将下载并替换 %1 个模组；必要前置失败或任一替换失败时"
+                                       "整个更新流程回滚，并生成原因报告。")
                                .arg(replaced);
         }
         summary->setText(summaryText);
@@ -798,7 +799,7 @@ void InstanceUpdateFlow::attach(MainWindow *owner, InstanceSettingsDialog *dialo
             state->executing = false;
             state->finished = true; state->requiresReload = changed;
             state->problem = !problem.isEmpty() ? problem : changed ? QObject::tr("更新已完成。点击完成返回；实例设置将重新读取新版本。")
-                : QObject::tr("本次更新未执行或已取消，原实例没有发布新核心。");
+                : QObject::tr("本次更新未执行或已取消，未向原实例发布新核心。");
             if (!applyFailurePath.isEmpty()) {
                 state->problem += QObject::tr("\n\n替换失败原因报告：\n%1")
                                       .arg(QDir::toNativeSeparators(applyFailurePath));
@@ -848,8 +849,8 @@ void InstanceUpdateFlow::attach(MainWindow *owner, InstanceSettingsDialog *dialo
                 Tasks::TaskCapabilities caps;
                 caps.canCancel = false;
                 caps.cancelBlockedReason = QObject::tr(
-                    "文件事务已经开始：复制、校验和发布要保证副本/原目录是一整份，中途停下会留下半份；"
-                    "这一段不支持取消。");
+                    "文件事务已开始：复制、校验和发布须保证副本或原目录完整，中途停止会留下不完整的目录；"
+                    "此阶段不支持取消。");
                 owner->m_activityCenter->tasks()->setCapabilities(state->parent, caps);
                 owner->m_activityCenter->tasks()->setDetail(state->parent,
                     QObject::tr("正在执行文件事务…"));
@@ -870,7 +871,7 @@ void InstanceUpdateFlow::attach(MainWindow *owner, InstanceSettingsDialog *dialo
             if (state->parent != 0) {
                 owner->m_activityCenter->tasks()->setStepState(
                     state->parent, 1, Tasks::TaskStepState::Done,
-                    QObject::tr("本次没有勾选替换，按保留/禁用处理。"));
+                    QObject::tr("本次未勾选替换，按保留/禁用处理。"));
             }
             status->setText(inPlace ? QObject::tr("正在执行完整快照更新，请等待事务结果…")
                                     : QObject::tr("正在复制更新副本并校验，请等待事务结果…"));
@@ -1014,8 +1015,8 @@ void InstanceUpdateFlow::attach(MainWindow *owner, InstanceSettingsDialog *dialo
                                  refreshEnabled();
                              };
                              if (result.cancelled) {
-                                 failReplacement(QObject::tr("已取消下载适配模组；整趟更新未执行，"
-                                                             "源实例没有任何改动。"),
+                                 failReplacement(QObject::tr("已取消下载适配模组；整个更新流程未执行，"
+                                                             "源实例未作任何改动。"),
                                                  {}, true);
                                  return;
                              }
@@ -1025,7 +1026,7 @@ void InstanceUpdateFlow::attach(MainWindow *owner, InstanceSettingsDialog *dialo
                                      details.append(QObject::tr("必要前置或适配文件缺失/校验失败。"));
                                  }
                                  failReplacement(QObject::tr("模组适配下载或必要前置失败；"
-                                                             "整趟更新已回滚，源实例没有任何改动。"),
+                                                             "整个更新流程已回滚，源实例未作任何改动。"),
                                                  details);
                                  return;
                              }
@@ -1033,7 +1034,8 @@ void InstanceUpdateFlow::attach(MainWindow *owner, InstanceSettingsDialog *dialo
                              QFile audit(QDir(stageDir).filePath(
                                  QStringLiteral("wtfml.preset-mod-install.json")));
                              if (!audit.open(QIODevice::ReadOnly) || audit.size() > 8 * 1024 * 1024) {
-                                 failReplacement(QObject::tr("读不到适配模组的下载清单，整趟更新未执行。"),
+                                 failReplacement(QObject::tr("无法读取适配模组的下载清单，"
+                                                             "整个更新流程未执行。"),
                                                  {});
                                  return;
                              }
@@ -1104,14 +1106,15 @@ void InstanceUpdateFlow::attach(MainWindow *owner, InstanceSettingsDialog *dialo
                              for (auto it = selectedByProject.cbegin(); it != selectedByProject.cend(); ++it) {
                                  if (!seenProjects.contains(it.key())) {
                                      failReplacement(
-                                         QObject::tr("没有从平台拿到「%1」的适配文件；整趟更新已回滚。")
+                                         QObject::tr("未从平台获取到「%1」的适配文件；整个更新流程已回滚。")
                                              .arg(it.value().value(QStringLiteral("title")).toString()),
-                                         {QObject::tr("项目 %1 没有可下载的适配文件").arg(it.key())});
+                                         {QObject::tr("项目 %1 无可下载的适配文件").arg(it.key())});
                                      return;
                                  }
                              }
                              if (replacements.isEmpty()) {
-                                 failReplacement(QObject::tr("适配下载完成但没有可用的文件；整趟更新未执行。"),
+                                 failReplacement(QObject::tr("适配下载已完成，但无可用文件；"
+                                                             "整个更新流程未执行。"),
                                                  {});
                                  return;
                              }
@@ -1124,8 +1127,8 @@ void InstanceUpdateFlow::attach(MainWindow *owner, InstanceSettingsDialog *dialo
                                            .arg(int(actualChanges.size() - preview.size()))
                                      : QString();
                              const QString question = QObject::tr(
-                                 "将要替换/新增以下 %1 个模组文件；嵌套 JAR 随父 JAR 一起替换。\n\n%2%3\n\n"
-                                 "替换失败或必要前置失败时整趟回滚，并写出原因报告。")
+                                 "将要替换/新增以下 %1 个模组文件；嵌套 JAR 随父 JAR 一起替换。"
+                                 "\n\n%2%3\n\n替换失败或必要前置失败时整个更新流程回滚，并生成原因报告。")
                                  .arg(int(replacements.size()))
                                  .arg(preview.join(QLatin1Char('\n')))
                                  .arg(extraFiles);
@@ -1134,8 +1137,8 @@ void InstanceUpdateFlow::attach(MainWindow *owner, InstanceSettingsDialog *dialo
                                                           question,
                                                           QObject::tr("执行替换"),
                                                           QObject::tr("取消并回滚"), false)) {
-                                 failReplacement(QObject::tr("用户取消了替换；整趟更新未执行，"
-                                                             "源实例没有任何改动。"),
+                                 failReplacement(QObject::tr("用户取消了替换；整个更新流程未执行，"
+                                                             "源实例未作任何改动。"),
                                                  {}, true);
                                  return;
                              }
@@ -1163,7 +1166,7 @@ void InstanceUpdateFlow::attach(MainWindow *owner, InstanceSettingsDialog *dialo
             if (AppPaths::minecraftDir() != state->root || owner->m_downloadInFlight || owner->m_instanceTransferController->copying()
                 || owner->installingVersionIds().contains(state->source)
                 || owner->m_launcherManager->isVersionRunning(state->source)) {
-                InlineMessage::warning(owner->m_ui->overlay(), QObject::tr("暂时不能更新"), QObject::tr("游戏目录已改变，或当前实例/下载/文件操作正在运行。请完成后重试。")); return;
+                InlineMessage::warning(owner->m_ui->overlay(), QObject::tr("暂时无法更新"), QObject::tr("游戏目录已改变，或当前实例/下载/文件操作正在运行。请完成后重试。")); return;
             }
             if (!mode->currentData().toBool()) {
                 const QString name = copyName->text().trimmed();
@@ -1197,7 +1200,11 @@ void InstanceUpdateFlow::attach(MainWindow *owner, InstanceSettingsDialog *dialo
             if (!state->loader.isEmpty() && !owner->m_installPage->pickInstallerJava(state->game,
                 VersionManager::loaderIndexForKind(loaderKind(state->loader)), &installerJava)) return;
             if (!InlineMessage::question(owner->m_ui->overlay(), QObject::tr("确认实例更新"),
-                    QObject::tr("更新到 Minecraft %1 / %2 %3。\n\n有目标发行版的模组可替换为适配版（缺的前置会自动补齐），其余按保留或禁用处理；无法确认的需先选处理方式。\n替换失败或前置失败会整趟回滚，并写出报告。\n存档跨版本后可能无法降级；请勿同时运行实例。")
+                    QObject::tr("更新到 Minecraft %1 / %2 %3。\n\n"
+                                "有目标发行版的模组可替换为适配版（缺的前置会自动补齐），"
+                                "其余按保留或禁用处理；无法确认的需先选处理方式。\n"
+                                "替换失败或前置失败时整个更新流程回滚，并生成报告。\n"
+                                "存档跨版本后可能无法降级；请勿同时运行实例。")
                         .arg(state->game, state->loader.isEmpty() ? QObject::tr("纯原版") : state->loader, state->loaderVersion),
                     QObject::tr("准备并继续"), QObject::tr("取消"), false)) return;
             // Confirmation runs a nested event loop: recheck ownership before any write.

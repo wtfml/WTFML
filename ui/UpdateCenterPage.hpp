@@ -9,7 +9,7 @@
  *
  * * 勾上（多选）→ 底下那颗「更新选中的 N 项」一次做完；
  * * 一行的「更新」→ 就这一条（"逐项"那一档）；
- * * 「忽略这一版」/「固定这一版」→ 以后别再提示我（判据在 `src/manage/UpdatePolicy`）；
+ * * 「忽略此版本」/「固定此版本」→ 以后别再提示我（判据在 `src/manage/UpdatePolicy`）；
  * * 底下那颗「撤销上一次更新」→ 退回这一批动手之前（回滚点，见 `src/manage/UpdateRollback`）。
  *
  * 一页上**不出现第二个窗口**：它是 `OverlayHost::showPage()` 盖在内容区
@@ -72,9 +72,9 @@ public:
         QString targetText;
         State state = State::Unknown;
         Suppress suppress = Suppress::None;
-        /// 要换上的那一版的 id（记「忽略这一版」用）。空 = 拼不出来。
+        /// 要换上的那一版的 id（记「忽略此版本」用）。空 = 拼不出来。
         QString targetVersionId;
-        /// 盘上这一份的内容 sha1（记「固定这一版」用）。空 = 算不出来。
+        /// 盘上这一份的内容 sha1（记「固定此版本」用）。空 = 算不出来。
         QString currentSha1;
         /// `Unknown` 那一档的原因（别的档是空串）。
         QString note;
@@ -151,9 +151,9 @@ public:
 signals:
     /// 用户点了「更新」（某一行）或「更新选中的 N 项」。@p paths 就是要更新的那几条。
     void updateRequested(const QStringList &paths);
-    /// 用户点了某一行上的「忽略这一版」/「不再忽略」。@p ignored 是**点完之后**该是什么样。
+    /// 用户点了某一行上的「忽略此版本」/「不再忽略」。@p ignored 是**点完之后**该是什么样。
     void ignoreToggled(const QString &path, bool ignored);
-    /// 同上，那一颗「固定这一版」/「不再固定」。
+    /// 同上，那一颗「固定此版本」/「不再固定」。
     void pinToggled(const QString &path, bool pinned);
     /// 用户点了「撤销上一次更新」。
     void undoRequested();

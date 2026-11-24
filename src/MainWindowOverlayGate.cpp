@@ -97,7 +97,7 @@ void MainWindow::warnOverlayBusy() {
                                tr("请确认或关闭当前对话框后再继续。"));
         return;
     }
-    InlineMessage::warning(overlay, tr("先关掉现在这一页"),
+    InlineMessage::warning(overlay, tr("请先关闭当前页面"),
                            tr("「%1」仍有一个页面打开。切换选项卡会隐藏该页面。\n\n请返回「%1」，选择左上角的返回按钮关闭该页面，再重试。")
                                .arg(title));
 }

@@ -10,7 +10,7 @@
 
 页面（只画状态、只发信号，判断都在 `operations/UpgradePageState` 等纯逻辑层）：
 1. 来源/目标双栏。目标选 Minecraft 版本、加载器及具体加载器版本，默认创建副本并起新名字。稳定加载器版本作默认建议，没有稳定版本时需明确选测试版，获取失败可刷新。
-2. 「兼容性报告…」：有评估结果时打开 `ui/UpgradeReportDialog`，没有结果时提示"还没有检查结果"。报告分五组（正常/无法确认/检查失败/不兼容/缺前置），只有正常项默认折叠；可按名字或依据搜索、只看某组、显示/折叠正常项；组标题带条数，必要项未处理有摘要。检查就绪后页面记下报告指纹。
+2. 「兼容性报告…」：有评估结果时打开 `ui/UpgradeReportDialog`，没有结果时提示"暂无检查结果"。报告分五组（正常/无法确认/检查失败/不兼容/缺前置），只有正常项默认折叠；可按名字或依据搜索、只看某组、显示/折叠正常项；组标题带条数，必要项未处理有摘要。检查就绪后页面记下报告指纹。
 3. 九类选择（§7）和每行"多少个 / 多大"（来源只读扫描一次）。
 4. 「更新记录…」打开 `ui/UpgradeHistoryDialog`（§8）。
 5. 底部摘要与「预览并确认」。闸门 `firstBlocker()` 四道：来源/目标/实例名（空、重名、与来源同名）、报告过期（目标或选择一变，旧检查按指纹判过期）、占用、勾了 Mod 配置却没勾 Mod 文件（`ConfigWithoutMods`）。来源实例此刻在跑或被别的作业占用，页面提前提示。整合包带自定义启动配置（主类不是 `net.minecraft.client.main.Main` / `net.minecraft.launchwrapper.Launch` / `cpw.mods.bootstraplauncher.BootstrapLauncher` / `net.fabricmc.loader.impl.launch.knot.KnotClient`，如 lwjgl3ify）时先提醒一次：升级后启动配置可能对不上。

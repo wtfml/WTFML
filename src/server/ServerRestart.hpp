@@ -45,7 +45,7 @@ Why whyFor(bool userStopped, bool forceKilled, int exitCode);
 /// 这一档会不会触发自动重启的考虑（只有 `Crash` 会）。
 bool isAbnormal(Why why);
 
-/// 界面上 / 日志里那一档的说法（「你自己停的」「正常退出」「异常退出」）。
+/// 界面上 / 日志里那一档的说法（「用户手动停止」「正常退出」「异常退出」）。
 QString whyName(Why why);
 
 // ---------------------------------------------------------------------------

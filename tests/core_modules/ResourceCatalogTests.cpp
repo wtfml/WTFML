@@ -875,17 +875,17 @@ void runResourceCatalogTests() {
         const QString prompt = ModDependencies::dependencyPromptText(
             ResourceCatalog::Kind::Mod,
             {QStringLiteral("Sodium"), QStringLiteral("Fabric API")});
-        // 正文 = 句头 + 名单 + 「要一起下载吗？」。名单**一条一行、前面带短横**（用户
+        // 正文 = 句头 + 名单 + 「是否一并下载？」。名单**一条一行、前面带短横**（用户
         // 原话「模组名称，一行一个」）。不写"这几个还没装"里的**计数** ——
         // 名单里几条一眼就看得见，而截断那一档写的是"还有 N 个未列出"。
         check(prompt.contains(QStringLiteral("- Sodium\n- Fabric API")) &&
                   prompt.contains(ModDependencies::dependencyPromptHead(ResourceCatalog::Kind::Mod)) &&
-                  prompt.trimmed().endsWith(QStringLiteral("要一起下载吗？")),
+                  prompt.trimmed().endsWith(QStringLiteral("是否一并下载？")),
               "Z6d 弹窗正文 = 句头 + 一条一行的名单 + 那句问句", prompt);
         check(ModDependencies::dependencyPromptText(ResourceCatalog::Kind::Mod, {}).isEmpty(),
               "Z6d 一条都不缺时那句话是空串（空表不该弹这个框）");
-        check(ModDependencies::dependencyAllButtonText() == QStringLiteral("一起下载") &&
-                  ModDependencies::dependencyOnlyThisButtonText() == QStringLiteral("只下这个"),
+        check(ModDependencies::dependencyAllButtonText() == QStringLiteral("全部下载") &&
+                  ModDependencies::dependencyOnlyThisButtonText() == QStringLiteral("仅下载此项"),
               "Z6d 两颗按钮的字（用户要的「一键下载」就在这一颗上）",
               ModDependencies::dependencyAllButtonText());
         check(ModDependencies::unresolvedNoteText({}).isEmpty() &&

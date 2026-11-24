@@ -45,12 +45,12 @@ QString tempPathFor(const QString &tag) {
 bool readWholeFile(const QString &path, QByteArray *out, QString *problem) {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        *problem = QCoreApplication::translate("ServerListFile", "读不了 %1：%2").arg(path, file.errorString());
+        *problem = QCoreApplication::translate("ServerListFile", "无法读取 %1：%2").arg(path, file.errorString());
         return false;
     }
     *out = file.readAll();
     if (file.error() != QFileDevice::NoError) {
-        *problem = QCoreApplication::translate("ServerListFile", "读 %1 读到一半出错了（%2）")
+        *problem = QCoreApplication::translate("ServerListFile", "读取 %1 时中途出错（%2）")
                        .arg(path, file.errorString());
         return false;
     }
@@ -113,7 +113,7 @@ bool commitBytes(const QString &target, const QByteArray &body, bool gzipped, QS
         plain.close();
         if (written != body.size()) {
             QFile::remove(tempPlain);
-            *problem = QCoreApplication::translate("ServerListFile", "临时文件没写全（盘满了？）");
+            *problem = QCoreApplication::translate("ServerListFile", "临时文件写入不完整，请检查磁盘空间");
             return false;
         }
         tempGz = tempPathFor(QStringLiteral("serverlist-gz"));
@@ -122,7 +122,7 @@ bool commitBytes(const QString &target, const QByteArray &body, bool gzipped, QS
         QFile::remove(tempPlain);
         if (!compressed) {
             QFile::remove(tempGz);
-            *problem = QCoreApplication::translate("ServerListFile", "压缩 servers.dat 失败了：%1").arg(why);
+            *problem = QCoreApplication::translate("ServerListFile", "压缩 servers.dat 失败：%1").arg(why);
             return false;
         }
     }
@@ -170,12 +170,12 @@ bool commitBytes(const QString &target, const QByteArray &body, bool gzipped, QS
         }
     } else if (out.write(body) != body.size()) {
         out.cancelWriting();
-        *problem = QCoreApplication::translate("ServerListFile", "临时文件没写全（盘满了？）");
+        *problem = QCoreApplication::translate("ServerListFile", "临时文件写入不完整，请检查磁盘空间");
         return false;
     }
 
     if (!out.commit()) {
-        *problem = QCoreApplication::translate("ServerListFile", "换掉 servers.dat 失败了：%1").arg(out.errorString());
+        *problem = QCoreApplication::translate("ServerListFile", "替换 servers.dat 失败：%1").arg(out.errorString());
         return false;
     }
     return true;
@@ -249,7 +249,8 @@ bool findEntryIndex(const NbtTree::Node &servers, const QString &name, const QSt
     }
     if (addressOnly == 0) {
         *problem =
-            QCoreApplication::translate("ServerListFile", "servers.dat 中找不到地址为「%1」的条目。请刷新服务器列表。")
+            QCoreApplication::translate("ServerListFile", "servers.dat 中未找到地址为「%1」的条目。"
+                                                          "请刷新服务器列表。")
                 .arg(address);
         return false;
     }
@@ -438,7 +439,7 @@ bool updateEntry(const QString &datPath, const QString &oldName, const QString &
         problemOut->clear();
     }
     if (datPath.trimmed().isEmpty()) {
-        return failWith(problemOut, QCoreApplication::translate("ServerListFile", "没有指定要改哪个 servers.dat。"));
+        return failWith(problemOut, QCoreApplication::translate("ServerListFile", "未指定要修改的 servers.dat。"));
     }
     if (newAddress.trimmed().isEmpty()) {
         return failWith(
@@ -478,7 +479,8 @@ bool addEntry(const QString &datPath, const QString &name, const QString &addres
         problemOut->clear();
     }
     if (datPath.trimmed().isEmpty()) {
-        return failWith(problemOut, QCoreApplication::translate("ServerListFile", "没有指定要加到哪个 servers.dat。"));
+        return failWith(problemOut, QCoreApplication::translate("ServerListFile", "未指定要添加到的 "
+                                                                                  "servers.dat。"));
     }
     if (address.trimmed().isEmpty()) {
         return failWith(
@@ -523,7 +525,8 @@ bool removeEntry(const QString &datPath, const QString &name, const QString &add
         problemOut->clear();
     }
     if (datPath.trimmed().isEmpty()) {
-        return failWith(problemOut, QCoreApplication::translate("ServerListFile", "没有指定要从哪个 servers.dat 里删。"));
+        return failWith(problemOut, QCoreApplication::translate("ServerListFile", "未指定要从中删除的 "
+                                                                                  "servers.dat。"));
     }
 
     LoadedList loaded;
@@ -549,7 +552,9 @@ bool removeEntries(const QString &datPath, const QList<QPair<QString, QString>> 
         problemOut->clear();
     }
     if (datPath.trimmed().isEmpty() || entries.isEmpty()) {
-        return failWith(problemOut, QCoreApplication::translate("ServerListFile", "没有指定要从哪个 servers.dat 里删，或者没有选中任何一条。"));
+        return failWith(problemOut, QCoreApplication::translate("ServerListFile", "未指定要从中删除的 "
+                                                                                  "servers.dat，"
+                                                                                  "或未选中任何条目。"));
     }
 
     LoadedList loaded;

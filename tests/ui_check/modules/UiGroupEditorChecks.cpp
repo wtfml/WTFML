@@ -152,7 +152,7 @@ int UiGroupEditorChecks() {
         dismissNextInline(&overlayHost);
         check(!dialog.createGroup(QStringLiteral("整合包")), "重名建不出来");
         check(g_modalText.contains(QStringLiteral("整合包")) &&
-                  g_modalText.contains(QStringLiteral("已经有一个")),
+                  g_modalText.contains(QStringLiteral("已存在名为")),
               "框里点名说的是哪个组重了", g_modalText);
 
         dismissNextInline(&overlayHost);

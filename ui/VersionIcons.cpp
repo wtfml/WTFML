@@ -378,7 +378,7 @@ QPixmap VersionIcons::loaderMark(int index, int size) {
     if (size <= 0) {
         return QPixmap();
     }
-    // 「不装（纯原版）」和越界的下标都是草方块 —— 那两条路装出来的就是原版。
+    // 「不安装（纯原版）」和越界的下标都是草方块 —— 那两条路装出来的就是原版。
     if (index < 0 || index > 4) {
         return grassBlock(size);
     }

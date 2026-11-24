@@ -118,30 +118,30 @@ int MwModpackImportChecks(const QDir &versionsDir, MainWindow &window, GlobalJav
         // 走到这一步说明清单、加载器都过了 —— 这是"只剩名字不对"那条路。
         dismissNextPrompt();
         check(!tryImport(kFabricJson, QStringLiteral("CON")), "AA5 名字叫 CON → 拒绝");
-        check(g_modalTitle == QStringLiteral("换个名字") && g_modalWasWarning,
+        check(g_modalTitle == QStringLiteral("更换名称") && g_modalWasWarning,
               "AA5 弹的是「换个名字」的警告框",
               g_modalTitle + QStringLiteral(" / ") + g_modalText);
         check(g_modalText.contains(QStringLiteral("保留设备名")),
               "AA5 弹窗说清了为什么这个名字不行", g_modalText);
 
-        // ---- AA6 重名：沙盒里已经有一个叫 1.18.2 的实例 ----
+        // ---- AA6 重名：沙盒里已存在名为 1.18.2 的实例 ----
         // 判据和「重命名」那条路**共用一份**（InstanceFiles::validateRenameTarget）——
         // 这里验的是它真的被调了，而不是"数据层自己又查了一遍"（数据层有意不查，
         // 见 VersionManager::importModpack 的说明）。
         dismissNextPrompt();
         check(!tryImport(kFabricJson, QStringLiteral("1.18.2")), "AA6 撞上已存在的实例名 → 拒绝");
-        check(g_modalTitle == QStringLiteral("换个名字") && g_modalWasWarning,
+        check(g_modalTitle == QStringLiteral("更换名称") && g_modalWasWarning,
               "AA6 也是「换个名字」的警告框",
               g_modalTitle + QStringLiteral(" / ") + g_modalText);
-        check(g_modalText.contains(QStringLiteral("已经有一个叫")) &&
+        check(g_modalText.contains(QStringLiteral("已存在名为")) &&
                   g_modalText.contains(QStringLiteral("1.18.2")),
               "AA6 弹窗指出了撞的是哪一个", g_modalText);
         // 大小写不敏感：磁盘上是 26.3，用户输入 26.3 上面那条已经覆盖；这里补一条
         // "换个大小写也躲不过去"的 —— 同一份判据的规矩。
         dismissNextPrompt();
         check(!tryImport(kFabricJson, QStringLiteral("26.3")), "AA6b 重名判据是同一份（26.3 也拒）");
-        check(g_modalText.contains(QStringLiteral("已经有一个叫")),
-              "AA6b 同样说的是「已经有一个叫」", g_modalText);
+        check(g_modalText.contains(QStringLiteral("已存在名为")),
+              "AA6b 同样说的是「已存在名为」", g_modalText);
 
         // ---- AA7 要 Forge/NeoForge 的包，而安装器要的 Java 本机给不出来 ----
         // 这一条补的是**另一件**事：Forge/NeoForge 的安装器自己就是个 Java 程序，
@@ -183,7 +183,7 @@ int MwModpackImportChecks(const QDir &versionsDir, MainWindow &window, GlobalJav
                 dismissNextPrompt();
                 check(!tryImport(kNeoForgeJson, QStringLiteral("导入的新实例")),
                       "AA7 要 Java 99 的 NeoForge 包 → 在开始之前就拒绝");
-                check(g_modalTitle == QStringLiteral("Java 版本不够") && g_modalWasWarning,
+                check(g_modalTitle == QStringLiteral("Java 版本过低") && g_modalWasWarning,
                       "AA7 弹的是「Java 版本不够」",
                       g_modalTitle + QStringLiteral(" / ") + g_modalText);
                 check(g_modalText.contains(QStringLiteral("Java 99")) &&
@@ -244,7 +244,7 @@ int MwModpackImportChecks(const QDir &versionsDir, MainWindow &window, GlobalJav
             check(InstanceFiles::checkImportTargetName(kDone, &problem) ==
                       InstanceFiles::ImportNameVerdict::Taken,
                   "AA8 做完了的那一份仍然拒（不许覆盖用户的实例）", problem);
-            check(problem.contains(QStringLiteral("已经有一个叫")),
+            check(problem.contains(QStringLiteral("已存在名为")),
                   "AA8 拒的理由还是那句话", problem);
 
             // ② 顶层有客户端 jar = 这不是整合包导入留下的目录（导入的实例目录里只有薄 json
@@ -290,7 +290,7 @@ int MwModpackImportChecks(const QDir &versionsDir, MainWindow &window, GlobalJav
                     dismissNextPrompt();
                     check(!tryImport(kNeoForgeJson, kHalf),
                           "AA8 半成品的名字 + 要 Java 99 的包 → 停在下一步（没开始导入）");
-                    check(g_modalTitle == QStringLiteral("Java 版本不够"),
+                    check(g_modalTitle == QStringLiteral("Java 版本过低"),
                           "AA8 执行那一半认这条口子（拦下它的是**下一步**，不是名字）",
                           g_modalTitle + QStringLiteral(" / ") + g_modalText);
                     // 对照：同一个包撞上**别的**实例名（26.3 是个装好的实例）时，
@@ -298,7 +298,7 @@ int MwModpackImportChecks(const QDir &versionsDir, MainWindow &window, GlobalJav
                     dismissNextPrompt();
                     check(!tryImport(kNeoForgeJson, QStringLiteral("26.3")),
                           "AA8 对照：同一个包撞上别的实例名 → 拒");
-                    check(g_modalTitle == QStringLiteral("换个名字"),
+                    check(g_modalTitle == QStringLiteral("更换名称"),
                           "AA8 对照：拒它的是名字那一关",
                           g_modalTitle + QStringLiteral(" / ") + g_modalText);
                 }
@@ -380,7 +380,7 @@ int MwModpackImportChecks(const QDir &versionsDir, MainWindow &window, GlobalJav
             check(!tryImport(cfManifest("liteloader-1.12.2"), QStringLiteral("新实例"),
                              ModpackImport::Format::CurseForge),
                   "AA9 liteloader 的 CF 包 → 拒（不许当成纯原版包放行）");
-            check(g_modalTitle == QStringLiteral("无法安装这个整合包") &&
+            check(g_modalTitle == QStringLiteral("无法安装此整合包") &&
                       g_modalText.contains(QStringLiteral("liteloader")),
                   "AA9 拦它的话里带着那个加载器的名字", g_modalTitle + QStringLiteral(" / ") +
                                                           g_modalText);
@@ -435,7 +435,7 @@ int MwModpackImportChecks(const QDir &versionsDir, MainWindow &window, GlobalJav
                     check(api.hits >= 1,
                           "AA10 那一发真的发到了我们指的那台机器上（发到别处就说明口子没生效）",
                           QString::number(api.hits));
-                    check(g_modalTitle == QStringLiteral("拿不到文件清单"),
+                    check(g_modalTitle == QStringLiteral("无法获取文件清单"),
                           "AA10 弹的是「拿不到文件清单」（这个标题只有 CF 那一支会弹）",
                           g_modalTitle + QStringLiteral(" / ") + g_modalText);
                     check(g_modalText.contains(QStringLiteral("接口说你没填 key")),
@@ -469,7 +469,7 @@ int MwModpackImportChecks(const QDir &versionsDir, MainWindow &window, GlobalJav
                 QMetaObject::invokeMethod(&window, "importModpackFromFile", Qt::DirectConnection,
                                           Q_ARG(QString, kZip), Q_ARG(QString, QString()));
             check(invoked, "AA11 importModpackFromFile 接得上（两个参数都认得）");
-            check(g_modalTitle == QStringLiteral("现在正忙"),
+            check(g_modalTitle == QStringLiteral("当前正忙"),
                   "★★ AA11 下载还没完时拖进来的整合包被挡下，并且当场说了一句人话"
                   "（不是默默吞掉、也不是排进队列）",
                   g_modalTitle + QStringLiteral(" / ") + g_modalText);
@@ -528,7 +528,7 @@ int MwModpackImportChecks(const QDir &versionsDir, MainWindow &window, GlobalJav
                 &window, "importModpackOneClick", Qt::DirectConnection, Q_ARG(QString, kZip),
                 Q_ARG(QString, QStringLiteral("oneclick-busy-test")));
             check(invoked, "AA13 importModpackOneClick 接得上");
-            check(g_modalTitle == QStringLiteral("现在正忙"),
+            check(g_modalTitle == QStringLiteral("当前正忙"),
                   "AA13 已有任务在跑时拦截一键导入续接", g_modalTitle);
             check(countOccurrences(messagesSnapshot(), QStringLiteral("开始导入整合包")) == startedBefore,
                   "AA13 被忙态拦截时一个字节都没开始导");
@@ -605,7 +605,7 @@ int MwModpackImportChecks(const QDir &versionsDir, MainWindow &window, GlobalJav
                     &window, "importModpackOneClick", Qt::DirectConnection,
                     Q_ARG(QString, mrpackPath), Q_ARG(QString, kMismatchId));
                 check(invokedMismatch, "AA14 指纹冲突调用接得上");
-                check(g_modalTitle == QStringLiteral("换个名字") && !g_modalWasWarning,
+                check(g_modalTitle == QStringLiteral("更换名称") && !g_modalWasWarning,
                       "AA14 指纹冲突时不直接报错失败，而是弹命名框让用户换名",
                       g_modalTitle + QStringLiteral(" / ") + g_modalText);
             }

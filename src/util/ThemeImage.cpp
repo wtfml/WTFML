@@ -58,14 +58,14 @@ QString store(const QString &slot, const QString &sourcePath, QString *errorOut)
     };
 
     if (!isSafeSlot(slot)) {
-        return fail(QCoreApplication::translate("ThemeImage", "内部错误：这个槽位的名字不能当文件名用。"));
+        return fail(QCoreApplication::translate("ThemeImage", "内部错误：此槽位的名称不能用作文件名。"));
     }
     const QFileInfo source(sourcePath);
     if (!source.isFile()) {
-        return fail(QCoreApplication::translate("ThemeImage", "这个文件读不到：%1").arg(sourcePath));
+        return fail(QCoreApplication::translate("ThemeImage", "无法读取此文件：%1").arg(sourcePath));
     }
     if (source.size() > kMaxSourceBytes) {
-        return fail(QCoreApplication::translate("ThemeImage", "这张图太大了（%1 MB），换一张小一点的。")
+        return fail(QCoreApplication::translate("ThemeImage", "图片过大（%1 MB），请更换较小的图片。")
                         .arg(QString::number(source.size() / 1024.0 / 1024.0, 'f', 1)));
     }
 
@@ -101,7 +101,7 @@ QString store(const QString &slot, const QString &sourcePath, QString *errorOut)
         }
     }
     if (image.isNull()) {
-        return fail(QCoreApplication::translate("ThemeImage", "这不是一张能打开的图片：%1").arg(source.fileName()));
+        return fail(QCoreApplication::translate("ThemeImage", "不是可打开的图片：%1").arg(source.fileName()));
     }
 
     QDir().mkpath(AppPaths::themeImageDir());
@@ -126,7 +126,7 @@ QString store(const QString &slot, const QString &sourcePath, QString *errorOut)
     }
     if (!ok) {
         file.cancelWriting();
-        return fail(QCoreApplication::translate("ThemeImage", "写不进 %1，检查一下磁盘权限。")
+        return fail(QCoreApplication::translate("ThemeImage", "无法写入 %1，请检查磁盘权限。")
                         .arg(QDir::toNativeSeparators(AppPaths::themeImageDir())));
     }
     if (!stale.isEmpty() && stale != target) {

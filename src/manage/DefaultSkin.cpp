@@ -99,13 +99,13 @@ bool writeCacheFile(const QString &path, const QByteArray &bytes, QString *error
     QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly)) {
         if (errorOut != nullptr) {
-            *errorOut = QCoreApplication::translate("DefaultSkin", "写不了 %1：%2").arg(path, file.errorString());
+            *errorOut = QCoreApplication::translate("DefaultSkin", "无法写入 %1：%2").arg(path, file.errorString());
         }
         return false;
     }
     if (file.write(bytes) != bytes.size() || !file.commit()) {
         if (errorOut != nullptr) {
-            *errorOut = QCoreApplication::translate("DefaultSkin", "写 %1 失败：%2").arg(path, file.errorString());
+            *errorOut = QCoreApplication::translate("DefaultSkin", "写入 %1 失败：%2").arg(path, file.errorString());
         }
         return false;
     }
@@ -208,13 +208,13 @@ DefaultSkin::Result DefaultSkin::resolve(const QString &playerName, const QStrin
         // 到不了这儿（offlineUuidFor 给的一定是 32 位十六进制）。留着是为了这一条路自己
         // 读起来是完整的，不靠"上面那个函数不会出错"。
         if (reasonOut != nullptr) {
-            *reasonOut = QCoreApplication::translate("DefaultSkin", "找不到此玩家名称对应的 UUID。");
+            *reasonOut = QCoreApplication::translate("DefaultSkin", "未找到此玩家名称对应的 UUID。");
         }
         return Result::Unavailable;
     }
     if (versionId.isEmpty()) {
         if (reasonOut != nullptr) {
-            *reasonOut = QCoreApplication::translate("DefaultSkin", "没有选中任何已安装版本。");
+            *reasonOut = QCoreApplication::translate("DefaultSkin", "未选择任何已安装版本。");
         }
         return Result::Unavailable;
     }
@@ -243,7 +243,7 @@ DefaultSkin::Result DefaultSkin::resolve(const QString &playerName, const QStrin
     const QString jar = InstanceFiles::jarPath(versionId);
     if (!QFile::exists(jar)) {
         if (reasonOut != nullptr) {
-            *reasonOut = QCoreApplication::translate("DefaultSkin", "这个版本的客户端 JAR 不在（%1）。").arg(jar);
+            *reasonOut = QCoreApplication::translate("DefaultSkin", "未找到此版本的客户端 JAR（%1）。").arg(jar);
         }
         return Result::Unavailable;
     }
@@ -258,11 +258,12 @@ DefaultSkin::Result DefaultSkin::resolve(const QString &playerName, const QStrin
         QString error;
         const ZipUtil::EntryStatus status =
             ZipUtil::readEntry(jar, p.entryPath, &bytes, &error,
-                               QCoreApplication::translate("DefaultSkin", "读客户端 JAR 里的贴图"));
+                               QCoreApplication::translate("DefaultSkin", "读取客户端 JAR 中的贴图"));
         if (status == ZipUtil::EntryStatus::Ok) {
             if (bytes.size() < 8 || std::memcmp(bytes.constData(), kPngSignature, 8) != 0) {
                 if (reasonOut != nullptr) {
-                    *reasonOut = QCoreApplication::translate("DefaultSkin", "客户端 JAR 里那条贴图不是一张 PNG（%1）。")
+                    *reasonOut = QCoreApplication::translate("DefaultSkin", "客户端 JAR 中的该贴图不是有效的"
+                                                                            " PNG（%1）。")
                                      .arg(p.entryPath);
                 }
                 return Result::Failed;
@@ -272,7 +273,7 @@ DefaultSkin::Result DefaultSkin::resolve(const QString &playerName, const QStrin
             if (target.isEmpty() || !writeCacheFile(target, bytes, &writeError)) {
                 if (reasonOut != nullptr) {
                     *reasonOut = target.isEmpty()
-                                     ? QCoreApplication::translate("DefaultSkin", "拼不出这个账号的缓存路径。")
+                                     ? QCoreApplication::translate("DefaultSkin", "无法生成此账号的缓存路径。")
                                      : writeError;
                 }
                 return Result::Failed;
@@ -296,10 +297,11 @@ DefaultSkin::Result DefaultSkin::resolve(const QString &playerName, const QStrin
             // 空着等于没写。这里补上，并且两种都带上路径（到底哪个版本的 JAR 坏了）。
             if (reasonOut != nullptr) {
                 if (status == ZipUtil::EntryStatus::NotAnArchive) {
-                    *reasonOut = QCoreApplication::translate("DefaultSkin", "无法打开这个版本的客户端 JAR（不是 zip 压缩包，或文件已损坏）：%1。")
+                    *reasonOut = QCoreApplication::translate("DefaultSkin", "无法打开此版本的客户端 JAR（非 "
+                                                                            "zip 压缩包或文件已损坏）：%1。")
                                      .arg(jar);
                 } else if (error.isEmpty()) {
-                    *reasonOut = QCoreApplication::translate("DefaultSkin", "读 %1 里的贴图失败。").arg(jar);
+                    *reasonOut = QCoreApplication::translate("DefaultSkin", "读取 %1 中的贴图失败。").arg(jar);
                 } else {
                     *reasonOut = error;
                 }
@@ -307,7 +309,7 @@ DefaultSkin::Result DefaultSkin::resolve(const QString &playerName, const QStrin
             return Result::Failed;
         }
         // NotFound：这个 JAR 不是这一套规矩 → 换下一套再问一次。
-        lastReason = QCoreApplication::translate("DefaultSkin", "客户端 JAR 里没有 %1。").arg(p.entryPath);
+        lastReason = QCoreApplication::translate("DefaultSkin", "客户端 JAR 中无 %1。").arg(p.entryPath);
     }
     if (reasonOut != nullptr) {
         *reasonOut = lastReason;

@@ -559,13 +559,13 @@ QList<MainWindowUI::PanelAction> runningPanelActions(const QColor &ink) {
     MainWindowUI::PanelAction stop;
     stop.icon = VersionIcons::power(iconSize, ink);
     // 图标按钮**必须**有 tooltip：一个电源符号说明不了"点了会把游戏直接杀掉、不会存档"。
-    stop.tooltip = QObject::tr("关闭这个实例（直接结束游戏进程，游戏不会存档）");
+    stop.tooltip = QObject::tr("关闭此实例（直接结束游戏进程，不会保存游戏进度）");
     MainWindowUI::PanelAction settings;
     settings.icon = VersionIcons::gear(iconSize, Theme::tokens().primary);
-    settings.tooltip = QObject::tr("打开这个实例的设置");
+    settings.tooltip = QObject::tr("打开此实例的设置");
     MainWindowUI::PanelAction log;
     log.icon = VersionIcons::line(QStringLiteral("log"), iconSize, ink);
-    log.tooltip = QObject::tr("打开这一场游戏的日志窗");
+    log.tooltip = QObject::tr("打开本次游戏的日志窗口");
     return {stop, settings, log};
 }
 
@@ -576,17 +576,17 @@ QList<MainWindowUI::PanelAction> runningServerPanelActions(const QColor &ink, bo
     stop.icon = VersionIcons::power(iconSize, ink);
     if (!stopping) {
         stop.enabled = true;
-        stop.tooltip = QObject::tr("停止这个服务端（先存盘并正常退出）");
+        stop.tooltip = QObject::tr("停止此服务端（先保存存档并正常退出）");
     } else if (forceKillAllowed) {
         stop.enabled = true;
-        stop.tooltip = QObject::tr("存盘等待已超时，点击强制结束这个服务端");
+        stop.tooltip = QObject::tr("等待存档保存已超时，点击强制结束此服务端");
     } else {
         stop.enabled = false;
-        stop.tooltip = QObject::tr("正在发送停服指令并等待存盘退出…");
+        stop.tooltip = QObject::tr("正在发送停服指令，等待存档保存并退出…");
     }
     MainWindowUI::PanelAction settings;
     settings.icon = VersionIcons::gear(iconSize, Theme::tokens().primary);
-    settings.tooltip = QObject::tr("打开这个服务端的设置");
+    settings.tooltip = QObject::tr("打开此服务端的设置");
     MainWindowUI::PanelAction console;
     console.icon = VersionIcons::line(QStringLiteral("log"), iconSize, ink);
     console.tooltip = QObject::tr("打开服务端控制台");
@@ -903,7 +903,7 @@ QList<MainWindowUI::PanelRow> runningGamePanelRows(QList<RunningProcesses::Entry
             const auto serverSubtitle = [startedAtMs = proc.startedAtMs,
                                          stopping = proc.serverStopping]() -> QString {
                 if (startedAtMs <= 0) {
-                    return stopping ? QObject::tr("正在停止（存盘中）") : QObject::tr("服务端");
+                    return stopping ? QObject::tr("正在停止（保存存档中）") : QObject::tr("服务端");
                 }
                 const QString dur = MainWindowUI::runningDurationText(
                     startedAtMs, QDateTime::currentMSecsSinceEpoch());

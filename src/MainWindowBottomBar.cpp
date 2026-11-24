@@ -131,7 +131,7 @@ void MainWindow::setDownloadUiBusy(bool busy) {
     } else {
         // 这一批到此为止（"为什么这是兜底、为什么不会把成功改写成失败"逐字在
         // `DownloadTaskLedgerController::finish()` 里）。
-        m_downloadTaskLedger->finish(tr("这一批下载没有正常结束。"));
+        m_downloadTaskLedger->finish(tr("本批下载未正常结束。"));
     }
     updateBottomBar();
 }

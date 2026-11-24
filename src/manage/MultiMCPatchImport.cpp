@@ -58,13 +58,15 @@ bool jvmArguments(const QJsonArray &input, QJsonArray &output) {
 /// 启动时才炸，而用户看不出是哪一步被忽略了。所以认得出就点名说清楚。
 QString unsupportedFieldReason(const QString &field) {
     if (field == QLatin1String("+jarMods")) {
-        return QObject::tr("这个包用了 +jarMods（旧式核心 mod）：它要求把 jar 合并进游戏本体，本启动器不做这一步，装上也起不来。");
+        return QObject::tr("此整合包使用了 +jarMods（旧式核心 mod）：需要将 jar 合并进游戏本体，"
+                           "本启动器不支持此操作，即使安装也无法启动。");
     }
     if (field == QLatin1String("+files")) {
         return QObject::tr("整合包包含旧版 +files 文件表。该表依赖原启动器确定目标路径，当前导入流程仅处理 +libraries。");
     }
     if (field == QLatin1String("addnatives")) {
-        return QObject::tr("这个包用了 addnatives（额外 natives）：本启动器只从版本 json 的 libraries 里取 natives。");
+        return QObject::tr("此整合包使用了 addnatives（额外 natives）：本启动器仅从版本 json 的 libraries "
+                           "中获取 natives。");
     }
     if (field == QLatin1String("+traits")) {
         return QObject::tr("此整合包使用了 +traits（例如 legacyLaunch）来指定启动方式。当前版本不支持导入这些启动设置。");

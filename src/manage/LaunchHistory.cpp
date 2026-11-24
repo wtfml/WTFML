@@ -369,7 +369,7 @@ QString resultNote(const Record &record) {
     case Result::Crash:
         return QCoreApplication::translate("LaunchHistory", "（上次是异常退出）");
     case Result::Running:
-        return QCoreApplication::translate("LaunchHistory", "（还在玩）");
+        return QCoreApplication::translate("LaunchHistory", "（游玩中）");
     case Result::StartFailed:
         return QCoreApplication::translate("LaunchHistory", "（上次启动失败）");
     case Result::NormalExit:
@@ -386,18 +386,18 @@ QString durationText(qint64 seconds) {
     // 时长（结局）"拼出来的，量词不同（分钟 / 小时）时"玩了"两个字必须一起挪 ——
     // 让调用方去拼会拼出「玩了 不到 1 分钟」这种话。
     if (seconds < 60) {
-        return QCoreApplication::translate("LaunchHistory", "玩了不到 1 分钟");
+        return QCoreApplication::translate("LaunchHistory", "已游玩不到 1 分钟");
     }
     const qint64 minutes = seconds / 60;
     if (minutes < 60) {
-        return QCoreApplication::translate("LaunchHistory", "玩了 %1 分钟").arg(minutes);
+        return QCoreApplication::translate("LaunchHistory", "已游玩 %1 分钟").arg(minutes);
     }
     const qint64 hours = minutes / 60;
     const qint64 rest = minutes % 60;
     if (rest == 0) {
-        return QCoreApplication::translate("LaunchHistory", "玩了 %1 小时").arg(hours);
+        return QCoreApplication::translate("LaunchHistory", "已游玩 %1 小时").arg(hours);
     }
-    return QCoreApplication::translate("LaunchHistory", "玩了 %1 小时 %2 分").arg(hours).arg(rest);
+    return QCoreApplication::translate("LaunchHistory", "已游玩 %1 小时 %2 分").arg(hours).arg(rest);
 }
 
 }  // namespace LaunchHistory

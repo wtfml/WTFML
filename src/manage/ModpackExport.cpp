@@ -135,7 +135,7 @@ bool readFileChunks(const QString &path, Sink &&sink, QString *errorOut) {
         const qint64 read = file.read(buffer.data(), buffer.size());
         if (read < 0) {
             if (errorOut != nullptr) {
-                *errorOut = QObject::tr("读这个文件的时候出错了：%1").arg(file.errorString());
+                *errorOut = QObject::tr("读取文件时出错：%1").arg(file.errorString());
             }
             return false;
         }
@@ -380,8 +380,8 @@ QHash<quint32, CurseForgeHit> parseCurseForgeFingerprints(const QByteArray &json
         const QString error = root.value(QStringLiteral("error")).toString().trimmed();
         if (problemOut != nullptr) {
             *problemOut = error.isEmpty()
-                              ? QObject::tr("CurseForge 的接口回的话里没有指纹表。")
-                              : QObject::tr("CurseForge 的接口拒绝了这一问：%1").arg(error);
+                              ? QObject::tr("CurseForge 接口返回的内容中无指纹表。")
+                              : QObject::tr("CurseForge 接口拒绝了本次请求：%1").arg(error);
         }
         return hits;
     }
@@ -444,7 +444,7 @@ QString instanceExclusionReason(const QString &relativePath, const QString &inst
     static const Rule kDirRules[] = {
         {"logs", QT_TRANSLATE_NOOP("ModpackExport", "日志")},
         {"crash-reports", QT_TRANSLATE_NOOP("ModpackExport", "崩溃报告")},
-        {"natives", QT_TRANSLATE_NOOP("ModpackExport", "启动器解出来的运行时文件")},
+        {"natives", QT_TRANSLATE_NOOP("ModpackExport", "启动器解压出的运行时文件")},
         {"libraries", QT_TRANSLATE_NOOP("ModpackExport", "游戏库文件")},
         {".mixin.out", QT_TRANSLATE_NOOP("ModpackExport", "Mixin 的调试输出")},
         {".cache", QT_TRANSLATE_NOOP("ModpackExport", "加载器的缓存")},
@@ -499,10 +499,10 @@ QString instanceExclusionReason(const QString &relativePath, const QString &inst
         }
     }
     if (!options.saves && lower == QLatin1String("saves")) {
-        return QCoreApplication::translate("ModpackExport", "存档（没勾上才排）");
+        return QCoreApplication::translate("ModpackExport", "存档（未勾选时排除）");
     }
     if (!options.screenshots && lower == QLatin1String("screenshots")) {
-        return QCoreApplication::translate("ModpackExport", "截图（没勾上才排）");
+        return QCoreApplication::translate("ModpackExport", "截图（未勾选时排除）");
     }
     // 文件那几条要求**正好是顶层那一个文件**：`mods/icon.png` 是 mod 自己的资源，
     // 不能因为名字撞上就把它排掉。
@@ -582,7 +582,7 @@ CollectResult collectInstanceFiles(const QString &instanceDir, const IncludeOpti
     const QDir root(instanceDir);
     if (!root.exists()) {
         result.problem =
-            QObject::tr("找不到这个实例目录：%1").arg(QDir::toNativeSeparators(instanceDir));
+            QObject::tr("未找到此实例目录：%1").arg(QDir::toNativeSeparators(instanceDir));
         return result;
     }
     const QString instanceId = QFileInfo(QDir::cleanPath(instanceDir)).fileName();
@@ -906,7 +906,7 @@ bool curseForgeFingerprint(const QString &path, quint32 *out, QString *errorOut)
     if (out == nullptr) {
         // 出参没给就没什么可做的了 —— 这是调用方的编程错误，不当成"文件读不了"。
         if (errorOut != nullptr) {
-            *errorOut = QObject::tr("内部错误：没有给出放指纹的地方。");
+            *errorOut = QObject::tr("内部错误：未提供指纹的存放位置。");
         }
         return false;
     }
@@ -932,7 +932,7 @@ bool curseForgeFingerprint(const QString &path, quint32 *out, QString *errorOut)
 bool hashFile(const QString &path, bool needFingerprint, FileHashes *out, QString *errorOut) {
     if (out == nullptr) {
         if (errorOut != nullptr) {
-            *errorOut = QObject::tr("内部错误：没有给出放哈希的地方。");
+            *errorOut = QObject::tr("内部错误：未提供哈希的存放位置。");
         }
         return false;
     }
@@ -1112,7 +1112,7 @@ ExportPlan buildExportPlan(const ExportRequest &request, const ModrinthQuery &qu
                 lookupOk = queryCurseForge(fingerprints, &curseForgeHits, &lookupProblem);
             } else {
                 lookupOk = false;
-                lookupProblem = QObject::tr("没有接上 CurseForge 的查询接口。");
+                lookupProblem = QObject::tr("未连接 CurseForge 查询接口。");
             }
         } else {
             QStringList sha1s;
@@ -1124,7 +1124,7 @@ ExportPlan buildExportPlan(const ExportRequest &request, const ModrinthQuery &qu
                 lookupOk = queryModrinth(sha1s, &modrinthHits, &lookupProblem);
             } else {
                 lookupOk = false;
-                lookupProblem = QObject::tr("没有接上 Modrinth 的查询接口。");
+                lookupProblem = QObject::tr("未连接 Modrinth 查询接口。");
             }
         }
     }

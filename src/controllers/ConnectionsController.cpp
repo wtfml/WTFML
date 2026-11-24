@@ -111,11 +111,11 @@ void ConnectionsController::setup() {
     // NOTE: 这里不接「离线模式」勾选框：让身份变的动作是**换账号 / 加一个离线账号**，
     // 而那两个槽自己就会调 m_owner->updateBottomBar()，所以这里不需要对应的接线
     // （底栏名字下面那行写的是"这次启动用哪种身份"）。
-    // 「账号与外观…」的隐藏兼容入口 + 设置页入口。这两条仍然直通那个窗。
+    // 「管理账号与皮肤」的隐藏兼容入口 + 设置页入口。这两条仍然直通那个窗。
     //
     // 主页那张账号卡片（`getAccountSkinButton()`）**不接在这一串里** ——
     // 它点开的是"最近用过的账号"那块面板（接线在 MainWindowUI 自己那儿，见
-    // `toggleAccountsPanel()`），而进「账号与外观」窗的那条路在面板**末行**那一颗。
+    // `toggleAccountsPanel()`），而进「账号与皮肤」窗的那条路在面板**末行**那一颗。
     // 两边都留着的话，点一下卡片会同时冒出面板和那个窗。
     connect(m_owner->m_ui->getAccountSkinSettingsButton(), &QPushButton::clicked, m_owner,
             &MainWindow::onAccountSkinButtonClicked);
@@ -417,7 +417,7 @@ void ConnectionsController::setup() {
     m_owner->m_ui->setGroupActionHandler([this](const QString &groupId, int action) {
         m_owner->onGroupActionRequested(groupId, action);
     });
-    // 齿轮里「把选中的实例移入分组…」弹出的**第二个**框（挑目标）点了哪一组。
+    // 齿轮里「将所选实例移入分组…」弹出的**第二个**框（挑目标）点了哪一组。
     m_owner->m_ui->setGroupPickHandler([this](const QString &groupId) {
         m_owner->setSelectedInstanceHomeGroup(groupId);
     });
@@ -507,7 +507,7 @@ void ConnectionsController::setup() {
     // 加载器那棵树（安装页）：**点一下**那条里的两件事分开办 ——
     // · 点顶层（一个加载器）：**只展开/收起**那一条。展开是"看看有哪些版本"，
     // 看一眼不等于选了它 —— **选中是点版本号那一下的事**；
-    // · 点「不装（纯原版）」：它底下没有版本可展开，点它就是选中它。它也是换加载器的
+    // · 点「不安装（纯原版）」：它底下没有版本可展开，点它就是选中它。它也是换加载器的
     // 唯一退路 —— 选中某一条之后其余几条会变灰（见 m_owner->updateLoaderRows()），
     // 没有它就走不回去了；
     // · 点子条目（一个版本号）：选中它爹那条加载器 + 把这一条钉在这个版本上，**收起**
@@ -528,7 +528,7 @@ void ConnectionsController::setup() {
             const int index =
                 item->data(MainWindowUI::loaderTreeKeyColumn(), Qt::UserRole).toInt();
             // 「预设」那一行：不是加载器（UserRole 是哨兵），点它开弹窗、**不展开**。
-            // 这一段必须在「不装（纯原版）」那条判断之前 —— 否则它会被当成某个加载器。
+            // 这一段必须在「不安装（纯原版）」那条判断之前 —— 否则它会被当成某个加载器。
             if (index == MainWindowUI::installPresetRowRole()) {
                 m_owner->openInstallPresetPicker();
                 return;
@@ -564,7 +564,7 @@ void ConnectionsController::setup() {
     };
     // 接线口和版本树那一条完全一样（鼠标单击 + 键盘回车），另外交待**哪些行是"开/关"**：
     // 点得快的第二发到的是双击事件，只有开关行才补那一发。按上面那三条判据划：
-    // 顶层那几条里除「不装」以外都是开关（「不装」点它是选中，算做事），
+    // 顶层那几条里除「不安装」以外都是开关（「不安装」点它是选中，算做事），
     // 灰的那几条点不动（handler 开头就 return 了，不算）；子条目（版本号）是选中，算做事。
     connectRowActivation(
         m_owner->m_ui->getLoaderTree(), onLoaderTreeClicked, [](QTreeWidgetItem *item) {

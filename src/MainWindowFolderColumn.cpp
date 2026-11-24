@@ -89,7 +89,7 @@ void MainWindow::refreshFolderList() {
         // 还要缀一句 —— 光看路径看不出"这一份现在扫不出东西"。
         row.subtitle = QDir::toNativeSeparators(path);
         if (!QFileInfo(path).isDir()) {
-            row.subtitle += tr("（目录不在了）");
+            row.subtitle += tr("（目录已不存在）");
         }
         rows.append(row);
     }

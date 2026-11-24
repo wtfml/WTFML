@@ -42,7 +42,7 @@ void ServerConsoleController::open(const QString &serverId) {
                 [this](const QString &command) {
                     ServerRun::ServerProcess *process = m_workspace->process(m_serverId);
                     if (process == nullptr || !process->sendCommand(command)) {
-                        if (m_host.log) m_host.log(tr("这一条没有送到服务端（它已经不在跑了）。"));
+                        if (m_host.log) m_host.log(tr("该命令未发送到服务端（服务端已停止运行）。"));
                     }
                 });
         connect(m_page, &ServerConsolePage::stopRequested, this, [this] {

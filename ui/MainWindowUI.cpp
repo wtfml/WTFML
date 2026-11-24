@@ -568,7 +568,7 @@ public:
         QString line1;
         if (failed) {
             reason->setText(card.reason);
-            stopAt->setText(QCoreApplication::translate("MainWindowUI", "停在「%1」").arg(card.stage));
+            stopAt->setText(QCoreApplication::translate("MainWindowUI", "停止于「%1」").arg(card.stage));
             line1 = card.reason;
             mark->finish(false);
         } else if (card.phase == Phase::Succeeded) {
@@ -1959,7 +1959,7 @@ QWidget *MainWindowUI::setupInstancePage() {
         QWidget::setTabOrder(importModpackButton, groupInstanceButton);
         QWidget::setTabOrder(instanceFilterButtons.last(), instanceSearchEdit);
 
-        // 「没有符合筛选条件的实例」那一行：摆在这儿（筛选行下面、树上面）而不是树的
+        // 「无符合筛选条件的实例」那一行：摆在这儿（筛选行下面、树上面）而不是树的
         // 下边 —— 筛空了的时候树是空的，那句话直接跟着筛选行读下来才对得上"是上面那些
         // 条件把它滤没的"。平时收着（`setVisible(false)`，连位置都不占）。
         instanceNoMatchLabel = new QLabel(instanceNoMatchText(), clientPage);
@@ -2326,7 +2326,7 @@ void MainWindowUI::setHomeQuickRows(const QList<HomeQuickItem> &current,
     };
     // ---------- 左下启动区（设计稿 r2 home.html .launch）----------
     // 「当前实例」眉题 + 实例名（手写 40）+ 元信息一行，三样合成一块可点的面（点开实例切换弹层）；
-    // 下面「启动游戏」+ 实例设置。一个实例都没有时：「还没有实例」+「下载游戏」。
+    // 下面「启动游戏」+ 实例设置。一个实例都没有时：「暂无实例」+「下载游戏」。
     if (homeQuickCurrentSection != nullptr && homeQuickCurrentRow != nullptr) {
         closeHomeInstancePicker();  // 它贴着的那一块马上要重建
         if (m_launchRow != nullptr) {
@@ -2376,9 +2376,9 @@ void MainWindowUI::setHomeQuickRows(const QList<HomeQuickItem> &current,
             }
             auto *name = new ElidedLabel(block);
             name->setObjectName(QStringLiteral("homeCurrentName"));
-            name->setText(item.empty ? QCoreApplication::translate("MainWindowUI", "还没有实例") : item.name);
+            name->setText(item.empty ? QCoreApplication::translate("MainWindowUI", "暂无实例") : item.name);
             name->setMinimumWidth(1);
-            // 零实例：「还没有实例」只是一句状态，用普通字阶（16），大标题才是这一屏唯一的手写大字。
+            // 零实例：「暂无实例」只是一句状态，用普通字阶（16），大标题才是这一屏唯一的手写大字。
             name->setMinimumHeight(item.empty ? 28 : 52);
             if (item.empty) {
                 name->setFont(Theme::textFont(name->font(), Theme::TextRole::Heading));

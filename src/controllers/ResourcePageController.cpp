@@ -514,7 +514,7 @@ void ResourcePageController::onDownloadFinished(const QString &label, bool succe
         const Tasks::TaskId activeTask = ledgerTask;
         m_owner.m_downloadTaskLedger->clear();
         if (pending.gameRoot != AppPaths::minecraftDir()) {
-            m_owner.finishTask(activeTask, false, MainWindow::tr("请切回原游戏文件夹再重试这次安装。"));
+            m_owner.finishTask(activeTask, false, MainWindow::tr("请切换回原游戏目录后重试本次安装。"));
             return;
         }
         if (activeTask != Tasks::invalidTaskId() && m_owner.m_activityCenter->tasks()->has(activeTask)) {

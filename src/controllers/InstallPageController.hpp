@@ -47,7 +47,7 @@ public:
 
     /// 进安装页：@param gameVersion 树上点中的那个原版号（这一份要基于它装）。
     ///
-    /// 每次进都**回到「不装（纯原版）」**、清空钉住的版本号 —— 上一个实例选的加载器跟
+    /// 每次进都**回到「不安装（纯原版）」**、清空钉住的版本号 —— 上一个实例选的加载器跟
     /// 这一个没关系。名称框里那份"用户改过没有"也一起清（默认名重新跟着加载器走）。
     /// 用户已经挑好的**预设**不在这里清（见文件头最后那段）。
     void openPage(const QString &gameVersion);
@@ -70,8 +70,8 @@ public:
     /// 那棵树的下标（`loaderKindFromIndex`），摆在别处只会多一处翻译。
     bool pickInstallerJava(const QString &gameVersion, int loaderIndex, QString *out);
 
-    /// 选中某一条加载器（传「不装（纯原版）」那个下标 = 取消加载器）。
-    /// 走这一句的是**点一条版本号**（选中它爹那条加载器）和**点「不装」**那一条 ——
+    /// 选中某一条加载器（传「不安装（纯原版）」那个下标 = 取消加载器）。
+    /// 走这一句的是**点一条版本号**（选中它爹那条加载器）和**点「不安装」**那一条 ——
     /// 点一条加载器**不**选中它，那一下只展开/收起。**不发任何请求**：版本列表是进安装页
     /// 时一次性全问好的。
     void selectLoader(int loaderIndex);
@@ -101,7 +101,7 @@ public:
 
     /// 这一页现在对着哪个原版号（空串 = 没进过安装页）。
     const QString &gameVersion() const { return m_gameVersion; }
-    /// 现在选中的是哪一条加载器（`modLoaderOptionTexts()` 的下标；「不装」也是一个合法值）。
+    /// 现在选中的是哪一条加载器（`modLoaderOptionTexts()` 的下标；「不安装」也是一个合法值）。
     int selectedLoader() const { return m_selectedLoader; }
     /// 某条加载器钉住的那一格：一个具体版本号 / `@latest` / `@stable` / 空串（没挑过）。
     /// **别当成"一定是版本号"** —— 空串在数据层那边按稳定档算。

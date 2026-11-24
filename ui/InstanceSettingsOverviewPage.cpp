@@ -227,7 +227,7 @@ void InstanceSettingsDialog::setupOverviewPage(const QString &instanceId) {
     //
     // **图标**：十档 —— 默认 + 八个内置候选 + 本地那张。内置那八张是版本分类 / 加载器的
     // 标志图（不用担心侵权），另外允许用户自己挑一张本地图片。**每一档都有对应的按钮**
-    // （八个候选各一颗、「恢复默认」、「选一张图片…」），没有"换过去就回不来"的死角。
+    // （八个候选各一颗、「恢复默认」、「选择图片…」），没有"换过去就回不来"的死角。
     //
     // NOTE: 那一排按钮**不是**当前值的出处（它们只是 m_iconChoice 的一幅画）—— 理由见 .hpp
     // 里 setIcon() 上面那一段：本地那一档没有控件能表示它。
@@ -376,7 +376,7 @@ void InstanceSettingsDialog::setupOverviewPage(const QString &instanceId) {
         grid->addWidget(MainWindowPageLayout::makeSettingRow(this, m_lastLaunchLabel, QString(), nullptr), row++, 0, 1, 2);
         auto *resetPlayTime = new QPushButton(tr("重置"), this);
         resetPlayTime->setObjectName(QStringLiteral("instancePlayTimeReset"));
-        resetPlayTime->setToolTip(tr("清掉这个实例已记录的累计游玩时间和上次游玩时长。"));
+        resetPlayTime->setToolTip(tr("清除此实例已记录的累计游玩时间和上次游玩时长。"));
         Theme::markButton(resetPlayTime, Theme::ButtonKind::Danger);
         connect(resetPlayTime, &QPushButton::clicked, this,
                 &InstanceSettingsDialog::resetPlayTimeRequested);
@@ -619,7 +619,7 @@ void InstanceSettingsDialog::setupOverviewPage(const QString &instanceId) {
                         row++, 0, 1, 2);
     }
 
-    // ---------- 「显示哪些页」----------
+    // ---------- 「显示页面」----------
     //
     // 「概览里调整是否显示」：七条一条一个勾选框（顺序见 optionalPageKeys()），勾/不勾
     // 直接决定左栏那一列里有没有这一条；勾掉的记在实例自己的 wtfml.meta 里（见
@@ -678,7 +678,7 @@ void InstanceSettingsDialog::setGameIconChoices(const QList<QPair<QString, QImag
     m_gameIconsLoading = false;
     m_gameIconStatus->setVisible(choices.isEmpty());
     if (choices.isEmpty()) {
-        m_gameIconStatus->setText(tr("客户端文件中没有可用的物品图标。"));
+        m_gameIconStatus->setText(tr("客户端文件中无可用的物品图标。"));
         return;
     }
 

@@ -81,7 +81,7 @@ Entry load(const QString &address) {
     entry.iconPng =
         QByteArray::fromBase64(root.value(QLatin1String(kIconKey)).toString().toLatin1());
     entry.online = root.value(QLatin1String(kOnlineKey)).toBool(false);
-    // 老缓存里没有这个键 ⇒ false ⇒ 界面上写「没连上」（见 Entry::timedOut 那条 NOTE：
+    // 老缓存里没有这个键 ⇒ false ⇒ 界面上写「无法连接」（见 Entry::timedOut 那条 NOTE：
     // 我们确实不知道上一次是怎么没通的，那不算"漏了一句"）。
     entry.timedOut = root.value(QLatin1String(kTimedOutKey)).toBool(false);
     entry.latencyMs = root.value(QLatin1String(kLatencyKey)).toInt(-1);

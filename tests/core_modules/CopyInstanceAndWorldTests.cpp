@@ -271,7 +271,7 @@ void runCopyInstanceAndWorldTests() {
         QString error;
         check(!WorldFiles::copyWorldInto(worldSrc, saves, QStringLiteral("搬进来的"), &error),
               "ZJ3 目标重名就拒绝");
-        check(error.contains(QStringLiteral("已经有一个叫")), "ZJ3 说清了是被重名挡住", error);
+        check(error.contains(QStringLiteral("已存在名为")), "ZJ3 说清了是被重名挡住", error);
         QFile f(saves + QStringLiteral("/搬进来的/其他文件.txt"));
         QByteArray got;
         if (f.open(QIODevice::ReadOnly)) {
@@ -323,7 +323,7 @@ void runCopyInstanceAndWorldTests() {
         writeFileAt(b + QStringLiteral("/level.dat"), "b");
         QString error;
         check(!WorldFiles::renameWorld(a, QStringLiteral("乙"), &error), "ZJ4 重名拒绝");
-        check(error.contains(QStringLiteral("已经有一个叫")), "ZJ4 原因说清了重名", error);
+        check(error.contains(QStringLiteral("已存在名为")), "ZJ4 原因说清了重名", error);
         check(existsAt(a + QStringLiteral("/level.dat")), "ZJ4 被挡住时老目录原样还在");
         QFile f(b + QStringLiteral("/level.dat"));
         QByteArray got;
@@ -740,7 +740,7 @@ void runCopyInstanceAndWorldTests() {
         // 不能报成"已存在同名实例"（用户会以为盘上真有两份）。
         check(!vm.copyInstance(srcId, sourceRoot.path(), srcId, &error),
               "ZJ5 目标是源自己那一份拒绝");
-        check(error.contains(QStringLiteral("就是这一份自己")), "ZJ5 而且原因说的是这话", error);
+        check(error.contains(QStringLiteral("目标与源实例")), "ZJ5 而且原因说的是这话", error);
 
         // 目标落在**源实例目录自己里面** → 拒（ 补的第四道闸）。这一条在数据
         // 层是兜底（界面那一层也有一条，用的是同一个 InstanceFiles::pathIsSameOrInside），
@@ -1207,7 +1207,7 @@ void runCopyInstanceAndWorldTests() {
                                                         QStringLiteral("server.jar"),
                                                         QStringLiteral("nogui")},
                   "ZK8 Paper：装完看 server.jar，启动参数和原版一样");
-            check(plan.note.contains(QStringLiteral("paperBuildsUrl")),
+            check(plan.note.contains(QStringLiteral("构建列表")),
                   "ZK8 Paper：note 把「地址去哪问」点出来了（界面上要照着这句说）", plan.note);
         }
 

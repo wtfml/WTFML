@@ -20,8 +20,8 @@ ServerListController::ServerListController(Host host, QObject *parent)
     : QObject(parent), m_host(std::move(host)) {}
 
 QString ServerListController::displayName(const QString &name) {
-    // 「（无名）」—— 空名字不是"缺了个值"，是一条正经的显示规矩（游戏那边显示成未命名）。
-    return name.isEmpty() ? tr("（无名）") : name;
+    // 「（未命名）」—— 空名字不是"缺了个值"，是一条正经的显示规矩（游戏那边显示成未命名）。
+    return name.isEmpty() ? tr("（未命名）") : name;
 }
 
 bool ServerListController::edit(const QString &instanceId, const QString &oldName,
@@ -48,7 +48,7 @@ bool ServerListController::edit(const QString &instanceId, const QString &oldNam
         m_host.notice(Notice{Notice::Kind::UpdateFailed, problem});
         return false;
     }
-    m_host.log(tr("已改服务器：%1（%2）→ %3（%4）")
+    m_host.log(tr("已修改服务器：%1（%2）→ %3（%4）")
                    .arg(displayName(oldName), oldAddress, displayName(newName), newAddress));
     // 改完重列一遍（**不新开一套"只换一行"的路**）：新表会让那一台的图标 / MOTD / 延迟回到
     // "还没测"，所以顺手照「刷新」那一路重测一遍 —— 用户看见的就是"这一台现在的样子"，
@@ -79,7 +79,7 @@ bool ServerListController::add(const QString &instanceId) {
         m_host.notice(Notice{Notice::Kind::AddFailed, problem});
         return false;
     }
-    m_host.log(tr("已加服务器：%1（%2）").arg(displayName(name), address));
+    m_host.log(tr("已添加服务器：%1（%2）").arg(displayName(name), address));
     m_host.changed(instanceId);
     return true;
 }
@@ -98,7 +98,7 @@ bool ServerListController::remove(const QString &instanceId, const QString &name
         m_host.notice(Notice{Notice::Kind::RemoveFailed, problem});
         return false;
     }
-    m_host.log(tr("已删服务器：%1（%2）").arg(displayName(name), address));
+    m_host.log(tr("已删除服务器：%1（%2）").arg(displayName(name), address));
     m_host.changed(instanceId);
     return true;
 }
@@ -113,7 +113,7 @@ bool ServerListController::removeMany(const QString &instanceId,
         m_host.notice(Notice{Notice::Kind::RemoveFailed, problem});
         return false;
     }
-    m_host.log(tr("已删服务器：%1 台").arg(entries.size()));
+    m_host.log(tr("已删除服务器：%1 台").arg(entries.size()));
     m_host.changed(instanceId);
     return true;
 }
