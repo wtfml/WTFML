@@ -654,10 +654,10 @@ void runToolboxExtraTests() {
         check(Banner::patternIndexById(QStringLiteral("creeper")) >= 0
                   && Banner::patternAt(Banner::patternIndexById(QStringLiteral("creeper")))
                              .item
-                         == QStringLiteral("旗帜图案")
+                         == QStringLiteral("苦力怕盾徽旗帜图案")
                   && Banner::patternIndexById(QStringLiteral("creeper_charge"))
                          == Banner::patternIndexById(QStringLiteral("creeper")),
-              "★★ ZAJ0 苦力怕盾徽用「旗帜图案」；旧 id creeper_charge 仍能认出来",
+              "★★ ZAJ0 苦力怕盾徽用全称「苦力怕盾徽旗帜图案」；旧 id creeper_charge 仍能认出来",
               Banner::patternAt(Banner::patternIndexById(QStringLiteral("creeper"))).item);
         check(Banner::patternIndexById(QStringLiteral("border")) >= 0
                   && Banner::patternAt(Banner::patternIndexById(QStringLiteral("border")))
@@ -764,9 +764,9 @@ void runToolboxExtraTests() {
         check(plan.summary.contains(QStringLiteral("底色 红色 · 2/6 层")),
               "★ ZAJ1 总述写清底色和层数", plan.summary);
         check(plan.command.contains(QStringLiteral("minecraft:red_banner"))
-                  && plan.command.contains(QStringLiteral("{Pattern:\"cross\",Color:0}"))
-                  && plan.command.contains(QStringLiteral("bricks")),
-              "★ ZAJ1 指令里图案、颜色、底色都对得上", plan.command);
+                  && plan.command.contains(QStringLiteral("{Pattern:\"cr\",Color:0}"))
+                  && plan.command.contains(QStringLiteral("{Pattern:\"bri\",Color:15}")),
+              "★ ZAJ1 指令里图案短码、颜色、底色都对得上", plan.command);
         const Banner::Plan brickPlan = Banner::plan(0, {{Banner::patternIndexById(QStringLiteral("bricks")), 0}});
         const Banner::Plan brickOld = Banner::plan(0, {{Banner::patternIndexById(QStringLiteral("bricks")), 0}}, QStringLiteral("1.21"));
         const Banner::Plan brickNew = Banner::plan(0, {{Banner::patternIndexById(QStringLiteral("bricks")), 0}}, QStringLiteral("1.21.2"));
@@ -775,21 +775,36 @@ void runToolboxExtraTests() {
                   && brickNew.materials.contains(QStringLiteral("砖纹旗帜图案 × 1")),
               "★★ ZAJ1 砖纹 1.21.1 及以前不需要图案物品，1.21.2 起要「砖纹旗帜图案」",
               brickNew.materials.join(QStringLiteral(" / ")));
-        check(plan.steps.first().contains(QStringLiteral("→ 叠出「斜十字」"))
+        check(plan.steps.first().contains(QStringLiteral("选择图案「斜十字」"))
                   && !plan.steps.first().contains(QStringLiteral("斜十字斜十字")),
-              "★★ ZAJ1 步骤里图案名和材料之间有分隔，不粘成「斜十字斜十字」",
+              "★★ ZAJ1 步骤用整句写图案名，不粘成「斜十字斜十字」",
               plan.steps.first());
+        const Banner::Plan creeperPlan = Banner::plan(
+            0, {{Banner::patternIndexById(QStringLiteral("creeper")), 0},
+                {Banner::patternIndexById(QStringLiteral("creeper")), 1}});
+        check(creeperPlan.materials.contains(QStringLiteral("苦力怕盾徽旗帜图案 × 1"))
+                  && !creeperPlan.materials.join(QStringLiteral(" "))
+                          .contains(QStringLiteral("苦力怕盾徽旗帜图案 × 2")),
+              "★★ ZAJ1 图案物品在织布机里不消耗，用两次也只记 1 件",
+              creeperPlan.materials.join(QStringLiteral(" / ")));
+        const Banner::Plan flowOld = Banner::plan(
+            0, {{Banner::patternIndexById(QStringLiteral("flow")), 0}}, QStringLiteral("1.20.4"));
+        check(flowOld.ok && flowOld.command.isEmpty()
+                  && flowOld.notes.join(QStringLiteral(" "))
+                         .contains(QStringLiteral("没有 1.20.4 及更早版本的指令写法")),
+              "★★ ZAJ1 涡流没有旧版短码：不给指令，改成提醒",
+              flowOld.notes.join(QStringLiteral(" / ")));
         const QString nbtCommand =
             QStringLiteral("/give @p minecraft:red_banner{BlockEntityTag:{Patterns:"
-                           "[{Pattern:\"cross\",Color:0},{Pattern:\"bricks\",Color:15}]}}");
+                           "[{Pattern:\"cr\",Color:0},{Pattern:\"bri\",Color:15}]}}");
         const QString componentCommand =
             QStringLiteral("/give @p minecraft:red_banner[minecraft:banner_patterns="
                            "[{pattern:\"minecraft:cross\",color:\"white\"},"
                            "{pattern:\"minecraft:bricks\",color:\"black\"}]]");
         check(plan.command == nbtCommand,
-              "★★ ZAJ1 不限版本 / 1.20.4 ⇒ 老写法逐字不变（NBT）", plan.command);
+              "★★ ZAJ1 不限版本 / 1.20.4 ⇒ 短码 NBT 写法", plan.command);
         check(Banner::plan(14, layers, QStringLiteral("1.20.4")).command == nbtCommand,
-              "★★ ZAJ1 1.20.4 ⇒ NBT（分界在这一档之后）",
+              "★★ ZAJ1 1.20.4 ⇒ 短码 NBT（分界在这一档之后）",
               Banner::plan(14, layers, QStringLiteral("1.20.4")).command);
         check(Banner::plan(14, layers, QStringLiteral("1.20.5")).command == componentCommand
                   && Banner::plan(14, layers, QStringLiteral("1.21")).command

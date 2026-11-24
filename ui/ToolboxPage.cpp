@@ -3022,7 +3022,7 @@ QWidget *ToolboxPage::buildBannerPanel() {
     ResultBox result = makeResultBox(panel, QCoreApplication::translate("ToolboxPage", "结果"), bannerResultName(), false);
     m_bannerResult = result.headline;
     m_bannerCopy = makeGlyphButton(result.card, QStringLiteral("toolboxBannerCopy"), Glyph::Copy,
-                                   QCoreApplication::translate("ToolboxPage", "把 /give 指令复制走（按目标版本选择写法）"),
+                                   QCoreApplication::translate("ToolboxPage", "复制 /give 指令（写法随目标版本变化）"),
                                    QCoreApplication::translate("ToolboxPage", "复制指令"));
     m_bannerCopy->setEnabled(false);
     result.head->addWidget(m_bannerCopy);
