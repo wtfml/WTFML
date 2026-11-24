@@ -861,7 +861,7 @@ int runPresetInstallChecks() {
                       problem->text().contains(QStringLiteral("选择「取消」可撤回本次编辑")),
                   "★ 删完说清楚删了几行（并且提醒「取消」能撤回）", problem->text());
             removeUnknown->click();
-            check(problem->text().contains(QStringLiteral("没有未识别的模组")),
+            check(problem->text().contains(QStringLiteral("无未识别的模组")),
                   "★ 再点一次 ⇒ 说「没有没认出来的行」，不是默默无反应", problem->text());
         }
     }

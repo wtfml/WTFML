@@ -102,19 +102,19 @@ QString blockerText(Blocker blocker) {
     case Blocker::TargetIncomplete:
         return QCoreApplication::translate("UpgradePageState", "请选择目标游戏版本和加载器。");
     case Blocker::InstanceBusy:
-        return QCoreApplication::translate("UpgradePageState", "这个实例正在运行或被别的操作占用，等它停下来再升级。");
+        return QCoreApplication::translate("UpgradePageState", "此实例正在运行或被其他操作占用，请等待其结束后再升级。");
     case Blocker::NameEmpty:
-        return QCoreApplication::translate("UpgradePageState", "新实例的名字不能空着。");
+        return QCoreApplication::translate("UpgradePageState", "新实例名称不能为空。");
     case Blocker::NameTaken:
-        return QCoreApplication::translate("UpgradePageState", "这个名字已经有一个实例在用了，换一个。");
+        return QCoreApplication::translate("UpgradePageState", "此名称已被其他实例使用，请更换。");
     case Blocker::NoSelection:
-        return QCoreApplication::translate("UpgradePageState", "至少选一类要迁移的内容。");
+        return QCoreApplication::translate("UpgradePageState", "至少选择一类要迁移的内容。");
     case Blocker::ConfigWithoutMods:
         return QCoreApplication::translate("UpgradePageState", "已选中模组配置，未选中模组文件。请同时迁移模组，或取消迁移相关配置。");
     case Blocker::ReportMissing:
-        return QCoreApplication::translate("UpgradePageState", "先做一次兼容性检查，再确认迁移。");
+        return QCoreApplication::translate("UpgradePageState", "请先执行兼容性检查，再确认迁移。");
     case Blocker::ReportStale:
-        return QCoreApplication::translate("UpgradePageState", "目标或选择改过了，需要重新检查一次。");
+        return QCoreApplication::translate("UpgradePageState", "目标或选择已更改，需要重新检查。");
     case Blocker::None:
         break;
     }

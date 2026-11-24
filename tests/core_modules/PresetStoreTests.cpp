@@ -676,7 +676,7 @@ void runPresetStoreTests() {
     bool escapeOk = true;
     QString escapeReason;
     Presets::loadManifest(root, QStringLiteral("../外面"), &escapeOk, &escapeReason);
-    check(!escapeOk && escapeReason.contains(QStringLiteral("不是一份预设")),
+    check(!escapeOk && escapeReason.contains(QStringLiteral("不是预设")),
           "★ PA5 读那一边也一样，而且说得出为什么", escapeReason);
 
     Presets::PresetManifest forged;

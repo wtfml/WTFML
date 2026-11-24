@@ -743,17 +743,17 @@ PresetManifest loadManifest(const QString &root, const QString &id, bool *ok, QS
     }
     const QString dir = presetDir(root, id);
     if (!isValidPresetId(id)) {
-        return fail(faultAt(dir, QCoreApplication::translate("PresetStore", "这个 id 不是一份预设（预设目录名只能是 UUID）")));
+        return fail(faultAt(dir, QCoreApplication::translate("PresetStore", "此 id 不是预设（预设目录名只能为 UUID）")));
     }
     if (!pathIsInsideRoot(root, dir)) {
-        return fail(faultAt(dir, QCoreApplication::translate("PresetStore", "拼出来的路径跑到预设目录外面去了")));
+        return fail(faultAt(dir, QCoreApplication::translate("PresetStore", "生成的路径超出预设目录")));
     }
     const QString path = manifestPath(root, id);
     if (!QFileInfo::exists(path)) {
         if (!QFileInfo::exists(dir)) {
             return fail(faultAt(dir, QCoreApplication::translate("PresetStore", "已经不在了")));
         }
-        return fail(faultAt(path, QCoreApplication::translate("PresetStore", "不存在（那个目录里没有这一份）")));
+        return fail(faultAt(path, QCoreApplication::translate("PresetStore", "不存在（该目录中无此预设）")));
     }
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {

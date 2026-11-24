@@ -68,8 +68,8 @@ DroppedResource::Result DroppedResource::classify(const QString &path) {
     if (!info.isFile()) {
         // 拖进来的可能是个目录（有人习惯拖文件夹）或者干脆是不存在的东西。两种都算
         // "认不出来"，但**理由不一样**，detail 里说清楚。
-        result.detail = info.isDir() ? QCoreApplication::translate("DroppedResource", "那是一个文件夹，不是文件")
-                                     : QCoreApplication::translate("DroppedResource", "找不到文件");
+        result.detail = info.isDir() ? QCoreApplication::translate("DroppedResource", "该路径为文件夹，不是文件")
+                                     : QCoreApplication::translate("DroppedResource", "未找到文件");
         return result;
     }
 
@@ -88,14 +88,14 @@ DroppedResource::Result DroppedResource::classify(const QString &path) {
             result.kind = ResourceCatalog::Kind::Modpack;
             result.detail = QCoreApplication::translate("DroppedResource", "需要 7-Zip 解压后导入");
         } else {
-            result.detail = QCoreApplication::translate("DroppedResource", "需要 7-Zip 才能解压，本机没找到 7z.exe");
+            result.detail = QCoreApplication::translate("DroppedResource", "需要 7-Zip 解压，本机未找到 7z.exe");
         }
         return result;
     }
     if (suffix != QLatin1String("zip") && suffix != QLatin1String("mrpack")) {
         result.detail = suffix.isEmpty()
                             ? QCoreApplication::translate("DroppedResource", "文件缺少扩展名，无法识别类型")
-                            : QCoreApplication::translate("DroppedResource", "`.%1` 不是能装进来的东西").arg(suffix);
+                            : QCoreApplication::translate("DroppedResource", "`.%1` 不是可安装的内容").arg(suffix);
         return result;
     }
 
@@ -103,9 +103,9 @@ DroppedResource::Result DroppedResource::classify(const QString &path) {
     QStringList entries;
     QString error;
     const ZipUtil::EntryStatus status =
-        ZipUtil::listEntries(path, &entries, &error, QCoreApplication::translate("DroppedResource", "读这个压缩包"));
+        ZipUtil::listEntries(path, &entries, &error, QCoreApplication::translate("DroppedResource", "读取压缩包"));
     if (status == ZipUtil::EntryStatus::NotAnArchive) {
-        result.detail = QCoreApplication::translate("DroppedResource", "无法打开：不是 zip 压缩包，或文件已损坏");
+        result.detail = QCoreApplication::translate("DroppedResource", "无法打开：不是 zip 压缩包或文件已损坏");
         return result;
     }
     if (status != ZipUtil::EntryStatus::Ok) {
@@ -143,13 +143,13 @@ DroppedResource::Result DroppedResource::classify(const QString &path) {
         if (hasSegment(folded, QStringLiteral("assets"))) {
             result.known = true;
             result.kind = ResourceCatalog::Kind::ResourcePack;
-            result.detail = QCoreApplication::translate("DroppedResource", "里面有 pack.mcmeta 和 assets/");
+            result.detail = QCoreApplication::translate("DroppedResource", "包含 pack.mcmeta 与 assets/");
             return result;
         }
         if (hasSegment(folded, QStringLiteral("data"))) {
             result.known = true;
             result.kind = ResourceCatalog::Kind::DataPack;
-            result.detail = QCoreApplication::translate("DroppedResource", "里面有 pack.mcmeta 和 data/");
+            result.detail = QCoreApplication::translate("DroppedResource", "包含 pack.mcmeta 与 data/");
             return result;
         }
     }
@@ -159,7 +159,7 @@ DroppedResource::Result DroppedResource::classify(const QString &path) {
     if (hasSegment(folded, QStringLiteral("shaders"))) {
         result.known = true;
         result.kind = ResourceCatalog::Kind::Shader;
-        result.detail = QCoreApplication::translate("DroppedResource", "里面有 shaders/");
+        result.detail = QCoreApplication::translate("DroppedResource", "包含 shaders/");
         return result;
     }
 
@@ -170,7 +170,7 @@ DroppedResource::Result DroppedResource::classify(const QString &path) {
         return result;
     }
     result.detail = entries.isEmpty()
-                        ? QCoreApplication::translate("DroppedResource", "这个压缩包是空的")
+                        ? QCoreApplication::translate("DroppedResource", "压缩包为空")
                         : QCoreApplication::translate("DroppedResource", "未找到整合包清单、pack.mcmeta 或 shaders/，无法识别压缩包类型");
     return result;
 }

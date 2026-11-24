@@ -60,7 +60,7 @@ QString confirmReason(SectionKind kind) {
     case SectionKind::Custom:
         break;
     }
-    return QCoreApplication::translate("Presets", "「覆盖」会改动目标上已有的东西，需要先确认。");
+    return QCoreApplication::translate("Presets", "「覆盖」会修改目标已有内容，需先确认。");
 }
 
 /// 这一段的种类这一版还认不认识（`Custom` 那一档是用户自己塞进来的、没有任何适配器接手
@@ -309,7 +309,7 @@ QString applyPlanVerb(ApplyMode mode) {
     case ApplyMode::Append:
         return QCoreApplication::translate("Presets", "追加");
     case ApplyMode::CopyIfMissing:
-        return QCoreApplication::translate("Presets", "缺了才拷");
+        return QCoreApplication::translate("Presets", "仅在缺失时复制");
     case ApplyMode::Skip:
         return QCoreApplication::translate("Presets", "跳过");
     }
@@ -337,7 +337,7 @@ QString applyPlanUnit(SectionKind kind) {
 
 QString applyPlanRowText(const ApplyPlanRow &row) {
     if (row.blocked) {
-        return QCoreApplication::translate("Presets", "做不了");
+        return QCoreApplication::translate("Presets", "无法完成");
     }
 
     // 这一档我们做不了主 ⇒ 这一行只说得出口这一件事（`count` 那一趟必然是 0）。
@@ -364,7 +364,7 @@ QString applyPlanRowText(const ApplyPlanRow &row) {
 
     if (!parts.isEmpty()) {
         if (row.removed > 0) {
-            parts.append(QCoreApplication::translate("Presets", "删掉 %1 %2").arg(row.removed).arg(unit));
+            parts.append(QCoreApplication::translate("Presets", "删除 %1 %2").arg(row.removed).arg(unit));
         }
         if (row.conflictCount > 0) {
             parts.append(QCoreApplication::translate("Presets", "冲突 %1 项").arg(row.conflictCount));
@@ -386,7 +386,7 @@ QString applyPlanRowText(const ApplyPlanRow &row) {
     if (row.mode == ApplyMode::Skip) {
         return applyPlanVerb(ApplyMode::Skip);
     }
-    return QCoreApplication::translate("Presets", "不动");
+    return QCoreApplication::translate("Presets", "无变化");
 }
 
 // ---------------------------------------------------------------------------

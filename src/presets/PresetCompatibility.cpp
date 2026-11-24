@@ -61,7 +61,7 @@ QString compatibilityStateKey(CompatibilityState state) {
 
 QString CompatibilitySummary::text() const {
     if (total == 0) {
-        return QCoreApplication::translate("PresetCompatibility", "没有模组引用要检查。");
+        return QCoreApplication::translate("PresetCompatibility", "无待检查的模组引用。");
     }
     QStringList parts;
     if (pending > 0) {
@@ -110,7 +110,7 @@ CompatibilityState localCompatibilityCheck(const ModReference &reference,
                       QCoreApplication::translate("PresetCompatibility", "仅支持 Modrinth 或 CurseForge 平台。"));
     }
     if (reference.projectId.isEmpty()) {
-        return report(CompatibilityState::Invalid, QCoreApplication::translate("PresetCompatibility", "这一条没有项目 id。"));
+        return report(CompatibilityState::Invalid, QCoreApplication::translate("PresetCompatibility", "此条缺少项目 id。"));
     }
     if (!reference.gameVersion.isEmpty() &&
         reference.gameVersion.compare(context.gameVersion.trimmed(), Qt::CaseInsensitive) != 0) {

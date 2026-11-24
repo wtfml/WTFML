@@ -891,7 +891,7 @@ Result parseMultiMCInstance(const QByteArray &mmcPackJson, const QByteArray &ins
         return result;
     }
     if (!customComponents.isEmpty()) {
-        result.problem = QCoreApplication::translate("ModpackImport", "这个 MultiMC / Prism 包依赖自定义启动组件：%1。\n\n目前不能转换它的 patches、专用库和 JVM 参数，因此没有导入，避免生成无法启动的实例。GTNH Java 17+ 的 lwjgl3ify 包请暂用 Prism 导入；这不影响普通标准格式整合包。")
+        result.problem = QCoreApplication::translate("ModpackImport", "此 MultiMC / Prism 整合包依赖自定义启动组件：%1。\n\n目前无法转换其中的 patches、专用库和 JVM 参数，因此未导入，以避免生成无法启动的实例。GTNH Java 17+ 的 lwjgl3ify 整合包请暂用 Prism 导入；普通标准格式整合包不受影响。")
                              .arg(customComponents.join(QCoreApplication::translate("ModpackImport", "、")));
         return result;
     }

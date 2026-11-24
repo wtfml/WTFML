@@ -281,19 +281,19 @@ QString Result::text() const {
                  .arg(copiedFiles)
                  .arg(FileHash::fileSizeText(copiedBytes));
     if (skippedFiles > 0) {
-        parts << QCoreApplication::translate("TransferApply", "跳过 %1 个（目标里已经有同名的，没有覆盖）").arg(skippedFiles);
+        parts << QCoreApplication::translate("TransferApply", "跳过 %1 个（目标中已有同名文件，未覆盖）").arg(skippedFiles);
     }
     if (failedFiles > 0) {
         parts << QCoreApplication::translate("TransferApply", "失败 %1 个").arg(failedFiles);
     }
     QString text = parts.join(QCoreApplication::translate("TransferApply", "，")) + QCoreApplication::translate("TransferApply", "。");
     if (!failures.isEmpty()) {
-        text += QCoreApplication::translate("TransferApply", "\n\n没搬成的：");
+        text += QCoreApplication::translate("TransferApply", "\n\n未迁移的文件：");
         for (const QString &failure : failures) {
             text += QStringLiteral("\n• %1").arg(QDir::toNativeSeparators(failure));
         }
         if (failedFiles > failures.size()) {
-            text += QCoreApplication::translate("TransferApply", "\n• …还有 %1 个").arg(failedFiles - failures.size());
+            text += QCoreApplication::translate("TransferApply", "\n• …另有 %1 个").arg(failedFiles - failures.size());
         }
     }
     return text;
@@ -307,16 +307,16 @@ Result apply(const QString &sourceDir, const QString &targetDir,
     const QString source = sourceDir.trimmed();
     const QString target = targetDir.trimmed();
     if (source.isEmpty() || target.isEmpty()) {
-        result.problem = QCoreApplication::translate("TransferApply", "没有给全源实例和目标实例的目录。");
+        result.problem = QCoreApplication::translate("TransferApply", "未提供完整的源实例和目标实例目录。");
         return result;
     }
     if (!QDir(source).exists()) {
-        result.problem = QCoreApplication::translate("TransferApply", "找不到源实例目录：%1")
+        result.problem = QCoreApplication::translate("TransferApply", "未找到源实例目录：%1")
                              .arg(QDir::toNativeSeparators(source));
         return result;
     }
     if (!QDir(target).exists()) {
-        result.problem = QCoreApplication::translate("TransferApply", "找不到目标实例目录：%1")
+        result.problem = QCoreApplication::translate("TransferApply", "未找到目标实例目录：%1")
                              .arg(QDir::toNativeSeparators(target));
         return result;
     }
@@ -327,7 +327,7 @@ Result apply(const QString &sourceDir, const QString &targetDir,
     // 当目标"）。双向各问一次：往源里面搬 = 自己抄自己，往源外面搬进它的祖先也一样危险。
     if (InstanceFiles::pathIsSameOrInside(source, target)
         || InstanceFiles::pathIsSameOrInside(target, source)) {
-        result.problem = QCoreApplication::translate("TransferApply", "源实例和目标实例是同一份（或互相嵌套），本次未移动任何文件。");
+        result.problem = QCoreApplication::translate("TransferApply", "源实例与目标实例相同或互相嵌套，本次未迁移任何文件。");
         return result;
     }
 
@@ -370,28 +370,28 @@ Result apply(const QString &sourceDir, const QString &targetDir,
 
 QString VerifySummary::text() const {
     if (!ok) return problem;
-    QString head = QCoreApplication::translate("TransferApply", "校验：看过 %1 个文件，缺 %2 个").arg(checkedFiles).arg(missingFiles);
+    QString head = QCoreApplication::translate("TransferApply", "校验：已检查 %1 个文件，缺少 %2 个").arg(checkedFiles).arg(missingFiles);
     if (sizeMismatchFiles > 0) {
-        head += QCoreApplication::translate("TransferApply", "；另有 %1 个目标里原有的同名文件大小不同（按规矩没有覆盖）")
+        head += QCoreApplication::translate("TransferApply", "；另有 %1 个目标中原有的同名文件大小不同（按规则未覆盖）")
                     .arg(sizeMismatchFiles);
     }
     head += QCoreApplication::translate("TransferApply", "。");
     if (!missing.isEmpty()) {
-        head += QCoreApplication::translate("TransferApply", "\n\n没在目标里找到的：");
+        head += QCoreApplication::translate("TransferApply", "\n\n目标中未找到的文件：");
         for (const QString &path : missing) {
             head += QStringLiteral("\n• %1").arg(QDir::toNativeSeparators(path));
         }
         if (missingFiles > missing.size()) {
-            head += QCoreApplication::translate("TransferApply", "\n• …还有 %1 个").arg(missingFiles - missing.size());
+            head += QCoreApplication::translate("TransferApply", "\n• …另有 %1 个").arg(missingFiles - missing.size());
         }
     }
     if (!mismatched.isEmpty()) {
-        head += QCoreApplication::translate("TransferApply", "\n\n大小不同的（原来是目标里就有的）：");
+        head += QCoreApplication::translate("TransferApply", "\n\n大小不同（目标原有）：");
         for (const QString &path : mismatched) {
             head += QStringLiteral("\n• %1").arg(QDir::toNativeSeparators(path));
         }
         if (sizeMismatchFiles > mismatched.size()) {
-            head += QCoreApplication::translate("TransferApply", "\n• …还有 %1 个").arg(sizeMismatchFiles - mismatched.size());
+            head += QCoreApplication::translate("TransferApply", "\n• …另有 %1 个").arg(sizeMismatchFiles - mismatched.size());
         }
     }
     return head;
@@ -404,16 +404,16 @@ VerifySummary verify(const QString &sourceDir, const QString &targetDir,
     const QString source = sourceDir.trimmed();
     const QString target = targetDir.trimmed();
     if (source.isEmpty() || target.isEmpty()) {
-        summary.problem = QCoreApplication::translate("TransferApply", "没有给全源实例和目标实例的目录。");
+        summary.problem = QCoreApplication::translate("TransferApply", "未提供完整的源实例和目标实例目录。");
         return summary;
     }
     if (!QDir(source).exists()) {
-        summary.problem = QCoreApplication::translate("TransferApply", "找不到源实例目录：%1")
+        summary.problem = QCoreApplication::translate("TransferApply", "未找到源实例目录：%1")
                               .arg(QDir::toNativeSeparators(source));
         return summary;
     }
     if (!QDir(target).exists()) {
-        summary.problem = QCoreApplication::translate("TransferApply", "找不到目标实例目录：%1")
+        summary.problem = QCoreApplication::translate("TransferApply", "未找到目标实例目录：%1")
                               .arg(QDir::toNativeSeparators(target));
         return summary;
     }

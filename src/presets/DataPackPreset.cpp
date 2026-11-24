@@ -177,7 +177,7 @@ bool removeTreeNoLinks(const QString &path, QString *problem) {
     }
     if (!info.isDir()) {
         if (!QFile::remove(path)) {
-            *problem = QCoreApplication::translate("Presets", "删不掉「%1」。").arg(path);
+            *problem = QCoreApplication::translate("Presets", "无法删除「%1」。").arg(path);
             return false;
         }
         return true;
@@ -193,7 +193,7 @@ bool removeTreeNoLinks(const QString &path, QString *problem) {
         }
     }
     if (!QDir().rmdir(path)) {
-        *problem = QCoreApplication::translate("Presets", "删不掉目录「%1」。").arg(path);
+        *problem = QCoreApplication::translate("Presets", "无法删除目录「%1」。").arg(path);
         return false;
     }
     return true;
@@ -546,7 +546,7 @@ bool copyOverwrite(const QString &source, const QString &target, QString *proble
     if (!copyTreeWithoutFollowingLinks(source, staging, {}, &copyProblem)) {
         removeTreeNoLinks(staging, &scratch);
         clearJournal(parent, base);
-        *problem = QCoreApplication::translate("Presets", "拷不进去「%1」：%2").arg(target, copyProblem);
+        *problem = QCoreApplication::translate("Presets", "无法复制「%1」：%2").arg(target, copyProblem);
         return false;
     }
     if (!writeJournal(parent, base, stagingName, QString(), QStringLiteral("staged"), problem)) {
@@ -792,7 +792,7 @@ DataPackCaptureReport captureDataPacks(const QString &instanceRoot,
     DataPackCaptureReport report;
 
     if (instanceRoot.trimmed().isEmpty() || !QFileInfo(instanceRoot).isDir()) {
-        report.problem = QCoreApplication::translate("Presets", "找不到实例目录，无法提取数据包。");
+        report.problem = QCoreApplication::translate("Presets", "未找到实例目录，无法提取数据包。");
         return report;
     }
     if (presetFilesRoot.trimmed().isEmpty()) {
@@ -808,11 +808,11 @@ DataPackCaptureReport captureDataPacks(const QString &instanceRoot,
         return report;
     }
     if (isLink(savesInfo)) {
-        report.problem = QCoreApplication::translate("Presets", "「%1」是一根链接，没有跟着它走。").arg(savesPath);
+        report.problem = QCoreApplication::translate("Presets", "「%1」为链接，未跟随。").arg(savesPath);
         return report;
     }
     if (!savesInfo.isDir()) {
-        report.problem = QCoreApplication::translate("Presets", "「%1」不是一个目录，没有扫它。").arg(savesPath);
+        report.problem = QCoreApplication::translate("Presets", "「%1」不是目录，未扫描。").arg(savesPath);
         return report;
     }
 
@@ -826,7 +826,7 @@ DataPackCaptureReport captureDataPacks(const QString &instanceRoot,
 
     for (const QFileInfo &worldDir : worldDirs) {
         if (isLink(worldDir)) {
-            report.problems.append(QCoreApplication::translate("Presets", "存档「%1」是一根链接，没有跟着它走。")
+            report.problems.append(QCoreApplication::translate("Presets", "存档「%1」为链接，未跟随。")
                                        .arg(worldDir.fileName()));
             continue;
         }
@@ -877,12 +877,12 @@ DataPackCaptureReport captureDataPacks(const QString &instanceRoot,
                 continue;
             }
             if (isLink(entry)) {
-                report.problems.append(QCoreApplication::translate("Presets", "「%1」里的「%2」是一根链接，没有收它。")
+                report.problems.append(QCoreApplication::translate("Presets", "「%1」中的「%2」为链接，未收集。")
                                            .arg(world, name));
                 continue;
             }
             if (!InstanceFiles::validatePathSegment(name).isEmpty()) {
-                report.problems.append(QCoreApplication::translate("Presets", "「%1」里有一项名字不能当文件名（%2），没有收它。")
+                report.problems.append(QCoreApplication::translate("Presets", "「%1」中有一项名称不能作为文件名（%2），未收集。")
                                            .arg(world, name));
                 continue;
             }
@@ -922,7 +922,7 @@ DataPackCaptureReport captureDataPacks(const QString &instanceRoot,
     report.sections = made;
     report.worlds = static_cast<int>(worldsWithPacks.size());
     report.packs = static_cast<int>(items.size());
-    report.notes.append(QCoreApplication::translate("Presets", "收了 %1 个存档里的 %2 个数据包。")
+    report.notes.append(QCoreApplication::translate("Presets", "已收集 %1 个存档中的 %2 个数据包。")
                             .arg(report.worlds)
                             .arg(report.packs));
     report.ok = true;
@@ -966,7 +966,7 @@ DataPackPlan planDataPacks(const QString &instanceRoot, const QList<DataPackItem
         const QFileInfo worldInfo(instanceRoot + QLatin1Char('/') + QLatin1String(kSavesDir) +
                                   QLatin1Char('/') + item.world);
         if (!exists && worldInfo.exists()) {
-            plan.problem = QCoreApplication::translate("Presets", "目标上的「saves/%1」不是个目录，没有往里写。")
+            plan.problem = QCoreApplication::translate("Presets", "目标「saves/%1」不是目录，未写入。")
                                .arg(item.world);
             return plan;
         }
@@ -1019,7 +1019,7 @@ DataPackApplyReport applyDataPacks(const QString &presetFilesRoot, const QString
     }
 
     if (instanceRoot.trimmed().isEmpty() || !QFileInfo(instanceRoot).isDir()) {
-        report.problem = QCoreApplication::translate("Presets", "找不到目标实例目录，无法应用数据包。");
+        report.problem = QCoreApplication::translate("Presets", "未找到目标实例目录，无法应用数据包。");
         return report;
     }
     if (presetFilesRoot.trimmed().isEmpty()) {
@@ -1077,7 +1077,7 @@ DataPackApplyReport applyDataPacks(const QString &presetFilesRoot, const QString
         const QString source = presetFilesRoot + QLatin1Char('/') + item.relativePath;
         const QFileInfo sourceInfo(source);
         if (!sourceInfo.exists()) {
-            report.problem = QCoreApplication::translate("Presets", "预设的 files/ 目录中找不到「%1」。")
+            report.problem = QCoreApplication::translate("Presets", "预设的 files/ 目录中未找到「%1」。")
                                  .arg(item.relativePath);
             // 已经落下去的那些留在盘上（和通用文件组那一条一致）。
             return report;
@@ -1090,7 +1090,7 @@ DataPackApplyReport applyDataPacks(const QString &presetFilesRoot, const QString
         // 预设 `files/` 里这一条**路过的**某一层是链接（手改过的预设、或者别处塞进来的
         // 一棵树）：上面那一格只判最后那一个包名，判不到 `saves/` / `datapacks/` 中间层。
         if (InstanceFiles::pathHasLinkComponent(presetFilesRoot, item.relativePath)) {
-            report.problem = QCoreApplication::translate("Presets", "预设里「%1」的路上有一层是链接，没有跟着它走。")
+            report.problem = QCoreApplication::translate("Presets", "预设中「%1」路径包含链接，未跟随。")
                                  .arg(item.relativePath);
             return report;
         }

@@ -528,7 +528,7 @@ void ResourcePageController::onDownloadFinished(const QString &label, bool succe
             tasks->setProgress(activeTask, 0, 0);
             tasks->setDetail(activeTask, tr("正在解析整合包清单…"));
         }
-        m_owner.appendLog(TextMarks::done(tr("%1 下好了：%2").arg(label, errorMessage)));
+        m_owner.appendLog(TextMarks::done(tr("%1 下载完成：%2").arg(label, errorMessage)));
         // 不弹"下载完成"：整合包下回来只是第一步，紧接着就会进入一键导入（不在此提前
         // finishTask），中间夹一个"下好了"等于让他白点一次。
         //
@@ -581,5 +581,5 @@ void ResourcePageController::onDownloadFinished(const QString &label, bool succe
 
     m_owner.appendLog(TextMarks::done(tr("%1 下载完成：%2").arg(label, errorMessage)));
     InlineMessage::information(m_owner.m_ui->overlay(), tr("下载完成"),
-                             tr("%1 已经装进实例里了。\n\n%2").arg(label, errorMessage));
+                             tr("%1 已安装到此实例。\n\n%2").arg(label, errorMessage));
 }
