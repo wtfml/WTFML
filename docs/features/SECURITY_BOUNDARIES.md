@@ -71,7 +71,7 @@ PNG、BMP、WebP 等格式的头部信息可能声明超大分辨率，引发解
 - 逐次确认：配置文件、完整文件名清单、其他文本、全局实例完整列表；没有会话级目录放行。
 - 硬阻断：凭据文件、凭据存储、二进制内容。
 - 严格模式把自动读取类别改为逐次确认，硬阻断不变。
-- `AgentRedaction` 当前方案：键名按 `_`、`-`、`.` 和小写/数字后接大写切词根；命中 `password/passwd/pwd/secret/token/credential(s)/cookie/csrf/session/apikey` 或相邻 `api/key`、`private/key`、`access/key` 时遮值；值少于 6 字符不遮；固定形态覆盖 Bearer、`sk-`、JWT、`AKIA…`、PEM 私钥块。完整说明见 [AGENT.md](AGENT.md) §8.2。
+- `AgentRedaction` 当前方案：键名按 `_`、`-`、`.` 和小写/数字后接大写切词根；命中 `password/passwd/pwd/secret/token/credential(s)/cookie/csrf/session/apikey` 或相邻 `api/key`、`private/key`、`access/key` 时遮值；值少于 6 字符不遮；固定形态覆盖 Bearer、`sk-`、JWT、`AKIA…`、PEM 私钥块。完整说明见 [AGENT.md](AGENT.md) §5.6.2.1。
 - 凭据文件名按 dotenv 家族（`.env`、`*.env`、`*.env.*`）、证书后缀（`pem/key/p12/pfx/jks`）和 `credential`/`secret`/`token`/`apikey`/`api_key`/`api-key` 词根判定；不命中的文件名进入普通文本审批。
 
 ### 4.3 文件工具与审批

@@ -497,7 +497,7 @@
 
 ### 智能体（Agent）
 
-导航第五项是「智能体」，启动仍停在主页。当前能力是自由对话 + 锁定实例内的受控文件工具 + 维护工作流（实例体检、崩溃急救、版本升级接入、模组维护）+ 启动器只读/受控写工具 + stdio MCP + 联网搜索/抓取与固定诊断命令；不含任意命令（`command.run`）、资源安装工具和 HTTP/SSE MCP。设计与边界见 [AGENT.md](features/AGENT.md)、[AGENT_STAGE1A.md](features/AGENT_STAGE1A.md)、[AGENT_STAGE1B.md](features/AGENT_STAGE1B.md)、[AGENT_STAGE2B.md](features/AGENT_STAGE2B.md)、[AGENT_STAGE2A.md](features/AGENT_STAGE2A.md)、[AGENT_STAGE3.md](features/AGENT_STAGE3.md)、[AGENT_STAGE4.md](features/AGENT_STAGE4.md)、[SECURITY_BOUNDARIES.md](features/SECURITY_BOUNDARIES.md)。
+导航第五项是「智能体」，启动仍停在主页。当前能力是自由对话 + 锁定实例内的受控文件工具 + 维护工作流（实例体检、崩溃急救、版本升级接入、模组维护）+ 启动器只读/受控写工具 + stdio MCP + 联网搜索/抓取与固定诊断命令；不含任意命令（`command.run`）、资源安装工具和 HTTP/SSE MCP。行为、工具上限与待人工验证见 [AGENT.md](features/AGENT.md)，安全边界见 [SECURITY_BOUNDARIES.md](features/SECURITY_BOUNDARIES.md)。
 
 **聊天**
 

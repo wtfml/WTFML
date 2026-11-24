@@ -83,7 +83,7 @@
 
 ## 2026-11-10　Agent 功能人工验收（Stage 1A / 1B）
 
-设计与实现见 [AGENT.md](../features/AGENT.md)、[AGENT_STAGE1A.md](../features/AGENT_STAGE1A.md)、[AGENT_STAGE1B.md](../features/AGENT_STAGE1B.md)。测试 provider 为 DeepSeek `deepseek-flash`，用专用可撤销 key；分支 `agent-development`。
+设计与实现见 [AGENT.md](../features/AGENT.md)。测试 provider 为 DeepSeek `deepseek-flash`，用专用可撤销 key；分支 `agent-development`。
 
 **G1A（无工具聊天）：除网络错误外通过。**
 - 范围：启动与导航（五颗顶部导航、900×620）、API/URL 校验（拒绝远程明文 HTTP、userinfo/查询串/片段，本地 HTTP 需显式勾选）、凭据遮挡与 Windows 凭据管理器存储（`WTFML/Agent/<profileId>`）、聊天生命周期（停止保留部分内容标"已中断"、切会话/切页取消在飞请求、关窗有界退出、删除会话先取消）、会话存储与 DPAPI 加密（`%LOCALAPPDATA%\WTFML\agent\sessions\`，加密失败保留明文、解密失败绝不回退明文）、无文件工具/无 MCP。日志、会话、错误卡片、导出里没有明文 key。

@@ -31,7 +31,7 @@
 
 量法：先建好 2000 条 `AgentView::Message`，`QElapsedTimer` 包住 `setMessages` + 一次 `processEvents()`。这一项量的是"极端长会话一次全量重摆"的代价，不是滚动帧率；日常会话切回来走的是同一路径，所以它是上界。
 
-已知：3820 ms 出现在 offscreen 首次布局（含 2000 个 `AgentMessageView` 的创建与 Markdown 渲染），说明**长会话一次性重摆偏慢**。Stage 4 只记录不改实现：真机滚动/切会话的手感留在 G4 人工验收（`AGENT_STAGE3_4_ACCEPTANCE.md` G4-4）里确认，若不可接受，下一步是会话消息懒加载 / 邻居窗口渲染，属于 Stage 5 范围的改动。
+已知：3820 ms 出现在 offscreen 首次布局（含 2000 个 `AgentMessageView` 的创建与 Markdown 渲染），说明**长会话一次性重摆偏慢**。这一项只记录不改实现：真机滚动/切会话的手感留在 [AGENT](../../features/AGENT.md) §13.3 的人工项里确认；若不可接受，下一步是会话消息懒加载 / 邻居窗口渲染。
 
 ## 3. 未测量
 
