@@ -3,6 +3,7 @@
 #include "PresetApply.hpp"
 #include "PresetStore.hpp"
 #include "util/LatestReadLoader.hpp"
+#include <QCoreApplication>
 
 namespace Presets {
 struct PreviewRequest {
@@ -30,7 +31,7 @@ inline PreviewSnapshot preparePreview(const PreviewRequest &request) {
     QString reason;
     result.manifest = loadManifest(request.root, request.presetId, &ok, &reason);
     if (!ok) {
-        result.problem = QStringLiteral("这一份读不出来：%1").arg(reason);
+        result.problem = QCoreApplication::translate("PresetPreviewLoader", "这一份读不出来：%1").arg(reason);
         return result;
     }
     auto target = readTargetSnapshot(request.instanceRoot, &result.problem);

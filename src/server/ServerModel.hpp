@@ -27,6 +27,7 @@
 #pragma once
 
 #include <QByteArray>
+#include <QCoreApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -71,19 +72,19 @@ enum class Status {
 inline QString statusName(Status status) {
     switch (status) {
     case Status::NotInstalled:
-        return QStringLiteral("未安装");
+        return QCoreApplication::translate("ServerModel", "未安装");
     case Status::Ready:
-        return QStringLiteral("可启动");
+        return QCoreApplication::translate("ServerModel", "可启动");
     case Status::Starting:
-        return QStringLiteral("启动中");
+        return QCoreApplication::translate("ServerModel", "启动中");
     case Status::Running:
-        return QStringLiteral("运行中");
+        return QCoreApplication::translate("ServerModel", "运行中");
     case Status::Stopping:
-        return QStringLiteral("停止中");
+        return QCoreApplication::translate("ServerModel", "停止中");
     case Status::Stopped:
-        return QStringLiteral("已停止");
+        return QCoreApplication::translate("ServerModel", "已停止");
     case Status::Crashed:
-        return QStringLiteral("异常退出");
+        return QCoreApplication::translate("ServerModel", "异常退出");
     }
     return QString();
 }
@@ -154,7 +155,7 @@ inline QString eulaFileText(bool accepted) {
     text += QStringLiteral("#By changing the setting below to TRUE you are indicating your "
                            "agreement to our EULA (https://aka.ms/MinecraftEULA).\n");
     text += QStringLiteral("#\n");
-    text += QStringLiteral("#我们（启动器）是在用户主动勾选之后才写这一行的，见 ServerModel 的文件头。\n");
+    text += QStringLiteral("#我们（启动器）是在用户主动勾选之后才写这一行的，见 ServerModel 的文件头。\n");  // i18n-ignore
     text += QStringLiteral("eula=%1\n").arg(accepted ? QStringLiteral("true")
                                                     : QStringLiteral("false"));
     return text;

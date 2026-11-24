@@ -518,7 +518,7 @@ public:
     /// 这里是提示，那里是标题。这个齿轮点下去直接把那一页开出来、不先问什么，
     /// 所以提示不带省略号（Qt 的规矩：点下去还要问点什么的才带）。
     static QString rowInstanceSettingsTipText() { return QCoreApplication::translate("MainWindowUI", "实例设置"); }
-    static QString rowPinTipText() { return QCoreApplication::translate("MainWindowUI", "收藏"); }
+    static QString rowPinTipText() { return QCoreApplication::translate("MainWindowUI", "收藏", "verb"); }
     /// 同一格反过来那一颗（下箭头）弹的话。它是 `rowPinTipText()` 的反义词，
     /// 只说「取消收藏」这一个意思。
     static QString rowUnpinTipText() { return QCoreApplication::translate("MainWindowUI", "取消收藏"); }
@@ -1129,7 +1129,7 @@ public:
         case InstanceFilterButton::Vanilla:
             return QCoreApplication::translate("MainWindowUI", "原版");
         case InstanceFilterButton::Modded:
-            return QCoreApplication::translate("MainWindowUI", "模组");
+            return QCoreApplication::translate("MainWindowUI", "模组", "instance filter");
         case InstanceFilterButton::Updatable:
             return QCoreApplication::translate("MainWindowUI", "可更新");
         case InstanceFilterButton::Recent:
@@ -1260,7 +1260,7 @@ public:
     // 控制台、设置、删除…）全在「更多」与右键菜单里；单击一行 = 进服务端设置。
 
     /// 第三格上的字。**唯一出处** —— 界面照它摆，验证工程照它核。
-    static QString serverStartText() { return QCoreApplication::translate("MainWindowUI", "启动"); }
+    static QString serverStartText() { return QCoreApplication::translate("MainWindowUI", "启动", "start server"); }
     static QString serverStopText() { return QCoreApplication::translate("MainWindowUI", "停止"); }
     static QString serverRepairText() { return QCoreApplication::translate("MainWindowUI", "修复"); }
     /// 停止中（第三格是灰的，等它自己退干净）。
@@ -1563,7 +1563,7 @@ public:
     }
     /// 名单那张表的三格。
     static QStringList serverSettingsPlayerColumns() {
-        return QStringList{QCoreApplication::translate("MainWindowUI", "玩家"), QCoreApplication::translate("MainWindowUI", "身份"),
+        return QStringList{QCoreApplication::translate("MainWindowUI", "玩家", "table column"), QCoreApplication::translate("MainWindowUI", "身份"),
                            QCoreApplication::translate("MainWindowUI", "说明")};
     }
     /// 「加一个…」那颗按钮上的字（封禁 IP 那一档问的是地址，不是名字）。
