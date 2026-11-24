@@ -167,7 +167,7 @@ void ResourceSearchController::fillResourceHitRows(QTreeWidget *tree, ResourceCa
         if (choices.isEmpty()) {
             // 一个游戏版本都没列（数据包那类）。摆一行灰的说清楚 —— 不然这一行看着能展开、
             // 点开却是空的。
-            m_owner.addResourcePlaceholderChild(item, MainWindow::tr("这个%1没有列出支持的游戏版本。")
+            m_owner.addResourcePlaceholderChild(item, MainWindow::tr("此%1未列出支持的游戏版本。")
                                                   .arg(ResourceCatalog::kindLabel(kind)));
         }
         QStringList rows;
@@ -244,11 +244,11 @@ void ResourceSearchController::onResourceSearchFinished(const QString &requestKe
         // **问到了、就是没有** —— 不算错，也**不弹窗**（一个"什么都没发生"的弹窗比没有
         // 更烦人）。用记下来的那个搜索词，别读编辑框里现在的字（理由见 startResourceSearch）。
         const QString &query = completed.query;
-        m_owner.appendLog(MainWindow::tr("%1 一条也没有搜到（%2）。")
+        m_owner.appendLog(MainWindow::tr("%1 无搜索结果（%2）。")
                       .arg(ResourceCatalog::kindLabel(kind), query.isEmpty() ? MainWindow::tr("空搜索词") : query));
         m_owner.addResourcePlaceholderRow(tree, query.isEmpty()
-                                            ? MainWindow::tr("这一类里一条都没有。")
-                                            : MainWindow::tr("没有搜到「%1」。").arg(query));
+                                            ? MainWindow::tr("此类别暂无内容。")
+                                            : MainWindow::tr("未搜索到「%1」。").arg(query));
     }
 }
 
@@ -540,7 +540,7 @@ void ResourceSearchController::downloadResourceVersion(QTreeWidgetItem *item) {
     const auto cached = m_owner.m_resourceVersions.constFind(requestKey);
     if (cached == m_owner.m_resourceVersions.constEnd()) {
         InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("下载失败"),
-            MainWindow::tr("尚未取得此版本的下载信息。请折叠后重新展开上方的游戏版本，再试一次。"));
+            MainWindow::tr("尚未获取此版本的下载信息。请折叠后重新展开上方的游戏版本，再重试。"));
         return;
     }
     const ResourceCatalog::VersionEntry *chosen = nullptr;

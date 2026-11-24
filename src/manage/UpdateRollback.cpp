@@ -185,13 +185,13 @@ Snapshot create(const QString &instanceDir, const QString &instanceId,
     Snapshot snapshot;
     if (instanceId.isEmpty()) {
         if (problemOut != nullptr) {
-            *problemOut = QObject::tr("不知道该给哪个实例做回滚点。");
+            *problemOut = QObject::tr("未指定要创建回滚点的实例。");
         }
         return snapshot;
     }
     if (!QFileInfo(instanceDir).isDir()) {
         if (problemOut != nullptr) {
-            *problemOut = QObject::tr("找不到实例目录：%1")
+            *problemOut = QObject::tr("未找到实例目录：%1")
                               .arg(QDir::toNativeSeparators(instanceDir));
         }
         return snapshot;
@@ -217,7 +217,7 @@ Snapshot create(const QString &instanceDir, const QString &instanceId,
     if (wanted.isEmpty()) {
         // 没有要碰的文件 = 这一趟没有回滚点这回事（调用方不该走到这儿，但别把空目录留下）。
         if (problemOut != nullptr) {
-            *problemOut = QObject::tr("本次没有需要改动的文件。");
+            *problemOut = QObject::tr("本次无需改动文件。");
         }
         return snapshot;
     }
@@ -262,7 +262,7 @@ Snapshot create(const QString &instanceDir, const QString &instanceId,
     if (keepPrevious) {
         if (QFileInfo::exists(previous) && !removeTreeWithoutFollowingLinks(previous)) {
             if (problemOut != nullptr) {
-                *problemOut = QObject::tr("清不掉上一次留下的旧回滚点（%1），它可能正被别的程序占着。")
+                *problemOut = QObject::tr("无法清除上一次遗留的旧回滚点（%1），可能正被其他程序占用。")
                                   .arg(QDir::toNativeSeparators(previous));
             }
             return Snapshot{};
@@ -279,7 +279,7 @@ Snapshot create(const QString &instanceDir, const QString &instanceId,
     // 停：留着上一趟的东西混进这一趟，还原的时候会把上一次的文件写回来。
     if (QFileInfo::exists(dir) && !removeTreeWithoutFollowingLinks(dir)) {
         if (problemOut != nullptr) {
-            *problemOut = QObject::tr("清不掉上一次的回滚点（%1），它可能正被别的程序占着。")
+            *problemOut = QObject::tr("无法清除上一次的回滚点（%1），可能正被其他程序占用。")
                               .arg(QDir::toNativeSeparators(dir));
         }
         restorePrevious();
@@ -355,7 +355,7 @@ Snapshot create(const QString &instanceDir, const QString &instanceId,
     if (!manifest.open(QIODevice::WriteOnly) || manifest.write(bytes) != bytes.size()
         || !manifest.commit()) {
         if (problemOut != nullptr) {
-            *problemOut = QObject::tr("回滚点的清单没写完（%1）。")
+            *problemOut = QObject::tr("回滚点的清单写入不完整（%1）。")
                               .arg(QDir::toNativeSeparators(manifest.fileName()));
         }
         restorePrevious();
@@ -440,7 +440,7 @@ RestoreResult restore(const Snapshot &snapshot, const QString &instanceDir) {
     }
     if (!snapshot.isValid() || !QFileInfo(instanceDir).isDir()) {
         result.failed = 1;
-        result.problems.append(QObject::tr("这一份回滚点用不了（清单不全或者实例目录没了）。"));
+        result.problems.append(QObject::tr("此回滚点不可用（清单不完整或实例目录不存在）。"));
         return result;
     }
     const auto note = [&result](const QString &text) {
@@ -466,7 +466,7 @@ RestoreResult restore(const Snapshot &snapshot, const QString &instanceDir) {
         const QString source = filesDirOf(snapshot.dir) + QLatin1Char('/') + entry.relativePath;
         if (!QFileInfo(source).isFile()) {
             ++result.failed;
-            note(QObject::tr("回滚点里少了「%1」。").arg(entry.relativePath));
+            note(QObject::tr("回滚点中缺少「%1」。").arg(entry.relativePath));
             continue;
         }
         if (!QDir().mkpath(QFileInfo(target).absolutePath())) {
@@ -494,7 +494,7 @@ RestoreResult restore(const Snapshot &snapshot, const QString &instanceDir) {
         }
         if (!copied || !out.commit()) {
             ++result.failed;
-            note(QObject::tr("换不上「%1」。").arg(entry.relativePath));
+            note(QObject::tr("无法替换「%1」。").arg(entry.relativePath));
             continue;
         }
         // 放回去的**对不对**：照清单里记的那个 sha1 对一遍（文件在那儿 ≠ 文件是对的）。

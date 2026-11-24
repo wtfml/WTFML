@@ -444,7 +444,7 @@ void runResourceDetailPageTests() {
                 dismissNextPrompt();
                 clickRow(list, targetRect.center());
                 QApplication::processEvents();
-                check(g_modalTitle == QStringLiteral("下载到哪个实例"),
+                check(g_modalTitle == QStringLiteral("目标实例"),
                       "ZJ6 点版本行打开内置目标选择器，取消不启动安装",
                       g_modalTitle + QStringLiteral(" / ") + g_modalText);
                 check(overlay->pageOpen(),

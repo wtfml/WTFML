@@ -1,6 +1,6 @@
 /**
  * @file MainWindowAccount.cpp
- * @brief 「账号与外观」那一扇窗的接线：登录 / 切号 / 登出 / 上传皮肤 / 挑披风，以及底栏两块面板里账号那一行。
+ * @brief 「账号与皮肤」那一扇窗的接线：登录 / 切号 / 登出 / 上传皮肤 / 挑披风，以及底栏两块面板里账号那一行。
  *
  * 【为什么单独一个翻译单元】
  *
@@ -51,7 +51,7 @@
 
 using namespace MainWindowViewData;
 
-// ============================ 「账号与外观」那个模块 ============================
+// ============================ 「账号与皮肤」那个模块 ============================
 //
 // 三件事在这个模块里的分工（写清楚免得下次改错地方）：
 // - **界面的样子**全在 ui/AccountSkinDialog.{hpp,cpp}（它不 include 任何 src/ 下的头）；
@@ -61,7 +61,7 @@ using namespace MainWindowViewData;
 
 void MainWindow::onAccountSkinButtonClicked() {
     // 覆盖层已经开着时**不能直接 return** —— 屏幕上什么都不发生：用户在别的选项卡上逛，
-    // 实例设置那一页还收着占住那一层；这时按「账号与外观」看着就是"按钮点坏了"。
+    // 实例设置那一页还收着占住那一层；这时按「账号与皮肤」看着就是"按钮点坏了"。
     // 所以并进同一套规矩：**静默收掉占着的那一层，再开**（让位那一段的唯一出处是
     // `runWhenOverlayFree()`）。
     runWhenOverlayFree([this] {
@@ -76,7 +76,7 @@ void MainWindow::onAccountSkinButtonClicked() {
         // 这一版微软登录用不了（没配应用 ID）时，「添加账号」菜单里「微软账号」置灰并带上原因。
         m_accountSkinDialog->setOnlineLoginUnavailable(AuthManager::loginConfigurationError());
         if (!overlay->showPage(m_accountSkinDialog, AccountSkinDialog::windowTitle())) {
-            appendLog(tr("无法打开账号与外观页：界面已被另一页占用。"));
+            appendLog(tr("无法打开账号与皮肤页：界面已被另一页占用。"));
             return;
         }
         QMetaObject::invokeMethod(this, [this] { refreshAccountSkin(); }, Qt::QueuedConnection);
@@ -119,7 +119,7 @@ void MainWindow::setupAccountSkinDialog() {
                 if (error.isEmpty()) {
                     applyCachedCapes(uuid);
                 } else {
-                    appendLog(tr("拉取披风列表失败：%1").arg(error));
+                    appendLog(tr("获取披风列表失败：%1").arg(error));
                 }
             });
     // 披风格画真贴图：走皮肤那套贴图缓存（按地址认领，别的贴图回来对不上地址就不理）。
@@ -282,7 +282,7 @@ void MainWindow::onOfflineAccountRequested(const QString &name) {
         m_accountSkinDialog->clearOfflineNameDraft();
     }
     updateBottomBar();
-    appendLog(tr("已添加离线账号「%1」并切换到它。").arg(trimmed));
+    appendLog(tr("已添加离线账号「%1」并切换到该账号。").arg(trimmed));
     // 列表、状态行、预览、披风这一整套刷新 —— 和切换账号之后做的事情一样。
     //
     refreshAccountSkin();
@@ -318,7 +318,7 @@ void MainWindow::onBottomBarPanelAction(bool account, const QString &key, int ac
             case kRunningPanelStopAction: {
                 ServerRun::ServerProcess *process = m_serverWorkspace->process(serverId);
                 if (process == nullptr || !process->isRunning()) {
-                    appendLog(tr("这个服务端刚刚已经停止了。"));
+                    appendLog(tr("此服务端已停止。"));
                     return;
                 }
                 if (process->status() != ServerModel::Status::Stopping) {
@@ -326,13 +326,13 @@ void MainWindow::onBottomBarPanelAction(bool account, const QString &key, int ac
                 } else if (process->forceKillAllowed()) {
                     m_serverRun->forceKill(serverId);
                 } else {
-                    appendLog(tr("%1：正在停服并等待存盘，宽限期内暂不强制结束。").arg(serverId));
+                    appendLog(tr("%1：正在停止服务并等待存档保存，宽限期内暂不强制结束。").arg(serverId));
                 }
                 return;
             }
             case kRunningPanelSettingsAction:
                 if (!ServerRegistry::serverExists(serverId)) {
-                    appendLog(tr("找不到这个服务端的目录。"));
+                    appendLog(tr("未找到此服务端的目录。"));
                     return;
                 }
                 openServerSettingsPage(serverId);
@@ -356,7 +356,7 @@ void MainWindow::onBottomBarPanelAction(bool account, const QString &key, int ac
             // 那个实例"没关系（用户点的就是这一行）。
             const LauncherManager::GameSession game = m_launcherManager->session(key.toInt());
             if (game.sessionId == 0) {
-                appendLog(tr("这个实例刚刚已经结束了。"));
+                appendLog(tr("此实例已结束。"));
                 return;
             }
             openInstanceSettings(game.versionId);
@@ -397,7 +397,7 @@ void MainWindow::logoutCurrentAccount() {
     // 手里还攥着他的状态"）。清干净之后 loggedIn() 是 false，界面自己退回未登录那一档。
     m_authManager->reloadStoredAccount();
     updateBottomBar();
-    appendLog(tr("已退出账号「%1」（账号仍保留在列表中，点该行的「选择」或「登录」即可重新登录）。")
+    appendLog(tr("已退出账号「%1」（账号仍保留在列表中，单击该行的「选择」或「登录」可重新登录）。")
                   .arg(name));
     // 外观也得跟着回默认：预览、账号列表里那个「当前」标记、披风列表都要重画一遍。
     // 没登录这一档走上半截就返回了（loadSavedToken() 取不到令牌），不会去联网。
@@ -462,7 +462,7 @@ void MainWindow::onAccountRemoveRequested(const QString &uuid) {
         // 两种失败：列表里本来就没有它；或者列表项删了、但活动槽那几个键没清干净
         // （R13，removeError 里写着原因）。
         InlineMessage::warning(m_ui->overlay(), tr("删除账号失败"),
-                             removeError.isEmpty() ? tr("这个账号不在已保存的列表里。")
+                             removeError.isEmpty() ? tr("此账号不在已保存的列表中。")
                                                    : removeError);
         return;
     }
@@ -508,13 +508,12 @@ void MainWindow::onSkinUploadRequested(const QString &path, const QString &varia
     const QImage image = ImageDecode::decode(png, kPickedSkinLimits);
     if (image.isNull()) {
         InlineMessage::warning(m_ui->overlay(), tr("上传皮肤失败"),
-                             tr("「%1」不是一张能读出来的图片。").arg(fileName));
+                             tr("「%1」不是可读取的图片。").arg(fileName));
         return;
     }
     if (!SkinApi::isAcceptableSkinSize(image.width(), image.height())) {
         InlineMessage::warning(m_ui->overlay(), tr("上传皮肤失败"),
-                             tr("皮肤图必须是 64×64（新格式）或者 64×32（老格式），这张是 "
-                                "%1×%2。")
+                             tr("皮肤图片须为 64×64（新格式）或 64×32（旧格式），当前图片为 %1×%2。")
                                  .arg(image.width())
                                  .arg(image.height()));
         return;
@@ -541,8 +540,8 @@ void MainWindow::onOfflineSkinPickRequested(const QString &path, const QString &
     const QString uuid = AccountStore::activeUuid();
     if (!AccountStore::isOffline(uuid)) {
         // 界面上这一颗只在离线档露着；真走到这里说明状态已经变了（比如另一处刚切了账号）。
-        InlineMessage::warning(m_ui->overlay(), tr("换皮肤失败"),
-                               tr("当前不是离线账号，这一张没有换。"));
+        InlineMessage::warning(m_ui->overlay(), tr("更换皮肤失败"),
+                               tr("当前不是离线账号，未更换皮肤。"));
         return;
     }
     const QString fileName = QFileInfo(path).fileName();
@@ -556,25 +555,24 @@ void MainWindow::onOfflineSkinPickRequested(const QString &path, const QString &
         skinFile.close();
     }
     if (image.isNull()) {
-        InlineMessage::warning(m_ui->overlay(), tr("换皮肤失败"),
-                               tr("读不到「%1」这张图（或者它不是一张能读出来的图片）。")
+        InlineMessage::warning(m_ui->overlay(), tr("更换皮肤失败"),
+                               tr("无法读取「%1」（或其不是可读取的图片）。")
                                    .arg(fileName));
         return;
     }
     if (!SkinApi::isAcceptableSkinSize(image.width(), image.height())) {
-        InlineMessage::warning(m_ui->overlay(), tr("换皮肤失败"),
-                               tr("皮肤图必须是 64×64（新格式）或者 64×32（老格式），这张是 "
-                                  "%1×%2。")
+        InlineMessage::warning(m_ui->overlay(), tr("更换皮肤失败"),
+                               tr("皮肤图片须为 64×64（新格式）或 64×32（旧格式），当前图片为 %1×%2。")
                                    .arg(image.width())
                                    .arg(image.height()));
         return;
     }
     QString error;
     if (!OfflineSkin::save(uuid, image, variant, &error)) {
-        InlineMessage::warning(m_ui->overlay(), tr("换皮肤失败"), error);
+        InlineMessage::warning(m_ui->overlay(), tr("更换皮肤失败"), error);
         return;
     }
-    appendLog(tr("已换成自己挑的皮肤（模型 %1）。").arg(OfflineSkin::loadModel(uuid)));
+    appendLog(tr("已更换为自选皮肤（模型 %1）。").arg(OfflineSkin::loadModel(uuid)));
     // 重走一遍：主页的小人、底栏的头像、这一页的 3D 预览都是同一份图（见
     // PlayerSkinController::reload() 里手动那张排在最前面）。
     refreshAccountSkin();
@@ -678,7 +676,7 @@ void MainWindow::onLoginStarted() {
     // 忙态由 onLoginFailed() 松开。
     if (m_accountSkinDialog != nullptr) {
         m_accountSkinDialog->setCapeLoading({});
-        m_accountSkinDialog->setBusy(true, tr("正在等浏览器完成登录…"));
+        m_accountSkinDialog->setBusy(true, tr("正在等待浏览器完成登录…"));
     }
 }
 

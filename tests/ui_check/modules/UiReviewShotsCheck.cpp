@@ -445,7 +445,7 @@ QList<MainWindowUI::PanelRow> accountRows(bool signedIn) {
     MainWindowUI::PanelRow steve;
     steve.key = QStringLiteral("steve");
     steve.title = QStringLiteral("Steve");
-    steve.subtitle = QStringLiteral("正版");
+    steve.subtitle = QStringLiteral("微软");
     steve.icon = faceMark(QColor(0x3c, 0x9e, 0x7a), QStringLiteral("S"), 32);
     steve.checked = true;
     rows.append(steve);
@@ -1307,7 +1307,7 @@ int runExtended(QApplication &app, const ShotOptions &options) {
     ui.getTabWidget()->setCurrentIndex(MainWindowUI::homeTabIndex());
     MainWindowUI::HomeQuickItem none;
     none.key = QStringLiteral("none");
-    none.name = QStringLiteral("还没有实例");
+    none.name = QStringLiteral("暂无实例");
     none.empty = true;
     ui.setHomeQuickRows({none}, {}, {});
     saveShot(app, window, options.out, QStringLiteral("home-empty"), &saved);
@@ -2640,8 +2640,8 @@ int runSite(QApplication &app, const ShotOptions &options) {
         InlineMessageBox box(
             MessageKind::Question, QCoreApplication::translate("ImportController", "开始导入"),
             demoText("整合包：Fabulously Optimized 6.1\nMinecraft：1.21.1 + Fabric 0.16.9\n"
-                     "要下载的文件：87 个\n装到：D:\\Games\\WTFML\\instances\\光影与优化-1.21.1\n\n"
-                     "开始导入吗？",
+                     "要下载的文件：87 个\n安装到：D:\\Games\\WTFML\\instances\\光影与优化-1.21.1\n\n"
+                     "是否开始导入？",
                      "Modpack: Fabulously Optimized 6.1\nMinecraft: 1.21.1 + Fabric 0.16.9\n"
                      "Files to download: 87\nInstall to: D:\\Games\\WTFML\\instances\\Shaders & Performance 1.21.1\n\n"
                      "Start import?"),
@@ -2799,7 +2799,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
             }
             {
                 InlineMessageBox box(
-                    MessageKind::Question, QCoreApplication::translate("ModpackExportController", "继续导出吗"),
+                    MessageKind::Question, QCoreApplication::translate("ModpackExportController", "是否继续导出"),
                     demoText("3 个文件在 Modrinth 与 CurseForge 都没查到出处：\n"
                              "mods/optifine-compat-1.0.3.jar\nmods/自定义合成表.jar\nconfig/rare-recipes.json\n\n"
                              "继续的话，认不出出处的文件会原样打进包里：别人装上照样能用，"
@@ -3313,7 +3313,7 @@ int runLegacy(QApplication &app, const QString &out) {
 
         MainWindowUI::HomeQuickItem none;
         none.key = QStringLiteral("none");
-        none.name = QStringLiteral("还没有实例");
+        none.name = QStringLiteral("暂无实例");
         none.empty = true;
         ui.setHomeQuickRows({none}, {}, {});
 

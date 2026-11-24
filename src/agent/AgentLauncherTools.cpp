@@ -10,10 +10,15 @@
 #include "AgentRedaction.hpp"
 
 #include "../manage/InstanceFiles.hpp"
+#include "AgentRepairTransaction.hpp"
+#include "AgentWorkspaceStore.hpp"
 #include "../settings/GlobalJavaSettings.hpp"
 #include "../util/SystemMemory.hpp"
 
 #include <QCryptographicHash>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QUuid>
@@ -137,7 +142,9 @@ QList<AgentToolSpec> AgentLauncherTools::specs() {
                                   {{QStringLiteral("fileName"),
                                     stringField(QStringLiteral("string"), 260)},
                                    {QStringLiteral("enabled"),
-                                    QJsonObject{{QStringLiteral("type"), QStringLiteral("boolean")}}}})));
+                                    QJsonObject{{QStringLiteral("type"), QStringLiteral("boolean")}}},
+                                   {QStringLiteral("workspaceId"),
+                                    stringField(QStringLiteral("string"), 80)}})));
     list.append(spec(QStringLiteral("settings.get"), QStringLiteral("读启动器设置"),
                      QStringLiteral("只返回白名单键的非路径字段。"), AgentRisk::ReadOnly,
                      objectSchema({}, {})));
@@ -147,7 +154,9 @@ QList<AgentToolSpec> AgentLauncherTools::specs() {
                                   {{QStringLiteral("key"), enumField(settingsKeys())},
                                    {QStringLiteral("value"),
                                     QJsonObject{{QStringLiteral("type"), QStringLiteral("string")},
-                                                {QStringLiteral("maxLength"), 2048}}}})));
+                                                {QStringLiteral("maxLength"), 2048}}},
+                                   {QStringLiteral("workspaceId"),
+                                    stringField(QStringLiteral("string"), 80)}})));
     list.append(spec(QStringLiteral("java.list"), QStringLiteral("列本机 Java"),
                      QStringLiteral("只返回主版本等非路径字段。"), AgentRisk::ReadOnly,
                      objectSchema({}, {})));
@@ -843,6 +852,25 @@ AgentToolResult AgentLauncherTools::handleSettingsSet(const Agent::ToolCall &cal
         }
         parsed = number;
     }
+    const QString workspaceId = call.arguments.value(QStringLiteral("workspaceId")).toString();
+    QString transactionId;
+    if (!workspaceId.isEmpty()) {
+        AgentRepairTransactionStore transactions;
+        AgentRepairTransactionRecord record;
+        if (!transactions.loadByWorkspace(workspaceId, &record, &problem) ||
+            record.instanceId != context.instanceId) {
+            return errorResult(Agent::ErrorKind::ToolError,
+                               problem.isEmpty() ? QStringLiteral("工作区没有对应事务。") : problem);  // i18n-ignore
+        }
+        transactionId = record.id;
+    } else {
+        AgentRepairTransactionStore transactions;
+        AgentRepairTransactionRecord active;
+        if (transactions.activeForInstance(context.instanceId, &active, &problem)) {
+            return errorResult(Agent::ErrorKind::ToolError,
+                               QStringLiteral("事务活动期间不能直接改启动器设置；请带 workspaceId。"));  // i18n-ignore
+        }
+    }
     Pending pending;
     pending.kind = Pending::Kind::SettingsWrite;
     pending.call = call;
@@ -850,6 +878,8 @@ AgentToolResult AgentLauncherTools::handleSettingsSet(const Agent::ToolCall &cal
     pending.key = key;
     pending.value = parsed;
     pending.oldValue = oldValue;
+    pending.workspaceId = workspaceId;
+    pending.transactionId = transactionId;
     pending.egress = writeEgress(QStringLiteral("instance-metadata"));
     const QString summary = QStringLiteral("修改设置 %1：%2 → %3")
                                 .arg(key, oldValue.toVariant().toString(), raw);
@@ -873,23 +903,50 @@ AgentToolResult AgentLauncherTools::handleModsSetEnabled(const Agent::ToolCall &
         return errorResult(Agent::ErrorKind::ToolError,
                            QStringLiteral("只处理 .jar / .jar.disabled 文件。"));
     }
-    QList<AgentHostModEntry> mods;
-    if (!m_host->mods(context.instanceId, &mods, &problem)) {
-        return errorResult(Agent::ErrorKind::ToolError, problem);
-    }
-    bool found = false;
-    for (const AgentHostModEntry &entry : mods) {
-        if (entry.fileName == fileName) {
-            found = true;
-            if (entry.enabled == enable) {
-                return errorResult(Agent::ErrorKind::ToolError,
-                                   enable ? QStringLiteral("这个模组已经是启用状态。")
-                                          : QStringLiteral("这个模组已经是停用状态。"));
+    const QString workspaceId = call.arguments.value(QStringLiteral("workspaceId")).toString();
+    if (!workspaceId.isEmpty()) {
+        AgentWorkspaceStore workspaces;
+        AgentWorkspaceRecord workspace;
+        if (!workspaces.load(workspaceId, &workspace, &problem) ||
+            workspace.sourceInstanceId != context.instanceId) {
+            return errorResult(Agent::ErrorKind::ToolError,
+                               problem.isEmpty() ? QStringLiteral("工作区与当前实例不匹配。") : problem);  // i18n-ignore
+        }
+        const QString path = workspace.rootPath + QStringLiteral("/versions/") +
+                             workspace.versionId + QStringLiteral("/mods/") + fileName;
+        if (!QFileInfo(path).isFile()) {
+            return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("工作区 mods 里没有这个文件。"));  // i18n-ignore
+        }
+        if (fileName.endsWith(QStringLiteral(".jar")) == enable) {
+            return errorResult(Agent::ErrorKind::ToolError,
+                               enable ? QStringLiteral("这个模组已经是启用状态。")  // i18n-ignore
+                                      : QStringLiteral("这个模组已经是停用状态。"));  // i18n-ignore
+        }
+    } else {
+        AgentRepairTransactionStore transactions;
+        AgentRepairTransactionRecord active;
+        if (transactions.activeForInstance(context.instanceId, &active, &problem)) {
+            return errorResult(Agent::ErrorKind::ToolError,
+                               QStringLiteral("事务活动期间不能直接改原实例；请带 workspaceId。"));  // i18n-ignore
+        }
+        QList<AgentHostModEntry> mods;
+        if (!m_host->mods(context.instanceId, &mods, &problem)) {
+            return errorResult(Agent::ErrorKind::ToolError, problem);
+        }
+        bool found = false;
+        for (const AgentHostModEntry &entry : mods) {
+            if (entry.fileName == fileName) {
+                found = true;
+                if (entry.enabled == enable) {
+                    return errorResult(Agent::ErrorKind::ToolError,
+                                       enable ? QStringLiteral("这个模组已经是启用状态。")  // i18n-ignore
+                                              : QStringLiteral("这个模组已经是停用状态。"));  // i18n-ignore
+                }
             }
         }
-    }
-    if (!found) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("mods 里没有这个文件。"));
+        if (!found) {
+            return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("mods 里没有这个文件。"));  // i18n-ignore
+        }
     }
     Pending pending;
     pending.kind = Pending::Kind::ModToggle;
@@ -897,6 +954,7 @@ AgentToolResult AgentLauncherTools::handleModsSetEnabled(const Agent::ToolCall &
     pending.context = context;
     pending.fileName = fileName;
     pending.enable = enable;
+    pending.workspaceId = workspaceId;
     pending.egress = writeEgress(QStringLiteral("file-name-list"));
     const QString summary = QStringLiteral("%1 模组：%2")
                                 .arg(enable ? QStringLiteral("启用") : QStringLiteral("停用"),
@@ -954,6 +1012,15 @@ AgentToolResult AgentLauncherTools::handleBackupCreate(const Agent::ToolCall &ca
 
 AgentToolResult AgentLauncherTools::handleBackupRestore(const Agent::ToolCall &call,
                                                         const AgentToolContext &context) {
+    {
+        AgentRepairTransactionStore transactions;
+        AgentRepairTransactionRecord active;
+        QString problem;
+        if (transactions.activeForInstance(context.instanceId, &active, &problem)) {
+            return errorResult(Agent::ErrorKind::ToolError,
+                               QStringLiteral("事务活动期间不能直接恢复备份；请先提交或回滚事务。"));  // i18n-ignore
+        }
+    }
     const QString backupId = call.arguments.value(QStringLiteral("backupId")).toString();
     QList<AgentHostBackupRef> backups;
     QString problem;
@@ -1000,7 +1067,14 @@ AgentToolResult AgentLauncherTools::resolveApproval(const QString &approvalId, b
     case Pending::Kind::SettingsWrite: {
         QJsonObject applied;
         QString problem;
-        if (!m_host->applySetting(pending.key, pending.value, &applied, &problem)) {
+        if (!pending.workspaceId.isEmpty()) {
+            AgentRepairTransactionStore transactions;
+            if (!transactions.recordSetting(pending.transactionId, pending.key, pending.oldValue,
+                                            pending.value, &problem)) {
+                return errorResult(Agent::ErrorKind::ToolError, problem);
+            }
+            applied = QJsonObject{{QStringLiteral("transaction"), true}};
+        } else if (!m_host->applySetting(pending.key, pending.value, &applied, &problem)) {
             return errorResult(Agent::ErrorKind::ToolError, problem);
         }
         QJsonObject data{{QStringLiteral("key"), pending.key},
@@ -1020,8 +1094,29 @@ AgentToolResult AgentLauncherTools::resolveApproval(const QString &approvalId, b
     case Pending::Kind::ModToggle: {
         QString previous;
         QString problem;
-        if (!m_host->setModEnabled(pending.context.instanceId, pending.fileName, pending.enable,
-                                   &previous, &problem)) {
+        if (!pending.workspaceId.isEmpty()) {
+            AgentWorkspaceStore workspaces;
+            AgentWorkspaceRecord workspace;
+            if (!workspaces.load(pending.workspaceId, &workspace, &problem)) {
+                return errorResult(Agent::ErrorKind::ToolError, problem);
+            }
+            const QString mods = workspace.rootPath + QStringLiteral("/versions/") +
+                                 workspace.versionId + QStringLiteral("/mods");
+            const QString from = mods + QLatin1Char('/') + pending.fileName;
+            previous = pending.fileName;
+            QString toName = pending.fileName;
+            if (pending.enable) {
+                if (toName.endsWith(QStringLiteral(".jar.disabled"))) toName.chop(5);
+            } else if (!toName.endsWith(QStringLiteral(".jar.disabled"))) {
+                toName += QStringLiteral(".disabled");
+            }
+            const QString to = mods + QLatin1Char('/') + toName;
+            if (QFileInfo::exists(to) || !QFile::rename(from, to)) {
+                return errorResult(Agent::ErrorKind::ToolError,
+                                   QStringLiteral("工作区模组改名失败。"));  // i18n-ignore
+            }
+        } else if (!m_host->setModEnabled(pending.context.instanceId, pending.fileName,
+                                          pending.enable, &previous, &problem)) {
             return errorResult(Agent::ErrorKind::ToolError, problem);
         }
         AgentToolResult result;

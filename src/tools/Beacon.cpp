@@ -231,15 +231,16 @@ int sharedBaseBlocks(int level, int beaconCount) {
 
 QString sharedBaseText(int level, int beaconCount) {
     if (!isValidLevel(level)) {
-        return QCoreApplication::translate("Beacon", "信标等级只有 1 – 4 级（%1 不是一个真的等级）。").arg(level);
+        return QCoreApplication::translate("Beacon", "信标等级须为 1 – 4（当前为 %1）。").arg(level);
     }
     if (beaconCount < 1 || beaconCount > maxBeaconCount()) {
-        return QCoreApplication::translate("Beacon", "信标颗数只能算 1 – %1 颗（%2 颗超出范围）。")
+        return QCoreApplication::translate("Beacon", "信标数量须在 1 – %1 颗之间，当前为 %2 颗。")
             .arg(maxBeaconCount())
             .arg(beaconCount);
     }
     const QString each =
-        QCoreApplication::translate("Beacon", "每颗信标另需 %1 块黑曜石 + %2 颗下界之星 + %3 块玻璃（合成表：底下 3 块黑曜石、中间一颗下界之星、四周 5 块玻璃）。")
+        QCoreApplication::translate("Beacon", "每颗信标另需 %1 块黑曜石 + %2 颗下界之星 + %3 块玻璃（合成表："
+                                              "最下方 3 块黑曜石、中间一颗下界之星、四周 5 块玻璃）。")
             .arg(kObsidianPerBeacon)
             .arg(kStarPerBeacon)
             .arg(kGlassPerBeacon);
@@ -257,7 +258,7 @@ QString sharedBaseText(int level, int beaconCount) {
                      .arg(layout.blocks)
                      .arg(separate);
     sentences << each;
-    sentences << QCoreApplication::translate("Beacon", "%1 颗一共 %2 块黑曜石、%1 颗下界之星、%3 块玻璃。")
+    sentences << QCoreApplication::translate("Beacon", "%1 颗共需 %2 块黑曜石、%1 颗下界之星、%3 块玻璃。")
                      .arg(beaconCount)
                      .arg(beaconCount * kObsidianPerBeacon)
                      .arg(beaconCount * kGlassPerBeacon);
@@ -277,7 +278,7 @@ QStringList effectsForLevel(int level) {
 
 QString summaryText(int level) {
     if (!isValidLevel(level)) {
-        return QCoreApplication::translate("Beacon", "信标等级只有 1 – 4 级（%1 不是一个真的等级）。").arg(level);
+        return QCoreApplication::translate("Beacon", "信标等级须为 1 – 4（当前为 %1）。").arg(level);
     }
     return QCoreApplication::translate("Beacon", "%1 级信标：范围 %2 格，底座共 %3 块。")
         .arg(level)
@@ -287,17 +288,17 @@ QString summaryText(int level) {
 
 QString detailText(int fromLevel, int level) {
     if (!isValidLevel(level)) {
-        return QCoreApplication::translate("Beacon", "信标等级只有 1 – 4 级（%1 不是一个真的等级）。").arg(level);
+        return QCoreApplication::translate("Beacon", "信标等级须为 1 – 4（当前为 %1）。").arg(level);
     }
     if (fromLevel < 0 || fromLevel > maxLevel()) {
-        return QCoreApplication::translate("Beacon", "「现在已有几级」只能是 0 – 4（%1 越界了）。").arg(fromLevel);
+        return QCoreApplication::translate("Beacon", "「当前等级」须为 0 – 4（%1 超出范围）。").arg(fromLevel);
     }
 
     QStringList lines;
     lines << summaryText(level);
     // 说的是**从下面数第 level 层**（搭到这一级时新铺的那一层，也是最大的那一层）——
     // 不是"最上面那一层"：最上面永远是 3 × 3。
-    lines << QCoreApplication::translate("Beacon", "• 第 %1 层：%2 × %2 = %3 块（最上面那层固定 3 × 3）")
+    lines << QCoreApplication::translate("Beacon", "• 第 %1 层：%2 × %2 = %3 块（最上层固定 3 × 3）")
                  .arg(level)
                  .arg(2 * level + 1)
                  .arg(layerBlocks(level));
@@ -312,12 +313,12 @@ QString detailText(int fromLevel, int level) {
     }
     lines << QCoreApplication::translate("Beacon", "• 效果：%1").arg(effectsForLevel(level).join(QCoreApplication::translate("Beacon", "、")));
     if (level < maxLevel()) {
-        lines << QCoreApplication::translate("Beacon", "• 升到 %1 级：再加 %2 块，范围 %3 格")
+        lines << QCoreApplication::translate("Beacon", "• 升至 %1 级：需再添加 %2 块，范围 %3 格")
                      .arg(level + 1)
                      .arg(layerBlocks(level + 1))
                      .arg(effectRange(level + 1));
     }
-    lines << QCoreApplication::translate("Beacon", "• 信标放在金字塔正中间，上方留出天空（可用玻璃）");
+    lines << QCoreApplication::translate("Beacon", "• 信标置于金字塔正中，上方须露出天空（可用玻璃）");
     return lines.join(QLatin1Char('\n'));
 }
 

@@ -56,7 +56,7 @@ void DirectDownloadController::attach(DownloadToolPanel *panel) {
     });
     panel->onCache = [this](int action) {
         if (action == 3 && !InlineMessage::question(m_overlay, tr("清空闲置续传缓存"),
-            tr("只删未被任务使用的分段和续传记录，已下载的文件不受影响。"),
+            tr("仅删除未被任务使用的分段和续传记录，已下载的文件不受影响。"),
             tr("清空"), tr("取消"), false, true)) return;
         manageCache(action);
     };
@@ -114,7 +114,7 @@ bool DirectDownloadController::start(const DirectDownloadRequest &request, bool 
     if (m_stopping) return reject(tr("启动器正在关闭，不能新增下载。"));
     if (!m_activity) return reject(tr("任务中心尚未就绪。"));
     loadRecovery();
-    if (m_recoveries.size() >= 64) return reject(tr("待恢复下载已达64项，请先继续或取消已有任务。"));
+    if (m_recoveries.size() >= 64) return reject(tr("待恢复下载已达 64 项，请先继续或取消已有任务。"));
     if (!QDir::isAbsolutePath(request.path)) return reject(tr("目标文件必须是绝对路径。"));
     DirectDownloadRequest validated;
     if (!DirectDownloadRequest::parse(request.url.toString(), QFileInfo(request.path).absolutePath(), QFileInfo(request.path).fileName(), &validated, error)) return false;
@@ -226,7 +226,7 @@ void DirectDownloadController::updateProgress(qint64 done, qint64 total) {
     const auto size = [](qint64 bytes) { return QLocale().formattedDataSize(qMax<qint64>(0, bytes)); };
     const qint64 speed = m_rate.bytesPerSecond(now);
     m_status = tr("%1 / %2 / %3").arg(size(done), total > 0 ? size(total) : tr("大小未知"),
-        speed < 0 ? tr("测量速度中…") : size(speed) + QStringLiteral("/s"));
+        speed < 0 ? tr("正在测量速度…") : size(speed) + QStringLiteral("/s"));
     if (total > done) {
         const qint64 eta = m_rate.remainingSeconds(now, total - done);
         if (eta > 0) {
@@ -296,7 +296,7 @@ bool DirectDownloadController::cancel(Tasks::TaskId id) {
     m_running = false;
     m_recoveries.remove(id); saveRecovery();
     m_activity->tasks()->cancel(m_task);
-    m_status = tr("已取消，原文件未替换；完整分段已保留，重开程序后用同一链接和目标可继续。");
+    m_status = tr("已取消，原文件未替换；完整分段已保留，重新启动程序后使用同一链接和目标可继续。");
     if (m_panel) { m_panel->setBusy(false); m_panel->showProgress(0, 1, m_status); }
     return true;
 }

@@ -626,11 +626,11 @@ void runServerSettingsTests() {
                   QString::number(taken));
         }
         // 三档那三句话的唯一出处。
-        check(ServerPortCheck::stateName(ServerPortCheck::State::Free) == QStringLiteral("没被占用")
+        check(ServerPortCheck::stateName(ServerPortCheck::State::Free) == QStringLiteral("未被占用")
                   && ServerPortCheck::stateName(ServerPortCheck::State::InUse)
-                         == QStringLiteral("被占用了")
+                         == QStringLiteral("已被占用")
                   && ServerPortCheck::stateName(ServerPortCheck::State::Unknown)
-                         == QStringLiteral("没能查出来"),
+                         == QStringLiteral("检测失败"),
               "★ ZV6 三档那三句话的唯一出处");
     }
 }

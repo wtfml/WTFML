@@ -195,7 +195,7 @@ void TaskDetailController::openLog(const QString &key) {
     }
     const QString path = AppPaths::minecraftDir() + QStringLiteral("/logs/wtfml.log");
     if (!QFile::exists(path)) {
-        InlineMessage::warning(m_overlay, tr("暂无任务日志"), tr("这一次启动到现在没有写过日志。"));
+        InlineMessage::warning(m_overlay, tr("暂无任务日志"), tr("本次启动尚未写入日志。"));
         return;
     }
     QDesktopServices::openUrl(QUrl::fromLocalFile(path));
@@ -227,7 +227,7 @@ void TaskDetailController::openTarget(const QString &key) {
     }
     if (!QDir().exists(dir)) {
         InlineMessage::warning(m_overlay, tr("无法打开目标位置"),
-                               tr("这一项说的是 %1，而那个目录现在不在。")
+                               tr("此任务对应 %1，该目录当前不存在。")
                                    .arg(QDir::toNativeSeparators(dir)));
         return;
     }
@@ -261,7 +261,7 @@ void TaskDetailController::copySummary(const QString &key) {
         lines << QString() << item.errorSummary;
     }
     QGuiApplication::clipboard()->setText(lines.join(QLatin1Char('\n')));
-    log(tr("这一项的摘要已经复制到剪贴板。"));
+    log(tr("此任务的摘要已复制到剪贴板。"));
 }
 
 void TaskDetailController::refreshOpenPage() {

@@ -21,7 +21,7 @@
 
 | 文件 | 行数 | 主语 |
 | --- | ---: | --- |
-| `MainWindowAccount.cpp` | 712 | 账号与外观：从开窗到登录失败弹窗 |
+| `MainWindowAccount.cpp` | 712 | 账号与皮肤：从开窗到登录失败弹窗 |
 | `MainWindowSkin.cpp` | 241 | `PlayerSkinController` 的外观落到底栏头像、主页小人、账号窗提示 |
 | `MainWindowServer.cpp` | 822 | 服务端两页：列表重扫、控制台、设置页动作、新建服务端 |
 | `MainWindowSettings.cpp` | 562 | 「设置」选项卡：控件到配置键的接线 |

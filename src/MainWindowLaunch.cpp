@@ -80,7 +80,7 @@ void MainWindow::onVersionsFetched(const QStringList &versions) {
         // 拉清单失败时 DownloadManager 也会发这个信号，发的是**上一次成功的结果**
         // （首次拉取就失败才是空的），所以这一支实际拦的是"从来没拉到过"。别让用户
         // 对着一棵永远空的树等下去 —— 日志里说清楚，树上那四条照样在（它们本来就是空的）。
-        appendLog(tr("在线版本列表获取失败（网络异常？）。"));
+        appendLog(tr("在线版本列表获取失败，请检查网络连接。"));
         return;
     }
     appendLog(tr("已更新在线版本列表 (%1 个版本)。").arg(versions.size()));

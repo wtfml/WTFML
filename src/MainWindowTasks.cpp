@@ -312,7 +312,7 @@ void MainWindow::cancelTaskFromDetail(const QString &key) {
             && m_versionManager != nullptr && m_versionManager->isModpackImporting()) {
             const int choice = InlineMessage::ask(
                 m_ui->overlay(), MessageKind::Question, tr("取消安装整合包"),
-                tr("整合包还在安装。取消后已下载的文件会保留，但实例不会完成。\n\n确认取消？"),
+                tr("整合包仍在安装。取消后已下载的文件会保留，但实例不会完成安装。\n\n确认取消？"),
                 QStringList{tr("继续安装"), tr("取消安装")}, 0, 1);
             if (choice != 1) return;
         }
@@ -408,7 +408,7 @@ void MainWindow::retryTaskFromDetail(const QString &key) {
         || (m_serverInstall != nullptr && m_serverInstall->ownsDownloadBatch())) {
         InlineMessage::information(
             m_ui->overlay(), tr("暂时无法操作"),
-            tr("已有下载或安装任务正在进行，请结束后再重试这几个文件。"));
+            tr("已有下载或安装任务正在进行，请待其结束后再重试这些文件。"));
         return;
     }
     // 重试也要在任务中心里看得见：账本里原来那一件已经是终态了（终态只落一次），
@@ -424,7 +424,7 @@ void MainWindow::retryTaskFromDetail(const QString &key) {
     const bool retryArchive = pending != m_pendingModpackImports.end() && pending->taskId == retryId;
     if (retryArchive && pending->gameRoot != AppPaths::minecraftDir()) {
         InlineMessage::information(m_ui->overlay(), tr("暂时无法操作"),
-                                   tr("请切回原游戏文件夹再重试这次安装。"));
+                                   tr("请切换回原游戏目录后重试本次安装。"));
         return;
     }
     QList<Tasks::TaskStep> steps = retryTask.steps;

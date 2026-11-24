@@ -33,7 +33,7 @@ void InstanceTransferController::upgradeInPlace(QString sourceId, QString target
     if (m_copyBusy || sourceId == targetId
         || !InstanceFiles::validateDirName(sourceId).isEmpty()
         || !InstanceFiles::validateDirName(targetId).isEmpty()) {
-        fail(tr("实例名无效、目标就是原实例，或已有文件任务正在运行。")); return;
+        fail(tr("实例名称无效、目标即原实例，或已有文件任务正在运行。")); return;
     }
     const QString game = AppPaths::minecraftDir();
     if (sourceId.compare(m_versions->instanceGameVersion(sourceId), Qt::CaseInsensitive) == 0) {
@@ -89,7 +89,8 @@ void InstanceTransferController::upgradeInPlace(QString sourceId, QString target
         core.disableOldMods = false;
     }
     if (!InlineMessage::question(m_overlay, tr("原地升级"),
-        tr("将「%1」的游戏核心替换为 %2 / %3。\n\n本次升级保留当前实例的存档、截图、配置和其他用户文件。替换前将创建并校验快照，原目录可通过「回滚原地升级」恢复。\n\n请保存设置后再升级。确认继续？")
+        tr("将「%1」的游戏核心替换为 %2 / %3。\n\n本次升级保留当前实例的存档、截图、配置和其他用户文件。"
+           "替换前将创建并校验快照，原目录可通过「回滚最近一次更新…」恢复。\n\n请保存设置后再升级。确认继续？")
             .arg(displayName(sourceId), core.gameVersion, core.loaderName.isEmpty() ? tr("原版") : core.loaderName),
         tr("备份并升级"), tr("取消"), false, true)) {
         if (whenSettled) whenSettled(false, true);
@@ -97,7 +98,8 @@ void InstanceTransferController::upgradeInPlace(QString sourceId, QString target
         return;
     }
     // Questions run nested event loops; recheck every lock immediately before starting.
-    if (unavailable() || AppPaths::minecraftDir() != game) { fail(tr("实例或游戏目录状态已变化，没有开始升级。")); return; }
+    if (unavailable() || AppPaths::minecraftDir() != game) { fail(tr("实例或游戏目录状态已变化，"
+                                                                     "未开始升级。")); return; }
     const InstanceUpgrade::Request request{game, sourceId,
         QUuid::createUuid().toString(QUuid::WithoutBraces), displayName(sourceId), -1, {}, {}};
     // 引擎阶段（`Stage` 的枚举值）⇒ 子任务第几步。原地升级那七步与枚举前七个
@@ -172,7 +174,7 @@ void InstanceTransferController::upgradeToCopy(const QString &sourceId, const QS
         return false;
     };
     if (unavailable() || AppPaths::minecraftDir() != game) {
-        fail(tr("实例或游戏目录状态已变化，没有开始创建副本。"));
+        fail(tr("实例或游戏目录状态已变化，未开始创建副本。"));
         return;
     }
     InstanceUpgrade::Request request{game, name,
@@ -199,7 +201,7 @@ void InstanceTransferController::rollbackUpgrade(QString sourceId,
     }
     const QString game = AppPaths::minecraftDir();
     const auto ids = InstanceUpgrade::recoverableTransactions(game, sourceId);
-    if (ids.isEmpty()) { abort(tr("没有可回滚的原地升级记录。普通快照请使用快照恢复。")); return; }
+    if (ids.isEmpty()) { abort(tr("无可回滚的原地升级记录。普通快照请使用快照恢复。")); return; }
     // Most recent retained transaction; after rolling it back the preceding one remains available.
     const InstanceUpgrade::Request request{game, sourceId, ids.first(), displayName(sourceId), -1, {}, {}};
     if (!InlineMessage::question(m_overlay, tr("回滚原地升级"),
@@ -315,7 +317,7 @@ void InstanceTransferController::runUpgradeJob(const InstanceUpgrade::Request &r
                 }
             }
             if (cancelled && detail.isEmpty()) {
-                detail = tr("已取消：原实例没有发布新核心（已经动过的那部分会自动恢复）。");
+                detail = tr("已取消：未向原实例发布新核心（已改动的部分将自动恢复）。");
             }
             if (!result.snapshotZip.isEmpty()) detail += tr("\n完整快照：%1").arg(result.snapshotZip);
             if (m_host.setTaskDetail) m_host.setTaskDetail(task, detail);

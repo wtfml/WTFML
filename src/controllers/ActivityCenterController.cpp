@@ -47,7 +47,7 @@ void ActivityCenterController::loadHistory() {
     m_transferSpeeds.clear();
     m_tasks.loadHistory();
     // 账本从盘上读回来了，"还没看过的失败"那一份却还停在空表上（它是内存
-    // 里的，新进程一开始就是空的）。症状：上一次会话里失败、用户还没来得及点「知道了」
+    // 里的，新进程一开始就是空的）。症状：上一次会话里失败、用户还没来得及点「确定」
     // 的任务，重启之后**底栏那颗红点不见了** —— 而面板「需要处理」里照样列着它
     // （那一栏看的是落盘的 `attentionAcknowledged`）。两处说的不是一回事，用户就会漏掉
     // 那件真的失败过的事。
@@ -426,13 +426,14 @@ Tasks::TaskCapabilities ActivityCenterController::defaultCapabilities(Tasks::Tas
             tr("导出正在生成压缩包。为避免留下不完整的文件，压缩阶段无法取消。");
         break;
     case Tasks::TaskKind::Backup:
-        caps.cancelBlockedReason = tr("这一项正在发布结果，发布过程中不能取消。");
+        caps.cancelBlockedReason = tr("此任务正在发布结果，发布期间无法取消。");
         break;
     case Tasks::TaskKind::Java:
-        caps.cancelBlockedReason = tr("正在准备 Java 运行环境，完成后会自动继续；这一项不支持取消。");
+        caps.cancelBlockedReason = tr("正在准备 Java 运行环境，完成后自动继续；此任务不支持取消。");
         break;
     case Tasks::TaskKind::Integrity:
-        caps.cancelBlockedReason = tr("完整性检查在后台只读扫描，不会改动任何文件；它停不了，跑完会统一报结果。");
+        caps.cancelBlockedReason = tr("完整性检查在后台只读扫描，不会修改任何文件，且无法停止；"
+                                      "完成后统一显示结果。");
         break;
     case Tasks::TaskKind::Crash:
     case Tasks::TaskKind::ServerLaunch:

@@ -69,7 +69,7 @@ void MainWindow::updateInstanceFiles(const QString &instanceId, const QString &p
         // 正常走不到：这套东西只在那四个"能下载的"页上开（见 InstanceFilesPage）——
         // 但"哪几页"这个判据在 ui/ 那一边，这边不能假设递进来的键一定认得。
         InlineMessage::warning(m_ui->overlay(), tr("更新失败"),
-                               tr("不知道这一页的文件该下到哪儿去。"));
+                               tr("无法确定此页文件的下载目标。"));
         return;
     }
     // 一趟检测的结果（实例 id → 路径 → 换成哪一版）。**没查过 = 空表** —— 那时候一条都
@@ -90,7 +90,7 @@ void MainWindow::updateInstanceFiles(const QString &instanceId, const QString &p
         || (m_serverInstall != nullptr && m_serverInstall->ownsDownloadBatch())) {
         InlineMessage::information(
             m_ui->overlay(), tr("暂时无法操作"),
-            tr("已有下载或安装任务正在进行，请结束后再更新这几个文件。"));
+            tr("已有下载或安装任务正在进行，请待其结束后再更新这些文件。"));
         return;
     }
 
@@ -141,7 +141,7 @@ void MainWindow::updateInstanceFiles(const QString &instanceId, const QString &p
     }
     if (!skipped.isEmpty()) {
         // 只记账不弹框：这一批**已经开起来了**，再插一个框等于让用户白点一次。
-        appendLog(tr("这几条查不到要换成哪一版，没有一起更新：%1").arg(skipped.join(QStringLiteral("、"))));
+        appendLog(tr("以下项目未查到可更新的版本，未一并更新：%1").arg(skipped.join(QStringLiteral("、"))));
     }
 
     // ---------- 回滚点（「更新前创建轻量回滚点，失败时可恢复原文件」）----------
@@ -157,14 +157,14 @@ void MainWindow::updateInstanceFiles(const QString &instanceId, const QString &p
         UpdateRollback::create(instanceDir, instanceId, relativePaths, &rollbackProblem,
                                /*keepPrevious=*/true);
     if (!snapshot.isValid()) {
-        InlineMessage::warning(m_ui->overlay(), tr("没有更新"),
+        InlineMessage::warning(m_ui->overlay(), tr("无可用更新"),
                                tr("无法为待更新文件创建回滚点，已取消更新。\n\n%1")
                                    .arg(rollbackProblem));
         appendLog(tr("「%1」未更新，创建回滚点失败（%2）。")
                       .arg(instanceDisplayName(instanceId), rollbackProblem));
         return;
     }
-    appendLog(tr("更新前留了一份回滚点：%1 个文件（%2）。")
+    appendLog(tr("更新前已保存回滚点：%1 个文件（%2）。")
                   .arg(snapshot.fileCount())
                   .arg(InstanceFilesPage::formatSize(snapshot.totalBytes())));
 
@@ -173,7 +173,7 @@ void MainWindow::updateInstanceFiles(const QString &instanceId, const QString &p
     // 名字里带上数量 —— 收尾那句要能自己说清是哪一批。★ 这个名字**同时是**账本认这一批的
     // 钥匙（见 m_updateBatch 那段）：下载器回来的只有"文件名"，而"文件名 → 第几步"这层
     // 对应关系只有这一处知道。
-    const QString label = tr("「%1」里的 %2 个更新")
+    const QString label = tr("「%1」中的 %2 个更新")
                               .arg(instanceDisplayName(instanceId))
                               .arg(files.size());
     m_updateBatch = UpdateBatchRun{};

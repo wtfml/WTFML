@@ -1,6 +1,6 @@
 /**
  * @file AccountSkinDialog.cpp
- * @brief 「账号与外观」对话框（见 .hpp 里那几段说明）。
+ * @brief 「账号与皮肤」对话框（见 .hpp 里那几段说明）。
  */
 
 #include "AccountSkinDialog.hpp"
@@ -822,7 +822,7 @@ void AccountSkinDialog::addAccountRow(const AccountRow &row) {
     if (relogin) {
         source = needsReloginText();
     } else if (!row.offline && saved.isValid()) {
-        source += QStringLiteral(" · ") + tr("登录取自 %1").arg(saved.toLocalTime().toString(tr("M 月 d 日")));
+        source += QStringLiteral(" · ") + tr("登录于 %1").arg(saved.toLocalTime().toString(tr("M 月 d 日")));
     }
     item->setData(kSourceRole, source);
     if (relogin) {
@@ -845,7 +845,7 @@ void AccountSkinDialog::addAccountRow(const AccountRow &row) {
     } else if (!row.savedAt.isEmpty()) {
         const QDateTime savedAt = QDateTime::fromString(row.savedAt, Qt::ISODate);
         if (savedAt.isValid()) {
-            item->setToolTip(tr("登录取自 %1")
+            item->setToolTip(tr("登录于 %1")
                                  .arg(savedAt.toLocalTime().toString(QStringLiteral("yyyy-MM-dd HH:mm"))));
         }
     }

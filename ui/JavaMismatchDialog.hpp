@@ -61,7 +61,7 @@ public:
     /// 用户点的哪个按钮。没点就关了窗口 = Abort。
     Choice choice() const { return m_choice; }
 
-    /// 「以后不再提醒这个实例」。默认不勾 —— 一个回车不该顺手改掉一个长期偏好。
+    /// 「不再提醒此实例」。默认不勾 —— 一个回车不该顺手改掉一个长期偏好。
     ///
     /// NOTE: 它是一句**独立于选了哪条路**的表态（勾选框的字面意思就是这样），所以
     /// 两条动作路都会把它交给调用方，落盘与否由调用方决定。
@@ -89,7 +89,7 @@ private:
 
     QLabel *m_textLabel = nullptr;
     QCheckBox *m_dontRemindCheck = nullptr;
-    /// 「仍然用这个 Java 启动」。**默认按钮是它**，不是"改用匹配的"：一次误按回车
+    /// 「仍使用此 Java 启动」。**默认按钮是它**，不是"改用匹配的"：一次误按回车
     /// 只该继续启动，不该顺手把用户的配置改掉 —— 改写配置那条路必须是刻意点的。
     QPushButton *m_continueButton = nullptr;
     QPushButton *m_useMatchingButton = nullptr;

@@ -101,7 +101,7 @@ GroupDialog::GroupDialog(const QList<Group> &groups, const QHash<QString, int> &
         m_groupList->setItemDelegate(new GroupListDelegate(m_groupList));
         m_groupList->viewport()->installEventFilter(this);
         layout->addWidget(m_groupList, 1);
-        layout->addWidget(caption(tr("行尾箭头调整顺序，按住 Shift 直接放到最上 / 最下。"), groupBox));
+        layout->addWidget(caption(tr("使用行尾箭头调整顺序；按住 Shift 可直接移至最上 / 最下。"), groupBox));
         body->addWidget(groupBox, 5);
     }
 
@@ -135,11 +135,11 @@ GroupDialog::GroupDialog(const QList<Group> &groups, const QHash<QString, int> &
         m_expandedCheck = new QCheckBox(detail);
         m_expandedCheck->setObjectName(expandedCheckName());
         m_expandedCheck->setAccessibleName(tr("默认展开"));
-        m_expandedCheck->setToolTip(tr("这一组在实例列表里默认展开。点组头也能切换。"));
+        m_expandedCheck->setToolTip(tr("此分组在实例列表中默认展开。单击分组标题也可切换。"));
         Theme::markSwitch(m_expandedCheck);
         layout->addWidget(MainWindowPageLayout::makeSettingRow(
             detail, MainWindowPageLayout::makeSettingRowTitle(tr("默认展开"), detail),
-            tr("在实例列表里默认展开这一组。"), m_expandedCheck));
+            tr("在实例列表中默认展开此分组。"), m_expandedCheck));
         // 打开的那一组变成**收藏组**（全清单只能有一个，所以打开这一颗会把别组那一颗关掉，
         // 见 setGroupPinned()）。说明**必须短**（上限见 pinnedHintText()）。
         m_pinnedCheck = new QCheckBox(detail);
@@ -261,7 +261,8 @@ GroupDialog::GroupDialog(const QList<Group> &groups, const QHash<QString, int> &
             names.append(group.name);
         }
         const bool answer = InlineMessage::question(OverlayHost::forWidget(this), tr("恢复默认分组设置"),
-            tr("现在的分组会被换成这 %1 个默认分组：%2。\n\n自己建的分组会消失，里面的实例不会被删，会按版本类型回到默认分组或未分组。\n\n确定要恢复吗？")
+            tr("当前分组将替换为以下 %1 个默认分组：%2。\n\n自建的分组将被移除，其中的实例不会删除，"
+               "将按版本类型归入默认分组或未分组。\n\n确定恢复？")
                 .arg(names.size())
                 .arg(names.join(tr("、"))), tr("是"), tr("否"), false,
                 /*destructive=*/true);
@@ -378,10 +379,10 @@ int GroupDialog::rowOfGroup(const QString &groupId) const {
 QString GroupDialog::validateGroupName(const QString &rawName, const QString &exceptGroupId) const {
     const QString name = rawName.trimmed();
     if (name.isEmpty()) {
-        return tr("组名不能是空的。");
+        return tr("组名不能为空。");
     }
     if (name.size() > maxGroupNameLength()) {
-        return tr("组名最多 %1 个字，现在有 %2 个。").arg(maxGroupNameLength()).arg(name.size());
+        return tr("组名最多 %1 个字，当前为 %2 个字。").arg(maxGroupNameLength()).arg(name.size());
     }
     for (const Group &group : m_groups) {
         if (group.id == exceptGroupId) {
@@ -390,7 +391,7 @@ QString GroupDialog::validateGroupName(const QString &rawName, const QString &ex
         // 不区分大小写：界面上「Forge 整合包」和「forge 整合包」看着就是同一个，
         // 放过去的结果是用户在同名两组之间搬来搬去，永远搞不清自己在哪个组里。
         if (group.name.compare(name, Qt::CaseInsensitive) == 0) {
-            return tr("已经有一个叫「%1」的组了。").arg(group.name);
+            return tr("已存在名为「%1」的分组。").arg(group.name);
         }
     }
     return QString();

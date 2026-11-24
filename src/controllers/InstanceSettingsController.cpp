@@ -183,7 +183,7 @@ bool InstanceSettingsController::rename(const QString &oldId, const QString &new
         problems += InstanceMaintenanceController::migrateWorldBackupSlots(
             AppPaths::versionDir(oldId), AppPaths::versionDir(name), &movedSlots);
         if (movedCaches + movedSlots > 0 && m_host.log) {
-            m_host.log(tr("改名时把 %1 处缓存备份搬到了新名字底下")
+            m_host.log(tr("重命名时已将 %1 处缓存备份移动到新名称下")
                            .arg(movedCaches + movedSlots));
         }
         for (const QString &problem : problems) {

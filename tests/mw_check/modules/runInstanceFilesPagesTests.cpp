@@ -556,7 +556,7 @@ void runInstanceFilesPagesTests() {
                     pumpUntil([&answerer] { return !answerer.answered.isEmpty(); }, 5000);
                 answerer.stop();
                 check(!moved && warned && !answerer.answered.isEmpty() &&
-                          answerer.answered.at(0).title == QStringLiteral("改动失败"),
+                          answerer.answered.at(0).title == QStringLiteral("修改失败"),
                       "★ T20.4 目标名已经有一份时不改：弹一句「改动失败」",
                       answerer.answered.isEmpty() ? QStringLiteral("没弹")
                                                   : answerer.answered.at(0).title);
@@ -2534,7 +2534,7 @@ void runInstanceFilesPagesTests() {
                   QStringLiteral("盘上换了=%1 那份留了备份=%2")
                       .arg(int(overwroteDisk))
                       .arg(int(sneakyKeptInBackup)));
-            check(gamePromptCount == 1 && gamePromptTitle == QStringLiteral("这个实例正开着游戏"),
+            check(gamePromptCount == 1 && gamePromptTitle == QStringLiteral("此实例正在运行游戏"),
                   "★★ T20.10 这个实例的游戏**在跑**时保存被挡住，而且说清了为什么（游戏手里"
                   "有一份内存副本，退出时会整份写回来）—— 判据和「游戏还在跑、窗口不许关」那一趟"
                   "是同一份（runningVersionIds()）",

@@ -53,7 +53,7 @@ QString unitText(const QMap<QString, int> &enchantments, bool isBook) {
     for (auto it = enchantments.constBegin(); it != enchantments.constEnd(); ++it) {
         parts.append(enchantmentText(it.key(), it.value()));
     }
-    const QString body = parts.isEmpty() ? QCoreApplication::translate("ToolboxController", "（没有附魔）") : parts.join(QStringLiteral(" + "));
+    const QString body = parts.isEmpty() ? QCoreApplication::translate("ToolboxController", "（无附魔）") : parts.join(QStringLiteral(" + "));
     return isBook ? QCoreApplication::translate("ToolboxController", "%1 的书").arg(body) : QCoreApplication::translate("ToolboxController", "%1 的装备").arg(body);
 }
 
@@ -429,8 +429,8 @@ void ToolboxController::open(const QString &toolKey) {
 void ToolboxController::runAnvilPlan() {
     const QList<ToolboxPage::AnvilRow> rows = m_page->anvilRows();
     if (rows.isEmpty()) {
-        InlineMessage::information(m_overlay, tr("没有可合并的内容"),
-                                   tr("先在表里加一两行：选一条附魔、写上等级。"));
+        InlineMessage::information(m_overlay, tr("无可合并的内容"),
+                                   tr("请先在表中添加至少一行：选择附魔并填写等级。"));
         return;
     }
     QList<Anvil::Unit> units;
@@ -474,7 +474,7 @@ void ToolboxController::runAnvilPlan() {
                 .arg(node - units.size() + 1)
                 .arg(unitText(produced.result, produced.resultIsBook));
         }
-        return QCoreApplication::translate("ToolboxController", "（无法识别的一件）");
+        return QCoreApplication::translate("ToolboxController", "（无法识别的物品）");
     };
     int stepNumber = 0;
     for (const Anvil::Step &step : plan.steps) {
@@ -495,7 +495,9 @@ void ToolboxController::runAnvilPlan() {
         // 互斥顶掉的那几条**点名说清楚**：不解释的话，用户会以为那一条悄悄丢了
         // （代价里那 +1 是照旧的，所以要说明"合不上来但还是要多花一级"）。
         for (auto it = step.cost.dropped.constBegin(); it != step.cost.dropped.constEnd(); ++it) {
-            view.notes.append(tr("第 %1 步：「%2」与目标已有的附魔互斥，这一步无法合入；目标保留原有附魔（铁砧仍按每条互斥 +1 级）。若要保留这一条，请把它所在的一件放到左槽先合。")
+            view.notes.append(tr("第 %1 步：「%2」与目标已有的附魔互斥，此步骤无法合入；"
+                                 "目标保留原有附魔（铁砧仍按每条互斥 +1 级）。若要保留该附魔，"
+                                 "请先将其所在的物品放到左槽合并。")
                                   .arg(stepNumber)
                                   .arg(enchantmentText(it.key(), it.value())));
         }
@@ -505,7 +507,7 @@ void ToolboxController::runAnvilPlan() {
                                   .replace(QCoreApplication::translate("ToolboxController", " 的装备"), QString());
     view.summary = plan.steps.isEmpty()
                        ? (plan.renameCost > 0
-                              ? tr("只有一件，无需合并；改名需要 %1 级。").arg(plan.renameCost)
+                              ? tr("只有一件，无需合并；重命名需要 %1 级。").arg(plan.renameCost)
                               : tr("只有一件，无需合并。"))
                        : tr("合计 %1 级%2，合并后为 %3。")
                              .arg(plan.totalCost)
@@ -526,7 +528,7 @@ void ToolboxController::runAnvilPlan() {
                 leftover.append(units.at(index).label);
             }
         }
-        view.notes.append(tr("这些材料用不上：%1（加入后也无法提升，材料不必全部使用）。")
+        view.notes.append(tr("未使用的材料：%1（加入后也无法提升；无需使用全部材料）。")
                               .arg(leftover.join(QCoreApplication::translate("ToolboxController", "、"))));
     }
     if (plan.finalPenalty > 0) {
@@ -537,11 +539,13 @@ void ToolboxController::runAnvilPlan() {
     // 改名那 1 级只花在**一次**操作上：某一步顺手改，或者合完单独改一次。
     if (plan.renameCost > 0) {
         if (plan.renameStep >= 0 && plan.renameStep < plan.steps.size()) {
-            view.notes.append(tr("第 %1 步合并时会同时改名，总代价多 1 级（这一步本身按 %2 级计；一条计划只改一次名）。")
+            view.notes.append(tr("第 %1 步合并时同时重命名，总代价增加 1 级（该步骤本身按 %2 级计；"
+                                 "一条计划只重命名一次）。")
                                   .arg(plan.renameStep + 1)
                                   .arg(plan.steps.at(plan.renameStep).cost.total));
         } else {
-            view.notes.append(tr("合并完成后再单独改名：%1 级（单独改名 = 该件先前工作惩罚 + 1，上限 39；单独改名不会再提高该惩罚）。")
+            view.notes.append(tr("合并完成后单独重命名：%1 级（单独重命名 = 该物品先前工作惩罚 + 1，上限 39；"
+                                 "不会再提高该惩罚）。")
                                   .arg(plan.renameCost));
         }
     }
@@ -619,7 +623,7 @@ void ToolboxController::loadTextFromJson(const QString &json) {
     }
     // 认不出来的那几种组件**不猜**（`translate` 要查语言文件、`score` 要游戏在跑、
     // `selector` 要挑实体 —— 都不是这一层能算的）。把名字列出来，用户自己知道少读了什么。
-    m_page->setTextNotice(tr("以下组件未解析：%1。它们需要游戏内的服务器或语言文件才能确定，此处不做推测。")
+    m_page->setTextNotice(tr("以下组件未解析：%1。其内容需由游戏内的服务器或语言文件确定，此处不做推测。")
                               .arg(parsed.unsupported.join(QCoreApplication::translate("ToolboxController", "、"))));
 }
 
@@ -648,7 +652,8 @@ void ToolboxController::convertCoordinates(int dimensionIndex, double x, double 
         if (CoordConvert::convertible(from, to)) {
             show(to);
         } else {
-            rows.append(QCoreApplication::translate("ToolboxController", "%1：末地不按比例算（两边坐标之间没有 8:1 那种关系）。")
+            rows.append(QCoreApplication::translate("ToolboxController",
+                                                    "%1：末地不进行比例换算（两侧坐标之间无 8:1 的对应关系）。")
                             .arg(CoordConvert::dimensionText(to)));
         }
     }
@@ -694,7 +699,7 @@ void ToolboxController::parseTeleport(const QString &text) {
     if (parsed.hasDimension) {
         message.append(tr("，维度 %1").arg(CoordConvert::dimensionText(parsed.dimension)));
     } else {
-        message.append(tr("（这条命令里没写维度）"));
+        message.append(tr("（命令中未指定维度）"));
     }
     if (parsed.hasRotation) {
         message.append(tr("，朝向 yaw %1 / pitch %2")
@@ -719,8 +724,8 @@ void ToolboxController::makeTeleportCommand(int dimensionIndex, double x, double
 
 void ToolboxController::checkServer(const QString &address) {
     if (address.isEmpty()) {
-        InlineMessage::information(m_overlay, tr("先写个地址"),
-                                   tr("比如 `mc.hypixel.net` 或者 `127.0.0.1:25565`。"));
+        InlineMessage::information(m_overlay, tr("请先输入地址"),
+                                   tr("例如 `mc.hypixel.net` 或 `127.0.0.1:25565`。"));
         return;
     }
     if (m_pinger == nullptr) {

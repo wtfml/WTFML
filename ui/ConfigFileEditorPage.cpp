@@ -260,7 +260,7 @@ ConfigFileEditorPage::ConfigFileEditorPage(QWidget *parent) : QWidget(parent) {
     m_history = new QPushButton(tr("历史版本"), this);
     m_history->setObjectName(QStringLiteral("configFileHistory"));
     Theme::markButton(m_history, Theme::ButtonKind::Neutral);
-    m_history->setToolTip(tr("按时间选择这个文件的备份；载入后需点击保存才会写回。"));
+    m_history->setToolTip(tr("按时间选择此文件的备份；载入后点击保存方可写入。"));
     connect(m_history, &QPushButton::clicked, this, [this] {
         if (m_hasFile && m_backupAvailable && isEditable()) emit historyRequested(m_path);
     });
@@ -320,7 +320,7 @@ ConfigFileEditorPage::ConfigFileEditorPage(QWidget *parent) : QWidget(parent) {
 
     m_editor = new CodeEditor(this);
     m_editor->setObjectName(editorName());
-    m_editor->setPlaceholderText(tr("（这个文件是空的）"));
+    m_editor->setPlaceholderText(tr("（此文件为空）"));
     m_editor->setMinimumHeight(kEditorMinHeight);
     middle->addWidget(m_editor, 1);
     outer->addLayout(middle, 1);
@@ -815,7 +815,7 @@ QString ConfigFileEditorPage::backText() { return QCoreApplication::translate("C
 QString ConfigFileEditorPage::saveText() { return QCoreApplication::translate("ConfigFileEditorPage", "保存"); }
 QString ConfigFileEditorPage::openFolderText() { return QCoreApplication::translate("ConfigFileEditorPage", "打开文件夹"); }
 QString ConfigFileEditorPage::indexToggleText() { return QCoreApplication::translate("ConfigFileEditorPage", "条目"); }
-QString ConfigFileEditorPage::indexFilterPlaceholder() { return QCoreApplication::translate("ConfigFileEditorPage", "在条目里找…"); }
+QString ConfigFileEditorPage::indexFilterPlaceholder() { return QCoreApplication::translate("ConfigFileEditorPage", "搜索条目…"); }
 QString ConfigFileEditorPage::restoreText() { return QCoreApplication::translate("ConfigFileEditorPage", "还原上一次"); }
 QString ConfigFileEditorPage::indexEmptyHint() { return QCoreApplication::translate("ConfigFileEditorPage", "文件中未找到可编辑的设置项"); }
 QString ConfigFileEditorPage::hintText() {

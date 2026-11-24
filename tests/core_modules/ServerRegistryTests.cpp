@@ -140,7 +140,7 @@ void runServerRegistryTests() {
               "★★ ZX6 从 libraries 那张 win_args.txt 反推成 Forge", entry.name);
         check(entry.installed,
               "ZX6 两张参数文件都在 ⇒ 判成装好了");
-        check(entry.note.contains(QStringLiteral("反推")),
+        check(entry.note.contains(QStringLiteral("推断得出")),
               "★ ZX6 那一行写着「这一档是反推的」，让用户点一下确认");
         check(entry.name == QStringLiteral("Paper1"),
               "ZX6 没有我们记的名字 ⇒ 显示名退回目录名");
@@ -339,7 +339,7 @@ void runServerRegistryTests() {
         big.close();
         QString readProblem;
         const ServerModel::Info info = ServerRegistry::readMeta(QStringLiteral("Srv1"), &readProblem);
-        check(info.gameVersion.isEmpty() && readProblem.contains(QStringLiteral("大得不像")),
+        check(info.gameVersion.isEmpty() && readProblem.contains(QStringLiteral("体积异常")),
               "★★ ZX8.7 超过 4 MiB 的记录按读不懂处理（不先 readAll 再说）", readProblem);
         QString toggleProblem;
         check(!ServerRegistry::setRestartOnCrash(QStringLiteral("Srv1"), true, &toggleProblem),

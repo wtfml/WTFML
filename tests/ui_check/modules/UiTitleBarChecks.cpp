@@ -216,8 +216,9 @@ int UiTitleBarChecks(QMainWindow &window, MainWindowUI &ui) {
         logo->click();
         QApplication::processEvents();
         check(rail->isCollapsed() && rail->width() == TitleBar::collapsedRailWidth() &&
-                  logo->toolTip() == QStringLiteral("窗口加宽后才能展开") && logo->cursor().shape() == Qt::ArrowCursor,
-              "★ 155 窄窗点 W 不展开，提示「窗口加宽后才能展开」",
+                  logo->toolTip() == QStringLiteral("加宽窗口后方可展开") &&
+                  logo->cursor().shape() == Qt::ArrowCursor,
+              "★ 155 窄窗点 W 不展开，提示「加宽窗口后方可展开」",
               QStringLiteral("轨 %1 提示「%2」").arg(rail->width()).arg(logo->toolTip()));
     }
     window.resize(1280, 800);

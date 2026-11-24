@@ -5,6 +5,9 @@
 
 #include "AgentLauncherHostImpl.hpp"
 
+#include "AgentTestLaunchRunner.hpp"
+#include "AgentRepairRunner.hpp"
+
 #include "MainWindow.hpp"
 
 #include "InstancePagesController.hpp"
@@ -77,7 +80,26 @@ int javaMajorForPath(const QString &javaPath) {
 }  // namespace
 
 AgentLauncherHostImpl::AgentLauncherHostImpl(MainWindow *owner)
-    : m_owner(owner), m_maintenance(AgentPaths::maintenanceBackupDir()) {}
+    : m_owner(owner),
+      m_maintenance(AgentPaths::maintenanceBackupDir()),
+      m_testLaunchRunner(owner != nullptr ? std::make_unique<AgentTestLaunchRunner>(owner)
+                                          : nullptr),
+      m_repairRunner(owner != nullptr ? std::make_unique<AgentRepairRunner>(
+                                           owner,
+                                           [this](const QString &key, const QJsonValue &value,
+                                                  QString *problem) {
+                                               QJsonObject applied;
+                                               return applySetting(key, value, &applied, problem);
+                                           },
+                                           [this](const QString &key) {
+                                               AgentHostSettings settings;
+                                               QString problem;
+                                               if (!this->settings(&settings, &problem)) return QJsonValue();
+                                               return settings.values.value(key);
+                                           })
+                                      : nullptr) {}
+
+AgentLauncherHostImpl::~AgentLauncherHostImpl() = default;
 
 QString AgentLauncherHostImpl::instanceDir(const QString &instanceId) const {
     return AppPaths::versionDir(instanceId);
@@ -237,8 +259,9 @@ bool AgentLauncherHostImpl::logTail(const QString &instanceId, int lines, QStrin
     }
     if (raw.isEmpty()) {
         if (problem != nullptr) {
-            *problem =
-                QCoreApplication::translate("AgentLauncherHostImpl", "找不到日志文件（实例目录的 logs/latest.log 或数据根的 logs/latest.log、logs/wtfml.log）。");
+            *problem = QCoreApplication::translate(
+                "AgentLauncherHostImpl",
+                "未找到日志文件（实例目录的 logs/latest.log 或数据根的 logs/latest.log、logs/wtfml.log）。");
         }
         return false;
     }
@@ -661,4 +684,37 @@ bool AgentLauncherHostImpl::openPage(const QString &page, const QString &instanc
     }
     m_owner->openInstanceSettings(instanceId, pageKey);
     return true;
+}
+
+bool AgentLauncherHostImpl::startTestLaunch(const QString &instanceId, const QString &workspaceId,
+                                            const AgentTestLaunchOptions &options,
+                                            const Completion &done, QString *problem) {
+    if (m_testLaunchRunner == nullptr) {
+        if (problem != nullptr) *problem = QStringLiteral("测试启动未接入。");  // i18n-ignore
+        return false;
+    }
+    return m_testLaunchRunner->start(instanceId, workspaceId, options, done, problem);
+}
+
+void AgentLauncherHostImpl::cancelTestLaunch() {
+    if (m_testLaunchRunner != nullptr) m_testLaunchRunner->cancel();
+}
+
+bool AgentLauncherHostImpl::beginTransaction(const QString &instanceId,
+                                              const QStringList &scopes,
+                                              const BeginCompletion &done, QString *problem) {
+    if (m_repairRunner == nullptr) {
+        if (problem != nullptr) *problem = QStringLiteral("修复事务未接入。");  // i18n-ignore
+        return false;
+    }
+    return m_repairRunner->begin(instanceId, scopes, done, problem);
+}
+
+bool AgentLauncherHostImpl::finishTransaction(const QString &transactionId, bool commit,
+                                              const FinishCompletion &done, QString *problem) {
+    if (m_repairRunner == nullptr) {
+        if (problem != nullptr) *problem = QStringLiteral("修复事务未接入。");  // i18n-ignore
+        return false;
+    }
+    return m_repairRunner->finish(transactionId, commit, done, problem);
 }

@@ -59,12 +59,13 @@ QString toZip(const QString &archive, QString *error) {
     }
     const QString sevenZip = executable();
     if (sevenZip.isEmpty()) {
-        if (error) *error = QCoreApplication::translate("SevenZip", "没找到 7z.exe：请先装 7-Zip，或手动解压后再导入。");
+        if (error) *error = QCoreApplication::translate("SevenZip", "未找到 7z.exe：请先安装 7-Zip，"
+                                                                    "或手动解压后再导入。");
         return {};
     }
     QTemporaryDir dir;
     if (!dir.isValid()) {
-        if (error) *error = QCoreApplication::translate("SevenZip", "建不了临时目录。");
+        if (error) *error = QCoreApplication::translate("SevenZip", "无法创建临时目录。");
         return {};
     }
     QProcess process;
@@ -75,7 +76,7 @@ QString toZip(const QString &archive, QString *error) {
                           QDir::toNativeSeparators(archive)});
     process.start();
     if (!process.waitForStarted(30000)) {
-        if (error) *error = QCoreApplication::translate("SevenZip", "7z.exe 起不来。");
+        if (error) *error = QCoreApplication::translate("SevenZip", "无法启动 7z.exe。");
         return {};
     }
     while (!process.waitForFinished(1000)) {
@@ -101,7 +102,7 @@ QString toZip(const QString &archive, QString *error) {
     }
     QString zipError;
     if (!ZipUtil::createZip(target, sources, &zipError)) {
-        if (error) *error = zipError.isEmpty() ? QCoreApplication::translate("SevenZip", "压成 zip 失败。") : zipError;
+        if (error) *error = zipError.isEmpty() ? QCoreApplication::translate("SevenZip", "压缩为 zip 失败。") : zipError;
         return {};
     }
     return target;

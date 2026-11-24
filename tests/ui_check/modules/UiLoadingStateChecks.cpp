@@ -205,12 +205,12 @@ void inlineChecks() {
     // ---- 出错行：「重试」那一格点中 = 调 retry ----
     int retried = 0;
     QTreeWidgetItem *failed = LoadingState::beginRow(parent);
-    LoadingState::failRow(failed, QStringLiteral("列表没取到"), [&] {
+    LoadingState::failRow(failed, QStringLiteral("列表获取失败"), [&] {
         ++retried;
         delete parent->takeChild(parent->indexOfChild(failed));
         LoadingState::beginRow(parent);
     });
-    check(failed->text(0) == QStringLiteral("列表没取到") && failed->isDisabled(), "LI4 failRow：同一行改写成原因，仍是灰的");
+    check(failed->text(0) == QStringLiteral("列表获取失败") && failed->isDisabled(), "LI4 failRow：同一行改写成原因，仍是灰的");
     check(LoadingState::tickingRowCount() == 0, "LI4 出错行不再按时钟重绘");
     tree->viewport()->repaint();
     const QModelIndex failedIndex = tree->model()->index(0, 0, tree->model()->index(1, 0));
@@ -287,7 +287,7 @@ void compactChecks() {
               "★ LC1 下拉框上画成一行、靠左（右边三分之一没画东西）");
     }
     int retried = 0;
-    LoadingState::fail(combo, QStringLiteral("列表没取到"), [&] {
+    LoadingState::fail(combo, QStringLiteral("列表获取失败"), [&] {
         ++retried;
         LoadingState::begin(combo, QStringLiteral("正在获取版本…"));
     });
@@ -343,7 +343,7 @@ void pageChecks() {
         page.resize(760, 560);
         page.show();
         QApplication::processEvents();
-        page.setLoading(QStringLiteral("正在读版本列表…"));
+        page.setLoading(QStringLiteral("正在读取版本列表…"));
         QTreeWidget *list = page.versionList();
         waitShown();
         check(LoadingState::overlay(list) != nullptr && LoadingState::overlay(list)->isVisible() &&

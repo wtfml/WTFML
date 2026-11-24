@@ -131,7 +131,7 @@ WorldSettingsPage::WorldView worldViewOf(const QString &worldDir,
     }
     QStringList notes;
     if (map.hasOtherDimensions) {
-        notes.append(InstanceEditorController::tr("下界 / 末地与模组维度的区域没有算进来。"));
+        notes.append(InstanceEditorController::tr("未统计下界、末地与模组维度的区域。"));
     }
     // 要求：「Mod 世界明确标注结果可能不完整」。判据拿不到"装没装模组"这件事
     // （模组可以只写在别处），所以这一句**一直在**，说的是这份统计的口径。
@@ -256,7 +256,7 @@ void InstanceEditorController::openConfigFile(InstanceSettingsDialog *dialog, co
     const bool readFailed = file.error() != QFileDevice::NoError;
     file.close();
     if (readFailed) {
-        InlineMessage::warning(m_owner->m_ui->overlay(), tr("读不完这个文件"),
+        InlineMessage::warning(m_owner->m_ui->overlay(), tr("无法完整读取此文件"),
                                m_owner->tr("%1\n\n%2").arg(QDir::toNativeSeparators(path), readError));
         return;
     }
@@ -290,7 +290,7 @@ void InstanceEditorController::saveConfigFile(InstanceSettingsDialog *dialog, co
     const QString instanceId = m_owner->instanceIdOfPath(path);
     if (!instanceId.isEmpty() && m_owner->runningVersionIds().contains(instanceId)) {
         InlineMessage::warning(
-            m_owner->m_ui->overlay(), tr("这个实例正开着游戏"),
+            m_owner->m_ui->overlay(), tr("此实例正在运行游戏"),
             tr("%1\n\n游戏正在运行，退出或保存设置时可能覆盖本次修改。请先退出游戏。")
                 .arg(QDir::toNativeSeparators(path)));
         return;
@@ -316,7 +316,7 @@ void InstanceEditorController::saveConfigFile(InstanceSettingsDialog *dialog, co
                 m_owner->m_ui->overlay(), MessageKind::Question, tr("源文件已丢失"),
                 tr("%1\n\n原文件已移除或移动。保存时会用当前编辑内容在原位置重新创建文件。")
                     .arg(QDir::toNativeSeparators(path)),
-                {tr("重新写出来")}, -1, -1, false);
+                {tr("重新创建")}, -1, -1, false);
             if (picked != 0) {
                 return;  // 关掉 / Esc：盘上、框里都原样
             }
@@ -327,7 +327,7 @@ void InstanceEditorController::saveConfigFile(InstanceSettingsDialog *dialog, co
                 m_owner->m_ui->overlay(), MessageKind::Question, tr("源文件已被修改"),
                 tr("%1\n\n文件在打开后发生了变化。继续保存会覆盖外部修改。")
                     .arg(QDir::toNativeSeparators(path)),
-                {tr("盖掉它"), tr("重新读取文件")}, -1, 0, false,
+                {tr("覆盖"), tr("重新读取文件")}, -1, 0, false,
                 tr("点击「重新读取文件」将放弃当前修改并读取磁盘最新内容。"));
             if (picked == 1) {
                 // 用户要的是盘上那一份：重读一遍（**不写盘**）。走的是和点开一个文件同一条路
@@ -355,7 +355,7 @@ void InstanceEditorController::saveConfigFile(InstanceSettingsDialog *dialog, co
         if (!WriteDirectoryGuard::acquire(path, &lockProblem)) {
             InlineMessage::warning(
                 m_owner->m_ui->overlay(),
-                tr("这个数据目录已被另一份启动器占用"), lockProblem);
+                tr("此数据目录已被另一个启动器实例占用"), lockProblem);
             return;
         }
     }
@@ -477,7 +477,7 @@ void InstanceEditorController::showConfigHistory(InstanceSettingsDialog *dialog,
     if (backups.isEmpty()) {
         editor->setBackupAvailable(false);
         InlineMessage::information(m_owner->m_ui->overlay(), tr("暂无历史版本"),
-                                  tr("这个配置文件没有可用的备份。保存修改前会自动保留原内容。"));
+                                  tr("此配置文件无可用备份。保存修改前将自动保留原内容。"));
         return;
     }
     QStringList rows;
@@ -524,7 +524,7 @@ void InstanceEditorController::restoreConfigFile(InstanceSettingsDialog *dialog,
         // —— 用户按了按钮，总得有个交代；顺手把那一颗收回去。
         editor->setBackupAvailable(false);
         InlineMessage::warning(m_owner->m_ui->overlay(), tr("原文件已丢失"),
-                               tr("这个文件的备份不在了（%1）。").arg(QDir::toNativeSeparators(
+                               tr("此文件的备份已不存在（%1）。").arg(QDir::toNativeSeparators(
                                    AppPaths::configBackupDir())));
         return;
     }
@@ -668,10 +668,10 @@ void InstanceEditorController::leaveWorldSettings(InstanceSettingsDialog *dialog
             m_owner->m_ui->overlay(), MessageKind::Question, tr("有未保存的更改"),
             tr("「%1」有未保存的更改。返回会丢弃这些更改。")
                 .arg(QFileInfo(m_owner->m_worldDir).fileName()),
-            {tr("返回并丢掉"), tr("留下来继续改")}, /*defaultIndex=*/1, /*destructiveIndex=*/0,
+            {tr("放弃更改"), tr("继续编辑")}, /*defaultIndex=*/1, /*destructiveIndex=*/0,
             false);
         if (picked != 0) {
-            return;  // 关掉 / Esc / 「留下来继续改」：都当"不走"
+            return;  // 关掉 / Esc / 「继续编辑」：都当"不走"
         }
     }
     dialog->closeWorldSettings();
@@ -701,7 +701,7 @@ void InstanceEditorController::saveWorldSettings(InstanceSettingsDialog *dialog)
     const QString runningId = m_owner->instanceIdOfPath(worldDir);
     if (!runningId.isEmpty() && m_owner->runningVersionIds().contains(runningId)) {
         InlineMessage::warning(
-            m_owner->m_ui->overlay(), tr("这个实例正开着游戏"),
+            m_owner->m_ui->overlay(), tr("此实例正在运行游戏"),
             tr("「%1」所在的实例正在运行。游戏保存时可能覆盖本次修改。\n\n请退出游戏后再编辑。")
                 .arg(worldName));
         return;
@@ -711,7 +711,7 @@ void InstanceEditorController::saveWorldSettings(InstanceSettingsDialog *dialog)
     const QFileInfo onDisk(WorldFiles::levelDataPath(worldDir));
     if (!onDisk.exists()) {
         // 走到这儿说明"刚刚还有、现在没了"（用户自己删了 / 挪走了）。**不许什么都不说**。
-        InlineMessage::warning(m_owner->m_ui->overlay(), tr("这个存档不见了"),
+        InlineMessage::warning(m_owner->m_ui->overlay(), tr("存档已丢失"),
                                tr("%1\n\n原文件已丢失，本次未写入。")
                                    .arg(QDir::toNativeSeparators(worldDir)));
         return;
@@ -726,7 +726,7 @@ void InstanceEditorController::saveWorldSettings(InstanceSettingsDialog *dialog)
             m_owner->m_ui->overlay(), MessageKind::Question, tr("源文件已被修改"),
             tr("「%1」的 level.dat 在打开后发生了变化。\n\n保存会将修改过的设置应用到文件，同一设置的外部修改将被覆盖。")
                 .arg(worldName),
-            {tr("照样存下去"), tr("重新读取文件")}, /*defaultIndex=*/-1, /*destructiveIndex=*/0,
+            {tr("仍然保存"), tr("重新读取文件")}, /*defaultIndex=*/-1, /*destructiveIndex=*/0,
             false);
         if (picked == 1) {
             // 用户要的是盘上那一份：重读重摆（**不写盘**）。
@@ -759,7 +759,7 @@ void InstanceEditorController::saveWorldSettings(InstanceSettingsDialog *dialog)
         // **没写盘**（`applyWorldInfo()` 改的是内存里那棵树）。理由和"配置文件"那条路
         // 一致：把用户改的一项写成"看着成了、其实没写"最坏。
         InlineMessage::warning(
-            m_owner->m_ui->overlay(), tr("这一项改不了"),
+            m_owner->m_ui->overlay(), tr("无法修改此项"),
             tr("「%1」\n\n%2\n\n保存已取消，原文件已保留。").arg(worldName, why));
         return;
     }
@@ -767,7 +767,7 @@ void InstanceEditorController::saveWorldSettings(InstanceSettingsDialog *dialog)
     // 或者它的值被改过的那些，就是 `delta.rules`。空的时候这一发是空转（一条都不写）。
     if (!WorldFiles::applyChangedGameRules(&data.document, changedRules(delta), &why)) {
         InlineMessage::warning(
-            m_owner->m_ui->overlay(), tr("这一条规则改不了"),
+            m_owner->m_ui->overlay(), tr("无法修改此规则"),
             tr("「%1」\n\n%2\n\n保存已取消，原文件已保留。").arg(worldName, why));
         return;
     }
@@ -780,7 +780,7 @@ void InstanceEditorController::saveWorldSettings(InstanceSettingsDialog *dialog)
     if (!m_owner->backupWorldLevelData(worldDir, &backupProblem)) {
         InlineMessage::warning(
             m_owner->m_ui->overlay(), tr("原文件备份失败"),
-            tr("「%1」\n\n%2\n\n所以这一次没有存。").arg(worldName, backupProblem));
+            tr("「%1」\n\n%2\n\n因此本次未保存。").arg(worldName, backupProblem));
         return;
     }
 
@@ -829,13 +829,13 @@ bool InstanceEditorController::confirmDiscardConfigEdits() {
     return InlineMessage::question(
         m_owner->m_ui->overlay(), tr("配置文件有未保存的更改"),
         tr("离开后将丢弃尚未保存的修改。\n\n确认丢弃？"),
-        tr("丢掉改动"), tr("继续编辑"), false);
+        tr("放弃更改"), tr("继续编辑"), false);
 }
 
 bool InstanceEditorController::confirmDiscardWorldEdits() {
     return InlineMessage::question(
         m_owner->m_ui->overlay(), tr("世界设置有未保存的更改"),
         tr("此世界有未保存的设置。关闭后会丢弃这些更改。\n\n丢弃更改？"),
-        tr("丢掉改动"), tr("继续编辑"), false);
+        tr("放弃更改"), tr("继续编辑"), false);
 }
 

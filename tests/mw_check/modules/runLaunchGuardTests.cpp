@@ -167,7 +167,7 @@ void runLaunchGuardTests() {
             return manager3 != nullptr ? manager3->runningGames().size() : -1;
         };
         // 用户点名的那两句（① 是他逐字写的），写死在这里就是**钉住措辞本身**。
-        const QString duplicateTitle = QStringLiteral("已经有一个相同的运行中游戏进程了！");
+        const QString duplicateTitle = QStringLiteral("已有相同的游戏进程正在运行");
         const QString worldLossTitle = QStringLiteral("进入单人世界可能会丢失进度");
         const QString canDisable = QStringLiteral("可以在设置中关闭此提示");
         const QStringList bothButtons{QStringLiteral("取消"), QStringLiteral("仍要启动")};

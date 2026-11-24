@@ -64,7 +64,13 @@ try {
         const auto image = reader.read();
         if (!image.isNull()) result.images.insert(object.value("name").toString(), image.scaled(64, 64));
     }
-    if (result.images.isEmpty()) result.error = QCoreApplication::translate("BannerTextures", "没有找到受支持的 Java 旗帜贴图，请选择原版客户端 JAR 或包含旗帜贴图的资源包。");
+    if (result.images.isEmpty()) result.error = QCoreApplication::translate("BannerTextures", "未找到受支持"
+                                                                                              "的 Java "
+                                                                                              "旗帜贴图，"
+                                                                                              "请选择原版客"
+                                                                                              "户端 JAR "
+                                                                                              "或包含旗帜贴"
+                                                                                              "图的资源包。");
     return result;
 }
 }

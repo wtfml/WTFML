@@ -120,7 +120,7 @@ quint32 colorRgb(Color color);
 bool parseHexColor(const QString &text, quint32 *rgb);
 /// `0xRRGGBB` → `#rrggbb`（JSON 组件里就是这一串）。
 QString hexColorName(quint32 rgb);
-/// `0xRRGGBB` → `§x§R§R§G§G§B§B`（1.16 起那份 `§` 写法；界面「插自定颜色」用它）。
+/// `0xRRGGBB` → `§x§R§R§G§G§B§B`（1.16 起那份 `§` 写法；界面「插入自定义颜色」用它）。
 QString legacyHexColor(quint32 rgb);
 /// 这一段实际画出来是什么色：自定色优先，否则那张十六色表。
 quint32 styleRgb(const Style &style);

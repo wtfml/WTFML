@@ -28,6 +28,8 @@ QString artifactDir(const QString &sessionId);
 QString recoveryRootDir();
 QString recoveryDir(const QString &sessionId);
 QString maintenanceBackupDir();
+QString workspaceRecordsDir();
+QString transactionsDir();
 QString mcpConfigDir();
 QString logsDir();
 

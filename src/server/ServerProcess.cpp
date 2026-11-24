@@ -126,7 +126,7 @@ void ServerProcess::start(const QString &serverId, const QString &dir, const QSt
     m_process->setArguments(arguments);
     m_process->setWorkingDirectory(dir);
     setStatus(ServerModel::Status::Starting);
-    emit message(tr("起服务端 %1：%2 %3")
+    emit message(tr("启动服务端 %1：%2 %3")
                      .arg(serverId, QDir::toNativeSeparators(program),
                           arguments.join(QLatin1Char(' '))));
     m_process->start();
@@ -145,7 +145,7 @@ bool ServerProcess::requestStop() {
     setStatus(ServerModel::Status::Stopping);
     // 宽限时间到点才允许强杀 —— 这一段里界面那颗按钮是灰的（见头文件那段）。
     m_gracefulTimer->start(qMax(0, m_gracefulMs));
-    emit message(tr("%1：已经让它正常停下来（给它 %2 秒存盘）。")
+    emit message(tr("%1：已请求正常停止（保存存档限时 %2 秒）。")
                      .arg(m_serverId)
                      .arg(qMax(0, m_gracefulMs) / 1000));
     return true;

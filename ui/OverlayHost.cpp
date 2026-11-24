@@ -1054,7 +1054,7 @@ bool OverlayHost::eventFilter(QObject *watched, QEvent *event) {
         switch (event->type()) {
         case QEvent::ChildAdded:
             // 塞进来的东西**必须能看见**。Qt 的规矩是"显式 hide 过的会一直是藏着的"，
-            // 而调用方给的多半正是"上次关掉时被 hide 过"的那个对话框（「账号与外观」
+            // 而调用方给的多半正是"上次关掉时被 hide 过"的那个对话框（「账号与皮肤」
             // 就是长驻的那一个）。不翻出来的症状是**页面开了、里面是空的，而且不报错** ——
             // 更阴的是布局里那个 `QWidgetItem::isEmpty()` 会因此返回 true（Qt 认的就是
             // `isHidden()` 这一位），于是这个控件连"有多高"都不算数。

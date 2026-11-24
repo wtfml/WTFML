@@ -105,7 +105,7 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
                 .contains(mouse->position().toPoint())) {
             if (event->type() == QEvent::MouseButtonPress) {
                 // 按下就动手（松开那一下只负责被吃掉）：跟普通按钮一样，按下去就该有反应。
-                // 这一下取消的是"装这个加载器"这件事 —— 退回「不装（纯原版）」。
+                // 这一下取消的是"装这个加载器"这件事 —— 退回「不安装（纯原版）」。
                 // NOTE: **钉住的版本号留着**（不清 m_chosenVersion）：那是用户自己挑的
                 // 一版，按一下叉就把它忘掉，下次再选中这条加载器还得从头找一遍。
                 // 它只在"这一条被选中"的时候才显示，留着不会让人看到不该看的东西。

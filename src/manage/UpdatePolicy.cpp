@@ -252,7 +252,7 @@ Store load(const QString &path, QString *problemOut) {
     bool ok = false;
     const Store store = fromJson(bytes, &ok);
     if (!ok && problemOut != nullptr) {
-        *problemOut = QObject::tr("无法解析「%1」（不是本程序写入的格式），本次按没有任何记录处理。")
+        *problemOut = QObject::tr("无法解析「%1」（不是本程序写入的格式），本次按无任何记录处理。")
                           .arg(path);
     }
     return store;
@@ -275,7 +275,7 @@ bool save(const Store &store, const QString &path, QString *problemOut) {
     QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly)) {
         if (problemOut != nullptr) {
-            *problemOut = QObject::tr("写不动「%1」：%2").arg(path, file.errorString());
+            *problemOut = QObject::tr("无法写入「%1」：%2").arg(path, file.errorString());
         }
         return false;
     }
