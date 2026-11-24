@@ -393,6 +393,9 @@ private:
     /// 表单那一竖排（弹簧在**收尾**，新加的行走它前面 —— 同实例设置那条规矩）。
     QVBoxLayout *m_formLayout = nullptr;
 
+    /// 表单名字列的宽（`setFields()` 按最长名字实测，见 .cpp）。
+    int m_fieldLabelWidth = 132;
+
     /// 「服务器简介」那一格下面那块"游戏里长什么样"（`FieldView::preview` 为真的那一行才有；
     /// 现在只有 `motd` 一行是那样）。**颜色与字形全照 `§` 码来**，见 `MotdText`。
     QLabel *m_motdPreview = nullptr;

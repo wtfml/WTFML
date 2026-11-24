@@ -489,6 +489,7 @@ void InstanceSettingsDialog::setInstanceName(const QString &name) {
     // 也不需要挡什么 —— 这一句只是让控件和"磁盘上现在叫什么"重新对上（改名成功之后是
     // 新名字，失败之后退回老名字）。
     m_instanceNameEdit->setText(name);
+    m_instanceNameEdit->setCursorPosition(0);
 }
 
 void InstanceSettingsDialog::setInstanceDisplayName(const QString &displayName) {
@@ -1811,6 +1812,18 @@ QString InstanceSettingsDialog::currentPageKey() const {
     return m_stack == nullptr ? QString() : pageKeyAtStackIndex(m_stack->currentIndex());
 }
 
+int InstanceSettingsDialog::fittedNavigationTreeWidth(const QTreeWidget *tree) {
+    int widest = 0;
+    for (QTreeWidgetItemIterator it(const_cast<QTreeWidget *>(tree)); *it; ++it) {
+        int depth = 0;
+        for (const QTreeWidgetItem *p = (*it)->parent(); p != nullptr; p = p->parent()) ++depth;
+        const int textWidth = QFontMetrics((*it)->font(0)).horizontalAdvance((*it)->text(0));
+        // 36 = 右留白 12 + 树内部左右各约 12 的余量（按截图实测：整项可画宽比树宽少约 22）
+        widest = qMax(widest, depth * tree->indentation() + 8 + textWidth + 36);
+    }
+    return qBound(navigationTreeWidth(), widest, 240);
+}
+
 void InstanceSettingsDialog::rebuildNavigationTree() {
     if (m_navigationTree == nullptr) return;
     QSet<QString> collapsed;
@@ -1873,6 +1886,7 @@ void InstanceSettingsDialog::rebuildNavigationTree() {
             (*it)->setExpanded(rebuilding ? !collapsed.contains(id) : defaultExpanded);
         }
     }
+    m_navigationTree->setFixedWidth(fittedNavigationTreeWidth(m_navigationTree));
 }
 
 QWidget *InstanceSettingsDialog::addOverrideRow(QGridLayout *grid, int row, const QString &field,

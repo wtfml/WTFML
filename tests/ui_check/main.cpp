@@ -401,7 +401,9 @@ int main(int argc, char *argv[]) {
         bool rightStillTalksAboutImport = false;
         if (instanceWorkspace != nullptr) {
             for (const QLabel *l : instanceWorkspace->findChildren<QLabel *>()) {
-                if (l->text().contains(QStringLiteral("导入整合包"))) {
+                // 空状态那句（instanceEmpty）本来就写「可导入整合包」，不在"常驻侧栏说明"之列。
+                if (l->objectName() != MainWindowUI::instanceEmptyLabelName() &&
+                    l->text().contains(QStringLiteral("导入整合包"))) {
                     rightStillTalksAboutImport = true;
                 }
             }

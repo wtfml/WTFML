@@ -96,8 +96,8 @@ int UiUpgradePageChecks(QApplication &app) {
           "UG6 存档那一行显示「3 个 · 2.0 KB」", savesNote != nullptr ? savesNote->text() : QString());
     auto *modsNote = page.findChild<QLabel *>(
         InstanceUpgradePage::categoryNoteName(QStringLiteral("mods")));
-    check(modsNote != nullptr && modsNote->text().contains(QStringLiteral("没有")),
-          "UG6 空的那一类明说「没有」", modsNote != nullptr ? modsNote->text() : QString());
+    check(modsNote != nullptr && modsNote->text().contains(QStringLiteral("无")),
+          "UG6 空的那一类明说「无」", modsNote != nullptr ? modsNote->text() : QString());
     check(summary != nullptr && summary->text().contains(QStringLiteral("3 个文件")),
           "UG6 摘要按选中的类别合计（只选了存档 ⇒ 3 个文件）",
           summary != nullptr ? summary->text() : QString());

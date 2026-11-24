@@ -593,6 +593,7 @@ void WorldSettingsPage::setWorld(const WorldView &view) {
 
     m_titleText = tr("世界设置：%1").arg(view.dirName);
     m_nameEdit->setText(view.levelName);
+    m_nameEdit->setCursorPosition(0);
     m_allowCommands->setChecked(view.allowCommands);
     m_hardcore->setChecked(view.hardcore);
     {
@@ -924,6 +925,7 @@ void WorldSettingsPage::rebuildRuleRows(bool harvestFromRows) {
                     QRegularExpression(QStringLiteral("-?\\d{1,18}")), edit));
             }
             edit->setText(rule.value);
+            edit->setCursorPosition(0);
             connect(edit, &QLineEdit::textChanged, this,
                     [this] { refreshSaveEnabled(); });
             layout->addWidget(edit, 1);

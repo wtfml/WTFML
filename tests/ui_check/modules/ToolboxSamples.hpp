@@ -138,7 +138,7 @@ inline void fillToolboxSamples(ToolboxPage &page, ToolboxPage::Tool tool) {
         page.setBannerDesign(0, {QStringLiteral("0:1"), QStringLiteral("1:2"), QStringLiteral("2:3"), QStringLiteral("0:0"),
                                  QStringLiteral("1:1"), QStringLiteral("2:2")}, QString());
         page.setBannerResult(demoText(
-            "底色 白色 · 6/6 层\n\n步骤：\n• 先做一面白色旗帜：6 块白色羊毛 + 1 根木棍\n• 第 1 层：条纹（橙色）\n• 第 2 层：十字（品红色）\n"
+            "底色 白色 · 6/6 层\n\n步骤：\n• 合成白色旗帜：6 块白色羊毛 + 1 根木棍\n• 第 1 层：条纹（橙色）\n• 第 2 层：十字（品红色）\n"
             "• 第 3 层：边框（黑色）\n• 第 4 层：条纹（白色）\n• 第 5 层：十字（橙色）\n• 第 6 层：边框（品红色）\n\n"
             "材料清单：\n• 白色羊毛 × 6\n• 木棍 × 1\n• 橙色染料 × 2\n• 品红色染料 × 2\n• 黑色染料 × 1\n\n"
             "指令（写法随目标版本变化）：\n"

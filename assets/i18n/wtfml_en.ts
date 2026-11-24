@@ -3889,7 +3889,7 @@ What you want to restore is this one:
         <name>CoordConvert</name>
         <message>
             <source>主世界</source>
-            <translation>Main world</translation>
+            <translation>Overworld</translation>
         </message>
         <message>
             <source>下界</source>
@@ -14716,7 +14716,7 @@ You can undo the last update in "Update center".</translation>
         </message>
         <message>
             <source>搜索设置</source>
-            <translation>Search settings…</translation>
+            <translation>Search…</translation>
         </message>
         <message>
             <source>运行时</source>
@@ -27744,7 +27744,7 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source> 次</source>
-            <translation> uses</translation>
+            <translation>×</translation>
         </message>
         <message>
             <source>附魔</source>

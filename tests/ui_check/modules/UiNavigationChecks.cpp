@@ -244,7 +244,8 @@ int UiNavigationChecks(QMainWindow &window, MainWindowUI &ui, QComboBox * &insta
               "「安装」不在主页（它只在下载页的安装页上）");
         check(instancePage != nullptr && isAncestor(instancePage, folderList) &&
                   isAncestor(instancePage, instanceList) &&
-                  instancePage->findChildren<QPushButton *>().size() == 13,
+                  instancePage->findChildren<QPushButton *>().size() == 17,
+              // 13 变 17：服务端模式的四颗筛选 chip（serverFilter0..3）也挂在实例页上，页内一共 17 颗。
               // UI 7b 从 11 变 14：页头那颗文件夹胶囊（instanceFolderPill，点开是文件夹浮层）
               // + 空状态那两颗（「去下载页装新版本」「导入整合包…」）。
               // 14 又变 13：空状态里的「导入整合包…」去掉（页头右上已有同一颗），只剩「去下载页装新版本」。

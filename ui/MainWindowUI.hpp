@@ -551,8 +551,9 @@ public:
     static int versionTreeIconSize() { return 18; }
     /// 最右边那个 >/V 的边长。
     static int versionTreeArrowSize() { return 12; }
-    /// 行尾那一格文字（「展开 / 收起」或悬停时的动词）占多宽：13 px 两个汉字 + 余量。
-    static int versionTreeTrailWidth() { return 28; }
+    /// 行尾那一格文字（「展开 / 收起」或悬停时的动词）占多宽：按当前语言译文实测（辅助档字号），
+    /// 28 px（13 px 两个汉字 + 余量）作下限、96 px 作上限，所以中文不变、英文不再被裁。
+    static int versionTreeTrailWidth();
     /// 行内左右留白。
     static int versionTreeRowPadding() { return 6; }
 

@@ -245,13 +245,15 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
     addEntry(maintenance, tr("迁移"), Section::Migration);
     addEntry(maintenance, tr("升级"), Section::Upgrade);
     m_sectionList->expandAll();
+    const int navWidth = InstanceSettingsDialog::fittedNavigationTreeWidth(m_sectionList);
+    m_sectionList->setFixedWidth(navWidth);
     {
         auto *column = new QWidget(this);
         auto *layout = new QVBoxLayout(column);
         layout->setContentsMargins(0, 0, 0, 0);
         layout->setSpacing(0);
         layout->addWidget(m_sectionList);
-        column->setFixedWidth(InstanceSettingsDialog::navigationTreeWidth());
+        column->setFixedWidth(navWidth);
         columns->addWidget(column);
     }
 
@@ -624,7 +626,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
         java->addWidget(m_launchBrowse);
         connect(m_launchBrowse, &QPushButton::clicked, this, [this] {
             const QString path = QFileDialog::getOpenFileName(this, tr("选择 Java 可执行文件"), m_launchJava->text());
-            if (!path.isEmpty()) m_launchJava->setText(path);
+            if (!path.isEmpty()) { m_launchJava->setText(path); m_launchJava->setCursorPosition(0); }
         });
         layout->addLayout(java);
         auto *memory = new QHBoxLayout;
@@ -778,8 +780,10 @@ void ServerSettingsPage::setRunButtons(bool running, bool stopping) {
 void ServerSettingsPage::setLaunchSettings(const LaunchSettings &settings) {
     m_savedLaunch = settings;
     m_launchJava->setText(settings.javaPath);
+    m_launchJava->setCursorPosition(0);
     m_launchMemory->setValue(settings.memoryMb);
     m_launchJvm->setText(settings.jvmArguments);
+    m_launchJvm->setCursorPosition(0);
     refreshSectionActions();
 }
 
@@ -874,6 +878,12 @@ void ServerSettingsPage::setFields(const QList<FieldView> &fields) {
     m_motdPreviewNote = nullptr;
     m_zipPickButton = nullptr;
     m_fields = fields;
+    // 名字列按最长的名字实测取宽：132 作下限、220 作上限（中文仍是 132，英文长名不再被硬切）。
+    int labelWidth = kFieldLabelWidth;
+    for (const FieldView &field : fields) {
+        labelWidth = qMax(labelWidth, m_formBody->fontMetrics().horizontalAdvance(field.label) + 4);
+    }
+    m_fieldLabelWidth = qMin(labelWidth, 220);
     for (const FieldView &field : fields) {
         addFieldRow(field);
     }
@@ -1302,7 +1312,7 @@ void ServerSettingsPage::addFieldRow(const FieldView &field) {
     layout->setSpacing(12);
 
     auto *label = new QLabel(field.label, row);
-    label->setFixedWidth(kFieldLabelWidth);
+    label->setFixedWidth(m_fieldLabelWidth);
     layout->addWidget(label);
 
     QWidget *editor = nullptr;
@@ -1392,7 +1402,7 @@ void ServerSettingsPage::addFieldRow(const FieldView &field) {
     if (field.preview) {
         auto *holder = new QWidget(m_formBody);
         auto *holderLayout = new QVBoxLayout(holder);
-        holderLayout->setContentsMargins(kFieldLabelWidth + 12, 0, 0, 0);
+        holderLayout->setContentsMargins(m_fieldLabelWidth + 12, 0, 0, 0);
         holderLayout->setSpacing(4);
 
         auto *plate = new QLabel(holder);
@@ -1465,6 +1475,7 @@ void ServerSettingsPage::setEditorValue(const FieldView &field, const QString &v
     case Kind::Text: {
         if (auto *edit = qobject_cast<QLineEdit *>(editor)) {
             edit->setText(value);
+            edit->setCursorPosition(0);  // 长值（MOTD、路径）显示开头，不停在末尾
         }
         break;
     }

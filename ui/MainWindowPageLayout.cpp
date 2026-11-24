@@ -125,6 +125,13 @@ void addSearchIcon(QLineEdit *edit) {
     Theme::follow(edit, tint);
 }
 
+void fitSearchWidth(QLineEdit *edit, int lo, int hi) {
+    QFont font = Theme::textFont(edit->font(), Theme::TextRole::Body);
+    const int wanted = QFontMetrics(font).horizontalAdvance(edit->placeholderText()) + 64;
+    edit->setMinimumWidth(qBound(lo, wanted, hi));
+    if (edit->maximumWidth() < edit->minimumWidth()) edit->setMaximumWidth(edit->minimumWidth());
+}
+
 QLineEdit *makeListFilterSearch(QWidget *parent, const QString &name, const QString &placeholder) {
     auto *edit = new QLineEdit(parent);
     edit->setObjectName(name);

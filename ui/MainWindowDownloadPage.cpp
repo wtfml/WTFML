@@ -321,6 +321,7 @@ void MainWindowUI::setupDownloadGamePage() {
     versionFilterLayout->addWidget(versionFilterHint);
     // 设计稿 download：搜索框定宽靠左，不再横贯整行。
     versionFilterEdit->setMaximumWidth(360);
+    fitSearchWidth(versionFilterEdit, 0, 360);
     {
         // 分段：全部 / 正式版 / 快照 / 远古版（设计稿 download）。只藏 / 露那几条分类，
         // 和筛选框叠着生效（见 applyVersionFilter()）。各段的版本数在 tooltip 里。
@@ -705,6 +706,7 @@ void MainWindowUI::setupDownloadServerPage() {
     search->setObjectName(QStringLiteral("serverVersionFilter"));
     search->setPlaceholderText(versionFilterPlaceholderText());
     addSearchIcon(search);
+    fitSearchWidth(search, 0, 360);
     filterLayout->addWidget(search, 1);
     auto *hint = new QLabel(filterBar);
     hint->setObjectName(downloadServerHintName());

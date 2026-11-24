@@ -580,6 +580,7 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
             auto *items = new QListWidget(page);
             items->setObjectName(transferItemsListName(key));
             items->setSelectionMode(QAbstractItemView::NoSelection);
+            items->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);  // 窄栏里长项省略号收尾，不出横向滚动条
             layout->addWidget(items, 3);
             m_transferItems.insert(key, items);
             if (upgrade) {
@@ -612,8 +613,10 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
                 mods->setRootIsDecorated(false);
                 mods->setAlternatingRowColors(false);
                 mods->setMinimumHeight(80);
+                mods->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);  // 表格不出横向滚动条
                 items->setMinimumHeight(80);
-                mods->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+                // 模组名列也按内容宽，剩下的都给依据列：英文依据句子长，两列平分时被省略。
+                mods->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
                 // 状态列按内容宽：钉 240 时窄窗下第一列只剩几十像素，表头「当前模组」都被截掉。
                 mods->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
                 mods->header()->setSectionResizeMode(2, QHeaderView::Stretch);
@@ -1072,6 +1075,13 @@ void InstanceSettingsDialog::setTransferItems(const QString &key,
     // 一批只是别让它把"按钮状态"重算三遍；算三遍也没有副作用，但更吵。
     const QSignalBlocker blocker(list);
     list->clear();
+    if (key == QStringLiteral("upgrade") && list->parentWidget() != nullptr) {
+        // 升级页右栏最长一项放得下（勾选框 + 留白约 56 px），上限仍是那一栏的 290。
+        int widest = 0;
+        for (const QPair<QString, QString> &entry : items)
+            widest = qMax(widest, list->fontMetrics().horizontalAdvance(entry.first));
+        list->parentWidget()->setMinimumWidth(qMin(290, widest + 56));
+    }
     for (const QPair<QString, QString> &entry : items) {
         auto *item = new QListWidgetItem(entry.first, list);
         item->setData(Qt::UserRole, entry.second);

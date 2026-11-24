@@ -971,6 +971,28 @@ const MainWindowUI::ThemeImageRow &MainWindowUI::getThemeImageRow(int index) con
 
 
 
+int MainWindowUI::versionTreeTrailWidth() {
+    // 行尾文字：「展开 / 收起」（版本树、实例分组头各一份译文，内容一致）与悬停动词「安装 / 下载」。
+    const QFont font = Theme::textFont(QApplication::font(), Theme::TextRole::Caption);
+    const QStringList words{QCoreApplication::translate("VersionTreeDelegate", "收起"),
+                            QCoreApplication::translate("VersionTreeDelegate", "展开"),
+                            QCoreApplication::translate("VersionTreeDelegate", "安装"),
+                            QCoreApplication::translate("MainWindowUI", "下载")};
+    static QString cachedKey;
+    static int cachedWidth = 28;
+    const QString key = words.join(QLatin1Char('|')) + QString::number(font.pixelSize());
+    if (key != cachedKey) {
+        const QFontMetrics metrics(font);
+        int widest = 0;
+        for (const QString &word : words) {
+            widest = qMax(widest, metrics.horizontalAdvance(word));
+        }
+        cachedWidth = qBound(28, widest + 2, 96);
+        cachedKey = key;
+    }
+    return cachedWidth;
+}
+
 QString MainWindowUI::runningDurationText(qint64 startedAtMs, qint64 nowMs) {
     // 负数（时钟被往回调过、或者 startedAtMs 是个没写过的 0）当"刚开始"：这一行是个说明，
     // 不该出现"已运行 -3 分钟"这种算术漏出来的话。
