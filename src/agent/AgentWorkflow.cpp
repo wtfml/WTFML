@@ -5,6 +5,8 @@
 
 #include "AgentWorkflow.hpp"
 
+#include "AgentRepairTransaction.hpp"
+
 
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -75,7 +77,8 @@ bool AgentWorkflow::isVerifyStep(const AgentPlanStep &step) const {
            step.tool == QStringLiteral("instance.context") ||
            step.tool == QStringLiteral("settings.get") ||
            step.tool == QStringLiteral("mods.list") ||
-           step.tool == QStringLiteral("instance.testLaunch");
+           step.tool == QStringLiteral("instance.testLaunch") ||
+           step.tool == QStringLiteral("repair.verify");
 }
 
 bool AgentWorkflow::submitPlan(const QString &goal, const QList<AgentPlanStep> &steps,
@@ -118,7 +121,8 @@ bool AgentWorkflow::submitPlan(const QString &goal, const QList<AgentPlanStep> &
         if (isRepairStep(step)) hasRepair = true;
         if (step.verify) {
             // 测试启动会起进程（risk=Command），但不写原实例；它是 S5.1 的验证步。
-            const bool executionVerify = step.tool == QStringLiteral("instance.testLaunch");
+            const bool executionVerify = step.tool == QStringLiteral("instance.testLaunch") ||
+                                         step.tool == QStringLiteral("repair.verify");
             if (isWriteRisk(toolSpec.risk) && !executionVerify) {
                 return fail(QStringLiteral("%1 被标成验证步，但它是写操作。").arg(label));
             }
@@ -242,6 +246,14 @@ bool AgentWorkflow::canFinish(QString *problem) const {
         }
     }
     if (m_evidenceIds.isEmpty()) return fail(QStringLiteral("没有任何证据 id，不能报完成。"));
+    if (!m_instanceId.isEmpty()) {
+        AgentRepairTransactionStore transactions;
+        AgentRepairTransactionRecord active;
+        if (transactions.activeForInstance(m_instanceId, &active, nullptr)) {
+            return fail(QStringLiteral("还有未收尾的修复事务（%1）；先用 repair.finish 提交或回滚。")  // i18n-ignore
+                            .arg(active.id));
+        }
+    }
     return true;
 }
 

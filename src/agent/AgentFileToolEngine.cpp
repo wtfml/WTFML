@@ -7,6 +7,8 @@
 
 #include "AgentApprovalPolicy.hpp"
 #include "AgentInstanceLock.hpp"
+#include "AgentRepairTransaction.hpp"
+#include "AgentWorkspaceStore.hpp"
 #include "AgentRedaction.hpp"
 
 #include <QFileInfo>
@@ -222,7 +224,30 @@ AgentToolResult AgentFileToolEngine::handleWrite(const Agent::ToolCall &call,
     const QString content = call.arguments.value(QStringLiteral("content")).toString();
     const QString expected = call.arguments.value(QStringLiteral("expectedSha256")).toString();
     const QString token = call.arguments.value(QStringLiteral("fileIdentityToken")).toString();
-    const AgentWritePlan plan = m_files->prepareWrite(context.rootPath, relative, content,
+    const QString workspaceId = call.arguments.value(QStringLiteral("workspaceId")).toString();
+
+    AgentToolContext writeContext = context;
+    if (!workspaceId.isEmpty()) {
+        AgentWorkspaceStore workspaces;
+        AgentWorkspaceRecord workspace;
+        QString problem;
+        if (!workspaces.load(workspaceId, &workspace, &problem) ||
+            workspace.sourceInstanceId != context.instanceId) {
+            return errorResult(Agent::ErrorKind::ToolError,
+                               problem.isEmpty() ? QStringLiteral("工作区与当前实例不匹配。") : problem);  // i18n-ignore
+        }
+        writeContext.rootPath = workspace.rootPath + QStringLiteral("/versions/") +
+                                workspace.versionId;
+    } else {
+        AgentRepairTransactionStore transactions;
+        AgentRepairTransactionRecord active;
+        QString problem;
+        if (transactions.activeForInstance(context.instanceId, &active, &problem)) {
+            return errorResult(Agent::ErrorKind::ToolError,
+                               QStringLiteral("事务活动期间不能直接写原实例；请带 workspaceId 写工作区。"));  // i18n-ignore
+        }
+    }
+    const AgentWritePlan plan = m_files->prepareWrite(writeContext.rootPath, relative, content,
                                                       expected, token);
     if (!plan.ok) return errorResult(plan.error.kind, plan.error.message);
     AgentEgressPolicy::Request request;
@@ -234,7 +259,7 @@ AgentToolResult AgentFileToolEngine::handleWrite(const Agent::ToolCall &call,
     Pending pending;
     pending.kind = Pending::Kind::Write;
     pending.call = call;
-    pending.context = context;
+    pending.context = writeContext;
     pending.egress = egressJson(egress, request.kind);
     pending.writePlan = plan;
     pending.content = request.content;

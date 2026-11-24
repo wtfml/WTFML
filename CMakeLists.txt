@@ -212,6 +212,9 @@ set(HEADER_FILES
     src/agent/AgentLaunchHost.hpp
     src/agent/AgentTestLaunch.hpp
     src/agent/AgentTestLaunchToolEngine.hpp
+    src/agent/AgentRepairHost.hpp
+    src/agent/AgentRepairTransaction.hpp
+    src/agent/AgentRepairToolEngine.hpp
     src/agent/AgentWinPath.hpp
     src/agent/AgentEgressPolicy.hpp
     src/agent/AgentArtifactStore.hpp
@@ -242,6 +245,7 @@ set(HEADER_FILES
     src/controllers/AgentController.hpp
     src/controllers/AgentLauncherHostImpl.hpp
     src/controllers/AgentTestLaunchRunner.hpp
+    src/controllers/AgentRepairRunner.hpp
     ui/AgentMarkdown.hpp
     ui/AgentViewTypes.hpp
     ui/AgentMessageView.hpp
@@ -560,6 +564,8 @@ set(SOURCE_FILES
     src/agent/AgentWorkspaceStore.cpp
     src/agent/AgentTestLaunch.cpp
     src/agent/AgentTestLaunchToolEngine.cpp
+    src/agent/AgentRepairTransaction.cpp
+    src/agent/AgentRepairToolEngine.cpp
     src/agent/AgentWinPath.cpp
     src/agent/AgentEgressPolicy.cpp
     src/agent/AgentArtifactStore.cpp
@@ -588,6 +594,7 @@ set(SOURCE_FILES
     src/controllers/AgentController.cpp
     src/controllers/AgentLauncherHostImpl.cpp
     src/controllers/AgentTestLaunchRunner.cpp
+    src/controllers/AgentRepairRunner.cpp
     src/net/HttpClient.cpp
     src/manage/DroppedResource.cpp
     src/manage/FolderManager.cpp

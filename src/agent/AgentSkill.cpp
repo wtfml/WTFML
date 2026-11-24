@@ -30,7 +30,9 @@ QStringList readOnlyTools() {
             QStringLiteral("fs.read"),
             QStringLiteral("artifact.read"),
             QStringLiteral("workflow.submitPlan"),
-            QStringLiteral("workflow.finish")};
+            QStringLiteral("workflow.finish"),
+            QStringLiteral("repair.diff"),
+            QStringLiteral("repair.status")};
 }
 
 /// 写类工具：必须在已批准的计划里才放行。
@@ -40,7 +42,10 @@ QStringList repairTools() {
             QStringLiteral("mods.setEnabled"),
             QStringLiteral("backup.create"),
             QStringLiteral("backup.restore"),
-            QStringLiteral("instance.testLaunch")};
+            QStringLiteral("instance.testLaunch"),
+            QStringLiteral("repair.begin"),
+            QStringLiteral("repair.verify"),
+            QStringLiteral("repair.finish")};
 }
 
 AgentSkill make(const QString &id, const QString &name, const QString &description,

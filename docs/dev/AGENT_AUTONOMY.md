@@ -98,7 +98,7 @@ S5.1 的规则在 `AgentTestLaunchMilestones`（纯函数），用 1.20.1 的原
 - 世界验证只允许工作区 `saves/` 里已经有的世界；S5.1 整份复制会带上源 `saves/`，启动时只按 `quickPlay.world` 进入副本，不回写源存档。`saves/` 永远不是提交范围。
 - 复制前检查源实例未运行；后台复制前按源目录文件总大小检查 16 GB 上限与目标卷剩余空间（估算体积 + 1 GB），超过就拒绝，让用户改用只读诊断。
 - 每个工作区在 `agent/workspaces/<id>.json` 登记来源、用途、创建时间、状态和日志位置；启动恢复扫描这张表，不接管未登记的目录。
-- S5.1 测试启动的工作区默认保留（稳定/崩溃/超时都留），日志和登记留给后续排查；S5.2 事务成功提交后再统一清理，失败/中断工作区保留到 `repair.status`。
+- 测试启动和修复事务的工作区默认保留（稳定/崩溃/超时/提交后都留），日志、登记和事务备份留给后续排查；自动清理尚未实现，`repair.status` 只列出状态。
 
 ### 3.4 修复事务
 
@@ -181,44 +181,28 @@ assets/agent/
 
 验收：`verify_agent` core-agent 905/905、`ui_check_agent` 77/77、`mw_check_agent` 83/83、`verify_launch` 370/370；产品目标编译通过；`check-agent-release.ps1`、`check-i18n.ps1`、`check-test-modules.ps1` PASS。真实 1.20.1 实例的启动/崩溃/超时仍需真机复跑（A9）。
 
-限制：工作区目前整份复制实例，未做按类别筛选；测试启动不自动下载 Java；Java 8 的 ASCII 别名不用于工作区；工作区默认保留，启动恢复扫描与自动清理留给 S5.2。
+限制：工作区目前整份复制实例，未做按类别筛选；测试启动不自动下载 Java；Java 8 的 ASCII 别名不用于工作区；工作区默认保留，启动恢复扫描与自动清理留给后续。
 
-### S5.2 修复事务与回滚（P0）
+### S5.2 修复事务与回滚（已完成 2026-11-24）
 
-改动：
+实现：
 
-- `AgentRepairTransaction`：事务日志、基线指纹、操作记录、差异、备份、提交、回滚、恢复；`AgentPaths` 增加 `transactionsDir()`。
-- `AgentRepairHost`：复制工作区、提交差异、回滚、恢复检查；异步、带进度。
-- `repair.begin`、`repair.diff`、`repair.verify`、`repair.finish`、`repair.status` 五个工具。
-- 现有写工具增加可选 `workspaceId`；事务内路由到工作区，事务外保持现行行为。工作区路径仍走 `AgentInstancePaths` 的字符串拒绝和句柄级最终路径校验，不因为“在工作区”就放松受保护目录、`..`、junction 或文件身份检查。
-- `settings.set` 的事务内覆盖层：测试启动读「当前设置 + 事务差异」，提交时才落盘。
+- `AgentRepairTransactionStore`：事务日志、状态、基线 `相对路径 → SHA-256`、设置增量、验证结果；`AgentPaths::transactionsDir()` 是唯一路径出处。
+- `AgentRepairHost` + `AgentRepairRunner`：`repair.begin` 复制工作区、从源实例记录基线；`repair.finish(commit)` 先核对源文件哈希、备份触达文件、原子重放差异、回读哈希，失败按已应用清单回滚；`repair.finish(rollback)` 只改事务状态，原实例不变。
+- 工具：`repair.begin`、`repair.diff`、`repair.verify`、`repair.finish`、`repair.status`。`repair.begin`/commit 逐次审批，rollback 自动，`repair.diff`/`status` 自动。
+- 写工具路由：`fs.write`、`mods.setEnabled`、`settings.set` 接受可选 `workspaceId`；事务内写工作区，事务外保持现行行为。事务活动期间不带 `workspaceId` 的直接写工具、`backup.restore` 一律拒绝。
+- `settings.set` 在事务内只记增量，提交时才通过宿主写回；`repair.diff` 同时列出设置增量。
+- 工作流：崩溃急救/模组维护白名单加入事务工具；`repair.verify` 可作为验证步；`repair.finish` 在失败后仍可回滚；`workflow.finish` 检测到未收尾事务时拒绝报完成。
+- 测试：`AgentRepairTests` 覆盖基线/差异、事务日志、begin/verify/finish 审批与异步交付；`AgentWorkflowTests` 覆盖事务计划。
 
-工具行为：
+验收：`verify_agent` core-agent 944/944、`ui_check_agent` 77/77、`mw_check_agent` 83/83、`verify_launch` 370/370；主程序与测试目标编译；检查脚本 PASS。真实 1.20.1 的提交/回滚 A10 未跑。
 
-| 工具 | 行为 | 审批 |
-| --- | --- | --- |
-| `repair.begin` | 建工作区、基线、事务日志；返回 `transactionId` / `workspaceId` / 空间估算 | 每次 |
-| `repair.diff` | 列改动文件、前后哈希、配置文本差异、二进制文件清单 | 自动 |
-| `repair.verify` | 调 `instance.testLaunch`，记录里程碑、证据、重复次数 | 事务内自动；独立调用每次 |
-| `repair.finish` | `commit` 只重放差异并备份；`rollback` 丢弃工作区/恢复已提交文件 | commit 每次；rollback 自动 |
-| `repair.status` | 列活动/中断事务、工作区占用、可恢复操作 | 自动 |
+限制：
 
-`repair.begin` 参数：`scopes`（`mods` / `config` / `options` / `settings`）、`testWorlds?`（只复制到工作区，不提交）、`diskBudgetMb?`。
-
-`AgentWorkflow` 的计划校验同步认识新工具：`repair.begin`、`mods.installFix`、`instance.repairCore` 属写，`repair.diff`、`repair.status`、诊断与日志检索属只读，`instance.testLaunch`、`repair.verify`、`mods.bisect` 属可重复执行；验证步判定要认识 `repair.verify`（执行游戏但不写文件），不能只按只读工具判断。计划至少一个验证步，`repair.finish(commit)` 只能作为最后一步。
-
-本地判据：
-
-- 一个实例同时只允许一个活动事务；事务过期时间默认 60 分钟，过期后只能回滚或重新开始。
-- 提交前必须有一次通过的 `repair.verify`；没有验证证据时 `commit` 直接拒绝。
-- 提交前逐个核对源文件哈希等于基线；不一致就拒绝提交，并列出被外部修改的文件。
-- 提交后是否做原实例启动验证由计划和用户决定；做的时候仅限 `milestone=main_menu` 且不带 quickPlay。世界问题不做提交后启动，报告写明「未在原件验证」；计划要求了提交后验证却没做或没达到里程碑时，报告只能写 `fixed_unverified`。
-- 用户取消、验证失败、磁盘不足、源文件变化、提交中写失败都自动回滚；回滚本身失败时保留现场并报 `rollback_failed`。
-- `workflow.finish` 的完成闸增加事务条件：有活动事务时必须是 `committed` 或 `rolled_back`，报告引用事务 id；`repair.finish` 负责任务收尾与提交/回滚，`workflow.finish` 负责最终报告，两个工具签发的结论必须一致。
-- 事务活动期间，同一实例的直接写工具（不带 `workspaceId` 的 `mods.setEnabled`、`fs.write`、`settings.set`、`backup.restore`）一律拒绝，防止原件在工作区验证期间漂移。
-- 事务日志、差异、备份都在 `agent/transactions/<id>/` 下，测试启动日志在 `agent/workspaces/<id>/logs/` 下，模型只能经 `artifact.read` 看到脱敏内容。
-
-验收：禁用嫌疑模组后启动仍崩溃，回滚后原实例模组文件哈希和 `options.txt` 完全恢复；修复成功提交后原实例可启动，备份可恢复；提交前用户手改 `options.txt` 会拒绝提交；启动器在提交中断后重启，`repair.status` 能识别并恢复。
+- 事务提交只处理 `mods/config/defaultconfigs/options/settings`；世界/存档不提交。
+- 事务备份是 `agent/transactions/<id>/backups/` 下的本地原文件副本，不是 DPAPI 容器；模型只拿相对路径和 id。
+- 复制/提交的当前实现没有独立取消；关闭启动器会等待当前后台操作。启动恢复扫描尚未接到 UI，只有 `repair.status` 能列出中断事务。
+- 提交后没有自动在原实例再启动验证；需要时由计划另行调用 `instance.testLaunch`。
 
 ### S5.3 崩溃快照与日志检索（P1）
 
@@ -401,7 +385,7 @@ agent/
   repair-cases/<id>.json                  本地修复病例（P2，默认关闭）
 ```
 
-工作区在 `<游戏根>/cache/agent-workspaces/<id>/`，事务日志只记相对/受控路径，不把绝对路径发给模型。成功事务删工作区，保留日志和报告；失败事务保留工作区到用户清理或 `repair.status` 清理，不自动删除未知目录。启动时扫描 `agent/workspaces/<id>.json` 和 `agent/transactions/` 的 `applying` / `verifying` / `committing` 状态，把中断项标成 `interrupted`，给出「继续验证 / 回滚 / 保留」三个选项；`committing` 一律先回滚，不自动续跑。
+工作区在 `<游戏根>/cache/agent-workspaces/<id>/`，事务日志只记相对/受控路径，不把绝对路径发给模型。当前实现默认保留工作区（提交/回滚后都留），自动清理和启动恢复扫描尚未接到 UI；`repair.status` 只列出活动/中断事务、状态和验证结果，不自动续跑也不删未知目录。
 
 ## 7. 测试与验收
 

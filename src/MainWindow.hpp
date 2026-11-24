@@ -1357,6 +1357,7 @@ private:
     friend class InstanceDialogController;
     friend class AgentLauncherHostImpl;
     friend class AgentTestLaunchRunner;
+    friend class AgentRepairRunner;
     friend class ServerManagementActions;
     friend class InstanceUpdateFlow;
     friend class InstanceEditorController;

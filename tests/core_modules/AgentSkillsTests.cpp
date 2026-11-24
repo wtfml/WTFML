@@ -57,6 +57,9 @@ void runAgentSkillsTests() {
           "技能：崩溃急救能建备份");
     check(crash.allowedTools.contains(QStringLiteral("instance.testLaunch")),
           "技能：崩溃急救能做隔离测试启动");
+    check(crash.allowedTools.contains(QStringLiteral("repair.begin")) &&
+              crash.allowedTools.contains(QStringLiteral("repair.finish")),
+          "技能：崩溃急救能用修复事务");
     check(crash.allowedTools.contains(QStringLiteral("workflow.submitPlan")) &&
               crash.allowedTools.contains(QStringLiteral("workflow.finish")),
           "技能：崩溃急救能提交计划与报告");

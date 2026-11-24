@@ -22,7 +22,7 @@
 | 英文本地化 | 待精修 | 统一 Minecraft 术语和界面用词，校对长提示并核对英文布局 |
 | 真机 7-Zip | 环境受限 | 本机无 `7z.exe`，需正常桌面会话/安装后复跑 |
 
-下一步可选：预设子清单批量写盘（先测量再改）；hover 过渡收口；外部样本/网络/桌面会话齐备后补 U8、实网、7-Zip；G1B 复测（见 §4）；智能体按 Stage 5 的 S5.2 起步（见 §4）。
+下一步可选：预设子清单批量写盘（先测量再改）；hover 过渡收口；外部样本/网络/桌面会话齐备后补 U8、实网、7-Zip；G1B 复测（见 §4）；智能体按 Stage 5 的 S5.3 起步（见 §4）。
 
 ## 2. P0 与已确认回归
 
@@ -38,8 +38,7 @@
 
 现行行为、工具上限与待人工验证清单见 [AGENT](features/AGENT.md)，安全边界见 [SECURITY_BOUNDARIES](features/SECURITY_BOUNDARIES.md)，人工记录见 [ACCEPTANCE_LOG](archive/ACCEPTANCE_LOG.md)。Stage 5 的接口、阶段顺序与验收见 [AGENT_AUTONOMY](dev/AGENT_AUTONOMY.md)。
 
-- [ ] **Stage 5 闭环底座（P0）**：S5.2 事务工作区、提交与回滚。S5.0 提示词外置、S5.1 隔离工作区与 `instance.testLaunch` 已完成；下一步补「修完能提交、失败能回滚」，再扩诊断与模组工具。
-- [ ] **Stage 5 诊断与模组（P1）**：S5.3 `diagnostics.crashSnapshot`、`logs.search`、`logs.readRange`、`crash.readFull` 与崩溃规则库；S5.4 `mods.analyzeCompatibility`、`mods.verifyFiles`、`mods.installFix`、`instance.repairCore`；S5.5 依赖感知 `mods.bisect`。
+- [ ] **Stage 5 诊断与模组（P1）**：S5.0 提示词外置、S5.1 隔离测试启动、S5.2 修复事务已完成；下一阶段 S5.3 `diagnostics.crashSnapshot`、`logs.search`、`logs.readRange`、`crash.readFull` 与崩溃规则库；S5.4 `mods.analyzeCompatibility`、`mods.verifyFiles`、`mods.installFix`、`instance.repairCore`；S5.5 依赖感知 `mods.bisect`。
 - [ ] **Stage 5 收口（P1/P2）**：S5.6 Prompt V2 与知识分层、自由对话工具白名单；S5.7 Auto-safe 事务授权需产品确认并新增 D12；修复病例库为 P2。
 - [ ] **G1B 人工复测**：真实路径/junction/长路径、真实文件系统竞争/占用，以及脱敏变体、凭据文件识别、artifact 取回边界、重启后审批作废、提交阶段删除。
 - [ ] **网络错误验收**：401/403、429、断网、流中断、重定向、TLS 证书错误、代理、400 错误体；清单见 ACCEPTANCE_LOG 的「延后：网络错误」一节。

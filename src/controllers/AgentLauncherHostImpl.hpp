@@ -13,14 +13,16 @@
 
 #include "agent/AgentBackupIndex.hpp"
 #include "agent/AgentLaunchHost.hpp"
+#include "agent/AgentRepairHost.hpp"
 #include "agent/AgentLauncherHost.hpp"
 
 #include <memory>
 
 class MainWindow;
 class AgentTestLaunchRunner;
+class AgentRepairRunner;
 
-class AgentLauncherHostImpl final : public AgentLauncherHost, public AgentLaunchHost {
+class AgentLauncherHostImpl final : public AgentLauncherHost, public AgentLaunchHost, public AgentRepairHost {
 public:
     explicit AgentLauncherHostImpl(MainWindow *owner);
     ~AgentLauncherHostImpl() override;
@@ -63,6 +65,12 @@ public:
                          QString *problem) override;
     void cancelTestLaunch() override;
 
+    // ---------- 修复事务（异步） ----------
+    bool beginTransaction(const QString &instanceId, const QStringList &scopes,
+                          const BeginCompletion &done, QString *problem) override;
+    bool finishTransaction(const QString &transactionId, bool commit,
+                           const FinishCompletion &done, QString *problem) override;
+
 private:
     AgentDiagnosticProjection::InstanceFacts factsFor(const QString &instanceId) const;
     QString modsDir(const QString &instanceId) const;
@@ -71,4 +79,5 @@ private:
     MainWindow *m_owner = nullptr;
     AgentBackupIndex m_maintenance;
     std::unique_ptr<AgentTestLaunchRunner> m_testLaunchRunner;
+    std::unique_ptr<AgentRepairRunner> m_repairRunner;
 };

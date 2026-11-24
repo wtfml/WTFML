@@ -62,6 +62,7 @@ QString recoveryRootDir() { return sessionsDir() + QStringLiteral("/.recovery");
 QString recoveryDir(const QString &sessionId) { return recoveryRootDir() + QLatin1Char('/') + sessionId; }
 QString maintenanceBackupDir() { return dataDir() + QStringLiteral("/backups/maintenance"); }
 QString workspaceRecordsDir() { return dataDir() + QStringLiteral("/workspaces"); }
+QString transactionsDir() { return dataDir() + QStringLiteral("/transactions"); }
 QString mcpConfigDir() { return dataDir() + QStringLiteral("/mcp"); }
 QString logsDir() { return dataDir() + QStringLiteral("/logs"); }
 
@@ -80,7 +81,8 @@ QString sessionBodyPath(const QString &sessionId, bool encrypted) {
 
 bool ensureDataDir(QString *problem) {
     const QStringList dirs{sessionsDir(), artifactsRootDir(), recoveryRootDir(),
-                           maintenanceBackupDir(), mcpConfigDir(), logsDir(), workspaceRecordsDir()};
+                           maintenanceBackupDir(), mcpConfigDir(), logsDir(), workspaceRecordsDir(),
+                           transactionsDir()};
     for (const QString &dir : dirs) {
         if (!QDir().mkpath(dir)) {
             if (problem != nullptr) {

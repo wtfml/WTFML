@@ -6,6 +6,7 @@
 #include "AgentLauncherHostImpl.hpp"
 
 #include "AgentTestLaunchRunner.hpp"
+#include "AgentRepairRunner.hpp"
 
 #include "MainWindow.hpp"
 
@@ -82,7 +83,21 @@ AgentLauncherHostImpl::AgentLauncherHostImpl(MainWindow *owner)
     : m_owner(owner),
       m_maintenance(AgentPaths::maintenanceBackupDir()),
       m_testLaunchRunner(owner != nullptr ? std::make_unique<AgentTestLaunchRunner>(owner)
-                                          : nullptr) {}
+                                          : nullptr),
+      m_repairRunner(owner != nullptr ? std::make_unique<AgentRepairRunner>(
+                                           owner,
+                                           [this](const QString &key, const QJsonValue &value,
+                                                  QString *problem) {
+                                               QJsonObject applied;
+                                               return applySetting(key, value, &applied, problem);
+                                           },
+                                           [this](const QString &key) {
+                                               AgentHostSettings settings;
+                                               QString problem;
+                                               if (!this->settings(&settings, &problem)) return QJsonValue();
+                                               return settings.values.value(key);
+                                           })
+                                      : nullptr) {}
 
 AgentLauncherHostImpl::~AgentLauncherHostImpl() = default;
 
@@ -682,4 +697,23 @@ bool AgentLauncherHostImpl::startTestLaunch(const QString &instanceId, const QSt
 
 void AgentLauncherHostImpl::cancelTestLaunch() {
     if (m_testLaunchRunner != nullptr) m_testLaunchRunner->cancel();
+}
+
+bool AgentLauncherHostImpl::beginTransaction(const QString &instanceId,
+                                              const QStringList &scopes,
+                                              const BeginCompletion &done, QString *problem) {
+    if (m_repairRunner == nullptr) {
+        if (problem != nullptr) *problem = QStringLiteral("修复事务未接入。");  // i18n-ignore
+        return false;
+    }
+    return m_repairRunner->begin(instanceId, scopes, done, problem);
+}
+
+bool AgentLauncherHostImpl::finishTransaction(const QString &transactionId, bool commit,
+                                              const FinishCompletion &done, QString *problem) {
+    if (m_repairRunner == nullptr) {
+        if (problem != nullptr) *problem = QStringLiteral("修复事务未接入。");  // i18n-ignore
+        return false;
+    }
+    return m_repairRunner->finish(transactionId, commit, done, problem);
 }

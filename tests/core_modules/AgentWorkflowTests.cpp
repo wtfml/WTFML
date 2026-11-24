@@ -151,6 +151,17 @@ void runAgentWorkflowTests() {
                        true)},
               &problem),
           "工作流：instance.testLaunch 可作为验证步", problem);
+    AgentWorkflow repairWorkflow;
+    repairWorkflow.setSkill(AgentSkillRegistry::find(QStringLiteral("crash-rescue")));
+    check(repairWorkflow.submitPlan(
+              QStringLiteral("事务修复"),
+              {stepFor(QStringLiteral("repair.begin"),
+                       QJsonObject{{QStringLiteral("scopes"), QJsonArray{QStringLiteral("mods")}}}),
+               stepFor(QStringLiteral("repair.verify"),
+                       QJsonObject{{QStringLiteral("transactionId"), QStringLiteral("tx-test")}},
+                       QStringLiteral("事务验证"), true)},
+              &problem),
+          "工作流：repair.verify 可作为验证步", problem);
 
     check(!workflow.submitPlan(QStringLiteral("修一下"),
                                {stepFor(QStringLiteral("mods.setEnabled"),

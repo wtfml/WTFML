@@ -8,6 +8,7 @@
 #include "AgentCommandTools.hpp"
 #include "AgentLauncherTools.hpp"
 #include "AgentTestLaunchToolEngine.hpp"
+#include "AgentRepairToolEngine.hpp"
 #include "AgentWebTools.hpp"
 #include "AgentWorkflowEngine.hpp"
 
@@ -48,6 +49,26 @@ bool validateValue(const QJsonValue &schemaValue, const QJsonValue &value, const
         if (maximum >= 0 && value.toDouble() > maximum) {
             if (problem != nullptr) *problem = QStringLiteral("%1 超过最大值。").arg(path);
             return false;
+        }
+    } else if (type == QStringLiteral("array")) {
+        if (!value.isArray()) {
+            if (problem != nullptr) *problem = QStringLiteral("%1 必须是数组。").arg(path);  // i18n-ignore
+            return false;
+        }
+        const QJsonArray array = value.toArray();
+        const int maxItems = schema.value(QStringLiteral("maxItems")).toInt(-1);
+        if (maxItems >= 0 && array.size() > maxItems) {
+            if (problem != nullptr) *problem = QStringLiteral("%1 超过最多条数。").arg(path);  // i18n-ignore
+            return false;
+        }
+        const QJsonObject items = schema.value(QStringLiteral("items")).toObject();
+        if (!items.isEmpty()) {
+            for (int i = 0; i < array.size(); ++i) {
+                if (!validateValue(items, array.at(i),
+                                   path + QStringLiteral("[%1]").arg(i), problem)) {
+                    return false;
+                }
+            }
         }
     } else if (type == QStringLiteral("object")) {
         if (!value.isObject()) {
@@ -157,7 +178,10 @@ QList<AgentToolSpec> AgentToolRegistry::fileBuiltins() {
                                    {QStringLiteral("maxLength"), 64}}},
                       {QStringLiteral("fileIdentityToken"),
                        QJsonObject{{QStringLiteral("type"), QStringLiteral("string")},
-                                   {QStringLiteral("maxLength"), 256}}}})});
+                                   {QStringLiteral("maxLength"), 256}}},
+                      {QStringLiteral("workspaceId"),
+                       QJsonObject{{QStringLiteral("type"), QStringLiteral("string")},
+                                   {QStringLiteral("maxLength"), 80}}}})});
     list.append(AgentToolSpec{
         QStringLiteral("artifact.read"), QStringLiteral("读取模型 artifact"),
         QStringLiteral("只读本会话模型可读 artifact；每次重新脱敏；本地原始存档不可读。"),
@@ -178,6 +202,7 @@ QList<AgentToolSpec> AgentToolRegistry::builtins() {
     QList<AgentToolSpec> list = fileBuiltins();
     list.append(AgentLauncherTools::specs());
     list.append(AgentTestLaunchToolEngine::specs());
+    list.append(AgentRepairToolEngine::specs());
     list.append(AgentWorkflowEngine::specs());
     list.append(AgentWebTools::specs());
     list.append(AgentCommandTools::specs());

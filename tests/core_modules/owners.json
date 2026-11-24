@@ -116,6 +116,7 @@
   "AgentSkillsTests.cpp": "agent",
   "AgentWorkspaceStoreTests.cpp": "agent",
   "AgentTestLaunchTests.cpp": "agent",
+  "AgentRepairTests.cpp": "agent",
   "AgentMarkdownTests.cpp": "agent",
   "AgentPathPolicyTests.cpp": "agent",
   "AgentEgressPolicyTests.cpp": "agent",
