@@ -8,6 +8,7 @@
 #include <cmath>
 
 #include "manage/ModpackImport.hpp"  // curseForgeApiBase() —— CurseForge 那张接口根地址的唯一出处
+#include "../../ui/UiLanguage.hpp"  // isEnglish()：下载量按界面语言换单位
 
 #include <algorithm>
 
@@ -1208,6 +1209,25 @@ QString formatDownloads(qint64 downloads) {
     }
     // 单位只在这里换一次。界面上列表那一行、详情、以及将来别处显示的下载量都读它，
     // 否则"1234567 次"和"123 万次"会在同一个界面上各说各的。
+    if (UiLanguage::isEnglish()) {
+        // 英文没有万 / 亿：千进位，一位小数、单位字母紧跟数字（`12.3K`）。K / M / B
+        // 是固定写法，不走翻译。四舍五入后到 1000 的进到下一个单位（999 950 →
+        // `1.0M`），不出 `1000.0K`。
+        if (downloads < 10000) {
+            return QString::number(downloads);
+        }
+        static constexpr qint64 steps[] = {1000, 1000000, 1000000000};
+        static constexpr const char *suffixes[] = {"K", "M", "B"};
+        int unit = downloads >= steps[2] ? 2 : (downloads >= steps[1] ? 1 : 0);
+        // 一位小数的那个位 → 整数（四舍五入）。除法先做，`downloads * 10` 会溢出。
+        qint64 tenths = (downloads + steps[unit] / 20) / (steps[unit] / 10);
+        if (tenths >= 10000 && unit < 2) {  // 999 950 → 1000.0K：进到下一个单位
+            ++unit;
+            tenths = (downloads + steps[unit] / 20) / (steps[unit] / 10);
+        }
+        return QString::number(tenths / 10) + QLatin1Char('.') + QString::number(tenths % 10) +
+               QLatin1String(suffixes[unit]);
+    }
     if (downloads >= 100000000) {
         return QCoreApplication::translate("ResourceCatalog", "%1 亿").arg(downloads / 100000000.0, 0, 'f', 1);
     }
