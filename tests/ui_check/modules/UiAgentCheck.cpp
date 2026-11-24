@@ -399,6 +399,29 @@ int UiAgentCheck() {
     inspectionChip = page->findChild<QPushButton *>(QStringLiteral("agentSkill_inspection"));
     check(inspectionChip != nullptr && inspectionChip->isChecked(),
           "智能体 UI：换模式后选中态跟着走");
+    // Auto-safe（S5.7）：只在崩溃急救/模组维护显示；勾选后发信号、可外部复位。
+    auto *autoSafe = page->findChild<QPushButton *>(QStringLiteral("agentAutoSafeButton"));
+    check(autoSafe != nullptr && autoSafe->isHidden(), "智能体 UI：Auto-safe 默认不出现");
+    page->setAutoSafeVisible(true);
+    QApplication::processEvents();
+    check(autoSafe != nullptr && !autoSafe->isHidden(), "智能体 UI：修复模式下 Auto-safe 出现");
+    check(autoSafe != nullptr && !autoSafe->isChecked(), "智能体 UI：Auto-safe 默认关闭");
+    bool autoSafeSignal = false;
+    QObject::connect(page, &AgentPage::autoSafeToggled, page,
+                     [&autoSafeSignal](bool enabled) { autoSafeSignal = enabled; });
+    if (autoSafe != nullptr) autoSafe->click();
+    QApplication::processEvents();
+    check(autoSafeSignal && autoSafe != nullptr && autoSafe->isChecked(),
+          "智能体 UI：点 Auto-safe 发出开启信号");
+    page->setAutoSafeEnabled(false);
+    QApplication::processEvents();
+    check(autoSafe != nullptr && !autoSafe->isChecked(), "智能体 UI：外部可以复位 Auto-safe");
+    page->setAutoSafeEnabled(true);
+    check(page->autoSafeEnabled(), "智能体 UI：Auto-safe 勾选态可读");
+    page->setAutoSafeVisible(false);
+    QApplication::processEvents();
+    check(autoSafe != nullptr && autoSafe->isHidden() && !page->autoSafeEnabled(),
+          "智能体 UI：离开展示后 Auto-safe 收起并复位");
     page->setWorkflowStatus(QStringLiteral("模式：实例体检 · 阶段：collect"));
     QApplication::processEvents();
     auto *statusLabel = page->findChild<QLabel *>(QStringLiteral("agentWorkflowStatus"));

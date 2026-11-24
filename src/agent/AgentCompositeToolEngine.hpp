@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "AgentAutoSafe.hpp"
 #include "AgentTool.hpp"
 #include "AgentWorkflow.hpp"
 
@@ -23,6 +24,8 @@ public:
     void addEngine(AgentToolEngine *engine);
     QList<AgentToolEngine *> engines() const { return m_engines; }
     void setWorkflow(AgentWorkflow *workflow) { m_workflow = workflow; }
+    /// Auto-safe 事务授权（D12）：授权范围内的写/启动工具不再逐次弹审批。
+    void setAutoSafe(AgentAutoSafe::Authorizer *authorizer) { m_autoSafe = authorizer; }
 
     QJsonArray schemas() const override;
     AgentToolResult invoke(const Agent::ToolCall &call) override;
@@ -41,8 +44,15 @@ private:
     /// 技能白名单 + 只读 + 已批准计划三道闸；空串表示放行。
     QString gate(const QString &internalName) const;
 
+    /// ApprovalRequired 时按 Auto-safe 判定：放行就替用户点"允许"，否则原样交回 UI。
+    AgentToolResult applyAutoSafe(const Agent::ToolCall &call, const AgentToolResult &result,
+                                  AgentToolEngine *engine);
+    /// 记审计需要的节点：repair.begin 绑事务、repair.verify 记验证、repair.finish 收尾写审计。
+    void observeResult(const Agent::ToolCall &call, AgentToolResult *result);
+
     QList<AgentToolEngine *> m_engines;
     AgentWorkflow *m_workflow = nullptr;
+    AgentAutoSafe::Authorizer *m_autoSafe = nullptr;
     QHash<QString, AgentToolEngine *> m_approvalOwner;
     QHash<QString, Agent::ToolCall> m_approvalCalls;
     AgentToolSink m_sink;

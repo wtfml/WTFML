@@ -242,6 +242,7 @@ set(HEADER_FILES
     src/agent/AgentCrashSnapshot.hpp
     src/agent/AgentMixinOwnership.hpp
     src/agent/AgentModHost.hpp
+    src/agent/AgentAutoSafe.hpp
     src/agent/AgentModBisect.hpp
     src/agent/AgentModCompat.hpp
     src/agent/AgentModToolEngine.hpp
@@ -603,6 +604,7 @@ set(SOURCE_FILES
     src/agent/AgentLogIndex.cpp
     src/agent/AgentCrashSnapshot.cpp
     src/agent/AgentMixinOwnership.cpp
+    src/agent/AgentAutoSafe.cpp
     src/agent/AgentModBisect.cpp
     src/agent/AgentModCompat.cpp
     src/agent/AgentModToolEngine.cpp

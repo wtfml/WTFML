@@ -681,6 +681,20 @@ AgentPage::AgentPage(QWidget *parent)
     m_workflowStatus->setFont(pxFont(m_workflowStatus->font(), 12));
     m_workflowStatus->setForegroundRole(QPalette::PlaceholderText);
     m_workflowStatus->hide();
+    // Auto-safe：一次批准有范围、有时效的事务（S5.7）。只在修复类模式里出现。
+    m_autoSafeButton = new QPushButton(QStringLiteral("Auto-safe"), m_skillBar);
+    m_autoSafeButton->setObjectName(QStringLiteral("agentAutoSafeButton"));
+    m_autoSafeButton->setCheckable(true);
+    m_autoSafeButton->setCursor(Qt::PointingHandCursor);
+    m_autoSafeButton->setToolTip(
+        QCoreApplication::translate("AgentPage",
+                                    "一次批准一个事务：按已批准计划执行，不再逐步确认；"  // i18n-ignore
+                                    "最长 60 分钟或 20 次启动，结束写审计。"));  // i18n-ignore
+    m_autoSafeButton->setAccessibleName(QStringLiteral("Auto-safe"));
+    Theme::markButton(m_autoSafeButton, Theme::ButtonKind::Ghost);
+    connect(m_autoSafeButton, &QPushButton::toggled, this,
+            [this](bool checked) { emit autoSafeToggled(checked); });
+    m_autoSafeButton->hide();
     {
         auto *skillLine = new QHBoxLayout;
         skillLine->setContentsMargins(0, 0, 0, 0);
@@ -1060,6 +1074,7 @@ void AgentPage::setSkills(const QList<AgentView::SkillOption> &skills,
         // 先摘父级再 deleteLater：旧按钮立刻不在 findChild() 的范围里，重建后不会
         // 查出上一轮的控件（测试和读屏都会拿到错的那个）。
         if (QWidget *widget = item->widget()) {
+            if (widget == m_autoSafeButton) continue;  // 常驻开关，不跟着模式按钮重建
             widget->hide();
             widget->setParent(nullptr);
             widget->deleteLater();
@@ -1081,6 +1096,29 @@ void AgentPage::setSkills(const QList<AgentView::SkillOption> &skills,
         m_skillLayout->addWidget(button);
     }
     m_skillLayout->addStretch(1);
+    if (m_autoSafeButton != nullptr) m_skillLayout->addWidget(m_autoSafeButton);
+}
+
+void AgentPage::setAutoSafeVisible(bool visible) {
+    if (m_autoSafeButton == nullptr) return;
+    m_autoSafeButton->setVisible(visible);
+    if (!visible) setAutoSafeEnabled(false);
+}
+
+void AgentPage::setAutoSafeEnabled(bool enabled) {
+    if (m_autoSafeButton == nullptr) return;
+    QSignalBlocker blocker(m_autoSafeButton);
+    m_autoSafeButton->setChecked(enabled);
+    Theme::markButton(m_autoSafeButton, enabled ? Theme::ButtonKind::Primary
+                                               : Theme::ButtonKind::Ghost);
+}
+
+bool AgentPage::autoSafeEnabled() const {
+    return m_autoSafeButton != nullptr && m_autoSafeButton->isChecked();
+}
+
+QString AgentPage::autoSafeText() const {
+    return m_autoSafeButton != nullptr ? m_autoSafeButton->text() : QString();
 }
 
 void AgentPage::setWorkflowStatus(const QString &text) {

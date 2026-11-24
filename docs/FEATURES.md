@@ -497,7 +497,7 @@
 
 ### 智能体（Agent）
 
-导航第五项是「智能体」，启动仍停在主页。当前能力是自由对话 + 锁定实例内的受控文件工具 + 维护工作流（实例体检、崩溃急救、版本升级接入、模组维护）+ 启动器只读/受控写工具 + stdio MCP + 联网搜索/抓取与固定诊断命令；不含任意命令（`command.run`）、资源安装工具和 HTTP/SSE MCP。行为、工具上限与待人工验证见 [AGENT.md](features/AGENT.md)，安全边界见 [SECURITY_BOUNDARIES.md](features/SECURITY_BOUNDARIES.md)。
+导航第五项是「智能体」，启动仍停在主页。当前能力是自由对话 + 锁定实例内的受控文件工具 + 维护工作流（实例体检、崩溃急救、版本升级接入、模组维护）+ 启动器只读/受控写工具 + stdio MCP + 联网搜索/抓取与固定诊断命令 + Stage 5 的崩溃快照与日志检索、模组兼容与文件修复、依赖感知二分、Auto-safe 事务授权；不含任意命令（`command.run`）、资源安装工具和 HTTP/SSE MCP。行为、工具上限与待人工验证见 [AGENT.md](features/AGENT.md)，安全边界见 [SECURITY_BOUNDARIES.md](features/SECURITY_BOUNDARIES.md)。
 
 **聊天**
 
@@ -524,10 +524,14 @@
 
 **维护工作流与启动器工具（Stage 2B）**
 
-- 模式胶囊：自由对话 / 实例体检 / 崩溃急救 / 版本升级 / 模组维护。模式记在会话里，换会话跟着会话走；换模式作废旧计划、证据保留。每个模式有显式工具白名单：自由对话不含事务、测试启动、模组修复与二分；这些只在崩溃急救/模组维护里放行（且要有已批准计划）。提示词 V2 把角色/条款放在 `assets/agent/prompts/`、崩溃签名放在 `assets/agent/knowledge/`，`common` ≤4 KB、单技能 ≤8 KB、组合 ≤16 KB。
+- 模式胶囊：自由对话 / 实例体检 / 崩溃急救 / 版本升级 / 模组维护。模式记在会话里，换会话跟着会话走；换模式作废旧计划、证据保留。每个模式有显式工具白名单：自由对话不含事务、测试启动、模组修复与二分；这些只在崩溃急救/模组维护里放行（且要有已批准计划）。
 - 实例体检只读：跑启动诊断、完整性体检、模组统计、日志结尾，结论分级并附证据 id；不写盘。
-- 崩溃急救：先调 `diagnostics.crashSnapshot` 拿环境、崩溃阶段、异常链、命中规则与模组嫌疑（规则在 `assets/agent/knowledge/`），日志按关键字/行号检索（`logs.search` / `logs.readRange`），整份报告走 `crash.readFull` 的 artifact；按现有规则分类（OOM、Java 版本不匹配、缺前置、文件损坏、配置错误、Mixin 冲突），只按现有规则判断、不猜具体模组；只被提到的模组置信度不超过 0.4，不标成根因；修复必须先用结构化计划卡提交，批准后逐步执行、每步单独审批，最后跑验证步并提交报告。没有证据不能报完成；某步失败后写工具全部锁住。需要实际启动验证时用隔离测试启动，只动工作区。
-- 模组兼容与修复（Stage 5.4）：`mods.analyzeCompatibility` 读每个模组 JAR 的本地声明（加载器、游戏/加载器/Java 范围、required 前置）对照实例，指出加载器不匹配、版本不兼容、缺前置（区分"未安装"和"只有停用文件"）、重复、损坏；`mods.verifyFiles` 逐个查 zip 结构、大小与 SHA-1。需要平台结论时先确认，只把 SHA-1 发给 Modrinth（不发文件名），严格模式每次确认，`offline=true` / `platform=false` 完全不发。修复只在事务工作区里做：`mods.installFix` 按 projectId/versionId/expectedSha1 解析地址、下载到暂存目录、校验大小与 SHA-1 后才写进工作区，可补齐必需前置，任一步失败工作区不变；`instance.repairCore` 走现有 `repairVersionFiles()` 重下客户端 jar、库和资源索引，每次审批、事务活动期间拒绝。平台只接 Modrinth。说不清是哪几个模组时，`mods.bisect` 在事务工作区里用依赖感知 delta debugging 反复启停并启动游戏：加载器/API 前置始终启用，嫌疑模组先试，每轮重置 `config/` 与 `options.txt`、清日志，结果按 `single`/`pair`/`set`/`not_found`/`not_reproducible`/`inconclusive` 报，默认 8 次、最多 20 次启动、45 分钟内；结束后恢复工作区基线。二分只定位不修复，不下载、不改世界、不写原实例。
+- 崩溃急救：先调 `diagnostics.crashSnapshot` 拿环境、崩溃阶段、异常链、命中规则与模组嫌疑（规则在 `assets/agent/knowledge/`），按 `matchedRules` 和证据决定下一步；日志按关键字/行号检索（`logs.search` / `logs.readRange`），整份报告走 `crash.readFull` 的 artifact。只被提到的模组置信度不超过 0.4，不当根因。修复必须先用结构化计划卡提交，批准后逐步执行（每步单独审批）、跑验证步并提交报告；没有证据不能报完成，某步失败后写工具全部锁住；需要实际启动验证时用隔离测试启动，只动工作区。
+- 模组维护：`mods.list` 看清单，`mods.analyzeCompatibility` 读声明对照实例（加载器不匹配、版本不兼容、缺前置——区分"未安装"与"只有停用文件"、重复、损坏），`mods.verifyFiles` 逐个查 zip 结构/大小/SHA-1。需要平台结论时先确认，只把 SHA-1 发给 Modrinth（不发文件名），严格模式每次确认，`offline=true` / `platform=false` 完全不发；平台只接 Modrinth。
+- 模组修复：只在事务工作区里做。`mods.installFix` 按 projectId/versionId/expectedSha1 解析地址、下载到暂存目录、校验大小与 SHA-1 后才写进工作区，可补齐必需前置，任一步失败工作区不变；`instance.repairCore` 走 `repairVersionFiles()` 重下客户端 jar、库和资源索引（每次审批、事务活动期间拒绝）。
+- 依赖感知二分（Stage 5.5）：`mods.bisect` 在事务工作区里用依赖感知 delta debugging 反复启停并启动游戏；加载器/API 前置始终启用，嫌疑模组先试，每轮重置 `config/` 与 `options.txt`、清日志；结果按 `single`/`pair`/`set`/`not_found`/`not_reproducible`/`inconclusive` 报，默认 8 次、最多 20 次启动、45 分钟内；结束后恢复工作区基线。只定位不修复，不下载、不改世界、不写原实例。
+- Auto-safe 事务授权（Stage 5.7，D12）：崩溃急救/模组维护里可以先打开。一次批准一个有范围、有时效的事务：按已批准计划执行写/启动/提交，不再逐步弹审批；最长 60 分钟或 20 次启动；`java.path`、`args.extraJvm`、`saves/`、恢复备份和核心文件修复始终拒绝；验证失败自动回滚；事务结束写审计到 `agent/transactions/<id>/audit.json`。默认关闭，换模式/换会话即关。
+- 提示词与知识分层（Stage 5.6）：每个模式都有显式白名单；角色/条款在 `assets/agent/prompts/`，崩溃签名在 `assets/agent/knowledge/`；`common` ≤4 KB、单技能 ≤8 KB、组合 ≤16 KB；提示词不背崩溃类型清单。
 - 隔离测试启动：`instance.testLaunch` 在崩溃急救/模组维护里可用，每次调用先审批。工作区复制到 `<游戏根>/cache/agent-workspaces/`，用启动器自己的参数生成与资产/库路径；离线测试身份，不刷新令牌、不连服务器、不下载 Java。等待 `process_started` / `main_menu` / `world_loaded` 里程碑，同时看进程退出码、新崩溃报告和 `hs_err_pid`；超时 1–600 秒、观察窗口 0–60 秒、重复 1–3 次，进程树用 Job Object 清理。原实例在启动期间不被写，世界验证只进工作区副本；工作区默认保留，自动清理尚未实现；日志留在本地。
 - 修复事务：`repair.begin` 复制隔离工作区并记录 `mods/config/defaultconfigs/options` 基线，`settings.set` 在事务内只记增量；`fs.write`/`mods.setEnabled`/`settings.set` 带 `workspaceId` 只改工作区。`repair.diff` 列改动，`repair.verify` 在工作区跑测试启动，`repair.finish(commit)` 先核对源文件哈希、备份、原子重放差异，失败回滚；`repair.finish(rollback)` 不动原实例。事务活动期间不带 `workspaceId` 的直接写和 `backup.restore` 被拒绝；一个实例同时只允许一个活动事务。
 - 启动器工具：实例清单（默认只给总数）、实例摘要、启动诊断、崩溃诊断、日志结尾（实例目录 `logs/latest.log` 优先，数据根兜底）、崩溃报告列表（实例目录 `crash-reports/` 优先，数据根兜底、同名去重）、完整性体检、模组列表（默认只给数量）、设置读写（白名单键，`java.path` 只写不读）、Java 列表、内存建议、备份列表/创建/恢复、升级检查、打开升级向导或已有页面。

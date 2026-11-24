@@ -71,6 +71,11 @@ public:
     void setSkills(const QList<AgentView::SkillOption> &skills, const QString &currentId);
     /// 工作流的阶段/计划进度那一行（空串收起）。
     void setWorkflowStatus(const QString &text);
+    /// Auto-safe 开关（S5.7）：只在崩溃急救/模组维护显示；打开后由控制器授权事务。
+    void setAutoSafeVisible(bool visible);
+    void setAutoSafeEnabled(bool enabled);
+    bool autoSafeEnabled() const;
+    QString autoSafeText() const;
     /// 「实例」胶囊右半边的值：已关联的实例名，未关联时是主页当前实例或「无」。
     void setInstanceChip(const QString &text, bool locked);
     /// 弹出实例下拉：第一行「跟随主页」，下面每个实例一行；@p lockedId 为空表示跟随主页。
@@ -113,6 +118,8 @@ signals:
     void approvalDenied(const QString &approvalId);
     /// 点了模式卡片。
     void skillChosen(const QString &skillId);
+    /// 点了 Auto-safe 开关。
+    void autoSafeToggled(bool enabled);
 
 private:
     void rebuildSessionRow(QListWidgetItem *item, const AgentView::SessionMeta &meta);
@@ -157,6 +164,7 @@ private:
     QWidget *m_skillBar = nullptr;
     QHBoxLayout *m_skillLayout = nullptr;
     QLabel *m_workflowStatus = nullptr;
+    QPushButton *m_autoSafeButton = nullptr;
     AgentComposer *m_composer = nullptr;
     QLabel *m_keyHint = nullptr;
     QPushButton *m_send = nullptr;

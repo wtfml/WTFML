@@ -139,6 +139,9 @@ private:
     AgentInstanceInfo lockedInstance() const;
     void onApproval(bool approved);
     void onSkillChosen(const QString &skillId);
+    void onAutoSafeToggled(bool enabled);
+    void disableAutoSafe(const QString &reason);
+    void refreshAutoSafeUi();
     void refreshMcpPage();
     void onMcpConnect(const QString &serverId);
     void onMcpDisconnect(const QString &serverId);
@@ -172,6 +175,8 @@ private:
     AgentTestLaunchToolEngine *m_testLaunchTools = nullptr;
     AgentRepairToolEngine *m_repairTools = nullptr;
     AgentModToolEngine *m_modTools = nullptr;
+    AgentAutoSafe::Authorizer m_autoSafe;
+    bool m_autoSafeUserOn = false;
     AgentCompositeToolEngine *m_compositeEngine = nullptr;
     McpTrustStore m_mcpStore;
     McpManager *m_mcpManager = nullptr;

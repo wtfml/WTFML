@@ -247,4 +247,59 @@ void runAgentRepairTests() {
           "事务：commit 结果交付");
     check(deliveredResult.data.value(QStringLiteral("committed")).toBool(),
           "事务：commit 结果标记已提交");
+
+    // ---------- Auto-safe：验证失败自动回滚 ----------
+    {
+        AgentRepairTransactionRecord autoRecord = record;
+        autoRecord.id = AgentRepairTransactionStore::newId();
+        autoRecord.workspaceId = QStringLiteral("ws-auto");
+        autoRecord.state = QStringLiteral("ready");
+        autoRecord.verification = {};
+        AgentRepairTransactionStore autoStore;
+        check(autoStore.create(autoRecord, &problem), "Auto-safe：自动回滚夹具创建", problem);
+
+        FakeRepairHost autoRepairHost;
+        FakeLaunchHost autoLaunchHost;
+        AgentRepairToolEngine autoEngine(&autoRepairHost, &autoLaunchHost,
+                                         [](QString *contextProblem) {
+                                             if (contextProblem != nullptr) contextProblem->clear();
+                                             return testContext();
+                                         });
+        autoEngine.setAutoSafe(true);
+        bool autoDelivered = false;
+        AgentToolResult autoResult;
+        autoEngine.setCompletionSink([&](const Agent::ToolCall &, const AgentToolResult &value) {
+            autoDelivered = true;
+            autoResult = value;
+        });
+        const AgentToolResult verify = autoEngine.invoke(callFor(
+            QStringLiteral("repair.verify"),
+            QJsonObject{{QStringLiteral("transactionId"), autoRecord.id}}));
+        check(verify.status == AgentToolResult::Status::Pending, "Auto-safe：验证进入等待");
+        AgentTestLaunchSummary failed;
+        failed.ok = false;
+        failed.problem = QStringLiteral("没有达到里程碑");
+        AgentTestLaunchRunResult crashed;
+        crashed.processStarted = true;
+        crashed.crashed = true;
+        failed.runs.append(crashed);
+        autoLaunchHost.launchDone(failed);
+        check(autoRepairHost.finishTransactionId == autoRecord.id && !autoRepairHost.finishCommit,
+              "Auto-safe：验证失败自动请求回滚");
+        AgentRepairFinishResult rolledBack;
+        rolledBack.ok = true;
+        rolledBack.committed = false;
+        rolledBack.transactionId = autoRecord.id;
+        autoRepairHost.finishDone(rolledBack);
+        check(autoDelivered && autoResult.status == AgentToolResult::Status::Error,
+              "Auto-safe：验证失败仍然交付失败结果");
+        check(autoResult.data.value(QStringLiteral("autoRollback"))
+                  .toObject()
+                  .value(QStringLiteral("ok"))
+                  .toBool(),
+              "Auto-safe：回滚结果并进验证结果");
+        check(autoResult.data.value(QStringLiteral("transactionState")).toString() ==
+                  QStringLiteral("rolled_back"),
+              "Auto-safe：结果里写事务已回滚");
+    }
 }

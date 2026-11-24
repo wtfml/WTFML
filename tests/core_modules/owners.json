@@ -142,6 +142,7 @@
   "AgentLogIndexTests.cpp": "agent",
   "AgentModTests.cpp": "agent",
   "AgentModBisectTests.cpp": "agent",
+  "AgentAutoSafeTests.cpp": "agent",
   "AgentPathLayoutTests.cpp": "agent",
   "DailyQuoteTests.cpp": "resources",
   "HomeGreetingTests.cpp": "resources"

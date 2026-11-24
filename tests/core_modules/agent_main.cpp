@@ -53,6 +53,7 @@ void runAgentCrashSnapshotTests();
 void runAgentLogIndexTests();
 void runAgentModTests();
 void runAgentModBisectTests();
+void runAgentAutoSafeTests();
 void runAgentPathLayoutTests();
 
 
@@ -240,6 +241,7 @@ int main(int argc, char **argv) {
     runAgentLogIndexTests();
     runAgentModTests();
     runAgentModBisectTests();
+    runAgentAutoSafeTests();
     runAgentPathLayoutTests();
 
     out() << "agent: " << g_checks - g_failures << "/" << g_checks << "\n";

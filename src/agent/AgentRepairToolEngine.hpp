@@ -34,6 +34,8 @@ public:
     bool handles(const QString &internalName) const override;
     void setCompletionSink(AgentToolSink sink) override { m_sink = std::move(sink); }
     void setHosts(AgentRepairHost *repairHost, AgentLaunchHost *launchHost);
+    /// Auto-safe（D12）：验证失败时自动回滚事务，并把回滚结果并进验证结果。
+    void setAutoSafe(bool enabled) { m_autoSafe = enabled; }
 
 private:
     struct Pending {
@@ -65,5 +67,8 @@ private:
     AgentRepairTransactionStore m_store;
     QHash<QString, Pending> m_pending;
     bool m_active = false;
+    bool m_autoSafe = false;
     Agent::ToolCall m_activeCall;
+    Agent::ToolCall m_autoRollbackCall;
+    AgentToolResult m_autoRollbackBase;
 };

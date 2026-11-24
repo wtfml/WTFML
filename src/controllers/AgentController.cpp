@@ -220,6 +220,8 @@ AgentController::AgentController(AgentPage *page, OverlayHost *overlay, QObject 
     m_compositeEngine->addEngine(m_webTools);
     m_compositeEngine->addEngine(m_commandTools);
     m_compositeEngine->setWorkflow(&m_workflow);
+    // Stage 5.7：Auto-safe 事务授权（默认关闭，不随会话记忆）。
+    m_compositeEngine->setAutoSafe(&m_autoSafe);
     m_loop->setToolEngine(m_compositeEngine);
     m_saveTimer = new QTimer(this);
     m_saveTimer->setSingleShot(true);
@@ -354,11 +356,41 @@ void AgentController::wirePage() {
     connect(m_page, &AgentPage::instanceChosen, this, &AgentController::onInstanceChosen);
     connect(m_page, &AgentPage::sessionExportRequested, this, &AgentController::onExport);
     connect(m_page, &AgentPage::skillChosen, this, &AgentController::onSkillChosen);
+    connect(m_page, &AgentPage::autoSafeToggled, this, &AgentController::onAutoSafeToggled);
     connect(m_loop, &AgentLoop::toolCallFinished, this,
             [this](const Agent::ToolCall &call, const AgentToolResult &result) {
-                Q_UNUSED(call);
-                Q_UNUSED(result);
                 if (m_page != nullptr) m_page->setWorkflowStatus(m_workflow.statusLine());
+                const QString tool = AgentToolRegistry::internalName(call.name);
+                if (tool == QStringLiteral("repair.begin") &&
+                    result.status == AgentToolResult::Status::Ok && m_autoSafeUserOn) {
+                    if (m_page != nullptr) {
+                        m_page->showNotice(
+                            QCoreApplication::translate("AgentController",
+                                                        "Auto-safe 已绑定事务 %1：计划内的写入与启动不再逐步确认。")  // i18n-ignore
+                                .arg(result.data.value(QStringLiteral("transactionId")).toString()));
+                    }
+                    refreshAutoSafeUi();
+                }
+                if (tool == QStringLiteral("repair.finish")) {
+                    const QJsonObject audit =
+                        result.data.value(QStringLiteral("autoSafeAudit")).toObject();
+                    if (m_autoSafeUserOn || !audit.isEmpty()) {
+                        m_autoSafeUserOn = false;
+                        if (m_page != nullptr) {
+                            m_page->setAutoSafeEnabled(false);
+                            m_page->showNotice(
+                                audit.contains(QStringLiteral("path"))
+                                    ? QCoreApplication::translate(
+                                          "AgentController",
+                                          "事务结束：Auto-safe 审计已写入 %1（%2 次启动）。")  // i18n-ignore
+                                          .arg(audit.value(QStringLiteral("path")).toString())
+                                          .arg(audit.value(QStringLiteral("launches")).toInt())
+                                    : QCoreApplication::translate(
+                                          "AgentController", "事务已结束，Auto-safe 关闭。"));  // i18n-ignore
+                        }
+                        refreshAutoSafeUi();
+                    }
+                }
             });
 }
 
@@ -524,6 +556,7 @@ void AgentController::selectSession(const QString &sessionId) {
     m_saveTimer->stop();
     updateHeader();
     // 会话里记着它上一轮用哪个模式；换会话时工作流从头开始，旧计划不留。
+    disableAutoSafe(QStringLiteral("切换会话"));  // i18n-ignore
     m_workflow.setSkill(usableSkill(m_session.meta.skill));
     refreshSkillUi();
 }
@@ -1320,6 +1353,7 @@ void AgentController::refreshSkillUi() {
         options.append(AgentView::SkillOption{skill.id, skill.name, skill.description});
     }
     m_page->setSkills(options, m_workflow.skill().id);
+    refreshAutoSafeUi();
 }
 
 void AgentController::onSkillChosen(const QString &skillId) {
@@ -1333,10 +1367,11 @@ void AgentController::onSkillChosen(const QString &skillId) {
         return;
     }
     if (m_loop->busy()) {
-        if (m_page != nullptr) m_page->showNotice(QStringLiteral("先停止当前回复再切换模式。"));
+        if (m_page != nullptr) m_page->showNotice(QCoreApplication::translate("AgentController", "先停止当前回复再切换模式。"));
         return;
     }
     if (m_workflow.skill().id == skill.id) return;
+    disableAutoSafe(QStringLiteral("切换模式"));  // i18n-ignore
     m_workflow.setSkill(skill);
     if (!m_session.meta.id.isEmpty()) {
         m_session.meta.skill = skill.id;
@@ -1350,6 +1385,66 @@ void AgentController::onSkillChosen(const QString &skillId) {
                                ? QStringLiteral("已回到自由对话。")
                                : QStringLiteral("已切到「%1」：%2").arg(skill.name, skill.description));
     }
+}
+
+void AgentController::onAutoSafeToggled(bool enabled) {
+    if (m_page == nullptr) return;
+    if (!enabled) {
+        disableAutoSafe(QStringLiteral("用户关闭"));  // i18n-ignore
+        return;
+    }
+    const QString skill = m_workflow.skill().id;
+    if (skill != QStringLiteral("crash-rescue") && skill != QStringLiteral("mods")) {
+        m_page->setAutoSafeEnabled(false);
+        m_page->showNotice(QCoreApplication::translate(
+            "AgentController", "Auto-safe 只在崩溃急救与模组维护里可用。"));  // i18n-ignore
+        return;
+    }
+    // 只读会话已锁定的实例；打开开关不替用户锁实例（那是第一次实例工具调用的事）。
+    const QString instanceId = m_session.meta.instanceLock.id;
+    if (instanceId.isEmpty()) {
+        m_page->setAutoSafeEnabled(false);
+        m_page->showNotice(QCoreApplication::translate(
+            "AgentController", "先锁定一个实例，再打开 Auto-safe。"));  // i18n-ignore
+        return;
+    }
+    m_autoSafe.enable(instanceId, m_session.meta.id, QDateTime::currentDateTimeUtc());
+    m_autoSafeUserOn = true;
+    m_repairTools->setAutoSafe(true);
+    refreshAutoSafeUi();
+    m_page->showNotice(
+        QCoreApplication::translate("AgentController",
+                                    "Auto-safe 已打开：提交并批准计划后，计划内的写入/启动不再逐步确认；"  // i18n-ignore
+                                    "最长 60 分钟或 20 次启动，事务结束写审计。"));  // i18n-ignore
+}
+
+void AgentController::disableAutoSafe(const QString &reason) {
+    if (!m_autoSafe.enabled() && !m_autoSafeUserOn) return;
+    m_autoSafe.disable(QDateTime::currentDateTimeUtc(), reason);
+    m_autoSafeUserOn = false;
+    if (m_repairTools != nullptr) m_repairTools->setAutoSafe(false);
+    if (m_page != nullptr) m_page->setAutoSafeEnabled(false);
+}
+
+void AgentController::refreshAutoSafeUi() {
+    if (m_page == nullptr) return;
+    const QString skill = m_workflow.skill().id;
+    const bool available = skill == QStringLiteral("crash-rescue") ||
+                           skill == QStringLiteral("mods");
+    m_page->setAutoSafeVisible(available);
+    if (!available) {
+        disableAutoSafe(QStringLiteral("当前模式不支持"));  // i18n-ignore
+        return;
+    }
+    if (!m_autoSafe.enabled()) return;
+    const int remaining = m_autoSafe.remainingLaunches();
+    const QString tx = m_autoSafe.transactionId();
+    m_page->setWorkflowStatus(
+        QCoreApplication::translate("AgentController",
+                                    "Auto-safe：%1，剩余启动 %2 次")  // i18n-ignore
+            .arg(tx.isEmpty() ? QCoreApplication::translate("AgentController", "等待事务")
+                              : tx,
+                 QString::number(remaining)));
 }
 
 void AgentController::onApproval(bool approved) {

@@ -146,7 +146,7 @@ QList<AgentSkill> AgentSkillRegistry::builtins() {
         true, {QStringLiteral("diagnostics.crash")},
         QStringLiteral("计划已批准；每步都有结果；至少一条证据；有验证步骤；"
                        "报告写明回退方式与未解决项。"),
-        3));
+        4));
 
     list.append(make(
         QStringLiteral("upgrade"), QStringLiteral("版本升级 / 移植"),
@@ -161,7 +161,7 @@ QList<AgentSkill> AgentSkillRegistry::builtins() {
         QStringLiteral("列模组、读声明查兼容/缺前置、启停或备份、按平台记录修复文件；不猜文件名兼容性。"),
         QStringLiteral("mods"), true, QStringList(readOnlyTools() + repairTools()), false, true,
         {QStringLiteral("mods.list")},
-        QStringLiteral("模组清单有证据；每个改动都有结果；不确定项写明。"), 4));
+        QStringLiteral("模组清单有证据；每个改动都有结果；不确定项写明。"), 5));
 
     return list;
 }

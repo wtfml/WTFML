@@ -378,6 +378,50 @@ AgentToolResult AgentRepairToolEngine::handleVerify(const Agent::ToolCall &call,
             if (!summary.ok) {
                 result.error.kind = Agent::ErrorKind::ToolError;
                 result.error.message = result.summary;
+                // Auto-safe（D12）：验证失败自动回滚，把回滚结果并进验证结果再交付。
+                if (m_autoSafe && m_repairHost != nullptr) {
+                    m_active = false;
+                    m_autoRollbackBase = result;
+                    m_autoRollbackCall = activeCall;
+                    QString rollbackProblem;
+                    const bool started = m_repairHost->finishTransaction(
+                        transactionId, false,
+                        [this](const AgentRepairFinishResult &finish) {
+                            AgentToolResult merged = m_autoRollbackBase;
+                            merged.data.insert(
+                                QStringLiteral("autoRollback"),
+                                QJsonObject{{QStringLiteral("ok"), finish.ok},
+                                            {QStringLiteral("transactionId"), finish.transactionId},
+                                            {QStringLiteral("problem"), finish.problem}});
+                            merged.data.insert(
+                                QStringLiteral("transactionState"),
+                                finish.ok ? QStringLiteral("rolled_back") : QStringLiteral("failed"));
+                            merged.summary +=
+                                finish.ok ? QStringLiteral("已自动回滚事务工作区。")  // i18n-ignore
+                                          : QStringLiteral("自动回滚失败，保留现场。");  // i18n-ignore
+                            m_autoRollbackBase = {};
+                            const Agent::ToolCall call = m_autoRollbackCall;
+                            m_autoRollbackCall = {};
+                            deliver(call, merged);
+                        },
+                        &rollbackProblem);
+                    if (!started) {
+                        AgentToolResult merged = m_autoRollbackBase;
+                        merged.data.insert(
+                            QStringLiteral("autoRollback"),
+                            QJsonObject{{QStringLiteral("ok"), false},
+                                        {QStringLiteral("problem"), rollbackProblem}});
+                        merged.summary +=
+                            QCoreApplication::translate("AgentRepairToolEngine",
+                                                        "自动回滚没有开始：%1")  // i18n-ignore
+                                .arg(rollbackProblem);
+                        m_autoRollbackBase = {};
+                        const Agent::ToolCall call = m_autoRollbackCall;
+                        m_autoRollbackCall = {};
+                        deliver(call, merged);
+                    }
+                    return;
+                }
             }
             deliver(activeCall, result);
         },

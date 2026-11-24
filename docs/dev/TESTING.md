@@ -273,7 +273,7 @@ CTest 的两种"排除 visual"选到的数量不同：`ctest -E visual` 按名�
 
 CTest 名：`wtfml.core-agent`、`wtfml.ui-agent`、`wtfml.main-window-agent`（`-Suite quick` 与 `window` 都包含）。每个测试用独立 `QTemporaryDir`，`AgentPaths` 通过 `QCoreApplication::setProperty("wtfml.testAgentDataDir", <临时目录>)` 隔离，QSettings 重定向到同一沙盒。
 
-- 覆盖：SSE/适配/错误与重试、会话与加密、凭据、上下文、路径矩阵与句柄级校验、审批矩阵、D11 外发、artifact 分离、实例锁、备份生命周期、文件/启动器/工作流/联网/命令工具、MCP 假服务器、诊断投影、崩溃规则与坏规则跳过、崩溃报告解析、mixin 配置归属、日志行索引与按行读取、模组声明解析、兼容性判定（加载器/版本/缺前置/重复/损坏/平台结论）、修复工具的审批与失败不改工作区、二分的缩减/依赖保留/组合冲突/不可复现/不一致/预算与工作区恢复、提示词 V2（条款/预算/无签名/白名单一致）、页面与真主窗口集成、性能基线。
+- 覆盖：SSE/适配/错误与重试、会话与加密、凭据、上下文、路径矩阵与句柄级校验、审批矩阵、D11 外发、artifact 分离、实例锁、备份生命周期、文件/启动器/工作流/联网/命令工具、MCP 假服务器、诊断投影、崩溃规则与坏规则跳过、崩溃报告解析、mixin 配置归属、日志行索引与按行读取、模组声明解析、兼容性判定（加载器/版本/缺前置/重复/损坏/平台结论）、修复工具的审批与失败不改工作区、二分的缩减/依赖保留/组合冲突/不可复现/不一致/预算与工作区恢复、提示词 V2（条款/预算/无签名/白名单一致）、Auto-safe（范围/时效/启动预算/硬禁止/审计、验证失败自动回滚）、页面与真主窗口集成、性能基线。
 - `verify_agent --mcp-fake-server` 是假 MCP 服务器的入口（同一可执行文件的隐藏模式），客户端用例用它起真子进程。
 - junction 夹具建不出来时输出 `SKIP`，不计入通过。
 - 计数见 [TEST_RUN_HISTORY.md](../archive/TEST_RUN_HISTORY.md)；待人工验证清单见 [AGENT.md](../features/AGENT.md) §13.3 与 [ROADMAP](../ROADMAP.md)；记录写进 [ACCEPTANCE_LOG.md](../archive/ACCEPTANCE_LOG.md)。

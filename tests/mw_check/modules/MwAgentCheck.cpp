@@ -445,6 +445,19 @@ int MwAgentChecks(QApplication &app) {
         check(repairBlocked.status == AgentToolResult::Status::Error,
               "真窗口：自由对话不放行 instance.repairCore", repairBlocked.summary);
 
+        // Auto-safe（S5.7）：只在修复模式可开；换模式即关。
+        controller->chooseSkillForTest(QStringLiteral("crash-rescue"));
+        auto *autoSafeButton =
+            page->findChild<QPushButton *>(QStringLiteral("agentAutoSafeButton"));
+        check(autoSafeButton != nullptr && !autoSafeButton->isHidden(),
+              "真窗口：崩溃急救模式下 Auto-safe 可见");
+        if (autoSafeButton != nullptr) autoSafeButton->click();
+        check(page->autoSafeEnabled(), "真窗口：点开 Auto-safe 后是勾选态");
+        controller->chooseSkillForTest(QStringLiteral("general"));
+        check(autoSafeButton != nullptr && autoSafeButton->isHidden() &&
+                  !page->autoSafeEnabled(),
+              "真窗口：回到自由对话后 Auto-safe 收起并关闭");
+
         // 切到模组维护：修复工具才进白名单；仍要求事务工作区/审批。
         controller->chooseSkillForTest(QStringLiteral("mods"));
         const AgentToolResult installInMode =

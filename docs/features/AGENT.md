@@ -25,13 +25,14 @@
 | D9 | 第一版只开放固定诊断命令 + 参数白名单，默认关闭；任意可执行文件未开放 |
 | D10 | 删除会话不删维护备份；备份带 `owner/source/sourceSessionId`；只清 `owner=agent` |
 | D11 | 外发按内容判定：自动读取脱敏日志/崩溃报告/实例与目录元数据；配置/完整文件名/完整实例清单逐次确认；凭据与二进制硬阻断 |
+| D12 | Auto-safe（2026-11-24 产品确认）：用户显式打开后，**一次批准一个有范围、有时效的事务**，事务内按已批准计划执行写/启动/提交，不再逐次确认；范围来自计划与 `repair.begin`（工具、文件、设置键、模组、项目号），最长 60 分钟或 20 次启动；`java.path`、`args.extraJvm`、`saves/`、删除、`backup.restore`、`instance.repairCore`、别的工区一律拒绝；默认关闭、不随会话记忆；每次事务结束写审计。这是 D5 的唯一例外，其它路径仍逐次确认 |
 
 ## 3. 架构与依赖
 
 `ui/Agent*` → `AgentController` → `src/agent/`（loop / context / session / provider / policy / tools）→ 现有网络与业务层。
 
 - `ui/Agent*` 只 include `ui/` 与值类型，不 include `src/`。
-- `src/agent/` 不 include `ui/` 或 `MainWindow`；业务能力只经 `AgentLauncherHost` 接口接入（实现在 `src/controllers/AgentLauncherHostImpl.*`）。
+- `src/agent/` 不 include `ui/` 或 `MainWindow`；业务能力只经宿主接口接入：`AgentLauncherHost`（诊断/设置/模组/备份）、`AgentLaunchHost`（测试启动）、`AgentRepairHost`（建工作区/提交回滚）、`AgentModHost`（平台查询/下载/核心修复），实现都在 `src/controllers/AgentLauncherHostImpl.*` 与 `AgentModPlatform.*`。
 - 网络只走 `AgentModelClient`；凭据只走 `AgentSecretStore`；会话落盘只走 `AgentSessionStore`；路径只从 `AgentPaths` / `AppPaths` 取。
 - UI 更新在主线程；网络异步；同一会话最多 1 个模型请求、1 个工具；异步工具有代次，取消后旧回调丢弃。
 
@@ -176,7 +177,7 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 
 ### 9.2 风险与审批矩阵
 
-只读自动；完整实例清单、完整模组文件名、配置读取、设置写、模组启停、备份创建与恢复逐次审批；命令与外部 MCP 逐次审批；没有会话级目录放行。
+只读自动；完整实例清单、完整模组文件名、配置读取、设置写、模组启停、备份创建与恢复逐次审批；命令与外部 MCP 逐次审批；没有会话级目录放行。唯一例外是 D12 Auto-safe：用户显式打开且计划已批准后，计划范围内的写/启动/提交不再逐次确认，范围外与硬禁止项照旧。
 
 ### 9.3 文件工具（5 个，只作用于锁定实例）
 
@@ -191,6 +192,8 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 路径校验是字符串拒绝（绝对路径、`..`、盘符、UNC、ADS、保留名、尾点/空格）+ Win32 句柄级最终路径/文件 ID/reparse 核对；受保护目录（`versions/libraries/assets/java/servers`）原始写一律拒绝。
 
 ### 9.4 启动器工具（28 个，均经 `AgentLauncherHost` / `AgentModHost` / `AgentLaunchHost`）
+
+分两部分：基础表（下面两张表）+ Stage 5 的六个专节——§9.4.2 测试启动、§9.4.3 修复事务、§9.4.4 崩溃快照与日志检索、§9.4.5 模组兼容与文件修复、§9.4.6 依赖感知二分、§9.4.7 Auto-safe 事务授权。
 
 只读自动：
 
@@ -333,6 +336,22 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 
 限制：二分只判断"哪些模组一起启用会崩"，不做修复；确认阶段出现不一致时最多加跑一轮，仍不一致回 `inconclusive`，不猜责任模组。
 
+#### 9.4.7 Auto-safe 事务授权（Stage 5.7，D12）
+
+用户显式打开后的一次性事务授权：提交并批准计划即视为同意"按计划执行到事务结束"。实现分两层——`AgentAutoSafe::Authorizer` 记范围/时效/启动次数/审计（纯记账 + 判定），`AgentCompositeToolEngine` 在 `ApprovalRequired` 时替用户点"允许"（范围内）或直接拒绝（硬禁止）。
+
+| 项 | 行为 |
+| --- | --- |
+| 打开 | 只在崩溃急救/模组维护显示开关；需要先锁定实例；默认关闭，不随会话记忆 |
+| 范围 | 已批准计划里的写工具、`fs.write` 路径、`settings.set` 键、`mods.setEnabled` 文件名、`mods.installFix` 项目号，加 `repair.begin/verify/finish/diff/status` 与启动测试/二分 |
+| 时效 | 60 分钟；启动次数 20（`instance.testLaunch`/`repair.verify` 按 `repeat` 计，`mods.bisect` 按 `maxLaunches` 计）；到期或用满退回逐次确认 |
+| 硬禁止 | `settings.set` 的 `java.path` / `args.extraJvm`；`fs.write` 的 `saves/` 与带 `..` 的路径；`backup.restore`；`instance.repairCore`；不在本事务工作区的写入 |
+| 自动回滚 | `repair.verify` 失败时事务工具自己调 `repair.finish(rollback)`，把回滚结果并进验证结果 |
+| 失效 | 换模式、换会话、关窗、事务结束（commit/rollback）、到期；关窗时停测试进程 |
+| 审计 | 事务结束写 `agent/transactions/<id>/audit.json`：范围、限制、实际操作、启动次数、验证、最终状态、回滚结果；同时挂进 `repair.finish` 的结果数据 |
+
+限制：Auto-safe 只跳过"写操作逐次确认"，不跳过外发确认（D11）与审批矩阵里的其它类别；`mods.bisect` 的一次授权按它的启动上限占预算，不做更细的逐轮记账。
+
 ### 9.5 联网与固定诊断命令
 
 | 工具 | 审批 | 关键上限 |
@@ -394,12 +413,12 @@ JSON-RPC 2.0、stdio、换行分隔。`initialize`（提议 `2024-11-05`，以�
 | 崩溃急救 / 模组维护 | 只读诊断 + 分析与校验 + 写工具 + 事务/启动测试/修复/二分 + `workflow.*` | — |
 | 版本升级 / 移植 | 只读诊断 + `backup.create` + 升级入口 | 设置写、事务、启动测试 |
 
-模式记在会话 `skill` 字段；换模式作废旧计划、证据保留。联网与诊断命令只在自由对话可用；修复工具只在崩溃急救/模组维护里放行。
+模式记在会话 `skill` 字段；换模式作废旧计划、证据保留。联网与诊断命令只在自由对话可用；修复工具只在崩溃急救/模组维护里放行。Auto-safe（D12）是修复类模式里的一个开关，不是第六个模式；换模式/换会话即关。
 
 ### 11.2 工作流
 
 - **实例体检**：锁定实例 → 启动诊断 → 日志/模组/完整性 → 分级结论 + 证据 + 下一步选项；不写盘。
-- **崩溃急救**：`diagnostics.crashSnapshot` 拿环境、阶段、异常链与命中规则（需要行号时再 `logs.search`，原文走 `crash.readFull`）→ 按 `matchedRules`、嫌疑的 role/置信度与证据决定下一步（类型清单在知识库，不写进提示词，也不猜具体模组）→ 计划 → `repair.begin` 建事务 → 逐步执行（事务内写工作区、每步单独审批、失败即停）→ `repair.verify` 在隔离工作区验证 → `repair.finish(commit/rollback)` → 报告写回退方式与未解决项。世界问题只在副本世界验证，不打开源存档。
+- **崩溃急救**：`diagnostics.crashSnapshot` 拿环境、阶段、异常链与命中规则（需要行号时再 `logs.search`，原文走 `crash.readFull`）→ 按 `matchedRules`、嫌疑的 role/置信度与证据决定下一步（类型清单在知识库，不写进提示词，也不猜具体模组）→ 计划 → `repair.begin` 建事务 → 逐步执行（事务内写工作区、每步单独审批、失败即停）→ `repair.verify` 在隔离工作区验证 → `repair.finish(commit/rollback)` → 报告写回退方式与未解决项。开了 Auto-safe 时计划批准后的写步骤不再逐个确认，验证失败自动回滚；世界问题只在副本世界验证，不打开源存档。
 - **版本升级 / 移植**：`upgrade.inspect` 只读检查 + 解释风险；执行一律打开现有升级向导。
 - **模组维护**：列清单 → `mods.analyzeCompatibility` 读声明查加载器/版本/缺前置/重复 → 需要逐文件哈希时 `mods.verifyFiles` → `repair.begin` → 在工作区启停/备份，或用 `mods.installFix` 按平台记录换掉损坏/不兼容的文件 → `repair.diff`/`repair.verify` → 提交或回滚。核心文件损坏走 `instance.repairCore`；说不清是哪几个模组时用 `mods.bisect` 在工作区二分（嫌疑来自 `diagnostics.crashSnapshot`）。
 
@@ -462,6 +481,7 @@ Collect → AwaitPlanApproval → Execute*（每步审批）→ Verify → Repor
 | 模组兼容 / 校验 | 2000 个文件、本地 60 s；平台每批 100 个哈希、总 180 s；单文件哈希 512 MB |
 | 模组修复 / 核心修复 | 单文件 100 MB、单事务 500 MB、≤10 个文件；核心修复 10 min |
 | 依赖感知二分 | 默认 8 次、最多 20 次启动；默认 45 min；每次启动 10–600 s；连续 3 次启动失败就停 |
+| Auto-safe | 60 min、20 次启动；一次只有一个授权；不随会话记忆 |
 | 修复事务 | 范围 5 类；基线文件 ≤20000 个、总大小 ≤512 MB；单实例同时 1 个活动事务；提交备份在 `agent/transactions/<id>/backups/` |
 | 目录列表 / `fs.read` / `fs.write` | 2000 项 / 256 KB（最大 1 MB）/ 1 MB |
 | MCP 单行 / 命令输出 | 8 MB / 256 KB |
@@ -483,7 +503,7 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 
 - 协议与客户端：SSE/分块边界、适配枚举、错误体保留、重试/取消、本地假服务器。
 - 会话与凭据：元数据/正文往返、损坏隔离、快照、整会话加密、Credential Manager + DPAPI 后备、脱敏。
-- 工具与安全：路径攻击矩阵、句柄级校验、审批矩阵、D11 边界表、artifact 分离、实例锁、备份生命周期、诊断投影、工作流闸门、MCP 协议/确认闸/假服务器、联网地址策略（假传输）、诊断命令、测试启动参数/审批/里程碑、工作区登记与清理、事务基线/差异/设置增量/审批、崩溃规则加载与坏规则跳过、崩溃报告解析、嫌疑角色与置信度、mixin 配置归属、日志行索引与按行读取、模组声明解析、兼容性判定（加载器/版本/缺前置/重复/损坏/平台结论）、修复工具的审批与失败不改工作区、二分的缩减/依赖保留/组合冲突/不可复现/不一致/预算与工作区恢复、提示词 V2（六类条款、五个报告状态、预算、无崩溃签名、工具引用都在白名单内、自由对话不放行修复工具）。
+- 工具与安全：路径攻击矩阵、句柄级校验、审批矩阵、D11 边界表、artifact 分离、实例锁、备份生命周期、诊断投影、工作流闸门、MCP 协议/确认闸/假服务器、联网地址策略（假传输）、诊断命令、测试启动参数/审批/里程碑、工作区登记与清理、事务基线/差异/设置增量/审批、崩溃规则加载与坏规则跳过、崩溃报告解析、嫌疑角色与置信度、mixin 配置归属、日志行索引与按行读取、模组声明解析、兼容性判定（加载器/版本/缺前置/重复/损坏/平台结论）、修复工具的审批与失败不改工作区、二分的缩减/依赖保留/组合冲突/不可复现/不一致/预算与工作区恢复、提示词 V2（六类条款、五个报告状态、预算、无崩溃签名、工具引用都在白名单内、自由对话不放行修复工具）、Auto-safe（范围/时效/启动预算/硬禁止/审计落盘、复合层替用户点允许、验证失败自动回滚）。
 - UI/集成：页面几何与状态、模式胶囊、工具卡/审批卡、真窗口里只读模式拒绝写、MCP 管理器接线、实例目录日志/崩溃报告读取。
 - 性能基线：2000 条会话读写/加密、上下文裁剪、智能体页 2000 条消息重摆（数字见 perf-notes）。
 
@@ -505,16 +525,17 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 | A10 | 真机 1.20.1：`repair.begin` → 工作区改模组/配置 → `repair.verify` → commit/rollback；提交前手改源文件 | 回滚后源文件哈希恢复；源文件被改时拒绝提交；提交中断可恢复 |
 | A11 | 真机 120 模组整合包：`mods.bisect` 在 12 次启动内定位已知问题模组；双模组冲突报 `pair`；取消后无孤儿进程、工作区恢复基线 | 必需前置始终启用；不误报 `not_found` |
 | A12 | 真实模型 + Mixin 夹具：先调 `diagnostics.crashSnapshot` 再决定是否二分；自由对话模式调不到修复工具 | 不直接提交“禁用日志里第一个模组”；被拒时说明切模式 |
+| A13 | 真机打开 Auto-safe：一次批准计划后完成「禁用模组 → 测试启动 → 提交」不再逐步弹审批；计划外改 `options.txt`/`args.extraJvm` 被拒；验证失败自动回滚；取消/超时/关窗停进程并留审计 | 审计文件完整；事务只动工作区 |
 
 限制：A1–A10 需要真机与真实账号/服务，记录写进 [ACCEPTANCE_LOG](../archive/ACCEPTANCE_LOG.md)（一行：日期｜做了什么｜结论｜意外发现）。
 
 ## 14. 现状、未覆盖与剩余计划
 
-已实现：聊天底座、文件工具、启动器工具、工作流、stdio MCP、联网与固定诊断命令、模式与证据、提示词资源化、隔离测试启动、修复事务、发布检查脚本。核心计数与最近一次自动化结果见 [TEST_RUN_HISTORY](../archive/TEST_RUN_HISTORY.md)。
+已实现：聊天底座、文件工具、启动器工具、工作流、stdio MCP、联网与固定诊断命令、模式与证据、提示词资源化（Prompt V2）、隔离测试启动、修复事务、崩溃快照与日志检索、模组兼容与文件修复、依赖感知二分、Auto-safe 事务授权、发布检查脚本。核心计数与最近一次自动化结果见 [TEST_RUN_HISTORY](../archive/TEST_RUN_HISTORY.md)，Stage 5 的交付与代码位置见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)。
 
-### 14.1 自主修复缺口
+### 14.1 自主修复能力与缺口
 
-现有闭环已有隔离测试启动和事务化提交/回滚；崩溃报告每份只读头 8 KB，日志只读尾 500 行；模组工具不读本地声明；世界、显卡与 Native 问题还缺结构化归因。按故障类型拆：
+闭环已覆盖"诊断 → 计划 → 事务 → 隔离验证 → 提交/回滚 → 报告"，模组侧还能读声明、按平台修文件、自动二分。仍按故障类型看：
 
 | 故障 | 现有能力 | 缺口 |
 | --- | --- | --- |
@@ -529,7 +550,7 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 | 显卡 / Native 崩溃 | `diagnostics.crashSnapshot` 认 `hs_err_pid` 与 `EXCEPTION_ACCESS_VIOLATION`，与内存/模组问题分开报；可测试启动复现 | 不解析 native 模块归属，不改驱动或渲染后端 |
 | 世界 / 存档崩溃 | 有限的崩溃诊断；可复制世界到工作区用 `quickPlay` 验证；可在副本里二分 | 事务不提交世界/存档，也不做原件提交后验证 |
 
-剩余阶段（S5.7 Auto-safe 事务授权需产品确认、P2 修复病例库）见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)。提示词外置、隔离测试启动、修复事务、崩溃快照与日志检索、模组兼容与文件修复、依赖感知二分、Prompt V2 与知识分层已于 2026-11-24 完成，见 §11.4、§9.4.2、§9.4.3、§9.4.4、§9.4.5、§9.4.6。
+Stage 5 的八个阶段已于 2026-11-24 全部完成，交付与代码位置见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)。剩余工作只有 P2 修复病例库与人工验收项，见 [ROADMAP](../ROADMAP.md)。
 
 未覆盖：
 
@@ -541,6 +562,7 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 | 二分时的世界 | 只按工作区 `quickPlay` 可选进副本世界；不验证存档一致性，也不判断世界崩溃与模组的归属 |
 | 修复病例库（P2） | 未实现：`agent/repair-cases/` 的规则/动作/验证结果还没有落盘，也没有参与本地排序 |
 | 自由对话的模型行为验收 | 白名单与提示词在本地断言，真实模型是否按提示词先诊断后动手见 A12 |
+| Auto-safe 的真机行为 | 本地夹具覆盖范围/审计/自动回滚；真实游戏里"一次批准跑完并提交"、关窗清理见 A13 |
 | `mods.installFix` 的补丁式回滚 | 失败时只撤销本次复制的文件；已完成的事务由 `repair.finish` 回滚 |
 | artifact 单会话配额（设计 64 MB） | 未实现，不拒绝 |
 | 联网工具的"本会话允许" | 审批卡按钮文案有，联网引擎未实现会话放行 |
@@ -549,4 +571,4 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 | 高 DPI/读屏/长路径/换用户解密/视觉套件 | 人工项，见 §13.3 |
 | 长会话一次重摆（2000 条约 3.8 s） | 未优化，见 perf-notes |
 
-剩余计划只在 [ROADMAP](../ROADMAP.md) 维护：G1B 复测、网络错误验收、A2–A8 中未做的人工项、Stage 3 剩余工具、Stage 5 自主修复（拆解见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)）、性能与长会话渲染。
+剩余计划只在 [ROADMAP](../ROADMAP.md) 维护：G1B 复测、网络错误验收、A2–A13 中未做的人工项、P2 修复病例库、Stage 3 剩余工具、性能与长会话渲染。
