@@ -180,7 +180,7 @@ QString Report::headline() const {
         if (warnings > 0) parts << QCoreApplication::translate("StartupDiagnosis", "%1 条提醒").arg(warnings);
         return QCoreApplication::translate("StartupDiagnosis", "启动诊断：发现 %1").arg(parts.join(QCoreApplication::translate("StartupDiagnosis", "、")));
     }
-    return QCoreApplication::translate("StartupDiagnosis", "启动诊断：没有发现明显问题");
+    return QCoreApplication::translate("StartupDiagnosis", "启动诊断：未发现明显问题");
 }
 
 QString Report::toText() const {
@@ -226,9 +226,9 @@ Report analyze(const Inputs &inputs) {
     // ---------- 1. 版本与加载器 ----------
     if (inputs.versionId.isEmpty()) {
         appendFinding(&report, Severity::Problem,
-                      QCoreApplication::translate("StartupDiagnosis", "这个实例没有指向任何游戏版本"),
-                      QCoreApplication::translate("StartupDiagnosis", "实例目录里读不到可以启动的版本信息。"),
-                      QCoreApplication::translate("StartupDiagnosis", "在实例设置里重新确认版本，或者重新安装这个实例。"));
+                      QCoreApplication::translate("StartupDiagnosis", "此实例未指向任何游戏版本"),
+                      QCoreApplication::translate("StartupDiagnosis", "实例目录中无法读取可启动的版本信息。"),
+                      QCoreApplication::translate("StartupDiagnosis", "请在实例设置中重新确认版本，或重新安装此实例。"));
     } else if (inputs.gameVersion.isEmpty()) {
         appendFinding(&report, Severity::Warning,
                       QCoreApplication::translate("StartupDiagnosis", "无法识别实例的实际游戏版本"),
@@ -241,12 +241,12 @@ Report analyze(const Inputs &inputs) {
         } else if (mods.enabled.size() > 0) {
             appendFinding(
                 &report, Severity::Problem,
-                QCoreApplication::translate("StartupDiagnosis", "没有模组加载器，却有 %1 个启用的模组").arg(mods.enabled.size()),
-                QCoreApplication::translate("StartupDiagnosis", "mods/ 里躺着 %1 个 .jar，但这个实例是原版（没有 Fabric / Forge / " "NeoForge / Quilt），游戏不会读它们。")
+                QCoreApplication::translate("StartupDiagnosis", "未安装模组加载器，但启用了 %1 个模组").arg(mods.enabled.size()),
+                QCoreApplication::translate("StartupDiagnosis", "mods/ 中有 %1 个 .jar，但此实例为原版（未安装 Fabric / Forge / " "NeoForge / Quilt），游戏不会加载这些文件。")
                     .arg(mods.enabled.size()),
-                QCoreApplication::translate("StartupDiagnosis", "在这个版本上装一个模组加载器，或者把 mods/ 里那些 jar 移走。"));
+                QCoreApplication::translate("StartupDiagnosis", "请安装模组加载器，或移除 mods/ 中的 jar 文件。"));
         } else {
-            appendFinding(&report, Severity::Ok, QCoreApplication::translate("StartupDiagnosis", "原版实例（没有模组加载器）"));
+            appendFinding(&report, Severity::Ok, QCoreApplication::translate("StartupDiagnosis", "原版实例（未安装模组加载器）"));
         }
     } else {
         appendFinding(&report, Severity::Ok,
@@ -261,30 +261,30 @@ Report analyze(const Inputs &inputs) {
     if (inputs.configuredJavaPath.isEmpty()) {
         if (inputs.autoSelectJava) {
             appendFinding(
-                &report, Severity::Info, QCoreApplication::translate("StartupDiagnosis", "没有预先指定 Java，启动时自动挑"),
+                &report, Severity::Info, QCoreApplication::translate("StartupDiagnosis", "未预先指定 Java，启动时自动选择"),
                 inputs.requiredJavaMajor > 0
-                    ? QCoreApplication::translate("StartupDiagnosis", "这个版本要 Java %1。").arg(inputs.requiredJavaMajor)
-                    : QCoreApplication::translate("StartupDiagnosis", "版本 json 里没写要哪个 Java，启动时按游戏版本推断。"),
-                QCoreApplication::translate("StartupDiagnosis", "如果本机没有匹配的 Java，第一次启动会先下载一份运行时。"));
+                    ? QCoreApplication::translate("StartupDiagnosis", "此版本需要 Java %1。").arg(inputs.requiredJavaMajor)
+                    : QCoreApplication::translate("StartupDiagnosis", "版本 json 未指定 Java 版本，启动时按游戏版本推断。"),
+                QCoreApplication::translate("StartupDiagnosis", "本机无匹配 Java 时，首次启动将先下载运行时。"));
         } else {
             appendFinding(&report, Severity::Problem,
-                          QCoreApplication::translate("StartupDiagnosis", "Java 选的是「手动指定」，但路径是空的"),
-                          QCoreApplication::translate("StartupDiagnosis", "手动档下启动器不会自己去挑 Java。"),
-                          QCoreApplication::translate("StartupDiagnosis", "在「启动设置」里填一个 java.exe，或者切回「自动」。"));
+                          QCoreApplication::translate("StartupDiagnosis", "Java 已设为「手动指定」，但路径为空"),
+                          QCoreApplication::translate("StartupDiagnosis", "手动模式下启动器不会自动选择 Java。"),
+                          QCoreApplication::translate("StartupDiagnosis", "请在「启动设置」中指定 java.exe，或切换回「自动」。"));
         }
     } else {
         const QString executable = javaExecutableOf(inputs.configuredJavaPath);
         if (executable.isEmpty() || !QFileInfo::exists(executable)) {
             appendFinding(&report, Severity::Problem,
-                          QCoreApplication::translate("StartupDiagnosis", "指定的 Java 用不了"),
+                          QCoreApplication::translate("StartupDiagnosis", "指定的 Java 不可用"),
                           QCoreApplication::translate("StartupDiagnosis", "路径：%1").arg(inputs.configuredJavaPath),
-                          QCoreApplication::translate("StartupDiagnosis", "把路径改成一个真实存在的 java.exe（或 JDK/JRE 目录），" "或者切回自动。"));
+                          QCoreApplication::translate("StartupDiagnosis", "请将路径改为存在的 java.exe（或 JDK/JRE 目录），" "或切换回自动。"));
         } else {
             appendFinding(
                 &report, Severity::Ok, QCoreApplication::translate("StartupDiagnosis", "已指定 Java"),
                 QCoreApplication::translate("StartupDiagnosis", "路径：%1").arg(executable),
                 inputs.requiredJavaMajor > 0
-                    ? QCoreApplication::translate("StartupDiagnosis", "这个版本要 Java %1；诊断不启动 JVM，具体主版本以启动日志为准。")
+                    ? QCoreApplication::translate("StartupDiagnosis", "此版本需要 Java %1；诊断不启动 JVM，具体主版本以启动日志为准。")
                           .arg(inputs.requiredJavaMajor)
                     : QString());
         }
@@ -297,7 +297,7 @@ Report analyze(const Inputs &inputs) {
         if (inputs.xmsMb > 0) memoryParts << QStringLiteral("Xms %1 MB").arg(inputs.xmsMb);
         if (inputs.autoMemory) memoryParts << QCoreApplication::translate("StartupDiagnosis", "自动");
         if (inputs.systemTotalMb > 0) {
-            memoryParts << QCoreApplication::translate("StartupDiagnosis", "机器共 %1 MB").arg(inputs.systemTotalMb);
+            memoryParts << QCoreApplication::translate("StartupDiagnosis", "设备总内存 %1 MB").arg(inputs.systemTotalMb);
         }
         const QString memoryDetail = memoryParts.join(QStringLiteral(" / "));
 
@@ -305,27 +305,27 @@ Report analyze(const Inputs &inputs) {
             && inputs.xmxMb > inputs.systemTotalMb) {
             appendFinding(
                 &report, Severity::Problem,
-                QCoreApplication::translate("StartupDiagnosis", "分给游戏的内存超过了机器总内存"),
+                QCoreApplication::translate("StartupDiagnosis", "分配给游戏的内存超过设备总内存"),
                 memoryDetail,
                 QCoreApplication::translate("StartupDiagnosis", "请将 Xmx 调低至物理内存容量以内，并为系统保留内存。"));
         } else if (inputs.xmxMb > 0 && inputs.systemTotalMb > 0
                    && inputs.xmxMb > inputs.systemTotalMb * 4 / 5) {
             appendFinding(&report, Severity::Warning,
-                          QCoreApplication::translate("StartupDiagnosis", "分给游戏的内存偏多"),
+                          QCoreApplication::translate("StartupDiagnosis", "分配给游戏的内存过多"),
                           memoryDetail,
-                          QCoreApplication::translate("StartupDiagnosis", "留一点给系统和其他程序，尤其模组整合包还要加载资源。"));
+                          QCoreApplication::translate("StartupDiagnosis", "请为系统和其他程序保留内存；模组整合包还需加载资源。"));
         } else if (inputs.xmxMb > 0) {
             appendFinding(&report, Severity::Info, QCoreApplication::translate("StartupDiagnosis", "内存分配"), memoryDetail);
         }
         if (inputs.xmxMb > 0 && inputs.xmxMb < 512) {
             appendFinding(&report, Severity::Warning,
-                          QCoreApplication::translate("StartupDiagnosis", "分给游戏的内存偏小（%1 MB）").arg(inputs.xmxMb),
+                          QCoreApplication::translate("StartupDiagnosis", "分配给游戏的内存过小（%1 MB）").arg(inputs.xmxMb),
                           memoryDetail,
                           QCoreApplication::translate("StartupDiagnosis", "模组整合包通常需要更多内存。原版 1.20 及以上建议至少分配 1024 MB。"));
         }
         if (inputs.systemTotalMb <= 0) {
             appendFinding(&report, Severity::Info,
-                          QCoreApplication::translate("StartupDiagnosis", "读不到这台机器的物理内存"),
+                          QCoreApplication::translate("StartupDiagnosis", "无法读取设备物理内存"),
                           QCoreApplication::translate("StartupDiagnosis", "仅获得配置的内存值，无法与设备容量比较。"));
         }
     }
@@ -333,15 +333,15 @@ Report analyze(const Inputs &inputs) {
     // ---------- 4. mods/ ----------
     if (!inputs.modsDir.isEmpty() && !QDir(inputs.modsDir).exists()) {
         appendFinding(&report, Severity::Info,
-                      QCoreApplication::translate("StartupDiagnosis", "这个实例没有 mods 目录"),
+                      QCoreApplication::translate("StartupDiagnosis", "此实例无 mods 目录"),
                       QCoreApplication::translate("StartupDiagnosis", "路径：%1").arg(inputs.modsDir),
-                      QCoreApplication::translate("StartupDiagnosis", "第一次往里面放模组时目录会自动建出来。"));
+                      QCoreApplication::translate("StartupDiagnosis", "首次添加模组时自动创建该目录。"));
     } else if (mods.enabled.size() > 0 && !inputs.loaderName.isEmpty()) {
         appendFinding(&report, Severity::Ok,
                       QCoreApplication::translate("StartupDiagnosis", "已启用 %1 个模组").arg(mods.enabled.size()),
                       inputs.modsDir);
     } else if (!inputs.loaderName.isEmpty() && mods.enabled.isEmpty()) {
-        appendFinding(&report, Severity::Info, QCoreApplication::translate("StartupDiagnosis", "mods/ 里没有启用的模组"),
+        appendFinding(&report, Severity::Info, QCoreApplication::translate("StartupDiagnosis", "mods/ 中无已启用的模组"),
                       inputs.modsDir.isEmpty() ? QString() : inputs.modsDir);
     }
     if (mods.disabled.size() > 0) {
@@ -360,7 +360,7 @@ Report analyze(const Inputs &inputs) {
     {
         const CrashScan crash = newestCrash(inputs.crashDir);
         if (crash.path.isEmpty()) {
-            appendFinding(&report, Severity::Info, QCoreApplication::translate("StartupDiagnosis", "没有崩溃报告"));
+            appendFinding(&report, Severity::Info, QCoreApplication::translate("StartupDiagnosis", "暂无崩溃报告"));
         } else {
             const QString description = crashLine(crash.text, QStringLiteral("Description:"));
             const QString time = crashLine(crash.text, QStringLiteral("Time:"));
@@ -376,14 +376,14 @@ Report analyze(const Inputs &inputs) {
                 appendFinding(&report, Severity::Warning,
                               QCoreApplication::translate("StartupDiagnosis", "最近一份崩溃报告是内存不足（OutOfMemoryError）"),
                               where,
-                              QCoreApplication::translate("StartupDiagnosis", "把 Xmx 调大（先确认机器真的有空闲内存），" "或者减少同时加载的模组。"));
+                              QCoreApplication::translate("StartupDiagnosis", "请调大 Xmx（确认设备有空闲内存），" "或减少同时加载的模组。"));
             } else if (crash.text.contains(QStringLiteral("UnsupportedClassVersionError"))) {
                 javaVersionProblemSeen = true;
                 appendFinding(
                     &report, Severity::Problem,
                     QCoreApplication::translate("StartupDiagnosis", "最近一份崩溃报告是 Java 版本不对（UnsupportedClassVersionError）"),
                     where,
-                    QCoreApplication::translate("StartupDiagnosis", "这个崩溃说明有东西是用比当前 Java 更新的版本编译的；" "换一个更新的 Java 再试。"));
+                    QCoreApplication::translate("StartupDiagnosis", "此崩溃表明有内容使用比当前 Java 更新的版本编译。" "请更换更新的 Java 后重试。"));
             } else if (crash.text.contains(QStringLiteral("NoClassDefFoundError"))
                        || crash.text.contains(QStringLiteral("ClassNotFoundException"))) {
                 appendFinding(&report, Severity::Warning,
@@ -397,7 +397,7 @@ Report analyze(const Inputs &inputs) {
                 appendFinding(&report, Severity::Warning,
                               QCoreApplication::translate("StartupDiagnosis", "最近一份崩溃报告发生在模组注入阶段（Mixin）"),
                               where,
-                              QCoreApplication::translate("StartupDiagnosis", "报告里通常会点名一个模组；先单独移走它再启动，" "确认是不是它引起的。"));
+                              QCoreApplication::translate("StartupDiagnosis", "报告通常会指明一个模组。请先单独移除该模组再启动，" "以确认原因。"));
             } else {
                 appendFinding(&report, Severity::Info,
                               QCoreApplication::translate("StartupDiagnosis", "最近一份崩溃报告：%1").arg(crash.name),
@@ -447,8 +447,8 @@ Report analyze(const Inputs &inputs) {
         if (log.hasOutOfMemory && !outOfMemorySeen) {
             appendFinding(&report, Severity::Warning,
                           QCoreApplication::translate("StartupDiagnosis", "启动日志里出现 OutOfMemoryError"),
-                          QCoreApplication::translate("StartupDiagnosis", "游戏在运行中内存不够了（不一定留下一份崩溃报告）。"),
-                          QCoreApplication::translate("StartupDiagnosis", "把 Xmx 调大，或者关掉一些模组再试。"));
+                          QCoreApplication::translate("StartupDiagnosis", "游戏运行期间内存不足（可能未生成崩溃报告）。"),
+                          QCoreApplication::translate("StartupDiagnosis", "请调大 Xmx，或减少部分模组后重试。"));
         }
     }
 

@@ -164,7 +164,7 @@ void GameSessionController::openLogFile(const QString &path) {
                         && file.write(bytes) == bytes.size() && file.commit();
         if (!ok) {
             InlineMessage::warning(m_ui->overlay(), tr("导出失败"),
-                                   tr("这个文件没能写出来（%1）：\n%2")
+                                   tr("文件写入失败（%1）：\n%2")
                                        .arg(QDir::toNativeSeparators(target), file.errorString()));
         }
     });
@@ -540,7 +540,7 @@ void GameSessionController::onGameFinished(int sessionId, int exitCode, QProcess
         if (launchSucceeded) m_host.launchTaskStepDone(finishingLaunchTask);
         m_host.finishLaunchTask(finishingLaunchTask, launchSucceeded,
                                 outputSeen ? tr("游戏窗口出现前进程就结束了，退出码 %1。").arg(exitCode)
-                                           : tr("游戏进程没等到能打日志就结束了，退出码 %1。").arg(exitCode));
+                                           : tr("游戏进程在生成日志前结束，退出码 %1。").arg(exitCode));
     }
 
     // ---------- 异常退出 → 账本上补一项「游戏异常退出」 ----------
@@ -647,7 +647,7 @@ void GameSessionController::stopGameSession(int sessionId) {
     if (!m_launcherManager->stopGame(sessionId)) {
         m_userStoppedSessions.remove(sessionId);
         // 上面那一问期间它退出了（游戏自己崩了/被别处停了）。
-        m_host.log(tr("「%1」刚刚已经结束了。").arg(game.displayName));
+        m_host.log(tr("「%1」已结束。").arg(game.displayName));
         return;
     }
     m_host.log(tr("已停止「%1」。").arg(game.displayName));
