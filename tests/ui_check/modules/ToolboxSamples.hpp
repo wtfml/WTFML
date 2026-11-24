@@ -141,12 +141,12 @@ inline void fillToolboxSamples(ToolboxPage &page, ToolboxPage::Tool tool) {
             "底色 白色 · 6/6 层\n\n步骤：\n• 合成白色旗帜：6 块白色羊毛 + 1 根木棍\n• 第 1 层：条纹（橙色）\n• 第 2 层：十字（品红色）\n"
             "• 第 3 层：边框（黑色）\n• 第 4 层：条纹（白色）\n• 第 5 层：十字（橙色）\n• 第 6 层：边框（品红色）\n\n"
             "材料清单：\n• 白色羊毛 × 6\n• 木棍 × 1\n• 橙色染料 × 2\n• 品红色染料 × 2\n• 黑色染料 × 1\n\n"
-            "指令（适用于 1.13–1.20.4 的 NBT 格式；1.20.5 及以上版本不适用）：\n"
+            "指令（写法随目标版本变化）：\n"
             "/give @p white_banner{BlockEntityTag:{Patterns:[{Pattern:ss,Color:2},{Pattern:cr,Color:6},{Pattern:bo,Color:15}]}}",
             "Base White · 6/6 layers\n\nSteps:\n• Craft a White Banner: 6 White Wool + 1 Stick\n• Layer 1: Stripe (Orange)\n• Layer 2: Cross (Magenta)\n"
             "• Layer 3: Bordure (Black)\n• Layer 4: Stripe (White)\n• Layer 5: Cross (Orange)\n• Layer 6: Bordure (Magenta)\n\n"
             "Materials:\n• White Wool × 6\n• Stick × 1\n• Orange Dye × 2\n• Magenta Dye × 2\n• Black Dye × 1\n\n"
-            "Command (NBT format for 1.13–1.20.4; not for 1.20.5 and later):\n"
+            "Command (syntax depends on the target version):\n"
             "/give @p white_banner{BlockEntityTag:{Patterns:[{Pattern:ss,Color:2},{Pattern:cr,Color:6},{Pattern:bo,Color:15}]}}"));
         break;
     case Tool::Trim:

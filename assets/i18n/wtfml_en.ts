@@ -14716,7 +14716,7 @@ You can undo the last update in "Update center".</translation>
         </message>
         <message>
             <source>搜索设置</source>
-            <translation>Search settings…</translation>
+            <translation>Search…</translation>
         </message>
         <message>
             <source>运行时</source>

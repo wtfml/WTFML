@@ -2767,7 +2767,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
                   demoText("Forge 专用", "Forge only"),
                   QStringLiteral("create-6.0.6.jar"), QString(), QStringLiteral("incompatible")},
                  {QStringLiteral("JEI 19.27.0"), demoText("未知", "Unknown"),
-                  demoText("模组未声明支持的版本", "Mod does not declare supported versions"),
+                  demoText("模组未声明支持的版本", "Support not declared"),
                   QStringLiteral("jei.jar"), QString(), QStringLiteral("unknown")}},
                 demoText("模组声明：11 个可沿用，1 个需要替换，1 个不兼容，1 个未知。",
                          "Mod declarations: 11 compatible, 1 needs replacement, 1 incompatible, 1 unknown."));
@@ -2848,7 +2848,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
     {
         const QString raw = demoText(
             "#Minecraft server properties\n"
-            "motd=欢迎来到 Steve 的周末生存服\n"
+            "motd=Steve 的周末生存服\n"
             "server-port=25565\n"
             "max-players=20\n"
             "online-mode=true\n"
@@ -2863,7 +2863,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
             "simulation-distance=8\n"
             "player-idle-timeout=0\n",
             "#Minecraft server properties\n"
-            "motd=Welcome to Steve's Weekend Survival Server\n"
+            "motd=Steve's Weekend Server\n"
             "server-port=25565\n"
             "max-players=20\n"
             "online-mode=true\n"
@@ -2952,7 +2952,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
             agent->setInstanceChip(shadersName, false);
             AgentView::SessionMeta session;
             session.id = QStringLiteral("s-site");
-            session.title = demoText("把渲染距离调到 12", "Set render distance to 12");
+            session.title = demoText("渲染距离调整为 12", "Set render distance to 12");
             session.updatedAt = QDateTime::currentDateTime().addSecs(-120);
             session.encrypted = true;
             agent->setSessions({session});
@@ -2961,15 +2961,15 @@ int runSite(QApplication &app, const ShotOptions &options) {
             AgentView::Message ask;
             ask.id = QStringLiteral("m1");
             ask.user = true;
-            ask.content = demoText("光影与优化-1.21.1 有点卡，帮我把渲染距离调到 12，顺便开平滑光照。",
-                                   "Shaders 1.21.1 feels laggy — please set render distance to 12 and enable smooth lighting.");
+            ask.content = demoText("请将光影与优化-1.21.1 的渲染距离调整为 12，并启用平滑光照。",
+                                   "Please set the render distance of Shaders 1.21.1 to 12 and enable smooth lighting.");
             AgentView::Message answer;
             answer.id = QStringLiteral("m2");
             answer.content = demoText(
-                "先看看 `options.txt` 现在写的是什么。\n"
-                "里面 `renderDistance:8`、`ao:false`，改这两项就行；写入前会备份成 `options.txt.bak`。",
-                "Let's check what `options.txt` currently has.\n"
-                "It has `renderDistance:8` and `ao:false`, so updating those two lines will do; a backup will be saved as `options.txt.bak` before writing.");
+                "`options.txt` 当前为 `renderDistance:8`、`ao:false`。\n"
+                "将修改这两项，写入前会将原文件备份为 `options.txt.bak`。",
+                "`options.txt` currently has `renderDistance:8` and `ao:false`.\n"
+                "Both values will be changed. The original file will be backed up as `options.txt.bak` before writing.");
             agent->clearMessages();
             app.sendPostedEvents(nullptr, QEvent::DeferredDelete);
             pump();
@@ -2977,7 +2977,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
             AgentView::ToolCard card;
             card.id = QStringLiteral("t1");
             card.title = demoText("读取 options.txt", "Read options.txt");
-            card.summary = demoText("读到 42 项设置", "Read 42 settings");
+            card.summary = demoText("共 42 项设置", "42 settings");
             card.detail = QStringLiteral("renderDistance=8　ao=false");
             card.status = AgentView::ToolCardStatus::Done;
             agent->setToolCards({card});
@@ -3137,6 +3137,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
                          QStringLiteral("default-vanilla"), 1);
             addInst(vanilla, vanillaName, QStringLiteral("1.21.4"),
                     QCoreApplication::translate("MainWindow", "原版"), 5);
+            vanilla->setExpanded(false);  // 收起这一组，末行不再被窗底切掉半行
             tree->show();
             tree->setCurrentItem(first);
         }
@@ -3208,8 +3209,8 @@ int runSite(QApplication &app, const ShotOptions &options) {
         if (AgentPage *agent = ui.getAgentPage()) {
             const QDateTime now = QDateTime::currentDateTime();
             const QString crashAsk =
-                demoText("装了光影以后一进世界就闪退，帮我看看是什么原因。",
-                         "After installing shaders, the game crashes as soon as I enter a world. Can you help me find out why?");
+                demoText("安装光影后进入世界即闪退，请分析原因。",
+                         "The game crashes when entering a world after installing shaders. Please find the cause.");
             const auto mkSession = [](const QString &id, const QString &title, const QDateTime &at) {
                 AgentView::SessionMeta meta;
                 meta.id = id;
@@ -3219,7 +3220,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
             };
             const QList<AgentView::SessionMeta> sessions{
                 mkSession(QStringLiteral("sa1"), crashAsk, now),
-                mkSession(QStringLiteral("sa2"), demoText("存档备份放在哪个目录？", "Where are world backups stored?"),
+                mkSession(QStringLiteral("sa2"), demoText("存档备份的位置", "World backup location"),
                           now.addSecs(-28 * 60)),
                 mkSession(QStringLiteral("sa3"), demoText("1.20.1 Forge 启动报错", "1.20.1 Forge launch error"),
                           now.addSecs(-28 * 60)),
@@ -3242,16 +3243,16 @@ int runSite(QApplication &app, const ShotOptions &options) {
             AgentView::Message answer;
             answer.id = QStringLiteral("ma2");
             answer.content = demoText(
-                "一进世界就闪退，多半出在这三处：\n\n"
-                "1. **Iris 与 Sodium 版本不配套**：两者要对应同一个 Minecraft 版本；\n"
-                "2. **显卡驱动过旧**：光影需要 OpenGL 4.x，先把驱动更新到最新；\n"
-                "3. **内存不够**：开光影建议给到 4 GB 以上，在实例设置的「启动」里调。\n\n"
-                "实例目录下 `crash-reports` 里最新的那份崩溃报告能说明是哪一种。要我读一下吗？",
-                "A crash right when entering a world usually comes down to one of three things:\n\n"
-                "1. **Iris & Sodium version mismatch**: both mods need to match your Minecraft version.\n"
-                "2. **Outdated GPU drivers**: shaders require OpenGL 4.x, so update your graphics driver first.\n"
-                "3. **Not enough memory**: shaders generally need at least 4 GB — adjust it under Instance Settings → Launch.\n\n"
-                "The latest report in the instance's `crash-reports` folder will tell us which one it is. Want me to read it?");
+                "进入世界时闪退，通常有以下三种原因：\n\n"
+                "1. **Iris 与 Sodium 版本不匹配**：两者须对应同一个 Minecraft 版本；\n"
+                "2. **显卡驱动过旧**：光影需要 OpenGL 4.x，请先更新驱动；\n"
+                "3. **内存不足**：使用光影建议分配 4 GB 以上，可在实例设置的「启动设置」中调整。\n\n"
+                "实例目录 `crash-reports` 中最新的崩溃报告可以确定原因。是否读取该报告？",
+                "A crash when entering a world usually has one of three causes:\n\n"
+                "1. **Iris and Sodium version mismatch**: both mods must match the same Minecraft version.\n"
+                "2. **Outdated graphics driver**: shaders require OpenGL 4.x. Update the driver first.\n"
+                "3. **Not enough memory**: 4 GB or more is recommended for shaders. Adjust it under Launch settings in the instance settings.\n\n"
+                "The latest report in the instance's `crash-reports` folder can confirm the cause. Would you like me to read it?");
             agent->clearMessages();
             app.sendPostedEvents(nullptr, QEvent::DeferredDelete);
             pump();
