@@ -105,7 +105,7 @@ PresetModEditor::PresetModEditor(const QList<Entry> &entries, QWidget *parent) :
         m_problem->setText(removed > 0
                                ? QCoreApplication::translate("PresetModEditor", "已移除 %1 条来源未知的记录。选择「取消」可撤回本次编辑。")
                                      .arg(removed)
-                               : QCoreApplication::translate("PresetModEditor", "没有未识别的模组。"));
+                               : QCoreApplication::translate("PresetModEditor", "无未识别的模组。"));
     });
     connect(add, &QPushButton::clicked, this, [this] {
         append({QStringLiteral("modrinth"), {}, {}, {}, {}, true});
@@ -130,7 +130,7 @@ PresetModEditor::PresetModEditor(const QList<Entry> &entries, QWidget *parent) :
                 // 这一行可能正被「只看没认出来的」藏着 —— 先放开筛选，才真能定位到它。
                 if (m_onlyUnknown->isChecked()) m_onlyUnknown->setChecked(false);
                 m_table->selectRow(row); m_table->scrollToItem(m_table->item(row, 1));
-                m_problem->setText(QCoreApplication::translate("PresetModEditor", "这个模组已经在清单中，已定位到该行。")); return;
+                m_problem->setText(QCoreApplication::translate("PresetModEditor", "此模组已在清单中，已定位到该行。")); return;
             }
         }
         append({platform, id, id, {}, {}, true});

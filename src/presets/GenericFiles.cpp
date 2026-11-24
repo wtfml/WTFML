@@ -107,7 +107,7 @@ bool copyOneFile(const QString &source, const QString &target, QString *problemO
     }
 
     if (!out.commit()) {
-        failWith(problemOut, QCoreApplication::translate("Presets", "换掉「%1」失败了：%2").arg(target, out.errorString()));
+        failWith(problemOut, QCoreApplication::translate("Presets", "替换「%1」失败：%2").arg(target, out.errorString()));
         return false;
     }
     return true;
@@ -148,7 +148,7 @@ bool walkDir(const QString &sourceDir, const QString &targetDir, const QString &
 
         if (isLink(entry)) {
             // 源那一侧夹着一根链接 ⇒ **整项失败**（见文件头那段）。
-            failWith(problemOut, QCoreApplication::translate("Presets", "「%1」里夹着一根链接（%2），没有跟着它走。")
+            failWith(problemOut, QCoreApplication::translate("Presets", "「%1」中包含链接（%2），未跟随。")
                                      .arg(groupDirName, entry.fileName()));
             return false;
         }
@@ -229,13 +229,13 @@ bool walkItem(const QString &sourceRoot, const QString &targetRoot, FileGroup gr
     // `applyFileGroup(…, items)` 那一档的清单可以来自预设段（那一趟没有扫盘）。
     if (isLink(QFileInfo(sourceGroupDir))) {
         failWith(problemOut,
-                 QCoreApplication::translate("Presets", "「%1」是一根链接（符号链接 / junction），没有跟着它走。")
+                 QCoreApplication::translate("Presets", "「%1」为链接（符号链接 / junction），未跟随。")
                      .arg(sourceGroupDir));
         return false;
     }
     if (isLink(QFileInfo(targetGroupDir))) {
         failWith(problemOut,
-                 QCoreApplication::translate("Presets", "目标上的「%1」是一根链接，没有往它里面写。").arg(targetGroupDir));
+                 QCoreApplication::translate("Presets", "目标「%1」为链接，未写入。").arg(targetGroupDir));
         return false;
     }
 
@@ -248,7 +248,7 @@ bool walkItem(const QString &sourceRoot, const QString &targetRoot, FileGroup gr
     }
     if (isLink(sourceInfo)) {
         failWith(problemOut,
-                 QCoreApplication::translate("Presets", "「%1」是一根链接，没有跟着它走。").arg(item.relativePath));
+                 QCoreApplication::translate("Presets", "「%1」为链接，未跟随。").arg(item.relativePath));
         return false;
     }
 
@@ -261,7 +261,7 @@ bool walkItem(const QString &sourceRoot, const QString &targetRoot, FileGroup gr
     // 次序同 `walkDir()` 那一段（链接先、逃逸后）—— 理由也在那儿。
     const QFileInfo targetInfo(targetAbs);
     if (isLink(targetInfo)) {
-        failWith(problemOut, QCoreApplication::translate("Presets", "目标上的「%1」是一根链接，没有往它里面写。")
+        failWith(problemOut, QCoreApplication::translate("Presets", "目标「%1」为链接，未写入。")
                                  .arg(targetAbs));
         return false;
     }
@@ -477,7 +477,7 @@ bool scanFileGroup(const QString &root, FileGroup group, QList<GenericItem> *out
         problemOut->clear();
     }
     if (root.trimmed().isEmpty()) {
-        failWith(problemOut, QCoreApplication::translate("Presets", "没有指定要扫哪个目录。"));
+        failWith(problemOut, QCoreApplication::translate("Presets", "未指定要扫描的目录。"));
         return false;
     }
     const QString groupDirName = fileGroupDirName(group);
@@ -491,7 +491,7 @@ bool scanFileGroup(const QString &root, FileGroup group, QList<GenericItem> *out
     // 放过去的话，后面 `mkpath()` 会顺着它建到链接那一头。
     if (isLink(groupInfo)) {
         failWith(problemOut,
-                 QCoreApplication::translate("Presets", "「%1」是一根链接（符号链接 / junction），没有扫它。").arg(groupDir));
+                 QCoreApplication::translate("Presets", "「%1」为链接（符号链接 / junction），未扫描。").arg(groupDir));
         return false;
     }
     if (!groupInfo.exists()) {
@@ -501,7 +501,7 @@ bool scanFileGroup(const QString &root, FileGroup group, QList<GenericItem> *out
     }
     if (!groupInfo.isDir()) {
         failWith(problemOut,
-                 QCoreApplication::translate("Presets", "「%1」那个位置上不是个目录，没有扫它。").arg(groupDir));
+                 QCoreApplication::translate("Presets", "「%1」所在位置不是目录，未扫描。").arg(groupDir));
         return false;
     }
 
@@ -547,7 +547,7 @@ QString genericActionName(GenericAction action) {
     case GenericAction::Replace:
         return QCoreApplication::translate("Presets", "覆盖");
     case GenericAction::CopyIfMissing:
-        return QCoreApplication::translate("Presets", "缺了才拷");
+        return QCoreApplication::translate("Presets", "仅在缺失时复制");
     case GenericAction::Skip:
         return QCoreApplication::translate("Presets", "跳过");
     case GenericAction::NeedsChoice:
@@ -589,10 +589,10 @@ GenericPlan planFileGroup(const QString &sourceRoot, const QList<GenericItem> &i
             }
             if (counts.written == 0) {
                 row.action = GenericAction::Skip;
-                row.reason = QCoreApplication::translate("Presets", "目标上已经有这一份了。");
+                row.reason = QCoreApplication::translate("Presets", "目标中已有此预设。");
             } else {
                 row.action = GenericAction::CopyIfMissing;
-                row.reason = QCoreApplication::translate("Presets", "目标上缺的那几份拷进去（已经有的一个都不动）。");
+                row.reason = QCoreApplication::translate("Presets", "将目标缺失的项复制进去（已有项不变）。");
             }
             break;
         }
@@ -639,7 +639,7 @@ GenericReport applyFileGroupItems(const QString &sourceRoot, const QString &targ
     GenericReport report;
     report.refused = refused;
     if (sourceRoot.trimmed().isEmpty() || targetRoot.trimmed().isEmpty()) {
-        report.problem = QCoreApplication::translate("Presets", "没有指定要落到哪个实例上。");
+        report.problem = QCoreApplication::translate("Presets", "未指定目标实例。");
         return report;
     }
 
@@ -705,7 +705,7 @@ GenericReport extractFileGroup(const QString &sourceRoot, const QString &presetF
                                FileGroup group) {
     GenericReport report;
     if (sourceRoot.trimmed().isEmpty() || presetFilesRoot.trimmed().isEmpty()) {
-        report.problem = QCoreApplication::translate("Presets", "没有指定要把这一组收到哪儿去。");
+        report.problem = QCoreApplication::translate("Presets", "未指定此组的收集目标。");
         return report;
     }
 

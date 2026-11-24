@@ -6,7 +6,7 @@ void runPresetCompatibilityTests() {
     section("PH1. 状态行那句话：缺失与「暂无法确认」分开说");
     {
         Presets::CompatibilitySummary empty;
-        check(empty.text() == QStringLiteral("没有模组引用要检查。"),
+        check(empty.text() == QStringLiteral("无待检查的模组引用。"),
               "PH1 一条引用都没有 ⇒ 直说没有要检查的", empty.text());
 
         Presets::CompatibilitySummary allMatched;

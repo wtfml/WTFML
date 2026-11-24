@@ -134,11 +134,11 @@ PresetEditorPage::PresetEditorPage(const QJsonObject &document, QWidget *parent,
             saveRequested(false);
     });
     connect(restore, &QPushButton::clicked, this, [this] {
-        if (!isDirty() || (confirmReset && confirmReset(QCoreApplication::translate("PresetEditorPage", "丢弃未保存的修改？"))))
+        if (!isDirty() || (confirmReset && confirmReset(QCoreApplication::translate("PresetEditorPage", "放弃未保存的修改"))))
             setDocument(m_original);
     });
     connect(clear, &QPushButton::clicked, this, [this] {
-        if ((!confirmReset || !confirmReset(QCoreApplication::translate("PresetEditorPage", "清空各部分内容？名称和图标保留。"))))
+        if ((!confirmReset || !confirmReset(QCoreApplication::translate("PresetEditorPage", "清空各部分内容（名称和图标保留）"))))
             return;
         auto state = this->document();
         state["sections"] = QJsonArray();

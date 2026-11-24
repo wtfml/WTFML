@@ -16,8 +16,8 @@ QList<Category> categories() {
     // 顺序 = 规范 4 节的三列表格阅读顺序；键沿用 `TransferPlanner::Item::key` 的叫法。
     return {
         {QStringLiteral("saves"), QCoreApplication::translate("UpgradeSelection", "游戏存档"), true},
-        {QStringLiteral("mods"), QCoreApplication::translate("UpgradeSelection", "Mod 文件"), true},
-        {QStringLiteral("config"), QCoreApplication::translate("UpgradeSelection", "Mod 配置"), true},
+        {QStringLiteral("mods"), QCoreApplication::translate("UpgradeSelection", "模组文件"), true},
+        {QStringLiteral("config"), QCoreApplication::translate("UpgradeSelection", "模组配置"), true},
         {QStringLiteral("options"), QCoreApplication::translate("UpgradeSelection", "游戏设置"), true},
         {QStringLiteral("resourcepacks"), QCoreApplication::translate("UpgradeSelection", "资源包"), true},
         {QStringLiteral("shaderpacks"), QCoreApplication::translate("UpgradeSelection", "光影包"), true},
@@ -87,7 +87,7 @@ Plan makePlan(const QList<TransferPlanner::Item> &items, const QString &sourceId
     plan.targetId = targetId;
     if (items.isEmpty()) {
         plan.ok = false;
-        plan.problem = QCoreApplication::translate("UpgradeSelection", "这一份里没有可迁移的内容。");
+        plan.problem = QCoreApplication::translate("UpgradeSelection", "此实例无可迁移的内容。");
         return plan;
     }
     QSet<QString> present;
@@ -122,7 +122,7 @@ QStringList warnings(const Plan &plan) {
         out.append(QCoreApplication::translate("UpgradeSelection", "已选中游戏设置，未选中资源包。新实例的设置可能引用缺失的资源包。"));
     }
     if (state.contains(QStringLiteral("shaderpacks"))) {
-        out.append(QCoreApplication::translate("UpgradeSelection", "光影包只在装了对应渲染器时才会生效；新实例不会替你装渲染器。"));
+        out.append(QCoreApplication::translate("UpgradeSelection", "光影包仅在安装对应渲染器后生效；新实例不会自动安装渲染器。"));
     }
     return out;
 }

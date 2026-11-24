@@ -97,7 +97,7 @@ QString compatibilityText(Compatibility compatibility, const QString &sourceGame
     };
     switch (compatibility) {
     case Compatibility::Same:
-        return QCoreApplication::translate("TransferPlanner", "目标版本（%1 / %2）与源一致：模组与配置可以原样搬过去。")
+        return QCoreApplication::translate("TransferPlanner", "目标版本（%1 / %2）与源一致：模组与配置可以原样迁移。")
             .arg(sourceGameVersion, loaderWord(sourceLoaderName));
     case Compatibility::GameVersionDiffers:
         return QCoreApplication::translate("TransferPlanner", "目标游戏版本为 %1，源版本为 %2。模组和部分配置可能不兼容，默认不迁移模组。")
@@ -152,7 +152,7 @@ QString Plan::headline() const {
                 : QCoreApplication::translate("TransferPlanner", "迁移计划：%1").arg(compatibilityName(compatibility));
     const qint64 bytes = selectedBytes(defaultSelectedKeys());
     const int files = selectedFileCount(defaultSelectedKeys());
-    return QCoreApplication::translate("TransferPlanner", "%1 / 默认搬 %2 项（%3）").arg(prefix).arg(count).arg(joinSize(files, bytes));
+    return QCoreApplication::translate("TransferPlanner", "%1 / 默认迁移 %2 项（%3）").arg(prefix).arg(count).arg(joinSize(files, bytes));
 }
 
 QString Plan::detailText() const {
@@ -165,7 +165,7 @@ QString Plan::detailText() const {
                       : QCoreApplication::translate("TransferPlanner", "本次迁移包括："));
     for (const Item &item : items) {
         if (!item.exists) {
-            lines << QCoreApplication::translate("TransferPlanner", "• %1：这一份实例里没有").arg(item.label);
+            lines << QCoreApplication::translate("TransferPlanner", "• %1：当前实例无此项").arg(item.label);
             continue;
         }
         // 勾选框记号：`☑` / `☐` 默认界面字体里没有（首次排版约 280 ms 的字体回退），
@@ -185,9 +185,9 @@ QString Plan::confirmText(const QStringList &keys) const {
     const int files = selectedFileCount(keys);
     const qint64 bytes = selectedBytes(keys);
     QString text = upgrade
-                       ? QCoreApplication::translate("TransferPlanner", "将创建一份升级副本，并把选中的 %1 项（%2）搬进去。")
+                       ? QCoreApplication::translate("TransferPlanner", "将创建升级副本，并将选中的 %1 项（%2）迁移进去。")
                              .arg(QString::number(keys.size()), joinSize(files, bytes))
-                       : QCoreApplication::translate("TransferPlanner", "将把选中的 %1 项（%2）搬进目标实例。")
+                       : QCoreApplication::translate("TransferPlanner", "将把选中的 %1 项（%2）迁移到目标实例。")
                              .arg(QString::number(keys.size()), joinSize(files, bytes));
     text += QCoreApplication::translate("TransferPlanner", "\n\n只增加文件，不删除、不覆盖目标里已有的同名文件。");
     if (compatibility != Compatibility::Same) {
@@ -202,8 +202,8 @@ Plan plan(const Inputs &inputs) {
 
     const QString sourceDir = inputs.sourceDir.trimmed();
     if (sourceDir.isEmpty() || !QDir(sourceDir).exists()) {
-        result.problem = QCoreApplication::translate("TransferPlanner", "找不到源实例目录：%1").arg(
-            sourceDir.isEmpty() ? QCoreApplication::translate("TransferPlanner", "（没有给）") : QDir::toNativeSeparators(sourceDir));
+        result.problem = QCoreApplication::translate("TransferPlanner", "未找到源实例目录：%1").arg(
+            sourceDir.isEmpty() ? QCoreApplication::translate("TransferPlanner", "（未提供）") : QDir::toNativeSeparators(sourceDir));
         return result;
     }
 
@@ -217,7 +217,7 @@ Plan plan(const Inputs &inputs) {
         && !inputs.targetLoaderVersion.isEmpty()
         && inputs.sourceLoaderVersion != inputs.targetLoaderVersion) {
         result.compatibilitySentence +=
-            QCoreApplication::translate("TransferPlanner", "加载器小版本不同（源 %1 / 目标 %2），一般没问题，起不来时先看它。")
+            QCoreApplication::translate("TransferPlanner", "加载器小版本不同（源 %1 / 目标 %2），通常不影响启动；若启动失败，请先检查此项。")
                 .arg(inputs.sourceLoaderVersion, inputs.targetLoaderVersion);
     }
 
@@ -266,7 +266,7 @@ Plan plan(const Inputs &inputs) {
         }
         if (item.key == QStringLiteral("mods") && item.exists
             && result.compatibility != Compatibility::Same) {
-            item.note = QCoreApplication::translate("TransferPlanner", "目标版本 / 加载器与源不一致，模组可能起不来；" "确认要原样搬过去再自己勾上。");
+            item.note = QCoreApplication::translate("TransferPlanner", "目标版本 / 加载器与源不一致，模组可能无法启动；" "确认需要原样迁移后再勾选。");
         } else if (neverDefaultSelected(item.key) && item.exists) {
             item.note = QCoreApplication::translate("TransferPlanner", "这些文件用于记录，默认不迁移。");
         } else if (result.compatibility == Compatibility::Unknown && item.exists

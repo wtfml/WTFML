@@ -159,7 +159,7 @@ bool PresetController::leaveEditor() {
         return false;
     m_editorPrompting = true;
     const int choice =
-        m_editorPrompt(tr("未保存的修改"), tr("如何处理当前修改？"),
+        m_editorPrompt(tr("未保存的修改"), tr("当前修改的处理方式"),
                        {tr("保存为草稿"), tr("保存为预设"), tr("不保存"), tr("取消")});
     m_editorPrompting = false;
     if (choice == 2) {

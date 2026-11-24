@@ -1995,7 +1995,7 @@ void runInstanceFilesPagesTests() {
                     }
                     migrationPlanText = plan->toPlainText();
                     planFilled = migrationPlanText.contains(QStringLiteral("迁移计划："))
-                                 && !migrationPlanText.contains(QStringLiteral("找不到源实例目录"));
+                                 && !migrationPlanText.contains(QStringLiteral("未找到源实例目录"));
 
                     bool savesChecked = false;
                     bool logsUnchecked = false;
