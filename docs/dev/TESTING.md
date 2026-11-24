@@ -109,6 +109,7 @@ ctest --preset visual                        # 只跑 visual 标签（完整历�
 | `WTFML_TEST_JAVA_DOWNLOAD=1` | 让 `verify` 的「E. Java 运行时选择」真的去下载运行时。默认只在本机找（`ensureJavaForVersion(..., allowDownload=false)`），找不到就打印"本机没有，按设置未下载"，不碰网络 |
 | `QT_QPA_PLATFORM=offscreen` | UI 测试和 `WTFMLNetworkDiag --self-test` 用的离屏平台 |
 | `WTFML_UC_SKIP_U10O=1` / `WTFML_SKIP_JUNCTION=1` | `ui_check` 的 U10O 整段 / junction 局部的逃生口；默认不设 |
+| `WTFML_AGENT_LOG_SCALE_MB=<MB>` | `core-agent` 的日志索引用例生成一份该大小的合成日志并打印建索引/搜索耗时，只打印不断言（默认不设，CI 不跑） |
 | `WTFML_FILES_PAINT_PROBE_ROWS=<行数>` | `mw_check_mod_action_panel` 打印文件页首绘/重列/滚动耗时（只打印、不断言），见 [LIST_PAINT.md](perf-notes/LIST_PAINT.md) |
 | `WTFML_MOD_SELECTION_PROBE_ROWS=<行数>` | 同一专项里的反选规模测量 |
 | `WTFML_PRESET_SCALE_ROOT` / `WTFML_TEST_GTNH_ARCHIVE` / `WTFML_TEST_PACK_ARCHIVES` / `WTFML_LIVE_DIRECT_URL` | 可选的大规模预设、整合包样本、实网直链样本；不设则跳过对应分支 |
@@ -272,7 +273,7 @@ CTest 的两种"排除 visual"选到的数量不同：`ctest -E visual` 按名�
 
 CTest 名：`wtfml.core-agent`、`wtfml.ui-agent`、`wtfml.main-window-agent`（`-Suite quick` 与 `window` 都包含）。每个测试用独立 `QTemporaryDir`，`AgentPaths` 通过 `QCoreApplication::setProperty("wtfml.testAgentDataDir", <临时目录>)` 隔离，QSettings 重定向到同一沙盒。
 
-- 覆盖：SSE/适配/错误与重试、会话与加密、凭据、上下文、路径矩阵与句柄级校验、审批矩阵、D11 外发、artifact 分离、实例锁、备份生命周期、文件/启动器/工作流/联网/命令工具、MCP 假服务器、诊断投影、页面与真主窗口集成、性能基线。
+- 覆盖：SSE/适配/错误与重试、会话与加密、凭据、上下文、路径矩阵与句柄级校验、审批矩阵、D11 外发、artifact 分离、实例锁、备份生命周期、文件/启动器/工作流/联网/命令工具、MCP 假服务器、诊断投影、崩溃规则与坏规则跳过、崩溃报告解析、mixin 配置归属、日志行索引与按行读取、页面与真主窗口集成、性能基线。
 - `verify_agent --mcp-fake-server` 是假 MCP 服务器的入口（同一可执行文件的隐藏模式），客户端用例用它起真子进程。
 - junction 夹具建不出来时输出 `SKIP`，不计入通过。
 - 计数见 [TEST_RUN_HISTORY.md](../archive/TEST_RUN_HISTORY.md)；待人工验证清单见 [AGENT.md](../features/AGENT.md) §13.3 与 [ROADMAP](../ROADMAP.md)；记录写进 [ACCEPTANCE_LOG.md](../archive/ACCEPTANCE_LOG.md)。

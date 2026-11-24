@@ -4,7 +4,10 @@
  *
  * 分派与实现见 docs/features/AGENT.md §9.4：只读工具自动执行；完整实例清单、完整模组
  * 文件名、设置写、模组启停、备份创建与恢复逐次审批。诊断结果先过
- * `AgentDiagnosticProjection` 再进模型上下文。
+ * `AgentDiagnosticProjection` 再进模型上下文。Stage 5.3 的崩溃快照与日志检索（
+ * `diagnostics.crashSnapshot` / `logs.search` / `logs.readRange` / `crash.readFull`）
+ * 也在这里：规则在 `AgentKnowledgeRules`、解析在 `AgentCrashSnapshot`、行索引在
+ * `AgentLogIndex`，本层只管参数、审批、证据与输出。
  *
  * 与文件工具一样：实例来自会话锁定，工具参数里没有实例 id；拒绝审批时一个字节不改。
  */
@@ -81,7 +84,14 @@ private:
     AgentToolResult handleCrashDiagnosis(const Agent::ToolCall &call,
                                          const AgentToolContext &context);
     AgentToolResult handleLogsTail(const Agent::ToolCall &call, const AgentToolContext &context);
+    AgentToolResult handleLogsSearch(const Agent::ToolCall &call, const AgentToolContext &context);
+    AgentToolResult handleLogsReadRange(const Agent::ToolCall &call,
+                                        const AgentToolContext &context);
     AgentToolResult handleCrashList(const Agent::ToolCall &call, const AgentToolContext &context);
+    AgentToolResult handleCrashSnapshot(const Agent::ToolCall &call,
+                                        const AgentToolContext &context);
+    AgentToolResult handleCrashReadFull(const Agent::ToolCall &call,
+                                        const AgentToolContext &context);
     AgentToolResult handleIntegrity(const Agent::ToolCall &call, const AgentToolContext &context);
     AgentToolResult handleModsList(const Agent::ToolCall &call, const AgentToolContext &context);
     AgentToolResult handleModsSetEnabled(const Agent::ToolCall &call,

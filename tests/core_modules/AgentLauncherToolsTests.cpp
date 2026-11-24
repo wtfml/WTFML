@@ -6,6 +6,7 @@
 
 #include "Support.hpp"
 
+#include "agent/AgentArtifactStore.hpp"
 #include "agent/AgentLauncherTools.hpp"
 #include "agent/AgentTool.hpp"
 
@@ -33,6 +34,9 @@ public:
     StartupDiagnosis::Report startupReport;
     QList<AgentHostModEntry> modEntries;
     QList<AgentHostBackupRef> backupEntries;
+    QList<AgentHostCrashReport> crashEntries;
+    QString logPath;
+    QString modsPath;
     QString settingsProblem;
     QJsonObject settingsValues;
 
@@ -82,8 +86,31 @@ public:
         Q_UNUSED(instanceId);
         Q_UNUSED(lines);
         Q_UNUSED(problem);
+        if (!logPath.isEmpty()) {
+            QFile file(logPath);
+            if (file.open(QIODevice::ReadOnly)) {
+                *text = QString::fromUtf8(file.readAll());
+                *relativeSource = QStringLiteral("versions/1.20.1-Fabric/logs/latest.log");
+                return true;
+            }
+        }
         *text = QStringLiteral("password = hunter2\n[12:00:00] [main/INFO]: 启动完成");
         *relativeSource = QStringLiteral("logs/latest.log");
+        return true;
+    }
+    bool logSources(const QString &instanceId, QList<AgentHostLogSource> *items,
+                    QString *problem) override {
+        Q_UNUSED(instanceId);
+        Q_UNUSED(problem);
+        items->clear();
+        if (logPath.isEmpty()) return true;
+        AgentHostLogSource source;
+        source.key = QStringLiteral("instance");
+        source.label = QStringLiteral("versions/1.20.1-Fabric/logs/latest.log");
+        source.path = logPath;
+        source.bytes = QFileInfo(logPath).size();
+        source.modifiedAt = QFileInfo(logPath).lastModified();
+        items->append(source);
         return true;
     }
     bool crashReports(const QString &instanceId, QList<AgentHostCrashReport> *items,
@@ -91,12 +118,26 @@ public:
         Q_UNUSED(instanceId);
         Q_UNUSED(problem);
         items->clear();
+        if (!crashEntries.isEmpty()) {
+            *items = crashEntries;
+            return true;
+        }
         AgentHostCrashReport report;
         report.fileName = QStringLiteral("crash-2026-01-01_12.00.00-client.txt");
+        report.label = QStringLiteral("versions/1.20.1-Fabric/crash-reports");
         report.modifiedAt = QDateTime::currentDateTimeUtc();
         report.bytes = 1024;
         report.headText = QStringLiteral("java.lang.OutOfMemoryError");
         items->append(report);
+        return true;
+    }
+    bool modsDirectory(const QString &instanceId, QString *path, QString *problem) override {
+        Q_UNUSED(instanceId);
+        if (modsPath.isEmpty()) {
+            if (problem != nullptr) *problem = QStringLiteral("mods 目录不存在。");
+            return false;
+        }
+        if (path != nullptr) *path = modsPath;
         return true;
     }
     bool integrity(const QString &instanceId, VersionIntegrity::Report *report,
@@ -431,6 +472,191 @@ void runAgentLauncherToolsTests() {
                                   QJsonObject{{QStringLiteral("page"), QStringLiteral("settings")}}));
     check(result.status == AgentToolResult::Status::Error,
           "启动器工具：未知页面被 schema 拒绝");
+
+    // ---------- S5.3: 崩溃快照 / 日志检索 ----------
+    QTemporaryDir snapshotDir;
+    check(snapshotDir.isValid(), "启动器工具：S5.3 临时目录可用");
+    if (snapshotDir.isValid()) {
+        const QString logPath = snapshotDir.filePath(QStringLiteral("latest.log"));
+        {
+            QFile file(logPath);
+            check(file.open(QIODevice::WriteOnly), "启动器工具：写日志夹具");
+            file.write(QStringLiteral("[12:00:00] [main/INFO]: Loading 3 mods:\n"
+                                      "[12:00:00] [main/INFO]: - examplemod 1.2.0\n"
+                                      "[12:00:01] [main/INFO]: password = hunter2\n"
+                                      "[12:00:02] [main/ERROR]: Mixin apply for mod examplemod failed "
+                                      "examplemod.mixins.json:ExampleMixin\n")
+                           .toUtf8());
+            file.close();
+        }
+        host.logPath = logPath;
+        const QString reportId = QStringLiteral("crash-2026-01-01_12.00.00-client.txt");
+        const QString crashPath = snapshotDir.filePath(reportId);
+        {
+            QFile file(crashPath);
+            check(file.open(QIODevice::WriteOnly), "启动器工具：写崩溃报告夹具");
+            file.write(QStringLiteral("---- Minecraft Crash Report ----\n"
+                                      "// Oops.\n"
+                                      "\n"
+                                      "Time: 2026-01-01 12:00:00\n"
+                                      "Description: Mod loading failed\n"
+                                      "\n"
+                                      "java.lang.RuntimeException: Failed to load mod file examplemod-1.2.0.jar\n"
+                                      "\tat cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:39)\n"
+                                      "Caused by: org.spongepowered.asm.mixin.throwables.MixinApplyError: "
+                                      "Error applying mixin examplemod.mixins.json:ExampleMixin from mod examplemod\n"
+                                      "\tat org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:392)\n"
+                                      "\n"
+                                      "-- System Details --\n"
+                                      "Details:\n"
+                                      "\tMinecraft Version: 1.20.1\n"
+                                      "\tJava Version: 17.0.8, Microsoft\n"
+                                      "\tMemory: 2147483648 bytes (2048 MiB) up to 4294967296 bytes (4096 MiB)\n"
+                                      "\tSuspected Mods: examplemod (Example Mod 1.2.0)\n"
+                                      "\tMod List: \n"
+                                      "\t\texamplemod-1.2.0.jar |Example Mod |examplemod |1.2.0 |DONE |Manifest: NOSIGNATURE\n"
+                                      "\tLevel spawn location: World: (0,64,0) in C:\\\\Users\\\\player\\\\saves\\\\world\n")
+                           .toUtf8());
+            file.close();
+        }
+        AgentHostCrashReport hostReport;
+        hostReport.fileName = reportId;
+        hostReport.path = crashPath;
+        hostReport.label = QStringLiteral("versions/1.20.1-Fabric/crash-reports");
+        hostReport.modifiedAt = QDateTime::currentDateTimeUtc();
+        hostReport.bytes = QFileInfo(crashPath).size();
+        host.crashEntries.append(hostReport);
+
+        // 日志检索：自动执行、带行号、遮凭据。
+        result = tools.invoke(callFor(QStringLiteral("logs.search"),
+                                      QJsonObject{{QStringLiteral("query"), QStringLiteral("mixin")}}));
+        check(result.status == AgentToolResult::Status::Ok, "启动器工具：logs.search 自动执行",
+              result.summary);
+        check(result.data.value(QStringLiteral("totalMatches")).toInt() == 1,
+              "启动器工具：logs.search 命中 1 处");
+        const QJsonArray searchMatches = result.data.value(QStringLiteral("matches")).toArray();
+        check(searchMatches.size() == 1 &&
+                  searchMatches.first().toObject().value(QStringLiteral("line")).toInt() == 4,
+              "启动器工具：logs.search 带行号");
+        result = tools.invoke(callFor(QStringLiteral("logs.search"),
+                                      QJsonObject{{QStringLiteral("query"), QStringLiteral("password")},
+                                                  {QStringLiteral("before"), 1}}));
+        const QString searchText =
+            QString::fromUtf8(QJsonDocument(result.data).toJson(QJsonDocument::Compact));
+        check(!searchText.contains(QStringLiteral("hunter2")),
+              "启动器工具：日志搜索里的口令被遮挡");
+        result = tools.invoke(callFor(QStringLiteral("logs.search")));
+        check(result.status == AgentToolResult::Status::Error,
+              "启动器工具：logs.search 缺 query 被 schema 拒");
+        result = tools.invoke(callFor(QStringLiteral("logs.search"),
+                                      QJsonObject{{QStringLiteral("query"), QStringLiteral("x")},
+                                                  {QStringLiteral("source"), QStringLiteral("nope")}}));
+        check(result.status == AgentToolResult::Status::Error,
+              "启动器工具：logs.search 的 source 只认枚举值");
+
+        // 严格模式下日志读取要逐次确认，拒绝后不给内容。
+        tools.setStrictEgress(true);
+        result = tools.invoke(callFor(QStringLiteral("logs.search"),
+                                      QJsonObject{{QStringLiteral("query"), QStringLiteral("mixin")}}));
+        check(result.status == AgentToolResult::Status::ApprovalRequired,
+              "启动器工具：严格模式下日志搜索要确认");
+        {
+            const AgentToolResult denied = tools.resolveApproval(approvalIdOf(result), false);
+            check(denied.error.kind == Agent::ErrorKind::ApprovalDenied,
+                  "启动器工具：拒绝后不给搜索结果");
+        }
+        tools.setStrictEgress(false);
+
+        // 按行读取。
+        result = tools.invoke(callFor(QStringLiteral("logs.readRange"),
+                                      QJsonObject{{QStringLiteral("startLine"), 2},
+                                                  {QStringLiteral("lineCount"), 2}}));
+        check(result.status == AgentToolResult::Status::Ok, "启动器工具：logs.readRange 自动执行",
+              result.summary);
+        check(result.data.value(QStringLiteral("firstLine")).toInt() == 2 &&
+                  result.data.value(QStringLiteral("lastLine")).toInt() == 3,
+              "启动器工具：logs.readRange 回行号范围");
+        check(result.data.value(QStringLiteral("totalLines")).toInt() == 4,
+              "启动器工具：logs.readRange 回总行数");
+        result = tools.invoke(callFor(QStringLiteral("logs.readRange"),
+                                      QJsonObject{{QStringLiteral("startLine"), 0}}));
+        check(result.status == AgentToolResult::Status::Error,
+              "启动器工具：logs.readRange 拒绝 startLine=0");
+        result = tools.invoke(callFor(QStringLiteral("logs.readRange"),
+                                      QJsonObject{{QStringLiteral("startLine"), 40}}));
+        check(result.status == AgentToolResult::Status::Ok &&
+                  result.data.value(QStringLiteral("truncated")).toBool(),
+              "启动器工具：越界读取回空表并标截断");
+
+        // 崩溃快照：默认最新一份报告。
+        result = tools.invoke(callFor(QStringLiteral("diagnostics.crashSnapshot")));
+        check(result.status == AgentToolResult::Status::Ok, "启动器工具：crashSnapshot 自动执行",
+              result.summary);
+        const QJsonObject crash = result.data.value(QStringLiteral("crash")).toObject();
+        check(crash.value(QStringLiteral("phase")).toString() == QStringLiteral("mod_initialization"),
+              "启动器工具：crashSnapshot 给出崩溃阶段",
+              crash.value(QStringLiteral("phase")).toString());
+        check(crash.value(QStringLiteral("exception")).toString() ==
+                  QStringLiteral("java.lang.RuntimeException"),
+              "启动器工具：crashSnapshot 给出顶层异常",
+              crash.value(QStringLiteral("exception")).toString());
+        bool sawMixinRule = false;
+        for (const QJsonValue &value : result.data.value(QStringLiteral("matchedRules")).toArray()) {
+            if (value.toString() == QStringLiteral("MIXIN_APPLY_FAILED")) sawMixinRule = true;
+        }
+        check(sawMixinRule, "启动器工具：crashSnapshot 命中 Mixin 规则");
+        const QJsonArray snapshotSuspects = result.data.value(QStringLiteral("suspects")).toArray();
+        check(!snapshotSuspects.isEmpty(), "启动器工具：crashSnapshot 给出嫌疑模组");
+        const QString environmentLoader = result.data.value(QStringLiteral("environment"))
+                                              .toObject()
+                                              .value(QStringLiteral("loader"))
+                                              .toString();
+        check(environmentLoader == QStringLiteral("forge"),
+              "启动器工具：crashSnapshot 的环境来自报告", environmentLoader);
+        check(result.data.value(QStringLiteral("evidence")).toArray().size() >= 1,
+              "启动器工具：crashSnapshot 带证据");
+        const QString snapshotText =
+            QString::fromUtf8(QJsonDocument(result.data).toJson(QJsonDocument::Compact));
+        check(!snapshotText.contains(QStringLiteral("C:\\\\Users")),
+              "启动器工具：crashSnapshot 不含本机路径");
+        result = tools.invoke(callFor(QStringLiteral("diagnostics.crashSnapshot"),
+                                      QJsonObject{{QStringLiteral("reportId"),
+                                                   QStringLiteral("nope.txt")}}));
+        check(result.status == AgentToolResult::Status::Error,
+              "启动器工具：未知 reportId 被拒");
+
+        // 崩溃报告全文：只回分段摘要，原文进 artifact 且已脱敏。
+        result = tools.invoke(callFor(QStringLiteral("crash.readFull"),
+                                      QJsonObject{{QStringLiteral("reportId"), reportId}}));
+        check(result.status == AgentToolResult::Status::Ok, "启动器工具：crash.readFull 自动执行",
+              result.summary);
+        const QString artifactId = result.data.value(QStringLiteral("artifactId")).toString();
+        check(!artifactId.isEmpty(), "启动器工具：crash.readFull 存了 artifact");
+        check(!result.data.value(QStringLiteral("segments")).toArray().isEmpty(),
+              "启动器工具：crash.readFull 给分段目录");
+        check(result.data.value(QStringLiteral("totalLines")).toInt() > 5,
+              "启动器工具：crash.readFull 回总行数");
+        const QString fullText =
+            QString::fromUtf8(QJsonDocument(result.data).toJson(QJsonDocument::Compact));
+        check(!fullText.contains(QStringLiteral("C:\\\\Users")),
+              "启动器工具：crash.readFull 的输出不含本机路径");
+        if (!artifactId.isEmpty()) {
+            AgentArtifactStore store;
+            QString stored;
+            QString storeProblem;
+            check(store.readModel(QStringLiteral("session-1"), artifactId, 0, 100000, &stored,
+                                  &storeProblem),
+                  "启动器工具：crash.readFull 的 artifact 读得回来", storeProblem);
+            check(stored.contains(QStringLiteral("MixinApplyError")),
+                  "启动器工具：artifact 里有报告原文");
+            check(!stored.contains(QStringLiteral("C:\\\\Users")),
+                  "启动器工具：artifact 里的本机路径已换掉");
+        }
+        result = tools.invoke(callFor(QStringLiteral("crash.readFull")));
+        check(result.status == AgentToolResult::Status::Error,
+              "启动器工具：crash.readFull 必须给 reportId");
+        host.crashEntries.clear();
+    }
 
     // ---------- schema / 未知参数 ----------
     result = tools.invoke(callFor(QStringLiteral("diagnostics.startup"),

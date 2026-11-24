@@ -372,6 +372,57 @@ int MwAgentChecks(QApplication &app) {
         check(logResult.data.value(QStringLiteral("content")).toString().contains(
                   QStringLiteral("instance log")),
               "真窗口：读到的是实例目录那份日志");
+
+        // Stage 5.3：崩溃快照与按行检索走真宿主、读的是实例目录里的文件。
+        Agent::ToolCall snapshotCall;
+        snapshotCall.id = QStringLiteral("mw-crash-2");
+        snapshotCall.name = QStringLiteral("diagnostics.crashSnapshot");
+        const AgentToolResult snapshot = controller->compositeEngine()->invoke(snapshotCall);
+        check(snapshot.status == AgentToolResult::Status::Ok,
+              "真窗口：crashSnapshot 读得到实例目录的崩溃报告", snapshot.summary);
+        check(snapshot.data.value(QStringLiteral("crash"))
+                  .toObject()
+                  .value(QStringLiteral("exception"))
+                  .toString() == QStringLiteral("java.lang.OutOfMemoryError"),
+              "真窗口：crashSnapshot 认出顶层异常");
+
+        Agent::ToolCall searchCall;
+        searchCall.id = QStringLiteral("mw-log-2");
+        searchCall.name = QStringLiteral("logs.search");
+        searchCall.arguments = QJsonObject{{QStringLiteral("query"), QStringLiteral("instance log")}};
+        const AgentToolResult searchResult = controller->compositeEngine()->invoke(searchCall);
+        check(searchResult.status == AgentToolResult::Status::Ok,
+              "真窗口：logs.search 走真宿主", searchResult.summary);
+        check(searchResult.data.value(QStringLiteral("totalMatches")).toInt() == 1 &&
+                  searchResult.data.value(QStringLiteral("matches"))
+                          .toArray()
+                          .first()
+                          .toObject()
+                          .value(QStringLiteral("line"))
+                          .toInt() == 1,
+              "真窗口：logs.search 带正确的行号");
+
+        Agent::ToolCall rangeCall;
+        rangeCall.id = QStringLiteral("mw-log-3");
+        rangeCall.name = QStringLiteral("logs.readRange");
+        rangeCall.arguments = QJsonObject{{QStringLiteral("startLine"), 1},
+                                          {QStringLiteral("lineCount"), 5}};
+        const AgentToolResult rangeResult = controller->compositeEngine()->invoke(rangeCall);
+        check(rangeResult.status == AgentToolResult::Status::Ok,
+              "真窗口：logs.readRange 走真宿主", rangeResult.summary);
+        check(rangeResult.data.value(QStringLiteral("totalLines")).toInt() == 1,
+              "真窗口：logs.readRange 回总行数");
+
+        Agent::ToolCall fullCall;
+        fullCall.id = QStringLiteral("mw-crash-3");
+        fullCall.name = QStringLiteral("crash.readFull");
+        fullCall.arguments = QJsonObject{
+            {QStringLiteral("reportId"), QStringLiteral("crash-2026-01-01_00.00.00-client.txt")}};
+        const AgentToolResult fullResult = controller->compositeEngine()->invoke(fullCall);
+        check(fullResult.status == AgentToolResult::Status::Ok,
+              "真窗口：crash.readFull 读得到实例目录里的报告", fullResult.summary);
+        check(!fullResult.data.value(QStringLiteral("artifactId")).toString().isEmpty(),
+              "真窗口：crash.readFull 存了 artifact");
     }
 
     // Stage 3：联网与诊断命令都接上了；诊断命令默认关闭，联网工具每次都要审批。

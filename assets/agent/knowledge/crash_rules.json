@@ -1,0 +1,235 @@
+{
+  "schema": 1,
+  "version": "2026-11-24.1",
+  "rules": [
+    {
+      "id": "MIXIN_APPLY_FAILED",
+      "priority": 90,
+      "phase": "mod_initialization",
+      "match": [
+        "MixinApplyError",
+        "Mixin apply failed",
+        "Mixin apply for mod",
+        "MixinTransformerError"
+      ],
+      "requires": [],
+      "suspects": [],
+      "confidence": 0.62,
+      "confidenceBasis": "MixinApplyError",
+      "recommendedTests": ["inspect_mixin_ownership", "bisect_mod_pair"],
+      "suggestedActions": ["check_mod_compatibility"]
+    },
+    {
+      "id": "MIXIN_INJECTION_FAILED",
+      "priority": 85,
+      "phase": "mod_initialization",
+      "match": [
+        "InvalidInjectionException",
+        "Critical injection failure",
+        "InjectionError",
+        "InvalidMixinException"
+      ],
+      "requires": [],
+      "suspects": [],
+      "confidence": 0.6,
+      "confidenceBasis": "InvalidInjectionException",
+      "recommendedTests": ["inspect_mixin_ownership", "bisect_mod_pair"],
+      "suggestedActions": ["check_mod_compatibility"]
+    },
+    {
+      "id": "JAVA_VERSION_MISMATCH",
+      "priority": 88,
+      "phase": "startup",
+      "match": [
+        "UnsupportedClassVersionError",
+        "has been compiled by a more recent version of the Java Runtime",
+        "class file version",
+        "Could not find or load main class"
+      ],
+      "requires": [],
+      "suspects": [],
+      "confidence": 0.72,
+      "confidenceBasis": "UnsupportedClassVersionError",
+      "recommendedTests": ["check_java_version"],
+      "suggestedActions": ["set_java_runtime"]
+    },
+    {
+      "id": "HEAP_OOM",
+      "priority": 80,
+      "phase": "runtime",
+      "match": [
+        "OutOfMemoryError: Java heap space",
+        "OutOfMemoryError: GC overhead limit exceeded"
+      ],
+      "requires": [],
+      "suspects": [],
+      "confidence": 0.75,
+      "confidenceBasis": "OutOfMemoryError: Java heap space",
+      "recommendedTests": ["raise_heap_and_retest", "inspect_heap_pressure"],
+      "suggestedActions": ["raise_memory"]
+    },
+    {
+      "id": "METASPACE_OOM",
+      "priority": 80,
+      "phase": "runtime",
+      "match": ["OutOfMemoryError: Metaspace", "OutOfMemoryError: Compressed class space"],
+      "requires": [],
+      "suspects": [],
+      "confidence": 0.72,
+      "confidenceBasis": "OutOfMemoryError: Metaspace",
+      "recommendedTests": ["raise_metaspace_and_retest", "bisect_mod_set"],
+      "suggestedActions": ["raise_memory"]
+    },
+    {
+      "id": "DIRECT_BUFFER_OOM",
+      "priority": 80,
+      "phase": "runtime",
+      "match": ["OutOfMemoryError: Direct buffer memory", "OutOfMemoryError: Direct buffer"],
+      "requires": [],
+      "suspects": [],
+      "confidence": 0.68,
+      "confidenceBasis": "OutOfMemoryError: Direct buffer memory",
+      "recommendedTests": ["inspect_render_backend"],
+      "suggestedActions": ["check_graphics_settings"]
+    },
+    {
+      "id": "NATIVE_THREAD_OOM",
+      "priority": 80,
+      "phase": "runtime",
+      "match": [
+        "OutOfMemoryError: unable to create native thread",
+        "unable to create new native thread",
+        "pthread_create failed"
+      ],
+      "requires": [],
+      "suspects": [],
+      "confidence": 0.68,
+      "confidenceBasis": "unable to create native thread",
+      "recommendedTests": ["reduce_mod_count_and_retest"],
+      "suggestedActions": ["raise_memory"]
+    },
+    {
+      "id": "MISSING_DEPENDENCY",
+      "priority": 78,
+      "phase": "mod_initialization",
+      "match": [
+        "Missing or unsupported mandatory dependencies",
+        "which is missing!",
+        "requires any version of"
+      ],
+      "requires": [],
+      "suspects": [],
+      "confidence": 0.68,
+      "confidenceBasis": "加载器报告的缺失前置",
+      "recommendedTests": ["inspect_mod_declarations"],
+      "suggestedActions": ["install_missing_dependency"]
+    },
+    {
+      "id": "DUPLICATE_MOD",
+      "priority": 76,
+      "phase": "mod_initialization",
+      "match": ["Found duplicate mods", "Duplicate mods found", "duplicate mod id"],
+      "requires": [],
+      "suspects": [],
+      "confidence": 0.7,
+      "confidenceBasis": "重复的 mod id",
+      "recommendedTests": ["list_duplicate_mods"],
+      "suggestedActions": ["disable_duplicate_mod"]
+    },
+    {
+      "id": "CORRUPT_MOD_FILE",
+      "priority": 74,
+      "phase": "mod_initialization",
+      "match": [
+        "java.util.zip.ZipException",
+        "invalid LOC header",
+        "invalid CEN header"
+      ],
+      "requires": [],
+      "suspects": [],
+      "confidence": 0.55,
+      "confidenceBasis": "JAR 读取失败",
+      "recommendedTests": ["verify_mod_files"],
+      "suggestedActions": ["reinstall_mod_file"]
+    },
+    {
+      "id": "CONFIG_PARSE_ERROR",
+      "priority": 70,
+      "phase": "config_load",
+      "match": [
+        "com.google.gson.JsonSyntaxException",
+        "JsonParseException",
+        "Failed to parse config",
+        "Could not parse config"
+      ],
+      "requires": [],
+      "suspects": [],
+      "confidence": 0.55,
+      "confidenceBasis": "配置解析异常",
+      "recommendedTests": ["inspect_config_file"],
+      "suggestedActions": ["restore_config_backup"]
+    },
+    {
+      "id": "NATIVE_CRASH",
+      "priority": 72,
+      "phase": "native",
+      "match": [
+        "EXCEPTION_ACCESS_VIOLATION",
+        "A fatal error has been detected by the Java Runtime Environment",
+        "SIGSEGV"
+      ],
+      "requires": [],
+      "suspects": [],
+      "confidence": 0.6,
+      "confidenceBasis": "JVM 致命错误日志",
+      "recommendedTests": ["inspect_native_modules", "bisect_mod_pair"],
+      "suggestedActions": ["check_graphics_settings"]
+    },
+    {
+      "id": "WORLD_LOAD_FAILURE",
+      "priority": 66,
+      "phase": "world_load",
+      "match": [
+        "Exception loading world",
+        "Failed to load world",
+        "Error loading world",
+        "Exception generating new chunk"
+      ],
+      "requires": [],
+      "suspects": [],
+      "confidence": 0.6,
+      "confidenceBasis": "世界加载异常",
+      "recommendedTests": ["verify_world_copy"],
+      "suggestedActions": ["restore_world_backup"]
+    },
+    {
+      "id": "ENTITY_TICK_CRASH",
+      "priority": 64,
+      "phase": "world_load",
+      "match": [
+        "Ticking entity",
+        "Exception ticking entity",
+        "Ticking block entity",
+        "Exception ticking block entity"
+      ],
+      "requires": [],
+      "suspects": [],
+      "confidence": 0.58,
+      "confidenceBasis": "实体/方块实体 tick 异常",
+      "recommendedTests": ["identify_ticking_mod", "bisect_mod_pair"],
+      "suggestedActions": ["check_mod_compatibility"]
+    },
+    {
+      "id": "MOD_LOADING_FAILED",
+      "priority": 50,
+      "phase": "mod_initialization",
+      "match": ["Mod loading has failed", "Loading errors encountered", "Failed to create mod"],
+      "requires": [],
+      "suspects": [],
+      "confidence": 0.4,
+      "confidenceBasis": "加载器报告模组加载失败",
+      "recommendedTests": ["inspect_mod_declarations"],
+      "suggestedActions": ["check_mod_compatibility"]
+    }
+  ]
+}

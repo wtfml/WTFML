@@ -20,6 +20,7 @@
 namespace AgentInstancePaths {
 
 struct Source {
+    QString key;     ///< `instance` / `shared` / `launcher`（日志源）；崩溃报告目录只用前两个
     QString path;    ///< 绝对路径（只在本地用）
     QString label;   ///< 相对标签：`versions/<id>/crash-reports` / `crash-reports`
 };
@@ -35,6 +36,7 @@ struct CrashReportFile {
     QString path;
     QString fileName;
     QString label;   ///< 来自哪个目录（`versions/<id>/crash-reports` 等）
+    QString directoryKey;  ///< `instance` / `shared`
     QDateTime modifiedAt;
     qint64 bytes = 0;
 };

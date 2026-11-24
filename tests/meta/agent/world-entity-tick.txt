@@ -1,0 +1,20 @@
+---- Minecraft Crash Report ----
+// Daisy, daisy...
+
+Time: 2026-01-01 13:00:00
+Description: Ticking entity
+
+java.lang.NullPointerException: Cannot invoke "net.minecraft.world.entity.Entity.getType()" because "entity" is null
+	at exampleentitymod.common.ExampleEntity.tick(ExampleEntity.java:121)
+	at net.minecraft.world.level.Level.guardEntityTick(Level.java:1183)
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- System Details --
+Details:
+	Minecraft Version: 1.20.1
+	Minecraft Version ID: 1.20.1
+	Java Version: 17.0.8, Microsoft
+	Java VM Version: OpenJDK 64-Bit Server VM (mixed mode), Microsoft
+	Suspected Mods: exampleentitymod (Example Entity Mod 2.0.0)

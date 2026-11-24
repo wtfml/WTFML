@@ -38,8 +38,11 @@ public:
                     QStringList *hints, QString *problem) override;
     bool logTail(const QString &instanceId, int lines, QString *text, QString *relativeSource,
                  QString *problem) override;
+    bool logSources(const QString &instanceId, QList<AgentHostLogSource> *items,
+                    QString *problem) override;
     bool crashReports(const QString &instanceId, QList<AgentHostCrashReport> *items,
                       QString *problem) override;
+    bool modsDirectory(const QString &instanceId, QString *path, QString *problem) override;
     bool integrity(const QString &instanceId, VersionIntegrity::Report *report,
                    QString *problem) override;
     bool mods(const QString &instanceId, QList<AgentHostModEntry> *items, QString *problem) override;

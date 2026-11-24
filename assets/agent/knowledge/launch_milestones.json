@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "version": "2026-11-24.1",
+  "milestones": {
+    "main_menu": ["Sound engine started", "OpenAL initialized"],
+    "world_loaded": [
+      "Preparing spawn area: 100%",
+      "Loaded 0 advancements",
+      "Loaded 1 advancements"
+    ],
+    "crash": [
+      "---- Minecraft Crash Report ----",
+      "A fatal error has been detected by the Java Runtime Environment",
+      "MixinApplyError",
+      "Mixin apply failed",
+      "java.lang.OutOfMemoryError",
+      "EXCEPTION_ACCESS_VIOLATION",
+      "Could not find or load main class"
+    ]
+  }
+}

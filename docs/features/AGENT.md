@@ -190,7 +190,7 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 
 路径校验是字符串拒绝（绝对路径、`..`、盘符、UNC、ADS、保留名、尾点/空格）+ Win32 句柄级最终路径/文件 ID/reparse 核对；受保护目录（`versions/libraries/assets/java/servers`）原始写一律拒绝。
 
-### 9.4 启动器工具（19 个，均经 `AgentLauncherHost`）
+### 9.4 启动器工具（23 个，均经 `AgentLauncherHost`）
 
 只读自动：
 
@@ -202,6 +202,10 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 | `diagnostics.crash` | 最近异常退出事实 + 规则提示；正常退出报错 |
 | `logs.tail` | ≤500 行（默认 120），读盘 ≤256 KB；实例 `logs/latest.log` → 数据根 `latest.log` → `wtfml.log`；路径换 `<path>` |
 | `crash.list` | 实例 `crash-reports/` 优先 + 数据根兜底，同名去重，≤20 份；每份读头 8 KB；`detail=full` 要确认 |
+| `diagnostics.crashSnapshot` | 解析最新一份崩溃报告（或日志尾）：环境、崩溃阶段、异常链、模组嫌疑、命中规则、建议验证；报告 8 MB、输出 16 KB、10 s 预算 |
+| `logs.search` | 字面量（大小写不敏感），带行号与前后文；≤200 条，结果 ≤24 KB 字符，扫描 6 s 预算；路径换 `<path>` |
+| `logs.readRange` | 行号从 1 开始；≤500 行、≤256 KB；起点越界回空表并标 `truncated` |
+| `crash.readFull` | 读整份报告（≤8 MB）；只回分段目录与每段摘要，原文脱敏后进 artifact；输出 ≤24 KB |
 | `instance.integrity` | 8 秒预算，超时回部分结果；只给分组计数 |
 | `mods.list` | 默认给启用/停用数；`detail=full` 列文件名并逐次确认，≤2000 |
 | `settings.get` | 白名单键的非路径字段（`java.path` 只写不读） |
@@ -232,7 +236,7 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 | --- | --- |
 | 工作区 | 默认 `<游戏根>/cache/agent-workspaces/<id>/`；用 `VersionManager::copyInstanceFrom()` 复制实例，登记与日志在 `%LOCALAPPDATA%/WTFML/agent/workspaces/`；原实例在启动期间不被写 |
 | 启动参数 | 复用 `LauncherManager::generateJvmArguments()` 与启动器的资产/库路径；离线、固定测试身份 `WTFML-Test`、不刷新令牌、不连服务器、不下载 Java |
-| 里程碑 | `process_started` / `main_menu`（`Sound engine started`、`OpenAL initialized`）/ `world_loaded`（`Preparing spawn area: 100%` 等）；另看进程退出码、新崩溃报告与 `hs_err_pid` |
+| 里程碑 | `process_started` / `main_menu` / `world_loaded`；标记在 `assets/agent/knowledge/launch_milestones.json`（读不到时判定一律 false，宁可超时）；另看进程退出码、新崩溃报告与 `hs_err_pid` |
 | 上限 | 超时 1–600 s，观察窗口 0–60 s，重复 1–3 次；每个启动器窗口一次只允许一个测试启动；进程树用 Job Object 清理 |
 | 只进副本世界 | `quickPlay.world` 只接受工作区 `saves/` 里已有的世界；源存档不参与启动 |
 | 拒绝 | 实例正在运行、缺 Java、`-javaagent`/`-agentlib`/`-Xbootclasspath` 等能加载本地代码的 JVM 参数、工作区路径不匹配 |
@@ -253,6 +257,30 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 - `settings.set` 在事务内只记旧值/新值，`repair.finish(commit)` 时才通过启动器设置写回；旧值不一致就拒绝提交。
 - 提交前逐个核对源文件 SHA-256 等于基线；源文件被外部修改就拒绝并列出文件。提交失败按已应用文件备份回滚，回滚失败保留现场。
 - `workflow.finish` 检测到未收尾事务时拒绝报完成；`repair.verify` 可作为计划的验证步，`repair.finish` 可在失败后回滚。
+
+#### 9.4.4 崩溃快照与日志检索（Stage 5.3）
+
+规则不写在提示词和 C++ 里：崩溃签名在 `assets/agent/knowledge/crash_rules.json`，启动里程碑标记在 `launch_milestones.json`，字段与置信度算法见该目录的 `README.md`。`AgentKnowledgeRules` 负责加载与校验（坏规则跳过并记 `problems`）；读不到规则时快照只给事实，`matchedRules` 为空。
+
+| 工具 | 读什么 | 关键行为 |
+| --- | --- | --- |
+| `diagnostics.crashSnapshot` | 最新崩溃报告；没有报告就用日志尾（512 KB） | `phase`、`suggestedAction` 取最高优先级命中规则；`suspects` 按证据分档；`knowledgeVersion` + `knowledgeProblems` 标明用的是哪版规则 |
+| `logs.search` | 实例 `logs/latest.log` → 数据根 `latest.log` → `wtfml.log`（`source=auto`/`instance`/`shared`/`launcher`） | 只做字面量匹配；同一份日志的行索引按文件大小 + 修改时间缓存 |
+| `logs.readRange` | 同上 | 用行偏移表直接定位，不把整份日志读进内存 |
+| `crash.readFull` | `crash.list` 列出的某一份报告 | 原文换掉本机路径后进模型可读 artifact，再用 `artifact.read` 按偏移取；分段摘要用来定位读哪一段 |
+
+嫌疑模组的角色与置信度由证据类型决定，不由模型或规则自说：
+
+| 证据 | `role` | `confidence` |
+| --- | --- | --- |
+| `Mixin apply for mod X failed`，或 mod id 出现在失败区栈帧里 | `candidate` | 规则基础值 + 0.12 |
+| 崩溃文本点名的 mixin 配置能由 JAR 声明归属到某个模组 | `candidate` | 规则基础值 + 0.05 |
+| 只在报告头 `Suspected Mods`、模组清单或规则 `suspects` 里出现 | `related` | ≤0.4 |
+| mixin 配置读不到归属 | `related`（`modId=unknown`） | ≤0.4 |
+
+上限：置信度封顶 0.95，不返回 1.0；`matchedRules` ≤8、嫌疑 ≤8、`causeChain` ≤8、建议验证 ≤8；证据 `id`/`kind`/`source`/`capturedAt`/`sha256`/`excerpt`，摘录 ≤400 字符且已脱敏。mixin 配置归属只读 JAR 里的声明（`fabric.mod.json`、`quilt.mod.json`、`META-INF/mods.toml`、`META-INF/neoforge.mods.toml`、`META-INF/MANIFEST.MF`），读不到就标 `unknown`，不按文件名猜。
+
+限制：日志搜索在调用线程上顺序扫描，100 MB 实测见 [PERFORMANCE](../dev/PERFORMANCE.md)；超过 6 s 预算回部分结果并标 `truncated`。正则搜索未开放。
 
 ### 9.5 联网与固定诊断命令
 
@@ -311,7 +339,7 @@ JSON-RPC 2.0、stdio、换行分隔。`initialize`（提议 `2024-11-05`，以�
 ### 11.2 工作流
 
 - **实例体检**：锁定实例 → 启动诊断 → 日志/模组/完整性 → 分级结论 + 证据 + 下一步选项；不写盘。
-- **崩溃急救**：收集异常退出事实、日志结尾、最新崩溃报告 → 按现有规则分类（OOM、Java 版本不匹配、缺前置、文件损坏、配置错误，不猜具体模组）→ 计划 → `repair.begin` 建事务 → 逐步执行（事务内写工作区、每步单独审批、失败即停）→ `repair.verify` 在隔离工作区验证 → `repair.finish(commit/rollback)` → 报告写回退方式与未解决项。世界问题只在副本世界验证，不打开源存档。
+- **崩溃急救**：`diagnostics.crashSnapshot` 拿环境、阶段、异常链与命中规则（需要行号时再 `logs.search`，原文走 `crash.readFull`）→ 按规则分类（OOM、Java 版本不匹配、缺前置、文件损坏、配置错误、Mixin 冲突，不猜具体模组）→ 计划 → `repair.begin` 建事务 → 逐步执行（事务内写工作区、每步单独审批、失败即停）→ `repair.verify` 在隔离工作区验证 → `repair.finish(commit/rollback)` → 报告写回退方式与未解决项。世界问题只在副本世界验证，不打开源存档。
 - **版本升级 / 移植**：`upgrade.inspect` 只读检查 + 解释风险；执行一律打开现有升级向导。
 - **模组维护**：列清单 → 按现有规则查依赖（不按文件名猜）→ `repair.begin` → 在工作区启停/备份 → `repair.diff`/`repair.verify` → 提交或回滚。
 
@@ -353,6 +381,8 @@ Collect → AwaitPlanApproval → Execute*（每步审批）→ Verify → Repor
 | 重试 / 模型请求总时长 | 2 次 / 10 分钟（可取消） |
 | 工具超时 | 文件 30 s、MCP 120 s、命令 60 s、联网 20 s |
 | 测试启动 | 1–600 s，观察 0–60 s，重复 1–3 次；工作区记录/日志在本地 |
+| 崩溃快照 / 崩溃报告全文 | 报告 8 MB、输出 16 KB（全文 24 KB）；规则命中 ≤8、嫌疑 ≤8；置信度 ≤0.95 |
+| 日志检索 | 搜索 ≤200 条 / 结果 ≤24 KB 字符 / 扫描 6 s；按行读取 ≤500 行 / 256 KB |
 | 修复事务 | 范围 5 类；基线文件 ≤20000 个、总大小 ≤512 MB；单实例同时 1 个活动事务；提交备份在 `agent/transactions/<id>/backups/` |
 | 目录列表 / `fs.read` / `fs.write` | 2000 项 / 256 KB（最大 1 MB）/ 1 MB |
 | MCP 单行 / 命令输出 | 8 MB / 256 KB |
@@ -374,7 +404,7 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 
 - 协议与客户端：SSE/分块边界、适配枚举、错误体保留、重试/取消、本地假服务器。
 - 会话与凭据：元数据/正文往返、损坏隔离、快照、整会话加密、Credential Manager + DPAPI 后备、脱敏。
-- 工具与安全：路径攻击矩阵、句柄级校验、审批矩阵、D11 边界表、artifact 分离、实例锁、备份生命周期、诊断投影、工作流闸门、MCP 协议/确认闸/假服务器、联网地址策略（假传输）、诊断命令、测试启动参数/审批/里程碑、工作区登记与清理、事务基线/差异/设置增量/审批。
+- 工具与安全：路径攻击矩阵、句柄级校验、审批矩阵、D11 边界表、artifact 分离、实例锁、备份生命周期、诊断投影、工作流闸门、MCP 协议/确认闸/假服务器、联网地址策略（假传输）、诊断命令、测试启动参数/审批/里程碑、工作区登记与清理、事务基线/差异/设置增量/审批、崩溃规则加载与坏规则跳过、崩溃报告解析、嫌疑角色与置信度、mixin 配置归属、日志行索引与按行读取。
 - UI/集成：页面几何与状态、模式胶囊、工具卡/审批卡、真窗口里只读模式拒绝写、MCP 管理器接线、实例目录日志/崩溃报告读取。
 - 性能基线：2000 条会话读写/加密、上下文裁剪、智能体页 2000 条消息重摆（数字见 perf-notes）。
 
@@ -408,17 +438,17 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 | 故障 | 现有能力 | 缺口 |
 | --- | --- | --- |
 | Java 版本不匹配 | `java.list`、`settings.set` 改 Java 或自动选择；`instance.testLaunch` 可在工作区验证；`repair.*` 可提交/回滚 | 测试启动不自动下载 Java；提交后不在原件自动验证 |
-| OOM | `memory.suggest`、`settings.set` 改 Xmx/Xms；可测试启动验证；可事务提交 | 只按堆内存建议，不区分 Metaspace、Direct Buffer、native thread |
+| OOM | `diagnostics.crashSnapshot` 区分堆、Metaspace、Direct Buffer 与 native thread 并给不同建议；`memory.suggest`、`settings.set` 改 Xmx/Xms；可测试启动验证；可事务提交 | `memory.suggest` 仍只按堆内存给数；不判断 native 模块归属 |
 | 缺模组前置 | `diagnostics.crash` 的规则提示、`mods.list` | 不读模组声明、不建已装依赖图、不能安装前置 |
 | Mod 版本冲突 | `mods.list`、`mods.setEnabled` | 没有兼容矩阵，不能查兼容版本或下载候选文件 |
 | Mod 文件损坏 | 无 | `instance.integrity` 不覆盖 `mods/`，不能重新下载修复 |
 | 配置文件错误 | `fs.read` / `fs.write` 白名单 | 不解析配置结构，只能靠备份整体回退 |
-| Mixin 冲突 | `diagnostics.crash` 的日志与规则提示；可在工作区复现 | 不认 mixin 配置归属，不能二分定位 |
+| Mixin 冲突 | `diagnostics.crashSnapshot` 给异常链、mixin 配置归属候选与建议验证；可在工作区复现 | 不能自动二分定位（S5.5） |
 | 游戏库文件损坏 | `instance.integrity` 只报 | 没有把 `VersionManager::repairVersionFiles()` 暴露成受控修复工具 |
-| 显卡 / Native 崩溃 | 可用测试启动复现，退出码和日志有限分类 | 不解析 `hs_err_pid` 与 native 模块，不能安全归因 |
+| 显卡 / Native 崩溃 | `diagnostics.crashSnapshot` 认 `hs_err_pid` 与 `EXCEPTION_ACCESS_VIOLATION`，与内存/模组问题分开报；可测试启动复现 | 不解析 native 模块归属，不改驱动或渲染后端 |
 | 世界 / 存档崩溃 | 有限的崩溃诊断；可复制世界到工作区用 `quickPlay` 验证 | 事务不提交世界/存档，也不做原件提交后验证 |
 
-下一阶段的崩溃快照、模组兼容与二分见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)；实现后行为写回本文 §9 与 §11。提示词外置、隔离测试启动与修复事务已于 2026-11-24 完成，见 §11.4、§9.4.2、§9.4.3。
+下一阶段的模组兼容与二分见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)；实现后行为写回本文 §9 与 §11。提示词外置、隔离测试启动、修复事务、崩溃快照与日志检索已于 2026-11-24 完成，见 §11.4、§9.4.2、§9.4.3、§9.4.4。
 
 未覆盖：
 

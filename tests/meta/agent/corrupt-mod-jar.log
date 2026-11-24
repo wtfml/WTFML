@@ -1,0 +1,4 @@
+[12:00:00] [main/ERROR]: Failed to load mod file examplemod-1.2.0.jar
+java.util.zip.ZipException: invalid LOC header (bad signature)
+	at java.base/java.util.zip.ZipFile$Source.get(ZipFile.java:1451)
+	at java.base/java.util.zip.ZipFile$CleanableResource.<init>(ZipFile.java:719)

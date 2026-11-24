@@ -693,6 +693,21 @@ pwsh -File tools/perf-download.ps1            # 全表；-Only '*seg*' 只跑一
 
 证据：`build/perf-download-report-20261025/`（改前全表）、`build/perf-download-report-before-limit-fix/`（改前限速用例）、`build/perf-download-report-20261025-final/`（上表：11 个用例、每例逐文件 SHA-1 核对通过）。功能回归：`build/verification-mingw13` 严格构建通过，`ctest` 38/38（354.20 s）。
 
+## 智能体崩溃快照与日志检索（2026-11-24）
+
+`logs.search` / `logs.readRange` 与 `crashSnapshot` 都在调用线程上跑，所以要量的是"一次调用会占住界面多久"。夹具是 `AgentLogIndexTests` 里按 `WTFML_AGENT_LOG_SCALE_MB` 生成的合成日志（每行约 70 字节，每 2 万行一条命中行），验证构建 `-O0`、NVMe、热缓存，单跑：
+
+| 项 | 100 MB / 161 万行 |
+| --- | --- |
+| 首次建行索引 + 读 200 行（`readRange`） | 98 ms |
+| 全文搜索 20 条（`search`，ASCII 词，字节匹配） | 353 ms |
+
+改前同一份夹具在每行都做 `QString::fromUtf8` 的版本上是 847 ms；只解码要输出的行之后降到 353 ms。索引只存每行起始偏移（100 MB / 161 万行约 13 MB），按文件大小 + 修改时间失效，最多缓存 4 份。
+
+量法：`WTFML_AGENT_LOG_SCALE_MB=100 ./build/verify-s53/tests/verify_agent.exe`，输出里找「日志规模测量」那一行；只打印，不断言（生成 100 MB 夹具要几秒，CI 不跑）。
+
+限制：这是 `-O0` 验证构建、热缓存、合成内容的数字；冷盘、真实日志（行长分布更散）会更慢。搜索按 6 s 预算截断，没有异步化。
+
 ## 发布体积
 
 2026-11-01：静态 Qt 的 `-O3` 单文件 73,531,415 字节，`strip --strip-unneeded` 后 43,288,540（−41.1%），导入 DLL 清单逐条相同；启动三跑 visible 原件 188 / 199 / 189 ms、去符号副本 171 / 185 / 190 ms，没有变慢。`-Os`（MinSizeRel）再去 4.9 MB，但启动中位 189 → 238 ms，不采用；`-flto=auto` 在这条工具链上链接不过（16 个自家符号被判未定义），不引入。工具是 `tools/prepare-release-copy.ps1`（只动副本、留 `.debug`、写 `release-copy.json`）。构建口径（必须用 `C:/mingw64` 编译器）、证据目录和未验项见 [RELEASE_SIZE.md](perf-notes/RELEASE_SIZE.md)。
@@ -707,6 +722,7 @@ pwsh -File tools/perf-download.ps1            # 全表；-Only '*seg*' 只跑一
 | 预设目录读取的协作式取消 | 作废只丢弃结果，不中断进行中的读取 |
 | CI 分片/缓存耗时 | 账号计费问题处理前没有可测对象 |
 | `repolishWidgets()` 22.5–25.7 ms | 未改，见"换主题" |
+| 智能体日志搜索的冷盘与异步化 | 只量了热缓存、-O0 合成夹具；同步扫描未改 |
 
 任何"变快了"的说法，以这份文档里同口径的数字为准。
 

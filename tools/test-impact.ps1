@@ -112,6 +112,8 @@ function Get-TestImpact([string[]]$Paths, [bool]$ForceFull = $false) {
             # （清单校验/嵌入字节一致）。不加这一条会落进 default ⇒ 整个 full。
             '^assets/assetdirector/|^tools/assetdirector-knownset\.py$' { @('core-resources'); break }
             '^assets/agent/' { @('core-agent'); break }
+            # 崩溃/日志夹具（tests/meta/agent/）：只有 core-agent 读它们。
+            '^tests/meta/agent/' { @('core-agent'); break }
             '^assets/i18n/' { @('ui-history'); break }
             '^(src/download/|tools/network_diag/)|(?i:Download|RangeChecks|SegmentInstall)' { @('core','network','presets'); break }
             '^(tools/.*\.ps1|tests/test_runner/)' { @('runner'); break }

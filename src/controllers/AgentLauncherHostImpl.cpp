@@ -273,6 +273,25 @@ bool AgentLauncherHostImpl::logTail(const QString &instanceId, int lines, QStrin
     return true;
 }
 
+bool AgentLauncherHostImpl::logSources(const QString &instanceId,
+                                       QList<AgentHostLogSource> *items, QString *problem) {
+    Q_UNUSED(problem);
+    if (items == nullptr) return false;
+    items->clear();
+    for (const AgentInstancePaths::Source &candidate :
+         AgentInstancePaths::logSources(instanceId)) {
+        AgentHostLogSource item;
+        item.key = candidate.key;
+        item.label = candidate.label;
+        item.path = candidate.path;
+        const QFileInfo info(candidate.path);
+        item.bytes = info.size();
+        item.modifiedAt = info.lastModified();
+        items->append(item);
+    }
+    return true;
+}
+
 bool AgentLauncherHostImpl::crashReports(const QString &instanceId,
                                          QList<AgentHostCrashReport> *items, QString *problem) {
     Q_UNUSED(problem);
@@ -284,12 +303,25 @@ bool AgentLauncherHostImpl::crashReports(const QString &instanceId,
          AgentInstancePaths::collectCrashReports(instanceId, 20)) {
         AgentHostCrashReport report;
         report.fileName = file.fileName;
+        report.path = file.path;
+        report.label = file.label;
         report.modifiedAt = file.modifiedAt;
         report.bytes = file.bytes;
         report.headText =
             AgentDiagnosticProjection::scrubPaths(readHead(file.path, kCrashHeadBytes));
         items->append(report);
     }
+    return true;
+}
+
+bool AgentLauncherHostImpl::modsDirectory(const QString &instanceId, QString *path,
+                                          QString *problem) {
+    const QString dir = modsDir(instanceId);
+    if (dir.isEmpty() || !QFileInfo(dir).isDir()) {
+        if (problem != nullptr) *problem = QStringLiteral("mods 目录不存在。");  // i18n-ignore
+        return false;
+    }
+    if (path != nullptr) *path = dir;
     return true;
 }
 

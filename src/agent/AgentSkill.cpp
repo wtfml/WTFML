@@ -15,8 +15,12 @@ QStringList readOnlyTools() {
             QStringLiteral("instance.context"),
             QStringLiteral("diagnostics.startup"),
             QStringLiteral("diagnostics.crash"),
+            QStringLiteral("diagnostics.crashSnapshot"),
             QStringLiteral("logs.tail"),
+            QStringLiteral("logs.search"),
+            QStringLiteral("logs.readRange"),
             QStringLiteral("crash.list"),
+            QStringLiteral("crash.readFull"),
             QStringLiteral("instance.integrity"),
             QStringLiteral("mods.list"),
             QStringLiteral("settings.get"),
@@ -97,7 +101,8 @@ QList<AgentSkill> AgentSkillRegistry::builtins() {
         QStringLiteral("crash_rescue"), true, QStringList(readOnlyTools() + repairTools()), false,
         true, {QStringLiteral("diagnostics.crash")},
         QStringLiteral("计划已批准；每步都有结果；至少一条证据；有验证步骤；"
-                       "报告写明回退方式与未解决项。")));
+                       "报告写明回退方式与未解决项。"),
+        2));
 
     list.append(make(
         QStringLiteral("upgrade"), QStringLiteral("版本升级 / 移植"),

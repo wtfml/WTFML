@@ -19,5 +19,8 @@
         <file alias="prompts/mods.md">prompts/mods.md</file>
         <file alias="prompts/repair_protocol.md">prompts/repair_protocol.md</file>
         <file alias="prompts/README.md">prompts/README.md</file>
+        <file alias="knowledge/crash_rules.json">knowledge/crash_rules.json</file>
+        <file alias="knowledge/launch_milestones.json">knowledge/launch_milestones.json</file>
+        <file alias="knowledge/README.md">knowledge/README.md</file>
     </qresource>
 </RCC>

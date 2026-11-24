@@ -1,44 +1,30 @@
 /**
  * @file AgentTestLaunch.cpp
  * @brief 测试启动的日志里程碑规则（见 .hpp）。
+ *
+ * 标记在 `assets/agent/knowledge/launch_milestones.json`（S5.3 从 C++ 字面量迁过去）：
+ * 换一个游戏版本就可能要加一句标记，改数据比改代码安全。读不到规则时三个判定都
+ * 返回 false —— 宁可超时，也不要凭空认为“进主菜单了”。
  */
 
 #include "AgentTestLaunch.hpp"
 
+#include "AgentKnowledgeRules.hpp"
+
 #include <QStringList>
 
-namespace {
-
-bool containsAny(const QString &line, const QStringList &needles) {
-    for (const QString &needle : needles) {
-        if (line.contains(needle, Qt::CaseSensitive)) return true;
-    }
-    return false;
-}
-
-}  // namespace
-
 bool AgentTestLaunchMilestones::isMainMenuLine(const QString &line) {
-    // 1.20.1 及常见加载器进主菜单前都会打出这两句。纹理图集那一类日志更早，
+    // 1.20.1 及常见加载器进主菜单前都会打出那两句；纹理图集那一类日志更早，
     // 不能单独当主菜单信号，否则会在资源加载阶段提前判成功。
-    return containsAny(line, {QStringLiteral("Sound engine started"),
-                              QStringLiteral("OpenAL initialized")});
+    return AgentKnowledge::milestoneMatches(QStringLiteral("main_menu"), line);
 }
 
 bool AgentTestLaunchMilestones::isWorldLoadedLine(const QString &line) {
-    return containsAny(line, {QStringLiteral("Preparing spawn area: 100%"),
-                              QStringLiteral("Loaded 0 advancements"),
-                              QStringLiteral("Loaded 1 advancements")});
+    return AgentKnowledge::milestoneMatches(QStringLiteral("world_loaded"), line);
 }
 
 bool AgentTestLaunchMilestones::isCrashLine(const QString &line) {
-    return containsAny(line, {QStringLiteral("---- Minecraft Crash Report ----"),
-                              QStringLiteral("A fatal error has been detected by the Java Runtime Environment"),
-                              QStringLiteral("MixinApplyError"),
-                              QStringLiteral("Mixin apply failed"),
-                              QStringLiteral("java.lang.OutOfMemoryError"),
-                              QStringLiteral("EXCEPTION_ACCESS_VIOLATION"),
-                              QStringLiteral("Could not find or load main class")});
+    return AgentKnowledge::milestoneMatches(QStringLiteral("crash"), line);
 }
 
 QStringList AgentTestLaunchMilestones::milestoneIds() {

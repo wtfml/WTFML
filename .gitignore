@@ -36,6 +36,8 @@ wtfml-token-tool/
 
 # Local diagnostics and editor/cache leftovers; keep fixtures and design documents tracked.
 *.log
+# 智能体崩溃/日志夹具是脱敏后的结构样本（编造的模组名、没有真实路径），不是运行日志。
+!tests/meta/agent/*.log
 *.dmp
 *.stackdump
 *.bak

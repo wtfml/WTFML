@@ -1,0 +1,3 @@
+[12:00:00] [main/ERROR]: java.lang.OutOfMemoryError: Direct buffer memory
+[12:00:00] [main/ERROR]: 	at java.base/java.nio.Bits.reserveMemory(Bits.java:178)
+[12:00:00] [main/ERROR]: 	at org.lwjgl.system.MemoryUtil.nmemAllocChecked(MemoryUtil.java:332)

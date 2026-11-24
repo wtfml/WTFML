@@ -10,7 +10,8 @@
        测试用的假 key），tests/ 与 docs/ 不算；
     2. 产品源码里不许出现测试假端点（example.com / localhost:9 / 127.0.0.1 之类的默认地址）；
     3. 技能提示词必须放在 `assets/agent/prompts/`、登记进 `agent.qrc`、不带 BOM，
-       `AgentSkill.cpp` 里不许再出现提示词正文；
+       `AgentSkill.cpp` 里不许再出现提示词正文；内嵌知识（`assets/agent/knowledge/`）
+       同样要登记、是有效 JSON、规则字段齐；
     4. `command.run`（任意可执行文件）不许出现在工具注册表里；
     5. `command.diagnose`、MCP、联网工具都必须有审批/确认闸的调用点；
     6. 诊断命令与 MCP 服务器的默认值必须是关闭/未启用。
@@ -144,6 +145,68 @@ if (Test-Path -LiteralPath $promptLibrary) {
     }
 } else {
     $violations.Add('找不到 src/agent/AgentPromptLibrary.cpp')
+}
+
+# --- 3b. 内嵌诊断知识（S5.3）：存在、登记、JSON 可解析、规则字段齐 ----------------
+$knowledgeDir = Join-Path $repo 'assets/agent/knowledge'
+$knowledgeQrc = Join-Path $repo 'assets/agent/agent.qrc'
+$requiredKnowledge = @('crash_rules.json', 'launch_milestones.json')
+if (-not (Test-Path -LiteralPath $knowledgeDir)) {
+    $violations.Add('找不到 assets/agent/knowledge（崩溃规则与里程碑标记必须外置成数据）')
+} else {
+    $qrcKnowledge = if (Test-Path -LiteralPath $knowledgeQrc) {
+        Get-Content -LiteralPath $knowledgeQrc -Raw
+    } else { '' }
+    foreach ($name in $requiredKnowledge) {
+        $path = Join-Path $knowledgeDir $name
+        if (-not (Test-Path -LiteralPath $path)) {
+            $violations.Add("缺少内嵌知识文件：assets/agent/knowledge/$name")
+            continue
+        }
+        if ($qrcKnowledge -notmatch [regex]::Escape("knowledge/$name")) {
+            $violations.Add("内嵌知识没有登记进 agent.qrc：$name")
+        }
+        $bytes = [IO.File]::ReadAllBytes($path)
+        if ($bytes.Length -eq 0) { $violations.Add("内嵌知识文件为空：$name") }
+        if ($bytes.Length -gt 262144) { $violations.Add("内嵌知识文件超过 256 KB：$name") }
+        if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
+            $violations.Add("内嵌知识文件带 UTF-8 BOM：$name")
+        }
+        try {
+            $data = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json -AsHashtable
+        } catch {
+            $violations.Add("内嵌知识文件不是有效 JSON：$name")
+            continue
+        }
+        if ($name -eq 'crash_rules.json') {
+            $ids = @{}
+            $allowedPhases = @('startup', 'mod_initialization', 'config_load', 'world_load',
+                               'runtime', 'native', 'shutdown')
+            foreach ($rule in @($data.rules)) {
+                $id = [string]$rule.id
+                if ($id -notmatch '^[A-Z][A-Z0-9_]{2,31}$') {
+                    $violations.Add("崩溃规则 id 不合法：$id")
+                    continue
+                }
+                if ($ids.ContainsKey($id)) { $violations.Add("崩溃规则 id 重复：$id") }
+                $ids[$id] = 1
+                if ($allowedPhases -notcontains [string]$rule.phase) {
+                    $violations.Add("崩溃规则 $id 的 phase 不认识：$($rule.phase)")
+                }
+                if (@($rule.match).Count -eq 0) { $violations.Add("崩溃规则 $id 没有 match") }
+                if (-not $rule.ContainsKey('confidence')) {
+                    $violations.Add("崩溃规则 $id 没有 confidence")
+                }
+            }
+            if ($ids.Count -lt 10) { $violations.Add("崩溃规则少于 10 条，覆盖不够：$($ids.Count)") }
+        } else {
+            foreach ($key in @('main_menu', 'world_loaded', 'crash')) {
+                if (-not $data.milestones.ContainsKey($key) -or @($data.milestones[$key]).Count -eq 0) {
+                    $violations.Add("里程碑缺少标记：$key")
+                }
+            }
+        }
+    }
 }
 
 # --- 4. `command.run` 不许出现在产品里 ----------------------------------------

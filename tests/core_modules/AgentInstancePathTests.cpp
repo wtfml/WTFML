@@ -63,6 +63,13 @@ void runAgentInstancePathTests() {
           "实例路径：日志标签是相对路径（不含盘符）");
     check(logs.size() == 2, "实例路径：数据根 wtfml.log 也在候选里",
           QString::number(logs.size()));
+    check(logs.constFirst().key == QStringLiteral("instance"),
+          "实例路径：日志源带 key（工具按 key 选源）", logs.constFirst().key);
+    bool sawLauncherKey = false;
+    for (const AgentInstancePaths::Source &source : logs) {
+        if (source.key == QStringLiteral("launcher")) sawLauncherKey = true;
+    }
+    check(sawLauncherKey, "实例路径：启动器日志的 key 是 launcher");
 
     const QList<AgentInstancePaths::Source> dirs =
         AgentInstancePaths::crashReportDirs(instanceId);
@@ -79,8 +86,16 @@ void runAgentInstancePathTests() {
     bool sawInstance = false;
     bool sawShared = false;
     for (const AgentInstancePaths::CrashReportFile &report : reports) {
-        if (report.fileName.startsWith(QStringLiteral("crash-2026-01-01"))) sawInstance = true;
-        if (report.fileName.startsWith(QStringLiteral("crash-2025-12-31"))) sawShared = true;
+        if (report.fileName.startsWith(QStringLiteral("crash-2026-01-01"))) {
+            sawInstance = true;
+            check(report.directoryKey == QStringLiteral("instance"),
+                  "实例路径：实例目录的崩溃报告带 directoryKey", report.directoryKey);
+        }
+        if (report.fileName.startsWith(QStringLiteral("crash-2025-12-31"))) {
+            sawShared = true;
+            check(report.directoryKey == QStringLiteral("shared"),
+                  "实例路径：数据根的崩溃报告带 directoryKey", report.directoryKey);
+        }
     }
     check(sawInstance && sawShared, "实例路径：实例目录和数据根的崩溃报告都收进来了");
 

@@ -237,6 +237,10 @@ set(HEADER_FILES
     src/agent/McpManager.hpp
     src/agent/AgentMcpToolEngine.hpp
     src/agent/AgentInstancePaths.hpp
+    src/agent/AgentKnowledgeRules.hpp
+    src/agent/AgentLogIndex.hpp
+    src/agent/AgentCrashSnapshot.hpp
+    src/agent/AgentMixinOwnership.hpp
     src/agent/AgentWebPolicy.hpp
     src/agent/AgentWebTransport.hpp
     src/agent/QtAgentWebTransport.hpp
@@ -589,6 +593,10 @@ set(SOURCE_FILES
     src/agent/McpManager.cpp
     src/agent/AgentMcpToolEngine.cpp
     src/agent/AgentInstancePaths.cpp
+    src/agent/AgentKnowledgeRules.cpp
+    src/agent/AgentLogIndex.cpp
+    src/agent/AgentCrashSnapshot.cpp
+    src/agent/AgentMixinOwnership.cpp
     src/agent/AgentWebPolicy.cpp
     src/agent/QtAgentWebTransport.cpp
     src/agent/AgentWebTools.cpp

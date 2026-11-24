@@ -35,12 +35,13 @@ QList<Source> crashReportDirs(const QString &instanceId) {
     if (!instanceId.isEmpty()) {
         const QString instance = AppPaths::versionDir(instanceId) + QStringLiteral("/crash-reports");
         if (QFileInfo(instance).isDir()) {
-            sources.append({instance, versionPrefix(instanceId) + QStringLiteral("/crash-reports")});
+            sources.append({QStringLiteral("instance"), instance,
+                            versionPrefix(instanceId) + QStringLiteral("/crash-reports")});
         }
     }
     const QString shared = AppPaths::crashReportsDir();
     if (QFileInfo(shared).isDir()) {
-        sources.append({shared, relativeLabel(shared)});
+        sources.append({QStringLiteral("shared"), shared, relativeLabel(shared)});
     }
     return sources;
 }
@@ -50,17 +51,18 @@ QList<Source> logSources(const QString &instanceId) {
     if (!instanceId.isEmpty()) {
         const QString latest = AppPaths::versionDir(instanceId) + QStringLiteral("/logs/latest.log");
         if (QFileInfo(latest).isFile()) {
-            sources.append({latest, versionPrefix(instanceId) + QStringLiteral("/logs/latest.log")});
+            sources.append({QStringLiteral("instance"), latest,
+                            versionPrefix(instanceId) + QStringLiteral("/logs/latest.log")});
         }
     }
     const QString sharedLatest = AppPaths::minecraftDir() + QStringLiteral("/logs/latest.log");
     if (QFileInfo(sharedLatest).isFile()) {
-        sources.append({sharedLatest, relativeLabel(sharedLatest)});
+        sources.append({QStringLiteral("shared"), sharedLatest, relativeLabel(sharedLatest)});
     }
     // 启动器自己的日志：没有游戏日志时也值得看一眼（它是我们写的，位置固定在数据根）。
     const QString launcherLog = AppPaths::minecraftDir() + QStringLiteral("/logs/wtfml.log");
     if (QFileInfo(launcherLog).isFile()) {
-        sources.append({launcherLog, relativeLabel(launcherLog)});
+        sources.append({QStringLiteral("launcher"), launcherLog, relativeLabel(launcherLog)});
     }
     return sources;
 }
@@ -78,6 +80,7 @@ QList<CrashReportFile> collectCrashReports(const QString &instanceId, int limit)
             file.path = entry.absoluteFilePath();
             file.fileName = entry.fileName();
             file.label = source.label;
+            file.directoryKey = source.key;
             file.modifiedAt = entry.lastModified();
             file.bytes = entry.size();
             indexByName.insert(file.fileName, int(files.size()));

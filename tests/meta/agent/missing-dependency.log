@@ -1,0 +1,3 @@
+[12:00:00] [main/ERROR]: Mod loading has failed
+[12:00:00] [main/ERROR]: net.minecraftforge.fml.ModLoadingException: Missing or unsupported mandatory dependencies:
+	Mod ID: 'fabric-api', Requested by: 'examplemod', Expected range: '[0.92,)', Actual version: '[MISSING]'

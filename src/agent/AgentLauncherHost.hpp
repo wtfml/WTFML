@@ -30,9 +30,21 @@ struct AgentHostModEntry {
 
 struct AgentHostCrashReport {
     QString fileName;      ///< `crash-reports/` 下的文件名
+    /// 本机绝对路径，**只在本地读盘用**；不要进模型输出（给出的是 fileName 与 label）。
+    QString path;
+    QString label;         ///< 来自哪个目录（`versions/<id>/crash-reports` 等）
     QDateTime modifiedAt;
     qint64 bytes = 0;
     QString headText;      ///< 开头一段（已脱敏、已去本机路径），可为空
+};
+
+/// 一份可被按行索引的日志（`logs.search` / `logs.readRange` 用它）。
+struct AgentHostLogSource {
+    QString key;      ///< instance / shared / launcher
+    QString label;    ///< 相对标签，不含盘符
+    QString path;     ///< 本机绝对路径，只在本地流式读盘时用
+    qint64 bytes = 0;
+    QDateTime modifiedAt;
 };
 
 struct AgentHostBackupRef {
@@ -78,8 +90,13 @@ public:
     /// `logs/latest.log` 末尾；`relativeSource` 回一个不含绝对路径的来源标签。
     virtual bool logTail(const QString &instanceId, int lines, QString *text,
                          QString *relativeSource, QString *problem) = 0;
+    /// 可搜索/可按行读取的日志候选（实例 → 数据根 → 启动器），带本机路径供本地索引。
+    virtual bool logSources(const QString &instanceId, QList<AgentHostLogSource> *items,
+                            QString *problem) = 0;
     virtual bool crashReports(const QString &instanceId, QList<AgentHostCrashReport> *items,
                               QString *problem) = 0;
+    /// `mods/` 目录的本机路径（mixin 配置归属扫描用）；目录不存在时回 false。
+    virtual bool modsDirectory(const QString &instanceId, QString *path, QString *problem) = 0;
 
     // ---------- 完整性 / 模组 ----------
     virtual bool integrity(const QString &instanceId, VersionIntegrity::Report *report,

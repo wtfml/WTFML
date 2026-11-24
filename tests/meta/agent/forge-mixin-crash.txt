@@ -1,0 +1,53 @@
+---- Minecraft Crash Report ----
+// Don't be sad, have a hug! <3
+
+Time: 2026-01-01 12:00:03
+Description: Mod loading failed
+
+java.lang.RuntimeException: Failed to load mod file examplemod-1.2.0.jar
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:39)
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:58)
+	at net.minecraftforge.fml.loading.targets.CommonLaunchHandler.runTarget(CommonLaunchHandler.java:132)
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: main
+Suspected Mods: examplemod (Example Mod 1.2.0), sodium (Sodium 0.5.8)
+Stacktrace:
+	at org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:392)
+	at org.spongepowered.asm.mixin.transformer.MixinTransformer.transformClassBytes(MixinTransformer.java:192)
+Caused by: org.spongepowered.asm.mixin.throwables.MixinApplyError: Error applying mixin examplemod.mixins.json:ExampleMixin from mod examplemod
+	at org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:392)
+	at org.spongepowered.asm.mixin.transformer.MixinTransformer.transformClassBytes(MixinTransformer.java:192)
+Caused by: org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException: Critical injection failure: @Inject annotation on exampleInjection could not find any targets matching 'm_12345_' in net.minecraft.client.Minecraft. Using refmap examplemod-refmap.json [PREINJECT Applicator Phase -> examplemod.mixins.json:ExampleMixin -> Prepare Injections]
+	at org.spongepowered.asm.mixin.injection.struct.InjectionInfo.validateTargets(InjectionInfo.java:656)
+
+-- System Details --
+Details:
+	Minecraft Version: 1.20.1
+	Minecraft Version ID: 1.20.1
+	Operating System: Windows 10 (amd64) version 10.0
+	Java Version: 17.0.8, Microsoft
+	Java VM Version: OpenJDK 64-Bit Server VM (mixed mode), Microsoft
+	Memory: 1234567890 bytes (1177 MiB) / 2147483648 bytes (2048 MiB) up to 4294967296 bytes (4096 MiB)
+	CPUs: 16 total
+	JVM Flags: 3 total; -Xmx4096M -Xms512M -XX:+UseG1GC
+	Loaded Mods: 42 total
+	Mod List: 
+		forge-1.20.1-47.3.0-universal.jar                     |Minecraft                     |minecraft                     |1.20.1              |DONE      |Manifest: NOSIGNATURE
+		sodium-0.5.8.jar                                      |Sodium                        |sodium                        |0.5.8               |DONE      |Manifest: NOSIGNATURE
+		examplemod-1.2.0.jar                                  |Example Mod                   |examplemod                     |1.2.0               |DONE      |Manifest: NOSIGNATURE
+		anothermod-3.1.0.jar                                  |Another Mod                   |anothermod                    |3.1.0               |DONE      |Manifest: NOSIGNATURE
+	-- Affected level --
+	Level name: All levels
+	All players: 0 total; []
+	Chunk stats: ServerChunkCache: 0 Drop: 0
+	Level seed: 0
+	Level generator: ID 00 - default, ver 1. Features: disabled
+	Level spawn location: World: (0,64,0), Section: (at 0,4,0 in 0,4,0; chunk contains blocks 0,0,0 to 15,255,15), Region: (0,0)
+	Level time: 0 game time, 0 day time
+	Level storage version: 0x04ABD - Anvil
+	Level weather: Rain time: 0 (now: false), thunder time: 0 (now: false)
+	Level game mode: Game mode: creative (ID 1). Hardcore: false. Cheats: false

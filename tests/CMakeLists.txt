@@ -191,6 +191,14 @@ set(PROJECT_SOURCES
     ${REPO_ROOT}/src/agent/AgentMcpToolEngine.hpp
     ${REPO_ROOT}/src/agent/AgentInstancePaths.cpp
     ${REPO_ROOT}/src/agent/AgentInstancePaths.hpp
+    ${REPO_ROOT}/src/agent/AgentKnowledgeRules.cpp
+    ${REPO_ROOT}/src/agent/AgentKnowledgeRules.hpp
+    ${REPO_ROOT}/src/agent/AgentLogIndex.cpp
+    ${REPO_ROOT}/src/agent/AgentLogIndex.hpp
+    ${REPO_ROOT}/src/agent/AgentCrashSnapshot.cpp
+    ${REPO_ROOT}/src/agent/AgentCrashSnapshot.hpp
+    ${REPO_ROOT}/src/agent/AgentMixinOwnership.cpp
+    ${REPO_ROOT}/src/agent/AgentMixinOwnership.hpp
     ${REPO_ROOT}/src/agent/AgentWebPolicy.cpp
     ${REPO_ROOT}/src/agent/AgentWebPolicy.hpp
     ${REPO_ROOT}/src/agent/AgentWebTransport.hpp

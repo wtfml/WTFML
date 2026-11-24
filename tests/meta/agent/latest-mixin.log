@@ -1,0 +1,12 @@
+[12:00:00] [main/INFO]: Loading 132 mods:
+[12:00:00] [main/INFO]: - minecraft 1.20.1
+[12:00:00] [main/INFO]: - fabricloader 0.15.11
+[12:00:00] [main/INFO]: - sodium 0.5.8
+[12:00:00] [main/INFO]: - anothermod 3.1.0
+[12:00:01] [main/INFO]: Config watcher for mod sodium started
+[12:00:01] [main/INFO]: Reloading resources for anothermod
+[12:00:02] [main/ERROR]: Mixin apply for mod examplemod failed examplemod.mixins.json:ExampleMixin from mod examplemod
+[12:00:02] [main/ERROR]: org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException: Critical injection failure: @Inject annotation on exampleInjection could not find any targets matching 'm_12345_' in net.minecraft.client.Minecraft
+[12:00:02] [main/ERROR]: 	at org.spongepowered.asm.mixin.injection.struct.InjectionInfo.validateTargets(InjectionInfo.java:656)
+[12:00:02] [main/ERROR]: 	at org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:392)
+[12:00:02] [main/ERROR]: Failed to start the minecraft server

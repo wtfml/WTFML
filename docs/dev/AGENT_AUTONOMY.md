@@ -29,7 +29,7 @@
 
 ## 2. 现状与缺口
 
-现有工具的上限见 [AGENT](../features/AGENT.md) §9：`logs.tail` 最多 500 行、读盘 256 KB；`crash.list` 每份只读头 8 KB；`diagnostics.crash` 只给退出事实与规则提示；`instance.integrity` 只覆盖客户端 jar、库、资源索引和资源对象；`mods.list` / `mods.setEnabled` 不读模组声明；所有修复都停在「改完建议用户手动启动」。
+现有工具的上限见 [AGENT](../features/AGENT.md) §9：`logs.tail` 最多 500 行、读盘 256 KB；`crash.list` 每份只读头 8 KB；`diagnostics.crash` 只给退出事实与规则提示（S5.3 之前的形态，之后由 `diagnostics.crashSnapshot` 接管结构化解析）；`instance.integrity` 只覆盖客户端 jar、库、资源索引和资源对象；`mods.list` / `mods.setEnabled` 不读模组声明；所有修复都停在「改完建议用户手动启动」。
 
 | 故障 | 现在能做的 | 缺口 |
 | --- | --- | --- |
@@ -87,7 +87,7 @@ src/controllers/Agent*HostImpl → LaunchController / LauncherManager / VersionM
 | `timed_out` | 到超时仍未达到目标里程碑 |
 | `cancelled` | 用户取消、会话关闭或启动器退出 |
 
-S5.1 的规则在 `AgentTestLaunchMilestones`（纯函数），用 1.20.1 的原版/Forge/Fabric/NeoForge 日志夹具验证；S5.3 再迁到内嵌知识文件。
+里程碑判定在 `AgentTestLaunchMilestones`（纯函数），标记本身从 S5.3 起在 `assets/agent/knowledge/launch_milestones.json`，不再写进 C++；读不到标记时三个判定都返回 false（宁可超时，也不凭空认为进了主菜单）。
 
 ### 3.3 隔离工作区
 
@@ -204,7 +204,7 @@ assets/agent/
 - 复制/提交的当前实现没有独立取消；关闭启动器会等待当前后台操作。启动恢复扫描尚未接到 UI，只有 `repair.status` 能列出中断事务。
 - 提交后没有自动在原实例再启动验证；需要时由计划另行调用 `instance.testLaunch`。
 
-### S5.3 崩溃快照与日志检索（P1）
+### S5.3 崩溃快照与日志检索（已完成 2026-11-24）
 
 新增工具：
 
@@ -240,7 +240,25 @@ assets/agent/
 
 规则先覆盖：Mixin 注入失败、堆 OOM、Metaspace/Direct Buffer/native thread、Java 版本不匹配、缺前置、重复模组、JAR 损坏、配置解析失败、native 崩溃、世界加载/实体 tick 崩溃。每类至少一组真实结构夹具；规则命中但证据不足时返回 `unknown` 和 `recommendedTests`，不编造责任模组。
 
-验收：Mixin 夹具返回异常链、mixin 配置归属候选和建议测试，不把日志里第一个模组直接标成根因；堆 OOM 与 native 内存问题给不同建议；`crash.list` 只看头 8 KB 漏掉的 Mod List 能由 `crash.readFull` 读到；`logs.search` 在 100 MB 日志上不阻塞 UI，结果带行号。
+实现：
+
+- `AgentKnowledgeRules`：加载 `assets/agent/knowledge/crash_rules.json` 与 `launch_milestones.json`（`Q_INIT_RESOURCE(agent)`）；校验 id 唯一、phase 枚举、字面量长度与条数上限，坏规则跳过并记 `problems`，整份读不到时只给事实、`matchedRules` 为空。`AgentTestLaunchMilestones` 改为按 `launch_milestones.json` 判定。
+- `AgentCrashSnapshot`：解析 `---- Minecraft Crash Report ----`、`hs_err_pid` 与游戏日志；取环境（游戏版本/加载器/加载器版本/Java 主版本）、`Description`、顶层异常与 `Caused by` 链、`Suspected Mods`、Forge `Mod List:` 表格、Fabric `Fabric Mods:` 与日志 `Loading N mods:` 清单、`Mixin apply for mod X failed`、`xxx.mixins.json`、失败区栈帧类名。
+- 嫌疑分档：`candidate`（栈帧或 mixin 配置归属，规则值 +0.12/+0.05）、`related`（只被提到，≤0.4）、`unknown`（配置无归属）；封顶 0.95。只被提到、或只出现在模组清单里的模组不进 `candidate`，日志里先出现的模组不会被误当成根因。
+- `AgentMixinOwnership`：读 `fabric.mod.json`、`quilt.mod.json`、`META-INF/mods.toml`、`META-INF/neoforge.mods.toml`、`META-INF/MANIFEST.MF` 的 mixin 声明，经 `ZipUtil::readMetadataBatch()` 一个进程读完一批（≤300 个 JAR）；只在崩溃文本点名了配置时才扫。
+- `AgentLogIndex`：流式行索引（记录每行起始偏移，按文件大小 + 修改时间失效，最多 4 份缓存），搜索按行号回命中与前后文，ASCII 搜索词在 UTF-8 字节上匹配、只解码要输出的行；单行超长按一行截断处理，行号不漂。
+- 工具：`diagnostics.crashSnapshot`、`logs.search`、`logs.readRange`、`crash.readFull` 全部只读自动；`crash.readFull` 把换掉本机路径后的原文存进模型可读 artifact，只回分段目录与摘要。崩溃急救/体检/模组维护的白名单加入这四个工具，`crash_rescue.md` 改为先调 `crashSnapshot`。
+- 规则库覆盖 Mixin 注入失败、堆 OOM、Metaspace、Direct Buffer、native thread、Java 版本不匹配、缺前置、重复模组、JAR 损坏、配置解析失败、native 崩溃、世界加载、实体 tick、通用模组加载失败；`tests/meta/agent/` 每类一份结构夹具。
+- `tools/check-agent-release.ps1` 增加知识文件检查：存在、登记进 `agent.qrc`、有效 JSON、无 BOM、≤256 KB、规则 id 唯一与 phase 合法、里程碑三个键齐。
+
+验收：`verify_agent` 1166/1166、`verify_launch` 370/370、`ui_check_agent` 77/77、`mw_check_agent` 91/91；产品目标按 `-Wall -Wextra -Wpedantic -Werror` 编译通过；`check-agent-release.ps1`、`check-i18n.ps1`、`check-test-modules.ps1`、`check-doc-links.ps1`、`check-repo-layout.ps1` PASS。100 MB / 161 万行日志实测：首次行索引 + 读 200 行 98 ms，全文搜索 353 ms（见 [PERFORMANCE](PERFORMANCE.md)）。真实 1.20.1 实例上的崩溃报告与整合包模组集仍需真机复跑（A9）。
+
+限制：
+
+- `logs.search` 在调用线程上顺序扫描：100 MB 约 350 ms，超过 6 s 预算回部分结果并标 `truncated`。没有异步扫描，也不是无阻塞。
+- 首版只做字面量匹配；正则要等带匹配上限的引擎。
+- mixin 归属只读 JAR 声明，声明里的配置名与实际加载的配置不一致时仍会落到 `unknown`。
+- 规则是启发式：置信度只表示"证据类型 + 规则强度"，不是概率；没有匹配规则时 `phase` 为 `unknown`。
 
 ### S5.4 模组兼容性与文件修复（P1）
 
@@ -415,7 +433,8 @@ agent/
 
 | 项 | 状态 |
 | --- | --- |
-| `logs.search` 正则 | S5.3 后段，需匹配上限引擎；首版字面量 + 异常类型 |
+| `logs.search` 正则 | 未做，需匹配上限引擎；首版只有字面量（大小写不敏感） |
+| 日志扫描的异步化 | 未做：在调用线程上扫描，100 MB 约 350 ms，超 6 s 预算截断 |
 | CurseForge 模组修复 | 不在 Stage 5；只接 Modrinth，后续按现有来源表扩展 |
 | 世界问题提交后验证 | 不做；只在副本世界验证，报告写明未在原件验证 |
 | 显卡/驱动修复 | 只分类和建议，不改驱动、系统设置或渲染后端 |

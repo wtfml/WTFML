@@ -6,7 +6,12 @@
 #include "AgentLauncherTools.hpp"
 
 #include "AgentApprovalPolicy.hpp"
+#include "AgentArtifactStore.hpp"
+#include "AgentCrashSnapshot.hpp"
 #include "AgentDiagnosticProjection.hpp"
+#include "AgentKnowledgeRules.hpp"
+#include "AgentLogIndex.hpp"
+#include "AgentMixinOwnership.hpp"
 #include "AgentRedaction.hpp"
 
 #include "../manage/InstanceFiles.hpp"
@@ -15,6 +20,7 @@
 #include "../settings/GlobalJavaSettings.hpp"
 #include "../util/SystemMemory.hpp"
 
+#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
@@ -29,6 +35,19 @@ constexpr int kLogTailLinesDefault = 120;
 constexpr int kLogTailLinesMax = 500;
 constexpr int kModNameLimit = 2000;
 constexpr int kEvidenceExcerpt = 400;
+/// 崩溃快照/全文的读盘上限（docs/dev/AGENT_AUTONOMY.md S5.3：报告 8 MB）。
+constexpr int kSnapshotReadLimit = 8 * 1024 * 1024;
+/// 没有崩溃报告时用的是日志尾，不能把 100 MB 全读进来。
+constexpr int kSnapshotLogTailBytes = 512 * 1024;
+constexpr int kMixinScanMaxJars = 300;
+constexpr int kSegmentLines = 2000;
+constexpr int kMaxSegments = 24;
+constexpr int kSummaryLineChars = 200;
+
+QJsonObject integerField(int maximum) {
+    return QJsonObject{{QStringLiteral("type"), QStringLiteral("integer")},
+                       {QStringLiteral("maximum"), maximum}};
+}
 
 QJsonObject stringField(const QString &type, int maxLength) {
     return QJsonObject{{QStringLiteral("type"), type}, {QStringLiteral("maxLength"), maxLength}};
@@ -94,6 +113,64 @@ bool wantsFull(const Agent::ToolCall &call) {
     return call.arguments.value(QStringLiteral("detail")).toString() == QStringLiteral("full");
 }
 
+QString scrubLine(const QString &text, int *hits) {
+    const AgentRedaction::Result redacted = AgentRedaction::redact(text);
+    if (hits != nullptr) *hits += redacted.hits;
+    return AgentDiagnosticProjection::scrubPaths(redacted.text);
+}
+
+/// 读文件前 @p maxBytes 字节；@p truncated 说明原文件更长（不是读失败）。
+bool readCapped(const QString &path, int maxBytes, QString *text, qint64 *bytes, bool *truncated) {
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) return false;
+    if (bytes != nullptr) *bytes = file.size();
+    QByteArray data = file.read(qint64(maxBytes) + 1);
+    if (truncated != nullptr) *truncated = data.size() > maxBytes;
+    if (data.size() > maxBytes) data.truncate(maxBytes);
+    if (text != nullptr) *text = QString::fromUtf8(data);
+    return true;
+}
+
+/// 读文件末尾 @p maxBytes 字节（日志可以是几百 MB，不能全读）。
+bool readTailCapped(const QString &path, int maxBytes, QString *text, qint64 *bytes,
+                    bool *truncated) {
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) return false;
+    const qint64 size = file.size();
+    if (bytes != nullptr) *bytes = size;
+    if (truncated != nullptr) *truncated = size > maxBytes;
+    if (size > maxBytes) file.seek(size - maxBytes);
+    if (text != nullptr) *text = QString::fromUtf8(file.readAll());
+    return true;
+}
+
+const AgentHostLogSource *pickLogSource(const QList<AgentHostLogSource> &sources,
+                                       const QString &key) {
+    if (sources.isEmpty()) return nullptr;
+    if (key.isEmpty() || key == QStringLiteral("auto")) return &sources.constFirst();
+    for (const AgentHostLogSource &source : sources) {
+        if (source.key == key) return &source;
+    }
+    return nullptr;
+}
+
+/// @p reportId 为空 = 最新一份；非空时只认真实存在的文件名（不做路径拼接）。
+bool pickCrashReport(const QList<AgentHostCrashReport> &reports, const QString &reportId,
+                     AgentHostCrashReport *out) {
+    if (reports.isEmpty()) return false;
+    if (reportId.isEmpty()) {
+        if (out != nullptr) *out = reports.constFirst();
+        return true;
+    }
+    for (const AgentHostCrashReport &report : reports) {
+        if (report.fileName == reportId) {
+            if (out != nullptr) *out = report;
+            return true;
+        }
+    }
+    return false;
+}
+
 }  // namespace
 
 QList<AgentToolSpec> AgentLauncherTools::specs() {
@@ -126,6 +203,49 @@ QList<AgentToolSpec> AgentLauncherTools::specs() {
                      objectSchema({}, {{QStringLiteral("detail"),
                                         enumField({QStringLiteral("summary"),
                                                    QStringLiteral("full")})}})));
+    list.append(spec(QStringLiteral("diagnostics.crashSnapshot"),
+                     QCoreApplication::translate("AgentLauncherTools", "崩溃快照"),
+                     QCoreApplication::translate("AgentLauncherTools", "解析最新一份崩溃报告（或日志尾）：环境、阶段、异常链、"
+                                         "模组嫌疑与命中规则；报告头部提到的模组只算线索。"),
+                     AgentRisk::ReadOnly,
+                     objectSchema({}, {{QStringLiteral("reportId"),
+                                        stringField(QStringLiteral("string"), 128)}})));
+    list.append(spec(QStringLiteral("logs.search"),
+                     QCoreApplication::translate("AgentLauncherTools", "搜索日志"),
+                     QCoreApplication::translate("AgentLauncherTools", "按字面量（大小写不敏感）搜日志，带行号与上下文；"
+                                         "最多 200 条，路径已脱敏。"),
+                     AgentRisk::ReadOnly,
+                     objectSchema({QStringLiteral("query")},
+                                  {{QStringLiteral("query"), stringField(QStringLiteral("string"), 400)},
+                                   {QStringLiteral("source"),
+                                    enumField({QStringLiteral("auto"), QStringLiteral("instance"),
+                                               QStringLiteral("shared"),
+                                               QStringLiteral("launcher")})},
+                                   {QStringLiteral("before"), integerField(10)},
+                                   {QStringLiteral("after"), integerField(10)},
+                                   {QStringLiteral("maxMatches"),
+                                    integerField(AgentLogIndex::maxMatchesLimit())}})));
+    list.append(spec(QStringLiteral("logs.readRange"),
+                     QCoreApplication::translate("AgentLauncherTools", "按行读日志"),
+                     QCoreApplication::translate("AgentLauncherTools", "从第 startLine 行开始读一段日志，最多 500 行；已脱敏。"),
+                     AgentRisk::ReadOnly,
+                     objectSchema({QStringLiteral("startLine")},
+                                  {{QStringLiteral("source"),
+                                    enumField({QStringLiteral("auto"), QStringLiteral("instance"),
+                                               QStringLiteral("shared"),
+                                               QStringLiteral("launcher")})},
+                                   {QStringLiteral("startLine"),
+                                    QJsonObject{{QStringLiteral("type"), QStringLiteral("integer")}}},
+                                   {QStringLiteral("lineCount"),
+                                    integerField(AgentLogIndex::maxLinesLimit())}})));
+    list.append(spec(QStringLiteral("crash.readFull"),
+                     QCoreApplication::translate("AgentLauncherTools", "读崩溃报告全文"),
+                     QCoreApplication::translate("AgentLauncherTools", "把整份崩溃报告脱敏后存成 artifact，只返回分段目录与摘要；"
+                                         "原文用 artifact.read 按偏移读。"),
+                     AgentRisk::ReadOnly,
+                     objectSchema({QStringLiteral("reportId")},
+                                  {{QStringLiteral("reportId"),
+                                    stringField(QStringLiteral("string"), 128)}})));
     list.append(spec(QStringLiteral("instance.integrity"), QStringLiteral("完整性体检"),
                      QStringLiteral("按现有完整性判据扫一遍；只给分组计数，不给路径；可能耗时数秒。"),
                      AgentRisk::ReadOnly, objectSchema({}, {})));
@@ -361,7 +481,13 @@ AgentToolResult AgentLauncherTools::invoke(const Agent::ToolCall &call) {
     }
     if (internal == QStringLiteral("diagnostics.crash")) return handleCrashDiagnosis(routed, context);
     if (internal == QStringLiteral("logs.tail")) return handleLogsTail(routed, context);
+    if (internal == QStringLiteral("logs.search")) return handleLogsSearch(routed, context);
+    if (internal == QStringLiteral("logs.readRange")) return handleLogsReadRange(routed, context);
     if (internal == QStringLiteral("crash.list")) return handleCrashList(routed, context);
+    if (internal == QStringLiteral("diagnostics.crashSnapshot")) {
+        return handleCrashSnapshot(routed, context);
+    }
+    if (internal == QStringLiteral("crash.readFull")) return handleCrashReadFull(routed, context);
     if (internal == QStringLiteral("instance.integrity")) return handleIntegrity(routed, context);
     if (internal == QStringLiteral("mods.list")) return handleModsList(routed, context);
     if (internal == QStringLiteral("mods.setEnabled")) return handleModsSetEnabled(routed, context);
@@ -583,6 +709,326 @@ AgentToolResult AgentLauncherTools::handleCrashList(const Agent::ToolCall &call,
                        QStringLiteral("crash-reports"), preview,
                        QStringLiteral("崩溃报告清单"),
                        QStringLiteral("崩溃报告清单：%1 份").arg(reports.size()), preview, data);
+}
+
+AgentToolResult AgentLauncherTools::handleLogsSearch(const Agent::ToolCall &call,
+                                                     const AgentToolContext &context) {
+    if (context.instanceId.isEmpty()) {
+        return errorResult(Agent::ErrorKind::ToolError,
+                           QCoreApplication::translate("AgentLauncherTools", "会话还没有锁定实例。"));
+    }
+    QList<AgentHostLogSource> sources;
+    QString problem;
+    if (!m_host->logSources(context.instanceId, &sources, &problem)) {
+        return errorResult(Agent::ErrorKind::ToolError, problem);
+    }
+    const AgentHostLogSource *source =
+        pickLogSource(sources, call.arguments.value(QStringLiteral("source")).toString());
+    if (source == nullptr) {
+        return errorResult(Agent::ErrorKind::ToolError,
+                           QCoreApplication::translate("AgentLauncherTools", "没有这份日志，或实例还没有日志文件。"));
+    }
+    AgentLogIndex::SearchOptions options;
+    options.query = call.arguments.value(QStringLiteral("query")).toString();
+    options.before = call.arguments.value(QStringLiteral("before")).toInt(0);
+    options.after = call.arguments.value(QStringLiteral("after")).toInt(0);
+    options.maxMatches = call.arguments.value(QStringLiteral("maxMatches")).toInt(50);
+    AgentLogIndex::SearchResult found;
+    if (!AgentLogIndex::search(source->path, options, &found, &problem)) {
+        return errorResult(Agent::ErrorKind::ToolError, problem);
+    }
+    int redactionHits = 0;
+    QJsonArray matches;
+    QString preview;
+    for (const AgentLogIndex::Match &match : found.matches) {
+        QJsonArray contextLines;
+        for (const AgentLogIndex::Line &line : match.context) {
+            contextLines.append(QJsonObject{
+                {QStringLiteral("line"), line.number},
+                {QStringLiteral("text"), scrubLine(line.text, &redactionHits)}});
+        }
+        const QString text = scrubLine(match.text, &redactionHits);
+        matches.append(QJsonObject{{QStringLiteral("line"), match.line},
+                                   {QStringLiteral("text"), text},
+                                   {QStringLiteral("context"), contextLines}});
+        preview += QStringLiteral("%1: %2\n").arg(match.line).arg(text);
+    }
+    QList<AgentDiagnosticProjection::Evidence> evidence;
+    addEvidence(&evidence, QStringLiteral("log"), source->label,
+                QCoreApplication::translate("AgentLauncherTools", "搜索命中 %1 处")
+                    .arg(found.totalMatches),
+                contentDigest(preview));
+    const QJsonObject data{
+        {QStringLiteral("source"), source->label},
+        {QStringLiteral("query"), options.query},
+        {QStringLiteral("totalMatches"), found.totalMatches},
+        {QStringLiteral("returned"), int(found.matches.size())},
+        {QStringLiteral("maxMatches"), options.maxMatches},
+        {QStringLiteral("bytes"), double(found.bytes)},
+        {QStringLiteral("scannedLines"), found.scannedLines},
+        {QStringLiteral("truncated"), found.truncated},
+        {QStringLiteral("budgetExceeded"), found.budgetExceeded},
+        {QStringLiteral("redactionHits"), redactionHits},
+        {QStringLiteral("matches"), matches},
+        {QStringLiteral("evidence"), evidenceJson(evidence)}};
+    const QString summary = QCoreApplication::translate("AgentLauncherTools", "日志搜索：命中 %1 处（返回 %2 处）")
+                                .arg(found.totalMatches)
+                                .arg(found.matches.size());
+    return deliverRead(context, call, AgentEgressPolicy::Kind::Log, source->label, preview,
+                       QCoreApplication::translate("AgentLauncherTools", "搜索日志"), summary,
+                       AgentRedaction::preview(preview, 4000), data);
+}
+
+AgentToolResult AgentLauncherTools::handleLogsReadRange(const Agent::ToolCall &call,
+                                                        const AgentToolContext &context) {
+    if (context.instanceId.isEmpty()) {
+        return errorResult(Agent::ErrorKind::ToolError,
+                           QCoreApplication::translate("AgentLauncherTools", "会话还没有锁定实例。"));
+    }
+    QList<AgentHostLogSource> sources;
+    QString problem;
+    if (!m_host->logSources(context.instanceId, &sources, &problem)) {
+        return errorResult(Agent::ErrorKind::ToolError, problem);
+    }
+    const AgentHostLogSource *source =
+        pickLogSource(sources, call.arguments.value(QStringLiteral("source")).toString());
+    if (source == nullptr) {
+        return errorResult(Agent::ErrorKind::ToolError,
+                           QCoreApplication::translate("AgentLauncherTools", "没有这份日志，或实例还没有日志文件。"));
+    }
+    const int startLine = call.arguments.value(QStringLiteral("startLine")).toInt();
+    if (startLine < 1) {
+        return errorResult(Agent::ErrorKind::ToolError,
+                           QCoreApplication::translate("AgentLauncherTools", "startLine 从 1 开始。"));
+    }
+    const int lineCount = call.arguments.value(QStringLiteral("lineCount")).toInt(200);
+    AgentLogIndex::LineRange range;
+    if (!AgentLogIndex::readRange(source->path, startLine, lineCount,
+                                  AgentLogIndex::maxCharsLimit(), &range, &problem)) {
+        return errorResult(Agent::ErrorKind::ToolError, problem);
+    }
+    int redactionHits = 0;
+    QJsonArray lines;
+    QString preview;
+    for (const AgentLogIndex::Line &line : range.lines) {
+        const QString text = scrubLine(line.text, &redactionHits);
+        lines.append(QJsonObject{{QStringLiteral("line"), line.number},
+                                 {QStringLiteral("text"), text}});
+        preview += text;
+        preview += QLatin1Char('\n');
+    }
+    QList<AgentDiagnosticProjection::Evidence> evidence;
+    addEvidence(&evidence, QStringLiteral("log"), source->label,
+                QCoreApplication::translate("AgentLauncherTools", "第 %1–%2 行（共 %3 行）")
+                    .arg(range.firstLine)
+                    .arg(range.lastLine)
+                    .arg(range.totalLines),
+                contentDigest(preview));
+    const QJsonObject data{
+        {QStringLiteral("source"), source->label},
+        {QStringLiteral("firstLine"), range.firstLine},
+        {QStringLiteral("lastLine"), range.lastLine},
+        {QStringLiteral("totalLines"), range.totalLines},
+        {QStringLiteral("truncated"), range.truncated},
+        {QStringLiteral("redactionHits"), redactionHits},
+        {QStringLiteral("lines"), lines},
+        {QStringLiteral("evidence"), evidenceJson(evidence)}};
+    const QString summary = QCoreApplication::translate("AgentLauncherTools", "日志第 %1–%2 行（共 %3 行）")
+                                .arg(range.firstLine)
+                                .arg(range.lastLine)
+                                .arg(range.totalLines);
+    return deliverRead(context, call, AgentEgressPolicy::Kind::Log, source->label, preview,
+                       QCoreApplication::translate("AgentLauncherTools", "按行读日志"), summary,
+                       AgentRedaction::preview(preview, 4000), data);
+}
+
+AgentToolResult AgentLauncherTools::handleCrashSnapshot(const Agent::ToolCall &call,
+                                                        const AgentToolContext &context) {
+    if (context.instanceId.isEmpty()) {
+        return errorResult(Agent::ErrorKind::ToolError,
+                           QCoreApplication::translate("AgentLauncherTools", "会话还没有锁定实例。"));
+    }
+    QString problem;
+    AgentDiagnosticProjection::InstanceFacts facts;
+    if (!m_host->instanceFacts(context.instanceId, &facts, &problem)) {
+        facts.instanceId = context.instanceId;
+    }
+    facts.instanceId = context.instanceId;
+
+    const QString requestedId = call.arguments.value(QStringLiteral("reportId")).toString();
+    QList<AgentHostCrashReport> reports;
+    m_host->crashReports(context.instanceId, &reports, &problem);
+    AgentHostCrashReport report;
+    QString text;
+    QString label;
+    QString sourceKind;
+    QString reportId;
+    qint64 bytes = 0;
+    bool truncated = false;
+    if (pickCrashReport(reports, requestedId, &report)) {
+        if (!readCapped(report.path, kSnapshotReadLimit, &text, &bytes, &truncated)) {
+            return errorResult(Agent::ErrorKind::ToolError,
+                               QCoreApplication::translate("AgentLauncherTools", "崩溃报告读不动。"));
+        }
+        label = report.label;
+        sourceKind = QStringLiteral("crash-report");
+        reportId = report.fileName;
+    } else if (!requestedId.isEmpty()) {
+        return errorResult(Agent::ErrorKind::ToolError,
+                           QCoreApplication::translate("AgentLauncherTools", "找不到这份崩溃报告；先用 crash.list 看有哪些。"));
+    } else {
+        // 没有崩溃报告也可能崩过（进程直接死掉）：退回日志尾，并标明来源是日志。
+        QList<AgentHostLogSource> sources;
+        if (!m_host->logSources(context.instanceId, &sources, &problem) || sources.isEmpty()) {
+            return errorResult(Agent::ErrorKind::ToolError,
+                               QCoreApplication::translate("AgentLauncherTools", "没有崩溃报告，也没有可读的游戏日志。"));
+        }
+        const AgentHostLogSource &source = sources.constFirst();
+        if (!readTailCapped(source.path, kSnapshotLogTailBytes, &text, &bytes, &truncated)) {
+            return errorResult(Agent::ErrorKind::ToolError,
+                               QCoreApplication::translate("AgentLauncherTools", "日志读不动。"));
+        }
+        label = source.label;
+        sourceKind = QStringLiteral("game-log");
+    }
+
+    AgentCrashSnapshot::SnapshotInput input;
+    input.parsed = AgentCrashSnapshot::parse(text, truncated);
+    input.rules = AgentKnowledge::loadCrashRules();
+    input.fallback.minecraftVersion = facts.gameVersion;
+    input.fallback.loader = facts.loaderName;
+    input.fallback.loaderVersion = facts.loaderVersion;
+    input.fallback.javaMajor = facts.usedJavaMajor;
+    input.sourceKind = sourceKind;
+    input.sourceLabel = label;
+    input.reportId = reportId;
+    input.bytes = bytes;
+    for (const AgentCrashSnapshot::ModEntry &entry : input.parsed.modList) {
+        input.modVersions.insert(entry.modId.toLower(), entry.version);
+    }
+    // 只在文本真的点名了 mixin 配置时才扫 JAR：那是这个工具里唯一要起外部进程的一步。
+    if (!input.parsed.mixinConfigs.isEmpty()) {
+        QString modsPath;
+        QString mixinProblem;
+        if (m_host->modsDirectory(context.instanceId, &modsPath, &mixinProblem)) {
+            int skipped = 0;
+            const QList<AgentMixinOwnership::Entry> owners =
+                AgentMixinOwnership::scan(modsPath, kMixinScanMaxJars, &skipped, &mixinProblem);
+            for (const AgentMixinOwnership::Entry &entry : owners) {
+                if (!entry.modId.isEmpty()) input.mixinOwners.insert(entry.config, entry.modId);
+            }
+        }
+    }
+    const AgentCrashSnapshot::Snapshot snapshot = AgentCrashSnapshot::build(input);
+    const QJsonObject data = snapshot.json;
+    const QJsonObject crash = data.value(QStringLiteral("crash")).toObject();
+    const QString exception = crash.value(QStringLiteral("exception")).toString();
+    const QString phase = crash.value(QStringLiteral("phase")).toString();
+    const QString summary =
+        QCoreApplication::translate("AgentLauncherTools", "崩溃快照：%1，阶段 %2，命中 %3 条规则，嫌疑 %4 个")
+            .arg(exception.isEmpty()
+                     ? QCoreApplication::translate("AgentLauncherTools", "未识别异常")
+                     : exception,
+                 phase)
+            .arg(snapshot.matchedRuleIds.size())
+            .arg(data.value(QStringLiteral("suspects")).toArray().size());
+    const QString content = QString::fromUtf8(QJsonDocument(data).toJson(QJsonDocument::Compact));
+    return deliverRead(context, call, AgentEgressPolicy::Kind::CrashReport, label, content,
+                       QCoreApplication::translate("AgentLauncherTools", "崩溃快照"), summary, summary, data);
+}
+
+AgentToolResult AgentLauncherTools::handleCrashReadFull(const Agent::ToolCall &call,
+                                                        const AgentToolContext &context) {
+    if (context.instanceId.isEmpty()) {
+        return errorResult(Agent::ErrorKind::ToolError,
+                           QCoreApplication::translate("AgentLauncherTools", "会话还没有锁定实例。"));
+    }
+    const QString reportId = call.arguments.value(QStringLiteral("reportId")).toString();
+    QList<AgentHostCrashReport> reports;
+    QString problem;
+    if (!m_host->crashReports(context.instanceId, &reports, &problem)) {
+        return errorResult(Agent::ErrorKind::ToolError, problem);
+    }
+    AgentHostCrashReport report;
+    if (reportId.isEmpty() || !pickCrashReport(reports, reportId, &report)) {
+        return errorResult(Agent::ErrorKind::ToolError,
+                           QCoreApplication::translate("AgentLauncherTools", "找不到这份崩溃报告；先用 crash.list 看有哪些。"));
+    }
+    QString raw;
+    qint64 bytes = 0;
+    bool truncated = false;
+    if (!readCapped(report.path, kSnapshotReadLimit, &raw, &bytes, &truncated)) {
+        return errorResult(Agent::ErrorKind::ToolError,
+                           QCoreApplication::translate("AgentLauncherTools", "崩溃报告读不动。"));
+    }
+    // 本机路径先换掉再进 artifact：artifact.read 只做凭据遮挡，不管路径。
+    const QString text = AgentDiagnosticProjection::scrubPaths(raw);
+    AgentArtifactStore artifacts;
+    QString artifactId;
+    QString artifactProblem;
+    if (!artifacts.putModelReadable(context.sessionId, text, &artifactId, &artifactProblem)) {
+        return errorResult(Agent::ErrorKind::ToolError, artifactProblem);
+    }
+
+    const QStringList lines = text.split(QLatin1Char('\n'));
+    QJsonArray segments;
+    QString firstSummary;
+    int offset = 0;
+    int segmentIndex = 0;
+    for (int start = 0; start < lines.size() && segmentIndex < kMaxSegments;) {
+        const int end = qMin(start + kSegmentLines, int(lines.size()));
+        QStringList picked;
+        for (int i = start; i < end && picked.size() < 2; ++i) {
+            const QString trimmed = lines.at(i).trimmed();
+            if (trimmed.isEmpty()) continue;
+            const bool heading = trimmed.startsWith(QStringLiteral("--")) ||
+                                 trimmed.startsWith(QStringLiteral("Caused by:")) ||
+                                 trimmed.startsWith(QStringLiteral("Description:")) ||
+                                 trimmed.contains(QStringLiteral("Exception")) ||
+                                 trimmed.contains(QStringLiteral("Error"));
+            if (heading) {
+                picked.append(AgentRedaction::redact(trimmed).text.left(kSummaryLineChars));
+            }
+        }
+        for (int i = start; i < end && picked.size() < 2; ++i) {
+            const QString trimmed = lines.at(i).trimmed();
+            if (!trimmed.isEmpty()) {
+                picked.append(AgentRedaction::redact(trimmed).text.left(kSummaryLineChars));
+            }
+        }
+        const QString segmentSummary = picked.join(QStringLiteral(" / "));
+        if (firstSummary.isEmpty()) firstSummary = segmentSummary;
+        int segmentChars = 0;
+        for (int i = start; i < end; ++i) segmentChars += lines.at(i).size() + 1;
+        segments.append(QJsonObject{{QStringLiteral("index"), segmentIndex + 1},
+                                    {QStringLiteral("firstLine"), start + 1},
+                                    {QStringLiteral("lastLine"), end},
+                                    {QStringLiteral("artifactOffset"), offset},
+                                    {QStringLiteral("summary"), segmentSummary}});
+        offset += segmentChars;
+        start = end;
+        ++segmentIndex;
+    }
+    const bool segmentsTruncated =
+        segmentIndex >= kMaxSegments && segmentIndex * kSegmentLines < lines.size();
+    QList<AgentDiagnosticProjection::Evidence> evidence;
+    addEvidence(&evidence, QStringLiteral("crash-report"), report.label, firstSummary,
+                contentDigest(text));
+    const QJsonObject data{{QStringLiteral("reportId"), report.fileName},
+                           {QStringLiteral("source"), report.label},
+                           {QStringLiteral("bytes"), double(bytes)},
+                           {QStringLiteral("totalLines"), int(lines.size())},
+                           {QStringLiteral("truncated"), truncated || segmentsTruncated},
+                           {QStringLiteral("artifactId"), artifactId},
+                           {QStringLiteral("segments"), segments},
+                           {QStringLiteral("evidence"), evidenceJson(evidence)}};
+    const QString summary =
+        QCoreApplication::translate("AgentLauncherTools", "崩溃报告全文：%1 行、%2 段（原文已脱敏进 artifact）")
+                                .arg(lines.size())
+                                .arg(segments.size());
+    return deliverRead(context, call, AgentEgressPolicy::Kind::CrashReport, report.label,
+                       firstSummary, QCoreApplication::translate("AgentLauncherTools", "崩溃报告全文"), summary,
+        summary, data);
 }
 
 AgentToolResult AgentLauncherTools::handleIntegrity(const Agent::ToolCall &call,
