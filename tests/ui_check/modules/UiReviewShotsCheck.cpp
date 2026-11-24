@@ -2097,7 +2097,7 @@ MainWindowUI::HomeQuickItem siteHomeItem(const QString &key, const QString &name
 
 QString siteDemoInstanceName(int index) {
     switch (index) {
-    case 0: return demoText("光影与优化-1.21.1", "Shaders & Performance 1.21.1");
+    case 0: return demoText("光影与优化-1.21.1", "Shaders 1.21.1");
     case 1: return demoText("机械动力-1.20.1", "Create 1.20.1");
     case 2: return demoText("科技整合-1.21.1", "Tech Pack 1.21.1");
     case 3: return demoText("原版生存-1.21.4", "Vanilla Survival 1.21.4");
@@ -2124,10 +2124,11 @@ void fillSiteHome(MainWindowUI &ui) {
                      true)};
     ui.setHomeQuickRows({all.at(0)}, {all.at(1), all.at(2)}, {all.at(0), all.at(1), all.at(3)});
     ui.setHomeQuickMode(MainWindowUI::HomeQuickMode::Current);
-    if (isEnglishDemo()) {
-        ui.setHomeHeroQuote(QStringLiteral("Imagination is more important than knowledge."),
-                            QStringLiteral("— Albert Einstein"), Theme::QuoteScript::Latin);
-    }
+    // 中英文都给一条演示一言（和 shot-home 同一来源），look-home-* 两种语言版面才一致。
+    ui.setHomeHeroQuote(
+        demoText("大鹏一日同风起，扶摇直上九万里。", "Imagination is more important than knowledge."),
+        demoText("— 李白《上李邕》", "— Albert Einstein"),
+        isEnglishDemo() ? Theme::QuoteScript::Latin : Theme::QuoteScript::Han);
     if (ui.getHomeAccountLabel() != nullptr) ui.getHomeAccountLabel()->setText(QStringLiteral("Steve"));
     if (ui.getHomeAccountTypeLabel() != nullptr) {
         ui.getHomeAccountTypeLabel()->setText(MainWindowUI::accountTypeOnlineText());
@@ -2317,8 +2318,8 @@ QJsonObject siteApprovalRequest() {
         {QStringLiteral("diff"),
          QStringLiteral("- renderDistance:8\n- ao:false\n+ renderDistance:12\n+ ao:true")},
         {QStringLiteral("backupHint"),
-         demoText("写之前会把原文件另存为 options.txt.bak。",
-                  "Original file will be backed up as options.txt.bak before writing.")},
+         demoText("写入前会将原文件备份为 options.txt.bak。",
+                  "The original file will be backed up as options.txt.bak before writing.")},
         {QStringLiteral("sessionAllowAvailable"), false},
         {QStringLiteral("egress"),
          QJsonObject{{QStringLiteral("kind"), demoText("本机文件", "Local file")},
@@ -2643,13 +2644,12 @@ int runSite(QApplication &app, const ShotOptions &options) {
                      "要下载的文件：87 个\n安装到：D:\\Games\\WTFML\\instances\\光影与优化-1.21.1\n\n"
                      "是否开始导入？",
                      "Modpack: Fabulously Optimized 6.1\nMinecraft: 1.21.1 + Fabric 0.16.9\n"
-                     "Files to download: 87\nInstall to: D:\\Games\\WTFML\\instances\\Shaders & Performance 1.21.1\n\n"
+                     "Files to download: 87\nInstall to: D:\\Games\\WTFML\\instances\\Shaders 1.21.1\n\n"
                      "Start import?"),
             {demoText("是", "Yes"), demoText("否", "No")}, 0, -1, &window);
-        box.setNote(demoText("冲突：包里自带 OptiFine 兼容补丁，与 Sodium 不能同时启用 —— "
-                             "导入后会在「模组」页把冲突的那一份标出来，不会删除。",
-                             "Conflict: the pack includes an OptiFine compatibility patch that cannot be enabled "
-                             "alongside Sodium — it will be marked in the Mods tab after import without deleting it."));
+        box.setNote(demoText("包内的 OptiFine 兼容补丁与 Sodium 冲突。导入后将在「模组」页标出该文件，不会删除。",
+                             "The OptiFine compatibility patch in this pack conflicts with Sodium. "
+                             "After import it will be marked on the Mods page and will not be deleted."));
         QTimer::singleShot(200, &box, [&] {
             pump();
             std::printf("  导入检查：提示「%s」%dx%d，备注 %d 字\n",
@@ -2723,7 +2723,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
             // 版本升级：另存副本 / 原地升级两颗按钮 + 快照与校验的说明。
             dialog.setUpgradeContext(
                 demoText("当前实例：光影与优化-1.21.1\nMinecraft 1.21.1 / Fabric 0.16.9",
-                         "Current instance: Shaders & Performance 1.21.1\nMinecraft 1.21.1 / Fabric 0.16.9"));
+                         "Current instance: Shaders 1.21.1\nMinecraft 1.21.1 / Fabric 0.16.9"));
             dialog.setTransferTargets(
                 QStringLiteral("upgrade"),
                 {{demoText("Minecraft 1.21.4（未安装）", "Minecraft 1.21.4 (not installed)"), QStringLiteral("1.21.4")},
@@ -2731,14 +2731,14 @@ int runSite(QApplication &app, const ShotOptions &options) {
             dialog.setTransferPlan(
                 QStringLiteral("upgrade"),
                 demoText("升级副本计划：游戏版本不同\n\n"
-                         "将创建一份升级副本，并把选中的 8 项（1,284 个文件 / 2.6 GB）搬进去。\n\n"
-                         "只增加文件，不删除、不覆盖目标里已有的同名文件。\n\n"
+                         "将创建升级副本，并复制选中的 8 项（1,284 个文件 / 2.6 GB）。\n\n"
+                         "仅添加文件，不会删除或覆盖目标中已有的同名文件。\n\n"
                          "兼容性结论：游戏版本不同\n\n"
-                         "原地升级会先创建完整 ZIP 快照并逐文件校验，确认后才替换；"
+                         "原地升级会先创建完整 ZIP 快照并逐文件校验，确认后再替换；"
                          "原目录另行保留，可回滚。",
                          "Upgrade copy plan: different game version\n\n"
                          "An upgrade copy will be created with the 8 selected items (1,284 files / 2.6 GB).\n\n"
-                         "Files will only be added; existing files with the same name in the target will not be deleted or overwritten.\n\n"
+                         "Files are only added. Existing files in the target are not deleted or overwritten.\n\n"
                          "Compatibility: different game version\n\n"
                          "In-place upgrade creates a full ZIP snapshot and verifies every file before replacing; "
                          "the original folder is kept for rollback."));
@@ -2800,14 +2800,13 @@ int runSite(QApplication &app, const ShotOptions &options) {
             {
                 InlineMessageBox box(
                     MessageKind::Question, QCoreApplication::translate("ModpackExportController", "是否继续导出"),
-                    demoText("3 个文件在 Modrinth 与 CurseForge 都没查到出处：\n"
+                    demoText("以下 3 个文件在 Modrinth 与 CurseForge 上均未找到来源：\n"
                              "mods/optifine-compat-1.0.3.jar\nmods/自定义合成表.jar\nconfig/rare-recipes.json\n\n"
-                             "继续的话，认不出出处的文件会原样打进包里：别人装上照样能用，"
-                             "只是启动器不能替他单独更新或者去重。",
-                             "3 files could not be matched on Modrinth or CurseForge:\n"
+                             "继续导出会保留来源未知的文件。导入后，启动器无法单独更新这些文件或去除重复项。",
+                             "3 files were not found on Modrinth or CurseForge:\n"
                              "mods/optifine-compat-1.0.3.jar\nmods/custom-recipes.jar\nconfig/rare-recipes.json\n\n"
-                             "If you continue, unrecognized files will be bundled as-is: others can still play, "
-                             "though the launcher cannot update or deduplicate them individually."),
+                             "Files from unknown sources will be kept in the export. After import, the launcher "
+                             "cannot update them individually or remove duplicates."),
                     {QCoreApplication::translate("ModpackExportController", "继续导出"),
                      QCoreApplication::translate("ModpackExportController", "取消")},
                     0, -1, &window);
@@ -2963,7 +2962,7 @@ int runSite(QApplication &app, const ShotOptions &options) {
             ask.id = QStringLiteral("m1");
             ask.user = true;
             ask.content = demoText("光影与优化-1.21.1 有点卡，帮我把渲染距离调到 12，顺便开平滑光照。",
-                                   "Shaders & Performance 1.21.1 feels laggy — please set render distance to 12 and enable smooth lighting.");
+                                   "Shaders 1.21.1 feels laggy — please set render distance to 12 and enable smooth lighting.");
             AgentView::Message answer;
             answer.id = QStringLiteral("m2");
             answer.content = demoText(
