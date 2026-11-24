@@ -524,7 +524,7 @@
 
 **维护工作流与启动器工具（Stage 2B）**
 
-- 模式胶囊：自由对话 / 实例体检 / 崩溃急救 / 版本升级 / 模组维护。模式记在会话里，换会话跟着会话走；换模式作废旧计划、证据保留。
+- 模式胶囊：自由对话 / 实例体检 / 崩溃急救 / 版本升级 / 模组维护。模式记在会话里，换会话跟着会话走；换模式作废旧计划、证据保留。每个模式有显式工具白名单：自由对话不含事务、测试启动、模组修复与二分；这些只在崩溃急救/模组维护里放行（且要有已批准计划）。提示词 V2 把角色/条款放在 `assets/agent/prompts/`、崩溃签名放在 `assets/agent/knowledge/`，`common` ≤4 KB、单技能 ≤8 KB、组合 ≤16 KB。
 - 实例体检只读：跑启动诊断、完整性体检、模组统计、日志结尾，结论分级并附证据 id；不写盘。
 - 崩溃急救：先调 `diagnostics.crashSnapshot` 拿环境、崩溃阶段、异常链、命中规则与模组嫌疑（规则在 `assets/agent/knowledge/`），日志按关键字/行号检索（`logs.search` / `logs.readRange`），整份报告走 `crash.readFull` 的 artifact；按现有规则分类（OOM、Java 版本不匹配、缺前置、文件损坏、配置错误、Mixin 冲突），只按现有规则判断、不猜具体模组；只被提到的模组置信度不超过 0.4，不标成根因；修复必须先用结构化计划卡提交，批准后逐步执行、每步单独审批，最后跑验证步并提交报告。没有证据不能报完成；某步失败后写工具全部锁住。需要实际启动验证时用隔离测试启动，只动工作区。
 - 模组兼容与修复（Stage 5.4）：`mods.analyzeCompatibility` 读每个模组 JAR 的本地声明（加载器、游戏/加载器/Java 范围、required 前置）对照实例，指出加载器不匹配、版本不兼容、缺前置（区分"未安装"和"只有停用文件"）、重复、损坏；`mods.verifyFiles` 逐个查 zip 结构、大小与 SHA-1。需要平台结论时先确认，只把 SHA-1 发给 Modrinth（不发文件名），严格模式每次确认，`offline=true` / `platform=false` 完全不发。修复只在事务工作区里做：`mods.installFix` 按 projectId/versionId/expectedSha1 解析地址、下载到暂存目录、校验大小与 SHA-1 后才写进工作区，可补齐必需前置，任一步失败工作区不变；`instance.repairCore` 走现有 `repairVersionFiles()` 重下客户端 jar、库和资源索引，每次审批、事务活动期间拒绝。平台只接 Modrinth。说不清是哪几个模组时，`mods.bisect` 在事务工作区里用依赖感知 delta debugging 反复启停并启动游戏：加载器/API 前置始终启用，嫌疑模组先试，每轮重置 `config/` 与 `options.txt`、清日志，结果按 `single`/`pair`/`set`/`not_found`/`not_reproducible`/`inconclusive` 报，默认 8 次、最多 20 次启动、45 分钟内；结束后恢复工作区基线。二分只定位不修复，不下载、不改世界、不写原实例。

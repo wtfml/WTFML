@@ -115,6 +115,11 @@ if (-not (Test-Path -LiteralPath $promptQrc)) {
             if ($bytes.Length -gt 65536) {
                 $violations.Add("技能提示词超过 64 KB：$($_.Name)")
             }
+            # S5.6 预算：common ≤4 KB、单个技能 ≤8 KB；超预算的规则进知识库或工具。
+            $budget = if ($_.Name -eq 'common.md') { 4096 } else { 8192 }
+            if ($bytes.Length -gt $budget) {
+                $violations.Add("技能提示词超过预算（${budget} 字节）：$($_.Name)")
+            }
             if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
                 $violations.Add("技能提示词带 UTF-8 BOM：$($_.Name)")
             }
@@ -206,6 +211,30 @@ if (-not (Test-Path -LiteralPath $knowledgeDir)) {
                 }
             }
         }
+    }
+}
+
+# --- 3c. 提示词里不许背崩溃类型表（S5.6）-------------------------------------
+$knowledgeRules = Join-Path $repo 'assets/agent/knowledge/crash_rules.json'
+if ((Test-Path -LiteralPath $knowledgeRules) -and (Test-Path -LiteralPath $promptDir)) {
+    try {
+        $ruleData = Get-Content -LiteralPath $knowledgeRules -Raw | ConvertFrom-Json -AsHashtable
+        $signatures = [Collections.Generic.List[string]]::new()
+        foreach ($rule in @($ruleData.rules)) {
+            foreach ($needle in @($rule.match) + @($rule.requires)) {
+                if ($needle -is [string] -and $needle.Length -ge 8) { $signatures.Add($needle) }
+            }
+        }
+        foreach ($file in Get-ChildItem -LiteralPath $promptDir -File -Filter *.md) {
+            $text = Get-Content -LiteralPath $file.FullName -Raw
+            foreach ($needle in $signatures) {
+                if ($text.Contains($needle)) {
+                    $violations.Add("提示词里出现崩溃签名（应放在知识库）：$($file.Name) ← $needle")
+                }
+            }
+        }
+    } catch {
+        $violations.Add('读不了崩溃规则，无法核对提示词里的签名清单')
     }
 }
 

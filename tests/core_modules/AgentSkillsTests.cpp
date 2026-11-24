@@ -5,8 +5,10 @@
 
 #include "Support.hpp"
 
+#include "agent/AgentKnowledgeRules.hpp"
 #include "agent/AgentPromptLibrary.hpp"
 #include "agent/AgentSkill.hpp"
+#include "agent/AgentTool.hpp"
 
 void runAgentSkillsTests() {
     const QList<AgentSkill> skills = AgentSkillRegistry::builtins();
@@ -15,7 +17,23 @@ void runAgentSkillsTests() {
     const AgentSkill general = AgentSkillRegistry::find(QStringLiteral("general"));
     check(general.id == QStringLiteral("general"), "技能：general 可查");
     check(general.name == QStringLiteral("自由对话"), "技能：名字是自由对话");
-    check(general.allowedTools.isEmpty(), "技能：自由对话不限制工具集合");
+    check(!general.allowedTools.isEmpty(), "技能：自由对话有显式工具白名单（S5.6）");
+    check(general.allowedTools.contains(QStringLiteral("fs.read")) &&
+              general.allowedTools.contains(QStringLiteral("diagnostics.crashSnapshot")) &&
+              general.allowedTools.contains(QStringLiteral("web.fetch")) &&
+              general.allowedTools.contains(QStringLiteral("mcp__*")),
+          "技能：自由对话保留文件/诊断/联网/MCP 工具");
+    check(!general.allowedTools.contains(QStringLiteral("instance.testLaunch")) &&
+              !general.allowedTools.contains(QStringLiteral("repair.begin")) &&
+              !general.allowedTools.contains(QStringLiteral("repair.finish")) &&
+              !general.allowedTools.contains(QStringLiteral("mods.installFix")) &&
+              !general.allowedTools.contains(QStringLiteral("mods.bisect")) &&
+              !general.allowedTools.contains(QStringLiteral("instance.repairCore")) &&
+              !general.allowedTools.contains(QStringLiteral("workflow.submitPlan")),
+          "技能：自由对话不带 Stage 5 修复与计划工具");
+    check(general.allows(QStringLiteral("mcp__server__tool")) &&
+              !general.allows(QStringLiteral("mods.bisect")),
+          "技能：通配白名单只放行对应前缀");
     check(!general.requiresPlan, "技能：自由对话不需要提交计划");
     check(general.promptId == QStringLiteral("general"), "提示词：general 的资源 id");
     check(general.promptVersion >= 1, "提示词：general 有版本号");
@@ -24,6 +42,9 @@ void runAgentSkillsTests() {
     check(general.systemPrompt.contains(QStringLiteral("工具")) &&
               general.systemPrompt.contains(QStringLiteral("用户确认")),
           "技能：系统提示与实际下发的工具一致（可读、写入须确认）");
+    check(general.systemPrompt.contains(QStringLiteral("没有事务")) &&
+              general.systemPrompt.contains(QStringLiteral("崩溃急救")),
+          "提示词：自由对话说明修复要切模式");
     check(general.systemPrompt.contains(QStringLiteral("证据")) &&
               general.systemPrompt.contains(QStringLiteral("无法确认")),
           "技能：系统提示要求引用证据");
@@ -94,6 +115,94 @@ void runAgentSkillsTests() {
               "提示词：每个技能不超过硬上限", skill.id);
         check(skill.systemPrompt.contains(QStringLiteral("证据 id")),
               "提示词：共享规则覆盖每个技能", skill.id);
+    }
+
+    // ------------------------------------------------------------ Prompt V2（S5.6）
+    {
+        const AgentSkill crashV2 = AgentSkillRegistry::find(QStringLiteral("crash-rescue"));
+        // 六类条款：执行优先、验证、回滚、证据、禁止猜测、审批边界。
+        check(crashV2.systemPrompt.contains(QStringLiteral("直接做")),
+              "提示词 V2：崩溃急救写了执行优先", crashV2.id);
+        check(crashV2.systemPrompt.contains(QStringLiteral("repair.verify")) ||
+                  crashV2.systemPrompt.contains(QStringLiteral("验证")),
+              "提示词 V2：崩溃急救要求验证");
+        check(crashV2.systemPrompt.contains(QStringLiteral("rollback")),
+              "提示词 V2：崩溃急救要求失败回滚");
+        check(crashV2.systemPrompt.contains(QStringLiteral("证据 id")),
+              "提示词 V2：崩溃急救要求引用证据");
+        check(crashV2.systemPrompt.contains(QStringLiteral("不猜")),
+              "提示词 V2：崩溃急救禁止猜测");
+        check(crashV2.systemPrompt.contains(QStringLiteral("审批")),
+              "提示词 V2：崩溃急救写明审批边界");
+        check(crashV2.systemPrompt.contains(QStringLiteral("diagnostics.crashSnapshot")) &&
+                  crashV2.systemPrompt.contains(QStringLiteral("matchedRules")),
+              "提示词 V2：崩溃急救先调 crashSnapshot 并按规则走");
+        check(crashV2.systemPrompt.contains(QStringLiteral("fixed_verified")) &&
+                  crashV2.systemPrompt.contains(QStringLiteral("fixed_unverified")) &&
+                  crashV2.systemPrompt.contains(QStringLiteral("mitigated")) &&
+                  crashV2.systemPrompt.contains(QStringLiteral("not_fixed")) &&
+                  crashV2.systemPrompt.contains(QStringLiteral("needs_user")),
+              "提示词 V2：崩溃急救写清五个报告状态");
+        check(crashV2.systemPrompt.contains(QStringLiteral("缺的是工具、权限还是外部信息")),
+              "提示词 V2：需要用户时说清缺什么");
+        check(crashV2.systemPrompt.contains(QStringLiteral("mods.bisect")),
+              "提示词 V2：崩溃急救指向二分工具");
+
+        // 提示词里不许背崩溃类型表：知识库里的签名串一个都不能出现。
+        const AgentKnowledge::CrashRuleSet rules = AgentKnowledge::loadCrashRules();
+        check(rules.ok(), "提示词 V2：知识库规则可用", rules.resourceProblem);
+        QStringList leaked;
+        for (const AgentSkill &skill : skills) {
+            for (const AgentKnowledge::CrashRule &rule : rules.rules) {
+                for (const QString &needle : rule.match) {
+                    if (needle.size() >= 8 && skill.systemPrompt.contains(needle)) {
+                        leaked.append(QStringLiteral("%1→%2").arg(skill.id, needle));
+                    }
+                }
+            }
+        }
+        check(leaked.isEmpty(), "提示词 V2：没有崩溃签名清单", leaked.join(QStringLiteral("; ")));
+
+        // 预算：common ≤4 KB、单技能 ≤8 KB、组合 ≤16 KB。
+        const AgentPrompt common = AgentPromptLibrary::load(QStringLiteral("common"));
+        check(common.ok() &&
+                  common.text.toUtf8().size() <= AgentPromptLibrary::maxCommonPromptBytes(),
+              "提示词 V2：common 在 4 KB 预算内",
+              QString::number(common.text.toUtf8().size()));
+        for (const AgentSkill &skill : skills) {
+            check(skill.systemPrompt.toUtf8().size() <=
+                      AgentPromptLibrary::maxComposedPromptBytes(),
+                  "提示词 V2：组合后不超过 16 KB", skill.id);
+            QString problem;
+            const AgentPrompt single = AgentPromptLibrary::load(skill.promptId, &problem);
+            check(single.ok() &&
+                      single.text.toUtf8().size() <= AgentPromptLibrary::maxSkillPromptBytes(),
+                  "提示词 V2：单个技能不超过 8 KB", skill.id);
+        }
+
+        // 提示词只引用当期白名单里存在的工具。
+        QStringList outside;
+        for (const AgentSkill &skill : skills) {
+            for (const AgentToolSpec &spec : AgentToolRegistry::builtins()) {
+                if (!skill.systemPrompt.contains(spec.name)) continue;
+                if (!skill.allows(spec.name)) {
+                    outside.append(QStringLiteral("%1→%2").arg(skill.id, spec.name));
+                }
+            }
+        }
+        check(outside.isEmpty(), "提示词 V2：提示词里的工具都在该模式白名单里",
+              outside.join(QStringLiteral("; ")));
+
+        // 修复协议只挂在崩溃急救/模组维护上。
+        check(crashV2.systemPrompt.contains(QStringLiteral("workflow.submitPlan")),
+              "提示词 V2：崩溃急救带修复协议");
+        for (const AgentSkill &skill : skills) {
+            if (skill.id == QStringLiteral("crash-rescue") || skill.id == QStringLiteral("mods")) {
+                continue;
+            }
+            check(!skill.systemPrompt.contains(QStringLiteral("repair.begin")),
+                  "提示词 V2：非修复模式不带事务协议", skill.id);
+        }
     }
 
     QString missingProblem;

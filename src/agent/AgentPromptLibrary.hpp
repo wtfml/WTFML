@@ -31,8 +31,13 @@ public:
     /// `:/agent/prompts/<id>.md`；id 不合法时返回空串。
     static QString resourcePath(const QString &id);
 
-    /// 单份提示词的硬上限（字节）。
+    /// 单份提示词的硬上限（字节；资源被截断/拒读的最后一道闸）。
     static int maxPromptBytes();
+    /// 预算（docs/dev/AGENT_AUTONOMY.md S5.6）：`common` ≤4 KB、单个技能 ≤8 KB、
+    /// `common + 技能 + repair_protocol` ≤16 KB。超预算的规则应进知识库或工具。
+    static int maxCommonPromptBytes();
+    static int maxSkillPromptBytes();
+    static int maxComposedPromptBytes();
 
     /// 只允许小写字母、数字、下划线和连字符，防止 id 拼出资源路径之外的名字。
     static bool validId(const QString &id);

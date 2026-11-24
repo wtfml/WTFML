@@ -24,6 +24,9 @@ static void initAgentPromptResources() {
 namespace {
 
 constexpr int kMaxPromptBytes = 64 * 1024;
+constexpr int kMaxCommonBytes = 4 * 1024;
+constexpr int kMaxSkillBytes = 8 * 1024;
+constexpr int kMaxComposedBytes = 16 * 1024;
 constexpr int kMaxIdLength = 64;
 
 QString normalizedPrompt(QString text) {
@@ -67,6 +70,12 @@ int AgentPromptLibrary::maxPromptBytes() {
     return kMaxPromptBytes;
 }
 
+int AgentPromptLibrary::maxCommonPromptBytes() { return kMaxCommonBytes; }
+
+int AgentPromptLibrary::maxSkillPromptBytes() { return kMaxSkillBytes; }
+
+int AgentPromptLibrary::maxComposedPromptBytes() { return kMaxComposedBytes; }
+
 AgentPrompt AgentPromptLibrary::load(const QString &id, QString *problem) {
     if (problem != nullptr) problem->clear();
     if (!validId(id)) {
@@ -89,10 +98,11 @@ AgentPrompt AgentPromptLibrary::load(const QString &id, QString *problem) {
         if (problem != nullptr) *problem = QCoreApplication::translate("AgentPromptLibrary", "找不到技能提示词资源：%1").arg(path);
         return {};
     }
-    QByteArray bytes = file.read(kMaxPromptBytes + 1);
-    if (bytes.size() > kMaxPromptBytes) {
+    const int budget = id == QStringLiteral("common") ? kMaxCommonBytes : kMaxSkillBytes;
+    QByteArray bytes = file.read(budget + 1);
+    if (bytes.size() > budget) {
         if (problem != nullptr) {
-            *problem = QCoreApplication::translate("AgentPromptLibrary", "技能提示词超过 %1 字节：%2").arg(kMaxPromptBytes).arg(path);
+            *problem = QCoreApplication::translate("AgentPromptLibrary", "提示词超过预算（%1 字节）：%2").arg(budget).arg(path);  // i18n-ignore
         }
         return {};
     }
@@ -142,9 +152,9 @@ AgentPrompt AgentPromptLibrary::compose(const QString &skillId, bool includeRepa
     }
 
     QString text = parts.join(QStringLiteral("\n\n"));
-    if (text.toUtf8().size() > kMaxPromptBytes) {
+    if (text.toUtf8().size() > kMaxComposedBytes) {
         if (problem != nullptr) {
-            *problem = QCoreApplication::translate("AgentPromptLibrary", "技能提示词组合后超过 %1 字节").arg(kMaxPromptBytes);
+            *problem = QCoreApplication::translate("AgentPromptLibrary", "技能提示词组合后超过预算（%1 字节）").arg(kMaxComposedBytes);  // i18n-ignore
         }
         return {};
     }

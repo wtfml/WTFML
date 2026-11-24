@@ -351,7 +351,7 @@ assets/agent/
 - 二分只定位不修复；确认阶段不一致最多加一轮，之后回 `inconclusive`。
 - 不改世界、不验证存档一致性；`quickPlay` 进副本世界只是可选参数。
 
-### S5.6 Prompt V2 与知识分层（P1）
+### S5.6 Prompt V2 与知识分层（已完成 2026-11-24）
 
 在 S5.1–S5.5 的工具稳定后重写提示词，分三层：
 
@@ -377,7 +377,22 @@ assets/agent/
 
 提示词只引用当期工具白名单里存在的工具；工具改名、删除或换阶段时同步改提示词和测试。提示词预算：`common.md` ≤4 KB，单个技能 ≤8 KB，`common + 技能 + repair_protocol` ≤16 KB；超过预算的规则进知识库或工具，不进提示词。
 
-验收：`crash_rescue` 的提示词包含执行优先、验证、回滚、证据、禁止猜测、审批边界六类条款；提示词里没有崩溃类型清单；五个技能的工具白名单与 [`AGENT`](../features/AGENT.md) §11.1 一致；真实模型在 Mixin 夹具上先调 `crashSnapshot` 再决定是否二分，不直接提交「禁用日志里第一个模组」。
+实现：
+
+- 提示词 V2：`common.md`（执行优先、证据、不猜、审批边界）、`general.md`（自由对话：修复要切模式）、`inspection.md`、`crash_rescue.md`（执行器定义 + 六类条款 + 五个报告状态）、`upgrade.md`、`mods.md`、`repair_protocol.md`（计划、事务、验证、回滚、报告）。诊断签名全部留在 `assets/agent/knowledge/`，提示词不背类型表。
+- 自由对话改为**显式工具白名单**：文件工具、只读诊断、设置/模组启停/备份、联网与诊断命令、`mcp__*`；不含 `repair.*`、`instance.testLaunch`、`mods.installFix`、`mods.bisect`、`instance.repairCore`、`workflow.*`。`AgentSkill::allows` 支持末尾 `*` 前缀通配（`mcp__*`）。
+- 白名单在**每个模式**都生效：`AgentCompositeToolEngine::schemas()` 恒按当前技能过滤，`gate()` 先查白名单、再查工作流的计划/步进闸（此前只有非自由对话才查）。
+- 提示词预算进 `AgentPromptLibrary`：`common` ≤4 KB、单技能 ≤8 KB、组合 ≤16 KB，超预算技能不可用并给出问题；`check-agent-release.ps1` 核对文件大小与“提示词里没有知识库签名”。
+- 测试：`AgentSkillsTests` 断言六类条款、五个状态、无崩溃签名（拿 `crash_rules.json` 的 match/requires 逐条比对）、预算、提示词里的工具都在该模式白名单内、自由对话不放行修复与计划工具；`mw_check_agent` 断言自由对话拒绝修复工具、切到模组维护后只差已批准计划。
+- 提示词版本递增：`general`/`inspection`/`upgrade` 2、`crash-rescue` 3、`mods` 4。
+
+验收：`verify_agent` 1359/1359、`mw_check_agent` 98/98、`mw_check` 3192/3192、`verify_launch` 370/370、`ui_check_agent` 77/77；产品目标按 `-Wall -Wextra -Wpedantic -Werror` 编译通过；`check-agent-release.ps1`、`check-i18n.ps1`、`check-test-modules.ps1`、`check-doc-links.ps1`、`check-repo-layout.ps1` PASS。真实模型是否先诊断后动手仍需人工（A12）。
+
+限制：
+
+- 提示词与白名单只能约束模型“拿到什么工具、看到什么要求”，真实模型的行为要人工验收（A12）。
+- 自由对话仍保留设置写、模组启停与备份（逐次审批），只摘掉了 Stage 5 的修复工具。
+- 修复病例库（P2）未实现。
 
 ### S5.7 Auto-safe 事务授权（P1，需产品确认）
 
@@ -475,7 +490,7 @@ agent/
 | 非确定性崩溃 | 重复次数有上限，超限标 `flaky`/`inconclusive`（S5.5 已按此实现） |
 | Auto-safe D12 | 需产品确认；未确认前保持 D5 逐次审批 |
 | `instance.repairCore` 回滚 | 共享库不存旧副本；失败不删旧文件，按官方哈希重下恢复，报告写明不能回到旧版本（已按此实现） |
-| 修复病例库 | P2，默认关闭，只在本地参与排序，不把原文发给模型 |
+| 修复病例库 | P2，未实现（`agent/repair-cases/` 的落盘与本地排序还没有）；提示词只引用当期白名单里的工具 |
 | 并发 | 每个启动器窗口的测试启动串行；多实例同时二分留到后续评估（二分本身复用这条串行约束） |
 | 测试启动窗口 | 会打开真实游戏窗口，Windows 下不做无头渲染；抢焦点/最小化留给人工验收 |
 | 工作区复制取消 | 复制阶段只丢弃结果，QtConcurrent 复制继续到结束；关闭启动器会等待当前复制 |

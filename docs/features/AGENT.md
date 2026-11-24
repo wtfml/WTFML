@@ -385,12 +385,21 @@ JSON-RPC 2.0、stdio、换行分隔。`initialize`（提议 `2024-11-05`，以�
 | `upgrade` | 版本升级 / 移植 | 否 | 是 | `upgrade.inspect` |
 | `mods` | 模组维护 | 否 | 是 | `mods.list` |
 
-技能只能缩小工具集合，改不了审批/外发策略；模式记在会话 `skill` 字段；换模式作废旧计划、证据保留。联网与诊断命令只在自由对话可用。
+每个模式都有一份**显式工具白名单**（S5.6），白名单在每个模式下都生效；技能只能缩小工具集合，改不了审批/外发策略。末尾带 `*` 的条目按前缀放行，只有 `mcp__*` 用到。
+
+| 模式 | 白名单大致范围 | 不含 |
+| --- | --- | --- |
+| 自由对话 | 文件工具、只读诊断、设置/模组启停/备份、联网与诊断命令、`mcp__*` | 事务（`repair.*`）、`instance.testLaunch`、`mods.installFix`、`mods.bisect`、`instance.repairCore`、`workflow.*` |
+| 实例体检 | 只读诊断 + 分析/校验 | 一切写工具、启动测试、事务 |
+| 崩溃急救 / 模组维护 | 只读诊断 + 分析与校验 + 写工具 + 事务/启动测试/修复/二分 + `workflow.*` | — |
+| 版本升级 / 移植 | 只读诊断 + `backup.create` + 升级入口 | 设置写、事务、启动测试 |
+
+模式记在会话 `skill` 字段；换模式作废旧计划、证据保留。联网与诊断命令只在自由对话可用；修复工具只在崩溃急救/模组维护里放行。
 
 ### 11.2 工作流
 
 - **实例体检**：锁定实例 → 启动诊断 → 日志/模组/完整性 → 分级结论 + 证据 + 下一步选项；不写盘。
-- **崩溃急救**：`diagnostics.crashSnapshot` 拿环境、阶段、异常链与命中规则（需要行号时再 `logs.search`，原文走 `crash.readFull`）→ 按规则分类（OOM、Java 版本不匹配、缺前置、文件损坏、配置错误、Mixin 冲突，不猜具体模组）→ 计划 → `repair.begin` 建事务 → 逐步执行（事务内写工作区、每步单独审批、失败即停）→ `repair.verify` 在隔离工作区验证 → `repair.finish(commit/rollback)` → 报告写回退方式与未解决项。世界问题只在副本世界验证，不打开源存档。
+- **崩溃急救**：`diagnostics.crashSnapshot` 拿环境、阶段、异常链与命中规则（需要行号时再 `logs.search`，原文走 `crash.readFull`）→ 按 `matchedRules`、嫌疑的 role/置信度与证据决定下一步（类型清单在知识库，不写进提示词，也不猜具体模组）→ 计划 → `repair.begin` 建事务 → 逐步执行（事务内写工作区、每步单独审批、失败即停）→ `repair.verify` 在隔离工作区验证 → `repair.finish(commit/rollback)` → 报告写回退方式与未解决项。世界问题只在副本世界验证，不打开源存档。
 - **版本升级 / 移植**：`upgrade.inspect` 只读检查 + 解释风险；执行一律打开现有升级向导。
 - **模组维护**：列清单 → `mods.analyzeCompatibility` 读声明查加载器/版本/缺前置/重复 → 需要逐文件哈希时 `mods.verifyFiles` → `repair.begin` → 在工作区启停/备份，或用 `mods.installFix` 按平台记录换掉损坏/不兼容的文件 → `repair.diff`/`repair.verify` → 提交或回滚。核心文件损坏走 `instance.repairCore`；说不清是哪几个模组时用 `mods.bisect` 在工作区二分（嫌疑来自 `diagnostics.crashSnapshot`）。
 
@@ -407,13 +416,29 @@ Collect → AwaitPlanApproval → Execute*（每步审批）→ Verify → Repor
 
 ### 11.4 核心提示词
 
-提示词在 `assets/agent/prompts/` 下的 md 文件里，由 `AgentPromptLibrary` 从 Qt 资源 `:/agent/prompts/` 加载；`AgentSkill.cpp` 只留技能 id、显示名、工具白名单和提示词 id。组合顺序为 `common.md` + 技能文件 +（崩溃急救/模组维护）`repair_protocol.md`，用空行连接。每个技能带 `promptId`、`promptHash`、`promptVersion`；资源缺失、为空、不是 UTF-8 或超过 64 KB 时技能不可用，发送前报错，不回退成空提示。
+提示词分三层（S5.6 Prompt V2）：技能提示词（角色、阶段、工具使用顺序、审批/验证/回滚要求）在 `assets/agent/prompts/`；诊断知识（崩溃签名、规则 id、置信度、建议验证）在 `assets/agent/knowledge/*.json`；工具在 `src/agent/`。提示词不背崩溃类型表，只引用当期白名单里存在的工具。
+
+`AgentPromptLibrary` 从 Qt 资源 `:/agent/prompts/` 加载；`AgentSkill.cpp` 只留技能 id、显示名、工具白名单、只读/计划标记和提示词 id。组合顺序为 `common.md` + 技能文件 +（崩溃急救/模组维护）`repair_protocol.md`，用空行连接。每个技能带 `promptId`、`promptHash`、`promptVersion`；资源缺失、为空、不是 UTF-8 或超过预算时技能不可用，发送前报错，不回退成空提示。
+
+| 预算 | 上限 |
+| --- | --- |
+| `common.md` | 4 KB |
+| 单个技能文件 | 8 KB |
+| `common + 技能 + repair_protocol` | 16 KB |
+
+超预算的规则进知识库或工具。`tools/check-agent-release.ps1` 核对文件大小与“提示词里没有知识库签名”；`verify_agent` 核对组合大小、工具引用都在白名单内。
+
+崩溃急救的目标定义是**执行器**：在锁定实例里尽可能自主完成诊断、修复、验证和回滚，工具和权限能做的直接做，不把人工操作步骤当结果；需要用户介入时说明缺的是工具、权限还是外部信息。六类条款（执行优先、验证、回滚、证据、禁止猜测、审批边界）与五个报告状态（`fixed_verified` / `fixed_unverified` / `mitigated` / `not_fixed` / `needs_user`）都写在 `crash_rescue.md` 与 `repair_protocol.md` 里，由 `verify_agent` 逐条断言。
 
 共享规则（`common.md`，对所有技能生效）原文：
 
+> 你在 WTFML 启动器里操作**本会话锁定的那个实例**，只能调用当前模式白名单里的工具。工具和权限允许做的直接做完，不要把“请用户自己去点”当成结果；做不到时说明缺的是工具、权限还是信息。
+>
 > 没有用工具读到的文件、日志或实例信息，不要假装读过；不知道就说不确定。任何凭据、令牌、账户信息都不要索要或复述。每条结论引用证据 id（E1、E2…）；拿不到证据就写“无法确认”并说明还需要什么。
+>
+> 不猜：模组责任、兼容版本、依赖、下载地址、退出原因都只能来自工具结果或用户明确给的信息。审批、外发、路径和下载来源策略不是你能绕开的：需要确认就停下来问，被拒绝就按拒绝处理，不换一条路绕过。
 
-各技能在此基础上加各自的只读/计划/报告要求；崩溃急救与模组维护再追加 `repair_protocol.md` 的计划、验证、失败即停与报告要求。工具描述与参数 schema 在各自引擎的 `specs()` 里（文件工具 `AgentToolRegistry.cpp`、启动器 `AgentLauncherTools.cpp`、工作流 `AgentWorkflowEngine.cpp`、联网 `AgentWebTools.cpp`、命令 `AgentCommandTools.cpp`）。系统提示作为 `messages` 第一条发出，role 按 `systemRole` 适配；控制器每轮只追加一行「当前工作流状态（本地记账，不要复述给用户）：…」。提示词是模型输入，不是界面文案，不包 `tr()`。
+工具描述与参数 schema 在各自引擎的 `specs()` 里（文件工具 `AgentToolRegistry.cpp`、启动器 `AgentLauncherTools.cpp`、工作流 `AgentWorkflowEngine.cpp`、联网 `AgentWebTools.cpp`、命令 `AgentCommandTools.cpp`、模组与二分 `AgentModToolEngine.cpp`）。系统提示作为 `messages` 第一条发出，role 按 `systemRole` 适配；控制器每轮只追加一行「当前工作流状态（本地记账，不要复述给用户）：…」。提示词是模型输入，不是界面文案，不包 `tr()`。
 
 ## 12. 防御性约束与上限
 
@@ -458,7 +483,7 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 
 - 协议与客户端：SSE/分块边界、适配枚举、错误体保留、重试/取消、本地假服务器。
 - 会话与凭据：元数据/正文往返、损坏隔离、快照、整会话加密、Credential Manager + DPAPI 后备、脱敏。
-- 工具与安全：路径攻击矩阵、句柄级校验、审批矩阵、D11 边界表、artifact 分离、实例锁、备份生命周期、诊断投影、工作流闸门、MCP 协议/确认闸/假服务器、联网地址策略（假传输）、诊断命令、测试启动参数/审批/里程碑、工作区登记与清理、事务基线/差异/设置增量/审批、崩溃规则加载与坏规则跳过、崩溃报告解析、嫌疑角色与置信度、mixin 配置归属、日志行索引与按行读取、模组声明解析、兼容性判定（加载器/版本/缺前置/重复/损坏/平台结论）、修复工具的审批与失败不改工作区、二分的缩减/依赖保留/组合冲突/不可复现/不一致/预算与工作区恢复。
+- 工具与安全：路径攻击矩阵、句柄级校验、审批矩阵、D11 边界表、artifact 分离、实例锁、备份生命周期、诊断投影、工作流闸门、MCP 协议/确认闸/假服务器、联网地址策略（假传输）、诊断命令、测试启动参数/审批/里程碑、工作区登记与清理、事务基线/差异/设置增量/审批、崩溃规则加载与坏规则跳过、崩溃报告解析、嫌疑角色与置信度、mixin 配置归属、日志行索引与按行读取、模组声明解析、兼容性判定（加载器/版本/缺前置/重复/损坏/平台结论）、修复工具的审批与失败不改工作区、二分的缩减/依赖保留/组合冲突/不可复现/不一致/预算与工作区恢复、提示词 V2（六类条款、五个报告状态、预算、无崩溃签名、工具引用都在白名单内、自由对话不放行修复工具）。
 - UI/集成：页面几何与状态、模式胶囊、工具卡/审批卡、真窗口里只读模式拒绝写、MCP 管理器接线、实例目录日志/崩溃报告读取。
 - 性能基线：2000 条会话读写/加密、上下文裁剪、智能体页 2000 条消息重摆（数字见 perf-notes）。
 
@@ -479,6 +504,7 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 | A9 | 真机 1.20.1：`instance.testLaunch` 到主菜单、崩溃复现、超时；源实例文件哈希不变 | 工作区隔离、无孤儿进程、日志可读 |
 | A10 | 真机 1.20.1：`repair.begin` → 工作区改模组/配置 → `repair.verify` → commit/rollback；提交前手改源文件 | 回滚后源文件哈希恢复；源文件被改时拒绝提交；提交中断可恢复 |
 | A11 | 真机 120 模组整合包：`mods.bisect` 在 12 次启动内定位已知问题模组；双模组冲突报 `pair`；取消后无孤儿进程、工作区恢复基线 | 必需前置始终启用；不误报 `not_found` |
+| A12 | 真实模型 + Mixin 夹具：先调 `diagnostics.crashSnapshot` 再决定是否二分；自由对话模式调不到修复工具 | 不直接提交“禁用日志里第一个模组”；被拒时说明切模式 |
 
 限制：A1–A10 需要真机与真实账号/服务，记录写进 [ACCEPTANCE_LOG](../archive/ACCEPTANCE_LOG.md)（一行：日期｜做了什么｜结论｜意外发现）。
 
@@ -503,7 +529,7 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 | 显卡 / Native 崩溃 | `diagnostics.crashSnapshot` 认 `hs_err_pid` 与 `EXCEPTION_ACCESS_VIOLATION`，与内存/模组问题分开报；可测试启动复现 | 不解析 native 模块归属，不改驱动或渲染后端 |
 | 世界 / 存档崩溃 | 有限的崩溃诊断；可复制世界到工作区用 `quickPlay` 验证；可在副本里二分 | 事务不提交世界/存档，也不做原件提交后验证 |
 
-下一阶段的 Prompt V2 与知识分层见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)；实现后行为写回本文 §9 与 §11。提示词外置、隔离测试启动、修复事务、崩溃快照与日志检索、模组兼容与文件修复、依赖感知二分已于 2026-11-24 完成，见 §11.4、§9.4.2、§9.4.3、§9.4.4、§9.4.5、§9.4.6。
+剩余阶段（S5.7 Auto-safe 事务授权需产品确认、P2 修复病例库）见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)。提示词外置、隔离测试启动、修复事务、崩溃快照与日志检索、模组兼容与文件修复、依赖感知二分、Prompt V2 与知识分层已于 2026-11-24 完成，见 §11.4、§9.4.2、§9.4.3、§9.4.4、§9.4.5、§9.4.6。
 
 未覆盖：
 
@@ -513,6 +539,8 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 | 模组平台查询（CurseForge） | 未实现；S5.4 只接 Modrinth，不按名称/slug 猜项目 |
 | 二分的不一致判定 | 确认阶段出现不一致最多加跑一轮，仍不一致回 `inconclusive`；不做统计意义上的 flaky 概率 |
 | 二分时的世界 | 只按工作区 `quickPlay` 可选进副本世界；不验证存档一致性，也不判断世界崩溃与模组的归属 |
+| 修复病例库（P2） | 未实现：`agent/repair-cases/` 的规则/动作/验证结果还没有落盘，也没有参与本地排序 |
+| 自由对话的模型行为验收 | 白名单与提示词在本地断言，真实模型是否按提示词先诊断后动手见 A12 |
 | `mods.installFix` 的补丁式回滚 | 失败时只撤销本次复制的文件；已完成的事务由 `repair.finish` 回滚 |
 | artifact 单会话配额（设计 64 MB） | 未实现，不拒绝 |
 | 联网工具的"本会话允许" | 审批卡按钮文案有，联网引擎未实现会话放行 |

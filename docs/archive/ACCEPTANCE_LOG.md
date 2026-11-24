@@ -292,3 +292,5 @@ python tools/acceptance_directory_boundary.py --exe <WTFMinecraftLauncher.exe> -
 2026-11-24｜智能体模组兼容与文件修复（S5.4）｜`verify_agent` 1268/1268、`mw_check_agent` 93/93、`mw_check` 3192/3192、`verify_launch` 370/370、`ui_check_agent` 77/77，产品目标严格编译通过，`check-agent-release.ps1`/`check-i18n.ps1`/`check-test-modules.ps1`/`check-doc-links.ps1`/`check-repo-layout.ps1` PASS｜`UpgradeAssessment` 改用共用 `ModDeclarations` 后升级夹具零差异；真实 Modrinth 查询、真实下载与提交未跑（A9/A10）。
 
 2026-11-24｜智能体依赖感知二分（S5.5）｜`verify_agent` 1327/1327、`mw_check_agent` 94/94、`mw_check` 3192/3192、`verify_launch` 370/370、`ui_check_agent` 77/77，产品目标严格编译通过，`check-agent-release.ps1`/`check-i18n.ps1`/`check-test-modules.ps1`/`check-doc-links.ps1`/`check-repo-layout.ps1` PASS｜120 模组 + 嫌疑候选时 5 次启动定位；依赖被闭包保留、`app` 需要 `lib` 时报 `single` 且 culprit 只有 `app`；真机 120 模组与取消清理未跑（A11）。
+
+2026-11-24｜智能体 Prompt V2 与知识分层（S5.6）｜`verify_agent` 1359/1359、`mw_check_agent` 98/98、`mw_check` 3192/3192、`verify_launch` 370/370、`ui_check_agent` 77/77，产品目标严格编译通过，`check-agent-release.ps1`/`check-i18n.ps1`/`check-test-modules.ps1`/`check-doc-links.ps1`/`check-repo-layout.ps1` PASS｜自由对话白名单摘掉 Stage 5 修复工具后，真实模型行为仍需人工验收（A12）；提示词总量 7.7 KB，最长的崩溃急救 1.9 KB。

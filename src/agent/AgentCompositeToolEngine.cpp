@@ -46,15 +46,13 @@ QJsonArray AgentCompositeToolEngine::schemas() const {
     const AgentSkill skill = m_workflow != nullptr ? m_workflow->skill() : AgentSkill{};
     for (const AgentToolEngine *engine : m_engines) {
         for (const QJsonValue &value : engine->schemas()) {
-            if (m_workflow != nullptr && m_workflow->active()) {
-                const QString wire = value.toObject()
-                                         .value(QStringLiteral("function"))
-                                         .toObject()
-                                         .value(QStringLiteral("name"))
-                                         .toString();
-                const QString internal = AgentToolRegistry::internalName(wire);
-                if (!skill.allows(internal)) continue;
-            }
+            const QString wire = value.toObject()
+                                     .value(QStringLiteral("function"))
+                                     .toObject()
+                                     .value(QStringLiteral("name"))
+                                     .toString();
+            const QString internal = AgentToolRegistry::internalName(wire);
+            if (!skill.allows(internal)) continue;
             result.append(value);
         }
     }
@@ -67,11 +65,12 @@ QString AgentCompositeToolEngine::riskBlockedMessage(const QString &skillName,
 }
 
 QString AgentCompositeToolEngine::gate(const QString &internalName) const {
-    if (m_workflow == nullptr || !m_workflow->active()) return QString();
-    const AgentSkill skill = m_workflow->skill();
+    // 白名单在每个模式都生效（自由对话也有一份显式清单）；计划/步进闸只对有工作流的模式。
+    const AgentSkill skill = m_workflow != nullptr ? m_workflow->skill() : AgentSkill{};
     if (!skill.allows(internalName)) {
         return riskBlockedMessage(skill.name, internalName);
     }
+    if (m_workflow == nullptr || !m_workflow->active()) return QString();
     const AgentToolSpec toolSpec = AgentToolRegistry::find(internalName);
     if (skill.readOnly && isWriteRisk(toolSpec.risk)) {
         return QStringLiteral("当前模式（%1）是只读模式，不能执行写操作。").arg(skill.name);

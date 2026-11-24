@@ -27,7 +27,8 @@ struct AgentSkill {
     int promptVersion = 1;
     /// 非空 = 资源缺失/为空/超限/编码错误，技能不可用；调用方不要下发空提示。
     QString promptProblem;
-    /// 工具内部名白名单。空 = 不限制（自由对话沿用 Stage 1B 的全部工具）。
+    /// 工具内部名白名单。空 = 不限制（只有"没有模式"的测试夹具会这样）；
+    /// 生产里每个模式都有显式清单（S5.6）。末尾带 `*` 的条目按前缀放行（`mcp__*`）。
     QStringList allowedTools;
     /// 完成这条工作流至少要碰过的工具（缺了 `workflow.finish` 就拒绝）。
     QStringList requiredTools;
@@ -41,7 +42,15 @@ struct AgentSkill {
     bool promptAvailable() const { return promptProblem.isEmpty() && !systemPrompt.isEmpty(); }
     bool restrictsTools() const { return !allowedTools.isEmpty(); }
     bool allows(const QString &toolName) const {
-        return allowedTools.isEmpty() || allowedTools.contains(toolName);
+        if (allowedTools.isEmpty()) return true;
+        if (allowedTools.contains(toolName)) return true;
+        for (const QString &entry : allowedTools) {
+            if (entry.endsWith(QLatin1Char('*')) && !entry.isEmpty() &&
+                toolName.startsWith(entry.left(entry.size() - 1))) {
+                return true;
+            }
+        }
+        return false;
     }
 };
 

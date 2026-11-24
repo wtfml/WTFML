@@ -413,36 +413,63 @@ int MwAgentChecks(QApplication &app) {
         check(rangeResult.data.value(QStringLiteral("totalLines")).toInt() == 1,
               "真窗口：logs.readRange 回总行数");
 
-        // Stage 5.4：工具注册与真宿主接线（异步部分在 core-agent 用假宿主验）。
+        // Stage 5.4/5.5/5.6：自由对话的显式白名单里没有修复工具，切到修复模式才放行。
         Agent::ToolCall installCall;
         installCall.id = QStringLiteral("mw-mod-1");
         installCall.name = QStringLiteral("mods.installFix");
         installCall.arguments = QJsonObject{
             {QStringLiteral("projectId"), QStringLiteral("proj-x")},
             {QStringLiteral("workspaceId"), QStringLiteral("ws-unknown")}};
-        const AgentToolResult installResult =
+        const AgentToolResult installBlocked =
             controller->compositeEngine()->invoke(installCall);
-        check(installResult.status == AgentToolResult::Status::Error,
-              "真窗口：没有工作区时拒绝 mods.installFix", installResult.summary);
+        check(installBlocked.status == AgentToolResult::Status::Error,
+              "真窗口：自由对话不放行 mods.installFix", installBlocked.summary);
+        check(installBlocked.summary.contains(QStringLiteral("不允许")),
+              "真窗口：被拒原因写的是模式白名单", installBlocked.summary);
 
         Agent::ToolCall bisectCall;
         bisectCall.id = QStringLiteral("mw-mod-2");
         bisectCall.name = QStringLiteral("mods.bisect");
         bisectCall.arguments = QJsonObject{
             {QStringLiteral("workspaceId"), QStringLiteral("ws-unknown")}};
-        const AgentToolResult bisectResult =
+        const AgentToolResult bisectBlocked =
             controller->compositeEngine()->invoke(bisectCall);
-        check(bisectResult.status == AgentToolResult::Status::Error,
-              "真窗口：没有事务工作区时拒绝 mods.bisect", bisectResult.summary);
+        check(bisectBlocked.status == AgentToolResult::Status::Error,
+              "真窗口：自由对话不放行 mods.bisect", bisectBlocked.summary);
 
+        Agent::ToolCall repairBlockedCall;
+        repairBlockedCall.id = QStringLiteral("mw-core-0");
+        repairBlockedCall.name = QStringLiteral("instance.repairCore");
+        const AgentToolResult repairBlocked =
+            controller->compositeEngine()->invoke(repairBlockedCall);
+        check(repairBlocked.status == AgentToolResult::Status::Error,
+              "真窗口：自由对话不放行 instance.repairCore", repairBlocked.summary);
+
+        // 切到模组维护：修复工具才进白名单；仍要求事务工作区/审批。
+        controller->chooseSkillForTest(QStringLiteral("mods"));
+        const AgentToolResult installInMode =
+            controller->compositeEngine()->invoke(installCall);
+        check(installInMode.status == AgentToolResult::Status::Error &&
+                  !installInMode.summary.contains(QStringLiteral("不允许")),
+              "真窗口：模组维护模式放行 mods.installFix（此时缺的是已批准计划）",
+              installInMode.summary);
+        const AgentToolResult bisectInMode =
+            controller->compositeEngine()->invoke(bisectCall);
+        check(bisectInMode.status == AgentToolResult::Status::Error &&
+                  !bisectInMode.summary.contains(QStringLiteral("不允许")),
+              "真窗口：模组维护模式放行 mods.bisect（此时缺的是已批准计划）",
+              bisectInMode.summary);
         Agent::ToolCall repairCall;
         repairCall.id = QStringLiteral("mw-core-1");
         repairCall.name = QStringLiteral("instance.repairCore");
         const AgentToolResult repairResult =
             controller->compositeEngine()->invoke(repairCall);
-        check(repairResult.status == AgentToolResult::Status::ApprovalRequired,
-              "真窗口：instance.repairCore 每次审批");
+        check(repairResult.status == AgentToolResult::Status::Error &&
+                  repairResult.summary.contains(QStringLiteral("计划")),
+              "真窗口：修复模式里 instance.repairCore 要先有已批准计划",
+              repairResult.summary);
         controller->compositeEngine()->cancelPending();
+        controller->chooseSkillForTest(QStringLiteral("general"));
 
         Agent::ToolCall fullCall;
         fullCall.id = QStringLiteral("mw-crash-3");
