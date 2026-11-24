@@ -71,8 +71,8 @@ QString resourcePackFormatProblem(const QString &version, const ResourcePackOpti
     return {};
 }
 
-WorldSettingsPage::WorldView worldViewOf(const QString &worldDir,
-                                         const WorldFiles::LevelData &data) {
+WorldSettingsPage::WorldView localWorldViewOf(const QString &worldDir,
+                                              const WorldFiles::LevelData &data) {
     WorldSettingsPage::WorldView view;
     view.dirName = QFileInfo(worldDir).fileName();
     view.gzipped = data.info.gzipped;
@@ -181,6 +181,28 @@ void applyWorldViewTo(WorldFiles::LevelData *data, const WorldSettingsPage::Delt
     if (delta.difficultyChanged) { info.hasDifficulty = true; info.difficulty = delta.difficultyValue; }
 }
 } // namespace
+
+WorldSettingsPage::WorldView InstanceEditorController::worldViewOf(
+    const QString &worldDir, const WorldFiles::LevelData &data) {
+    return localWorldViewOf(worldDir, data);
+}
+
+bool InstanceEditorController::applyWorldEdits(WorldFiles::LevelData &data,
+                                               const WorldSettingsPage::Delta &delta,
+                                               QString *problem) {
+    applyWorldViewTo(&data, delta);
+    QString why;
+    if (!WorldFiles::applyWorldInfo(&data.document, data.info, &why,
+                                    WorldFiles::MissingField::Create)) {
+        if (problem != nullptr) *problem = why;
+        return false;
+    }
+    if (!WorldFiles::applyChangedGameRules(&data.document, changedRules(delta), &why)) {
+        if (problem != nullptr) *problem = why;
+        return false;
+    }
+    return true;
+}
 
 InstanceEditorController::InstanceEditorController(MainWindow *owner) : QObject(owner), m_owner(owner) {}
 
@@ -634,7 +656,7 @@ void InstanceEditorController::showWorldSettingsPage(InstanceSettingsDialog *dia
     m_owner->m_worldDir = worldDir;
     m_owner->m_worldStampSize = stamp.size;
     m_owner->m_worldStampMtimeMs = stamp.mtimeMs;
-    dialog->openWorldSettings(worldViewOf(worldDir, data));
+    dialog->openWorldSettings(localWorldViewOf(worldDir, data));
     // `setBackupAvailable()` **必须在 openWorldSettings() 之后**：`setWorld()` 会把
     // "留过备份没有"这一位清掉（上一条世界的答案对这一个世界不作数）。
     page->setBackupAvailable(!m_owner->latestWorldBackup(worldDir).isEmpty());

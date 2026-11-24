@@ -313,7 +313,9 @@ int applyEdits(ServerModel::Properties &properties, const Values &edits) {
     for (const QPair<QString, QString> &edit : edits) {
         const Field *field = fieldFor(edit.first);
         if (field == nullptr) {
-            continue;  // 表里没有的键不写（这一层只认这十几项）
+            // 其他属性来自原文，允许修改现有值并保留键名及顺序。
+            if (properties.contains(edit.first) && properties.setValue(edit.first, edit.second)) ++changed;
+            continue;
         }
         QString normalized;
         QString problem;

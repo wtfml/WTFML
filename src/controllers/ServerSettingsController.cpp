@@ -57,6 +57,7 @@ ServerSettingsController::SaveResult ServerSettingsController::save(
     for (const QPair<QString, QString> &edit : edits) {
         const ServerPropertiesForm::Field *field = ServerPropertiesForm::fieldFor(edit.first);
         if (field == nullptr) {
+            if (properties.contains(edit.first)) accepted.append(edit);
             continue;
         }
         QString normalized;

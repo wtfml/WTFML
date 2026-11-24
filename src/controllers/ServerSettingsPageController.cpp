@@ -20,12 +20,14 @@
 #include "MainWindowUI.hpp"
 #include "OverlayHost.hpp"
 #include "ServerSettingsPage.hpp"
+#include "controllers/InstanceEditorController.hpp"
 #include "controllers/ServerSettingsController.hpp"
 #include "controllers/ServerWorkspaceController.hpp"
 #include "controllers/ServerRunController.hpp"
 #include "controllers/BackupController.hpp"
 #include "manage/BackupFiles.hpp"
 #include "manage/FolderManager.hpp"
+#include "manage/WorldFiles.hpp"
 #include "server/ServerModel.hpp"
 #include "server/ServerPropertiesForm.hpp"
 #include "server/ServerInstallController.hpp"
@@ -69,7 +71,10 @@ void ServerSettingsPageController::open(const QString &serverId) {
                 [this](int section) {
                     mergeEdits(static_cast<int>(m_page->section()), section);
                     using Section = ServerSettingsPage::Section;
-                    if (section == static_cast<int>(Section::Backups)) refreshWorlds();
+                    if (section == static_cast<int>(Section::Backups)) {
+                        refreshWorlds();
+                        refreshWorldEditor();
+                    }
                     if (section == static_cast<int>(Section::Players)) m_owner.refreshServerPlayers();
                     if (section == static_cast<int>(Section::Logs)) refreshLogs();
                 });
@@ -78,6 +83,11 @@ void ServerSettingsPageController::open(const QString &serverId) {
         connect(m_page, &ServerSettingsPage::startRequested, this, [this] {
             if (!m_page || !m_editable || m_serverId.isEmpty() || m_page->launchSettingsChanged() || m_page->rawEdited() ||
                 !m_page->changedOnly().isEmpty()) return;
+            if (m_page->worldEditor()->isDirty()) {
+                InlineMessage::information(m_owner.m_ui->overlay(), m_page->windowTitle(),
+                                           MainWindow::tr("请先保存或放弃存档修改。"));
+                return;
+            }
             m_owner.m_serverRun->start(m_serverId);
         });
         connect(m_page, &ServerSettingsPage::stopRequested, this, [this] { m_owner.m_serverRun->stop(m_serverId); });
@@ -96,7 +106,32 @@ void ServerSettingsPageController::open(const QString &serverId) {
             if (m_owner.m_ui->overlay()->dismiss()) m_owner.openServerConsole(id);
         });
         connect(m_page, &ServerSettingsPage::launchSaveRequested, this, [this] { saveLaunchSettings(); });
-        connect(m_page, &ServerSettingsPage::worldChanged, this, [this] { refreshWorlds(); });
+        auto *worldEditor = m_page->worldEditor();
+        connect(m_page, &ServerSettingsPage::worldChanged, this, [this, worldEditor] {
+            const QString previous = QFileInfo(m_worldEditorDir).fileName();
+            if (!m_editable || (worldEditor->isDirty() && selectedWorld() != previous &&
+                !InlineMessage::question(m_owner.m_ui->overlay(), MainWindow::tr("放弃存档修改？"),
+                    MainWindow::tr("切换世界会放弃当前存档中未保存的修改。"),
+                    MainWindowUI::serverSettingsRevertText(), MainWindow::tr("取消"), false, true))) {
+                m_page->selectWorld(previous);
+                return;
+            }
+            refreshWorlds();
+            refreshWorldEditor();
+        });
+        connect(worldEditor, &WorldSettingsPage::saveRequested, this, [this] { saveWorldEditor(); });
+        connect(worldEditor, &WorldSettingsPage::openFolderRequested, this, [this] {
+            if (!m_worldEditorDir.isEmpty() && QFileInfo(m_worldEditorDir).isDir())
+                QDesktopServices::openUrl(QUrl::fromLocalFile(m_worldEditorDir));
+        });
+        connect(worldEditor, &WorldSettingsPage::fileEditingRequested, this, [this, worldEditor](bool open) {
+            if (open && (!m_editable || !InlineMessage::question(m_owner.m_ui->overlay(),
+                    MainWindow::tr("修改存档文件"),
+                    MainWindow::tr("保存前会备份 level.dat。服务端启动后会按服务端配置应用相应的规则。"),
+                    MainWindow::tr("继续"), MainWindow::tr("取消"), false))) {
+                worldEditor->setFileEditingOpen(false);
+            }
+        });
         connect(m_page, &ServerSettingsPage::activateWorldRequested, this, [this] {
             if (!m_editable || selectedWorld().isEmpty()) return;
             m_page->setFieldValue(QStringLiteral("level-name"), selectedWorld());
@@ -158,6 +193,9 @@ void ServerSettingsPageController::open(const QString &serverId) {
         });
     }
     m_serverId = serverId;
+    m_worldEditorDir.clear();
+    m_worldSourceHash.clear();
+    m_page->worldEditor()->setUnreadable({}, {});
     m_page->setSection(ServerSettingsPage::Section::Overview);
     refresh();
     const auto info = ServerRegistry::readMeta(serverId);
@@ -191,6 +229,8 @@ void ServerSettingsPageController::refreshIfShowing(const QString &serverId) {
     if (isShowing(serverId)) {
         applyRunState(m_page, serverId);
         refreshWorlds();
+        if (m_page->section() == ServerSettingsPage::Section::Backups && !m_page->worldEditor()->isDirty())
+            refreshWorldEditor(true);
     }
 }
 
@@ -198,7 +238,10 @@ void ServerSettingsPageController::refreshRunStateIfShowing(const QString &serve
     if (!isShowing(serverId)) {
         return;
     }
+    const bool wasEditable = m_editable;
     applyRunState(m_page, serverId);
+    if (!wasEditable && m_editable && m_page->section() == ServerSettingsPage::Section::Backups &&
+        !m_page->worldEditor()->isDirty()) refreshWorldEditor(true);
     // 体检单里"能不能启动 / 端口通不通"这两条随在跑变（`checkFacts()` 会看进程）；
     // 保存带那句话也得在 `setEditable()` 之后重算（在跑时它归只读那句管）。
     runCheck();
@@ -209,12 +252,15 @@ void ServerSettingsPageController::applyRunState(ServerSettingsPage *page,
                                                  const QString &serverId) {
     const ServerRun::ServerProcess *process = m_owner.m_serverWorkspace->process(serverId);
     const bool running = process != nullptr && process->isRunning();
-    m_editable = !running && !m_owner.m_serverRun->fileBusy(serverId);
+    const bool starting = m_owner.m_serverRun->isStarting(serverId) ||
+        (process && process->status() == ServerModel::Status::Starting);
+    m_editable = !starting && !running && !m_owner.m_serverRun->fileBusy(serverId);
     // 顶上只写状态本身（"运行中"）；"为什么改不了"由下面那行只读说明讲，不再重复一遍。
-    const auto status = process ? process->status() : ServerModel::Status::Stopped;
+    const auto status = starting && !running ? ServerModel::Status::Starting
+        : process ? process->status() : ServerModel::Status::Stopped;
     page->setStatusText(ServerModel::statusName(status));
     page->setRunButtons(running, status == ServerModel::Status::Stopping);
-    page->setEditable(m_editable, running ? MainWindowUI::serverSettingsRunningNote()
+    page->setEditable(m_editable, starting || running ? MainWindowUI::serverSettingsRunningNote()
         : !m_editable ? MainWindow::tr("正在处理服务端文件。") : QString());
 }
 
@@ -226,9 +272,6 @@ void ServerSettingsPageController::refresh() {
     }
     const ServerRegistry::Entry entry = ServerRegistry::describe(serverId);
     page->setServerName(entry.name.isEmpty() ? serverId : entry.name);
-    const QString versions = QStringList{entry.gameVersion, entry.loaderVersion, entry.buildId}.join(QLatin1Char(' ')).simplified();
-    page->setOverview((ServerInstall::flavorName(entry.flavor) + QLatin1Char(' ') + versions).trimmed(),
-                      QDir::toNativeSeparators(entry.dirPath));
     using Flavor = ServerInstall::Flavor;
     page->setContentCapabilities(entry.flavor == Flavor::Fabric || entry.flavor == Flavor::Forge ||
         entry.flavor == Flavor::NeoForge || entry.flavor == Flavor::Quilt,
@@ -243,9 +286,37 @@ void ServerSettingsPageController::refresh() {
     // 盘上读出来的东西（`setValues()` 自己就把基线重设到刚摆进去的那一份）。
     const QString raw = m_owner.m_serverSettingsController->readRaw(serverId);
     const ServerModel::Properties properties = ServerModel::parseProperties(raw);
+    auto property = [&properties](const QString &key) {
+        const auto *field = ServerPropertiesForm::fieldFor(key);
+        return field ? ServerPropertiesForm::valueOf(properties, *field) : properties.value(key);
+    };
+    const QString ip = property(QStringLiteral("server-ip"));
+    const auto address = ip.isEmpty() ? QStringLiteral("localhost")
+        : ip.contains(QLatin1Char(':')) && !ip.startsWith(QLatin1Char('[')) ? QStringLiteral("[%1]").arg(ip) : ip;
+    const QString notSet = MainWindow::tr("未设置");
+    QList<QPair<QString, QString>> facts{
+        {MainWindow::tr("服务端类型"), ServerInstall::flavorName(entry.flavor)},
+        {MainWindow::tr("Minecraft 版本"), entry.gameVersion.isEmpty() ? notSet : entry.gameVersion},
+        {MainWindow::tr("连接地址"), address + QLatin1Char(':') + property(QStringLiteral("server-port"))},
+        {MainWindow::tr("启动世界"), m_owner.serverWorldName(serverId)},
+        {MainWindow::tr("最大玩家数"), property(QStringLiteral("max-players"))},
+        {MainWindow::tr("服务器简介"), property(QStringLiteral("motd"))},
+        {MainWindow::tr("服务端目录"), QDir::toNativeSeparators(entry.dirPath)}
+    };
+    if (!entry.loaderVersion.isEmpty()) facts.insert(2, {MainWindow::tr("加载器版本"), entry.loaderVersion});
+    if (!entry.buildId.isEmpty()) facts.insert(2, {MainWindow::tr("构建号"), entry.buildId});
+    page->setOverview(facts);
+    refreshForm(properties);
+    page->setRawText(raw);
+    refreshWorlds();
+    runCheck();
+    updateSaveState();
+}
 
+void ServerSettingsPageController::refreshForm(const ServerModel::Properties &properties) {
     QList<ServerSettingsPage::FieldView> views;
     const QList<ServerPropertiesForm::Field> &fields = ServerPropertiesForm::commonFields();
+    auto values = ServerPropertiesForm::valuesOf(properties, fields);
     for (const ServerPropertiesForm::Field &field : fields) {
         ServerSettingsPage::FieldView view;
         view.key = field.key;
@@ -277,17 +348,88 @@ void ServerSettingsPageController::refresh() {
         }
         views.append(view);
     }
-    page->setFields(views);
-    page->setValues(ServerPropertiesForm::valuesOf(properties, fields));
-    page->setRawText(raw);
-
-    refreshWorlds();
-    runCheck();
-    updateSaveState();
+    for (const QString &key : ServerPropertiesForm::unknownKeys(properties)) {
+        const QString value = properties.value(key);
+        ServerSettingsPage::FieldView field;
+        field.key = key;
+        field.label = key;
+        field.extra = true;
+        field.secret = key.contains(QStringLiteral("password"), Qt::CaseInsensitive) ||
+            key.contains(QStringLiteral("secret"), Qt::CaseInsensitive);
+        if (!field.secret && (value.contains(QLatin1Char('\n')) || value.contains(QLatin1Char('\r')) || value.size() > 1000))
+            field.kind = ServerSettingsPage::Kind::Multiline;
+        views.append(field);
+        values.append({key, value});
+    }
+    m_page->setFields(views);
+    m_page->setValues(values);
 }
 
 QString ServerSettingsPageController::selectedWorld() const {
     return m_page && !m_serverId.isEmpty() ? m_page->selectedWorld() : QString();
+}
+
+void ServerSettingsPageController::refreshWorldEditor(bool force) {
+    if (!m_page || m_serverId.isEmpty()) return;
+    auto *editor = m_page->worldEditor();
+    const QString world = selectedWorld();
+    const QString root = AppPaths::serverDir(m_serverId);
+    const QString path = world.isEmpty() ? QString() : QDir(root).filePath(world);
+    if (!force && !path.isEmpty() && path == m_worldEditorDir) return;
+    m_worldEditorDir = path;
+    m_worldSourceHash.clear();
+    if (path.isEmpty() || !RestoreJournal::ordinaryPath(root, WorldFiles::levelDataPath(path))) {
+        editor->setUnreadable(world, MainWindow::tr("请选择可访问的世界存档。"));
+        return;
+    }
+    WorldFiles::LevelData data;
+    QString problem;
+    if (!WorldFiles::readLevelData(path, &data, &problem)) {
+        editor->setUnreadable(world, problem);
+        editor->setBackupAvailable(!m_page->selectedBackup().isEmpty());
+        return;
+    }
+    m_worldSourceHash = data.sourceSha256;
+    editor->setWorld(InstanceEditorController::worldViewOf(path, data));
+    editor->setBackupAvailable(!m_owner.latestWorldBackup(path).isEmpty());
+}
+
+void ServerSettingsPageController::saveWorldEditor() {
+    if (!m_page || !m_editable || m_serverId.isEmpty() || m_worldSourceHash.isEmpty()) return;
+    const QString root = AppPaths::serverDir(m_serverId);
+    const QString path = m_worldEditorDir;
+    if (selectedWorld().isEmpty() || QDir(root).filePath(selectedWorld()) != path) return;
+    auto *editor = m_page->worldEditor();
+    if (!editor->isDirty()) return;
+    QString problem;
+    const auto fail = [this, &problem] {
+        InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("无法保存存档"), problem);
+    };
+    const auto *process = m_owner.m_serverWorkspace->process(m_serverId);
+    if (m_owner.m_serverRun->isStarting(m_serverId) || (process && process->isRunning()))
+        return;
+    if (!ServerWriteGuard::acquire(m_serverId, &problem) ||
+        !RestoreJournal::ordinaryPath(root, WorldFiles::levelDataPath(path))) {
+        if (problem.isEmpty()) problem = MainWindow::tr("存档路径已变更，请重新打开存档。");
+        fail();
+        return;
+    }
+    WorldFiles::LevelData data;
+    if (!WorldFiles::readLevelData(path, &data, &problem)) { fail(); return; }
+    if (data.sourceSha256 != m_worldSourceHash) {
+        problem = MainWindow::tr("level.dat 在打开后已被修改。请重新打开存档后再编辑。");
+        fail();
+        return;
+    }
+    if (!InstanceEditorController::applyWorldEdits(data, editor->deltaFromOpened(), &problem) ||
+        !m_owner.backupWorldLevelData(path, &problem) || !WorldFiles::writeLevelData(path, data, &problem)) {
+        fail();
+        return;
+    }
+    editor->markSaved();
+    editor->setBackupAvailable(true);
+    WorldFiles::LevelData saved;
+    m_worldSourceHash = WorldFiles::readLevelData(path, &saved) ? saved.sourceSha256 : QByteArray();
 }
 
 void ServerSettingsPageController::refreshWorlds() {
@@ -399,7 +541,8 @@ void ServerSettingsPageController::mergeEdits(int fromSection, int toSection) {
         // 里删了一行、改了一个值，切回来时就该看得见。
         //
         // NOTE: 这一步**只动表单和基线，不写盘**（保存还是那唯一一条写盘的路）。
-        page->setValues(m_owner.m_serverSettingsController->valuesFromRaw(page->rawText()));
+        refreshForm(ServerModel::parseProperties(page->rawText()));
+        updateSaveState();
     }
     // 「世界备份」「诊断」两页和这两样都不搭界，切过去什么都不用做。
 }

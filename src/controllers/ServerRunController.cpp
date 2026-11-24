@@ -15,6 +15,7 @@
 #include "OverlayHost.hpp"
 #include "controllers/ActivityCenterController.hpp"
 #include "controllers/ServerWorkspaceController.hpp"
+#include "controllers/ServerSettingsPageController.hpp"
 #include "download/ServerInstall.hpp"
 #include "manage/VersionManager.hpp"
 #include "server/ServerRegistry.hpp"
@@ -76,8 +77,10 @@ void ServerRunController::start(const QString &serverId, bool automatic) {
     // 闸③：EULA。**只有用户自己勾了才写**（见 ensureServerEula）。
     // 同意框会处理界面事件，先占住这一台的启动位置。
     m_startupTasks.insert(serverId, Tasks::invalidTaskId());
+    m_owner.m_serverSettings->refreshRunStateIfShowing(serverId);
     if (!m_owner.ensureServerEula(serverId)) {
         m_startupTasks.remove(serverId);
+        m_owner.m_serverSettings->refreshRunStateIfShowing(serverId);
         return;
     }
     // 用户亲手起的 = 新的一轮。自动重启必须沿用前一轮的计数（见 `ServerRestart::decide()`）。
@@ -96,6 +99,7 @@ void ServerRunController::start(const QString &serverId, bool automatic) {
     const ServerInstall::Plan plan = m_owner.serverLaunchPlan(serverId, &problem);
     if (!plan.ok) {
         m_owner.finishTask(m_startupTasks.take(serverId), false, problem);
+        m_owner.m_serverSettings->refreshRunStateIfShowing(serverId);
         InlineMessage::critical(m_owner.m_ui->overlay(), MainWindow::tr("无法启动此服务端"), problem);
         return;
     }
@@ -117,6 +121,7 @@ void ServerRunController::start(const QString &serverId, bool automatic) {
     if (!m_owner.m_javaSettings->installerJavaFor(requiredJavaMajor, configuredJava, &java, &javaReason)) {
         m_owner.appendLog(MainWindow::tr("无法获取启动此服务端所需的 Java：%1").arg(javaReason));
         m_owner.finishTask(m_startupTasks.take(serverId), false, javaReason);
+        m_owner.m_serverSettings->refreshRunStateIfShowing(serverId);
         InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("Java 版本过低"), javaReason);
         return;
     }
@@ -227,6 +232,7 @@ void ServerRunController::onExited(const QString &serverId, int exitCode) {
     }
     m_owner.updateServerRow(serverId);
     m_owner.updateServerConsole();
+    m_owner.m_serverSettings->refreshRunStateIfShowing(serverId);
     if (exitCode == 0 && !zeroStartupFailure) {
         m_owner.appendLog(MainWindow::tr("%1 已退出。").arg(shown));
         return;

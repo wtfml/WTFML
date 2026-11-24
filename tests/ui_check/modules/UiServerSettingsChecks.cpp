@@ -209,6 +209,12 @@ int UiServerSettingsChecks() {
                       .arg(portSpin != nullptr)
                       .arg(onlineToggle != nullptr)
                       .arg(difficultyCombo != nullptr));
+            if (motdEdit && portSpin) {
+                page.setSection(ServerSettingsPage::Section::Common);
+                QApplication::processEvents();
+                check(motdEdit->width() > portSpin->width() + 100,
+                      "MOTD input uses the available width of the settings form");
+            }
             if (portSpin != nullptr && difficultyCombo != nullptr) {
                 check(portSpin->minimum() == 1 && portSpin->maximum() == 65535,
                       "★★ U37.3 数字框那两头就是翻译点喂进来的值域（游戏自己的界，不是这一层"

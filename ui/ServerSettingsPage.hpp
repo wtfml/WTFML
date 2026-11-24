@@ -69,6 +69,8 @@ class QStackedWidget;
 class QTreeWidget;
 class QTreeWidgetItem;
 class QVBoxLayout;
+class QFormLayout;
+class WorldSettingsPage;
 class ToggleSwitch;
 
 class ServerSettingsPage : public QDialog {
@@ -98,7 +100,7 @@ public:
         bool operator==(const LaunchSettings &) const = default;
     };
 
-    void setOverview(const QString &typeVersion, const QString &directory);
+    void setOverview(const QList<QPair<QString, QString>> &facts);
     void setRunButtons(bool running, bool stopping);
     void setLaunchSettings(const LaunchSettings &settings);
     LaunchSettings launchSettings() const;
@@ -106,6 +108,8 @@ public:
     void setWorlds(const QStringList &worlds, const QString &selected, const QString &startup,
                    const QString &pending = QString());
     QString selectedWorld() const;
+    void selectWorld(const QString &name);
+    WorldSettingsPage *worldEditor() const { return m_worldEditor; }
     void setContentCapabilities(bool mods, bool plugins);
     void setLogText(const QString &text);
     QString upgradeVersion() const;
@@ -122,6 +126,7 @@ public:
         Number,  ///< 数字框（`min`~`max`）
         Switch,  ///< 拨动开关
         Choice,  ///< 下拉框（`choiceTokens` / `choiceNames` 按下标对齐）
+        Multiline,
     };
 
     /// 表单里的一行（**全是显示用的字符串 + 值域**，由翻译点算好）。
@@ -139,6 +144,8 @@ public:
         bool preview = false;
         /// 这一行旁边要不要摆「选择本地 zip…」（目前只有 `resource-pack-sha1`）。
         bool zipPick = false;
+        bool extra = false;
+        bool secret = false;
     };
 
     /// 表单上的一项值（**顺序跟着字段表走**；`ui/` 自己的类型，见文件头那条界线）。
@@ -362,8 +369,7 @@ private:
     QStackedWidget *m_stack = nullptr;
     QHash<int, QTreeWidgetItem *> m_sections;
     QHash<int, QTreeWidgetItem *> m_contentSections;
-    QLabel *m_overviewType = nullptr;
-    QLabel *m_overviewDirectory = nullptr;
+    QFormLayout *m_overviewFacts = nullptr;
     QPushButton *m_consoleButton = nullptr;
     QLineEdit *m_launchJava = nullptr;
     QPushButton *m_launchBrowse = nullptr;
@@ -372,6 +378,7 @@ private:
     QPushButton *m_launchSave = nullptr;
     LaunchSettings m_savedLaunch;
     QComboBox *m_worldSelector = nullptr;
+    WorldSettingsPage *m_worldEditor = nullptr;
     bool m_splitWorldBackup = false;
     QPushButton *m_activateWorld = nullptr;
     QString m_startupWorld;

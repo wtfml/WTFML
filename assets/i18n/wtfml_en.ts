@@ -11915,6 +11915,82 @@ Change its Java path in Instance settings or switch to Global.</translation>
     <context>
         <name>MainWindow</name>
         <message>
+            <source>请先保存或放弃存档修改。</source>
+            <translation>Save or discard the world changes first.</translation>
+        </message>
+        <message>
+            <source>放弃存档修改？</source>
+            <translation>Discard World Changes?</translation>
+        </message>
+        <message>
+            <source>切换世界会放弃当前存档中未保存的修改。</source>
+            <translation>Switching worlds will discard unsaved changes to the current world.</translation>
+        </message>
+        <message>
+            <source>修改存档文件</source>
+            <translation>Edit World Files</translation>
+        </message>
+        <message>
+            <source>保存前会备份 level.dat。服务端启动后会按服务端配置应用相应的规则。</source>
+            <translation>The launcher backs up level.dat before saving. Server settings may override some rules when the server starts.</translation>
+        </message>
+        <message>
+            <source>未设置</source>
+            <translation>Not Set</translation>
+        </message>
+        <message>
+            <source>服务端类型</source>
+            <translation>Server Type</translation>
+        </message>
+        <message>
+            <source>Minecraft 版本</source>
+            <translation>Minecraft Version</translation>
+        </message>
+        <message>
+            <source>连接地址</source>
+            <translation>Connection Address</translation>
+        </message>
+        <message>
+            <source>启动世界</source>
+            <translation>Startup World</translation>
+        </message>
+        <message>
+            <source>最大玩家数</source>
+            <translation>Player Limit</translation>
+        </message>
+        <message>
+            <source>服务器简介</source>
+            <translation>Server Description</translation>
+        </message>
+        <message>
+            <source>服务端目录</source>
+            <translation>Server Folder</translation>
+        </message>
+        <message>
+            <source>加载器版本</source>
+            <translation>Loader Version</translation>
+        </message>
+        <message>
+            <source>构建号</source>
+            <translation>Build Number</translation>
+        </message>
+        <message>
+            <source>请选择可访问的世界存档。</source>
+            <translation>Select an accessible world save.</translation>
+        </message>
+        <message>
+            <source>无法保存存档</source>
+            <translation>Could Not Save World</translation>
+        </message>
+        <message>
+            <source>存档路径已变更，请重新打开存档。</source>
+            <translation>The world path has changed. Reopen the world and try again.</translation>
+        </message>
+        <message>
+            <source>level.dat 在打开后已被修改。请重新打开存档后再编辑。</source>
+            <translation>level.dat changed after it was opened. Reopen the world before editing it.</translation>
+        </message>
+        <message>
             <source>无法访问内容目录。请检查所选世界和目录位置。</source>
             <translation>Can't access the content folder. Check the selected world and folder location.</translation>
         </message>
@@ -24717,6 +24793,14 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
     <context>
         <name>ServerCheck</name>
         <message>
+            <source>配置包含 %1 项其他属性</source>
+            <translation>The configuration contains %1 additional properties</translation>
+        </message>
+        <message>
+            <source>可在「设置」的「其他属性」中编辑，例如 %1。</source>
+            <translation>Edit these under Other Properties in Settings. Examples include %1.</translation>
+        </message>
+        <message>
             <source>要处理</source>
             <translation>To be processed</translation>
         </message>
@@ -26027,6 +26111,18 @@ Please close the program occupying the port, or change the port in "Common Setti
     </context>
     <context>
         <name>ServerSettingsPage</name>
+        <message>
+            <source>编辑存档</source>
+            <translation>Edit World</translation>
+        </message>
+        <message>
+            <source>备份</source>
+            <translation>Backups</translation>
+        </message>
+        <message>
+            <source>其他属性</source>
+            <translation>Other Properties</translation>
+        </message>
         <message>
             <source>打开目录</source>
             <translation>Open folder</translation>

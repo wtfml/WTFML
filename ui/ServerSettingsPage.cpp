@@ -7,6 +7,7 @@
 
 #include <QComboBox>
 #include <QFileDialog>
+#include <QFormLayout>
 #include <QFont>
 #include <QFontDatabase>
 #include <QFontMetrics>
@@ -23,6 +24,7 @@
 #include <QSpinBox>
 #include <QStackedWidget>
 #include <QTextCursor>
+#include <QTabWidget>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 #include <QVBoxLayout>
@@ -36,6 +38,7 @@
 #include "Theme.hpp"
 #include "ToggleSwitch.hpp"
 #include "VersionTreeDelegate.hpp"
+#include "WorldSettingsPage.hpp"
 
 namespace {
 
@@ -397,9 +400,24 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
         });
         connect(m_activateWorld, &QPushButton::clicked, this, &ServerSettingsPage::activateWorldRequested);
         layout->addLayout(tools);
+        auto *tabs = new QTabWidget;
+        m_worldEditor = new WorldSettingsPage;
+        m_worldEditor->renameButton()->hide();
+        m_worldEditor->deleteButton()->hide();
+        tabs->addTab(m_worldEditor, tr("编辑存档"));
+        auto *backupPage = new QWidget;
+        auto *backupLayout = new QVBoxLayout(backupPage);
+        backupLayout->setContentsMargins(0, 8, 0, 0);
+        tabs->addTab(backupPage, tr("备份"));
+        tabs->setDocumentMode(true);
+        layout->addWidget(tabs, 1);
+        connect(m_worldEditor, &WorldSettingsPage::fullBackupRequested, this, &ServerSettingsPage::backupNowRequested);
+        connect(m_worldEditor, &WorldSettingsPage::openBackupFolderRequested, this,
+                &ServerSettingsPage::openBackupFolderRequested);
+        connect(m_worldEditor, &WorldSettingsPage::restoreBackupRequested, tabs, [tabs] { tabs->setCurrentIndex(1); });
         m_backupNote = makeNoteLabel(nullptr, QString());
         m_backupNote->setObjectName(MainWindowUI::serverSettingsBackupNoteName());
-        layout->addWidget(m_backupNote);
+        backupLayout->addWidget(m_backupNote);
 
         m_backupList = new QTreeWidget();
         m_backupList->setObjectName(MainWindowUI::serverSettingsBackupListName());
@@ -421,7 +439,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
                         emit restoreBackupRequested(item->data(0, Qt::UserRole).toString());
                     }
                 });
-        layout->addWidget(m_backupList, 1);
+        backupLayout->addWidget(m_backupList, 1);
 
         auto *row = new QWidget();
         auto *rowLayout = new QHBoxLayout(row);
@@ -472,7 +490,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
             }
         });
         rowLayout->addWidget(m_restoreButton);
-        layout->addWidget(row);
+        backupLayout->addWidget(row);
     }
 
     // ---------- ⑤ 玩家名单 ----------
@@ -607,10 +625,11 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
 
     {
         auto *layout = addSectionPage(m_stack, QStringLiteral("serverSettingsOverview"));
-        m_overviewType = makeNoteLabel(nullptr, {});
-        m_overviewDirectory = makeNoteLabel(nullptr, {});
-        layout->addWidget(m_overviewType);
-        layout->addWidget(m_overviewDirectory);
+        m_overviewFacts = new QFormLayout;
+        m_overviewFacts->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+        m_overviewFacts->setVerticalSpacing(12);
+        m_overviewFacts->setHorizontalSpacing(24);
+        layout->addLayout(m_overviewFacts);
         layout->addStretch();
     }
     {
@@ -766,9 +785,15 @@ void ServerSettingsPage::setServerName(const QString &name) {
     setWindowTitle(name.isEmpty() ? windowTitle() : name);
 }
 
-void ServerSettingsPage::setOverview(const QString &typeVersion, const QString &directory) {
-    m_overviewType->setText(typeVersion);
-    m_overviewDirectory->setText(directory);
+void ServerSettingsPage::setOverview(const QList<QPair<QString, QString>> &facts) {
+    while (m_overviewFacts->rowCount() != 0) m_overviewFacts->removeRow(0);
+    for (const auto &[name, value] : facts) {
+        auto *label = makeNoteLabel(nullptr, {});
+        label->setTextFormat(Qt::PlainText);
+        label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+        label->setText(value);
+        m_overviewFacts->addRow(name, label);
+    }
 }
 
 void ServerSettingsPage::setRunButtons(bool running, bool stopping) {
@@ -811,9 +836,16 @@ QString ServerSettingsPage::selectedWorld() const {
     return m_worldSelector->currentData().toString();
 }
 
+void ServerSettingsPage::selectWorld(const QString &name) {
+    const QSignalBlocker blocker(m_worldSelector);
+    m_worldSelector->setCurrentIndex(m_worldSelector->findData(name));
+    refreshSectionActions();
+}
+
 void ServerSettingsPage::setSplitWorldBackup(bool split) {
     m_splitWorldBackup = split;
     m_backupNowButton->setText(split ? tr("备份完整服务端…") : MainWindowUI::serverSettingsBackupNowText());
+    m_worldEditor->fullBackupButton()->setText(m_backupNowButton->text());
     if (split) m_backupNote->setText(m_backupNote->text() + QLatin1Char('\n') +
         tr("该世界的下界或末地在独立目录中。请用完整服务端备份同时保留这些维度。"));
     refreshBackupActions();
@@ -884,7 +916,14 @@ void ServerSettingsPage::setFields(const QList<FieldView> &fields) {
         labelWidth = qMax(labelWidth, m_formBody->fontMetrics().horizontalAdvance(field.label) + 4);
     }
     m_fieldLabelWidth = qMin(labelWidth, 220);
+    bool showedExtras = false;
     for (const FieldView &field : fields) {
+        if (field.extra && !showedExtras) {
+            auto *heading = new QLabel(tr("其他属性"), m_formBody);
+            heading->setFont(Theme::textFont(heading->font(), Theme::TextRole::Heading));
+            m_formLayout->insertWidget(m_formLayout->count() - 1, heading);
+            showedExtras = true;
+        }
         addFieldRow(field);
     }
     refreshSaveBar();
@@ -1312,17 +1351,26 @@ void ServerSettingsPage::addFieldRow(const FieldView &field) {
     layout->setSpacing(12);
 
     auto *label = new QLabel(field.label, row);
-    label->setFixedWidth(m_fieldLabelWidth);
+    label->setWordWrap(field.extra);
+    label->setFixedWidth(field.extra ? kFieldEditorWidth : m_fieldLabelWidth);
     layout->addWidget(label);
 
     QWidget *editor = nullptr;
     switch (field.kind) {
     case Kind::Text: {
         auto *edit = new QLineEdit(row);
-        edit->setFixedWidth(kFieldEditorWidth);
+        if (!field.preview && !field.extra) edit->setFixedWidth(kFieldEditorWidth);
+        if (field.secret) edit->setEchoMode(QLineEdit::PasswordEchoOnEdit);
         // 接在**摆默认值之后**：`addItem` / `setRange` 这一类也会发信号，接早了会在
         // 搭界面这一路就把 `edited()` 发出去（那时页面还没搭完）。
         connect(edit, &QLineEdit::textChanged, this, [changed](const QString &) { changed(); });
+        editor = edit;
+        break;
+    }
+    case Kind::Multiline: {
+        auto *edit = new QPlainTextEdit(row);
+        edit->setFixedHeight(82);
+        connect(edit, &QPlainTextEdit::textChanged, this, changed);
         editor = edit;
         break;
     }
@@ -1353,6 +1401,7 @@ void ServerSettingsPage::addFieldRow(const FieldView &field) {
     }
     // 认人走这个名字（前缀 + `server.properties` 里那个键），不认行号、也不认那一行的字。
     editor->setObjectName(MainWindowUI::serverSettingsFieldName(field.key));
+    editor->setEnabled(m_editable);
     // 挂着预览的那一格：**敲一个字画一次**（预览就是给人边改边看的）。程序摆值那一趟
     // （`setEditorValue()` 走 `setText()`）也走这里 —— 那也是"这一格现在写着什么"。
     if (field.preview) {
@@ -1367,7 +1416,7 @@ void ServerSettingsPage::addFieldRow(const FieldView &field) {
     if (field.kind == Kind::Switch) {
         layout->addWidget(editor, 0, Qt::AlignLeft);
     } else {
-        layout->addWidget(editor, 0);
+        layout->addWidget(editor, field.preview || field.extra ? 1 : 0);
     }
 
     // 「选择本地 zip…」：只为那一格服务。选文件、验 zip、算 SHA-1 全在 `MainWindow`
@@ -1382,13 +1431,13 @@ void ServerSettingsPage::addFieldRow(const FieldView &field) {
         m_zipPickButton = pick;
     }
 
-    if (field.hint.isEmpty()) {
-        layout->addStretch(1);
-    } else {
+    if (!field.hint.isEmpty() && !field.preview) {
         auto *hint = makeHintLabel(row, field.hint);
         // 折行的小字**不许**参与横向度量：它一长，整行就被抻宽，右栏就出横向滚动条了。
         hint->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
         layout->addWidget(hint, 1);
+    } else if (!field.preview && !field.extra) {
+        layout->addStretch(1);
     }
 
     m_editors.insert(field.key, editor);
@@ -1404,6 +1453,7 @@ void ServerSettingsPage::addFieldRow(const FieldView &field) {
         auto *holderLayout = new QVBoxLayout(holder);
         holderLayout->setContentsMargins(m_fieldLabelWidth + 12, 0, 0, 0);
         holderLayout->setSpacing(4);
+        if (!field.hint.isEmpty()) holderLayout->addWidget(makeHintLabel(holder, field.hint));
 
         auto *plate = new QLabel(holder);
         plate->setObjectName(MainWindowUI::serverSettingsMotdPreviewName());
@@ -1444,6 +1494,10 @@ QString ServerSettingsPage::editorValue(const FieldView &field) const {
         const auto *edit = qobject_cast<const QLineEdit *>(editor);
         return edit != nullptr ? edit->text() : QString();
     }
+    case Kind::Multiline: {
+        const auto *edit = qobject_cast<const QPlainTextEdit *>(editor);
+        return edit != nullptr ? edit->toPlainText() : QString();
+    }
     case Kind::Number: {
         const auto *spin = qobject_cast<const QSpinBox *>(editor);
         return spin != nullptr ? QString::number(spin->value()) : QString();
@@ -1477,6 +1531,10 @@ void ServerSettingsPage::setEditorValue(const FieldView &field, const QString &v
             edit->setText(value);
             edit->setCursorPosition(0);  // 长值（MOTD、路径）显示开头，不停在末尾
         }
+        break;
+    }
+    case Kind::Multiline: {
+        if (auto *edit = qobject_cast<QPlainTextEdit *>(editor)) edit->setPlainText(value);
         break;
     }
     case Kind::Number: {
@@ -1569,6 +1627,8 @@ void ServerSettingsPage::refreshSectionActions() {
     m_launchMemory->setEnabled(m_editable);
     m_launchJvm->setReadOnly(!m_editable);
     m_launchSave->setEnabled(m_editable && launchSettingsChanged());
+    m_worldSelector->setEnabled(m_editable && m_worldSelector->count() > 0);
+    m_worldEditor->setEnabled(m_editable);
     m_activateWorld->setEnabled(m_editable && !selectedWorld().isEmpty() && selectedWorld() != m_startupWorld);
     m_migration->setEnabled(m_editable);
     m_migrationImport->setEnabled(m_editable);

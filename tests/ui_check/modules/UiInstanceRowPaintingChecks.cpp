@@ -692,8 +692,8 @@ int UiInstanceRowPaintingChecks() {
         // （内容还在路上）。两条走的是同一条路（顶层条目 + 粗体），但说的话不一样。
         page.setGroups({});
         check(page.groupCount() == 1 && page.versionRowCount() == 0 &&
-                  page.placeholderText() == QStringLiteral("这个资源一个版本都没发过"),
-              "★ Z14 空表**不摆一片空白**：摆一句「这个资源一个版本都没发过」"
+                  page.placeholderText() == QStringLiteral("此资源未发布任何版本"),
+              "★ Z14 空表**不摆一片空白**：摆一句「此资源未发布任何版本」"
               "（那条说明自己算一条顶层条目）",
               page.placeholderText());
         page.setPlaceholder(QStringLiteral("正在读取版本列表…"));

@@ -196,6 +196,12 @@ void PresetEditorPage::rebuildPages(const QJsonObject &state) {
     });
     layout->addWidget(new QLabel(QCoreApplication::translate("PresetEditorPage", "启用部分"), overview));
     const auto enabled = state.value("enabledParts").toObject();
+    const auto sections = state.value("sections").toArray();
+    // 旧预设可能在没有游戏设置内容时也记录了启用。补齐默认值后需要让用户主动选择覆盖。
+    const bool hasGameSettings = std::any_of(sections.cbegin(), sections.cend(), [](const auto &value) {
+        const auto section = value.toObject();
+        return partFor(section) == "gameSettings" && !section.value("items").toArray().isEmpty();
+    });
     const QStringList titles{
         QCoreApplication::translate("PresetEditorPage", "游戏设置"),
         QCoreApplication::translate("PresetEditorPage", "模组"),
@@ -209,14 +215,16 @@ void PresetEditorPage::rebuildPages(const QJsonObject &state) {
         const bool legacyShaderDisabled = parts[i] == QStringLiteral("shaderPacks") &&
             !enabled.contains(parts[i]) && enabled.contains(QStringLiteral("resourcePacks")) &&
             !enabled.value(QStringLiteral("resourcePacks")).toBool();
-        check->setChecked(!legacyShaderDisabled && (!enabled.contains(parts[i]) || enabled.value(parts[i]).toBool()));
+        const bool canEnable = parts[i] != QStringLiteral("gameSettings") || hasGameSettings;
+        check->setChecked(canEnable && !legacyShaderDisabled &&
+                          (!enabled.contains(parts[i]) || enabled.value(parts[i]).toBool()));
         m_enabled[parts[i]] = check;
         layout->addWidget(check);
     }
     layout->addStretch();
     m_pages->addWidget(overview);
     QList<PresetOptionsEditor::Entry> options, keys;
-    for (const auto &value : state.value("sections").toArray()) {
+    for (const auto &value : sections) {
         auto section = value.toObject();
         const auto kind = section.value("kind").toString();
         if (kind != "vanillaOptions" && kind != "vanillaKeys")

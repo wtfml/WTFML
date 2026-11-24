@@ -345,6 +345,11 @@ void runServerSettingsTests() {
               "ZV3 被改的那一项真的变了");
         check(props.value(QStringLiteral("some-plugin-option")) == QStringLiteral("nonsense value"),
               "★★ ZV3 我们不认识的键原样留着（整合包和插件往里加的键一个都不动）");
+        check(ServerPropertiesForm::applyEdits(props,
+                  {{QStringLiteral("some-plugin-option"), QStringLiteral("a\nb")}}) == 1 &&
+                  ServerModel::parseProperties(props.toString()).value(QStringLiteral("some-plugin-option")) ==
+                      QStringLiteral("a\nb"),
+              "ZV3 其他属性可编辑并保留转义的换行");
 
         // 表里没有的键：跳过（这一层只认那十九项）。
         ServerModel::Properties other = ServerModel::parseProperties(QStringLiteral("a=1\n"));

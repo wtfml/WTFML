@@ -41,10 +41,12 @@
 #include "server/ServerPortCheck.hpp"
 
 #include <QObject>
+#include <QByteArray>
 #include <QString>
 
 class MainWindow;
 class ServerSettingsPage;
+namespace ServerModel { struct Properties; }
 
 class ServerSettingsPageController final : public QObject {
 public:
@@ -105,6 +107,9 @@ private:
     /// `refresh()` 与 `refreshRunStateIfShowing()` 都走这里，免得两边的措辞和判据分叉。
     void applyRunState(ServerSettingsPage *page, const QString &serverId);
     void refreshWorlds();
+    void refreshWorldEditor(bool force = false);
+    void saveWorldEditor();
+    void refreshForm(const ServerModel::Properties &properties);
     void refreshLogs();
     void saveLaunchSettings();
     void exportMigration();
@@ -116,6 +121,8 @@ private:
     ServerSettingsPage *m_page = nullptr;
     /// 这一页**现在说的是哪一个**服务端（见文件头：认它，不问列表选中谁）。
     QString m_serverId;
+    QString m_worldEditorDir;
+    QByteArray m_worldSourceHash;
     /// 这一页现在能不能改（服务端在跑 = 不能）。
     bool m_editable = true;
     bool m_copyingUpgrade = false;

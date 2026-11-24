@@ -401,9 +401,10 @@ int main(int argc, char *argv[]) {
         bool rightStillTalksAboutImport = false;
         if (instanceWorkspace != nullptr) {
             for (const QLabel *l : instanceWorkspace->findChildren<QLabel *>()) {
-                // 空状态那句（instanceEmpty）本来就写「可导入整合包」，不在"常驻侧栏说明"之列。
+                // 空状态那句（instanceEmpty）本来就写「可导入整合包」，不在"常驻侧栏说明"之列；
+                // 页头那颗按钮的完整文案带省略号，正文里重复的才是要挡的。
                 if (l->objectName() != MainWindowUI::instanceEmptyLabelName() &&
-                    l->text().contains(QStringLiteral("导入整合包"))) {
+                    l->text().contains(QStringLiteral("导入整合包…"))) {
                     rightStillTalksAboutImport = true;
                 }
             }

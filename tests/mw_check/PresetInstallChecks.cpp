@@ -12,6 +12,7 @@
 #include <QProcess>
 #include "download/ResourceStore.hpp"
 #include "PresetModEditor.hpp"
+#include "PresetEditorPage.hpp"
 #include "PresetOptionsEditor.hpp"
 #include "PresetManagePage.hpp"
 #include "PresetModReview.hpp"
@@ -27,12 +28,12 @@
 #include <QSortFilterProxyModel>
 #include <QPersistentModelIndex>
 #include <QPushButton>
-#include <QSpinBox>
-#include <QStyledItemDelegate>
+#include <QSlider>
 #include "presets/PresetStore.hpp"
 #include "presets/PresetCatalog.hpp"
 #include "controllers/PresetController.hpp"
 #include "presets/PresetApply.hpp"
+#include "presets/PresetWorkspace.hpp"
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QTemporaryDir>
@@ -870,17 +871,13 @@ int runPresetInstallChecks() {
     check(options.entries().size() == 2 && options.entries()[0].value == QStringLiteral("0.5"),
           "game settings editor round-trips selected options and keys");
     auto *optionTable = options.findChild<QTableWidget *>(QStringLiteral("presetOptionsEditorTable"));
-    const QModelIndex fovIndex = optionTable->model()->index(0, 1);
-    auto *fovEditor = optionTable->itemDelegate()->createEditor(&options, QStyleOptionViewItem(), fovIndex);
-    optionTable->itemDelegate()->setEditorData(fovEditor, fovIndex);
-    auto *degrees = qobject_cast<QSpinBox *>(fovEditor);
+    auto *fovEditor = optionTable ? optionTable->cellWidget(0, 1) : nullptr;
+    auto *degrees = fovEditor ? fovEditor->findChild<QSlider *>() : nullptr;
     check(degrees && degrees->value() == 90, "stored FOV is edited in human-readable degrees");
     if (degrees) {
         degrees->setValue(80);
-        optionTable->itemDelegate()->setModelData(degrees, optionTable->model(), fovIndex);
         check(options.entries()[0].value == QStringLiteral("0.25"), "human-readable FOV writes the original normalized game format");
     }
-    delete fovEditor;
     {
         PresetManagePage manage;
         PresetManagePage::PresetItem one; one.id = QStringLiteral("one"); one.name = QStringLiteral("建筑"); one.description = QStringLiteral("creative keys");
@@ -1012,6 +1009,27 @@ int runPresetInstallChecks() {
     const auto contents = config.readAll(); config.close();
     check(applied.ok && opened && contents.contains("fov:0.5") && contents.contains("unknownPreserved:yes"),
           "settings application changes selected keys and preserves unknown fields");
+    {
+        PresetEditorPage fresh(QJsonObject{{"id", manifest.id}, {"name", manifest.name},
+            {"enabledParts", QJsonObject{{"gameSettings", true}}},
+            {"modReferences", QJsonArray{QJsonObject{{"platform", "modrinth"}, {"projectId", "test-mod"}}}}});
+        auto *enableGame = fresh.findChild<QCheckBox *>("presetEditorEnabled_gameSettings");
+        check(enableGame && !enableGame->isChecked(), "legacy presets without game data require opting into an override");
+        const auto disabled = Presets::saveEditorDocument(presetRoot, fresh.document(), false);
+        check(disabled.ok && disabled.manifest.sections.isEmpty() &&
+                  !disabled.manifest.editorState.value("sections").toArray().isEmpty(),
+              "disabling the group excludes it from application and retains its editable values");
+        if (enableGame) enableGame->setChecked(true);
+        const auto enabled = Presets::saveEditorDocument(presetRoot, fresh.document(), false);
+        auto withGameSettings = enabled.manifest;
+        withGameSettings.modReferences.clear();
+        const auto overwritten = Presets::applyPresetToInstance(presetRoot, withGameSettings, apply);
+        const bool reopened = config.open(QIODevice::ReadOnly);
+        const auto after = config.readAll(); config.close();
+        check(enableGame && enabled.ok && overwritten.ok && reopened && after.contains("fov:0.0") &&
+                  after.contains("renderDistance:12") && after.contains("unknownPreserved:yes"),
+              "enabling the group overwrites an existing value and adds defaults even without edits");
+    }
     const QString preview = qEnvironmentVariable("WTFML_PRESET_PREVIEW_DIR");
     if (!preview.isEmpty()) {
         QDir().mkpath(preview);
