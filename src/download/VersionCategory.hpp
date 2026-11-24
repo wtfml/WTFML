@@ -15,6 +15,7 @@
  */
 #pragma once
 
+#include <QCoreApplication>
 #include <QString>
 #include <QStringList>
 
@@ -88,13 +89,13 @@ inline QString channelKey(Channel channel) {
 inline QString channelText(Channel channel) {
     switch (channel) {
     case Channel::Release:
-        return QStringLiteral("正式版");
+        return QCoreApplication::translate("VersionCategory", "正式版");
     case Channel::Snapshot:
-        return QStringLiteral("快照版");
+        return QCoreApplication::translate("VersionCategory", "快照版");
     case Channel::Old:
-        return QStringLiteral("远古版");
+        return QCoreApplication::translate("VersionCategory", "远古版");
     case Channel::AprilFools:
-        return QStringLiteral("愚人节版");
+        return QCoreApplication::translate("VersionCategory", "愚人节版");
     }
     return QString();
 }

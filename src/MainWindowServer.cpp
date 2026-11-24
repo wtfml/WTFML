@@ -481,8 +481,8 @@ void MainWindow::createServerFromNewServerPage() {
     const QString desired = ServerRegistry::sanitizeId(m_newServerPage->serverName());
     if (desired.isEmpty()) {
         // 话说完就停在表单上：刚填的东西不能因为一句提醒就没收。
-        InlineMessage::warning(m_ui->overlay(), QStringLiteral("这个名字不能当目录名"),
-                               QStringLiteral("换一个名字再试（名字里不能只有标点或空白）。"));
+        InlineMessage::warning(m_ui->overlay(), tr("这个名字不能当目录名"),
+                               tr("换一个名字再试（名字里不能只有标点或空白）。"));
         return;
     }
     const QString serverId = ServerRegistry::uniqueServerId(desired);
@@ -500,7 +500,7 @@ void MainWindow::createServerFromNewServerPage() {
     info.memoryMb = m_newServerPage->memoryMb();
     QString problem;
     if (!ServerRegistry::createServer(serverId, info, &problem)) {
-        InlineMessage::critical(m_ui->overlay(), QStringLiteral("建不了这个服务端"), problem);
+        InlineMessage::critical(m_ui->overlay(), tr("建不了这个服务端"), problem);
         return;
     }
     // 建好了：表单那一层退回去（下次进来从版本列表开始），并切到「管理 → 服务端」——
@@ -973,7 +973,7 @@ void MainWindow::onServerLineAppended(const QString &serverId, const QString &li
     // 只有长到离谱的那些才截断，而且**只截写进日志的这一份** —— 控制台那一页照旧是原话。
     QString logged = line;
     if (logged.size() > kMaxLoggedServerLineChars) {
-        logged = logged.left(kMaxLoggedServerLineChars) + QStringLiteral("…（这一行太长，截断了）");
+        logged = logged.left(kMaxLoggedServerLineChars) + tr("…（这一行太长，截断了）");
     }
     appendLog(QStringLiteral("[%1] %2").arg(serverId, logged));
     // 控制台那一页正开着它的话，这一行也进那一页（认人认"这一页现在说的是谁"，见控制器）。
@@ -1007,7 +1007,7 @@ void MainWindow::updateNewServerSummary(NewServerPage *page) {
     const QString desiredId = ServerRegistry::sanitizeId(page->serverName());
     if (desiredId.isEmpty()) {
         page->setTargetDir(QString());
-        page->setSummary(QString(), QStringLiteral("先给它起个名字（会当成目录名）。"));
+        page->setSummary(QString(), tr("先给它起个名字（会当成目录名）。"));
         return;
     }
     // 「目录」那一行：服务端根目录只有一份（`<数据目录>/servers`，就是左栏那一列里的根），
