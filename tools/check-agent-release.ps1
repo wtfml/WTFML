@@ -224,6 +224,8 @@ if (Test-Path -LiteralPath $registry) {
 $gateChecks = @(
     @{ File = 'src/agent/AgentLauncherTools.cpp'; Pattern = 'AgentApprovalPolicy::request'; What = '启动器工具审批闸' },
     @{ File = 'src/agent/AgentTestLaunchToolEngine.cpp'; Pattern = 'AgentApprovalPolicy::request'; What = '测试启动审批闸' },
+    @{ File = 'src/agent/AgentModToolEngine.cpp';       Pattern = 'AgentApprovalPolicy::request'; What = '模组工具审批闸' },
+    @{ File = 'src/agent/AgentModToolEngine.cpp';       Pattern = 'loadByWorkspace';              What = '模组修复只认事务工作区' },
     @{ File = 'src/agent/AgentWebTools.cpp';       Pattern = 'AgentApprovalPolicy::request'; What = '联网工具审批闸' },
     @{ File = 'src/agent/AgentCommandTools.cpp';   Pattern = 'AgentApprovalPolicy::request'; What = '诊断命令审批闸' },
     @{ File = 'src/agent/AgentMcpToolEngine.cpp';  Pattern = 'AgentApprovalPolicy::request'; What = 'MCP 工具审批闸' },

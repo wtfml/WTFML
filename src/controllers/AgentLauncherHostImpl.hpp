@@ -13,16 +13,21 @@
 
 #include "agent/AgentBackupIndex.hpp"
 #include "agent/AgentLaunchHost.hpp"
-#include "agent/AgentRepairHost.hpp"
 #include "agent/AgentLauncherHost.hpp"
+#include "agent/AgentModHost.hpp"
+#include "agent/AgentRepairHost.hpp"
 
 #include <memory>
 
 class MainWindow;
 class AgentTestLaunchRunner;
 class AgentRepairRunner;
+class DownloadManager;
 
-class AgentLauncherHostImpl final : public AgentLauncherHost, public AgentLaunchHost, public AgentRepairHost {
+class AgentLauncherHostImpl final : public AgentLauncherHost,
+                                    public AgentLaunchHost,
+                                    public AgentRepairHost,
+                                    public AgentModHost {
 public:
     explicit AgentLauncherHostImpl(MainWindow *owner);
     ~AgentLauncherHostImpl() override;
@@ -74,13 +79,35 @@ public:
     bool finishTransaction(const QString &transactionId, bool commit,
                            const FinishCompletion &done, QString *problem) override;
 
+    // ---------- 模组平台查询 / 下载 / 核心修复（S5.4，异步） ----------
+    bool lookupModPlatform(const QString &instanceId, const QString &gameVersion,
+                           const QString &loaderVersion, const QString &loader,
+                           const QStringList &sha1s, const PlatformCompletion &done,
+                           QString *problem) override;
+    bool resolveModTarget(const QString &instanceId, const QString &projectId,
+                          const QString &versionId, const QString &expectedSha1,
+                          const ResolveCompletion &done, QString *problem) override;
+    bool downloadModFile(const AgentHostModTarget &target, const QString &stagingDir,
+                         const DownloadCompletion &done, QString *problem) override;
+    bool repairCoreFiles(const QString &instanceId, const QStringList &flaggedPaths,
+                         const RepairCompletion &done, QString *problem) override;
+
 private:
     AgentDiagnosticProjection::InstanceFacts factsFor(const QString &instanceId) const;
     QString modsDir(const QString &instanceId) const;
     QString instanceDir(const QString &instanceId) const;
 
+    struct ModDownloadJob {
+        QString fileName;
+        DownloadCompletion done;
+    };
+
     MainWindow *m_owner = nullptr;
     AgentBackupIndex m_maintenance;
     std::unique_ptr<AgentTestLaunchRunner> m_testLaunchRunner;
     std::unique_ptr<AgentRepairRunner> m_repairRunner;
+    bool m_modPlatformBusy = false;
+    bool m_modResolveBusy = false;
+    DownloadManager *m_modDownloader = nullptr;
+    std::unique_ptr<ModDownloadJob> m_modDownloadJob;
 };

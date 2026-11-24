@@ -267,6 +267,7 @@ add_library(core_cases_agent OBJECT
  core_modules/AgentInstancePathTests.cpp
  core_modules/AgentCrashSnapshotTests.cpp
  core_modules/AgentLogIndexTests.cpp
+ core_modules/AgentModTests.cpp
  core_modules/AgentPathLayoutTests.cpp
 )
 wtfml_core_compile(core_cases_agent)

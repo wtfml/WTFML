@@ -413,6 +413,27 @@ int MwAgentChecks(QApplication &app) {
         check(rangeResult.data.value(QStringLiteral("totalLines")).toInt() == 1,
               "真窗口：logs.readRange 回总行数");
 
+        // Stage 5.4：工具注册与真宿主接线（异步部分在 core-agent 用假宿主验）。
+        Agent::ToolCall installCall;
+        installCall.id = QStringLiteral("mw-mod-1");
+        installCall.name = QStringLiteral("mods.installFix");
+        installCall.arguments = QJsonObject{
+            {QStringLiteral("projectId"), QStringLiteral("proj-x")},
+            {QStringLiteral("workspaceId"), QStringLiteral("ws-unknown")}};
+        const AgentToolResult installResult =
+            controller->compositeEngine()->invoke(installCall);
+        check(installResult.status == AgentToolResult::Status::Error,
+              "真窗口：没有工作区时拒绝 mods.installFix", installResult.summary);
+
+        Agent::ToolCall repairCall;
+        repairCall.id = QStringLiteral("mw-core-1");
+        repairCall.name = QStringLiteral("instance.repairCore");
+        const AgentToolResult repairResult =
+            controller->compositeEngine()->invoke(repairCall);
+        check(repairResult.status == AgentToolResult::Status::ApprovalRequired,
+              "真窗口：instance.repairCore 每次审批");
+        controller->compositeEngine()->cancelPending();
+
         Agent::ToolCall fullCall;
         fullCall.id = QStringLiteral("mw-crash-3");
         fullCall.name = QStringLiteral("crash.readFull");

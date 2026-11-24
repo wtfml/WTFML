@@ -5,8 +5,9 @@
 
 #include "AgentLauncherHostImpl.hpp"
 
-#include "AgentTestLaunchRunner.hpp"
+#include "AgentModPlatform.hpp"
 #include "AgentRepairRunner.hpp"
+#include "AgentTestLaunchRunner.hpp"
 
 #include "MainWindow.hpp"
 
@@ -17,6 +18,7 @@
 #include "manage/BackupFiles.hpp"
 #include "manage/InstanceFiles.hpp"
 #include "manage/LaunchHistory.hpp"
+#include "download/DownloadManager.hpp"
 #include "manage/VersionManager.hpp"
 #include "settings/EffectiveJavaSettings.hpp"
 #include "settings/GlobalJavaSettings.hpp"
@@ -33,6 +35,8 @@
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QSaveFile>
+#include <QTimer>
+#include <QtConcurrent/QtConcurrentRun>
 
 namespace {
 
@@ -100,6 +104,173 @@ AgentLauncherHostImpl::AgentLauncherHostImpl(MainWindow *owner)
                                       : nullptr) {}
 
 AgentLauncherHostImpl::~AgentLauncherHostImpl() = default;
+
+// ---------------------------------------------------------------- 模组（S5.4）
+
+bool AgentLauncherHostImpl::lookupModPlatform(const QString &instanceId,
+                                              const QString &gameVersion,
+                                              const QString &loaderVersion,
+                                              const QString &loader, const QStringList &sha1s,
+                                              const PlatformCompletion &done, QString *problem) {
+    Q_UNUSED(instanceId);
+    Q_UNUSED(loaderVersion);
+    if (m_owner == nullptr) {
+        if (problem != nullptr) *problem = QStringLiteral("主窗口未接入。");  // i18n-ignore
+        return false;
+    }
+    if (m_modPlatformBusy) {
+        if (problem != nullptr) *problem = QStringLiteral("上一次平台查询还没结束。");  // i18n-ignore
+        return false;
+    }
+    m_modPlatformBusy = true;
+    AgentModPlatform::LookupQuery query;
+    query.sha1s = sha1s;
+    query.gameVersion = gameVersion;
+    query.loader = loader;
+    query.apiBase = m_owner->m_settings->modrinthApiBaseOverride();
+    QPointer<MainWindow> owner(m_owner);
+    (void)QtConcurrent::run([this, owner, query, done]() {
+        const AgentModPlatform::LookupResult result = AgentModPlatform::lookupModrinth(query);
+        MainWindow *window = owner.data();
+        if (window == nullptr) return;
+        QMetaObject::invokeMethod(
+            window,
+            [this, result, done]() {
+                m_modPlatformBusy = false;
+                if (done) done(result.entries, result.problem);
+            },
+            Qt::QueuedConnection);
+    });
+    return true;
+}
+
+bool AgentLauncherHostImpl::resolveModTarget(const QString &instanceId, const QString &projectId,
+                                             const QString &versionId,
+                                             const QString &expectedSha1,
+                                             const ResolveCompletion &done, QString *problem) {
+    Q_UNUSED(instanceId);
+    if (m_owner == nullptr) {
+        if (problem != nullptr) *problem = QStringLiteral("主窗口未接入。");  // i18n-ignore
+        return false;
+    }
+    if (m_modResolveBusy) {
+        if (problem != nullptr) *problem = QStringLiteral("上一次地址解析还没结束。");  // i18n-ignore
+        return false;
+    }
+    m_modResolveBusy = true;
+    AgentModPlatform::TargetQuery query;
+    query.projectId = projectId;
+    query.versionId = versionId;
+    query.expectedSha1 = expectedSha1;
+    query.gameVersion = factsFor(instanceId).gameVersion;
+    query.loader = factsFor(instanceId).loaderName.toLower();
+    query.apiBase = m_owner->m_settings->modrinthApiBaseOverride();
+    QPointer<MainWindow> owner(m_owner);
+    (void)QtConcurrent::run([this, owner, query, done]() {
+        const AgentModPlatform::TargetResult result = AgentModPlatform::resolveModrinth(query);
+        MainWindow *window = owner.data();
+        if (window == nullptr) return;
+        QMetaObject::invokeMethod(
+            window,
+            [this, result, done]() {
+                m_modResolveBusy = false;
+                if (done) done(result.target, result.problem);
+            },
+            Qt::QueuedConnection);
+    });
+    return true;
+}
+
+bool AgentLauncherHostImpl::downloadModFile(const AgentHostModTarget &target,
+                                            const QString &stagingDir,
+                                            const DownloadCompletion &done, QString *problem) {
+    if (m_owner == nullptr) {
+        if (problem != nullptr) *problem = QStringLiteral("主窗口未接入。");  // i18n-ignore
+        return false;
+    }
+    if (m_modDownloadJob) {
+        if (problem != nullptr) *problem = QStringLiteral("上一次下载还没结束。");  // i18n-ignore
+        return false;
+    }
+    if (target.url.isEmpty() || target.fileName.isEmpty()) {
+        if (problem != nullptr) *problem = QStringLiteral("下载目标不完整。");  // i18n-ignore
+        return false;
+    }
+    if (!QDir().mkpath(stagingDir)) {
+        if (problem != nullptr) *problem = QStringLiteral("建不出暂存目录。");  // i18n-ignore
+        return false;
+    }
+    if (m_modDownloader == nullptr) {
+        m_modDownloader = new DownloadManager(nullptr);
+        m_modDownloader->setAllowOverwrite(false);
+        QObject::connect(
+            m_modDownloader, &DownloadManager::downloadFinished, m_owner,
+            [this](const QString &fileName, bool success, const QString &errorMessage) {
+                if (!m_modDownloadJob || m_modDownloadJob->fileName != fileName) return;
+                auto job = std::move(m_modDownloadJob);
+                AgentModHost::DownloadOutcome outcome;
+                outcome.ok = success;
+                outcome.problem = errorMessage;
+                if (success) {
+                    const QString path = m_modDownloader->property("wtfml.agent.stagedPath").toString();
+                    outcome.stagedPath = path;
+                    QFile file(path);
+                    outcome.bytes = file.exists() ? file.size() : -1;
+                    if (file.open(QIODevice::ReadOnly)) {
+                        QCryptographicHash hash(QCryptographicHash::Sha1);
+                        while (!file.atEnd()) hash.addData(file.read(1024 * 1024));
+                        outcome.sha1 = QString::fromLatin1(hash.result().toHex());
+                    }
+                }
+                m_modDownloader->setProperty("wtfml.agent.stagedPath", QVariant());
+                if (job && job->done) job->done(outcome);
+            });
+    }
+    const QString stagedPath =
+        stagingDir + QLatin1Char('/') + QLatin1String("mod-") +
+        QUuid::createUuid().toString(QUuid::WithoutBraces) + QStringLiteral(".jar");
+    m_modDownloader->setProperty("wtfml.agent.stagedPath", stagedPath);
+    m_modDownloadJob = std::make_unique<ModDownloadJob>();
+    m_modDownloadJob->fileName = QFileInfo(stagedPath).fileName();
+    m_modDownloadJob->done = done;
+    m_modDownloader->downloadFile(target.url, stagedPath, target.sha1, target.size);
+    return true;
+}
+
+bool AgentLauncherHostImpl::repairCoreFiles(const QString &instanceId,
+                                            const QStringList &flaggedPaths,
+                                            const RepairCompletion &done, QString *problem) {
+    if (m_owner == nullptr || m_owner->m_versionManager == nullptr) {
+        if (problem != nullptr) *problem = QStringLiteral("主窗口未接入。");  // i18n-ignore
+        return false;
+    }
+    if (m_owner->m_versionManager->downloads()->isBusy()) {
+        if (problem != nullptr) *problem = QStringLiteral("已有下载任务在进行，等它结束再修。");  // i18n-ignore
+        return false;
+    }
+    struct State {
+        bool finished = false;
+        RepairCompletion completion;
+    };
+    auto state = std::make_shared<State>();
+    state->completion = done;
+    auto *guard = new QObject(m_owner);
+    QObject::connect(
+        m_owner->m_versionManager, &VersionManager::versionDownloadFinished, guard,
+        [state, guard, instanceId](const QString &id, bool ok, const QString &message) {
+            if (state->finished || id != instanceId) return;
+            state->finished = true;
+            guard->deleteLater();
+            if (state->completion) {
+                AgentModHost::RepairOutcome outcome;
+                outcome.ok = ok;
+                outcome.problem = message;
+                state->completion(outcome);
+            }
+        });
+    m_owner->m_versionManager->repairVersionFiles(instanceId, flaggedPaths);
+    return true;
+}
 
 QString AgentLauncherHostImpl::instanceDir(const QString &instanceId) const {
     return AppPaths::versionDir(instanceId);
@@ -368,6 +539,7 @@ bool AgentLauncherHostImpl::mods(const QString &instanceId, QList<AgentHostModEn
         entry.fileName = file.fileName();
         entry.enabled = file.fileName().endsWith(QStringLiteral(".jar"));
         entry.bytes = file.size();
+        entry.path = file.absoluteFilePath();
         items->append(entry);
     }
     return true;

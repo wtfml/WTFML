@@ -179,6 +179,7 @@ set(SOURCE_FILES
     ${REPO_ROOT}/src/controllers/ThemeSettingsController.cpp
     ${REPO_ROOT}/src/controllers/AgentController.cpp
     ${REPO_ROOT}/src/controllers/AgentLauncherHostImpl.cpp
+    ${REPO_ROOT}/src/controllers/AgentModPlatform.cpp
     ${REPO_ROOT}/src/controllers/AgentTestLaunchRunner.cpp
     ${REPO_ROOT}/src/controllers/AgentTestLaunchRunner.hpp
     ${REPO_ROOT}/src/controllers/AgentRepairRunner.cpp

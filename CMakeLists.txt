@@ -241,6 +241,9 @@ set(HEADER_FILES
     src/agent/AgentLogIndex.hpp
     src/agent/AgentCrashSnapshot.hpp
     src/agent/AgentMixinOwnership.hpp
+    src/agent/AgentModHost.hpp
+    src/agent/AgentModCompat.hpp
+    src/agent/AgentModToolEngine.hpp
     src/agent/AgentWebPolicy.hpp
     src/agent/AgentWebTransport.hpp
     src/agent/QtAgentWebTransport.hpp
@@ -248,6 +251,7 @@ set(HEADER_FILES
     src/agent/AgentCommandTools.hpp
     src/controllers/AgentController.hpp
     src/controllers/AgentLauncherHostImpl.hpp
+    src/controllers/AgentModPlatform.hpp
     src/controllers/AgentTestLaunchRunner.hpp
     src/controllers/AgentRepairRunner.hpp
     ui/AgentMarkdown.hpp
@@ -336,6 +340,7 @@ set(HEADER_FILES
     # 迁移 / 升级副本：计划只读盘，落盘在
     # TransferApply。目标版本 / 加载器不一致时如实说不一致，不替用户猜。
     src/operations/TransferPlanner.hpp
+    src/operations/ModDeclarations.hpp
     # 迁移式升级的九类选择：稳定键、默认值、指纹与依赖提示（纯逻辑）。
     src/operations/UpgradeSelection.hpp
     src/operations/UpgradePageState.hpp
@@ -597,12 +602,15 @@ set(SOURCE_FILES
     src/agent/AgentLogIndex.cpp
     src/agent/AgentCrashSnapshot.cpp
     src/agent/AgentMixinOwnership.cpp
+    src/agent/AgentModCompat.cpp
+    src/agent/AgentModToolEngine.cpp
     src/agent/AgentWebPolicy.cpp
     src/agent/QtAgentWebTransport.cpp
     src/agent/AgentWebTools.cpp
     src/agent/AgentCommandTools.cpp
     src/controllers/AgentController.cpp
     src/controllers/AgentLauncherHostImpl.cpp
+    src/controllers/AgentModPlatform.cpp
     src/controllers/AgentTestLaunchRunner.cpp
     src/controllers/AgentRepairRunner.cpp
     src/net/HttpClient.cpp
@@ -678,6 +686,7 @@ set(SOURCE_FILES
     src/diagnose/StartupDiagnosis.cpp
     # 迁移 / 升级副本。
     src/operations/TransferPlanner.cpp
+    src/operations/ModDeclarations.cpp
     src/operations/UpgradeSelection.cpp
     src/operations/UpgradePageState.cpp
     src/operations/UpgradeReport.cpp

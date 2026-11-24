@@ -41,6 +41,7 @@ class AgentMcpPage;
 class AgentLaunchHost;
 class AgentTestLaunchToolEngine;
 class AgentRepairToolEngine;
+class AgentModToolEngine;
 class AgentPage;
 class AgentSettingsPage;
 class AgentModelClient;
@@ -170,6 +171,7 @@ private:
     AgentLauncherTools *m_launcherTools = nullptr;
     AgentTestLaunchToolEngine *m_testLaunchTools = nullptr;
     AgentRepairToolEngine *m_repairTools = nullptr;
+    AgentModToolEngine *m_modTools = nullptr;
     AgentCompositeToolEngine *m_compositeEngine = nullptr;
     McpTrustStore m_mcpStore;
     McpManager *m_mcpManager = nullptr;

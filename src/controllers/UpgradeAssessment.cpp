@@ -6,6 +6,7 @@
 #include "manage/VersionDisplay.hpp"
 #include "manage/InstanceIconLookup.hpp"
 #include "download/ResourceStore.hpp"
+#include "operations/ModDeclarations.hpp"
 #include "operations/ModVersionDeclaration.hpp"
 #include "operations/FabricVersionDeclaration.hpp"
 #include "util/ZipUtil.hpp"
@@ -33,17 +34,8 @@
 
 namespace {
 std::atomic_bool g_wallClockBudgets{true};
-struct Declaration {
-    QString loader;
-    QJsonValue game;
-    QString basis;
-    QJsonValue breaks;
-    QJsonValue loaderRange;
-    QString loaderBasis;
-    QJsonValue javaRange;
-    QString javaBasis;
-    QString problem;
-};
+using Declaration = ModDeclarations::Declaration;
+
 struct NestedCheck {
     QString name;
     QJsonValue game;
@@ -65,262 +57,19 @@ struct Mod {
 };
 struct Scan { QList<Mod> mods; QString note; };
 
-struct TomlRequirements {
-    QJsonValue game, loader, java;
-    QString problem;
-};
-
-/// 从 `mods.toml` 里读三类依赖：minecraft / 加载器自己 / java。
-/// 同一个类别出现多个**不同**范围时记 problem（不替用户挑一个）。
-TomlRequirements tomlRequirements(const QByteArray &bytes, const QString &loaderId) {
-    TomlRequirements result;
-    const QString text = QString::fromUtf8(bytes);
-    auto blocks = QRegularExpression(QStringLiteral(
-        "(?ms)^\\s*\\[\\[dependencies\\.[^\\]]+\\]\\]\\s*(.*?)(?=^\\s*\\[|\\z)"))
-                      .globalMatch(text);
-    QHash<QString, QString> ranges;
-    while (blocks.hasNext()) {
-        const QString block = blocks.next().captured(1);
-        const auto id = QRegularExpression(QStringLiteral("(?m)^\\s*modId\\s*=\\s*[\"']([^\"']+)[\"']"))
-                            .match(block);
-        if (!id.hasMatch()) continue;
-        const auto type = QRegularExpression(QStringLiteral("(?m)^\\s*type\\s*=\\s*[\"']([^\"']+)[\"']"))
-                              .match(block);
-        if (type.hasMatch() && type.captured(1) != QStringLiteral("required")) continue;
-        const auto range = QRegularExpression(
-            QStringLiteral("(?m)^\\s*versionRange\\s*=\\s*[\"']([^\"']+)[\"']")).match(block);
-        if (!range.hasMatch()) {
-            result.problem = QObject::tr("依赖块缺少 versionRange");
-            continue;
-        }
-        const QString value = range.captured(1).trimmed();
-        const QString key = id.captured(1);
-        if (key != QStringLiteral("minecraft") && key != loaderId
-            && key != QStringLiteral("java")) {
-            continue;
-        }
-        if (!value.startsWith('[') && !value.startsWith('(')) {
-            result.problem = QObject::tr("%1 的版本范围语法无效：%2").arg(key, value);
-            continue;
-        }
-        if (ranges.contains(key) && ranges.value(key) != value) {
-            result.problem = QObject::tr("%1 有多个不同的版本范围").arg(key);
-            continue;
-        }
-        ranges.insert(key, value);
-    }
-    result.game = ranges.contains(QStringLiteral("minecraft"))
-        ? QJsonValue(ranges.value(QStringLiteral("minecraft"))) : QJsonValue();
-    result.loader = ranges.contains(loaderId) ? QJsonValue(ranges.value(loaderId)) : QJsonValue();
-    result.java = ranges.contains(QStringLiteral("java"))
-        ? QJsonValue(ranges.value(QStringLiteral("java"))) : QJsonValue();
-    return result;
-}
-
-/// Quilt 的依赖/冲突表是数组：`{"id":"minecraft","versions":"..."}`。
-/// 取同一个 id 的所有范围；多个不同范围时返回空（调用方记 problem）。
-QJsonValue quiltRange(const QJsonArray &list, const QString &id, QString *problem) {
-    QStringList ranges;
-    for (const QJsonValue &value : list) {
-        const QJsonObject entry = value.toObject();
-        if (entry.value(QStringLiteral("id")).toString() != id) continue;
-        const QJsonValue versions = entry.value(QStringLiteral("versions"));
-        if (versions.isString()) ranges.append(versions.toString());
-        else if (versions.isArray()) {
-            for (const QJsonValue &one : versions.toArray()) {
-                if (one.isString()) ranges.append(one.toString());
-            }
-        } else {
-            if (problem) *problem = QObject::tr("Quilt 的 %1 依赖版本不是字符串或数组").arg(id);
-        }
-    }
-    ranges.removeDuplicates();
-    if (ranges.size() > 1) {
-        if (problem) *problem = QObject::tr("Quilt 的 %1 有多个不同的版本范围").arg(id);
-        return QJsonValue();
-    }
-    return ranges.isEmpty() ? QJsonValue() : QJsonValue(ranges.first());
-}
-
-/// 把一份 `fabric.mod.json` 读成一条声明。
-void addFabricDeclaration(Mod &mod, const QByteArray &bytes, const QString &basisPrefix) {
-    QJsonParseError parse;
-    const auto document = QJsonDocument::fromJson(bytes, &parse);
-    const auto object = document.object();
-    if (parse.error != QJsonParseError::NoError || !document.isObject()) {
-        Declaration failed;
-        failed.loader = QStringLiteral("fabric");
-        failed.basis = basisPrefix;
-        failed.problem = QObject::tr("Fabric 声明不是有效 JSON 对象");
-        mod.declarations.append(failed);
-        return;
-    }
-    const auto depends = object.value(QStringLiteral("depends")).toObject();
-    Declaration declaration;
-    declaration.loader = QStringLiteral("fabric");
-    declaration.game = depends.value(QStringLiteral("minecraft"));
-    declaration.basis = basisPrefix + QStringLiteral(" / depends.minecraft");
-    declaration.breaks = object.value(QStringLiteral("breaks")).toObject().value(QStringLiteral("minecraft"));
-    declaration.loaderRange = depends.value(QStringLiteral("fabricloader"));
-    declaration.loaderBasis = basisPrefix + QStringLiteral(" / depends.fabricloader");
-    declaration.javaRange = depends.value(QStringLiteral("java"));
-    declaration.javaBasis = basisPrefix + QStringLiteral(" / depends.java");
-    if (!object.value(QStringLiteral("name")).toString().isEmpty()) {
-        mod.name = object.value(QStringLiteral("name")).toString();
-    }
-    mod.localVersion = object.value(QStringLiteral("version")).toString();
-    mod.declarations.append(declaration);
-}
-
-/// 把一份 `quilt.mod.json` 读成一条声明（Quilt 的 depends/breaks 是数组）。
-void addQuiltDeclaration(Mod &mod, const QByteArray &bytes) {
-    QJsonParseError parse;
-    const auto document = QJsonDocument::fromJson(bytes, &parse);
-    if (parse.error != QJsonParseError::NoError || !document.isObject()) {
-        Declaration failed;
-        failed.loader = QStringLiteral("quilt");
-        failed.basis = QStringLiteral("quilt.mod.json");
-        failed.problem = QObject::tr("Quilt 声明不是有效 JSON 对象");
-        mod.declarations.append(failed);
-        return;
-    }
-    const auto object = document.object();
-    const auto loader = object.value(QStringLiteral("quilt_loader")).toObject();
-    QString problem;
-    Declaration declaration;
-    declaration.loader = QStringLiteral("quilt");
-    declaration.game = quiltRange(object.value(QStringLiteral("depends")).toArray(),
-                                  QStringLiteral("minecraft"), &problem);
-    declaration.basis = QStringLiteral("quilt.mod.json / depends[minecraft]");
-    declaration.loaderRange = quiltRange(object.value(QStringLiteral("depends")).toArray(),
-                                         QStringLiteral("quilt_loader"), &problem);
-    declaration.loaderBasis = QStringLiteral("quilt.mod.json / depends[quilt_loader]");
-    declaration.javaRange = quiltRange(object.value(QStringLiteral("depends")).toArray(),
-                                       QStringLiteral("java"), &problem);
-    declaration.javaBasis = QStringLiteral("quilt.mod.json / depends[java]");
-    declaration.breaks = quiltRange(object.value(QStringLiteral("breaks")).toArray(),
-                                    QStringLiteral("minecraft"), &problem);
-    declaration.problem = problem;
-    const auto metadata = loader.value(QStringLiteral("metadata")).toObject();
-    if (!metadata.value(QStringLiteral("name")).toString().isEmpty()) {
-        mod.name = metadata.value(QStringLiteral("name")).toString();
-    }
-    mod.localVersion = loader.value(QStringLiteral("version")).toString();
-    mod.declarations.append(declaration);
-}
-
-/// 旧 Forge 的 `mcmod.info`：数组 / `{modList:[...]}` / 单个对象都认。
-/// 没有 `acceptedMinecraftVersions` 时不猜——记未知，让用户显式选择。
-void addLegacyInfoDeclaration(Mod &mod, const QByteArray &bytes) {
-    QJsonParseError parse;
-    const auto document = QJsonDocument::fromJson(bytes, &parse);
-    if (parse.error != QJsonParseError::NoError) {
-        Declaration failed;
-        failed.loader = QStringLiteral("forge");
-        failed.basis = QStringLiteral("mcmod.info");
-        failed.problem = QObject::tr("mcmod.info 无法解析（%1）").arg(parse.errorString());
-        mod.declarations.append(failed);
-        return;
-    }
-    QList<QJsonObject> entries;
-    if (document.isArray()) {
-        for (const QJsonValue &value : document.array()) entries.append(value.toObject());
-    } else if (document.isObject()) {
-        const auto object = document.object();
-        if (object.value(QStringLiteral("modList")).isArray()) {
-            for (const QJsonValue &value : object.value(QStringLiteral("modList")).toArray()) {
-                entries.append(value.toObject());
-            }
-        } else {
-            entries.append(object);
-        }
-    }
-    QStringList ranges;
-    for (const QJsonObject &entry : entries) {
-        const QJsonValue accepted = entry.value(QStringLiteral("acceptedMinecraftVersions"));
-        if (accepted.isString()) ranges.append(accepted.toString());
-        else if (accepted.isArray()) {
-            for (const QJsonValue &one : accepted.toArray()) {
-                if (one.isString()) ranges.append(one.toString());
-            }
-        }
-        if (entry.value(QStringLiteral("version")).isString() && mod.localVersion.isEmpty()) {
-            mod.localVersion = entry.value(QStringLiteral("version")).toString();
-        }
-        if (entry.value(QStringLiteral("name")).isString() && mod.name == QFileInfo(mod.path).fileName()) {
-            mod.name = entry.value(QStringLiteral("name")).toString();
-        }
-    }
-    ranges.removeDuplicates();
-    Declaration declaration;
-    declaration.loader = QStringLiteral("forge");
-    declaration.basis = QStringLiteral("mcmod.info / acceptedMinecraftVersions");
-    if (ranges.size() == 1) {
-        declaration.game = ranges.first();
-    } else if (ranges.size() > 1) {
-        declaration.problem = QObject::tr("mcmod.info 里多个 mod 的 acceptedMinecraftVersions 不一致");
-    } else {
-        declaration.problem = QObject::tr("mcmod.info 没有 acceptedMinecraftVersions");
-    }
-    mod.declarations.append(declaration);
-}
-
-const QStringList kModMetadataEntries{
-    QStringLiteral("fabric.mod.json"), QStringLiteral("quilt.mod.json"),
-    QStringLiteral("META-INF/neoforge.mods.toml"), QStringLiteral("META-INF/mods.toml"),
-    QStringLiteral("mcmod.info")};
-
+/// 把一份 JAR 的声明搬进升级评估用的 `Mod`（解析在 `ModDeclarations`）。
 void readModDeclarations(Mod &mod, const ZipUtil::ArchiveMetadata &record) {
-    const auto parsedProblem = [&](const QString &entry, const QString &loader) {
-        Declaration declaration;
-        declaration.loader = loader;
-        declaration.basis = entry;
-        declaration.problem = record.entryProblems.value(entry);
-        mod.declarations.append(declaration);
-    };
-    if (record.entryProblems.contains(QStringLiteral("fabric.mod.json"))) {
-        parsedProblem(QStringLiteral("fabric.mod.json"), QStringLiteral("fabric"));
-    } else if (record.entries.contains(QStringLiteral("fabric.mod.json"))) {
-        addFabricDeclaration(mod, record.entries.value(QStringLiteral("fabric.mod.json")),
-                             QStringLiteral("fabric.mod.json"));
-    }
-    if (record.entryProblems.contains(QStringLiteral("quilt.mod.json"))) {
-        parsedProblem(QStringLiteral("quilt.mod.json"), QStringLiteral("quilt"));
-    } else if (record.entries.contains(QStringLiteral("quilt.mod.json"))) {
-        addQuiltDeclaration(mod, record.entries.value(QStringLiteral("quilt.mod.json")));
-    }
-    const auto addToml = [&](const QString &entry, const QString &loader, const QString &loaderId) {
-        if (record.entryProblems.contains(entry)) {
-            parsedProblem(entry, loader);
-            return;
-        }
-        if (!record.entries.contains(entry)) return;
-        const auto requirements = tomlRequirements(record.entries.value(entry), loaderId);
-        Declaration declaration;
-        declaration.loader = loader;
-        declaration.game = requirements.game;
-        declaration.basis = entry + QStringLiteral(" / minecraft.versionRange");
-        declaration.loaderRange = requirements.loader;
-        declaration.loaderBasis = entry + QStringLiteral(" / ") + loaderId + QStringLiteral(".versionRange");
-        declaration.javaRange = requirements.java;
-        declaration.javaBasis = entry + QStringLiteral(" / java.versionRange");
-        declaration.problem = requirements.problem;
-        mod.declarations.append(declaration);
-    };
-    addToml(QStringLiteral("META-INF/neoforge.mods.toml"), QStringLiteral("neoforge"),
-            QStringLiteral("neoforge"));
-    addToml(QStringLiteral("META-INF/mods.toml"), QStringLiteral("forge"),
-            QStringLiteral("forge"));
-    if (record.entryProblems.contains(QStringLiteral("mcmod.info"))) {
-        parsedProblem(QStringLiteral("mcmod.info"), QStringLiteral("forge"));
-    } else if (record.entries.contains(QStringLiteral("mcmod.info"))) {
-        addLegacyInfoDeclaration(mod, record.entries.value(QStringLiteral("mcmod.info")));
-    }
+    ModDeclarations::Mod parsed;
+    ModDeclarations::parse(QFileInfo(mod.path).fileName(), record.entries, record.entryProblems,
+                           &parsed);
+    mod.declarations = parsed.declarations;
+    if (!parsed.name.isEmpty()) mod.name = parsed.name;
+    if (!parsed.version.isEmpty()) mod.localVersion = parsed.version;
 }
 
 ModVersionDeclaration::Match matchModVersion(const Declaration &declaration, const QJsonValue &rule,
                                              const QString &target) {
-    if (declaration.loader != QStringLiteral("fabric")) {
+    if (declaration.loader != ModDeclarations::Loader::Fabric) {
         return ModVersionDeclaration::matches(rule, target);
     }
     const auto result = FabricVersionDeclaration::matches(rule, target);
@@ -442,7 +191,7 @@ Scan scan(const QString &root, const QString &sourceId, const QString &cache, co
     }
     audit.close();
     QString batchProblem;
-    const auto metadata = ZipUtil::readMetadataBatch(paths, kModMetadataEntries,
+    const auto metadata = ZipUtil::readMetadataBatch(paths, ModDeclarations::metadataEntries(),
         &batchProblem, [stop] { return stop->load(); });
     QElapsedTimer identityClock; identityClock.start();
     for (const auto &path : paths) {
@@ -508,7 +257,7 @@ Scan scan(const QString &root, const QString &sourceId, const QString &cache, co
             mod.nestedIncomplete = true;
             if (mod.declarations.isEmpty()) {
                 Declaration declaration;
-                declaration.loader = QStringLiteral("forge");
+                declaration.loader = ModDeclarations::Loader::Forge;
                 declaration.basis = QCoreApplication::translate("UpgradeAssessment", "旧 Forge 注解");
                 declaration.problem = QObject::tr("读不到模组条目表，旧 Forge 注解无法检查：%1")
                                           .arg(nestedProblem);
@@ -564,7 +313,7 @@ Scan scan(const QString &root, const QString &sourceId, const QString &cache, co
                 if (!found) continue;
                 annotationFound = true;
                 Declaration declaration;
-                declaration.loader = QStringLiteral("forge");
+                declaration.loader = ModDeclarations::Loader::Forge;
                 declaration.basis = QCoreApplication::translate("UpgradeAssessment", "旧 Forge @Mod 注解 / acceptedMinecraftVersions");
                 declaration.game = accepted;
                 declaration.problem = rangeProblem;
@@ -573,7 +322,7 @@ Scan scan(const QString &root, const QString &sourceId, const QString &cache, co
             }
             if (!annotationFound) {
                 Declaration declaration;
-                declaration.loader = QStringLiteral("forge");
+                declaration.loader = ModDeclarations::Loader::Forge;
                 declaration.basis = QCoreApplication::translate("UpgradeAssessment", "旧 Forge 注解");
                 declaration.problem = classes.size() > take
                     ? QObject::tr("旧 Forge 注解未完整扫描（候选 %1 个，只看了 %2 个）")
@@ -640,37 +389,26 @@ Scan scan(const QString &root, const QString &sourceId, const QString &cache, co
             if (!nestedMetadata.contains(nested.first) || !record.problem.isEmpty()) {
                 check.problem = record.problem.isEmpty() ? nestedBatchProblem : record.problem;
             } else {
-                // 复用顶层同一套声明解析（临时造一个 Mod 只为拿 Declaration）。
+                // 复用同一套声明解析（嵌套 JAR 的条目名和顶层不一样，只走 parseEntry）。
                 Mod parsed;
                 parsed.path = nested.first;
                 parsed.name = QFileInfo(nested.first).fileName();
-                if (record.entries.contains(QStringLiteral("fabric.mod.json"))) {
-                    addFabricDeclaration(parsed, record.entries.value(QStringLiteral("fabric.mod.json")),
-                                         QCoreApplication::translate("UpgradeAssessment", "嵌套 fabric.mod.json"));
-                }
-                if (record.entries.contains(QStringLiteral("quilt.mod.json"))) {
-                    addQuiltDeclaration(parsed, record.entries.value(QStringLiteral("quilt.mod.json")));
-                }
-                for (const auto &entry : {QStringLiteral("META-INF/mods.toml"),
-                                          QStringLiteral("META-INF/neoforge.mods.toml")}) {
+                for (const QString &entry : {QStringLiteral("fabric.mod.json"),
+                                             QStringLiteral("quilt.mod.json"),
+                                             QStringLiteral("META-INF/mods.toml"),
+                                             QStringLiteral("META-INF/neoforge.mods.toml")}) {
                     if (!record.entries.contains(entry)) continue;
-                    const auto requirements = tomlRequirements(
-                        record.entries.value(entry),
-                        entry.contains(QStringLiteral("neoforge")) ? QStringLiteral("neoforge")
-                                                                   : QStringLiteral("forge"));
                     Declaration declaration;
-                    declaration.loader = entry.contains(QStringLiteral("neoforge"))
-                        ? QStringLiteral("neoforge") : QStringLiteral("forge");
-                    declaration.game = requirements.game;
-                    declaration.basis = QCoreApplication::translate("UpgradeAssessment", "嵌套 ") + entry;
-                    declaration.problem = requirements.problem;
+                    ModDeclarations::parseEntry(entry, record.entries.value(entry), &declaration);
+                    declaration.basis =
+                        QCoreApplication::translate("UpgradeAssessment", "嵌套 ") + declaration.basis;
                     parsed.declarations.append(declaration);
                 }
                 // 优先用 quilt / fabric 这种显式声明；没有就取第一条有 game 的。
                 const Declaration *chosen = nullptr;
                 for (const auto &declaration : parsed.declarations) {
-                    if (declaration.loader == QStringLiteral("quilt")
-                        || declaration.loader == QStringLiteral("fabric")) {
+                    if (declaration.loader == ModDeclarations::Loader::Quilt
+                        || declaration.loader == ModDeclarations::Loader::Fabric) {
                         chosen = &declaration;
                         break;
                     }
@@ -725,7 +463,7 @@ QString localState(const Mod &mod, const QString &game, const QString &loader,
     }
     const Declaration *chosen = nullptr;
     for (const auto &declaration : mod.declarations) {
-        if (declaration.loader == loader) {
+        if (ModDeclarations::loaderKey(declaration.loader) == loader) {
             chosen = &declaration;
             break;
         }
@@ -735,7 +473,7 @@ QString localState(const Mod &mod, const QString &game, const QString &loader,
     bool fabricFallback = false;
     if (chosen == nullptr && loader == QStringLiteral("quilt")) {
         for (const auto &declaration : mod.declarations) {
-            if (declaration.loader == QStringLiteral("fabric")) {
+            if (declaration.loader == ModDeclarations::Loader::Fabric) {
                 chosen = &declaration;
                 fabricFallback = true;
                 break;
@@ -857,7 +595,8 @@ void UpgradeAssessment::setWallClockBudgetsForTesting(bool enabled) { g_wallCloc
 QHash<QString, UpgradeAssessment::PickerMismatch> UpgradeAssessment::checkDroppedMods(
     const QStringList &paths, const QList<PickerTarget> &targets) {
     if (paths.isEmpty() || targets.isEmpty()) return {};
-    const auto archives = ZipUtil::readMetadataBatch(paths, kModMetadataEntries);
+    const auto archives =
+        ZipUtil::readMetadataBatch(paths, ModDeclarations::metadataEntries());
     QHash<QString, PickerMismatch> results;
     for (auto it = archives.cbegin(); it != archives.cend(); ++it) {
         Mod mod;
@@ -866,8 +605,10 @@ QHash<QString, UpgradeAssessment::PickerMismatch> UpgradeAssessment::checkDroppe
         if (mod.declarations.isEmpty()) continue;
         for (const auto &target : targets) {
             const auto supportsLoader = [&target](const Declaration &declaration) {
-                return declaration.loader == target.loader ||
-                       (target.loader == QStringLiteral("quilt") && declaration.loader == QStringLiteral("fabric"));
+                const QString key = ModDeclarations::loaderKey(declaration.loader);
+                return key == target.loader ||
+                       (target.loader == QStringLiteral("quilt") &&
+                        key == QStringLiteral("fabric"));
             };
             const bool matchingLoader = std::any_of(mod.declarations.cbegin(), mod.declarations.cend(),
                                                     supportsLoader);

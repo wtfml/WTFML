@@ -30,6 +30,8 @@ QString recoveryDir(const QString &sessionId);
 QString maintenanceBackupDir();
 QString workspaceRecordsDir();
 QString transactionsDir();
+/// 模组修复的下载暂存目录（`agent/staging`）；校验通过后才复制进事务工作区。
+QString modStagingDir();
 QString mcpConfigDir();
 QString logsDir();
 

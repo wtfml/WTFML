@@ -7,6 +7,7 @@
 
 #include "AgentCommandTools.hpp"
 #include "AgentLauncherTools.hpp"
+#include "AgentModToolEngine.hpp"
 #include "AgentTestLaunchToolEngine.hpp"
 #include "AgentRepairToolEngine.hpp"
 #include "AgentWebTools.hpp"
@@ -203,6 +204,7 @@ QList<AgentToolSpec> AgentToolRegistry::builtins() {
     list.append(AgentLauncherTools::specs());
     list.append(AgentTestLaunchToolEngine::specs());
     list.append(AgentRepairToolEngine::specs());
+    list.append(AgentModToolEngine::specs());
     list.append(AgentWorkflowEngine::specs());
     list.append(AgentWebTools::specs());
     list.append(AgentCommandTools::specs());

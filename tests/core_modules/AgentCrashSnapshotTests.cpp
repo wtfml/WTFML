@@ -144,15 +144,15 @@ void runAgentCrashSnapshotTests() {
     const FixtureCase cases[] = {
         {"forge-mixin-crash.txt", "MIXIN_APPLY_FAILED", "mod_initialization", "check_mod_compatibility"},
         {"fabric-heap-oom.txt", "HEAP_OOM", "runtime", "raise_memory"},
-        {"metaspace-oom.log", "METASPACE_OOM", "runtime", "raise_memory"},
-        {"direct-buffer-oom.log", "DIRECT_BUFFER_OOM", "runtime", "check_graphics_settings"},
-        {"native-thread-oom.log", "NATIVE_THREAD_OOM", "runtime", "raise_memory"},
-        {"java-version-mismatch.log", "JAVA_VERSION_MISMATCH", "startup", "set_java_runtime"},
-        {"missing-dependency.log", "MISSING_DEPENDENCY", "mod_initialization", "install_missing_dependency"},
-        {"duplicate-mod.log", "DUPLICATE_MOD", "mod_initialization", "disable_duplicate_mod"},
-        {"corrupt-mod-jar.log", "CORRUPT_MOD_FILE", "mod_initialization", "reinstall_mod_file"},
-        {"config-parse-error.log", "CONFIG_PARSE_ERROR", "config_load", "restore_config_backup"},
-        {"hs-err-access-violation.log", "NATIVE_CRASH", "native", "check_graphics_settings"},
+        {"metaspace-oom.log.txt", "METASPACE_OOM", "runtime", "raise_memory"},
+        {"direct-buffer-oom.log.txt", "DIRECT_BUFFER_OOM", "runtime", "check_graphics_settings"},
+        {"native-thread-oom.log.txt", "NATIVE_THREAD_OOM", "runtime", "raise_memory"},
+        {"java-version-mismatch.log.txt", "JAVA_VERSION_MISMATCH", "startup", "set_java_runtime"},
+        {"missing-dependency.log.txt", "MISSING_DEPENDENCY", "mod_initialization", "install_missing_dependency"},
+        {"duplicate-mod.log.txt", "DUPLICATE_MOD", "mod_initialization", "disable_duplicate_mod"},
+        {"corrupt-mod-jar.log.txt", "CORRUPT_MOD_FILE", "mod_initialization", "reinstall_mod_file"},
+        {"config-parse-error.log.txt", "CONFIG_PARSE_ERROR", "config_load", "restore_config_backup"},
+        {"hs-err-access-violation.log.txt", "NATIVE_CRASH", "native", "check_graphics_settings"},
         {"world-entity-tick.txt", "ENTITY_TICK_CRASH", "world_load", "check_mod_compatibility"},
     };
     for (const FixtureCase &item : cases) {
@@ -289,7 +289,7 @@ void runAgentCrashSnapshotTests() {
           "崩溃快照：unknown 置信度不超过 0.4");
 
     // 日志夹具：第一个被提到的模组不是责任模组。
-    const QString logText = readFixture(QStringLiteral("latest-mixin.log"));
+    const QString logText = readFixture(QStringLiteral("latest-mixin.log.txt"));
     const AgentCrashSnapshot::Parsed logParsed = AgentCrashSnapshot::parse(logText);
     check(logParsed.kind == QStringLiteral("game-log"), "崩溃解析：日志夹具认成 game-log",
           logParsed.kind);
@@ -313,7 +313,7 @@ void runAgentCrashSnapshotTests() {
     const AgentCrashSnapshot::Snapshot heap =
         build(readFixture(QStringLiteral("fabric-heap-oom.txt")));
     const AgentCrashSnapshot::Snapshot direct =
-        build(readFixture(QStringLiteral("direct-buffer-oom.log")));
+        build(readFixture(QStringLiteral("direct-buffer-oom.log.txt")));
     check(containsTest(heap.json, QStringLiteral("raise_heap_and_retest")),
           "崩溃快照：堆 OOM 给 raise_heap_and_retest");
     check(!containsTest(heap.json, QStringLiteral("inspect_render_backend")),

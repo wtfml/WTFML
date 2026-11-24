@@ -89,6 +89,7 @@ PNG、BMP、WebP 等格式的头部信息可能声明超大分辨率，引发解
 - 诊断结果先过 `AgentDiagnosticProjection` 再进模型上下文：只留 severity/code/title/hint、计数、Java 主版本、退出码、OOM/缺前置等布尔事实；Java 可执行文件路径、数据根、日志/崩溃报告绝对路径、账户与环境变量、原始 stack trace 一律不进模型。
 - 日志与崩溃报告片段在发送前把本机绝对路径替换成 `<path>`（`AgentDiagnosticProjection::scrubPaths`），再遮凭据形态内容。
 - 崩溃快照只返回类型名、阶段、行数、计数与脱敏后的摘录，不含原始 stack trace；mixin 归属只读 JAR 声明，读不到标 `unknown`。`crash.readFull` 的原文先换掉本机路径再进模型可读 artifact，模型每次读都要重新脱敏。
+- 模组平台查询只接 Modrinth、只发 SHA-1（不发文件名）；首次按实例确认，严格模式每次，`offline=true` 不发。修复只写事务工作区：下载先落 `agent/staging/` 并校验大小与 SHA-1，失败撤销本次复制；下载地址与哈希只取平台记录，不接受模型给的任意 URL。
 - 完整实例清单、完整模组文件名、设置写、模组启停、备份创建与恢复逐次审批；`settings.get` 不返回 `java.path`，路径类字段从结果里剔除。
 - 工作流只读模式拒绝一切写工具；要求计划的模式里，写工具必须等于**已批准计划的当前一步**，跳步被拒绝；某一步失败后写工具全部锁住。
 - `workflow.finish` 本地核对计划/验证步/证据，缺一项就拒绝；模型不能靠自然语言声称完成。

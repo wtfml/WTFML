@@ -288,3 +288,5 @@ python tools/acceptance_directory_boundary.py --exe <WTFMinecraftLauncher.exe> -
 2026-11-24｜服务端左栏按管理对象分组并接入启动参数、世界选择、插件管理和维护操作｜`main-window` 3192/3192、服务端界面 94/94、`core-servers` 796/796、`core-instances` 1869/1869，Windows x64 构建与隔离启动通过｜独立维度用整服迁移包备份，导入防覆盖，升级使用同类型副本。
 
 2026-11-24｜智能体崩溃快照与日志检索（S5.3）｜`verify_agent` 1166/1166、`verify_launch` 370/370、`ui_check_agent` 77/77、`mw_check_agent` 91/91，产品目标严格编译通过，`check-agent-release.ps1`/`check-i18n.ps1`/`check-test-modules.ps1`/`check-doc-links.ps1`/`check-repo-layout.ps1` PASS｜100 MB 日志首次行索引 + 读 200 行 98 ms、全文搜索 353 ms；ASCII 搜索词走字节匹配后有 2.4 倍收益；真机 1.20.1 整合包仍需复跑。
+
+2026-11-24｜智能体模组兼容与文件修复（S5.4）｜`verify_agent` 1268/1268、`mw_check_agent` 93/93、`mw_check` 3192/3192、`verify_launch` 370/370、`ui_check_agent` 77/77，产品目标严格编译通过，`check-agent-release.ps1`/`check-i18n.ps1`/`check-test-modules.ps1`/`check-doc-links.ps1`/`check-repo-layout.ps1` PASS｜`UpgradeAssessment` 改用共用 `ModDeclarations` 后升级夹具零差异；真实 Modrinth 查询、真实下载与提交未跑（A9/A10）。

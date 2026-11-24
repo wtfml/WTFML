@@ -15,6 +15,8 @@
 #include "agent/AgentLaunchHost.hpp"
 #include "agent/AgentTestLaunchToolEngine.hpp"
 #include "agent/AgentRepairHost.hpp"
+#include "agent/AgentModHost.hpp"
+#include "agent/AgentModToolEngine.hpp"
 #include "agent/AgentRepairToolEngine.hpp"
 #include "agent/McpTypes.hpp"
 
@@ -187,6 +189,9 @@ AgentController::AgentController(AgentPage *page, OverlayHost *overlay, QObject 
         nullptr, [this](QString *problem) { return toolContext(problem); });
     m_repairTools = new AgentRepairToolEngine(
         nullptr, nullptr, [this](QString *problem) { return toolContext(problem); });
+    // Stage 5.4：模组兼容、文件校验、修复与核心文件修复。平台查询/下载经 AgentModHost。
+    m_modTools = new AgentModToolEngine(
+        nullptr, nullptr, [this](QString *problem) { return toolContext(problem); }, this);
     m_workflowEngine = new AgentWorkflowEngine(&m_workflow);
     // Stage 2A：MCP。确认闸在 McpTrustStore，生命周期在 McpManager；这里的引擎只管
     // 逐次审批与异步交付。配置读不出来就当作没有服务器，不阻断其它功能。
@@ -208,6 +213,7 @@ AgentController::AgentController(AgentPage *page, OverlayHost *overlay, QObject 
     m_compositeEngine->addEngine(m_launcherTools);
     m_compositeEngine->addEngine(m_testLaunchTools);
     m_compositeEngine->addEngine(m_repairTools);
+    m_compositeEngine->addEngine(m_modTools);
     m_compositeEngine->addEngine(m_workflowEngine);
     m_compositeEngine->addEngine(m_mcpTools);
     m_compositeEngine->addEngine(m_webTools);
@@ -1284,6 +1290,9 @@ void AgentController::setLauncherHost(AgentLauncherHost *host) {
     if (m_repairTools != nullptr) {
         m_repairTools->setHosts(dynamic_cast<AgentRepairHost *>(host),
                                 dynamic_cast<AgentLaunchHost *>(host));
+    }
+    if (m_modTools != nullptr) {
+        m_modTools->setHosts(host, dynamic_cast<AgentModHost *>(host));
     }
 }
 

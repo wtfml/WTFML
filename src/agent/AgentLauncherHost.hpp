@@ -26,6 +26,8 @@ struct AgentHostModEntry {
     QString fileName;   ///< 相对 `mods/` 的文件名（不含路径）
     bool enabled = true;
     qint64 bytes = 0;
+    /// 本机绝对路径，只在本地读盘用（声明解析、算 SHA-1）；不进模型输出。
+    QString path;
 };
 
 struct AgentHostCrashReport {

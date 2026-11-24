@@ -260,7 +260,7 @@ assets/agent/
 - mixin 归属只读 JAR 声明，声明里的配置名与实际加载的配置不一致时仍会落到 `unknown`。
 - 规则是启发式：置信度只表示"证据类型 + 规则强度"，不是概率；没有匹配规则时 `phase` 为 `unknown`。
 
-### S5.4 模组兼容性与文件修复（P1）
+### S5.4 模组兼容性与文件修复（已完成 2026-11-24）
 
 改动：
 
@@ -284,7 +284,26 @@ assets/agent/
 
 平台查询只在用户同意后发出，首次按实例/会话确认「把 N 个模组文件的 SHA-1 发给 Modrinth」，不发文件名；严格模式下每次确认；`offline=true` 只做本地分析。平台结果缓存 24 小时，键为 `sha1 + gameVersion + loader`。平台只接 Modrinth；CurseForge 作为后续项，不按名称或 slug 猜项目。必要前置在 Modrinth 找不到时整批停止，不改用 CurseForge，也不按名称搜索替代品。
 
-验收：Fabric 模组装进 Forge 实例能报 `loader_mismatch`；缺前置能指出缺的 mod id 和是否只有停用文件；损坏 JAR 能被 `corrupt_file` 识别并按哈希找回候选；没有批准时一个字节不下载；下载哈希不符时整批失败，工作区不变。
+实现：
+
+- `ModDeclarations`（`src/operations/`）：从 `UpgradeAssessment.cpp` 抽出的本地声明解析，升级评估与智能体共用一份；除游戏/加载器/Java 范围外，补 mod id、版本、required 前置与加载器 id。`UpgradeAssessment` 改为调用它，`mw_check` 3192/3192 逐字节不变。
+- `AgentModCompat`：纯函数判定 `loader_mismatch` / `incompatible_version` / `missing_dependency`（区分"未安装"和"只有 `.jar.disabled`"）/ `duplicate_mod` / `corrupt_file` / `unknown`，并能合并平台结果（平台版本的游戏版本、加载器、必需项目号）。
+- 平台查询经 `AgentModHost`：只接 Modrinth、只发 SHA-1（每批 ≤100、每次 ≤2000、总 180 s），地址与解析复用 `ModpackExport`/`ResourceCatalog` 现有纯函数；首次按实例确认一次，严格模式每次，`offline=true` 不发。
+- `mods.installFix`：要求活动事务与登记工作区；解析目标 → 下载到 `agent/staging/` → 校验大小/哈希 → 复制到工作区临时名 → 再校验 → 改名；失败撤销本次复制，工作区回到调用前；单文件 100 MB、单事务 500 MB、≤10 个文件；可补齐版本声明的必需前置。
+- `mods.verifyFiles`：本地查 zip 结构、大小、SHA-1；`platform=true` 时按哈希找回候选版本（同一份平台确认）。
+- `instance.repairCore`：每次审批，事务活动期间拒绝；经 `VersionManager::repairVersionFiles()` 重下客户端 jar、库和资源索引，等 `versionDownloadFinished` 收尾。
+- 工具注册、技能白名单（体检/崩溃急救只读集合加分析与校验；崩溃急救/模组维护的写集合加修复与核心修复）与 `mods.md` 提示词（promptVersion 2）同步；`check-agent-release.ps1` 增加模组工具审批闸与"只认事务工作区"检查。
+- 测试：`AgentModTests` 覆盖声明解析（fabric/quilt/mods.toml/mcmod.info）、每类判定、平台确认与拒绝、非严格/严格模式的确认次数、校验、安装成功与两类失败（哈希不符、前置缺失）、核心修复与事务拒绝；`mw_check_agent` 覆盖工具注册与真宿主接线的同步分支。
+
+验收：`verify_agent` 1268/1268、`mw_check_agent` 93/93、`mw_check` 3192/3192、`verify_launch` 370/370、`ui_check_agent` 77/77；产品目标按 `-Wall -Wextra -Wpedantic -Werror` 编译通过；`check-agent-release.ps1`、`check-i18n.ps1`、`check-test-modules.ps1`、`check-doc-links.ps1`、`check-repo-layout.ps1` PASS。真实 Modrinth 查询、真实下载与 1.20.1 实例提交仍要真机复跑（A9/A10）。
+
+限制：
+
+- 平台只接 Modrinth；CurseForge 不参与，必要前置在 Modrinth 找不到时整批停止。
+- 平台结论取决于 `version_files` 回的那一版元数据；文件被作者换过哈希时只能落到 `unknown`。
+- `mods.installFix` 失败时只撤销本次复制的文件；它不改基线，提交/回滚仍由 `repair.finish` 负责。
+- `instance.repairCore` 不保留共享库旧副本，失败按官方哈希重下恢复。
+- 平台与下载的真实耗时没量（本机夹具全部走假宿主）。
 
 ### S5.5 依赖感知二分（P1）
 
@@ -435,13 +454,13 @@ agent/
 | --- | --- |
 | `logs.search` 正则 | 未做，需匹配上限引擎；首版只有字面量（大小写不敏感） |
 | 日志扫描的异步化 | 未做：在调用线程上扫描，100 MB 约 350 ms，超 6 s 预算截断 |
-| CurseForge 模组修复 | 不在 Stage 5；只接 Modrinth，后续按现有来源表扩展 |
+| CurseForge 模组修复 | 不在 Stage 5；S5.4 只接 Modrinth，后续按现有来源表扩展 |
 | 世界问题提交后验证 | 不做；只在副本世界验证，报告写明未在原件验证 |
 | 显卡/驱动修复 | 只分类和建议，不改驱动、系统设置或渲染后端 |
 | Java 运行时自动下载 | 测试启动不下载；缺 Java 直接报原因，由现有下载入口处理 |
 | 非确定性崩溃 | 重复次数有上限，超限标 `flaky`/`inconclusive` |
 | Auto-safe D12 | 需产品确认；未确认前保持 D5 逐次审批 |
-| `instance.repairCore` 回滚 | 共享库不存旧副本；失败不删旧文件，按官方哈希重下恢复，报告写明不能回到旧版本 |
+| `instance.repairCore` 回滚 | 共享库不存旧副本；失败不删旧文件，按官方哈希重下恢复，报告写明不能回到旧版本（已按此实现） |
 | 修复病例库 | P2，默认关闭，只在本地参与排序，不把原文发给模型 |
 | 并发 | 每个启动器窗口的测试启动串行；多实例同时二分留到后续评估 |
 | 测试启动窗口 | 会打开真实游戏窗口，Windows 下不做无头渲染；抢焦点/最小化留给人工验收 |

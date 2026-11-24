@@ -140,6 +140,7 @@
   "AgentInstancePathTests.cpp": "agent",
   "AgentCrashSnapshotTests.cpp": "agent",
   "AgentLogIndexTests.cpp": "agent",
+  "AgentModTests.cpp": "agent",
   "AgentPathLayoutTests.cpp": "agent",
   "DailyQuoteTests.cpp": "resources",
   "HomeGreetingTests.cpp": "resources"

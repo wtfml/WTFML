@@ -190,7 +190,7 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 
 路径校验是字符串拒绝（绝对路径、`..`、盘符、UNC、ADS、保留名、尾点/空格）+ Win32 句柄级最终路径/文件 ID/reparse 核对；受保护目录（`versions/libraries/assets/java/servers`）原始写一律拒绝。
 
-### 9.4 启动器工具（23 个，均经 `AgentLauncherHost`）
+### 9.4 启动器工具（27 个，均经 `AgentLauncherHost` / `AgentModHost`）
 
 只读自动：
 
@@ -206,6 +206,8 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 | `logs.search` | 字面量（大小写不敏感），带行号与前后文；≤200 条，结果 ≤24 KB 字符，扫描 6 s 预算；路径换 `<path>` |
 | `logs.readRange` | 行号从 1 开始；≤500 行、≤256 KB；起点越界回空表并标 `truncated` |
 | `crash.readFull` | 读整份报告（≤8 MB）；只回分段目录与每段摘要，原文脱敏后进 artifact；输出 ≤24 KB |
+| `mods.analyzeCompatibility` | 读每个 JAR 的本地声明对照实例：加载器不匹配、版本不兼容、缺前置、重复、损坏；`offline=false` 时经确认后把 SHA-1 发给 Modrinth 补平台结论 |
+| `mods.verifyFiles` | 逐个检查 `mods/` 下 JAR 的 zip 结构、大小、SHA-1；`platform=true` 时经同一份确认按哈希找回候选 |
 | `instance.integrity` | 8 秒预算，超时回部分结果；只给分组计数 |
 | `mods.list` | 默认给启用/停用数；`detail=full` 列文件名并逐次确认，≤2000 |
 | `settings.get` | 白名单键的非路径字段（`java.path` 只写不读） |
@@ -221,6 +223,8 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 | `mods.setEnabled` | 只改扩展名 `.jar` ↔ `.jar.disabled`；目标已存在拒绝 |
 | `backup.create` | 范围 config/mods/options/servers；单文件 ≤8 MB、总量 ≤32 MB、≤400 文件；`owner=agent` 写 `backups/maintenance` |
 | `backup.restore` | 恢复前先做快照；路径越界/绝对路径拒绝；只恢复 `owner=agent` |
+| `mods.installFix` | 只接受 `projectId`/`versionId`/`expectedSha1`；先在暂存目录下载并校验大小与 SHA-1，全部通过才写进事务工作区；可补齐版本声明的必需前置；没有活动事务时拒绝 |
+| `instance.repairCore` | 复用 `VersionManager::repairVersionFiles()` 重下客户端 jar、库和资源索引；每次审批；事务活动期间拒绝 |
 
 只开页面：`upgrade.openWizard`、`launcher.openPage`（实例设置 / 日志 / 备份 / 完整性）。
 
@@ -282,6 +286,34 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 
 限制：日志搜索在调用线程上顺序扫描，100 MB 实测见 [PERFORMANCE](../dev/PERFORMANCE.md)；超过 6 s 预算回部分结果并标 `truncated`。正则搜索未开放。
 
+#### 9.4.5 模组兼容与文件修复（Stage 5.4）
+
+本地声明解析在 `src/operations/ModDeclarations`（升级评估与智能体共用一份，不读界面、不读盘），判定在 `src/agent/AgentModCompat`，平台查询、下载与核心文件修复经 `AgentModHost`（`src/controllers/AgentModPlatform` + `DownloadManager` + `VersionManager`）。
+
+| 工具 | 平台/网络 | 写盘 | 审批 |
+| --- | --- | --- | --- |
+| `mods.analyzeCompatibility` | 默认询问平台；`offline=true` 只做本地 | 不写 | 本地自动；**首次平台查询**按实例确认一次，严格模式每次 |
+| `mods.verifyFiles` | 只有 `platform=true` 才查 | 不写 | 本地自动；平台查询用同一份确认 |
+| `mods.installFix` | 解析下载地址 + 下载（只接 Modrinth） | 只写事务工作区 | 每次 |
+| `instance.repairCore` | 官方源重下 | 写共享 `libraries/`、`assets/`、客户端 jar | 每次 |
+
+平台查询的边界：只把 SHA-1 发给 Modrinth（**不发文件名**），每批 ≤100、每次 ≤2000 个哈希、总时限 180 s；结果按哈希由平台侧的地址与版本元数据解释。严格模式下每次都确认；非严格模式同一实例在同一会话里确认一次。平台只接 Modrinth，CurseForge 不参与；必要前置在 Modrinth 找不到时整批停止，不按名称搜索替代品。
+
+问题类型：
+
+| 类型 | 判据 |
+| --- | --- |
+| `missing_dependency` | 声明要求的 required 前置没有启用的文件；只有 `.jar.disabled` 时在 `detail` 里点名 |
+| `incompatible_version` | 声明的游戏/加载器/Java 范围不满足，或平台记录的这一版不支持当前实例 |
+| `loader_mismatch` | 声明（或平台记录）的加载器与实例不一致；Quilt 实例允许 Fabric 模组 |
+| `duplicate_mod` | 同一个 mod id 出现在多个文件里（都启用是 problem，含停用文件是 warning） |
+| `corrupt_file` | 读不到条目表、zip 坏、文件大小为 0、复制后哈希不符 |
+| `unknown` | 没有可识别声明、读不到 mod id、范围无法解析、平台没认出哈希（平台查询没问成时**不**逐文件报这个） |
+
+`mods.installFix` 的写入顺序：解析目标 → 下载到 `agent/staging/<事务>-<uuid>/` → 校验大小与 SHA-1 → 复制到工作区 `versions/<id>/mods/` 的临时名 → 再校验一次哈希 → 改名落盘。任何一步失败都清掉这次复制的文件，工作区回到调用前；单文件 ≤100 MB、单事务 ≤500 MB、≤10 个文件。目标文件名、下载地址与哈希全部来自平台记录，不接受任意 URL。
+
+限制：平台只覆盖 Modrinth 上认得出的文件；`repairCore` 不保留旧副本，失败按官方哈希重下恢复。
+
 ### 9.5 联网与固定诊断命令
 
 | 工具 | 审批 | 关键上限 |
@@ -341,7 +373,7 @@ JSON-RPC 2.0、stdio、换行分隔。`initialize`（提议 `2024-11-05`，以�
 - **实例体检**：锁定实例 → 启动诊断 → 日志/模组/完整性 → 分级结论 + 证据 + 下一步选项；不写盘。
 - **崩溃急救**：`diagnostics.crashSnapshot` 拿环境、阶段、异常链与命中规则（需要行号时再 `logs.search`，原文走 `crash.readFull`）→ 按规则分类（OOM、Java 版本不匹配、缺前置、文件损坏、配置错误、Mixin 冲突，不猜具体模组）→ 计划 → `repair.begin` 建事务 → 逐步执行（事务内写工作区、每步单独审批、失败即停）→ `repair.verify` 在隔离工作区验证 → `repair.finish(commit/rollback)` → 报告写回退方式与未解决项。世界问题只在副本世界验证，不打开源存档。
 - **版本升级 / 移植**：`upgrade.inspect` 只读检查 + 解释风险；执行一律打开现有升级向导。
-- **模组维护**：列清单 → 按现有规则查依赖（不按文件名猜）→ `repair.begin` → 在工作区启停/备份 → `repair.diff`/`repair.verify` → 提交或回滚。
+- **模组维护**：列清单 → `mods.analyzeCompatibility` 读声明查加载器/版本/缺前置/重复 → 需要逐文件哈希时 `mods.verifyFiles` → `repair.begin` → 在工作区启停/备份，或用 `mods.installFix` 按平台记录换掉损坏/不兼容的文件 → `repair.diff`/`repair.verify` → 提交或回滚。核心文件损坏走 `instance.repairCore`。
 
 ### 11.3 工作流状态机
 
@@ -383,6 +415,8 @@ Collect → AwaitPlanApproval → Execute*（每步审批）→ Verify → Repor
 | 测试启动 | 1–600 s，观察 0–60 s，重复 1–3 次；工作区记录/日志在本地 |
 | 崩溃快照 / 崩溃报告全文 | 报告 8 MB、输出 16 KB（全文 24 KB）；规则命中 ≤8、嫌疑 ≤8；置信度 ≤0.95 |
 | 日志检索 | 搜索 ≤200 条 / 结果 ≤24 KB 字符 / 扫描 6 s；按行读取 ≤500 行 / 256 KB |
+| 模组兼容 / 校验 | 2000 个文件、本地 60 s；平台每批 100 个哈希、总 180 s；单文件哈希 512 MB |
+| 模组修复 / 核心修复 | 单文件 100 MB、单事务 500 MB、≤10 个文件；核心修复 10 min |
 | 修复事务 | 范围 5 类；基线文件 ≤20000 个、总大小 ≤512 MB；单实例同时 1 个活动事务；提交备份在 `agent/transactions/<id>/backups/` |
 | 目录列表 / `fs.read` / `fs.write` | 2000 项 / 256 KB（最大 1 MB）/ 1 MB |
 | MCP 单行 / 命令输出 | 8 MB / 256 KB |
@@ -404,7 +438,7 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 
 - 协议与客户端：SSE/分块边界、适配枚举、错误体保留、重试/取消、本地假服务器。
 - 会话与凭据：元数据/正文往返、损坏隔离、快照、整会话加密、Credential Manager + DPAPI 后备、脱敏。
-- 工具与安全：路径攻击矩阵、句柄级校验、审批矩阵、D11 边界表、artifact 分离、实例锁、备份生命周期、诊断投影、工作流闸门、MCP 协议/确认闸/假服务器、联网地址策略（假传输）、诊断命令、测试启动参数/审批/里程碑、工作区登记与清理、事务基线/差异/设置增量/审批、崩溃规则加载与坏规则跳过、崩溃报告解析、嫌疑角色与置信度、mixin 配置归属、日志行索引与按行读取。
+- 工具与安全：路径攻击矩阵、句柄级校验、审批矩阵、D11 边界表、artifact 分离、实例锁、备份生命周期、诊断投影、工作流闸门、MCP 协议/确认闸/假服务器、联网地址策略（假传输）、诊断命令、测试启动参数/审批/里程碑、工作区登记与清理、事务基线/差异/设置增量/审批、崩溃规则加载与坏规则跳过、崩溃报告解析、嫌疑角色与置信度、mixin 配置归属、日志行索引与按行读取、模组声明解析、兼容性判定（加载器/版本/缺前置/重复/损坏/平台结论）、修复工具的审批与失败不改工作区。
 - UI/集成：页面几何与状态、模式胶囊、工具卡/审批卡、真窗口里只读模式拒绝写、MCP 管理器接线、实例目录日志/崩溃报告读取。
 - 性能基线：2000 条会话读写/加密、上下文裁剪、智能体页 2000 条消息重摆（数字见 perf-notes）。
 
@@ -439,22 +473,24 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 | --- | --- | --- |
 | Java 版本不匹配 | `java.list`、`settings.set` 改 Java 或自动选择；`instance.testLaunch` 可在工作区验证；`repair.*` 可提交/回滚 | 测试启动不自动下载 Java；提交后不在原件自动验证 |
 | OOM | `diagnostics.crashSnapshot` 区分堆、Metaspace、Direct Buffer 与 native thread 并给不同建议；`memory.suggest`、`settings.set` 改 Xmx/Xms；可测试启动验证；可事务提交 | `memory.suggest` 仍只按堆内存给数；不判断 native 模块归属 |
-| 缺模组前置 | `diagnostics.crash` 的规则提示、`mods.list` | 不读模组声明、不建已装依赖图、不能安装前置 |
-| Mod 版本冲突 | `mods.list`、`mods.setEnabled` | 没有兼容矩阵，不能查兼容版本或下载候选文件 |
-| Mod 文件损坏 | 无 | `instance.integrity` 不覆盖 `mods/`，不能重新下载修复 |
+| 缺模组前置 | `mods.analyzeCompatibility` 读声明与已装依赖图，指出缺的 mod id 和是否只有停用文件；`mods.installFix` 按平台记录补齐必需前置 | 只按声明与平台记录判断，不管 jar-in-jar 里的隐藏依赖 |
+| Mod 版本冲突 | `mods.analyzeCompatibility` 对照实例的游戏/加载器/Java 范围与平台记录；`mods.installFix` 换掉不兼容的文件 | 没有社区兼容矩阵，不做多模组组合验证（S5.5 二分） |
+| Mod 文件损坏 | `mods.verifyFiles` 查 zip 结构/大小/SHA-1；平台按哈希找回候选；`mods.installFix` 下进工作区 | `instance.integrity` 仍不覆盖 `mods/` |
 | 配置文件错误 | `fs.read` / `fs.write` 白名单 | 不解析配置结构，只能靠备份整体回退 |
 | Mixin 冲突 | `diagnostics.crashSnapshot` 给异常链、mixin 配置归属候选与建议验证；可在工作区复现 | 不能自动二分定位（S5.5） |
-| 游戏库文件损坏 | `instance.integrity` 只报 | 没有把 `VersionManager::repairVersionFiles()` 暴露成受控修复工具 |
+| 游戏库文件损坏 | `instance.repairCore` 走 `VersionManager::repairVersionFiles()` 重下客户端 jar、库和资源索引 | 共享库不保留旧副本，不能回到旧版本 |
 | 显卡 / Native 崩溃 | `diagnostics.crashSnapshot` 认 `hs_err_pid` 与 `EXCEPTION_ACCESS_VIOLATION`，与内存/模组问题分开报；可测试启动复现 | 不解析 native 模块归属，不改驱动或渲染后端 |
 | 世界 / 存档崩溃 | 有限的崩溃诊断；可复制世界到工作区用 `quickPlay` 验证 | 事务不提交世界/存档，也不做原件提交后验证 |
 
-下一阶段的模组兼容与二分见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)；实现后行为写回本文 §9 与 §11。提示词外置、隔离测试启动、修复事务、崩溃快照与日志检索已于 2026-11-24 完成，见 §11.4、§9.4.2、§9.4.3、§9.4.4。
+下一阶段的依赖感知二分与 Prompt V2 见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)；实现后行为写回本文 §9 与 §11。提示词外置、隔离测试启动、修复事务、崩溃快照与日志检索、模组兼容与文件修复已于 2026-11-24 完成，见 §11.4、§9.4.2、§9.4.3、§9.4.4、§9.4.5。
 
 未覆盖：
 
 | 项 | 状态 |
 | --- | --- |
 | 单会话工具调用总数（设计 40） | 未实现（只有单轮 8 步） |
+| 模组平台查询（CurseForge） | 未实现；S5.4 只接 Modrinth，不按名称/slug 猜项目 |
+| `mods.installFix` 的补丁式回滚 | 失败时只撤销本次复制的文件；已完成的事务由 `repair.finish` 回滚 |
 | artifact 单会话配额（设计 64 MB） | 未实现，不拒绝 |
 | 联网工具的"本会话允许" | 审批卡按钮文案有，联网引擎未实现会话放行 |
 | 日志里的裸用户名/启动参数/硬件指纹 | 只替换路径形态 |

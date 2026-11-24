@@ -23,6 +23,8 @@ QStringList readOnlyTools() {
             QStringLiteral("crash.readFull"),
             QStringLiteral("instance.integrity"),
             QStringLiteral("mods.list"),
+            QStringLiteral("mods.analyzeCompatibility"),
+            QStringLiteral("mods.verifyFiles"),
             QStringLiteral("settings.get"),
             QStringLiteral("java.list"),
             QStringLiteral("memory.suggest"),
@@ -49,7 +51,9 @@ QStringList repairTools() {
             QStringLiteral("instance.testLaunch"),
             QStringLiteral("repair.begin"),
             QStringLiteral("repair.verify"),
-            QStringLiteral("repair.finish")};
+            QStringLiteral("repair.finish"),
+            QStringLiteral("mods.installFix"),
+            QStringLiteral("instance.repairCore")};
 }
 
 AgentSkill make(const QString &id, const QString &name, const QString &description,
@@ -114,10 +118,10 @@ QList<AgentSkill> AgentSkillRegistry::builtins() {
 
     list.append(make(
         QStringLiteral("mods"), QStringLiteral("模组维护"),
-        QStringLiteral("列模组、按现有规则查依赖、启停或备份；不猜文件名兼容性。"),
+        QStringLiteral("列模组、读声明查兼容/缺前置、启停或备份、按平台记录修复文件；不猜文件名兼容性。"),
         QStringLiteral("mods"), true, QStringList(readOnlyTools() + repairTools()), false, true,
         {QStringLiteral("mods.list")},
-        QStringLiteral("模组清单有证据；每个改动都有结果；不确定项写明。")));
+        QStringLiteral("模组清单有证据；每个改动都有结果；不确定项写明。"), 2));
 
     return list;
 }
