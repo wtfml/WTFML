@@ -245,9 +245,11 @@ void runToolboxExtraTests() {
         // 隐身 = 夜视 + 发酵蜘蛛眼；夜视 = 粗制的药水 + 金胡萝卜。
         int invisibility = -1;
         int weakness = -1;
+        int slowFalling = -1;
         for (int i = 0; i < Brewing::potionCount(); ++i) {
             if (Brewing::potionAt(i).name == QStringLiteral("隐身药水")) invisibility = i;
             if (Brewing::potionAt(i).name == QStringLiteral("虚弱药水")) weakness = i;
+            if (Brewing::potionAt(i).name == QStringLiteral("缓降药水")) slowFalling = i;
         }
         check(invisibility >= 0 && weakness >= 0, "ZAI4 表里有隐身和虚弱");
         if (invisibility >= 0) {
@@ -280,6 +282,17 @@ void runToolboxExtraTests() {
                   "★★ ZAI4 虚弱的材料只有水瓶和发酵蜘蛛眼（不补下界疣）",
                   plan.materials.join(QStringLiteral("、")));
         }
+
+        const Brewing::Plan slowFallingPlan =
+            Brewing::plan(slowFalling, false, false, Brewing::Form::Normal);
+        check(slowFallingPlan.ok && !slowFallingPlan.directFromWater
+                  && slowFallingPlan.steps.size() == 2
+                  && slowFallingPlan.steps.at(0) == QStringLiteral("水瓶 + 下界疣 → 粗制的药水")
+                  && slowFallingPlan.steps.at(1) == QStringLiteral("粗制的药水 + 幻翼膜 → 缓降药水")
+                  && slowFallingPlan.materials.contains(QStringLiteral("下界疣 × 1"))
+                  && slowFallingPlan.materials.contains(QStringLiteral("幻翼膜 × 1")),
+              "ZAI4 缓降先做粗制的药水，再加幻翼膜",
+              slowFallingPlan.detailText());
 
         const Brewing::Plan bad = Brewing::plan(-1, false, false, Brewing::Form::Normal);
         check(!bad.ok && !bad.error.isEmpty(),
