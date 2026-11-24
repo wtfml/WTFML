@@ -211,12 +211,14 @@ void headerFollowsColumnChecks() {
         QApplication::processEvents();
         auto *table = editor.findChild<QTableWidget *>(QStringLiteral("presetOptionsEditorTable"));
         const QImage shot = editor.grab().toImage();
-        for (int col = 0; table != nullptr && col < 2; ++col) {
-            const ColumnInk ink = columnInk(&editor, shot, table, table->horizontalHeader(), col);
+        // 只量首列：第二列已经是滑条 / 下拉框这类输入控件，第一笔墨是控件边框或滑轨，
+        // 不是文字，拿来和表头字比会把控件内缩算成“没对齐”。DD14 说的是“第一列”。
+        if (table != nullptr) {
+            const ColumnInk ink = columnInk(&editor, shot, table, table->horizontalHeader(), 0);
             // 首列那一格最左边是勾选框，不是文字：勾选框的指示器比表头字左缘再让 2px 是
             // QStyle 自己画的 inset，不拿它当「表头没对齐」。服务器列表首列同样按 2px 判。
             ownOk &= ink.headLeft >= 0 && qAbs(ink.headLeft - ink.cellLeft) <= 2;
-            detail << QStringLiteral("预设设置表列%1 表头 %2 / 格 %3").arg(col).arg(ink.headLeft).arg(ink.cellLeft);
+            detail << QStringLiteral("预设设置表首列 表头 %1 / 格 %2").arg(ink.headLeft).arg(ink.cellLeft);
         }
         ownOk &= table != nullptr;
     }
