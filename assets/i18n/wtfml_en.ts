@@ -873,7 +873,7 @@ Select "Sign out" to try again.</translation>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>找不到技能提示词资源：%1</source>
+            <source>未找到技能提示词资源：%1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2115,10 +2115,6 @@ Confirm you have the right to use these game assets and have read the Minecraft 
             <translation>The number of bytes in %1 is illegal.</translation>
         </message>
         <message>
-            <source>没有给出清单结果。</source>
-            <translation>No listing results were given.</translation>
-        </message>
-        <message>
             <source>已知集合清单为空或过大。</source>
             <translation>The collection list is known to be empty or too large.</translation>
         </message>
@@ -2129,10 +2125,6 @@ Confirm you have the right to use these game assets and have read the Minecraft 
         <message>
             <source>不支持此已知资源清单的格式版本。</source>
             <translation>Unrecognized version of known collection manifest format.</translation>
-        </message>
-        <message>
-            <source>已知集合清单里没有可用的条目。</source>
-            <translation>There are no available entries in the known collection list.</translation>
         </message>
         <message>
             <source>已知集合条目不是对象。</source>
@@ -2147,10 +2139,6 @@ Confirm you have the right to use these game assets and have read the Minecraft 
             <translation>The MC version of %1 is illegal.</translation>
         </message>
         <message>
-            <source>%1 没有可用的消费者匹配规则。</source>
-            <translation>%1 No consumer matching rules available.</translation>
-        </message>
-        <message>
             <source>%1 的消费者匹配规则不合法。</source>
             <translation>The consumer matching rule for %1 is illegal.</translation>
         </message>
@@ -2163,7 +2151,19 @@ Confirm you have the right to use these game assets and have read the Minecraft 
             <translation>Version JSON of %1</translation>
         </message>
         <message>
-            <source>%1 没有资源索引。</source>
+            <source>未提供清单结果。</source>
+            <translation>No listing results were given.</translation>
+        </message>
+        <message>
+            <source>已知集合清单中无可用条目。</source>
+            <translation>There are no available entries in the known collection list.</translation>
+        </message>
+        <message>
+            <source>%1 无可用消费者匹配规则。</source>
+            <translation>%1 No consumer matching rules available.</translation>
+        </message>
+        <message>
+            <source>%1 无资源索引。</source>
             <translation>%1 has no resource index.</translation>
         </message>
         <message>
@@ -2613,8 +2613,18 @@ The backup is placed here: %2
             <translation>Backup completed</translation>
         </message>
         <message>
-            <source>备份没有完成</source>
+            <source>备份未完成</source>
             <translation>Backup not completed</translation>
+        </message>
+        <message>
+            <source>还原未完成</source>
+            <translation>Restore not completed</translation>
+        </message>
+        <message>
+            <source>未找到此实例的目录：
+%1</source>
+            <translation>The directory for this instance cannot be found: 
+%1</translation>
         </message>
         <message>
             <source>恢复备份</source>
@@ -2653,10 +2663,6 @@ What you want to restore is this one:
             <translation>Restore completed</translation>
         </message>
         <message>
-            <source>还原没有完成</source>
-            <translation>Restore not completed</translation>
-        </message>
-        <message>
             <source>「%1」的文件正在修改。请等待安装、导入或检查完成后再创建快照。</source>
             <translation>"%1" is being installed, imported or checked. Please take a snapshot after completion - the files being modified are being packaged.</translation>
         </message>
@@ -2683,12 +2689,6 @@ Assets and libraries are not packaged by default: these two parts can be re-down
         <message>
             <source>刚才有另一项操作开始了（复制 / 备份 / 还原 / 安装 / 游戏启动）。等它完成后再做快照。</source>
             <translation>Another operation just started (copy/backup/restore/install/game launch). Wait for it to complete before taking the snapshot.</translation>
-        </message>
-        <message>
-            <source>找不到这个实例的目录：
-%1</source>
-            <translation>The directory for this instance cannot be found: 
-%1</translation>
         </message>
         <message>
             <source>整个实例目录（包含能重新下回来的资源文件和游戏库）</source>
@@ -3916,23 +3916,23 @@ What you want to restore is this one:
             <translation>Dimension not recognized: `%1`.</translation>
         </message>
         <message>
-            <source>`execute in &lt;维度&gt;` 后面缺一个 `run`。</source>
+            <source>`execute in &lt;维度&gt;` 后缺少 `run`。</source>
             <translation>`execute in &lt;dimension&gt;` is missing a `run` after it.</translation>
         </message>
         <message>
-            <source>这条命令里没有 `tp`：只认传送命令（F3+C 复制出来的就是一条）。</source>
+            <source>此命令不含 `tp`。仅支持传送命令，F3+C 复制的内容即为传送命令。</source>
             <translation>There is no `tp` in this command: only the transfer command is recognized (the one copied by F3+C).</translation>
         </message>
         <message>
-            <source>三个坐标不全：读到的只有 %1 个数。</source>
+            <source>坐标不足 3 个：仅读取到 %1 个数。</source>
             <translation>Three coordinates are incomplete: only %1 numbers are read.</translation>
         </message>
         <message>
-            <source>`%1` 不是一个数。</source>
+            <source>`%1` 不是有效数字。</source>
             <translation>`%1` is not a number.</translation>
         </message>
         <message>
-            <source>输入含 `~` 或 `^` 相对坐标。请站到目标位置后复制绝对坐标。</source>
+            <source>输入包含 `~` 或 `^` 相对坐标。请站到目标位置后复制绝对坐标。</source>
             <translation>Among these three numbers are `~` / `^` (relative coordinates): it says "a few squares ahead from here". You must first know where you are standing before you can calculate it - first stand at your point and then copy it again.</translation>
         </message>
     </context>
@@ -4585,7 +4585,7 @@ The instance is ready, but some presets could not be applied:
             <translation>The version number written inside is "%1", and the version number is "%2"</translation>
         </message>
         <message>
-            <source>（没有这个字段）</source>
+            <source>（无此字段）</source>
             <translation>(There is no such field)</translation>
         </message>
         <message>
@@ -4929,7 +4929,7 @@ The instance is ready, but some presets could not be applied:
             <translation>Canceled</translation>
         </message>
         <message>
-            <source>读这个文件读失败了：%1</source>
+            <source>读取文件失败：%1</source>
             <translation>Failed to read this file: %1</translation>
         </message>
         <message>
@@ -4949,28 +4949,24 @@ The instance is ready, but some presets could not be applied:
             <translation>The written algorithm and the length do not match: the mark is %1 (%2 bits), but the actual number is %3 bits.</translation>
         </message>
         <message>
-            <source>没有已知值可比。</source>
+            <source>无已知值可比。</source>
             <translation>There is no known value to compare with.</translation>
+        </message>
+        <message>
+            <source>不一致：实际值为 %1。</source>
+            <translation>Inconsistency: calculated as %1.</translation>
+        </message>
+        <message>
+            <source>（未计算）</source>
+            <translation>(didn’t calculate it)</translation>
         </message>
         <message>
             <source>一致。</source>
             <translation>Consistent.</translation>
         </message>
-        <message>
-            <source>不一致：算出来的是 %1。</source>
-            <translation>Inconsistency: calculated as %1.</translation>
-        </message>
-        <message>
-            <source>（没算出来）</source>
-            <translation>(didn’t calculate it)</translation>
-        </message>
     </context>
     <context>
         <name>FileOperationRecoveryController</name>
-        <message>
-            <source>读不了 %1（%2）</source>
-            <translation>Unable to read %1 (%2)</translation>
-        </message>
         <message>
             <source>无法创建目录 %1</source>
             <translation>Unable to create directory %1</translation>
@@ -4980,7 +4976,11 @@ The instance is ready, but some presets could not be applied:
             <translation>Unable to write %1 (%2)</translation>
         </message>
         <message>
-            <source>发布不了 %1（%2）</source>
+            <source>无法读取 %1（%2）</source>
+            <translation>Unable to read %1 (%2)</translation>
+        </message>
+        <message>
+            <source>无法发布 %1（%2）</source>
             <translation>Unable to publish %1 (%2)</translation>
         </message>
         <message>
@@ -5904,7 +5904,7 @@ Files already moved can be restored from the Recycle Bin.</translation>
             <translation>Export failed</translation>
         </message>
         <message>
-            <source>这个文件没能写出来（%1）：
+            <source>文件写入失败（%1）：
 %2</source>
             <translation>Could not write the file (%1):
 %2</translation>
@@ -5950,8 +5950,16 @@ Files already moved can be restored from the Recycle Bin.</translation>
             <translation>The process ended before the game window appeared, exit code %1.</translation>
         </message>
         <message>
-            <source>游戏进程没等到能打日志就结束了，退出码 %1。</source>
+            <source>游戏进程在生成日志前结束，退出码 %1。</source>
             <translation>The game process ended before logging could be logged. The exit code was %1.</translation>
+        </message>
+        <message>
+            <source>此实例已结束。</source>
+            <translation>This instance has just ended.</translation>
+        </message>
+        <message>
+            <source>「%1」已结束。</source>
+            <translation>"%1" It just ended.</translation>
         </message>
         <message>
             <source>%1 个实例</source>
@@ -5982,14 +5990,6 @@ Want to stop it?</translation>
         <message>
             <source>取消</source>
             <translation>Cancel</translation>
-        </message>
-        <message>
-            <source>这个实例刚刚已经结束了。</source>
-            <translation>This instance has just ended.</translation>
-        </message>
-        <message>
-            <source>「%1」刚刚已经结束了。</source>
-            <translation>"%1" It just ended.</translation>
         </message>
         <message>
             <source>已停止「%1」。</source>
@@ -6050,8 +6050,16 @@ First install a Java %1, or go to "Settings" and point the path there.</translat
             <translation>Can't recognize</translation>
         </message>
         <message>
-            <source>没有</source>
+            <source>无</source>
             <translation>No</translation>
+        </message>
+        <message>
+            <source>本机无 Java %1，且当前不允许下载运行时。</source>
+            <translation>Java %1 is not available on this machine and downloading the runtime is not currently allowed.</translation>
+        </message>
+        <message>
+            <source>未找到 Java %1，且无法下载。</source>
+            <translation>Java %1 cannot be found or downloaded.</translation>
         </message>
         <message>
             <source>当前设置为手动指定 Java，</source>
@@ -6068,14 +6076,6 @@ First install a Java %1, or go to "Settings" and point the path there.</translat
         <message>
             <source>，未找到兼容版本时取消启动。</source>
             <translation>—— Without automatic replacement, it will directly fail.</translation>
-        </message>
-        <message>
-            <source>这台机器上没有 Java %1，且当前不允许下载运行时。</source>
-            <translation>Java %1 is not available on this machine and downloading the runtime is not currently allowed.</translation>
-        </message>
-        <message>
-            <source>找不到也下载不到 Java %1。</source>
-            <translation>Java %1 cannot be found or downloaded.</translation>
         </message>
         <message>
             <source>已取消准备 Java 运行时。</source>
@@ -17444,6 +17444,14 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
             <translation>%1 long integers</translation>
         </message>
         <message>
+            <source>文件过大（%1 字节）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>文件末尾多出 %1 个字节</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>开关</source>
             <translation>Switch</translation>
         </message>
@@ -17452,55 +17460,55 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
             <translation>Integer</translation>
         </message>
         <message>
-            <source>长度是负的</source>
+            <source>长度值为负数</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>文件在这里就断了（还要 %1 个字节，只剩 %2 个）</source>
+            <source>文件在此处中断：需要 %1 个字节，剩余 %2 个</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>元素太多（超过 %1 个）</source>
+            <source>元素数量超过上限 %1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>不认识的标签类型 %1</source>
+            <source>未知的标签类型 %1</source>
+            <translation type="unfinished">Unrecognized tag type %1</translation>
+        </message>
+        <message>
+            <source>嵌套层级超过上限 %1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>嵌套太深（超过 %1 层）</source>
+            <source>此处不应出现结束标签</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>这里不该出现结束标签</source>
+            <source>列表包含未知的元素类型 %1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>列表里写着不认识的元素类型 %1</source>
+            <source>列表的项数为负数</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>列表的项数是负的</source>
+            <source>列表的元素类型为空，但项数为 %1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>列表的元素类型是空的、却写着 %1 项</source>
+            <source>列表项数 %1 超过文件剩余字节数</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>列表的项数 %1 比文件剩下的字节还多</source>
+            <source>复合标签缺少结束标记</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>复合标签没有收尾</source>
+            <source>整数数组的长度为负数</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>整数数组的长度是负的</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>长整数数组的长度是负的</source>
+            <source>长整数数组的长度为负数</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -17532,8 +17540,24 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>文字</source>
+            <source>字符串</source>
             <translation>Word</translation>
+        </message>
+        <message>
+            <source>未知</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>文本</source>
+            <translation>Word</translation>
+        </message>
+        <message>
+            <source>规则「%1」的值不是字符串，已跳过。</source>
+            <translation>The rule "%1" is not text on the board, so don't touch it.</translation>
+        </message>
+        <message>
+            <source>此存档中无规则「%1」。仅可编辑已有规则。</source>
+            <translation>There are no rules called "%1" in this world - this page only changes the ones that already exist in the world.</translation>
         </message>
         <message>
             <source>列表</source>
@@ -17552,18 +17576,6 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>不认识</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>这份文件太大了（%1 字节）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>末尾还多着 %1 个字节</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>level.dat 缺少游戏规则数据。存档可能尚未初始化或来自旧版本。</source>
             <translation>There is no "Game Rules" field in this level.dat (old save, or the game has not been saved yet).</translation>
         </message>
@@ -17576,10 +17588,6 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
             <translation>There is no "Game Rules" section in this level.dat, so it cannot be changed.</translation>
         </message>
         <message>
-            <source>规则「%1」的值不是文本，已跳过。</source>
-            <translation>The rule "%1" is not text on the board, so don't touch it.</translation>
-        </message>
-        <message>
             <source>规则「%1」的值过长，无法保存。</source>
             <translation>The value for rule "%1" is too long.</translation>
         </message>
@@ -17587,43 +17595,39 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
             <source>游戏规则名称过长，无法保存。</source>
             <translation>The rule name is too long and cannot be entered.</translation>
         </message>
-        <message>
-            <source>此存档中没有规则「%1」。可编辑已存在的规则。</source>
-            <translation>There are no rules called "%1" in this world - this page only changes the ones that already exist in the world.</translation>
-        </message>
     </context>
     <context>
         <name>NbtUtil</name>
-        <message>
-            <source>文件里有个长度是负数</source>
-            <translation>There is a length in the file that is a negative number</translation>
-        </message>
-        <message>
-            <source>文件读到第 %1 个字节就断了</source>
-            <translation>The file is broken after reading the %1 byte</translation>
-        </message>
-        <message>
-            <source>NBT 嵌套超过 %1 层</source>
-            <translation>NBT nested beyond %1 levels</translation>
-        </message>
-        <message>
-            <source>列表声明包含 %1 个元素，实际数据长度不足</source>
-            <translation>The list says there are %1 elements, and the remaining bytes cannot fit in it.</translation>
-        </message>
         <message>
             <source>未知的标签类型 %1</source>
             <translation>Unrecognized tag type %1</translation>
         </message>
         <message>
-            <source>servers 列表里装的不是 TAG_Compound（元素类型是 %1）</source>
+            <source>文件中的长度值为负数</source>
+            <translation>There is a length in the file that is a negative number</translation>
+        </message>
+        <message>
+            <source>文件在第 %1 个字节处中断</source>
+            <translation>The file is broken after reading the %1 byte</translation>
+        </message>
+        <message>
+            <source>NBT 嵌套层级超过 %1</source>
+            <translation>NBT nested beyond %1 levels</translation>
+        </message>
+        <message>
+            <source>列表声明包含 %1 个元素，实际数据不足</source>
+            <translation>The list says there are %1 elements, and the remaining bytes cannot fit in it.</translation>
+        </message>
+        <message>
+            <source>servers 列表的元素类型为 %1，应为 TAG_Compound</source>
             <translation>The servers list is not filled with TAG_Compound (the element type is %1)</translation>
         </message>
         <message>
-            <source>servers 声明包含 %1 条记录，实际数据长度不足</source>
+            <source>servers 声明包含 %1 条记录，实际数据不足</source>
             <translation>The servers say there are %1 items and the remaining bytes cannot be loaded.</translation>
         </message>
         <message>
-            <source>文件是空的，连一个标签都没有</source>
+            <source>文件为空，不含任何标签</source>
             <translation>The file is empty, not even a tag</translation>
         </message>
         <message>
@@ -17639,16 +17643,24 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
             <translation>Unable to open %1 (%2)</translation>
         </message>
         <message>
-            <source>%1 有 %2 MB，超过 %3 MB 的上限，没有读</source>
+            <source>%1 为 %2 MB，超过 %3 MB 上限，未读取</source>
             <translation>%1 has %2 MB, exceeds %3 MB limit, no reads</translation>
         </message>
         <message>
-            <source>读 %1 读到一半出错了（%2）</source>
+            <source>读取 %1 时中途出错（%2）</source>
             <translation>Could not finish reading %1 (%2)</translation>
         </message>
         <message>
-            <source>servers.dat 有 %1 MB，超过 %2 MB 的上限，没有读</source>
+            <source>servers.dat 为 %1 MB，超过 %2 MB 上限，未读取</source>
             <translation>Servers.dat has %1 MB, exceeds %2 MB limit, no reads</translation>
+        </message>
+        <message>
+            <source>servers.dat 解压后为 %1 MB，超过 %2 MB 上限</source>
+            <translation>Servers.dat is decompressed and contains %1 MB, which exceeds the upper limit of %2 MB.</translation>
+        </message>
+        <message>
+            <source>servers.dat 解压后无数据，请确认文件是否完整</source>
+            <translation>Servers.dat is empty when decompressed (this gzip is probably broken or not downloaded completely)</translation>
         </message>
         <message>
             <source>无法创建临时目录（%1）</source>
@@ -17661,14 +17673,6 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         <message>
             <source>无法读取 servers.dat：%1</source>
             <translation>Servers.dat cannot be read: %1</translation>
-        </message>
-        <message>
-            <source>servers.dat 解压出来有 %1 MB，超过 %2 MB 的上限</source>
-            <translation>Servers.dat is decompressed and contains %1 MB, which exceeds the upper limit of %2 MB.</translation>
-        </message>
-        <message>
-            <source>servers.dat 解压后没有数据；请确认文件是否完整</source>
-            <translation>Servers.dat is empty when decompressed (this gzip is probably broken or not downloaded completely)</translation>
         </message>
     </context>
     <context>
@@ -20217,7 +20221,7 @@ Not supported by this preset category: %1.</translation>
             <translation>The `worlds` in the pending application list "%1" is not an array, so it is not touched this time.</translation>
         </message>
         <message>
-            <source>写不动待应用清单「%1」：%2</source>
+            <source>无法写入待应用清单「%1」：%2</source>
             <translation>Unable to write pending application list "%1": %2</translation>
         </message>
         <message>
@@ -20459,10 +20463,6 @@ Not supported by this preset category: %1.</translation>
         <message>
             <source>已保留目标中的 %1 个同名数据包。</source>
             <translation>There are already %1 datapacks with the same name on the target, and they are not touched by this file.</translation>
-        </message>
-        <message>
-            <source>读不了「%1」：%2</source>
-            <translation>Unable to read "%1": %2</translation>
         </message>
         <message>
             <source>无法写入「%1」：%2</source>
@@ -20709,7 +20709,7 @@ Not supported by this preset category: %1.</translation>
             <translation>The extra item %1 in that section of MaLiLib is not a grid object.</translation>
         </message>
         <message>
-            <source>没给实例目录，读不了目标上的配置。</source>
+            <source>未指定实例目录，无法读取目标配置。</source>
             <translation>If the instance directory is not given, the configuration on the target cannot be read.</translation>
         </message>
         <message>
@@ -20757,7 +20757,7 @@ Not supported by this preset category: %1.</translation>
             <translation>The platform does not give any available versions.</translation>
         </message>
         <message>
-            <source>这一版没有可下载的文件。</source>
+            <source>此版本无可下载的文件。</source>
             <translation>There are no downloadable files for this version.</translation>
         </message>
         <message>
@@ -20953,10 +20953,6 @@ Not supported by this preset category: %1.</translation>
             <translation>Unable to read "%1": %2</translation>
         </message>
         <message>
-            <source>写不动「%1」：%2</source>
-            <translation>Can't write "%1": %2</translation>
-        </message>
-        <message>
             <source>「%1」替换失败：%2</source>
             <translation>"%1" replacement failed: %2</translation>
         </message>
@@ -21065,7 +21061,7 @@ Not supported by this preset category: %1.</translation>
             <translation>Shaderpacks/</translation>
         </message>
         <message>
-            <source>%1 读不了：%2</source>
+            <source>%1 无法读取：%2</source>
             <translation>%1 Unable to read: %2</translation>
         </message>
         <message>
@@ -23691,39 +23687,39 @@ Wait a minute or two and retry.</translation>
     <context>
         <name>ReplayInfo</name>
         <message>
-            <source>文件不存在</source>
-            <translation>File not found</translation>
-        </message>
-        <message>
-            <source>文件是空的</source>
-            <translation>The file is empty</translation>
-        </message>
-        <message>
-            <source>文件太大，不像是 Replay 录像</source>
-            <translation>The file is too large to be a ReplayMod recording</translation>
-        </message>
-        <message>
-            <source>读 Replay 元数据</source>
-            <translation>Read replay metadata</translation>
-        </message>
-        <message>
-            <source>压缩包里没有 metaData.json，不是 Replay 录像</source>
-            <translation>The archive is missing metaData.json and is not a ReplayMod recording</translation>
-        </message>
-        <message>
             <source>无法打开录像压缩包。请确认文件是有效的 Replay 录像。</source>
             <translation>Could not open the archive. It is not a valid ReplayMod recording.</translation>
-        </message>
-        <message>
-            <source>读压缩包失败</source>
-            <translation>Could not read the archive</translation>
         </message>
         <message>
             <source>metaData.json 无法解析（%1）</source>
             <translation>Could not parse metaData.json (%1)</translation>
         </message>
         <message>
-            <source>metaData.json 里没有 Replay 的版本信息</source>
+            <source>未找到文件</source>
+            <translation>File not found</translation>
+        </message>
+        <message>
+            <source>文件为空</source>
+            <translation>The file is empty</translation>
+        </message>
+        <message>
+            <source>文件过大，不是有效的 Replay 录像</source>
+            <translation>The file is too large to be a ReplayMod recording</translation>
+        </message>
+        <message>
+            <source>读取 Replay 元数据</source>
+            <translation>Read replay metadata</translation>
+        </message>
+        <message>
+            <source>压缩包中无 metaData.json，不是 Replay 录像</source>
+            <translation>The archive is missing metaData.json and is not a ReplayMod recording</translation>
+        </message>
+        <message>
+            <source>读取压缩包失败</source>
+            <translation>Could not read the archive</translation>
+        </message>
+        <message>
+            <source>metaData.json 无 Replay 版本信息</source>
             <translation>metaData.json does not contain replay version information</translation>
         </message>
         <message>
@@ -24343,15 +24339,15 @@ Wait a minute or two and retry.</translation>
             <translation>Other</translation>
         </message>
         <message>
-            <source>正在读版本列表…</source>
+            <source>正在读取版本列表…</source>
             <translation>Reading version list…</translation>
         </message>
         <message>
-            <source>这个游戏版本上没有可下载的版本。</source>
+            <source>此游戏版本暂无可下载的版本。</source>
             <translation>There is no downloadable version of this game.</translation>
         </message>
         <message>
-            <source>前置模组的名字没取到：%1</source>
+            <source>未获取到前置模组的名称：%1</source>
             <translation>The name of the pre-mod was not found: %1</translation>
         </message>
         <message>
@@ -24618,24 +24614,12 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation>There is no palette in this structure file, so the content cannot be read.</translation>
         </message>
         <message>
-            <source>找不到这个文件。</source>
-            <translation>The file cannot be found.</translation>
-        </message>
-        <message>
-            <source>这个文件是空的。</source>
-            <translation>This file is empty.</translation>
-        </message>
-        <message>
             <source>文件大小为 %1 MB，超出预览上限。</source>
             <translation>This file is too large (%1 MB) and this page cannot be read.</translation>
         </message>
         <message>
             <source>无法打开结构文件：%1</source>
             <translation>Unable to open this file: %1</translation>
-        </message>
-        <message>
-            <source>解压这一步腾不出临时目录。</source>
-            <translation>This step of decompression does not free up the temporary directory.</translation>
         </message>
         <message>
             <source>gzip 解压失败：%1</source>
@@ -24646,7 +24630,19 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation>The decompressed content is empty, the file may be damaged or the download is incomplete.</translation>
         </message>
         <message>
-            <source>解压之后太大了（超过 %1 MB），这一页不展开读。</source>
+            <source>未找到文件。</source>
+            <translation>The file cannot be found.</translation>
+        </message>
+        <message>
+            <source>文件为空。</source>
+            <translation>This file is empty.</translation>
+        </message>
+        <message>
+            <source>无法创建临时目录。</source>
+            <translation>This step of decompression does not free up the temporary directory.</translation>
+        </message>
+        <message>
+            <source>解压后大小超过 %1 MB，不展开读取。</source>
             <translation>After decompression, it is too large (more than %1 MB) and this page will not be expanded for reading.</translation>
         </message>
         <message>
@@ -24715,7 +24711,7 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation>(The block table of this file has not been solved, only the metadata has been read)</translation>
         </message>
         <message>
-            <source>最多的方块：</source>
+            <source>数量最多的方块：</source>
             <translation>Most blocks:</translation>
         </message>
         <message>
@@ -24777,19 +24773,6 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation>%1 description</translation>
         </message>
         <message>
-            <source>入口文件不在这个目录里。</source>
-            <translation>The entry file is not in this directory.</translation>
-        </message>
-        <message>
-            <source>
-点「修复（重新安装）」下载缺失文件。</source>
-            <translation>Click "Repair (Reinstall)" to download the missing files.</translation>
-        </message>
-        <message>
-            <source>这个服务端尚未安装完成</source>
-            <translation>This server has not been installed yet</translation>
-        </message>
-        <message>
             <source>服务端安装记录缺失</source>
             <translation>Server installation record is missing</translation>
         </message>
@@ -24804,11 +24787,6 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         <message>
             <source>安装记录缺少启动所需的版本信息。</source>
             <translation>The installation record is missing version information required for startup.</translation>
-        </message>
-        <message>
-            <source>
-点「修复（重新安装）」按记录的来源完整重装。</source>
-            <translation>Click "Repair (Reinstall)" to completely reinstall from the recorded source.</translation>
         </message>
         <message>
             <source>尚未接受 Minecraft 最终用户许可协议</source>
@@ -24829,7 +24807,25 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
  can restore the default value or modify it in "Common Settings".</translation>
         </message>
         <message>
-            <source>（空的）</source>
+            <source>入口文件不在当前目录中。</source>
+            <translation>The entry file is not in this directory.</translation>
+        </message>
+        <message>
+            <source>
+点击「修复（重新安装）」下载缺失文件。</source>
+            <translation>Click "Repair (Reinstall)" to download the missing files.</translation>
+        </message>
+        <message>
+            <source>此服务端尚未安装完成</source>
+            <translation>This server has not been installed yet</translation>
+        </message>
+        <message>
+            <source>
+点击「修复（重新安装）」按记录的来源完整重装。</source>
+            <translation>Click "Repair (Reinstall)" to completely reinstall from the recorded source.</translation>
+        </message>
+        <message>
+            <source>（空）</source>
             <translation>(empty)</translation>
         </message>
         <message>
@@ -24891,7 +24887,7 @@ Please close the program occupying the port, or change the port in "Common Setti
             <translation>After adding or changing a mod, you need to restart the server.</translation>
         </message>
         <message>
-            <source>配置包含 %1 项未提供表单编辑的设置</source>
+            <source>配置包含 %1 项无法通过表单编辑的设置</source>
             <translation>Configuration contains %1 settings that do not provide form editing</translation>
         </message>
         <message>
@@ -26444,10 +26440,6 @@ Please close the program occupying the port, or change the port in "Common Setti
             <translation>,</translation>
         </message>
         <message>
-            <source>启动诊断：没有发现明显问题</source>
-            <translation>Startup diagnostics: No obvious problems found</translation>
-        </message>
-        <message>
             <source>【%1】%2</source>
             <translation>[%1]%2</translation>
         </message>
@@ -26458,18 +26450,6 @@ Please close the program occupying the port, or change the port in "Common Setti
         <message>
             <source>实例：%1</source>
             <translation>Example: %1</translation>
-        </message>
-        <message>
-            <source>这个实例没有指向任何游戏版本</source>
-            <translation>This instance does not point to any game version</translation>
-        </message>
-        <message>
-            <source>实例目录里读不到可以启动的版本信息。</source>
-            <translation>The version information that can be started cannot be read in the instance directory.</translation>
-        </message>
-        <message>
-            <source>在实例设置里重新确认版本，或者重新安装这个实例。</source>
-            <translation>Reconfirm the version in the instance settings, or reinstall the instance.</translation>
         </message>
         <message>
             <source>无法识别实例的实际游戏版本</source>
@@ -26484,132 +26464,40 @@ Please close the program occupying the port, or change the port in "Common Setti
             <translation>Check whether the version json is complete (you can scan the "Integrity Check" page).</translation>
         </message>
         <message>
-            <source>没有模组加载器，却有 %1 个启用的模组</source>
-            <translation>No mod loader, but %1 enabled mods</translation>
-        </message>
-        <message>
-            <source>mods/ 里躺着 %1 个 .jar，但这个实例是原版（没有 Fabric / Forge / NeoForge / Quilt），游戏不会读它们。</source>
-            <translation>There are %1 .jars lying around in mods/, but this instance is vanilla (no Fabric / Forge / NeoForge / Quilt) and the game won't read them.</translation>
-        </message>
-        <message>
-            <source>在这个版本上装一个模组加载器，或者把 mods/ 里那些 jar 移走。</source>
-            <translation>Install a mod loader on this version, or move the jars in mods/.</translation>
-        </message>
-        <message>
-            <source>原版实例（没有模组加载器）</source>
-            <translation>Vanilla instance (without mod loader)</translation>
-        </message>
-        <message>
             <source>加载器：%1%2</source>
             <translation>Loader: %1%2</translation>
-        </message>
-        <message>
-            <source>没有预先指定 Java，启动时自动挑</source>
-            <translation>Java is not specified in advance and is automatically selected at startup.</translation>
-        </message>
-        <message>
-            <source>这个版本要 Java %1。</source>
-            <translation>This version requires Java %1.</translation>
-        </message>
-        <message>
-            <source>版本 json 里没写要哪个 Java，启动时按游戏版本推断。</source>
-            <translation>The version json does not say which Java is required, it is inferred according to the game version at startup.</translation>
-        </message>
-        <message>
-            <source>如果本机没有匹配的 Java，第一次启动会先下载一份运行时。</source>
-            <translation>If the machine does not have matching Java, a runtime will be downloaded for the first time.</translation>
-        </message>
-        <message>
-            <source>Java 选的是「手动指定」，但路径是空的</source>
-            <translation>Java selected "Manually Specify", but the path is empty</translation>
-        </message>
-        <message>
-            <source>手动档下启动器不会自己去挑 Java。</source>
-            <translation>In manual mode, the launcher will not select Java by itself.</translation>
-        </message>
-        <message>
-            <source>在「启动设置」里填一个 java.exe，或者切回「自动」。</source>
-            <translation>Fill in a java.exe in "Startup Settings", or switch back to "Automatic".</translation>
-        </message>
-        <message>
-            <source>指定的 Java 用不了</source>
-            <translation>The specified Java cannot be used</translation>
         </message>
         <message>
             <source>路径：%1</source>
             <translation>Path: %1</translation>
         </message>
         <message>
-            <source>把路径改成一个真实存在的 java.exe（或 JDK/JRE 目录），或者切回自动。</source>
-            <translation>Change the path to a real java.exe (or JDK/JRE directory), or switch back to automatic.</translation>
-        </message>
-        <message>
             <source>已指定 Java</source>
             <translation>Java specified</translation>
-        </message>
-        <message>
-            <source>这个版本要 Java %1；诊断不启动 JVM，具体主版本以启动日志为准。</source>
-            <translation>This version requires Java %1; the diagnosis does not start the JVM. The specific main version is subject to the startup log.</translation>
         </message>
         <message>
             <source>自动</source>
             <translation>Automatic</translation>
         </message>
         <message>
-            <source>机器共 %1 MB</source>
-            <translation>Machine total %1 MB</translation>
-        </message>
-        <message>
-            <source>分给游戏的内存超过了机器总内存</source>
-            <translation>The memory allocated to the game exceeds the total memory of the machine</translation>
-        </message>
-        <message>
             <source>请将 Xmx 调低至物理内存容量以内，并为系统保留内存。</source>
             <translation>Reduce the size of Xmx to within the machine memory; if the allocation is larger than the physical memory, the JVM is likely to fail when allocating the heap after it is started.</translation>
-        </message>
-        <message>
-            <source>分给游戏的内存偏多</source>
-            <translation>Too much memory allocated to games</translation>
-        </message>
-        <message>
-            <source>留一点给系统和其他程序，尤其模组整合包还要加载资源。</source>
-            <translation>Leave some space for the system and other programs, especially mod integration packages to load resources.</translation>
         </message>
         <message>
             <source>内存分配</source>
             <translation>Memory allocation</translation>
         </message>
         <message>
-            <source>分给游戏的内存偏小（%1 MB）</source>
-            <translation>The memory allocated to the game is too small (%1 MB)</translation>
-        </message>
-        <message>
             <source>模组整合包通常需要更多内存。原版 1.20 及以上建议至少分配 1024 MB。</source>
             <translation>Mod packs are prone to OutOfMemoryError; vanilla 1.20 onwards also recommends at least 1024 MB.</translation>
-        </message>
-        <message>
-            <source>读不到这台机器的物理内存</source>
-            <translation>Unable to read the physical memory of this machine</translation>
         </message>
         <message>
             <source>仅获得配置的内存值，无法与设备容量比较。</source>
             <translation>The memory column only reports the configuration value, and the relative size cannot be determined.</translation>
         </message>
         <message>
-            <source>这个实例没有 mods 目录</source>
-            <translation>This instance does not have a mods directory</translation>
-        </message>
-        <message>
-            <source>第一次往里面放模组时目录会自动建出来。</source>
-            <translation>The directory will be created automatically the first time you put a mod into it.</translation>
-        </message>
-        <message>
             <source>已启用 %1 个模组</source>
             <translation>%1 mods enabled</translation>
-        </message>
-        <message>
-            <source>mods/ 里没有启用的模组</source>
-            <translation>There are no enabled mods in mods/</translation>
         </message>
         <message>
             <source>…还有 %1 个</source>
@@ -26624,10 +26512,6 @@ Please close the program occupying the port, or change the port in "Common Setti
             <translation>They are called `*.jar.disabled` on the disk and the game will not load.</translation>
         </message>
         <message>
-            <source>没有崩溃报告</source>
-            <translation>No crash report</translation>
-        </message>
-        <message>
             <source>文件：%1</source>
             <translation>File: %1</translation>
         </message>
@@ -26640,16 +26524,8 @@ Please close the program occupying the port, or change the port in "Common Setti
             <translation>The most recent crash report was out of memory (OutOfMemoryError)</translation>
         </message>
         <message>
-            <source>把 Xmx 调大（先确认机器真的有空闲内存），或者减少同时加载的模组。</source>
-            <translation>Increase Xmx (make sure the machine really has free memory first), or reduce the number of mods loaded at the same time.</translation>
-        </message>
-        <message>
             <source>最近一份崩溃报告是 Java 版本不对（UnsupportedClassVersionError）</source>
             <translation>The most recent crash report was an incorrect Java version (UnsupportedClassVersionError)</translation>
-        </message>
-        <message>
-            <source>这个崩溃说明有东西是用比当前 Java 更新的版本编译的；换一个更新的 Java 再试。</source>
-            <translation>This crash indicates that something was compiled with a newer version of Java than your current version; try again with a newer version of Java.</translation>
         </message>
         <message>
             <source>最近一份崩溃报告里是缺类异常</source>
@@ -26664,7 +26540,127 @@ Please close the program occupying the port, or change the port in "Common Setti
             <translation>The most recent crash report occurred during the mod injection phase (Mixin)</translation>
         </message>
         <message>
-            <source>报告里通常会点名一个模组；先单独移走它再启动，确认是不是它引起的。</source>
+            <source>启动诊断：未发现明显问题</source>
+            <translation>Startup diagnostics: No obvious problems found</translation>
+        </message>
+        <message>
+            <source>此实例未指向任何游戏版本</source>
+            <translation>This instance does not point to any game version</translation>
+        </message>
+        <message>
+            <source>实例目录中无法读取可启动的版本信息。</source>
+            <translation>The version information that can be started cannot be read in the instance directory.</translation>
+        </message>
+        <message>
+            <source>请在实例设置中重新确认版本，或重新安装此实例。</source>
+            <translation>Reconfirm the version in the instance settings, or reinstall the instance.</translation>
+        </message>
+        <message>
+            <source>未安装模组加载器，但启用了 %1 个模组</source>
+            <translation>No mod loader, but %1 enabled mods</translation>
+        </message>
+        <message>
+            <source>mods/ 中有 %1 个 .jar，但此实例为原版（未安装 Fabric / Forge / NeoForge / Quilt），游戏不会加载这些文件。</source>
+            <translation>There are %1 .jars lying around in mods/, but this instance is vanilla (no Fabric / Forge / NeoForge / Quilt) and the game won't read them.</translation>
+        </message>
+        <message>
+            <source>请安装模组加载器，或移除 mods/ 中的 jar 文件。</source>
+            <translation>Install a mod loader on this version, or move the jars in mods/.</translation>
+        </message>
+        <message>
+            <source>原版实例（未安装模组加载器）</source>
+            <translation>Vanilla instance (without mod loader)</translation>
+        </message>
+        <message>
+            <source>未预先指定 Java，启动时自动选择</source>
+            <translation>Java is not specified in advance and is automatically selected at startup.</translation>
+        </message>
+        <message>
+            <source>此版本需要 Java %1。</source>
+            <translation>This version requires Java %1.</translation>
+        </message>
+        <message>
+            <source>版本 json 未指定 Java 版本，启动时按游戏版本推断。</source>
+            <translation>The version json does not say which Java is required, it is inferred according to the game version at startup.</translation>
+        </message>
+        <message>
+            <source>本机无匹配 Java 时，首次启动将先下载运行时。</source>
+            <translation>If the machine does not have matching Java, a runtime will be downloaded for the first time.</translation>
+        </message>
+        <message>
+            <source>Java 已设为「手动指定」，但路径为空</source>
+            <translation>Java selected "Manually Specify", but the path is empty</translation>
+        </message>
+        <message>
+            <source>手动模式下启动器不会自动选择 Java。</source>
+            <translation>In manual mode, the launcher will not select Java by itself.</translation>
+        </message>
+        <message>
+            <source>请在「启动设置」中指定 java.exe，或切换回「自动」。</source>
+            <translation>Fill in a java.exe in "Startup Settings", or switch back to "Automatic".</translation>
+        </message>
+        <message>
+            <source>指定的 Java 不可用</source>
+            <translation>The specified Java cannot be used</translation>
+        </message>
+        <message>
+            <source>请将路径改为存在的 java.exe（或 JDK/JRE 目录），或切换回自动。</source>
+            <translation>Change the path to a real java.exe (or JDK/JRE directory), or switch back to automatic.</translation>
+        </message>
+        <message>
+            <source>此版本需要 Java %1；诊断不启动 JVM，具体主版本以启动日志为准。</source>
+            <translation>This version requires Java %1; the diagnosis does not start the JVM. The specific main version is subject to the startup log.</translation>
+        </message>
+        <message>
+            <source>设备总内存 %1 MB</source>
+            <translation>Machine total %1 MB</translation>
+        </message>
+        <message>
+            <source>分配给游戏的内存超过设备总内存</source>
+            <translation>The memory allocated to the game exceeds the total memory of the machine</translation>
+        </message>
+        <message>
+            <source>分配给游戏的内存过多</source>
+            <translation>Too much memory allocated to games</translation>
+        </message>
+        <message>
+            <source>请为系统和其他程序保留内存；模组整合包还需加载资源。</source>
+            <translation>Leave some space for the system and other programs, especially mod integration packages to load resources.</translation>
+        </message>
+        <message>
+            <source>分配给游戏的内存过小（%1 MB）</source>
+            <translation>The memory allocated to the game is too small (%1 MB)</translation>
+        </message>
+        <message>
+            <source>无法读取设备物理内存</source>
+            <translation>Unable to read the physical memory of this machine</translation>
+        </message>
+        <message>
+            <source>此实例无 mods 目录</source>
+            <translation>This instance does not have a mods directory</translation>
+        </message>
+        <message>
+            <source>首次添加模组时自动创建该目录。</source>
+            <translation>The directory will be created automatically the first time you put a mod into it.</translation>
+        </message>
+        <message>
+            <source>mods/ 中无已启用的模组</source>
+            <translation>There are no enabled mods in mods/</translation>
+        </message>
+        <message>
+            <source>暂无崩溃报告</source>
+            <translation>No crash report</translation>
+        </message>
+        <message>
+            <source>请调大 Xmx（确认设备有空闲内存），或减少同时加载的模组。</source>
+            <translation>Increase Xmx (make sure the machine really has free memory first), or reduce the number of mods loaded at the same time.</translation>
+        </message>
+        <message>
+            <source>此崩溃表明有内容使用比当前 Java 更新的版本编译。请更换更新的 Java 后重试。</source>
+            <translation>This crash indicates that something was compiled with a newer version of Java than your current version; try again with a newer version of Java.</translation>
+        </message>
+        <message>
+            <source>报告通常会指明一个模组。请先单独移除该模组再启动，以确认原因。</source>
             <translation>A mod is usually named in the report; remove it individually and then enable it to see if it is the cause.</translation>
         </message>
         <message>
@@ -26724,11 +26720,11 @@ Please close the program occupying the port, or change the port in "Common Setti
             <translation>OutOfMemoryError appears in startup log</translation>
         </message>
         <message>
-            <source>游戏在运行中内存不够了（不一定留下一份崩溃报告）。</source>
+            <source>游戏运行期间内存不足（可能未生成崩溃报告）。</source>
             <translation>The game runs out of memory while running (not necessarily leaving a crash report).</translation>
         </message>
         <message>
-            <source>把 Xmx 调大，或者关掉一些模组再试。</source>
+            <source>请调大 Xmx，或减少部分模组后重试。</source>
             <translation>Turn up the Xmx, or turn off some mods and try again.</translation>
         </message>
     </context>
@@ -28985,7 +28981,7 @@ Back up the instance first. Continue anyway?</translation>
             <translation>Missing file</translation>
         </message>
         <message>
-            <source>0 字节（下载写了一半留下的）</source>
+            <source>0 字节（下载中断留下的）</source>
             <translation>0 bytes (half written after downloading)</translation>
         </message>
         <message>

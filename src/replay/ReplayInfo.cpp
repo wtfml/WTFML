@@ -54,16 +54,16 @@ Info read(const QString &path) {
     Info info;
     const QFileInfo file(path);
     if (!file.exists() || !file.isFile()) {
-        info.problem = QCoreApplication::translate("ReplayInfo", "文件不存在");
+        info.problem = QCoreApplication::translate("ReplayInfo", "未找到文件");
         return info;
     }
     info.fileBytes = file.size();
     if (info.fileBytes <= 0) {
-        info.problem = QCoreApplication::translate("ReplayInfo", "文件是空的");
+        info.problem = QCoreApplication::translate("ReplayInfo", "文件为空");
         return info;
     }
     if (info.fileBytes > kMaxArchiveBytes) {
-        info.problem = QCoreApplication::translate("ReplayInfo", "文件太大，不像是 Replay 录像");
+        info.problem = QCoreApplication::translate("ReplayInfo", "文件过大，不是有效的 Replay 录像");
         return info;
     }
 
@@ -71,18 +71,18 @@ Info read(const QString &path) {
     QString error;
     const ZipUtil::EntryStatus status =
         ZipUtil::readEntry(path, QStringLiteral("metaData.json"), &bytes, &error,
-                           QCoreApplication::translate("ReplayInfo", "读 Replay 元数据"));
+                           QCoreApplication::translate("ReplayInfo", "读取 Replay 元数据"));
     switch (status) {
     case ZipUtil::EntryStatus::Ok:
         break;
     case ZipUtil::EntryStatus::NotFound:
-        info.problem = QCoreApplication::translate("ReplayInfo", "压缩包里没有 metaData.json，不是 Replay 录像");
+        info.problem = QCoreApplication::translate("ReplayInfo", "压缩包中无 metaData.json，不是 Replay 录像");
         return info;
     case ZipUtil::EntryStatus::NotAnArchive:
         info.problem = QCoreApplication::translate("ReplayInfo", "无法打开录像压缩包。请确认文件是有效的 Replay 录像。");
         return info;
     case ZipUtil::EntryStatus::Failed:
-        info.problem = error.isEmpty() ? QCoreApplication::translate("ReplayInfo", "读压缩包失败") : error;
+        info.problem = error.isEmpty() ? QCoreApplication::translate("ReplayInfo", "读取压缩包失败") : error;
         return info;
     }
 
@@ -97,7 +97,7 @@ Info read(const QString &path) {
     // 有这一格才算 Replay：别的 zip 里也可能恰好有一份叫 metaData.json 的清单。
     if (!object.contains(QStringLiteral("mcversion"))
         && !object.contains(QStringLiteral("fileFormat"))) {
-        info.problem = QCoreApplication::translate("ReplayInfo", "metaData.json 里没有 Replay 的版本信息");
+        info.problem = QCoreApplication::translate("ReplayInfo", "metaData.json 无 Replay 版本信息");
         return info;
     }
 

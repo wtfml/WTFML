@@ -100,7 +100,7 @@ bool chooseVersion(const QList<ResourceCatalog::VersionEntry> &versions,
         sawMatch = true;
         const ResourceCatalog::FileEntry *file = version.primaryFile();
         if (file == nullptr) {
-            fileWhy = QCoreApplication::translate("Presets", "这一版没有可下载的文件。");
+            fileWhy = QCoreApplication::translate("Presets", "此版本无可下载的文件。");
             continue;
         }
         if (!file->unavailableNote.trimmed().isEmpty()) {
