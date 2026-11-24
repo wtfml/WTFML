@@ -232,7 +232,7 @@ Report analyze(const Inputs &inputs) {
     } else if (inputs.gameVersion.isEmpty()) {
         appendFinding(&report, Severity::Warning,
                       QCoreApplication::translate("StartupDiagnosis", "无法识别实例的实际游戏版本"),
-                      QCoreApplication::translate("StartupDiagnosis", "版本记录里没有 realVersion，界面上只能显示目录名。"),
+                      QCoreApplication::translate("StartupDiagnosis", "版本记录中无 realVersion，界面只能显示目录名。"),
                       QCoreApplication::translate("StartupDiagnosis", "请在「完整性检查」中检查版本 JSON 是否完整。"));
     }
     if (inputs.loaderName.isEmpty()) {
@@ -387,7 +387,7 @@ Report analyze(const Inputs &inputs) {
             } else if (crash.text.contains(QStringLiteral("NoClassDefFoundError"))
                        || crash.text.contains(QStringLiteral("ClassNotFoundException"))) {
                 appendFinding(&report, Severity::Warning,
-                              QCoreApplication::translate("StartupDiagnosis", "最近一份崩溃报告里是缺类异常"),
+                              QCoreApplication::translate("StartupDiagnosis", "最近一份崩溃报告为缺类异常"),
                               where,
                               QCoreApplication::translate("StartupDiagnosis", "请检查日志中对应类所属的模组，确认依赖已安装且与当前游戏版本兼容。"));
             } else if (crash.text.contains(QStringLiteral("Mixin"))
@@ -412,14 +412,14 @@ Report analyze(const Inputs &inputs) {
         if (!log.exists) {
             appendFinding(&report, Severity::Info,
                           QCoreApplication::translate("StartupDiagnosis", "暂无启动日志"),
-                          QCoreApplication::translate("StartupDiagnosis", "此数据目录下没有使用该启动器运行游戏的记录。"));
+                          QCoreApplication::translate("StartupDiagnosis", "此数据目录下无使用该启动器运行游戏的记录。"));
         } else if (log.hasUnsupportedClassVersion && !javaVersionProblemSeen) {
             javaVersionProblemSeen = true;
             appendFinding(
                 &report, Severity::Problem,
-                QCoreApplication::translate("StartupDiagnosis", "启动日志里出现 UnsupportedClassVersionError（Java 太旧）"),
+                QCoreApplication::translate("StartupDiagnosis", "启动日志中出现 UnsupportedClassVersionError（Java 太旧）"),
                 log.lastGameError,
-                QCoreApplication::translate("StartupDiagnosis", "换一个更新的 Java；具体要哪个版本查版本 json 或模组说明。"));
+                QCoreApplication::translate("StartupDiagnosis", "请更换更新的 Java；具体版本请查阅版本 json 或模组说明。"));
         }
         if (log.exists) {
             if (log.hasExitCode && log.exitCode != 0) {
@@ -435,18 +435,18 @@ Report analyze(const Inputs &inputs) {
                               log.lastGameError.isEmpty() ? QString() : log.lastGameError);
             } else if (!log.lastGameError.isEmpty()) {
                 appendFinding(&report, Severity::Warning,
-                              QCoreApplication::translate("StartupDiagnosis", "启动日志里有错误，但没有看到退出码"),
+                              QCoreApplication::translate("StartupDiagnosis", "启动日志中有错误，但未看到退出码"),
                               log.lastGameError,
                               QCoreApplication::translate("StartupDiagnosis", "尚未获取完整的启动结果。可在「日志」页查看最新记录。"));
             } else {
                 appendFinding(&report, Severity::Info,
-                              QCoreApplication::translate("StartupDiagnosis", "启动日志里没有看到游戏退出记录"),
-                              QCoreApplication::translate("StartupDiagnosis", "当前会话没有游戏启动记录。"));
+                              QCoreApplication::translate("StartupDiagnosis", "启动日志中未看到游戏退出记录"),
+                              QCoreApplication::translate("StartupDiagnosis", "当前会话无游戏启动记录。"));
             }
         }
         if (log.hasOutOfMemory && !outOfMemorySeen) {
             appendFinding(&report, Severity::Warning,
-                          QCoreApplication::translate("StartupDiagnosis", "启动日志里出现 OutOfMemoryError"),
+                          QCoreApplication::translate("StartupDiagnosis", "启动日志中出现 OutOfMemoryError"),
                           QCoreApplication::translate("StartupDiagnosis", "游戏运行期间内存不足（可能未生成崩溃报告）。"),
                           QCoreApplication::translate("StartupDiagnosis", "请调大 Xmx，或减少部分模组后重试。"));
         }

@@ -540,7 +540,7 @@ void ResourceSearchController::downloadResourceVersion(QTreeWidgetItem *item) {
     const auto cached = m_owner.m_resourceVersions.constFind(requestKey);
     if (cached == m_owner.m_resourceVersions.constEnd()) {
         InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("下载失败"),
-            MainWindow::tr("尚未获取此版本的下载信息。请折叠后重新展开上方的游戏版本，再重试。"));
+            MainWindow::tr("尚未获取此版本的下载信息。请折叠后重新展开上方的游戏版本，然后重试。"));
         return;
     }
     const ResourceCatalog::VersionEntry *chosen = nullptr;

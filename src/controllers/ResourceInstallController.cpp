@@ -503,7 +503,7 @@ void ResourceInstallController::installNow(ResourceCatalog::Kind kind, const QSt
     if (isBatchBusy()) {
         InlineMessage::information(
             owner.m_ui->overlay(), MainWindow::tr("暂时无法操作"),
-            MainWindow::tr("已有下载或安装任务正在进行，请待其结束后再下载此项。"));
+            MainWindow::tr("已有下载或安装任务正在进行，请等待其结束后再下载此项。"));
         return;
     }
 
@@ -542,7 +542,7 @@ void ResourceInstallController::installNow(ResourceCatalog::Kind kind, const QSt
         if (isBatchBusy()) {
             InlineMessage::information(
                 owner.m_ui->overlay(), MainWindow::tr("暂时无法操作"),
-                MainWindow::tr("已有下载或安装任务正在进行，请待其结束后再下载此项。"));
+                MainWindow::tr("已有下载或安装任务正在进行，请等待其结束后再下载此项。"));
             return;
         }
     }

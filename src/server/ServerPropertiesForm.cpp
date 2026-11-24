@@ -145,7 +145,7 @@ const QList<Field> &commonFields() {
               Kind::Text, QString(), 0, 0, {}, false},
         // `zipPick = true`：这一格旁边摆一颗「选择本地 zip…」，按 SHA-1 填进来。
         Field{QStringLiteral("resource-pack-sha1"), QCoreApplication::translate("ServerPropertiesForm", "资源包 SHA-1"),
-              QCoreApplication::translate("ServerPropertiesForm", "该 zip 的 SHA-1；可用右侧按钮从本地 zip 计算"),
+              QCoreApplication::translate("ServerPropertiesForm", "该 zip 的 SHA-1；可选择本地 zip 计算"),
               Kind::Text, QString(), 0, 0, {}, false, false, true},
         // ---------- 规则 ----------
         Field{QStringLiteral("online-mode"), QCoreApplication::translate("ServerPropertiesForm", "正版验证"),

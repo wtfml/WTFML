@@ -95,13 +95,13 @@ void ModpackExportController::exportPack(const QString &versionId,
     if (versionId.isEmpty() || targetPath.isEmpty()) return;
     if (m_busy) {
         InlineMessage::information(m_overlay, tr("正在导出"),
-                                   tr("已有整合包正在打包，请待其完成后再开始下一个。"));
+                                   tr("已有整合包正在打包，请等待其完成后再开始下一个。"));
         return;
     }
     if (m_host.isBeingModified && m_host.isBeingModified(versionId)) {
         InlineMessage::information(
             m_overlay, tr("暂时无法操作"),
-            tr("「%1」的文件正在变动。请待安装、导入或检查完成后再导出。")
+            tr("「%1」的文件正在变动。请等待安装、导入或检查完成后再导出。")
                 .arg(displayName(versionId)));
         return;
     }

@@ -67,7 +67,7 @@ void PresetModInstaller::deployOne(int index) {
     // QTemporaryFile retains its native handle after close(); rename through the
     // same object so Qt releases that handle before the Windows rename operation.
     if (!output.rename(target)) {
-        finish(tr("发布模组失败或目标已被其它程序创建，未覆盖：%1").arg(row.file.filename)); return;
+        finish(tr("发布模组失败或目标已被其他程序创建，未覆盖：%1").arg(row.file.filename)); return;
     }
     output.setAutoRemove(false);
     m_fileStates[row.key] = QStringLiteral("enabled"); ++m_result.installed;

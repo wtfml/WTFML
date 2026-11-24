@@ -127,9 +127,9 @@ void UpgradeReportDialog::refresh() {
 
     const int unresolved = UpgradeReport::unresolvedRequired(m_rows);
     if (unresolved > 0) {
-        m_summary->setText(tr("还有 %1 项必要内容需要处理。").arg(unresolved));
+        m_summary->setText(tr("尚有 %1 项必要内容需处理。").arg(unresolved));
     } else {
-        m_summary->setText(tr("必要内容都已经明确处理。"));
+        m_summary->setText(tr("必要内容均已明确处理。"));
     }
 }
 

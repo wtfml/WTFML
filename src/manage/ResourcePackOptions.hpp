@@ -133,7 +133,7 @@ inline bool save(const QString &path, const QByteArray &expected, bool expectedE
     const Snapshot current = read(path);
     if (!current.problem.isEmpty()) return fail(current.problem);
     if (current.exists != expectedExists || current.document.bytes != expected)
-        return fail(QCoreApplication::translate("ResourcePackOptions", "options.txt 已被外部修改；本次没有覆盖，请刷新后重新操作。"));
+        return fail(QCoreApplication::translate("ResourcePackOptions", "options.txt 已被外部修改；本次未覆盖，请刷新后重新操作。"));
     for (const auto &id : ids)
         if (isLocal(id) && !current.document.selected.contains(id) && !available.contains(id))
             return fail(QCoreApplication::translate("ResourcePackOptions", "待启用的资源包已不存在，请刷新后重试。"));

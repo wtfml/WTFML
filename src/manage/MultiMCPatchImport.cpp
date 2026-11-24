@@ -133,7 +133,7 @@ Result parsePatchedMultiMCInstance(const QByteArray &manifest, const QByteArray 
             loader = key; loaderVersion = versions.value(uid);
         }
     }
-    if (gameVersion.isEmpty()) return fail(QCoreApplication::translate("MultiMCPatchImport", "没有 Minecraft 组件。"));
+    if (gameVersion.isEmpty()) return fail(QCoreApplication::translate("MultiMCPatchImport", "无 Minecraft 组件。"));
     // Preserve the ordinary parser's path exclusions/name handling without accepting custom components there.
     const QJsonObject baseComponent{{"uid", "net.minecraft"}, {"version", gameVersion}};
     result = parseMultiMCInstance(QJsonDocument(QJsonObject{{"components", QJsonArray{baseComponent}}}).toJson(),
@@ -186,10 +186,10 @@ Result parsePatchedMultiMCInstance(const QByteArray &manifest, const QByteArray 
             if (minimum == 100) return fail(QCoreApplication::translate("MultiMCPatchImport", "Java 版本列表为空。"));
             if (hasJavaDeclaration) compatibleJava.intersect(declared); else compatibleJava = declared;
             hasJavaDeclaration = true;
-            if (compatibleJava.isEmpty()) return fail(QCoreApplication::translate("MultiMCPatchImport", "补丁之间的 Java 要求没有交集。"));
+            if (compatibleJava.isEmpty()) return fail(QCoreApplication::translate("MultiMCPatchImport", "各补丁的 Java 要求无交集。"));
         }
         if (patch.contains("+jvmArgs") && (!patch.value("+jvmArgs").isArray() || !jvmArguments(patch.value("+jvmArgs").toArray(), jvm)))
-            return fail(QCoreApplication::translate("MultiMCPatchImport", "补丁包含暂不支持或不安全的 JVM 参数，没有执行。"));
+            return fail(QCoreApplication::translate("MultiMCPatchImport", "补丁包含暂不支持或不安全的 JVM 参数，未执行。"));
         if (patch.contains("+tweakers") && !patch.value("+tweakers").isArray()) return fail(QCoreApplication::translate("MultiMCPatchImport", "Tweaker 字段无效。"));
         for (const auto &value : patch.value("+tweakers").toArray()) {
             static const QRegularExpression className(QStringLiteral("^[A-Za-z_$][A-Za-z0-9_$.]*$"));
@@ -236,7 +236,7 @@ Result parsePatchedMultiMCInstance(const QByteArray &manifest, const QByteArray 
             } else if (lib.contains("natives")) {
                 // Retain official classifier downloads, filling their missing Maven-relative paths.
                 auto classifiers = downloads.value("classifiers").toObject();
-                if (classifiers.isEmpty()) return fail(QCoreApplication::translate("MultiMCPatchImport", "Native 库没有可校验的 classifier 清单。"));
+                if (classifiers.isEmpty()) return fail(QCoreApplication::translate("MultiMCPatchImport", "Native 库无可校验的 classifier 清单。"));
                 for (auto it = classifiers.begin(); it != classifiers.end(); ++it) {
                     auto item = it.value().toObject();
                     if (!httpsUrl(item.value("url").toString()) || !sha1Valid(item.value("sha1").toString())) return fail(QCoreApplication::translate("MultiMCPatchImport", "Native 库校验信息缺失。"));

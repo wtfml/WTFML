@@ -772,7 +772,7 @@ void ResumableDownload::checkStuck() {
         probe();
         return;
     }
-    finish(false, tr("下载长时间没有任何进展，已停止。请检查网络后重试。"));
+    finish(false, tr("下载长时间无进展，已停止。请检查网络后重试。"));
 }
 
 void ResumableDownload::clearCacheFiles() const { removeParts(m_cache); }

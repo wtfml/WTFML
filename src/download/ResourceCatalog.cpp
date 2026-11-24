@@ -1479,7 +1479,7 @@ QString hitMetaLine(const Hit &hit) {
 
 QString VersionGroup::title() const {
     if (loader.isEmpty() && gameVersion.isEmpty()) {
-        return QCoreApplication::translate("ResourceCatalog", "其它版本");
+        return QCoreApplication::translate("ResourceCatalog", "其他版本");
     }
     if (loader.isEmpty()) {
         return gameVersion;

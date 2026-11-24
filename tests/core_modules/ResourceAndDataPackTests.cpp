@@ -408,7 +408,7 @@ void runResourceAndDataPackTests() {
     const Presets::DataPackApplyReport merged =
         Presets::applyDataPacks(dpFiles, dpTarget, made.first(), Presets::ApplyMode::Merge, false);
     check(merged.ok && merged.needsChoice == 2 && merged.deployed == 0 && merged.deferred == 0,
-          "★★★ PL6 「合并」对数据包报「要你选 2 个」，一个都不写",
+          "★★★ PL6 「合并」对数据包报「待选择 2 个」，一个都不写",
           QStringLiteral("%1/%2/%3").arg(merged.needsChoice).arg(merged.deployed).arg(merged.deferred));
     check(!merged.details.isEmpty(), "★★ PL6 而且说清楚该怎么办");
     check(readBytes(dpTarget + QStringLiteral("/saves/W1/datapacks/pack1.zip")) == deployedBefore &&

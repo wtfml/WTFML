@@ -352,7 +352,7 @@ QString dependentInstanceProblem(const QString &gameDir, const QString &instance
             const auto json = document.object();
             for (const QString &field : {QStringLiteral("inheritsFrom"), QStringLiteral("jar")}) {
                 if (json.value(field).toString().compare(instanceId, Qt::CaseInsensitive) == 0)
-                    return QCoreApplication::translate("InstanceUpgrade", "实例 %1 的 %2 引用了此核心。请改用升级副本，避免影响其它实例。")
+                    return QCoreApplication::translate("InstanceUpgrade", "实例 %1 的 %2 引用了此核心。请改用升级副本，避免影响其他实例。")
                         .arg(entry.fileName(), field);
             }
         }
@@ -1031,7 +1031,7 @@ static Result prepareCopyAndCommitImpl(Request r, const Core &core, const QStrin
         result.requiresReload = true;
         result.ok = writeJournal(r, QStringLiteral("committed"), QString());
         if (!result.ok) {
-            result.problem = QCoreApplication::translate("InstanceUpgrade", "副本已发布，但事务记录未能更新；没有删除任何文件。");
+            result.problem = QCoreApplication::translate("InstanceUpgrade", "副本已发布，但事务记录未能更新；未删除任何文件。");
         }
         if (progress && result.ok) progress(Stage::Done);
         return result;
@@ -1164,7 +1164,7 @@ static Result rollbackImpl(const Request &r, bool verifyRetained,
     result.rolledBack = true;
     result.rollbackAvailable = false;
     result.ok = writeJournal(r, "rolled_back", result.snapshotZip);
-    if (!result.ok) result.problem = QCoreApplication::translate("InstanceUpgrade", "原实例已恢复，但回滚记录未能更新；没有删除恢复材料。");
+    if (!result.ok) result.problem = QCoreApplication::translate("InstanceUpgrade", "原实例已恢复，但回滚记录未能更新；未删除恢复材料。");
     return result;
 }
 

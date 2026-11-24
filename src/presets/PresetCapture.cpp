@@ -47,7 +47,7 @@ bool readWholeFile(const QString &path, QByteArray *out, QString *problem) {
     }
     *out = file.readAll();
     if (file.error() != QFileDevice::NoError) {
-        *problem = QCoreApplication::translate("Presets", "读「%1」读到一半出错了：%2").arg(path, file.errorString());
+        *problem = QCoreApplication::translate("Presets", "读取「%1」中断：%2").arg(path, file.errorString());
         return false;
     }
     return true;
@@ -83,7 +83,7 @@ bool captureFileGroup(const CaptureRequest &request, FileGroup group,
                                     .arg(groupDisplayName(group), one));
     }
     if (items.isEmpty()) {
-        report->notes.append(QCoreApplication::translate("Presets", "%1 里是空的。").arg(groupDisplayName(group)));
+        report->notes.append(QCoreApplication::translate("Presets", "%1 为空。").arg(groupDisplayName(group)));
         return false;
     }
 

@@ -460,7 +460,7 @@ bool serverListFromSection(const PresetSection &section, QList<NbtUtil::ServerEn
     if (!serverListHandlesSection(section.kind)) {
         if (problemOut != nullptr) {
             *problemOut =
-                QCoreApplication::translate("Presets", "这一段不归服务器列表这一层管。");
+                QCoreApplication::translate("Presets", "此段不属于服务器列表层管理范围。");
         }
         return false;
     }

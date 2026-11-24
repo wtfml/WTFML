@@ -104,7 +104,7 @@ bool FileOperationRecoveryController::registerReport(const OperationReport::Repo
                                                      QString *problem) {
     if (report.id.isEmpty()
         || (report.entries.isEmpty() && report.totalFiles <= 0)) {
-        if (problem) *problem = QCoreApplication::translate("FileOperationRecoveryController", "报告没有编号或没有任何条目，未登记。");
+        if (problem) *problem = QCoreApplication::translate("FileOperationRecoveryController", "报告缺少编号或无任何条目，未登记。");
         return false;
     }
     const QString dataRoot = contextString(report.context, kContextDataRoot).isEmpty()
@@ -180,18 +180,18 @@ bool FileOperationRecoveryController::resume(const QString &token) {
     // stagingDir 和目标文件，世界导入 / 批量复制都会被写坏（见 `m_resuming`）。
     if (m_resuming.contains(token)) {
         InlineMessage::information(m_overlay, tr("继续未完成操作"),
-                                   tr("这一项正在继续，等它做完再看结果。"));
+                                   tr("此项正在继续，请等待完成后查看结果。"));
         return false;
     }
     OperationReport::Report report = reportFor(token);
     if (!report.hasUnfinished()) {
         InlineMessage::information(m_overlay, tr("继续未完成操作"),
-                                   tr("「%1」已经没有未完成的项了。").arg(report.title));
+                                   tr("「%1」已无未完成项。").arg(report.title));
         return false;
     }
     // 实例忙（游戏在跑 / 另一项文件操作占着）时先不动盘：写一份原因报告比"试一下又失败"更有用。
     if (!report.instanceId.isEmpty() && m_host.isInstanceBusy && m_host.isInstanceBusy(report.instanceId)) {
-        const QString reason = tr("「%1」正在运行或正被另一项文件操作占用，等它结束后再按「继续未完成操作」。")
+        const QString reason = tr("「%1」正在运行或正被另一项文件操作占用，请等待其结束后再选择「继续未完成操作」。")
                                    .arg(m_host.displayName ? m_host.displayName(report.instanceId)
                                                            : report.instanceId);
         const QString failure = writeFailureReport(token, reason);
@@ -264,7 +264,7 @@ bool FileOperationRecoveryController::resumeWorldImport(const Job &job, Tasks::T
     const QString savesDir = contextString(context, kContextSavesDir);
     const QString name = contextString(context, kContextName);
     if (worldDir.isEmpty() || savesDir.isEmpty() || name.isEmpty()) {
-        if (problem) *problem = tr("报告里没有足够信息再导入这个世界（源 / 目标 / 名字缺失）。");
+        if (problem) *problem = tr("报告中缺少重新导入此世界所需信息（源、目标或名称缺失）。");
         return false;
     }
     auto report = std::make_shared<OperationReport::Report>(job.report);
@@ -335,7 +335,7 @@ bool FileOperationRecoveryController::resumeTransfer(const Job &job, Tasks::Task
         items.append(item);
     }
     if (sourceDir.isEmpty() || targetDir.isEmpty() || items.isEmpty() || keys.isEmpty()) {
-        if (problem) *problem = tr("报告里没有足够信息继续迁移（源 / 目标 / 勾选项缺失）。");
+        if (problem) *problem = tr("报告中缺少继续迁移所需信息（源、目标或勾选项缺失）。");
         return false;
     }
     auto report = std::make_shared<OperationReport::Report>(job.report);
@@ -391,7 +391,7 @@ bool FileOperationRecoveryController::resumeFileCopy(const Job &job, Tasks::Task
     const QString sourcePath = contextString(context, kContextSourcePath);
     const QString targetPath = contextString(context, kContextTargetPath);
     if (sourcePath.isEmpty() || targetPath.isEmpty()) {
-        if (problem) *problem = tr("报告里没有足够信息重新复制这个文件（源 / 目标缺失）。");
+        if (problem) *problem = tr("报告中缺少重新复制此文件所需信息（源或目标缺失）。");
         return false;
     }
     auto report = std::make_shared<OperationReport::Report>(job.report);
@@ -422,7 +422,7 @@ bool FileOperationRecoveryController::resumeFileCopy(const Job &job, Tasks::Task
                 return QString();
             }
             if (policy == OperationReport::ConflictPolicy::Cancel) {
-                return QCoreApplication::translate("FileOperationRecoveryController", "目标已经存在，按当时选择的「取消」没有覆盖。");
+                return QCoreApplication::translate("FileOperationRecoveryController", "目标已存在；按当时选择的「取消」，未覆盖。");
             }
         }
         QString problem;
@@ -459,12 +459,12 @@ void FileOperationRecoveryController::settle(Tasks::TaskId task, OperationReport
         // 原来那条失败任务上的「继续未完成操作」**要摘掉**：报告和 job 都没了，那颗按钮
         // 再点只会得到"现场已经不在"，而屏幕上看起来像是这一件没做完。
         if (m_host.clearTaskRecovery) m_host.clearTaskRecovery(token);
-        if (m_host.log) m_host.log(tr("已补完未完成的文件操作：%1").arg(report.title));
+        if (m_host.log) m_host.log(tr("已完成剩余文件操作：%1").arg(report.title));
         return;
     }
     if (cancelled) {
         if (m_host.setTaskDetail) m_host.setTaskDetail(task, tr("已取消，未发布的暂存保留着。"));
-        if (m_host.finishTask) m_host.finishTask(task, false, tr("已取消，未完成的项保留着。"));
+        if (m_host.finishTask) m_host.finishTask(task, false, tr("已取消，未完成项将保留。"));
         // 恢复入口只能挂在终态任务上。
         if (m_host.setTaskRecovery) m_host.setTaskRecovery(task, token);
         return;

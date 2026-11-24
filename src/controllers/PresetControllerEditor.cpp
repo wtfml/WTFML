@@ -50,7 +50,7 @@ void PresetController::openEditor(const QString &id, bool draft, int section) {
         else if (kind=="genericFiles" && !section.value("items").toArray().isEmpty()) key=kind+"/"+section.value("items").toArray().first().toObject().value("path").toString().section('/',0,0);
         if (key.isEmpty()) continue;
         if (editableSections.contains(key)) {
-            m_page->showStatus(tr("此旧预设含多段同类内容，暂不能在统一编辑器中合并编辑。原内容保留，可从实例重新提取一份草稿。"));
+            m_page->showStatus(tr("此旧预设含多段同类内容，暂不能在统一编辑器中合并编辑。原内容保留，可从实例重新提取草稿。"));
             return;
         }
         editableSections.insert(key);
@@ -276,7 +276,7 @@ void PresetController::captureForEditor(const QString &instanceId) {
                 QStringList notes = capture.report.problems;
                 if (unresolved)
                     notes.prepend(
-                        tr("Modrinth 和 CurseForge 均未识别 %1 个模组。可在模组页筛选来源未知的项目，补充或移除它们，也可在概览中停用模组部分。")
+                        tr("Modrinth 和 CurseForge 均未识别 %1 个模组。可在模组页筛选来源未知的项目，补充或移除这些项目，也可在概览中停用模组部分。")
                             .arg(unresolved));
                 notes.append(capture.lookupProblems);
                 m_editor->showProblem(notes.join('\n'));

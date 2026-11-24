@@ -161,7 +161,7 @@ void BackupController::inspectRecovery() {
         };
         if (inUse()) {
             InlineMessage::information(m_overlay, tr("暂时无法操作"),
-                                       tr("这一份正在运行，或者正被复制 / 备份 / 还原 / 安装占用。请等它结束后再替换。"));
+                                       tr("此实例正在运行，或正被复制、备份、还原或安装占用。请等待其结束后再替换。"));
             return;
         }
         if (!InlineMessage::question(
@@ -184,7 +184,7 @@ void BackupController::inspectRecovery() {
             InlineMessage::warning(m_overlay, tr("替换失败"), swapped.problem);
             return;
         }
-        log(tr("人工恢复：用 %1 换掉了 %2").arg(QDir::toNativeSeparators(item.retained),
+        log(tr("手动恢复：已将 %2 替换为 %1").arg(QDir::toNativeSeparators(item.retained),
                                                 QDir::toNativeSeparators(item.target)));
         QString done = tr("替换完成。");
         if (!swapped.retainedPath.isEmpty()) {
@@ -192,7 +192,7 @@ void BackupController::inspectRecovery() {
                         .arg(QDir::toNativeSeparators(swapped.retainedPath));
         }
         if (!swapped.journalPath.isEmpty()) {
-            done += tr("\n\n恢复记录也留着（%1），在「中断恢复检查」里能看到，核对完再标记已检查。")
+            done += tr("\n\n恢复记录将保留（%1），可在「中断恢复检查」中查看；核对完成后标记已检查。")
                         .arg(QDir::toNativeSeparators(swapped.journalPath));
         }
         if (!swapped.notes.isEmpty()) {
@@ -264,14 +264,14 @@ void BackupController::pickZip(BackupFiles::Kind kind, const QString &label, con
     if (zips.isEmpty()) {
         if (!rejected.isEmpty()) {
             InlineMessage::information(
-                m_overlay, tr("没有能还原的备份"),
-                tr("找到 %1 个文件名匹配的备份，但其中的元数据与%2不匹配、无效或来自其他工具。以下文件未列入可还原备份：\n%3\n\n备份目录：%4")
+                m_overlay, tr("暂无可还原的备份"),
+                tr("检测到 %1 个文件名匹配的备份，但其中元数据与%2不匹配、无效或来自其他工具。以下文件未列入可还原备份：\n%3\n\n备份目录：%4")
                     .arg(QString::number(rejected.size()), what,
                          rejected.join(QLatin1Char('\n')), QDir::toNativeSeparators(dir)));
             return;
         }
         InlineMessage::information(
-            m_overlay, tr("没有可还原的备份"),
+            m_overlay, tr("暂无可还原的备份"),
             tr("%1 暂无备份。请先在此页面创建备份。\n\n备份目录：%2")
                 .arg(what, QDir::toNativeSeparators(dir)));
         return;
@@ -313,7 +313,7 @@ void BackupController::backupWorld(const QString &worldDir) {
     if (!instanceId.isEmpty() && m_host.isBeingModified
         && m_host.isBeingModified(instanceId)) {
         InlineMessage::information(m_overlay, tr("暂时无法操作"),
-                                   tr("「%1」正在复制、备份、还原或安装，请完成后再备份这个世界。")
+                                   tr("「%1」正在复制、备份、还原或安装，请完成后再备份此世界。")
                                        .arg(displayName(instanceId)));
         return;
     }
@@ -333,7 +333,7 @@ void BackupController::backupWorld(const QString &worldDir) {
     manifest.sourceInstanceName = instanceId.isEmpty() ? QString() : displayName(instanceId);
     manifest.gameVersion = instanceId.isEmpty() ? QString() : m_versions->instanceGameVersion(instanceId);
     manifest.createdAt = now;
-    manifest.scope = QStringList{tr("这个存档的整个文件夹")};
+    manifest.scope = QStringList{tr("此存档的整个目录")};
     const QString zip = QDir(BackupFiles::backupDir(BackupFiles::Kind::World))
                             .filePath(BackupFiles::backupFileName(worldName, now));
     // 这一趟在**读整棵目录树**（世界那一棵，连同它所在的实例）。跑着的
@@ -364,7 +364,7 @@ void BackupController::restoreWorld(const QString &worldDir, InstanceSettingsDia
     const QString worldName = QFileInfo(worldDir).fileName();
     const QPointer<InstanceSettingsDialog> guardedDialog(dialog);
     const QString root = AppPaths::minecraftDir();
-    pickZip(BackupFiles::Kind::World, worldName, tr("这个世界"),
+    pickZip(BackupFiles::Kind::World, worldName, tr("此世界"),
             [this, worldDir, worldName, instanceId, guardedDialog, root](const QString &zip) {
     auto *dialog = guardedDialog.data();
     if (AppPaths::minecraftDir() != root || busy()
@@ -431,7 +431,7 @@ void BackupController::snapshotInstance(const QString &versionId) {
         || (m_host.isBeingModified && m_host.isBeingModified(versionId))
         || (m_host.isRunning && m_host.isRunning(versionId))) {
         InlineMessage::information(m_overlay, tr("暂时无法操作"),
-                                   tr("刚才有另一项操作开始了（复制 / 备份 / 还原 / 安装 / 游戏启动）。等它完成后再做快照。"));
+                                   tr("另一项操作已开始（复制、备份、还原、安装或游戏启动）。请等待其完成后再创建快照。"));
         return;
     }
     const bool complete = picked == 1;
@@ -454,11 +454,11 @@ void BackupController::snapshotInstance(const QString &versionId) {
     manifest.complete = complete;
     manifest.createdAt = now;
     if (complete) {
-        manifest.scope = QStringList{tr("整个实例目录（包含能重新下回来的资源文件和游戏库）")};
+        manifest.scope = QStringList{tr("整个实例目录（含可重新下载的资源文件与游戏库）")};
     } else {
         manifest.excluded = QStringList{QStringLiteral("assets"), QStringLiteral("libraries")};
         manifest.scope = QStringList{tr("实例目录（模组、配置、存档、日志…）"),
-                                     tr("没打包：assets、libraries（能重新下回来）")};
+                                     tr("未打包：assets、libraries（可重新下载）")};
     }
     const QString zip = QDir(BackupFiles::backupDir(BackupFiles::Kind::Instance))
                             .filePath(BackupFiles::backupFileName(dirName, now));
@@ -471,7 +471,7 @@ void BackupController::snapshotInstance(const QString &versionId) {
     if (m_host.setFileOperationBusy) m_host.setFileOperationBusy(versionId, true);
     startWrite(manifest, instanceDir, zip,
                tr("创建「%1」的快照").arg(displayName(versionId)), versionId,
-               tr("快照创建完成"), QString(), tr("快照没有做成"));
+               tr("快照创建完成"), QString(), tr("快照创建失败"));
 }
 
 void BackupController::restoreInstance(const QString &versionId, InstanceSettingsDialog *dialog) {
@@ -491,7 +491,7 @@ void BackupController::restoreInstance(const QString &versionId, InstanceSetting
     const QString instanceDir = AppPaths::versionDir(versionId);
     const QPointer<InstanceSettingsDialog> guardedDialog(dialog);
     const QString root = AppPaths::minecraftDir();
-    pickZip(BackupFiles::Kind::Instance, QFileInfo(instanceDir).fileName(), tr("这个实例"),
+    pickZip(BackupFiles::Kind::Instance, QFileInfo(instanceDir).fileName(), tr("此实例"),
             [this, versionId, guardedDialog, root](const QString &zip) {
     auto *dialog = guardedDialog.data();
     if (AppPaths::minecraftDir() != root || busy()
@@ -695,7 +695,7 @@ void BackupController::writeFinished(const BackupFiles::WriteResult &result,
     } else {
         // 失败这一路必须用失败标题：拿**成功标题**去弹，「备份完成」下面的正文却说
         // "没打成"。标题和正文自相矛盾，用户扫一眼标题就当成功了。
-        const QString title = failureTitle.isEmpty() ? tr("没有完成") : failureTitle;
+        const QString title = failureTitle.isEmpty() ? tr("未完成") : failureTitle;
         log(tr("%1：%2").arg(title, result.problem));
         InlineMessage::warning(m_overlay, title, result.problem);
     }
@@ -776,7 +776,7 @@ void BackupController::restoreFinished(const BackupFiles::RestoreResult &result,
     } else if (cancelled) {
         log(tr("%1：已取消。").arg(failureTitle.isEmpty() ? tr("还原") : failureTitle));
     } else {
-        const QString title = failureTitle.isEmpty() ? tr("没有完成") : failureTitle;
+        const QString title = failureTitle.isEmpty() ? tr("未完成") : failureTitle;
         log(tr("%1：%2").arg(title, result.problem));
         InlineMessage::warning(m_overlay, title, result.problem);
     }

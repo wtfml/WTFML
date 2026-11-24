@@ -91,7 +91,7 @@ bool copyOneFile(const QString &source, const QString &target, QString *problemO
         // "抄完了"，一份截断的配置照样原子地盖上去（`ServerListFile::commitBytes()` 同一条）。
         if (got < 0) {
             out.cancelWriting();
-            failWith(problemOut, QCoreApplication::translate("Presets", "读「%1」读到一半出错了：%2")
+            failWith(problemOut, QCoreApplication::translate("Presets", "读取「%1」中断：%2")
                                      .arg(source, in.errorString()));
             return false;
         }
@@ -100,7 +100,7 @@ bool copyOneFile(const QString &source, const QString &target, QString *problemO
         }
         if (out.write(buffer, got) != got) {
             out.cancelWriting();
-            failWith(problemOut, QCoreApplication::translate("Presets", "写「%1」写到一半出错了：%2")
+            failWith(problemOut, QCoreApplication::translate("Presets", "写入「%1」中断：%2")
                                      .arg(target, out.errorString()));
             return false;
         }
@@ -243,7 +243,7 @@ bool walkItem(const QString &sourceRoot, const QString &targetRoot, FileGroup gr
     const QFileInfo sourceInfo(sourceAbs);
     if (!sourceInfo.exists()) {
         failWith(problemOut,
-                 QCoreApplication::translate("Presets", "「%1」不在了（预设里说有这一项）。").arg(item.relativePath));
+                 QCoreApplication::translate("Presets", "「%1」不存在（预设中记录有此文件）。").arg(item.relativePath));
         return false;
     }
     if (isLink(sourceInfo)) {
@@ -380,14 +380,14 @@ bool genericPathIsSafe(const QString &relativePath, QString *problemOut) {
         problemOut->clear();
     }
     if (relativePath.isEmpty()) {
-        failWith(problemOut, QCoreApplication::translate("Presets", "这一项的路径是空的。"));
+        failWith(problemOut, QCoreApplication::translate("Presets", "此项路径为空。"));
         return false;
     }
     if (QDir::isAbsolutePath(relativePath) || relativePath.startsWith(QLatin1Char('\\')) ||
         relativePath.startsWith(QLatin1Char('/')) || relativePath.contains(QLatin1Char(':'))) {
         // `C:/x`、`/x`、`\\server\share` 都是"绝对的"，`:` 还得单判一道（`C:x` 在
         // `QDir::isAbsolutePath()` 那儿不算绝对的，但它照样能跑到别处去）。
-        failWith(problemOut, QCoreApplication::translate("Presets", "「%1」不是一条相对路径。").arg(relativePath));
+        failWith(problemOut, QCoreApplication::translate("Presets", "「%1」不是相对路径。").arg(relativePath));
         return false;
     }
 
@@ -522,7 +522,7 @@ bool scanFileGroup(const QString &root, FileGroup group, QList<GenericItem> *out
         if (isLink(entry)) {
             if (refusedOut != nullptr) {
                 refusedOut->append(relative +
-                                   QCoreApplication::translate("Presets", "：是一根链接（符号链接 / junction），没有跟着它走。"));
+                                   QCoreApplication::translate("Presets", "：为链接（符号链接 / junction），未跟随。"));
             }
             continue;
         }
@@ -592,7 +592,7 @@ GenericPlan planFileGroup(const QString &sourceRoot, const QList<GenericItem> &i
                 row.reason = QCoreApplication::translate("Presets", "目标中已有此预设。");
             } else {
                 row.action = GenericAction::CopyIfMissing;
-                row.reason = QCoreApplication::translate("Presets", "将目标缺失的项复制进去（已有项不变）。");
+                row.reason = QCoreApplication::translate("Presets", "将目标缺失的项复制到目标中（已有项不变）。");
             }
             break;
         }
@@ -750,7 +750,7 @@ bool sectionsFromFileGroup(FileGroup group, const QList<GenericItem> &items, App
         if (!genericPathIsSafe(item.relativePath, problemOut) ||
             !fileGroupOfPath(item.relativePath, &belongsTo) || belongsTo != group) {
             if (problemOut != nullptr && problemOut->isEmpty()) {
-                *problemOut = QCoreApplication::translate("Presets", "「%1」不属于这一组（%2）。")
+                *problemOut = QCoreApplication::translate("Presets", "「%1」不属于此组（%2）。")
                                   .arg(item.relativePath, fileGroupDirName(group));
             }
             return false;
@@ -788,7 +788,7 @@ bool fileGroupFromSection(const PresetSection &section, QList<GenericItem> *out,
         problemOut->clear();
     }
     if (!genericFilesHandlesSection(section.kind)) {
-        failWith(problemOut, QCoreApplication::translate("Presets", "这一段不归通用文件组这一层管。"));
+        failWith(problemOut, QCoreApplication::translate("Presets", "此段不属于通用文件层管理范围。"));
         return false;
     }
 

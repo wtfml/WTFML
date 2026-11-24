@@ -183,16 +183,16 @@ bool parse(const QByteArray &json, Manifest *out, QString *error) {
             one.name = item.value(QStringLiteral("name")).toString();
             one.size = static_cast<qint64>(item.value(QStringLiteral("size")).toDouble(-1));
             if (!objectNameValid(one.name)) {
-                return fail(QCoreApplication::translate("AssetDirectorKnownSet", "%1 里有不合法的对象名。").arg(set.id));
+                return fail(QCoreApplication::translate("AssetDirectorKnownSet", "%1 中存在不合法的对象名。").arg(set.id));
             }
             if (!sha1Valid(item.value(QStringLiteral("hash")).toString(), &one.hash)) {
-                return fail(QCoreApplication::translate("AssetDirectorKnownSet", "%1 里 %2 的哈希不是 40 位十六进制。").arg(set.id, one.name));
+                return fail(QCoreApplication::translate("AssetDirectorKnownSet", "%1 中的 %2 哈希不是 40 位十六进制。").arg(set.id, one.name));
             }
             if (one.size <= 0 || one.size > kMaxObjectBytes) {
-                return fail(QCoreApplication::translate("AssetDirectorKnownSet", "%1 里 %2 的字节数不合法。").arg(set.id, one.name));
+                return fail(QCoreApplication::translate("AssetDirectorKnownSet", "%1 中的 %2 字节数不合法。").arg(set.id, one.name));
             }
             if (setHashes.contains(one.hash)) {
-                return fail(QCoreApplication::translate("AssetDirectorKnownSet", "%1 里同一个哈希出现了两次。").arg(set.id));
+                return fail(QCoreApplication::translate("AssetDirectorKnownSet", "%1 中同一哈希出现两次。").arg(set.id));
             }
             setHashes.insert(one.hash);
             hashes.insert(one.hash);
@@ -261,7 +261,7 @@ Plan plan(const Set &set, const QString &assetsRoot, const Validator &valid) {
     result.objects = static_cast<int>(set.objects.size());
     result.bytesTotal = set.totalBytes;
     if (set.totalBytes > kMaxKnownSetBytes) {
-        result.refusal = QCoreApplication::translate("AssetDirectorKnownSet", "这套已知集合有 %1 MiB，超过了允许自动下载的上限 %2 MiB。")
+        result.refusal = QCoreApplication::translate("AssetDirectorKnownSet", "此已知集合为 %1 MiB，超过允许自动下载的上限 %2 MiB。")
                              .arg(set.totalBytes / (1024.0 * 1024.0), 0, 'f', 1)
                              .arg(kMaxKnownSetBytes / (1024 * 1024));
         return result;
