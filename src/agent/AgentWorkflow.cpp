@@ -74,7 +74,8 @@ bool AgentWorkflow::isVerifyStep(const AgentPlanStep &step) const {
            step.tool == QStringLiteral("instance.integrity") ||
            step.tool == QStringLiteral("instance.context") ||
            step.tool == QStringLiteral("settings.get") ||
-           step.tool == QStringLiteral("mods.list");
+           step.tool == QStringLiteral("mods.list") ||
+           step.tool == QStringLiteral("instance.testLaunch");
 }
 
 bool AgentWorkflow::submitPlan(const QString &goal, const QList<AgentPlanStep> &steps,
@@ -116,7 +117,9 @@ bool AgentWorkflow::submitPlan(const QString &goal, const QList<AgentPlanStep> &
         }
         if (isRepairStep(step)) hasRepair = true;
         if (step.verify) {
-            if (isWriteRisk(toolSpec.risk)) {
+            // 测试启动会起进程（risk=Command），但不写原实例；它是 S5.1 的验证步。
+            const bool executionVerify = step.tool == QStringLiteral("instance.testLaunch");
+            if (isWriteRisk(toolSpec.risk) && !executionVerify) {
                 return fail(QStringLiteral("%1 被标成验证步，但它是写操作。").arg(label));
             }
             hasVerify = true;

@@ -116,7 +116,7 @@ function Get-TestImpact([string[]]$Paths, [bool]$ForceFull = $false) {
             '^(src/download/|tools/network_diag/)|(?i:Download|RangeChecks|SegmentInstall)' { @('core','network','presets'); break }
             '^(tools/.*\.ps1|tests/test_runner/)' { @('runner'); break }
             '^ui/Agent' { @('ui-agent'); break }
-            '^src/controllers/AgentController|^src/controllers/AgentLauncherHostImpl' { @('agent-window','window'); break }
+            '^src/controllers/(AgentController|AgentLauncherHostImpl|AgentTestLaunchRunner)' { @('agent-window','window'); break }
             '^ui/Popups\.(cpp|hpp)$' { @('ui','theme','window','popups'); break }
             '^ui/' { @('ui','theme','window'); break }
             default { @() }

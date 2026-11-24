@@ -140,6 +140,18 @@ void runAgentWorkflowTests() {
           "工作流：不在白名单的工具被拒");
     check(workflow.stage() == AgentWorkflowStage::Collect, "工作流：计划被拒时状态不变");
 
+    AgentWorkflow launchWorkflow;
+    launchWorkflow.setSkill(AgentSkillRegistry::find(QStringLiteral("crash-rescue")));
+    check(launchWorkflow.submitPlan(
+              QStringLiteral("关模组后测试启动"),
+              {stepFor(QStringLiteral("mods.setEnabled"),
+                       QJsonObject{{QStringLiteral("fileName"), QStringLiteral("a.jar")},
+                                   {QStringLiteral("enabled"), false}}),
+               stepFor(QStringLiteral("instance.testLaunch"), {}, QStringLiteral("测试启动验证"),
+                       true)},
+              &problem),
+          "工作流：instance.testLaunch 可作为验证步", problem);
+
     check(!workflow.submitPlan(QStringLiteral("修一下"),
                                {stepFor(QStringLiteral("mods.setEnabled"),
                                         QJsonObject{{QStringLiteral("fileName"),

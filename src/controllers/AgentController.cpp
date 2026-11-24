@@ -12,6 +12,8 @@
 #include "agent/AgentRedaction.hpp"
 #include "agent/AgentSecretStore.hpp"
 #include "agent/AgentSkill.hpp"
+#include "agent/AgentLaunchHost.hpp"
+#include "agent/AgentTestLaunchToolEngine.hpp"
 #include "agent/McpTypes.hpp"
 
 #include "AgentMcpPage.hpp"
@@ -179,6 +181,8 @@ AgentController::AgentController(AgentPage *page, OverlayHost *overlay, QObject 
     m_launcherTools = new AgentLauncherTools(
         nullptr, [this](QString *problem) { return toolContext(problem); });
     m_launcherTools->setStrictEgress(AgentSettings::strictEgress());
+    m_testLaunchTools = new AgentTestLaunchToolEngine(
+        nullptr, [this](QString *problem) { return toolContext(problem); });
     m_workflowEngine = new AgentWorkflowEngine(&m_workflow);
     // Stage 2A：MCP。确认闸在 McpTrustStore，生命周期在 McpManager；这里的引擎只管
     // 逐次审批与异步交付。配置读不出来就当作没有服务器，不阻断其它功能。
@@ -198,6 +202,7 @@ AgentController::AgentController(AgentPage *page, OverlayHost *overlay, QObject 
     m_compositeEngine = new AgentCompositeToolEngine;
     m_compositeEngine->addEngine(m_toolEngine);
     m_compositeEngine->addEngine(m_launcherTools);
+    m_compositeEngine->addEngine(m_testLaunchTools);
     m_compositeEngine->addEngine(m_workflowEngine);
     m_compositeEngine->addEngine(m_mcpTools);
     m_compositeEngine->addEngine(m_webTools);
@@ -1267,6 +1272,9 @@ void AgentController::openMcpSettings() {
 void AgentController::setLauncherHost(AgentLauncherHost *host) {
     m_launcherHost = host;
     if (m_launcherTools != nullptr) m_launcherTools->setHost(host);
+    if (m_testLaunchTools != nullptr) {
+        m_testLaunchTools->setHost(dynamic_cast<AgentLaunchHost *>(host));
+    }
 }
 
 void AgentController::applySkillToLoop() {

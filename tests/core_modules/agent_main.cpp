@@ -26,6 +26,8 @@ void runAgentCredentialStoreTests();
 void runAgentContextTests();
 void runAgentLoopTests();
 void runAgentSkillsTests();
+void runAgentWorkspaceStoreTests();
+void runAgentTestLaunchTests();
 void runAgentMarkdownTests();
 void runAgentPathPolicyTests();
 void runAgentEgressPolicyTests();
@@ -206,6 +208,8 @@ int main(int argc, char **argv) {
     runAgentContextTests();
     runAgentLoopTests();
     runAgentSkillsTests();
+    runAgentWorkspaceStoreTests();
+    runAgentTestLaunchTests();
     runAgentMarkdownTests();
     runAgentPathPolicyTests();
     runAgentEgressPolicyTests();

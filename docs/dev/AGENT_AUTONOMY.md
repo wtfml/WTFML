@@ -72,7 +72,7 @@ src/controllers/Agent*HostImpl → LaunchController / LauncherManager / VersionM
 测试启动必须走启动器自己的准备与启动代码，不拼 shell，不直接调用 `java.exe`。为此先做两件底层改动：
 
 1. 引入 `LaunchRoots`（数据根、版本目录、版本 id、离线标记、测试身份）。`LauncherManager::generateJvmArguments()` 现在从 `AppPaths::minecraftDir()` / `AppPaths::versionDir()` 现算绝对路径，改为由调用方显式传入；`AsciiPathAlias`、`InstanceFiles::jarPath()` 等派生路径也走这一份 roots。普通启动传当前游戏根，测试启动传工作区根，不用 `AppPaths::setMinecraftDir()` 切换进程级状态。
-2. 把 `LaunchController::onStartButtonClicked()` 里的准备段（校验文件、准备 natives、挑 Java、拼参数）抽成可复用的准备服务，普通启动和测试启动共用。玩家名/UUID 也由启动 profile 传入，测试 profile 用固定测试名，不读当前账号。测试 profile 强制离线、不刷新令牌、不下载 Java、不连服务器、不带用户传入的参数。
+2. S5.1 实际只复用 `LauncherManager::generateJvmArguments()`、`GlobalJavaSettings::ensureJavaForVersion()`（`allowDownload=false`）和实例设置合成，没有把 `LaunchController::onStartButtonClicked()` 的登录/向导/natives 整段抽出来。测试 profile 强制离线、固定测试名 `WTFML-Test`、不刷新令牌、不下载 Java、不连服务器、不带用户传入的参数；旧版需要 Java 8 ASCII 别名/natives 解压的实例暂不作为测试目标。
 
 测试进程由 `AgentTestLaunchRunner` 自己持有 `QProcess`，不复用 `LauncherManager` 的用户会话表：不弹日志窗、不写「最近启动」、不在任务中心留「运行中」条目。进程环境、优先级和 Job Object 清理复用 `LauncherManager` 的同一套设置，超时或取消时整棵杀掉。
 
@@ -80,25 +80,25 @@ src/controllers/Agent*HostImpl → LaunchController / LauncherManager / VersionM
 
 | 里程碑 | 判据 |
 | --- | --- |
-| `process_started` | `QProcess` 启动成功（`waitForStarted` 通过），进程仍在运行 |
+| `process_started` | `QProcess` 发出 `started` / 进入 Running，进程仍在运行 |
 | `main_menu` | 新日志命中主菜单规则（原版/Forge/Fabric/NeoForge 各自的标记），并在观察窗口内无致命异常、无新崩溃报告 |
 | `world_loaded` | 指定副本世界通过 quickPlay 启动，命中世界加载完成规则，并稳定到观察窗口结束 |
 | `crashed` | 进程异常退出，或出现新崩溃报告 / `hs_err_pid`，或日志命中崩溃规则 |
 | `timed_out` | 到超时仍未达到目标里程碑 |
 | `cancelled` | 用户取消、会话关闭或启动器退出 |
 
-规则文件先覆盖 1.20.1 的原版、Forge、Fabric、NeoForge 日志夹具；新版本按夹具补齐，不在代码里散写字符串。
+S5.1 的规则在 `AgentTestLaunchMilestones`（纯函数），用 1.20.1 的原版/Forge/Fabric/NeoForge 日志夹具验证；S5.3 再迁到内嵌知识文件。
 
 ### 3.3 隔离工作区
 
 工作区是一个独立游戏根，默认放在 `<游戏根>/cache/agent-workspaces/<事务或启动 id>/`，与源实例同卷，避免整份实例跨盘复制。物理路径由 `AppPaths` 新增 `agentWorkspacesDir()` 给出，`AgentPaths` 只放登记和事务数据。
 
-- 复制规则复用 `VersionManager::copyInstanceFrom()` 的路径校验、暂存和发布逻辑，增加排除项：`logs/`、`crash-reports/`、截图等运行产物不进工作区。
-- 只复制该事务需要的可写部分：`mods/`、`config/`、`defaultconfigs/`、`options.txt`、必要的核心文件；`assets/`、`libraries/` 默认复制，同卷支持块克隆时用块克隆，源目录不建可写链接。链接或块克隆只作为后续优化，先保证测试过程写不到源目录。
-- 需要世界验证时只复制指定存档到工作区 `saves/`，原存档不参与启动。`saves/` 永远不是提交范围。
-- 复制前检查源实例未运行、目标卷可写、剩余空间不少于估算体积加 1 GB；默认单个工作区上限 16 GB，超过拒绝并让用户改用只读诊断。
+- S5.1 复用 `VersionManager::copyInstanceFrom()` 的路径校验、暂存和发布逻辑，整份复制实例；`logs/`、`crash-reports/`、截图暂未排除，留给事务阶段按类别筛选。
+- S5.1 用 `VersionManager::copyInstanceFrom()` 整份复制实例到工作区；`assets/`、`libraries/` 通过 `LaunchRoots` 指向当前游戏根只读共享，客户端 jar 取源实例，兄弟 jar 取工作区副本。工作区不建指向源目录的可写链接；后续事务阶段再做按类别筛选复制。
+- 世界验证只允许工作区 `saves/` 里已经有的世界；S5.1 整份复制会带上源 `saves/`，启动时只按 `quickPlay.world` 进入副本，不回写源存档。`saves/` 永远不是提交范围。
+- 复制前检查源实例未运行；后台复制前按源目录文件总大小检查 16 GB 上限与目标卷剩余空间（估算体积 + 1 GB），超过就拒绝，让用户改用只读诊断。
 - 每个工作区在 `agent/workspaces/<id>.json` 登记来源、用途、创建时间、状态和日志位置；启动恢复扫描这张表，不接管未登记的目录。
-- 成功提交后删除工作区；测试启动的临时工作区在结果回灌后删除，崩溃现场保留到 `repair.status` 或用户清理；失败工作区不静默删除。
+- S5.1 测试启动的工作区默认保留（稳定/崩溃/超时都留），日志和登记留给后续排查；S5.2 事务成功提交后再统一清理，失败/中断工作区保留到 `repair.status`。
 
 ### 3.4 修复事务
 
@@ -151,7 +151,7 @@ assets/agent/
 
 ## 4. 阶段计划
 
-顺序：S5.1 → S5.2 必须串行；S5.3–S5.5 在闭环底座可用后可并行；S5.6 在工具稳定后；S5.7 最后并需产品确认。每个阶段拆成可独立评审的提交，测试和文档跟对应改动一起走。
+顺序：S5.2 是所有后续阶段的前置；S5.3–S5.5 在闭环底座可用后可并行；S5.6 在工具稳定后；S5.7 最后并需产品确认。每个阶段拆成可独立评审的提交，测试和文档跟对应改动一起走。
 
 ### S5.0 提示词外置（已完成 2026-11-24）
 
@@ -167,68 +167,21 @@ assets/agent/
 
 验收：`verify_agent` core-agent 846/846、`ui_check_agent` 77/77、`mw_check_agent` 83/83；`check-agent-release.ps1`、`check-i18n.ps1`、`check-test-modules.ps1` PASS；产品与测试目标编译通过。
 
-### S5.1 隔离工作区与启动测试（P0）
+### S5.1 隔离工作区与启动测试（已完成 2026-11-24）
 
-改动：
+实现：
 
-- `AgentWorkspaceStore`：创建、打开、清理、磁盘预算、路径校验、启动恢复扫描；`AppPaths` 增加 `agentWorkspacesDir()`，`AgentPaths` 增加 `workspaceRecordsDir()`。
-- `LaunchRoots` 与启动准备服务重构；普通启动回归不变。
-- `AgentTestLaunchRunner` 与 `instance.testLaunch` 工具；异步、可取消、Job Object 清理。
-- `AgentLaunchHost` 异步接口：开始测试启动、返回进度、结束时回灌结果；现有同步宿主接口不动。
-- 里程碑规则与夹具：原版、Forge、Fabric、NeoForge 1.20.1 各一组主菜单/崩溃/超时日志。
+- `AgentWorkspaceStore`：`ws-` id、物理根 `<游戏根>/cache/agent-workspaces/<id>`、登记/日志在 `%LOCALAPPDATA%/WTFML/agent/workspaces/`、状态、列表、安全清理；`AppPaths::agentWorkspacesDir()`、`AgentPaths::workspaceRecordsDir()` 是唯一路径出处。
+- `LauncherManager::generateJvmArguments()` 增加可选 `LaunchRoots`：普通启动不传、逐字节沿用 AppPaths；测试启动把 `versionDir` 指到工作区，`assets`/`libraries` 仍来自当前游戏根，客户端 jar 与兄弟 jar 分别取源/工作区路径。`startGame()` 的 `--gameDir`/`ensureInitialOptions()` 改为跟随参数里的 gameDir。
+- `AgentLaunchHost` 异步接口 + `AgentTestLaunchToolEngine`：`instance.testLaunch` 参数解析、审批、Pending、结果回灌；`AgentCompositeToolEngine` 与 `AgentController` 已接入，`AgentLauncherHostImpl` 实现该接口。
+- `AgentTestLaunchRunner`：工作区复制与 Java 探测在 `QtConcurrent`，进程、日志轮询和 Job Object 清理在主线程；离线测试身份、不刷新令牌、不下载 Java、不登记用户会话；拒绝 `-javaagent`/`-agentlib`/`-Xbootclasspath` 等参数。
+- 里程碑规则：`AgentTestLaunch::AgentTestLaunchMilestones` 覆盖主菜单（`Sound engine started`/`OpenAL initialized`）、世界（`Preparing spawn area: 100%` 等）和日志崩溃标记；宿主另看退出码、新崩溃报告与 `hs_err_pid`。
+- 技能：崩溃急救/模组维护的白名单加入 `instance.testLaunch`；工作流允许它作为 `verify=true` 的验证步（执行游戏但不写原实例）。
+- 夹具与检查：`AgentWorkspaceStoreTests`、`AgentTestLaunchTests` 覆盖登记/清理、里程碑、参数、审批、异步交付；`check-agent-release.ps1` 纳入测试启动审批闸。
 
-工具接口：
+验收：`verify_agent` core-agent 905/905、`ui_check_agent` 77/77、`mw_check_agent` 83/83、`verify_launch` 370/370；产品目标编译通过；`check-agent-release.ps1`、`check-i18n.ps1`、`check-test-modules.ps1` PASS。真实 1.20.1 实例的启动/崩溃/超时仍需真机复跑（A9）。
 
-```json
-{
-  "workspaceId": "optional; 没有就建临时工作区",
-  "timeoutSeconds": 120,
-  "milestone": "main_menu",
-  "settleSeconds": 10,
-  "repeat": 1,
-  "quickPlay": {"world": "optional-world-copy"},
-  "captureLogs": true,
-  "expect": "stable"
-}
-```
-
-返回：
-
-```json
-{
-  "ok": true,
-  "launchId": "launch-001",
-  "workspaceId": "ws-001",
-  "runs": [
-    {
-      "processStarted": true,
-      "exitCode": null,
-      "startupPhase": "main_menu",
-      "milestoneReached": true,
-      "crashed": false,
-      "timedOut": false,
-      "newCrashReport": false,
-      "durationMs": 18420
-    }
-  ],
-  "evidence": ["E12", "E13"],
-  "logRefs": ["launch-001/latest.log", "launch-001/stdout.log"]
-}
-```
-
-本地判据：
-
-- 只能由工具发起，不接受模型传入的可执行文件、JVM 参数或游戏参数；离线模式、固定测试身份，不刷新令牌。
-- 测试启动沿用实例的有效 JVM 参数；`args.extraJvm` 里出现 `-javaagent`、`-agentlib`、`-Xbootclasspath` 等能加载本地代码的选项时拒绝启动并列出选项，除非用户单独确认；不静默剔除。
-- 一次只允许一个测试启动；同一工作区被占用时返回 `busy` 和当前 `launchId`。临时工作区的结果回灌后删除，崩溃或超时现场保留到 `repair.status` 清理。
-- `quickPlay.world` 只接受已经复制进工作区 `saves/` 的世界名；不在工作区时返回 `world_not_in_workspace`，不打开源存档。
-- 超时、取消、启动器退出都杀整棵进程树；日志和崩溃报告按启动 id 隔离，原始日志留在本地事务目录，模型只拿脱敏摘录和证据 id。
-- `expect=crash` 时 `ok` 表示成功复现崩溃，不表示修复成功；`expect=stable` 时只有达到里程碑并稳定到观察窗口结束才算 `ok`。
-- `captureLogs=false` 只返回进程、里程碑和崩溃报告事实，不落原始日志；默认 true，事务验证必须为 true。
-- `repeat>1` 时每次单独返回；全部 run 都符合 `expect` 才 `ok=true`，部分符合标 `flaky=true`，不按多数票判成功。
-- 缺 Java、缺核心文件、工作区不可写等问题在启动前返回明确原因，不自动下载 Java 或补文件。
-
-验收：真实 1.20.1 实例在工作区到主菜单，源实例的 `logs/`、`crash-reports/`、`options.txt`、`mods/` 时间戳和哈希不变；故意放一个损坏模组能返回 `crashed` 和崩溃报告；超时用例能清理进程树；普通启动回归通过。
+限制：工作区目前整份复制实例，未做按类别筛选；测试启动不自动下载 Java；Java 8 的 ASCII 别名不用于工作区；工作区默认保留，启动恢复扫描与自动清理留给 S5.2。
 
 ### S5.2 修复事务与回滚（P0）
 
@@ -424,7 +377,7 @@ assets/agent/
 | `crash.readFull` | S5.3 | 只读 | 自动 | 8 MB，输出 24 KB |
 | `mods.analyzeCompatibility` | S5.4 | 只读 + 平台查询 | 本地自动；首次外发确认；严格模式每次 | 2000 模组，60 s 本地，180 s 平台 |
 | `mods.verifyFiles` | S5.4 | 只读 | 本地自动；平台哈希查询按分析工具确认 | 2000 文件，单文件 512 MB，本地 60 s |
-| `instance.testLaunch` | S5.1 | 执行游戏 | 独立调用每次；已批准计划/事务内按计划次数自动 | 1–600 s，重复 1–3，全局串行 |
+| `instance.testLaunch` | S5.1 | 执行游戏 | 独立调用每次（S5.2 事务内再按计划放行） | 1–600 s，重复 1–3，每个启动器窗口串行 |
 | `instance.repairCore` | S5.4 | 写共享库/资源 | 每次 | 10 min，官方源哈希 |
 | `mods.installFix` | S5.4 | 下载并写文件 | 每个文件；Auto-safe 内按事务 | 单文件 100 MB，事务 500 MB，10 文件 |
 | `mods.bisect` | S5.5 | 多次启动 | 每次计划 + 事务 | 20 次启动，45 min |
@@ -487,7 +440,8 @@ agent/
 | Auto-safe D12 | 需产品确认；未确认前保持 D5 逐次审批 |
 | `instance.repairCore` 回滚 | 共享库不存旧副本；失败不删旧文件，按官方哈希重下恢复，报告写明不能回到旧版本 |
 | 修复病例库 | P2，默认关闭，只在本地参与排序，不把原文发给模型 |
-| 并发 | 测试启动全局串行；多实例同时二分留到后续评估 |
+| 并发 | 每个启动器窗口的测试启动串行；多实例同时二分留到后续评估 |
 | 测试启动窗口 | 会打开真实游戏窗口，Windows 下不做无头渲染；抢焦点/最小化留给人工验收 |
+| 工作区复制取消 | 复制阶段只丢弃结果，QtConcurrent 复制继续到结束；关闭启动器会等待当前复制 |
 | 正版登录相关故障 | 测试启动强制离线，依赖正版登录/服务器的模组问题不在自动验证范围 |
 | 性能数字 | 实现后补，当前只定预算和测量项 |

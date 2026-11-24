@@ -39,7 +39,8 @@ QStringList repairTools() {
             QStringLiteral("fs.write"),
             QStringLiteral("mods.setEnabled"),
             QStringLiteral("backup.create"),
-            QStringLiteral("backup.restore")};
+            QStringLiteral("backup.restore"),
+            QStringLiteral("instance.testLaunch")};
 }
 
 AgentSkill make(const QString &id, const QString &name, const QString &description,

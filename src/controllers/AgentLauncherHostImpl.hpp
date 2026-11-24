@@ -12,13 +12,18 @@
 #pragma once
 
 #include "agent/AgentBackupIndex.hpp"
+#include "agent/AgentLaunchHost.hpp"
 #include "agent/AgentLauncherHost.hpp"
 
-class MainWindow;
+#include <memory>
 
-class AgentLauncherHostImpl final : public AgentLauncherHost {
+class MainWindow;
+class AgentTestLaunchRunner;
+
+class AgentLauncherHostImpl final : public AgentLauncherHost, public AgentLaunchHost {
 public:
     explicit AgentLauncherHostImpl(MainWindow *owner);
+    ~AgentLauncherHostImpl() override;
 
     bool instanceList(QList<AgentDiagnosticProjection::InstanceFacts> *items,
                       QString *problem) override;
@@ -52,6 +57,12 @@ public:
     bool upgradeInspect(const QString &instanceId, QJsonObject *data, QString *problem) override;
     bool openPage(const QString &page, const QString &instanceId, QString *problem) override;
 
+    // ---------- 测试启动（异步） ----------
+    bool startTestLaunch(const QString &instanceId, const QString &workspaceId,
+                         const AgentTestLaunchOptions &options, const Completion &done,
+                         QString *problem) override;
+    void cancelTestLaunch() override;
+
 private:
     AgentDiagnosticProjection::InstanceFacts factsFor(const QString &instanceId) const;
     QString modsDir(const QString &instanceId) const;
@@ -59,4 +70,5 @@ private:
 
     MainWindow *m_owner = nullptr;
     AgentBackupIndex m_maintenance;
+    std::unique_ptr<AgentTestLaunchRunner> m_testLaunchRunner;
 };

@@ -5,6 +5,8 @@
 
 #include "AgentLauncherHostImpl.hpp"
 
+#include "AgentTestLaunchRunner.hpp"
+
 #include "MainWindow.hpp"
 
 #include "InstancePagesController.hpp"
@@ -77,7 +79,12 @@ int javaMajorForPath(const QString &javaPath) {
 }  // namespace
 
 AgentLauncherHostImpl::AgentLauncherHostImpl(MainWindow *owner)
-    : m_owner(owner), m_maintenance(AgentPaths::maintenanceBackupDir()) {}
+    : m_owner(owner),
+      m_maintenance(AgentPaths::maintenanceBackupDir()),
+      m_testLaunchRunner(owner != nullptr ? std::make_unique<AgentTestLaunchRunner>(owner)
+                                          : nullptr) {}
+
+AgentLauncherHostImpl::~AgentLauncherHostImpl() = default;
 
 QString AgentLauncherHostImpl::instanceDir(const QString &instanceId) const {
     return AppPaths::versionDir(instanceId);
@@ -661,4 +668,18 @@ bool AgentLauncherHostImpl::openPage(const QString &page, const QString &instanc
     }
     m_owner->openInstanceSettings(instanceId, pageKey);
     return true;
+}
+
+bool AgentLauncherHostImpl::startTestLaunch(const QString &instanceId, const QString &workspaceId,
+                                            const AgentTestLaunchOptions &options,
+                                            const Completion &done, QString *problem) {
+    if (m_testLaunchRunner == nullptr) {
+        if (problem != nullptr) *problem = QStringLiteral("测试启动未接入。");  // i18n-ignore
+        return false;
+    }
+    return m_testLaunchRunner->start(instanceId, workspaceId, options, done, problem);
+}
+
+void AgentLauncherHostImpl::cancelTestLaunch() {
+    if (m_testLaunchRunner != nullptr) m_testLaunchRunner->cancel();
 }

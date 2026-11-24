@@ -241,6 +241,8 @@ add_library(core_cases_agent OBJECT
  core_modules/AgentContextTests.cpp
  core_modules/AgentLoopTests.cpp
  core_modules/AgentSkillsTests.cpp
+ core_modules/AgentWorkspaceStoreTests.cpp
+ core_modules/AgentTestLaunchTests.cpp
  core_modules/AgentMarkdownTests.cpp
  core_modules/AgentPathPolicyTests.cpp
  core_modules/AgentEgressPolicyTests.cpp

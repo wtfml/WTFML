@@ -224,6 +224,20 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 
 `diagnostics.startup`、`diagnostics.crash`、`instance.integrity` 自动执行，但结果先经 `AgentDiagnosticProjection`：只留实例名/版本/加载器、Java 主版本、Xmx/Xms、模组数、退出码、崩溃分类、OOM/缺前置等布尔事实、发现的 severity/code/title/hint 与证据 id；Java 路径、数据根、日志/崩溃报告绝对路径、账户、环境变量、原始 stack trace 一律剔除。空结果不报成功。
 
+#### 9.4.2 测试启动（Stage 5.1，`AgentLaunchHost`）
+
+`instance.testLaunch` 是异步工具：每次独立调用先审批，批准后由 `AgentTestLaunchRunner` 在隔离工作区启动一次游戏，等里程碑、崩溃或超时。
+
+| 项 | 行为 |
+| --- | --- |
+| 工作区 | 默认 `<游戏根>/cache/agent-workspaces/<id>/`；用 `VersionManager::copyInstanceFrom()` 复制实例，登记与日志在 `%LOCALAPPDATA%/WTFML/agent/workspaces/`；原实例在启动期间不被写 |
+| 启动参数 | 复用 `LauncherManager::generateJvmArguments()` 与启动器的资产/库路径；离线、固定测试身份 `WTFML-Test`、不刷新令牌、不连服务器、不下载 Java |
+| 里程碑 | `process_started` / `main_menu`（`Sound engine started`、`OpenAL initialized`）/ `world_loaded`（`Preparing spawn area: 100%` 等）；另看进程退出码、新崩溃报告与 `hs_err_pid` |
+| 上限 | 超时 1–600 s，观察窗口 0–60 s，重复 1–3 次；每个启动器窗口一次只允许一个测试启动；进程树用 Job Object 清理 |
+| 只进副本世界 | `quickPlay.world` 只接受工作区 `saves/` 里已有的世界；源存档不参与启动 |
+| 拒绝 | 实例正在运行、缺 Java、`-javaagent`/`-agentlib`/`-Xbootclasspath` 等能加载本地代码的 JVM 参数、工作区路径不匹配 |
+| 结果 | `processStarted`、`exitCode`、`startupPhase`、`milestoneReached`、`crashed`、`timedOut`、`newCrashReport`、`durationMs`、日志引用与证据 id；工作区默认保留，日志留在本地，S5.2 统一清理 |
+
 ### 9.5 联网与固定诊断命令
 
 | 工具 | 审批 | 关键上限 |
@@ -281,9 +295,9 @@ JSON-RPC 2.0、stdio、换行分隔。`initialize`（提议 `2024-11-05`，以�
 ### 11.2 工作流
 
 - **实例体检**：锁定实例 → 启动诊断 → 日志/模组/完整性 → 分级结论 + 证据 + 下一步选项；不写盘。
-- **崩溃急救**：收集异常退出事实、日志结尾、最新崩溃报告 → 按现有规则分类（OOM、Java 版本不匹配、缺前置、文件损坏、配置错误，不猜具体模组）→ 计划 → 逐步执行（每步单独审批、失败即停）→ 验证 → 报告写回退方式与未解决项。
+- **崩溃急救**：收集异常退出事实、日志结尾、最新崩溃报告 → 按现有规则分类（OOM、Java 版本不匹配、缺前置、文件损坏、配置错误，不猜具体模组）→ 计划 → 逐步执行（每步单独审批、失败即停）→ 在隔离工作区用 `instance.testLaunch` 验证 → 报告写回退方式与未解决项。 World 问题只在副本世界验证，不打开源存档。
 - **版本升级 / 移植**：`upgrade.inspect` 只读检查 + 解释风险；执行一律打开现有升级向导。
-- **模组维护**：列清单 → 按现有规则查依赖（不按文件名猜）→ 启停/备份。
+- **模组维护**：列清单 → 按现有规则查依赖（不按文件名猜）→ 启停/备份 → 需要时用 `instance.testLaunch` 验证。
 
 ### 11.3 工作流状态机
 
@@ -322,6 +336,7 @@ Collect → AwaitPlanApproval → Execute*（每步审批）→ Verify → Repor
 | 单轮工具步数 / 单会话总数 | 8 / 40（总数按会话累计，见 §14 未覆盖） |
 | 重试 / 模型请求总时长 | 2 次 / 10 分钟（可取消） |
 | 工具超时 | 文件 30 s、MCP 120 s、命令 60 s、联网 20 s |
+| 测试启动 | 1–600 s，观察 0–60 s，重复 1–3 次；工作区记录/日志在本地 |
 | 目录列表 / `fs.read` / `fs.write` | 2000 项 / 256 KB（最大 1 MB）/ 1 MB |
 | MCP 单行 / 命令输出 | 8 MB / 256 KB |
 
@@ -342,7 +357,7 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 
 - 协议与客户端：SSE/分块边界、适配枚举、错误体保留、重试/取消、本地假服务器。
 - 会话与凭据：元数据/正文往返、损坏隔离、快照、整会话加密、Credential Manager + DPAPI 后备、脱敏。
-- 工具与安全：路径攻击矩阵、句柄级校验、审批矩阵、D11 边界表、artifact 分离、实例锁、备份生命周期、诊断投影、工作流闸门、MCP 协议/确认闸/假服务器、联网地址策略（假传输）、诊断命令。
+- 工具与安全：路径攻击矩阵、句柄级校验、审批矩阵、D11 边界表、artifact 分离、实例锁、备份生命周期、诊断投影、工作流闸门、MCP 协议/确认闸/假服务器、联网地址策略（假传输）、诊断命令、测试启动参数/审批/里程碑、工作区登记与清理。
 - UI/集成：页面几何与状态、模式胶囊、工具卡/审批卡、真窗口里只读模式拒绝写、MCP 管理器接线、实例目录日志/崩溃报告读取。
 - 性能基线：2000 条会话读写/加密、上下文裁剪、智能体页 2000 条消息重摆（数字见 perf-notes）。
 
@@ -360,31 +375,32 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 | A6 | 真实诊断命令：默认关闭、审批、取消/超时后进程树清理 | 无孤儿进程，输出截断可见 |
 | A7 | 凭据与会话：Credential Manager 主路径、DPAPI 后备、换 Windows 用户后解密失败 | 明确报错，不静默当空会话 |
 | A8 | 发布物在干净机器启动；高 DPI 与读屏基础检查 | 智能体页可打开、无重叠、关键控件有名称 |
+| A9 | 真机 1.20.1：`instance.testLaunch` 到主菜单、崩溃复现、超时；源实例文件哈希不变 | 工作区隔离、无孤儿进程、日志可读 |
 
-限制：A1–A8 需要真机与真实账号/服务，记录写进 [ACCEPTANCE_LOG](../archive/ACCEPTANCE_LOG.md)（一行：日期｜做了什么｜结论｜意外发现）。
+限制：A1–A9 需要真机与真实账号/服务，记录写进 [ACCEPTANCE_LOG](../archive/ACCEPTANCE_LOG.md)（一行：日期｜做了什么｜结论｜意外发现）。
 
 ## 14. 现状、未覆盖与剩余计划
 
-已实现：聊天底座、文件工具、启动器工具、工作流、stdio MCP、联网与固定诊断命令、模式与证据、提示词资源化、发布检查脚本。核心计数与最近一次自动化结果见 [TEST_RUN_HISTORY](../archive/TEST_RUN_HISTORY.md)。
+已实现：聊天底座、文件工具、启动器工具、工作流、stdio MCP、联网与固定诊断命令、模式与证据、提示词资源化、隔离测试启动、发布检查脚本。核心计数与最近一次自动化结果见 [TEST_RUN_HISTORY](../archive/TEST_RUN_HISTORY.md)。
 
 ### 14.1 自主修复缺口
 
-现有闭环停在「改完再建议用户手动启动」：没有启动测试工具，没有事务化回滚；崩溃报告每份只读头 8 KB，日志只读尾 500 行；模组工具不读本地声明；世界、显卡与 Native 问题只能给建议。按故障类型拆：
+现有闭环已有隔离测试启动，但仍没有事务化提交/回滚；崩溃报告每份只读头 8 KB，日志只读尾 500 行；模组工具不读本地声明；世界、显卡与 Native 问题还缺结构化归因。按故障类型拆：
 
 | 故障 | 现有能力 | 缺口 |
 | --- | --- | --- |
-| Java 版本不匹配 | `java.list`、`settings.set` 改 Java 或自动选择 | 改完不能实际启动验证，失败不能自动回退 |
-| OOM | `memory.suggest`、`settings.set` 改 Xmx/Xms | 只按堆内存建议，不区分 Metaspace、Direct Buffer、native thread |
+| Java 版本不匹配 | `java.list`、`settings.set` 改 Java 或自动选择；`instance.testLaunch` 可在工作区验证 | 提交/回滚未接；测试启动不自动下载 Java |
+| OOM | `memory.suggest`、`settings.set` 改 Xmx/Xms；可测试启动验证 | 只按堆内存建议，不区分 Metaspace、Direct Buffer、native thread |
 | 缺模组前置 | `diagnostics.crash` 的规则提示、`mods.list` | 不读模组声明、不建已装依赖图、不能安装前置 |
 | Mod 版本冲突 | `mods.list`、`mods.setEnabled` | 没有兼容矩阵，不能查兼容版本或下载候选文件 |
 | Mod 文件损坏 | 无 | `instance.integrity` 不覆盖 `mods/`，不能重新下载修复 |
 | 配置文件错误 | `fs.read` / `fs.write` 白名单 | 不解析配置结构，只能靠备份整体回退 |
-| Mixin 冲突 | `diagnostics.crash` 的日志与规则提示 | 不认 mixin 配置归属，不能二分定位 |
+| Mixin 冲突 | `diagnostics.crash` 的日志与规则提示；可在工作区复现 | 不认 mixin 配置归属，不能二分定位 |
 | 游戏库文件损坏 | `instance.integrity` 只报 | 没有把 `VersionManager::repairVersionFiles()` 暴露成受控修复工具 |
-| 显卡 / Native 崩溃 | 退出码和日志的有限分类 | 不解析 `hs_err_pid` 与 native 模块，不能安全复现 |
-| 世界 / 存档崩溃 | 有限的崩溃诊断 | 不复制世界、不进世界验证 |
+| 显卡 / Native 崩溃 | 可用测试启动复现，退出码和日志有限分类 | 不解析 `hs_err_pid` 与 native 模块，不能安全归因 |
+| 世界 / 存档崩溃 | 有限的崩溃诊断；可复制世界到工作区用 `quickPlay` 验证 | 不做原件提交后验证 |
 
-下一阶段的启动测试、事务回滚、崩溃快照、模组兼容与二分见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)；实现后行为写回本文 §9 与 §11。提示词已于 2026-11-24 外置，见 §11.4。
+下一阶段的事务回滚、崩溃快照、模组兼容与二分见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)；实现后行为写回本文 §9 与 §11。提示词外置与隔离测试启动已于 2026-11-24 完成，见 §11.4 与 §9.4.2。
 
 未覆盖：
 

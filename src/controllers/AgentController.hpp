@@ -38,6 +38,8 @@
 #include <functional>
 
 class AgentMcpPage;
+class AgentLaunchHost;
+class AgentTestLaunchToolEngine;
 class AgentPage;
 class AgentSettingsPage;
 class AgentModelClient;
@@ -165,6 +167,7 @@ private:
     AgentWorkflow m_workflow;
     AgentWorkflowEngine *m_workflowEngine = nullptr;
     AgentLauncherTools *m_launcherTools = nullptr;
+    AgentTestLaunchToolEngine *m_testLaunchTools = nullptr;
     AgentCompositeToolEngine *m_compositeEngine = nullptr;
     McpTrustStore m_mcpStore;
     McpManager *m_mcpManager = nullptr;

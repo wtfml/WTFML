@@ -208,6 +208,10 @@ set(HEADER_FILES
     src/agent/AgentLoop.hpp
     src/agent/AgentSkill.hpp
     src/agent/AgentPromptLibrary.hpp
+    src/agent/AgentWorkspaceStore.hpp
+    src/agent/AgentLaunchHost.hpp
+    src/agent/AgentTestLaunch.hpp
+    src/agent/AgentTestLaunchToolEngine.hpp
     src/agent/AgentWinPath.hpp
     src/agent/AgentEgressPolicy.hpp
     src/agent/AgentArtifactStore.hpp
@@ -237,6 +241,7 @@ set(HEADER_FILES
     src/agent/AgentCommandTools.hpp
     src/controllers/AgentController.hpp
     src/controllers/AgentLauncherHostImpl.hpp
+    src/controllers/AgentTestLaunchRunner.hpp
     ui/AgentMarkdown.hpp
     ui/AgentViewTypes.hpp
     ui/AgentMessageView.hpp
@@ -552,6 +557,9 @@ set(SOURCE_FILES
     src/agent/AgentLoop.cpp
     src/agent/AgentSkill.cpp
     src/agent/AgentPromptLibrary.cpp
+    src/agent/AgentWorkspaceStore.cpp
+    src/agent/AgentTestLaunch.cpp
+    src/agent/AgentTestLaunchToolEngine.cpp
     src/agent/AgentWinPath.cpp
     src/agent/AgentEgressPolicy.cpp
     src/agent/AgentArtifactStore.cpp
@@ -579,6 +587,7 @@ set(SOURCE_FILES
     src/agent/AgentCommandTools.cpp
     src/controllers/AgentController.cpp
     src/controllers/AgentLauncherHostImpl.cpp
+    src/controllers/AgentTestLaunchRunner.cpp
     src/net/HttpClient.cpp
     src/manage/DroppedResource.cpp
     src/manage/FolderManager.cpp

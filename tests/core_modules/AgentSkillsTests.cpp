@@ -38,6 +38,8 @@ void runAgentSkillsTests() {
           "技能：体检能跑启动诊断");
     check(!inspection.allowedTools.contains(QStringLiteral("fs.write")),
           "技能：体检的工具集里没有写工具");
+    check(!inspection.allowedTools.contains(QStringLiteral("instance.testLaunch")),
+          "技能：体检不做测试启动");
     check(inspection.requiredTools.contains(QStringLiteral("diagnostics.startup")),
           "技能：体检必须跑启动诊断才能报完成");
     check(inspection.promptId == QStringLiteral("inspection"), "提示词：体检的资源 id");
@@ -53,6 +55,8 @@ void runAgentSkillsTests() {
           "技能：崩溃急救能用设置工具");
     check(crash.allowedTools.contains(QStringLiteral("backup.create")),
           "技能：崩溃急救能建备份");
+    check(crash.allowedTools.contains(QStringLiteral("instance.testLaunch")),
+          "技能：崩溃急救能做隔离测试启动");
     check(crash.allowedTools.contains(QStringLiteral("workflow.submitPlan")) &&
               crash.allowedTools.contains(QStringLiteral("workflow.finish")),
           "技能：崩溃急救能提交计划与报告");
