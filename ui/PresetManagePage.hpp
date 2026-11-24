@@ -11,9 +11,9 @@
  *
  * 【两层的形状都照着这一栏里已有的样子】
  *
- * 列表那一层和「客户端实例」「服务端」是同一页形（顶上 chip 高的搜索框 + 一排类别 chip、
- * 中间一整棵不画外框、按类别分组的树、底下那颗建东西的主操作）。细节那一层和下载页那张
- * 安装页是同一页形（顶上「← 返回」+ 名字、中间滚动区里几张卡片、主操作浮在底下正中间）。
+ * 列表那一层和「客户端实例」「服务端」是同一页形（顶上左边是筛选 chip、右边是搜索框，
+ * 中间一整棵不画外框、按类别分组的树、底下那颗建东西的主操作）。详情沿用实例设置的
+ * 面包屑和身份页眉，页眉右侧是「应用」，左栏切换详情和编辑内容。
  * 点一行进细节、按返回回列表 —— 和实例页点一行进实例设置是同一条路。
  *
  * 【为什么提取和应用的入口都在这一页上】
@@ -39,6 +39,7 @@
 #include <QStringList>
 
 class QCheckBox;
+class FlowLayout;
 class QComboBox;
 class QFrame;
 class QGridLayout;
@@ -46,6 +47,7 @@ class QHBoxLayout;
 class QLabel;
 class QLineEdit;
 class QListWidget;
+class PresetEditorPage;
 class QPushButton;
 class QStackedWidget;
 class QTreeWidget;
@@ -68,7 +70,7 @@ public:
         /// 这一份属于哪一类。★ 这里只是一把**不透明**的钥匙：页面拿它和筛选项的
         /// `CategoryOption::key` 逐字比、原样交给外面；四类叫什么、怎么翻，全在控制器。
         QString categoryKey;
-        QString categoryText;  ///< 已经翻好的类别名（工具提示与右栏摘要里显示）
+        QString categoryText;  ///< 已经翻好的类别名（用于列表、工具提示和详情摘要）
         int sectionCount = 0;
         bool isDefault = false;
         QStringList categoryKeys;
@@ -202,6 +204,10 @@ public:
     /// 忙的时候所有会动盘的东西都禁掉（列表本身还能选着看）。
     void setBusy(bool busy);
     bool isBusy() const { return m_busy; }
+    void enableEditorTabs();
+    void embedEditor(PresetEditorPage *editor);
+    void removeEmbeddedEditor();
+    bool hasEmbeddedEditor() const { return m_embeddedEditor != nullptr; }
 
     QString currentPresetId() const;
     QString selectedApplyInstanceId() const;
@@ -248,8 +254,10 @@ public:
     static QString statusLabelName() { return QStringLiteral("presetStatusLabel"); }
 
 signals:
+    void detailVisibilityChanged(bool visible);
     void editModsRequested(const QString &id);
     void editOptionsRequested(const QString &id);
+    void editSectionRequested(const QString &id, int section);
     /// 用户在左栏选了一份。
     void presetSelected(const QString &id);
     void applyTargetChanged(const QString &id);
@@ -289,7 +297,7 @@ private:
     /// 形状照实例设置那一页：顶上一条返回行，下面是整片底色上的几小节（不套卡片）。
     void buildDetailLayer();
     /// 名称 / 说明 / 一行小字（和实例设置页顶上那块"图标 + 名字"同一个位置）。
-    QWidget *buildIdentityBlock(QWidget *parent);
+    QWidget *buildDetailsFields(QWidget *parent);
     QWidget *buildPresetContentSection(QWidget *parent);
     QWidget *buildCaptureSection(QWidget *parent);
     QWidget *buildApplySection(QWidget *parent);
@@ -326,8 +334,8 @@ private:
     QStackedWidget *m_layers = nullptr;
     QWidget *m_listLayer = nullptr;
     QWidget *m_detailLayer = nullptr;
-    /// 列表那一层顶上那两行里的第二行（类别 chip）。第一行是搜索框，独占一整条。
-    QHBoxLayout *m_chipRow = nullptr;
+    /// 分类按钮用左侧空间，窄窗或较长译文下可以折行。
+    FlowLayout *m_chipRow = nullptr;
     /// 「没有符合筛选条件的预设」那一句（筛空了才露）。
     QLabel *m_noMatchLabel = nullptr;
     /// 类别 chip（第一颗是「全部」，钥匙空串）。点哪一颗就把哪一颗点亮 —— 单选。
@@ -365,9 +373,10 @@ private:
     QListWidget *m_sectionList = nullptr;
     /// 顶上那块图标（这份预设自带的图标；没有就是拼图）——和实例设置页那块同一个位置。
     QLabel *m_identityIcon = nullptr;
-    /// 细节层左栏那条导航（概览 / 从实例提取 / 应用到实例）和右栏那个页栈。
+    /// 详情和编辑共用左栏导航，右侧随标签切换。
     QListWidget *m_detailNav = nullptr;
     QStackedWidget *m_detailPages = nullptr;
+    PresetEditorPage *m_embeddedEditor = nullptr;
 
     QComboBox *m_captureInstanceCombo = nullptr;
     QCheckBox *m_captureOptions = nullptr;

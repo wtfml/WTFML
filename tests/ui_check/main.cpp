@@ -115,6 +115,12 @@ int main(int argc, char *argv[]) {
     // 换掉它会把整份基线的像素重新洗一遍。
     Theme::setSpec(Theme::presetSpec(QStringLiteral("emerald")));
 
+    if (app.arguments().contains(QStringLiteral("--server-settings-check"))) {
+        const int result = UiServerSettingsChecks();
+        std::printf("\nServer settings assertions: %d passed, %d failed\n", g_pass, g_fail);
+        return result != 0 ? result : g_fail == 0 ? 0 : 1;
+    }
+
     QMainWindow window;
     MainWindowUI ui(&window);
 

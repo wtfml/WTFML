@@ -14,7 +14,7 @@
  * 那条收尾本来就在这片的 `finishUpdateBatch()` 旁边。
  *
  * 文件顶上那个匿名命名空间也跟着搬：`loaderMarkIndexForServerFlavor()` 只给这一片算
- * "服务端八档挂哪张图"，`kMaxLoggedServerLineChars` 只给这里截日志行 —— 留在原来的
+ * 「服务端类型列挂哪张小图」，`kMaxLoggedServerLineChars` 只给这里截日志行 —— 留在原来的
  * 地方就是"一个只在别处用的常量"。内链接的东西不跨翻译单元，所以它必须整段跟着走。
  *
  * 【这一片里没有判据】
@@ -50,6 +50,7 @@
 #include "server/ServerProcess.hpp"
 #include "server/ServerRegistry.hpp"
 #include "manage/VersionManager.hpp"
+#include "manage/InstanceFilter.hpp"
 #include "server/ServerRun.hpp"
 #include "settings/GlobalJavaSettings.hpp"
 #include "util/AppPaths.hpp"
@@ -59,6 +60,7 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 #include <QLayout>
+#include <QLineEdit>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
@@ -68,6 +70,7 @@
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 #include <QUrl>
+#include <algorithm>
 
 using namespace MainWindowViewData;
 
@@ -98,6 +101,77 @@ int loaderMarkIndexForServerFlavor(ServerInstall::Flavor flavor) {
 /// 控制台那一页里照旧是原话。
 constexpr int kMaxLoggedServerLineChars = 400;
 
+enum { kServerTypeRole = Qt::UserRole + 0x5352, kServerRunningRole, kServerSearchRole };
+using ServerFilterButton = MainWindowUI::ServerFilterButton;
+
+ServerFilterButton filterTypeForFlavor(ServerInstall::Flavor flavor) {
+    switch (flavor) {
+    case ServerInstall::Flavor::Paper:
+    case ServerInstall::Flavor::Purpur:
+    case ServerInstall::Flavor::Spigot:
+        return ServerFilterButton::Plugins;
+    case ServerInstall::Flavor::Fabric:
+    case ServerInstall::Flavor::Forge:
+    case ServerInstall::Flavor::NeoForge:
+    case ServerInstall::Flavor::Quilt:
+        return ServerFilterButton::Mods;
+    case ServerInstall::Flavor::Vanilla:
+        return ServerFilterButton::Vanilla;
+    }
+    return ServerFilterButton::Vanilla;
+}
+
+void fillServerRow(QTreeWidgetItem *item, const ServerRegistry::Entry &entry,
+                   const ServerRun::ServerProcess *process) {
+    const ServerModel::Status status = process ? process->status()
+        : (entry.installed ? ServerModel::Status::Ready : ServerModel::Status::NotInstalled);
+    const bool running = process && process->isRunning();
+    const QString flavor = ServerInstall::flavorName(entry.flavor);
+    const QString loaderVersion = entry.loaderVersion.trimmed();
+    const QString version = loaderVersion.isEmpty() ? entry.gameVersion : loaderVersion;
+    QString typeAndVersion = (flavor + QLatin1Char(' ') + version).trimmed();
+    if (!entry.buildId.isEmpty()) typeAndVersion += QStringLiteral(" #%1").arg(entry.buildId);
+    item->setData(0, kServerTypeRole, static_cast<int>(filterTypeForFlavor(entry.flavor)));
+    item->setData(0, kServerRunningRole, running || status == ServerModel::Status::Starting);
+    item->setData(0, kServerSearchRole,
+                  QStringList{entry.name, entry.serverId, entry.gameVersion, loaderVersion, typeAndVersion});
+
+    // 类型和端版本放在中间一列。左侧补充状态及不同于端版本的游戏版本。
+    QStringList facts;
+    if (!entry.gameVersion.isEmpty() && entry.gameVersion != version) {
+        facts << MainWindow::tr("Minecraft %1").arg(entry.gameVersion);
+    }
+    facts << ServerModel::statusName(status);
+    item->setText(0, entry.name);
+    item->setData(0, ListRowDelegate::SubtitleRole, facts.join(QStringLiteral(" · ")));
+    item->setData(0, ListRowDelegate::MetaRole, typeAndVersion);
+    item->setData(0, ListRowDelegate::MetaIconRole,
+                  QIcon(VersionIcons::loaderMark(loaderMarkIndexForServerFlavor(entry.flavor), 32)));
+    QStringList tip{typeAndVersion};
+    if (!entry.note.isEmpty()) tip << entry.note;
+    tip << QDir::toNativeSeparators(entry.dirPath);
+    item->setToolTip(0, tip.join(QLatin1Char('\n')));
+
+    ListRowDelegate::LaunchKind kind = ListRowDelegate::LaunchKind::Start;
+    QString text = MainWindowUI::serverStartText();
+    QString launchTip = MainWindow::tr("启动这个服务端");
+    if (!entry.installed) {
+        kind = ListRowDelegate::LaunchKind::Repair;
+        text = MainWindowUI::serverRepairText();
+        launchTip = MainWindow::tr("实例尚未安装完成。请选择补装以下载缺失文件。");
+    } else if (running) {
+        const bool stopping = status == ServerModel::Status::Stopping;
+        kind = stopping ? ListRowDelegate::LaunchKind::Busy : ListRowDelegate::LaunchKind::Stop;
+        text = stopping ? MainWindowUI::serverStoppingText() : MainWindowUI::serverStopText();
+        launchTip = stopping ? MainWindow::tr("已发送停止请求，正在等待保存并退出")
+                             : MainWindow::tr("保存后自行退出（推荐）");
+    }
+    item->setData(0, ListRowDelegate::LaunchKindRole, static_cast<int>(kind));
+    item->setData(0, ListRowDelegate::LaunchTextRole, text);
+    item->setData(0, ListRowDelegate::ActionTipRole,
+                  QStringList{MainWindow::tr("打开服务端目录"), MainWindow::tr("更多操作"), launchTip});
+}
+
 }  // namespace
 
 void MainWindow::refreshServerList() {
@@ -116,36 +190,55 @@ void MainWindow::refreshServerList() {
     tree->clear();
     const QList<ServerRegistry::Entry> entries = ServerRegistry::scanAll();
     const QSize rowSize(0, ListRowDelegate::rowHeight());
+    QTreeWidgetItem *preferred = nullptr;
     for (const ServerRegistry::Entry &entry : entries) {
         auto *item = new QTreeWidgetItem(tree);
         item->setData(0, Qt::UserRole, entry.serverId);
-        // 行首那张图：档名对应的加载器标志（认不出来的档一律草方块，见那一处）。
+        // 封面按服务端 ID 分配稳定颜色，和类型小图标各自显示。
         item->setData(0, ListRowDelegate::CoverRole,
-                      QIcon(VersionIcons::loaderMark(loaderMarkIndexForServerFlavor(entry.flavor), 48)));
+                      QIcon(VersionIcons::isoBlock(VersionIcons::isoBlockKindFor(entry.serverId), 48)));
         item->setSizeHint(0, rowSize);
-        // 名字 / 副行 / 第三格的字与种类 —— **全在 updateServerRow() 一处**
-        // （刚建出来的那一行也要走一遍，别在这儿再抄一份摆法）。
-        updateServerRow(entry.serverId);
+        fillServerRow(item, entry, m_serverWorkspace->process(entry.serverId));
+        if (entry.serverId == keepId) preferred = item;
     }
-    if (QTreeWidgetItem *first = tree->topLevelItem(0)) {
-        tree->setCurrentItem(first);
-    }
-    // 把选中项还回去（重扫前后停在同一行上）。用户上一次选的那一个还在就选它。
-    if (!keepId.isEmpty()) {
-        for (int i = 0; i < tree->topLevelItemCount(); ++i) {
-            QTreeWidgetItem *item = tree->topLevelItem(i);
-            if (item != nullptr && item->data(0, Qt::UserRole).toString() == keepId) {
-                tree->setCurrentItem(item);
-                break;
-            }
-        }
-    }
-    if (QLabel *empty = m_ui->getServerEmptyLabel()) {
-        empty->setVisible(entries.isEmpty());
-    }
+    tree->setCurrentItem(preferred);
+    applyServerListFilters();
     m_ui->setServerFolderText(tr("%1（%2 个服务端）")
                                   .arg(QDir::toNativeSeparators(ServerRegistry::rootDir()))
                                   .arg(entries.size()));
+}
+
+void MainWindow::applyServerListFilters() {
+    auto *tree = m_ui->getServerList();
+    const auto tokens = InstanceFilter::searchTokens(m_ui->getServerSearchEdit()->text());
+    const auto checked = [this](ServerFilterButton button) {
+        return m_ui->getServerFilterButton(button)->isChecked();
+    };
+    int type = -1;
+    for (const auto button : {ServerFilterButton::Vanilla, ServerFilterButton::Plugins, ServerFilterButton::Mods}) {
+        if (checked(button)) type = static_cast<int>(button);
+    }
+    const bool runningOnly = checked(ServerFilterButton::Running);
+    auto *current = tree->currentItem();
+    QTreeWidgetItem *firstVisible = nullptr;
+    for (int row = 0; row < tree->topLevelItemCount(); ++row) {
+        auto *item = tree->topLevelItem(row);
+        const auto searchFields = item->data(0, kServerSearchRole).toStringList();
+        const bool matches = (type < 0 || item->data(0, kServerTypeRole).toInt() == type) &&
+            (!runningOnly || item->data(0, kServerRunningRole).toBool()) &&
+            std::all_of(tokens.cbegin(), tokens.cend(), [&](const QString &token) {
+                return std::any_of(searchFields.cbegin(), searchFields.cend(), [&](const QString &field) {
+                    return field.contains(token, Qt::CaseInsensitive);
+                });
+            });
+        item->setHidden(!matches);
+        if (matches && !firstVisible) firstVisible = item;
+    }
+    if (!current || current->isHidden()) tree->setCurrentItem(firstVisible);
+    auto *empty = m_ui->getServerEmptyLabel();
+    empty->setText(tree->topLevelItemCount() == 0 ? MainWindowUI::serverEmptyText()
+                                                : MainWindowUI::serverNoMatchText());
+    empty->setVisible(!firstVisible);
 }
 
 void MainWindow::openNewServerPage() {
@@ -481,8 +574,8 @@ void MainWindow::createServerFromNewServerPage() {
     const QString desired = ServerRegistry::sanitizeId(m_newServerPage->serverName());
     if (desired.isEmpty()) {
         // 话说完就停在表单上：刚填的东西不能因为一句提醒就没收。
-        InlineMessage::warning(m_ui->overlay(), QStringLiteral("这个名字不能当目录名"),
-                               QStringLiteral("换一个名字再试（名字里不能只有标点或空白）。"));
+        InlineMessage::warning(m_ui->overlay(), tr("这个名字不能当目录名"),
+                               tr("换一个名字再试（名字里不能只有标点或空白）。"));
         return;
     }
     const QString serverId = ServerRegistry::uniqueServerId(desired);
@@ -500,7 +593,7 @@ void MainWindow::createServerFromNewServerPage() {
     info.memoryMb = m_newServerPage->memoryMb();
     QString problem;
     if (!ServerRegistry::createServer(serverId, info, &problem)) {
-        InlineMessage::critical(m_ui->overlay(), QStringLiteral("建不了这个服务端"), problem);
+        InlineMessage::critical(m_ui->overlay(), tr("建不了这个服务端"), problem);
         return;
     }
     // 建好了：表单那一层退回去（下次进来从版本列表开始），并切到「管理 → 服务端」——
@@ -909,47 +1002,8 @@ void MainWindow::updateServerRow(const QString &serverId) {
     if (item == nullptr) {
         return;  // 这一行已经不在列表里了（删掉了 / 还没重扫出来）
     }
-    const ServerRegistry::Entry entry = ServerRegistry::describe(serverId);
-    const ServerRun::ServerProcess *process = m_serverWorkspace->process(serverId);
-    const ServerModel::Status status =
-        process != nullptr
-            ? process->status()
-            : (entry.installed ? ServerModel::Status::Ready : ServerModel::Status::NotInstalled);
-
-    // 和客户端同一种行（ListRowDelegate）：第一行自定义名，第二行「Minecraft 版本 · 端类型 · 状态」。
-    QStringList facts;
-    if (!entry.gameVersion.isEmpty()) {
-        facts << tr("Minecraft %1").arg(entry.gameVersion);
-    }
-    facts << ServerInstall::flavorName(entry.flavor) << ServerModel::statusName(status);
-    item->setText(0, entry.name);
-    item->setData(0, ListRowDelegate::SubtitleRole, facts.join(QStringLiteral(" · ")));
-    QString tip = entry.note;
-    if (!tip.isEmpty()) {
-        tip += QLatin1Char('\n');
-    }
-    tip += QDir::toNativeSeparators(entry.dirPath);
-    item->setToolTip(0, tip);
-
-    // 第三格（悬停才露）一行只有一个，按状态换身份：修复 / 停止 / 启动；其余项在「更多」与右键里。
-    ListRowDelegate::LaunchKind kind = ListRowDelegate::LaunchKind::Start;
-    QString text = MainWindowUI::serverStartText();
-    QString launchTip = tr("启动这个服务端");
-    if (!entry.installed) {
-        kind = ListRowDelegate::LaunchKind::Repair;
-        text = MainWindowUI::serverRepairText();
-        launchTip = tr("实例尚未安装完成。请选择补装以下载缺失文件。");
-    } else if (process != nullptr && process->isRunning()) {
-        const bool stopping = status == ServerModel::Status::Stopping;
-        kind = stopping ? ListRowDelegate::LaunchKind::Busy : ListRowDelegate::LaunchKind::Stop;
-        text = stopping ? MainWindowUI::serverStoppingText() : MainWindowUI::serverStopText();
-        launchTip = stopping ? tr("已发送停止请求，正在等待保存并退出")
-                             : tr("保存后自行退出（推荐）");
-    }
-    item->setData(0, ListRowDelegate::LaunchKindRole, static_cast<int>(kind));
-    item->setData(0, ListRowDelegate::LaunchTextRole, text);
-    item->setData(0, ListRowDelegate::ActionTipRole,
-                  QStringList{tr("打开服务端目录"), tr("更多操作"), launchTip});
+    fillServerRow(item, ServerRegistry::describe(serverId), m_serverWorkspace->process(serverId));
+    applyServerListFilters();
 }
 
 void MainWindow::onServerStatusChanged(const QString &serverId, ServerModel::Status status) {
@@ -973,7 +1027,7 @@ void MainWindow::onServerLineAppended(const QString &serverId, const QString &li
     // 只有长到离谱的那些才截断，而且**只截写进日志的这一份** —— 控制台那一页照旧是原话。
     QString logged = line;
     if (logged.size() > kMaxLoggedServerLineChars) {
-        logged = logged.left(kMaxLoggedServerLineChars) + QStringLiteral("…（这一行太长，截断了）");
+        logged = logged.left(kMaxLoggedServerLineChars) + tr("…（这一行太长，截断了）");
     }
     appendLog(QStringLiteral("[%1] %2").arg(serverId, logged));
     // 控制台那一页正开着它的话，这一行也进那一页（认人认"这一页现在说的是谁"，见控制器）。
@@ -1007,7 +1061,7 @@ void MainWindow::updateNewServerSummary(NewServerPage *page) {
     const QString desiredId = ServerRegistry::sanitizeId(page->serverName());
     if (desiredId.isEmpty()) {
         page->setTargetDir(QString());
-        page->setSummary(QString(), QStringLiteral("先给它起个名字（会当成目录名）。"));
+        page->setSummary(QString(), tr("先给它起个名字（会当成目录名）。"));
         return;
     }
     // 「目录」那一行：服务端根目录只有一份（`<数据目录>/servers`，就是左栏那一列里的根），

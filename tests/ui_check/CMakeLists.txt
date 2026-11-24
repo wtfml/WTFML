@@ -305,6 +305,9 @@ add_ui_module(ui_check_armor_trim ArmorTrimChecks.cpp runArmorTrimChecks)
 add_ui_module(ui_check_background_shots modules/UiBackgroundShots.cpp UiBackgroundShots)  # 背景图样张，不进 ctest
 add_ui_module(ui_check_settings_shots modules/UiSettingsShotsCheck.cpp UiSettingsShotsCheck)  # 设置页验收截图，不进 ctest
 add_ui_module(ui_check_review_shots modules/UiReviewShotsCheck.cpp UiReviewShotsCheck)  # 走查验收截图，不进 ctest
+if(NOT WTFML_COMPACT_TEST_RUNNERS AND COMMAND wtfml_embed_translations)
+ wtfml_embed_translations(ui_check_review_shots)
+endif()
 wtfml_write_compact_entries()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
  foreach(_target wtfml_ui_fixture ui_legacy_cases ui_check)

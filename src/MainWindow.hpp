@@ -2370,6 +2370,7 @@ private:
     void setInstanceMode(MainWindowUI::InstanceMode mode);
     /// 重扫 `<数据目录>/Servers`，把服务端列表重灌一遍（`ServerRegistry::scanAll()`）。
     void refreshServerList();
+    void applyServerListFilters();
     /// 打开「新建服务端」那张表单 —— 它**不是**单独开的一页：表单就住在「下载 → 服务端」
     /// 那一栏的第二层里（和「游戏」的安装页同一个形状，`downloadServerFormIndex()`）。
     /// 所以这里做的是"切到下载页 → 翻到服务端那一栏 → 停在表单那一层"。

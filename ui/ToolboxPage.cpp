@@ -2125,10 +2125,10 @@ QWidget *ToolboxPage::buildCoordPanel() {
     // 「粘贴命令」：读剪贴板里 F3+C 那一行，当场认维度 + 坐标再换算。
     // 原先那一行「从命令读」输入框 + 「认一下」按钮在 bfeca25 收文案时删掉了，只剩"往坐标
     // 框里 Ctrl+V"这条没人看得出来的暗路（用户报的就是它没了）。
-    auto *pasteCommand = new QPushButton(QStringLiteral("粘贴命令"), panel);
+    auto *pasteCommand = new QPushButton(QCoreApplication::translate("ToolboxPage", "粘贴命令"), panel);
     pasteCommand->setObjectName(QStringLiteral("coordPasteTp"));
     pasteCommand->setToolTip(
-        QStringLiteral("读剪贴板里 F3+C 复制的那一行，认出维度和坐标并直接换算。"));
+        QCoreApplication::translate("ToolboxPage", "读剪贴板里 F3+C 复制的那一行，认出维度和坐标并直接换算。"));
     pasteCommand->setAutoDefault(false);
     Theme::markButton(pasteCommand, Theme::ButtonKind::Neutral);
     // 「换算」是这一块唯一的主钮，紧跟在三格坐标后面（同一行、靠右）。
@@ -2189,7 +2189,7 @@ QWidget *ToolboxPage::buildCoordPanel() {
         const QString text = QGuiApplication::clipboard()->text().trimmed();
         if (text.isEmpty()) {
             setTeleportParse(false,
-                             QStringLiteral("剪贴板里没有东西。先在游戏里按 F3+C 复制坐标，再点这里。"));
+                             QCoreApplication::translate("ToolboxPage", "剪贴板里没有东西。先在游戏里按 F3+C 复制坐标，再点这里。"));
             return;
         }
         emit teleportParseRequested(text);
@@ -2326,7 +2326,7 @@ QWidget *ToolboxPage::buildServerPanel() {
     card->hide();  // 没有结果不画
     layout->addWidget(card);
     auto *history = new SoftPanel(panel);
-    history->box()->addWidget(makePanelCaption(history, QStringLiteral("本次检测记录")));
+    history->box()->addWidget(makePanelCaption(history, QCoreApplication::translate("ToolboxPage", "本次检测记录")));
     m_serverHistory = new QListWidget(history);
     m_serverHistory->setObjectName(QStringLiteral("serverHistory"));
     m_serverHistory->setUniformItemSizes(true);
@@ -2425,7 +2425,7 @@ void ToolboxPage::setServerView(const ServerView &view) {
     }
     if (view.timedOut) ++stat.timeouts;
     const QString result = view.ok ? view.latency : !view.kind.isEmpty() ? view.kind
-                          : view.timedOut ? QStringLiteral("超时") : QStringLiteral("检测失败");
+                          : view.timedOut ? QCoreApplication::translate("ToolboxPage", "超时") : QCoreApplication::translate("ToolboxPage", "检测失败");
     QString label = QStringLiteral("%1 · %2").arg(view.address, result);
     if (stat.attempts > 1) {
         if (stat.successes > 0) {

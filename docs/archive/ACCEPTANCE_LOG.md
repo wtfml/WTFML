@@ -272,4 +272,17 @@ python tools/acceptance_directory_boundary.py --exe <WTFMinecraftLauncher.exe> -
 2026-11-23｜客户端实例列表按有无自定义名称显示一行或两行｜Windows x64 构建和隔离启动通过，`core-instances` 1864 项和目录切换专项通过｜未命名实例可悬停查看累计游玩时长。
 
 2026-11-23｜客户端实例封面支持本地游戏物品与自动整合包封面，左侧版本文字去除重复加载器信息｜Windows x64 构建和隔离启动通过，`core-instances`、`core-resources`、`ui-refresh` 通过｜旧版书和红石粉使用旧贴图名，默认包封面与手动图标分别保存。
+
 2026-11-23｜统一本地数据路径到 `%LOCALAPPDATA%\WTFML` 一层（智能体 `agent/`、断点续传 `cache/`），不再出现三层 WTFML｜新增 `AppPaths::localDataRoot()` 作为唯一出处，`AgentPaths::dataDir()` 与 `DownloadCache::root()` 改走它；启动时一次性迁移旧的三层目录；新增 `AgentPathLayoutTests` 22 条；`verify_agent` 806/806｜旧目录只在搬空后 rmdir，新位置已有内容时不动旧的；测试隔离（`wtfml.testAgentDataDir`）下不迁移。
+
+2026-11-23｜修复游戏设置预设编辑器右栏文字重影｜修复前新增断言复现，修复后 `install-layout`、`design-defaults`、Windows x64 构建与隔离启动通过｜透明输入控件下方的表格代理曾重复绘制原始值。
+
+2026-11-23｜预设详情左栏直接显示编辑标签｜`install-layout`、`preset-install`、Windows x64 构建与隔离启动通过｜编辑标签共用一份文档，取消离开时恢复原标签。
+
+2026-11-23｜预设详情与实例设置统一页头和左右栏布局｜`install-layout`、`lifecycle`、`preset-install`、Windows x64 构建与隔离启动通过｜返回预设列表时恢复文件夹路径和模式切换。
+
+2026-11-24｜服务端列表增加筛选和搜索，预设列表改为左分类右搜索｜`install-layout`、`main-window` 3182 项、Windows x64 构建与隔离启动通过｜运行中筛选随服务端起停更新，最小窗口下仅折行左侧预设分类。
+
+2026-11-24｜服务端与预设采用实例列表的彩色方块封面和类型列｜`install-layout`、`main-window`、`preset-install`、Windows x64 构建与隔离启动通过｜颜色按标识稳定分配，服务端类型列可显示加载器版本或构建号，预设类型列显示类别。
+
+2026-11-24｜服务端左栏按管理对象分组并接入启动参数、世界选择、插件管理和维护操作｜`main-window` 3192/3192、服务端界面 94/94、`core-servers` 796/796、`core-instances` 1869/1869，Windows x64 构建与隔离启动通过｜独立维度用整服迁移包备份，导入防覆盖，升级使用同类型副本。

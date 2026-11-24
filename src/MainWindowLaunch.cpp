@@ -133,7 +133,7 @@ void MainWindow::updateHomeRecent() {
                 const QString loader = instanceLoaderName(parts, m_versionManager, &loaderVersion);
                 instance.version = QStringLiteral("Minecraft %1 / %2")
                     .arg(parts.realVersion.isEmpty() ? parts.id : parts.realVersion,
-                         loader.isEmpty() ? QStringLiteral("原版")
+                         loader.isEmpty() ? tr("原版")
                                           : (loader + QLatin1Char(' ') + loaderVersion).trimmed());
             }
             // 主页封面：用户挑过图标就用挑的那张，没挑就按实例名稳定配色的等距方块（设计稿 cover）。
@@ -181,7 +181,7 @@ QList<MainWindowUI::HomePickerInstance> MainWindow::currentFolderInstancePickerR
         row.searchKeywords =
             QStringList{part.customName, part.realVersion, loader, loaderVersion, title}.join(QLatin1Char(' '));
         row.subtitle = QStringLiteral("%1 %2")
-                           .arg(loader.isEmpty() ? QStringLiteral("原版") : loader,
+                           .arg(loader.isEmpty() ? tr("原版") : loader,
                                 part.realVersion.isEmpty() ? part.id : part.realVersion)
                            .trimmed();
         row.icon = m_instancePageMarks.value(part.id);
@@ -256,7 +256,7 @@ void MainWindow::openHomeInstancePicker() {
             row.title = id;
             row.loaderKey = loaderFromId(id);
             row.searchKeywords = folder.title;
-            row.subtitle = row.loaderKey.isEmpty() ? QStringLiteral("原版") : row.loaderKey;
+            row.subtitle = row.loaderKey.isEmpty() ? tr("原版") : row.loaderKey;
             row.icon = QIcon(VersionIcons::grassBlock(MainWindowUI::instanceTreeIconSize()));
             instances.append(row);
         }

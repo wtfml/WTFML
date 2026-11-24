@@ -5,6 +5,7 @@
 
 #include "ThemeImage.hpp"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -57,14 +58,14 @@ QString store(const QString &slot, const QString &sourcePath, QString *errorOut)
     };
 
     if (!isSafeSlot(slot)) {
-        return fail(QStringLiteral("内部错误：这个槽位的名字不能当文件名用。"));
+        return fail(QCoreApplication::translate("ThemeImage", "内部错误：这个槽位的名字不能当文件名用。"));
     }
     const QFileInfo source(sourcePath);
     if (!source.isFile()) {
-        return fail(QStringLiteral("这个文件读不到：%1").arg(sourcePath));
+        return fail(QCoreApplication::translate("ThemeImage", "这个文件读不到：%1").arg(sourcePath));
     }
     if (source.size() > kMaxSourceBytes) {
-        return fail(QStringLiteral("这张图太大了（%1 MB），换一张小一点的。")
+        return fail(QCoreApplication::translate("ThemeImage", "这张图太大了（%1 MB），换一张小一点的。")
                         .arg(QString::number(source.size() / 1024.0 / 1024.0, 'f', 1)));
     }
 
@@ -100,7 +101,7 @@ QString store(const QString &slot, const QString &sourcePath, QString *errorOut)
         }
     }
     if (image.isNull()) {
-        return fail(QStringLiteral("这不是一张能打开的图片：%1").arg(source.fileName()));
+        return fail(QCoreApplication::translate("ThemeImage", "这不是一张能打开的图片：%1").arg(source.fileName()));
     }
 
     QDir().mkpath(AppPaths::themeImageDir());
@@ -125,7 +126,7 @@ QString store(const QString &slot, const QString &sourcePath, QString *errorOut)
     }
     if (!ok) {
         file.cancelWriting();
-        return fail(QStringLiteral("写不进 %1，检查一下磁盘权限。")
+        return fail(QCoreApplication::translate("ThemeImage", "写不进 %1，检查一下磁盘权限。")
                         .arg(QDir::toNativeSeparators(AppPaths::themeImageDir())));
     }
     if (!stale.isEmpty() && stale != target) {

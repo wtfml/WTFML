@@ -4,6 +4,7 @@
  */
 #include "TextFormat.hpp"
 
+#include <QCoreApplication>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
@@ -264,7 +265,7 @@ QString colorText(Color color) {
             return QString::fromUtf8(info.text);
         }
     }
-    return QStringLiteral("默认");
+    return QCoreApplication::translate("TextFormat", "默认");
 }
 
 QString styleText(Color color) {
@@ -279,7 +280,7 @@ QString formatText(QChar code) {
         }
     }
     if (lower == QChar('r')) {
-        return QStringLiteral("复位");
+        return QCoreApplication::translate("TextFormat", "复位");
     }
     return QString();
 }

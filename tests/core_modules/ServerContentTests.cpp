@@ -5,7 +5,10 @@ void runServerContentTests() {
 
     // ---------- ZAH0. 名字上的规矩 ----------
     {
-        check(ServerContent::kindCount() == 2, "ZAH0 内容就两类（模组 / 数据包）",
+        check(ServerContent::kindCount() == 3 &&
+                  ServerContent::folderName(ServerContent::Kind::Plugins) == QStringLiteral("plugins") &&
+                  ServerContent::fileSuffix(ServerContent::Kind::Plugins) == QStringLiteral(".jar"),
+              "ZAH0 插件、模组和数据包使用各自的内容目录",
               QString::number(ServerContent::kindCount()));
         check(ServerContent::kindTitle(ServerContent::Kind::Mods) == QStringLiteral("模组")
                   && ServerContent::kindTitle(ServerContent::Kind::Datapacks)

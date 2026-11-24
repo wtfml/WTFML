@@ -27,7 +27,7 @@
 
 namespace {
 const QStringList parts{"gameSettings", "mods", "resourcePacks", "dataPacks", "shaderPacks"};
-QPushButton *button(const QString &text, QWidget *parent, QVBoxLayout *layout,
+QPushButton *button(const QString &text, QWidget *parent, QBoxLayout *layout,
                     Theme::ButtonKind kind = Theme::ButtonKind::Neutral) {
     auto *b = new QPushButton(text, parent);
     Theme::markButton(b, kind);
@@ -62,42 +62,68 @@ void embed(QDialog *dialog) {
             label->hide();
 }
 } // namespace
-PresetEditorPage::PresetEditorPage(const QJsonObject &document, QWidget *parent) : QDialog(parent) {
+QStringList PresetEditorPage::sectionTitles() {
+    return {
+        QCoreApplication::translate("PresetEditorPage", "概览"),
+        QCoreApplication::translate("PresetEditorPage", "游戏选项"),
+        QCoreApplication::translate("PresetEditorPage", "按键"),
+        QCoreApplication::translate("PresetEditorPage", "模组"),
+        QCoreApplication::translate("PresetEditorPage", "资源包"),
+        QCoreApplication::translate("PresetEditorPage", "数据包"),
+    };
+}
+
+PresetEditorPage::PresetEditorPage(const QJsonObject &document, QWidget *parent,
+                                   Presentation presentation)
+    : QDialog(parent) {
     setObjectName("presetEditorPage");
+    if (presentation == Presentation::Embedded) setWindowFlags(Qt::Widget);
     auto *outer = new QHBoxLayout(this);
     outer->setContentsMargins(0, 0, 0, 0);
     outer->setSpacing(16);
-    auto *left = new QWidget(this);
-    left->setFixedWidth(204);
-    auto *side = new QVBoxLayout(left);
-    side->setContentsMargins(0, 0, 0, 0);
-    // 左上角那颗「返回」**不摆了**：这一页由覆盖层整块铺在内容区上，返回箭头在页眉上
-    // （和实例设置一模一样）。`backRequested` 那条路仍然通 —— 走 reject()。
-    m_navigation = new QListWidget(left);
-    m_navigation->setObjectName("presetEditorNavigation");
-    m_navigation->setFrameShape(QFrame::NoFrame);
-    m_navigation->setProperty("wtfmlNav", "sidebar");
-    m_navigation->setItemDelegate(new VersionTreeDelegate(m_navigation, false, 0, true));
-    m_navigation->setMouseTracking(true);
-    m_navigation->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_navigation->setFont(Theme::textFont(m_navigation->font(), Theme::TextRole::Body));
-    m_navigation->addItems(
-        {
-            QCoreApplication::translate("PresetEditorPage", "概览"),
-            QCoreApplication::translate("PresetEditorPage", "游戏选项"),
-            QCoreApplication::translate("PresetEditorPage", "按键"),
-            QCoreApplication::translate("PresetEditorPage", "模组"),
-            QCoreApplication::translate("PresetEditorPage", "资源包"),
-            QCoreApplication::translate("PresetEditorPage", "数据包"),
-        });
-    side->addWidget(m_navigation, 1);
-    auto *draft = button(QCoreApplication::translate("PresetEditorPage", "保存为草稿"), left, side);
+    auto *right = new QVBoxLayout;
+    m_pages = new QStackedWidget(this);
+    m_pages->setObjectName("presetEditorSections");
+    right->addWidget(m_pages, 1);
+    m_problem = new QLabel(this);
+    m_problem->setObjectName("presetEditorProblem");
+    m_problem->setWordWrap(true);
+    right->addWidget(m_problem);
+
+    QWidget *actionParent = this;
+    QBoxLayout *actions = nullptr;
+    if (presentation == Presentation::Embedded) {
+        actions = new QHBoxLayout;
+        right->addLayout(actions);
+    } else {
+        auto *left = new QWidget(this);
+        left->setFixedWidth(204);
+        auto *side = new QVBoxLayout(left);
+        side->setContentsMargins(0, 0, 0, 0);
+        m_navigation = new QListWidget(left);
+        m_navigation->setObjectName("presetEditorNavigation");
+        m_navigation->setFrameShape(QFrame::NoFrame);
+        m_navigation->setProperty("wtfmlNav", "sidebar");
+        m_navigation->setItemDelegate(new VersionTreeDelegate(m_navigation, false, 0, true));
+        m_navigation->setMouseTracking(true);
+        m_navigation->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        m_navigation->setFont(Theme::textFont(m_navigation->font(), Theme::TextRole::Body));
+        m_navigation->addItems(sectionTitles());
+        side->addWidget(m_navigation, 1);
+        connect(m_navigation, &QListWidget::currentRowChanged, m_pages,
+                &QStackedWidget::setCurrentIndex);
+        outer->addWidget(left);
+        actionParent = left;
+        actions = side;
+    }
+    outer->addLayout(right, 1);
+    auto *draft = button(QCoreApplication::translate("PresetEditorPage", "保存为草稿"), actionParent, actions);
     draft->setObjectName("presetEditorSaveDraft");
-    auto *save = button(QCoreApplication::translate("PresetEditorPage", "保存为预设"), left, side, Theme::ButtonKind::Primary);
+    auto *save = button(QCoreApplication::translate("PresetEditorPage", "保存为预设"), actionParent, actions, Theme::ButtonKind::Primary);
     save->setObjectName("presetEditorPublish");
-    auto *restore = button(QCoreApplication::translate("PresetEditorPage", "恢复到上次"), left, side);
+    auto *restore = button(QCoreApplication::translate("PresetEditorPage", "恢复到上次"), actionParent, actions);
     restore->setObjectName("presetEditorRestore");
-    auto *clear = button(QCoreApplication::translate("PresetEditorPage", "全部清空"), left, side, Theme::ButtonKind::Danger);
+    auto *clear = button(QCoreApplication::translate("PresetEditorPage", "全部清空"), actionParent, actions, Theme::ButtonKind::Danger);
     clear->setObjectName("presetEditorClear");
     connect(draft, &QPushButton::clicked, this, [this] {
         if (saveRequested)
@@ -119,31 +145,23 @@ PresetEditorPage::PresetEditorPage(const QJsonObject &document, QWidget *parent)
         state["modReferences"] = QJsonArray();
         setDocument(state);
     });
-    outer->addWidget(left);
-    auto *right = new QVBoxLayout;
-    m_pages = new QStackedWidget(this);
-    right->addWidget(m_pages, 1);
-    m_problem = new QLabel(this);
-    m_problem->setObjectName("presetEditorProblem");
-    m_problem->setWordWrap(true);
-    right->addWidget(m_problem);
-    outer->addLayout(right, 1);
-    connect(m_navigation, &QListWidget::currentRowChanged, m_pages,
-            &QStackedWidget::setCurrentIndex);
     setDocument(document);
     m_original = this->document();
 }
 void PresetEditorPage::reject() {
-    // 一个字都不关：要不要保存是控制器的决定（见 .hpp 那段）。控制器收页走 accept()。
     if (backRequested)
         backRequested();
 }
 
+void PresetEditorPage::selectSection(int section) {
+    if (m_navigation) m_navigation->setCurrentRow(section);
+    m_pages->setCurrentIndex(section);
+}
+
 void PresetEditorPage::setDocument(const QJsonObject &document) {
-    const int page = qMax(0, m_navigation->currentRow());
+    const int page = qMax(0, m_pages->currentIndex());
     rebuildPages(document);
-    m_navigation->setCurrentRow(page);
-    m_pages->setCurrentIndex(page);
+    selectSection(page);
     showProblem({});
 }
 void PresetEditorPage::rebuildPages(const QJsonObject &state) {

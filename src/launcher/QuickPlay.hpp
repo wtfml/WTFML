@@ -31,6 +31,7 @@
 
 #pragma once
 
+#include <QCoreApplication>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QJsonValue>
@@ -128,10 +129,10 @@ inline bool supports(const QJsonObject &versionJson, Kind kind) {
  */
 inline QString unsupportedText(Kind kind) {
     if (kind == Kind::Multiplayer) {
-        return QStringLiteral("「加入服务器」要用游戏自己的 --quickPlayMultiplayer 参数，"
+        return QCoreApplication::translate("QuickPlay", "「加入服务器」要用游戏自己的 --quickPlayMultiplayer 参数，"
                               "这个版本（1.20 之前）没有它 —— 发了游戏会直接报错退出。");
     }
-    return QStringLiteral("「加入选中的世界」要用游戏自己的 --quickPlaySingleplayer 参数，"
+    return QCoreApplication::translate("QuickPlay", "「加入选中的世界」要用游戏自己的 --quickPlaySingleplayer 参数，"
                           "这个版本（1.20 之前）没有它 —— 发了游戏会直接报错退出。");
 }
 

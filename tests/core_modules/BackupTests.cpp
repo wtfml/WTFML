@@ -407,6 +407,10 @@ void runBackupTests() {
     // 就在"还原"这个动作里**没了**。
     writeFileAt(restoredWorld + QStringLiteral("/只在这儿有.txt"), QByteArrayLiteral("OLD-ONLY"));
     writeFileAt(restoredWorld + QStringLiteral("/level.dat"), QByteArrayLiteral("CHANGED-BY-HAND"));
+    const auto newOnly = BackupFiles::restoreBackup(worldZip, restoreParent, {}, {}, BackupFiles::RestoreTarget::NewOnly);
+    check(!newOnly.ok && newOnly.safetyZip.isEmpty() &&
+              readAll(restoredWorld + QStringLiteral("/level.dat")) == QByteArrayLiteral("CHANGED-BY-HAND"),
+          "ZQ4 导入模式遇到已有目录时保留原文件", newOnly.problem);
     const BackupFiles::RestoreResult over = BackupFiles::restoreBackup(worldZip, restoreParent);
     check(over.ok && !over.safetyZip.isEmpty() && QFile::exists(over.safetyZip),
           "★ ZQ4 还原之前先给「现在这一份」做了一份安全快照", over.problem);

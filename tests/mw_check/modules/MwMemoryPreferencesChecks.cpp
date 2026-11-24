@@ -1,4 +1,5 @@
 #include "Support.hpp"
+#include "ListRowDelegate.hpp"
 int MwMemoryPreferencesChecks(const bool settingsWired, const QString &kDecorated, MainWindow &window, QComboBox * &installed, QComboBox * &memoryMode, QLabel * &memoryHint, QSpinBox * &maxSpin, QComboBox * &behaviourCombo, QComboBox * &sourceCombo, QPlainTextEdit * &jvmEdit, SettingsParts::CommitOnFocusOut * &applyJvm, MemorySlider * &maxSlider) {
     if (settingsWired) {
         // ---- 内存：改一个数就落盘 ----
@@ -287,9 +288,7 @@ int MwMemoryPreferencesChecks(const bool settingsWired, const QString &kDecorate
         // 那一组静态断言并不存在。这里只钉"下拉框 → 盘"这一跳，以及下面 N 节
         // "盘 → 新窗口的下拉框"那一跳。
 
-        // ---- 显示名的拼法是固定的（UI 问题 #14：那一组开关撤掉了）----
-        // 显示名就是 自定义名-实际版本-加载器名（原先是那四个开关的出厂档），加载器版本
-        // 不进显示名；实例列表和下拉框是同一份数据的两种看法，写法必须一致。
+        // 启动下拉框使用紧凑显示名。管理列表独立显示实例名、游戏版本和加载器信息。
         {
             const int at = installed->findData(QStringLiteral("1.20.1"));
             check(installed->itemText(at) == kDecorated,
@@ -301,10 +300,12 @@ int MwMemoryPreferencesChecks(const bool settingsWired, const QString &kDecorate
                 byObjectName<QTreeWidget>(&window, MainWindowUI::instanceListName());
             for (QTreeWidgetItem *item : instanceItemsOf(instanceListView)) {
                 if (item->data(0, Qt::UserRole).toString() == QStringLiteral("1.20.1")) {
-                    listMatches = item->text(0) == installed->itemText(at);
+                    listMatches = item->text(0) == QStringLiteral("我的整合包") &&
+                        item->data(0, ListRowDelegate::SubtitleRole).toString() == QStringLiteral("1.20.1") &&
+                        item->data(0, ListRowDelegate::MetaRole).toString() == QStringLiteral("Forge 47.2.0");
                 }
             }
-            check(listMatches, "实例列表里的同一个版本写法一致（同一份数据的两种看法）");
+            check(listMatches, "实例列表分开显示自定义名称、游戏版本和加载器版本");
         }
 
         // ---- JVM 参数：失焦（committed）才落盘，且去首尾空白 ----

@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include <QCoreApplication>
 #include <QString>
 
 namespace ServerPortCheck {
@@ -38,11 +39,11 @@ State stateOf(int port, QString *problemOut = nullptr);
 inline QString stateName(State state) {
     switch (state) {
     case State::Free:
-        return QStringLiteral("没被占用");
+        return QCoreApplication::translate("ServerPortCheck", "没被占用");
     case State::InUse:
-        return QStringLiteral("被占用了");
+        return QCoreApplication::translate("ServerPortCheck", "被占用了");
     case State::Unknown:
-        return QStringLiteral("没能查出来");
+        return QCoreApplication::translate("ServerPortCheck", "没能查出来");
     }
     return QString();
 }

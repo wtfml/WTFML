@@ -306,6 +306,9 @@ void PresetController::buildPage() {
     pushCategories();
 
     connect(m_page, &PresetManagePage::presetSelected, this, &PresetController::selectPreset);
+    connect(m_page, &PresetManagePage::detailVisibilityChanged, this, [this](bool visible) {
+        if (m_host.presetDetailVisible) m_host.presetDetailVisible(visible);
+    });
     connect(m_page, &QObject::destroyed, this, [this] { cancelModCheck(); });
     connect(m_page, &PresetManagePage::executionReportRequested, this, &PresetController::showExecutionReport);
     connect(m_page, &PresetManagePage::resumeRequested, this, [this](const QString &preset, const QString &instance) {
@@ -314,13 +317,11 @@ void PresetController::buildPage() {
     connect(m_page, &PresetManagePage::createRequested, this, [this](const QString &) { openEditor(); });
     if (auto *combo = m_page->findChild<QComboBox *>(PresetManagePage::newCategoryComboName())) combo->hide();
     if (auto *label = m_page->findChild<QLabel *>(QStringLiteral("presetNewCategoryLabel"))) label->hide();
-    auto *editDocument = m_page->findChild<QPushButton *>(PresetManagePage::saveDetailsButtonName());
-    if (editDocument) {
-        disconnect(editDocument,nullptr,m_page,nullptr);
-        editDocument->setText(tr("编辑预设"));
-        Theme::markButton(editDocument,Theme::ButtonKind::Primary);
-        connect(editDocument, &QPushButton::clicked, this, [this] { if (!m_currentId.isEmpty()) openEditor(m_currentId); });
-    }
+    m_page->enableEditorTabs();
+    connect(m_page, &PresetManagePage::editSectionRequested, this,
+            [this](const QString &id, int section) {
+        if (!id.isEmpty()) openEditor(id, false, section);
+    });
     if (auto *name = m_page->findChild<QLineEdit *>(PresetManagePage::nameEditName())) name->setReadOnly(true);
     if (auto *description = m_page->findChild<QLineEdit *>(PresetManagePage::descriptionEditName())) description->setReadOnly(true);
     connect(m_page, &PresetManagePage::duplicateRequested, this,

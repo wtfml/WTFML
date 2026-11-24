@@ -15,6 +15,7 @@
  * 拆开之后别的 .cpp 看不见 —— 匿名命名空间是内部链接）。
  */
 #include "InstanceSettingsDialog.hpp"
+#include "MainWindowPageLayout.hpp"
 #include "InstanceSettingsSignature.hpp"
 #include "InstanceSettingsPageChoices.hpp"
 #include "ResourcePackPage.hpp"
@@ -110,8 +111,6 @@ constexpr int kChoiceComboWidth = 110;
 constexpr int kNavListExtraWidth = 28;
 /// 两栏之间空多少。和整页外边距那一档（12）同一档。
 constexpr int kColumnSpacing = 16;
-/// 页眉实例名的字号下限：从 Display 26 往下收到这一号，再放不下才省略。
-constexpr int kHeaderTitleMinPixelSize = 20;
 /// 单独拿出来用时的初始大小。宽是"一列导航 + 一块还放得下两列表格的内容"量出来的
 /// （见 .cpp 构造函数里那句 NOTE：嵌进覆盖层时这个数不作数）。
 constexpr int kDialogWidth = 820;
@@ -197,35 +196,19 @@ InstanceSettingsDialog::InstanceSettingsDialog(const QString &instanceName,
     outer->setSpacing(10);
 
     // UI 7b 页眉（设计稿 instance-*）：图标 + 实例名 + 一行元信息 | 打开目录（扁平）+ 启动实例（这一页唯一的实心钮）。
-    auto *header = new QWidget(this);
+    const auto identity = MainWindowPageLayout::makeDetailHeader(this);
+    auto *header = identity.widget;
     header->setObjectName(QStringLiteral("instanceSettingsHeader"));
-    auto *headerLine = new QHBoxLayout(header);
-    headerLine->setContentsMargins(4, 0, 4, 4);
-    headerLine->setSpacing(14);
-    m_headerIcon = new QLabel(header);
+    auto *headerLine = identity.line;
+    m_headerIcon = identity.icon;
     m_headerIcon->setObjectName(QStringLiteral("instanceHeaderIcon"));
-    m_headerIcon->setFixedSize(48, 48);
     m_headerIcon->setScaledContents(true);
-    headerLine->addWidget(m_headerIcon);
-    auto *headerText = new QVBoxLayout;
-    headerText->setSpacing(2);
-    m_headerTitle = new ElidedLabel(header);
+    m_headerTitle = identity.title;
     m_headerTitle->setText(instanceName);
     m_headerTitle->setObjectName(QStringLiteral("instanceHeaderTitle"));
-    Theme::markDisplay(m_headerTitle, Theme::textFont(m_headerTitle->font(), Theme::TextRole::Display));
-    // 长名先收字号（Display 26 → 20），再放不下才省略、悬停看全名；高度按 26 钉死，页眉不随名字变高矮。
-    m_headerTitle->setFitPixelRange(Theme::textSize(Theme::TextRole::Display), kHeaderTitleMinPixelSize);
-    headerText->addWidget(m_headerTitle);
-    m_headerMeta = new QLabel(header);
+    m_headerMeta = identity.meta;
     m_headerMeta->setObjectName(headerMetaName());
-    {
-        QPalette pal = m_headerMeta->palette();
-        pal.setColor(QPalette::WindowText, Theme::tokens().secondary);
-        m_headerMeta->setPalette(pal);
-    }
     m_headerMeta->hide();  // 由 setHeaderMeta() 填；没填就不占行
-    headerText->addWidget(m_headerMeta);
-    headerLine->addLayout(headerText, 1);
     auto *folder = new QToolButton(header);
     folder->setObjectName(QStringLiteral("instanceHeaderFolder"));
     folder->setAutoRaise(true);

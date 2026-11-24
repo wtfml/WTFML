@@ -5,6 +5,7 @@
  */
 #pragma once
 
+#include <QCoreApplication>
 #include <QHash>
 #include <QJsonObject>
 #include <QFuture>
@@ -118,7 +119,7 @@ public:
     static QString latestGroupKey() { return QStringLiteral("latest"); }
 
     /// 「最新版本」那一组给用户看的名字。
-    static QString latestGroupText() { return QStringLiteral("最新版本"); }
+    static QString latestGroupText() { return QCoreApplication::translate("VersionManager", "最新版本"); }
 
     /**
      * @brief 挑出「最新版本」那一组的两条（**纯函数**）：清单里最新的正式版与最新的快照。

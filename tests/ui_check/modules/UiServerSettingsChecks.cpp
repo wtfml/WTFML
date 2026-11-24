@@ -25,9 +25,9 @@ int UiServerSettingsChecks() {
         auto *sections = page.findChild<QTreeWidget *>(MainWindowUI::serverSettingsSectionListName());
         auto *start = page.findChild<QPushButton *>(QStringLiteral("serverSettingsStart"));
         auto *saveAction = page.findChild<QPushButton *>(MainWindowUI::serverSettingsSaveButtonName());
-        check(start && saveAction && sections && start->parentWidget() == sections->parentWidget() &&
-                  saveAction->parentWidget() == sections->parentWidget(),
-              "save and start actions are anchored below server navigation");
+        check(start && saveAction && title && start->parentWidget() == title->parentWidget() &&
+                  saveAction->parentWidget() != start->parentWidget(),
+              "start is in the identity header and save is in the configuration footer");
         if (start) {
             int requests = 0;
             const auto startConnection = QObject::connect(&page, &ServerSettingsPage::startRequested,
@@ -102,13 +102,11 @@ int UiServerSettingsChecks() {
             for (int i = 0; i < sections->topLevelItemCount(); ++i) {
                 sectionTexts.append(sections->topLevelItem(i)->text(0));
             }
-            bool titlesOk = sections->topLevelItemCount() == MainWindowUI::serverSettingsSectionCount();
-            for (int i = 0; titlesOk && i < sections->topLevelItemCount(); ++i) {
-                titlesOk = sections->topLevelItem(i)->text(0) == MainWindowUI::serverSettingsSectionTitle(i);
-            }
-            check(titlesOk && stack->count() == MainWindowUI::serverSettingsSectionCount(),
-                  "★★ U37.1 左栏的页数、次序就是唯一出处里的次序，右栏一页对一页"
-                  "（`serverSettingsSectionCount()`）",
+            const QStringList expected{QStringLiteral("概览"), QStringLiteral("启动设置"),
+                QStringLiteral("设置"), QStringLiteral("世界与玩家"),
+                QStringLiteral("内容管理"), QStringLiteral("维护")};
+            check(sectionTexts == expected && stack->count() == static_cast<int>(ServerSettingsPage::Section::Count),
+                  "★★ U37.1 左栏按管理对象分组，概览排第一",
                   sectionTexts.join(QStringLiteral(" / ")));
             check(sections->hasMouseTracking() &&
                       qobject_cast<VersionTreeDelegate *>(sections->itemDelegate()) == nullptr,
@@ -117,21 +115,23 @@ int UiServerSettingsChecks() {
                   "都不生效 —— 同实例设置那一列）");
             check(sections->width() == InstanceSettingsDialog::navigationTreeWidth(),
                   "server navigation uses the instance settings width");
-            check(sections->topLevelItem(0)->sizeHint(0).height() == 36,
-                  "server navigation preserves the instance settings row height");
-            auto *players = sections->topLevelItem(static_cast<int>(ServerSettingsPage::Section::Players));
+            check(sections->topLevelItemCount() == 6 && sections->topLevelItem(0)->font(0).bold() &&
+                      !sections->topLevelItem(3)->child(1)->font(0).bold(),
+                  "server navigation emphasizes top-level entries like client settings");
+            auto *players = page.findChild<QComboBox *>(QStringLiteral("serverSettingsPlayerSelector"));
             int selectedList = -1;
             QObject::connect(&page, &ServerSettingsPage::playerListChanged, &page,
                              [&selectedList](int index) { selectedList = index; });
-            check(players && players->childCount() == MainWindowUI::serverSettingsPlayerListCount(),
-                  "player lists are nested navigation items");
-            if (players && players->childCount() > 2) {
-                sections->setCurrentItem(players->child(2));
+            check(players && players->count() == MainWindowUI::serverSettingsPlayerListCount(),
+                  "player lists share a selector inside the player page");
+            if (players && players->count() > 2) {
+                page.setSection(ServerSettingsPage::Section::Players);
+                players->setCurrentIndex(2);
                 check(page.playerList() == 2 && selectedList == 2 &&
                           page.section() == ServerSettingsPage::Section::Players,
                       "player child selection updates both the list and page");
                 page.setPlayerList(0);
-                check(sections->currentItem() == players->child(0),
+                check(players->currentIndex() == 0,
                       "programmatic player list changes keep navigation in sync");
             }
 
@@ -149,7 +149,7 @@ int UiServerSettingsChecks() {
                       && sectionSignals == 0,
                   "★★ U37.2 `setSection()` 是**程序摆的**：页翻过去了，但**不发 "
                   "`sectionChanged`**（发出去的话 `MainWindow` 会再合一次两边的编辑）");
-            sections->setCurrentItem(sections->topLevelItem(1));  // 用户点了「原始文本」
+            sections->setCurrentItem(sections->topLevelItem(5)->child(2));  // 用户点了「原始文本」
             check(sectionSignals == 1 && lastSection == 1 &&
                       stack->currentIndex() == 1 &&
                       page.section() == ServerSettingsPage::Section::RawText,
@@ -631,7 +631,7 @@ int UiServerSettingsChecks() {
             {
                 auto *contentNote = page.findChild<QLabel *>(
                     MainWindowUI::serverSettingsContentNoteName());
-                auto *contentCombo = sections->topLevelItem(static_cast<int>(ServerSettingsPage::Section::Content));
+                auto *contentCombo = sections->topLevelItem(4);
                 auto *contentTree = page.findChild<QTreeWidget *>(
                     MainWindowUI::serverSettingsContentTreeName());
                 auto *contentAdd = page.findChild<QPushButton *>(
@@ -654,12 +654,11 @@ int UiServerSettingsChecks() {
                     contentRefresh != nullptr) {
                     check(contentCombo->childCount() ==
                                   MainWindowUI::serverSettingsContentKindCount() &&
-                              contentCombo->child(0)->text(0) ==
+                              contentCombo->child(2)->text(0) ==
                                   MainWindowUI::serverSettingsContentKindTitle(0) &&
-                              contentCombo->child(1)->text(0) ==
+                              contentCombo->child(0)->text(0) ==
                                   MainWindowUI::serverSettingsContentKindTitle(1),
-                          "★★ U37.16 类型下拉框的两项逐字就是唯一出处那两句（模组 / 数据包）；"
-                          "**这里的下标同时就是 `ServerContent::Kind`**",
+                          "★★ U37.16 内容管理依次列出数据包、插件和模组",
                           QStringLiteral("%1 / %2")
                               .arg(contentCombo->child(0)->text(0), contentCombo->child(1)->text(0)));
                     check(contentTree->columnCount() ==
@@ -680,7 +679,7 @@ int UiServerSettingsChecks() {
                           "★★ U37.16 `setContentKind()` 只摆下拉框、**不发信号**（程序摆的"
                           "不算用户改了；发了那边会白重列一次）",
                           QString::number(kindSignals));
-                    sections->setCurrentItem(contentCombo->child(0));
+                    sections->setCurrentItem(contentCombo->child(2));
                     check(kindSignals == 1 && lastKind == 0 && page.contentKind() == 0,
                           "★★ U37.16 用户自己切下拉框才发一发，带的正是新下标",
                           QStringLiteral("发了 %1 发，最后一发=%2").arg(kindSignals).arg(lastKind));

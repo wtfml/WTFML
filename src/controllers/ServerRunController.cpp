@@ -23,6 +23,7 @@
 #include "settings/GlobalJavaSettings.hpp"
 
 #include <QJsonObject>
+#include <QProcess>
 #include <QTimer>
 
 ServerRunController::ServerRunController(MainWindow *owner) : QObject(owner), m_owner(*owner) {}
@@ -127,7 +128,7 @@ void ServerRunController::start(const QString &serverId, bool automatic) {
     // 内存：这一个自己配过就用它，没配过（`memoryMb <= 0`，见 `ServerModel::Info` 那句）
     // 就跟全局那一档 —— 和上面 java 的规矩一样。
     const int memoryMb = info.memoryMb > 0 ? info.memoryMb : m_owner.m_javaSettings->xmx();
-    const QStringList arguments = ServerRun::launchArguments(plan, memoryMb);
+    const QStringList arguments = ServerRun::launchArguments(plan, memoryMb, QProcess::splitCommand(info.jvmArguments));
     const int mods = m_owner.countServerMods(entry.dirPath);
     const qint64 worldBytes = m_owner.serverWorldBytes(entry.dirPath);
     const int gracefulMs = ServerRun::gracefulStopMs(mods, worldBytes);
