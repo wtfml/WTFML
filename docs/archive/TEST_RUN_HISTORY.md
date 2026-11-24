@@ -40,8 +40,8 @@
 | 11-05 | `-Suite network` | 6/6（107.94 s）；复测 5/5（89.16 s） | 设 `WTFML_TEST_TEMP` 之后；之前本机 3/6 失败，根因见 TESTING.md「环境变量」 |
 | 11-05 | network-diag | 48 条全过（19.0 / 18.9 s，退出 0） | `build-audit/tools/network_diag/WTFMLNetworkDiag.exe --self-test`，`QT_QPA_PLATFORM=offscreen` |
 | 11-05 | 例行检查 + `-Suite quick` | 归属检查 PASS；quick 12/12（11.85 s）；文档引用检查 PASS | 当时 129 条 md 链接 + 48 条源码 docs 引用 |
-| 11-10 | Agent Stage 1A | `verify_agent` 145、`ui_check_agent` 28、`mw_check_agent` 22 | `wtfml.ui`、`main-window`、`token-protection-fault`、核心基线、`test-modules/test-runner/ci-partitions` 同轮通过；细节见 [AGENT_STAGE1A](../features/AGENT_STAGE1A.md) |
-| 11-10 | Agent Stage 1B | `verify_agent` 306、`ui_check_agent` 39、`mw_check_agent` 31 | junction 夹具建不出来时输出 `SKIP`，不计通过；见 [AGENT_STAGE1B](../features/AGENT_STAGE1B.md) |
+| 11-10 | Agent Stage 1A | `verify_agent` 145、`ui_check_agent` 28、`mw_check_agent` 22 | `wtfml.ui`、`main-window`、`token-protection-fault`、核心基线、`test-modules/test-runner/ci-partitions` 同轮通过；细节见 [AGENT](../features/AGENT.md) |
+| 11-10 | Agent Stage 1B | `verify_agent` 306、`ui_check_agent` 39、`mw_check_agent` 31 | junction 夹具建不出来时输出 `SKIP`，不计通过；见 [AGENT](../features/AGENT.md) |
 
 ## 真机与实网验收
 
