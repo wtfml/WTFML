@@ -242,7 +242,7 @@ void runToolboxExtraTests() {
 
     // ---------- ZAI4. 链式前驱与水瓶直出 ----------
     {
-        // 隐身 = 夜视 + 发酵蜘蛛眼；夜视 = 粗制的药水 + 金胡萝卜。
+        // 隐身 = 夜视 + 发酵蛛眼；夜视 = 粗制的药水 + 金胡萝卜。
         int invisibility = -1;
         int weakness = -1;
         int slowFalling = -1;
@@ -258,7 +258,7 @@ void runToolboxExtraTests() {
             check(plan.ok && plan.steps.size() == 3
                       && plan.steps.at(0).contains(QStringLiteral("下界疣"))
                       && plan.steps.at(1).contains(QStringLiteral("金胡萝卜"))
-                      && plan.steps.at(2).contains(QStringLiteral("发酵蜘蛛眼")),
+                      && plan.steps.at(2).contains(QStringLiteral("发酵蛛眼")),
                   "★★ ZAI4 隐身要把前驱那条链补全：粗制的药水 → 夜视 → 隐身",
                   plan.steps.join(QStringLiteral(" / ")));
         }
@@ -266,7 +266,7 @@ void runToolboxExtraTests() {
             const Brewing::Plan plan =
                 Brewing::plan(weakness, false, false, Brewing::Form::Normal);
             check(plan.ok && plan.steps.size() == 1
-                      && plan.steps.at(0) == QStringLiteral("水瓶 + 发酵蜘蛛眼 → 虚弱药水")
+                      && plan.steps.at(0) == QStringLiteral("水瓶 + 发酵蛛眼 → 虚弱药水")
                       && !plan.steps.join(QStringLiteral(" ")).contains(QStringLiteral("下界疣"))
                       && plan.directFromWater,
                   "★★ ZAI4 虚弱从水瓶直接做（不需要下界疣那一步）",
@@ -276,10 +276,10 @@ void runToolboxExtraTests() {
                   "★★ ZAI4 水瓶直出的路线单独标出来，效果行照常写等级与时长",
                   plan.detailText().left(160));
             check(plan.materials.contains(QStringLiteral("水瓶 × 1"))
-                      && plan.materials.contains(QStringLiteral("发酵蜘蛛眼 × 1"))
+                      && plan.materials.contains(QStringLiteral("发酵蛛眼 × 1"))
                       && !plan.materials.join(QStringLiteral(" "))
                               .contains(QStringLiteral("下界疣")),
-                  "★★ ZAI4 虚弱的材料只有水瓶和发酵蜘蛛眼（不补下界疣）",
+                  "★★ ZAI4 虚弱的材料只有水瓶和发酵蛛眼（不补下界疣）",
                   plan.materials.join(QStringLiteral("、")));
         }
 
@@ -382,8 +382,8 @@ void runToolboxExtraTests() {
         check(slownessIv.ok && slownessIv.summary.contains(QStringLiteral("IV"))
                   && slownessIv.steps.last().contains(QStringLiteral("IV")),
               "★★ ZAI3b 迟缓升一级之后名字与步骤都写 IV", slownessIv.summary);
-        check(slownessIv.effect == QStringLiteral("迟缓 IV · 0:20"),
-              "★★ ZAI3b 迟缓 IV 的效果行写等级与时长（0:20）", slownessIv.effect);
+        check(slownessIv.effect == QStringLiteral("缓慢 IV · 0:20"),
+              "★★ ZAI3b 缓慢 IV 的效果行写等级与时长（0:20）", slownessIv.effect);
         check(Brewing::levelText(0).isEmpty() && Brewing::levelText(2) == QStringLiteral("II")
                   && Brewing::levelText(4) == QStringLiteral("IV"),
               "ZAI3b 等级写法（0 = 空、2 = II、4 = IV）");
@@ -500,9 +500,9 @@ void runToolboxExtraTests() {
         // 特殊路径（虚弱：水瓶直出）。
         if (weakness >= 0) {
             const Brewing::Plan p = Brewing::plan(weakness, false, false, Brewing::Form::Normal, 3);
-            check(p.ok && p.steps == QStringList{QStringLiteral("水瓶 + 发酵蜘蛛眼 → 虚弱药水")}
+            check(p.ok && p.steps == QStringList{QStringLiteral("水瓶 + 发酵蛛眼 → 虚弱药水")}
                       && p.directFromWater && hasMaterial(p, QStringLiteral("水瓶 × 3"))
-                      && hasMaterial(p, QStringLiteral("发酵蜘蛛眼 × 1"))
+                      && hasMaterial(p, QStringLiteral("发酵蛛眼 × 1"))
                       && p.summary == QStringLiteral("产出：虚弱药水 × 3 瓶（酿造 1 次）")
                       && p.effect == QStringLiteral("虚弱 I · 1:30")
                       && p.detailText().contains(QStringLiteral("特殊路径"))
@@ -568,8 +568,8 @@ void runToolboxExtraTests() {
                     Brewing::plan(healing, false, false, Brewing::Form::Normal);
                 const Brewing::Plan two =
                     Brewing::plan(healing, false, true, Brewing::Form::Normal);
-                check(one.effect == QStringLiteral("治疗 I · 瞬间恢复 4 点生命值")
-                          && two.effect == QStringLiteral("治疗 II · 瞬间恢复 8 点生命值")
+                check(one.effect == QStringLiteral("瞬间治疗 I · 瞬间恢复 4 点生命值")
+                          && two.effect == QStringLiteral("瞬间治疗 II · 瞬间恢复 8 点生命值")
                           && !one.effect.contains(QLatin1Char(':'))
                           && !two.effect.contains(QLatin1Char(':')),
                       "★★ ZAI6 治疗是瞬间效果：写说明、不写持续时间",
@@ -578,7 +578,7 @@ void runToolboxExtraTests() {
             if (harming >= 0) {
                 const Brewing::Plan one =
                     Brewing::plan(harming, false, false, Brewing::Form::Normal);
-                check(one.effect == QStringLiteral("伤害 I · 瞬间造成 6 点伤害")
+                check(one.effect == QStringLiteral("瞬间伤害 I · 瞬间造成 6 点伤害")
                           && !one.effect.contains(QLatin1Char(':')),
                       "★★ ZAI6 伤害是瞬间效果：写说明、不写持续时间", one.effect);
             }
@@ -606,8 +606,8 @@ void runToolboxExtraTests() {
         if (turtle >= 0) {
             const Brewing::Plan p =
                 Brewing::plan(turtle, false, false, Brewing::Form::Lingering);
-            check(p.effect == QStringLiteral("海龟大师 I · 0:05"),
-                  "★★ ZAI7 滞留海龟大师：0:20 → 0:05", p.effect);
+            check(p.effect == QStringLiteral("缓慢 + 抗性提升 I · 0:05"),
+                  "★★ ZAI7 滞留神龟药水：0:20 → 0:05", p.effect);
         }
 
         const int poison = Brewing::potionNames().indexOf(QStringLiteral("剧毒药水"));
@@ -626,10 +626,10 @@ void runToolboxExtraTests() {
                 Brewing::plan(healing, false, true, Brewing::Form::Splash);
             const Brewing::Plan lingering =
                 Brewing::plan(healing, false, true, Brewing::Form::Lingering);
-            check(normal.effect == QStringLiteral("治疗 II · 瞬间恢复 8 点生命值")
-                      && splash.effect == QStringLiteral("治疗 II · 瞬间恢复 8 点生命值")
+            check(normal.effect == QStringLiteral("瞬间治疗 II · 瞬间恢复 8 点生命值")
+                      && splash.effect == QStringLiteral("瞬间治疗 II · 瞬间恢复 8 点生命值")
                       && lingering.effect
-                             == QStringLiteral("治疗 II · 瞬间，效果云内周期生效"),
+                             == QStringLiteral("瞬间治疗 II · 瞬间，效果云内周期生效"),
                   "★★ ZAI7 滞留治疗 II：换成「瞬间，效果云内周期生效」，普通 / 喷溅仍是原说明",
                   normal.effect + QStringLiteral(" / ") + splash.effect + QStringLiteral(" / ")
                       + lingering.effect);
@@ -638,8 +638,8 @@ void runToolboxExtraTests() {
 
     // ---------- ZAJ0. 旗帜：图案表与十六色 ----------
     {
-        check(Banner::patternCount() == 45,
-              "★ ZAJ0 图案表 45 种（和原版织布机那几十种对得上）",
+        check(Banner::patternCount() == 42,
+              "★ ZAJ0 图案表 42 种（与 1.21 的 banner_pattern 定义一致，去掉重复项）",
               QString::number(Banner::patternCount()));
         check(Banner::colorCount() == 16 && Banner::colorName(0) == QStringLiteral("白色")
                   && Banner::colorName(14) == QStringLiteral("红色")
@@ -651,12 +651,33 @@ void runToolboxExtraTests() {
                   && Banner::colorId(14) == QStringLiteral("red"),
               "★ ZAJ0 染料名和 id 都从同一张表里出来",
               Banner::dyeName(14) + QStringLiteral(" / ") + Banner::colorId(14));
-        check(Banner::patternIndexById(QStringLiteral("creeper_charge")) >= 0
-                  && Banner::patternAt(Banner::patternIndexById(QStringLiteral("creeper_charge")))
+        check(Banner::patternIndexById(QStringLiteral("creeper")) >= 0
+                  && Banner::patternAt(Banner::patternIndexById(QStringLiteral("creeper")))
                              .item
-                         == QStringLiteral("苦力怕头颅"),
-              "★★ ZAJ0 少数几种图案用的不是「旗帜图案」那件物品（苦力怕 = 苦力怕头颅）",
-              Banner::patternAt(Banner::patternIndexById(QStringLiteral("creeper_charge"))).item);
+                         == QStringLiteral("旗帜图案")
+                  && Banner::patternIndexById(QStringLiteral("creeper_charge"))
+                         == Banner::patternIndexById(QStringLiteral("creeper")),
+              "★★ ZAJ0 苦力怕盾徽用「旗帜图案」；旧 id creeper_charge 仍能认出来",
+              Banner::patternAt(Banner::patternIndexById(QStringLiteral("creeper"))).item);
+        check(Banner::patternIndexById(QStringLiteral("border")) >= 0
+                  && Banner::patternAt(Banner::patternIndexById(QStringLiteral("border")))
+                             .item
+                         .isEmpty()
+                  && Banner::patternIndexById(QStringLiteral("bricks")) >= 0
+                  && Banner::patternAt(Banner::patternIndexById(QStringLiteral("bricks")))
+                             .item
+                         .isEmpty(),
+              "★★ ZAJ0 border / bricks 都在 no_item_required 里，不需要额外物品",
+              Banner::patternAt(Banner::patternIndexById(QStringLiteral("border"))).item);
+        check(Banner::patternIndexById(QStringLiteral("bordure_indented"))
+                      == Banner::patternIndexById(QStringLiteral("curly_border"))
+                  && Banner::patternIndexById(QStringLiteral("thing"))
+                         == Banner::patternIndexById(QStringLiteral("mojang"))
+                  && Banner::patternIndexById(QStringLiteral("snout"))
+                         == Banner::patternIndexById(QStringLiteral("piglin"))
+                  && Banner::patternIndexById(QStringLiteral("stripe_small"))
+                         == Banner::patternIndexById(QStringLiteral("small_stripes")),
+              "★★ ZAJ0 旧存档的重复 id 都转成官方 id（bordure_indented / thing / snout / stripe_small）");
         check(Banner::patternIndexById(QStringLiteral("no_such_pattern")) == -1
                   && Banner::patternAt(999).id.isEmpty(),
               "★ ZAJ0 认不出来就回 -1 / 空，不编一个图案出来");
@@ -672,6 +693,54 @@ void runToolboxExtraTests() {
                   && Banner::patternSince(Banner::patternIndexById(QStringLiteral("cross")))
                          == QStringLiteral("1.14"),
               "★★ ZAJ0 图案从哪一版起有：涡流 / 狂风是 1.21，普通图案回 1.14");
+        bool uniqueIds = true;
+        for (int i = 0; i < Banner::patternCount() && uniqueIds; ++i) {
+            for (int j = i + 1; j < Banner::patternCount(); ++j) {
+                if (Banner::patternAt(i).id == Banner::patternAt(j).id) {
+                    uniqueIds = false;
+                    break;
+                }
+            }
+        }
+        check(uniqueIds, "★★ ZAJ0 图案 id 不重复（旧表里的三组重复项已合并）");
+        check(Banner::patternAt(Banner::patternIndexById(QStringLiteral("small_stripes"))).name
+                      == QStringLiteral("竖条纹")
+                  && Banner::patternAt(Banner::patternIndexById(QStringLiteral("diagonal_left"))).name
+                         == QStringLiteral("右上三角")
+                  && Banner::patternAt(Banner::patternIndexById(QStringLiteral("piglin"))).name
+                         == QStringLiteral("猪鼻")
+                  && Banner::patternAt(Banner::patternIndexById(QStringLiteral("border"))).name
+                         == QStringLiteral("方框边")
+                  && Banner::patternAt(Banner::patternIndexById(QStringLiteral("triangles_bottom"))).name
+                         == QStringLiteral("底波纹"),
+              "★★ ZAJ0 图案名照官方简中（竖条纹 / 右上三角 / 猪鼻 / 方框边 / 底波纹）");
+
+        const QJsonObject oldDesign{
+            {QStringLiteral("format"), QStringLiteral("wtfml-banner")},
+            {QStringLiteral("schemaVersion"), 1},
+            {QStringLiteral("base"), QStringLiteral("white")},
+            {QStringLiteral("version"), QStringLiteral("1.21")},
+            {QStringLiteral("layers"),
+             QJsonArray{QJsonObject{{QStringLiteral("pattern"), QStringLiteral("stripe_small")},
+                                    {QStringLiteral("color"), QStringLiteral("red")}},
+                        QJsonObject{{QStringLiteral("pattern"), QStringLiteral("thing")},
+                                    {QStringLiteral("color"), QStringLiteral("black")}},
+                        QJsonObject{{QStringLiteral("pattern"), QStringLiteral("snout")},
+                                    {QStringLiteral("color"), QStringLiteral("white")}},
+                        QJsonObject{{QStringLiteral("pattern"), QStringLiteral("bordure_indented")},
+                                    {QStringLiteral("color"), QStringLiteral("blue")}}}}};
+        BannerDesign::Design migrated;
+        QString migrateError;
+        const bool migratedOk =
+            BannerDesign::decode(QJsonDocument(oldDesign).toJson(), &migrated, &migrateError);
+        check(migratedOk && migrated.layers
+                                == QStringList{
+                                       QStringLiteral("%1:14").arg(Banner::patternIndexById(QStringLiteral("small_stripes"))),
+                                       QStringLiteral("%1:15").arg(Banner::patternIndexById(QStringLiteral("mojang"))),
+                                       QStringLiteral("%1:0").arg(Banner::patternIndexById(QStringLiteral("piglin"))),
+                                       QStringLiteral("%1:11").arg(Banner::patternIndexById(QStringLiteral("curly_border")))},
+              "★★ ZAJ0 旧设计文件里的 stripe_small / thing / snout / bordure_indented 读成官方 id，图层不丢",
+              migrated.layers.join(QStringLiteral(" / ")) + QStringLiteral(" ") + migrateError);
     }
 
     // ---------- ZAJ1. 旗帜：叠层计划与材料账 ----------
@@ -687,27 +756,36 @@ void runToolboxExtraTests() {
                   && plan.steps.last().contains(QStringLiteral("黑色染料")),
               "★★ ZAJ1 使用已有空白旗帜，按列表次序逐层叠加",
               plan.steps.join(QStringLiteral(" / ")));
-        check(plan.materials.size() == 4
+        check(plan.materials.size() == 2
                   && plan.materials.contains(QStringLiteral("白色染料 × 1"))
-                  && plan.materials.contains(QStringLiteral("黑色染料 × 1"))
-                  && plan.materials.contains(QStringLiteral("砖块 × 1"))
-                  && plan.materials.contains(QStringLiteral("旗帜图案 × 1")),
-              "★★ ZAJ1 材料按种类合并成「× N」，特殊材料用图案表里那件东西",
+                  && plan.materials.contains(QStringLiteral("黑色染料 × 1")),
+              "★★ ZAJ1 材料只有染料：斜十字与砖纹都不需要图案物品",
               plan.materials.join(QStringLiteral(" / ")));
         check(plan.summary.contains(QStringLiteral("底色 红色 · 2/6 层")),
               "★ ZAJ1 总述写清底色和层数", plan.summary);
         check(plan.command.contains(QStringLiteral("minecraft:red_banner"))
                   && plan.command.contains(QStringLiteral("{Pattern:\"cross\",Color:0}"))
-                  && plan.command.contains(QStringLiteral("field_masoned")),
+                  && plan.command.contains(QStringLiteral("bricks")),
               "★ ZAJ1 指令里图案、颜色、底色都对得上", plan.command);
-        // 写法按目标版本分两套：1.20.5 起 `/give` 不收 NBT 那串，改用物品组件。
+        const Banner::Plan brickPlan = Banner::plan(0, {{Banner::patternIndexById(QStringLiteral("bricks")), 0}});
+        const Banner::Plan brickOld = Banner::plan(0, {{Banner::patternIndexById(QStringLiteral("bricks")), 0}}, QStringLiteral("1.21"));
+        const Banner::Plan brickNew = Banner::plan(0, {{Banner::patternIndexById(QStringLiteral("bricks")), 0}}, QStringLiteral("1.21.2"));
+        check(!brickPlan.materials.join(QStringLiteral(" ")).contains(QStringLiteral("旗帜图案"))
+                  && !brickOld.materials.join(QStringLiteral(" ")).contains(QStringLiteral("旗帜图案"))
+                  && brickNew.materials.contains(QStringLiteral("砖纹旗帜图案 × 1")),
+              "★★ ZAJ1 砖纹 1.21.1 及以前不需要图案物品，1.21.2 起要「砖纹旗帜图案」",
+              brickNew.materials.join(QStringLiteral(" / ")));
+        check(plan.steps.first().contains(QStringLiteral("→ 叠出「斜十字」"))
+                  && !plan.steps.first().contains(QStringLiteral("斜十字斜十字")),
+              "★★ ZAJ1 步骤里图案名和材料之间有分隔，不粘成「斜十字斜十字」",
+              plan.steps.first());
         const QString nbtCommand =
             QStringLiteral("/give @p minecraft:red_banner{BlockEntityTag:{Patterns:"
-                           "[{Pattern:\"cross\",Color:0},{Pattern:\"field_masoned\",Color:15}]}}");
+                           "[{Pattern:\"cross\",Color:0},{Pattern:\"bricks\",Color:15}]}}");
         const QString componentCommand =
             QStringLiteral("/give @p minecraft:red_banner[minecraft:banner_patterns="
                            "[{pattern:\"minecraft:cross\",color:\"white\"},"
-                           "{pattern:\"minecraft:field_masoned\",color:\"black\"}]]");
+                           "{pattern:\"minecraft:bricks\",color:\"black\"}]]");
         check(plan.command == nbtCommand,
               "★★ ZAJ1 不限版本 / 1.20.4 ⇒ 老写法逐字不变（NBT）", plan.command);
         check(Banner::plan(14, layers, QStringLiteral("1.20.4")).command == nbtCommand,
@@ -804,9 +882,11 @@ void runToolboxExtraTests() {
         check(ArmorTrim::armorPieceName(3, 0) == QStringLiteral("金头盔"),
               "★ ZAJ3 金头盔（其余材质就是材质 + 部位）", ArmorTrim::armorPieceName(3, 0));
         check(ArmorTrim::trimMaterialAt(0).item == QStringLiteral("紫水晶碎片")
+                  && ArmorTrim::trimMaterialAt(8).item == QStringLiteral("下界石英")
                   && ArmorTrim::trimMaterialAt(9).item == QStringLiteral("红石粉"),
               "★ ZAJ3 每种纹饰材料在锻造台里摆的那件东西写在表里",
               ArmorTrim::trimMaterialAt(0).item + QStringLiteral(" / ")
+                  + ArmorTrim::trimMaterialAt(8).item + QStringLiteral(" / ")
                   + ArmorTrim::trimMaterialAt(9).item);
         // 名字以游戏 zh_cn.json 为准：`trim_material.minecraft.*` / `trim_pattern.minecraft.*`
         const QStringList materialNames = ArmorTrim::trimMaterialNames();
@@ -1002,8 +1082,11 @@ void runToolboxExtraTests() {
               single.notes.join(QStringLiteral(" / ")));
         const ArmorTrim::Plan flowPlan = ArmorTrim::plan(4, 1, flow, 0, 1);
         check(flowPlan.ok
-                  && flowPlan.notes.join(QStringLiteral(" / ")).contains(QStringLiteral("1.21")),
-              "★★ ZAJ5 1.21 的模板会提醒版本（更早的版本里没有）",
+                  && flowPlan.notes.join(QStringLiteral(" / "))
+                         .contains(QStringLiteral("涡流纹饰模板自 Java 版 1.21 起可用。"))
+                  && !flowPlan.notes.join(QStringLiteral(" / "))
+                          .contains(QStringLiteral("纹饰模板 纹饰模板")),
+              "★★ ZAJ5 1.21 的模板会提醒版本，且「纹饰模板」不重复",
               flowPlan.notes.join(QStringLiteral(" / ")));
         const ArmorTrim::Plan resinPlan =
             ArmorTrim::plan(4, 1, coast, ArmorTrim::trimMaterialCount() - 1, 1);

@@ -641,7 +641,7 @@ void ToolboxController::convertCoordinates(int dimensionIndex, double x, double 
                         .arg(CoordConvert::dimensionText(to),
                              CoordConvert::positionText(converted)));
     };
-    rows.append(QCoreApplication::translate("ToolboxController", "%1 中的字段：%2")
+    rows.append(QCoreApplication::translate("ToolboxController", "%1 中的坐标：%2")
                     .arg(CoordConvert::dimensionText(from), CoordConvert::positionText(position)));
     for (CoordConvert::Dimension to :
          {CoordConvert::Dimension::Overworld, CoordConvert::Dimension::Nether,
