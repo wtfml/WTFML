@@ -2962,14 +2962,13 @@ int runSite(QApplication &app, const ShotOptions &options) {
             ask.id = QStringLiteral("m1");
             ask.user = true;
             ask.content = demoText("请将光影与优化-1.21.1 的渲染距离调整为 12，并启用平滑光照。",
-                                   "Please set the render distance of Shaders 1.21.1 to 12 and enable smooth lighting.");
+                                   "Set the render distance to 12 and enable smooth lighting.");
             AgentView::Message answer;
             answer.id = QStringLiteral("m2");
             answer.content = demoText(
                 "`options.txt` 当前为 `renderDistance:8`、`ao:false`。\n"
                 "将修改这两项，写入前会将原文件备份为 `options.txt.bak`。",
-                "`options.txt` currently has `renderDistance:8` and `ao:false`.\n"
-                "Both values will be changed. The original file will be backed up as `options.txt.bak` before writing.");
+                "`options.txt` has `renderDistance:8` and `ao:false`. Both will be changed after a backup.");
             agent->clearMessages();
             app.sendPostedEvents(nullptr, QEvent::DeferredDelete);
             pump();
@@ -2980,7 +2979,9 @@ int runSite(QApplication &app, const ShotOptions &options) {
             card.summary = demoText("共 42 项设置", "42 settings");
             card.detail = QStringLiteral("renderDistance=8　ao=false");
             card.status = AgentView::ToolCardStatus::Done;
-            agent->setToolCards({card});
+            // 不摆工具卡：带上它对话流比窗口高 25 px，滚到底时用户气泡的上沿被页头压住。
+            Q_UNUSED(card);
+            agent->setToolCards({});
             agent->showEmptyState(false);
             agent->showApproval(siteApprovalRequest());
             pump();
