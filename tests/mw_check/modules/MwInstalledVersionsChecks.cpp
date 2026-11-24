@@ -806,7 +806,7 @@ int MwInstalledVersionsChecks(const QDir &versionsDir, MainWindow &window, QStac
                                           Q_ARG(bool, false),
                                           Q_ARG(LoaderMeta::LoaderVersionList,
                                                 LoaderMeta::LoaderVersionList()),
-                                          Q_ARG(QString, QStringLiteral("网络不通")));
+                                          Q_ARG(QString, QStringLiteral("网络不可达")));
                 QApplication::processEvents();
                 check(failedRow->childCount() == 3 &&
                           childText(failedRow, 0) == MainWindowUI::loaderVersionLatestText() &&
@@ -1047,7 +1047,7 @@ int MwInstalledVersionsChecks(const QDir &versionsDir, MainWindow &window, QStac
                 dismissNextPrompt();
                 installBtn->click();
                 QApplication::processEvents();
-                check(g_modalTitle == QStringLiteral("Java 版本不够"),
+                check(g_modalTitle == QStringLiteral("Java 版本过低"),
                       "点「安装」弹的是「Java 版本不够」",
                       g_modalTitle + QStringLiteral(" / ") + g_modalText);
                 check(g_modalWasWarning, "它是警告框（这是一条错误，不是「还没做」那种提示）");
@@ -1069,7 +1069,7 @@ int MwInstalledVersionsChecks(const QDir &versionsDir, MainWindow &window, QStac
                           QString::number(countOccurrences(messagesSnapshot(),
                                                            QStringLiteral("开始安装"))));
                 check(countOccurrences(messagesSnapshot(),
-                                       QStringLiteral("这个版本要的 Java 拿不到")) >= 1,
+                                       QStringLiteral("无法获取此版本所需的 Java")) >= 1,
                       "日志里也留了一句");
 
                 // 收拾：翻回「自动」那一档。**路径本身清不掉**（产品有意不让"自动"这一档

@@ -100,10 +100,10 @@ QString GroupListDelegate::rowActionTip(const QModelIndex &index, const QRect &i
     // 一点都不挨着，顺序无所谓；将来真叠上了，先判的那个赢（和 VersionTreeDelegate::
     // rowActionTip() 同一条）。
     if (canMoveUp(index) && moveUpRect(itemRect).contains(pos)) {
-        return tr("上移这一组（按住 Shift 直接放到最上面）");
+        return tr("上移分组（按住 Shift 可直接移至最上）");
     }
     if (canMoveDown(index) && moveDownRect(itemRect).contains(pos)) {
-        return tr("下移这一组（按住 Shift 直接放到最下面）");
+        return tr("下移分组（按住 Shift 可直接移至最下）");
     }
     return QString();
 }

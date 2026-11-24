@@ -40,8 +40,8 @@
 | 11-05 | `-Suite network` | 6/6（107.94 s）；复测 5/5（89.16 s） | 设 `WTFML_TEST_TEMP` 之后；之前本机 3/6 失败，根因见 TESTING.md「环境变量」 |
 | 11-05 | network-diag | 48 条全过（19.0 / 18.9 s，退出 0） | `build-audit/tools/network_diag/WTFMLNetworkDiag.exe --self-test`，`QT_QPA_PLATFORM=offscreen` |
 | 11-05 | 例行检查 + `-Suite quick` | 归属检查 PASS；quick 12/12（11.85 s）；文档引用检查 PASS | 当时 129 条 md 链接 + 48 条源码 docs 引用 |
-| 11-10 | Agent Stage 1A | `verify_agent` 145、`ui_check_agent` 28、`mw_check_agent` 22 | `wtfml.ui`、`main-window`、`token-protection-fault`、核心基线、`test-modules/test-runner/ci-partitions` 同轮通过；细节见 [AGENT_STAGE1A](../features/AGENT_STAGE1A.md) |
-| 11-10 | Agent Stage 1B | `verify_agent` 306、`ui_check_agent` 39、`mw_check_agent` 31 | junction 夹具建不出来时输出 `SKIP`，不计通过；见 [AGENT_STAGE1B](../features/AGENT_STAGE1B.md) |
+| 11-10 | Agent Stage 1A | `verify_agent` 145、`ui_check_agent` 28、`mw_check_agent` 22 | `wtfml.ui`、`main-window`、`token-protection-fault`、核心基线、`test-modules/test-runner/ci-partitions` 同轮通过；细节见 [AGENT](../features/AGENT.md) |
+| 11-10 | Agent Stage 1B | `verify_agent` 306、`ui_check_agent` 39、`mw_check_agent` 31 | junction 夹具建不出来时输出 `SKIP`，不计通过；见 [AGENT](../features/AGENT.md) |
 
 ## 真机与实网验收
 
@@ -56,6 +56,8 @@
 | 11-03 | 真屏 UI/DPI 巡检（系统 150%） | 三主题 × 两尺寸 × 十场景 60 张截图全部保存；调色板失配 0；Tab 遍历 `visitedControls=6` | `build/tmp-desktop-extended-20261103/`；100% / 125% 未测 |
 | 11-03 | 静态发布重建 + 软件渲染 | 74,103,888 → 去符号 43,707,356 字节（−41.0%）；真启动三跑 visible 199–204 ms；`QT_OPENGL=software` 24 张截图全部保存 | 见 [RELEASE_SIZE](../dev/perf-notes/RELEASE_SIZE.md) |
 | 11-03 | 实网下载（无系统代理） | `icon-live 20`：搜索 833 ms、20 张图标 1884 ms 全回；`cf-resolve-live`：镜像 728 ms 换回 1 条；`resource-live mod` 22/22：下载 `sodium-fabric-0.9.3-beta.1+mc26.3.jar` 1,912,496 B | 同一条 `icon-live` 连跑两次，第一次搜索 15001 ms / 0 条，之后没复现；`resource-live` 曾在原生「下载到哪个文件夹」框上挂住，现改为从实例设置 → 模组页进入 |
+| 11-24 | 智能体 S5.1（隔离工作区 + `instance.testLaunch`） | core-agent 905/905、ui-agent 77/77、main-window-agent 83/83、core-launch 370/370；主程序与测试目标编译；check-agent-release / i18n / test-modules / doc-links / repo-layout PASS | 真实 1.20.1 的启动/崩溃/超时 A9 未跑；工作区整份复制实例，成功/失败都保留 |
+| 11-24 | 智能体 S5.2（修复事务 + 工作区写路由） | core-agent 944/944、ui-agent 77/77、main-window-agent 83/83、core-launch 370/370；主程序与测试目标编译；check-agent-release / i18n / test-modules / doc-links / repo-layout PASS | 真实 1.20.1 的 commit/rollback A10 未跑；复制/提交无独立取消，关闭启动器会等待后台操作 |
 
 2.1.5 升级 / 回滚 / 主菜单（秒；判据 `Sound engine started` / `OpenAL initialized`，Forge/NeoForge 只到主菜单）：
 

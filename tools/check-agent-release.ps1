@@ -4,15 +4,16 @@
     智能体发布前检查：明文密钥、测试假端点、调试后门、危险开关默认值、确认闸存在性。
 
 .DESCRIPTION
-    对应 docs/features/AGENT.md §14 的 Stage 4「发布检查」与
-    docs/features/AGENT_STAGE3_4_ACCEPTANCE.md 的 G4-16/G4-17。只读检查，不改任何文件：
+    对应 docs/features/AGENT.md §12/§13.3 的发布检查项。只读检查，不改任何文件：
 
     1. 产品源码（src/、ui/）里不许出现明文 API Key / 令牌字面量（`sk-…`、`Bearer <长串>`、
        测试用的假 key），tests/ 与 docs/ 不算；
     2. 产品源码里不许出现测试假端点（example.com / localhost:9 / 127.0.0.1 之类的默认地址）；
-    3. `command.run`（任意可执行文件）不许出现在工具注册表里；
-    4. `command.diagnose`、MCP、联网工具都必须有审批/确认闸的调用点；
-    5. 诊断命令与 MCP 服务器的默认值必须是关闭/未启用。
+    3. 技能提示词必须放在 `assets/agent/prompts/`、登记进 `agent.qrc`、不带 BOM，
+       `AgentSkill.cpp` 里不许再出现提示词正文；
+    4. `command.run`（任意可执行文件）不许出现在工具注册表里；
+    5. `command.diagnose`、MCP、联网工具都必须有审批/确认闸的调用点；
+    6. 诊断命令与 MCP 服务器的默认值必须是关闭/未启用。
 
     有任一违规退出码 1。用法：`pwsh tools/check-agent-release.ps1`。
 
@@ -80,7 +81,72 @@ foreach ($file in (Get-ProductFiles @('src', 'ui'))) {
     }
 }
 
-# --- 3. `command.run` 不许出现在产品里 ----------------------------------------
+# --- 3. 技能提示词：外置、可加载、无正文回流 ---------------------------------
+$promptDir = Join-Path $repo 'assets/agent/prompts'
+$promptQrc = Join-Path $repo 'assets/agent/agent.qrc'
+$requiredPrompts = @('common.md', 'general.md', 'inspection.md', 'crash_rescue.md',
+                     'upgrade.md', 'mods.md', 'repair_protocol.md', 'README.md')
+if (-not (Test-Path -LiteralPath $promptDir)) {
+    $violations.Add('找不到 assets/agent/prompts（技能提示词必须外置）')
+} else {
+    foreach ($name in $requiredPrompts) {
+        if (-not (Test-Path -LiteralPath (Join-Path $promptDir $name))) {
+            $violations.Add("缺少技能提示词：assets/agent/prompts/$name")
+        }
+    }
+}
+if (-not (Test-Path -LiteralPath $promptQrc)) {
+    $violations.Add('找不到 assets/agent/agent.qrc（提示词资源清单）')
+} else {
+    $qrcText = Get-Content -LiteralPath $promptQrc -Raw
+    if ($qrcText -notmatch 'prefix="/agent"') {
+        $violations.Add('agent.qrc 的资源前缀不是 /agent')
+    }
+    if (Test-Path -LiteralPath $promptDir) {
+        Get-ChildItem -LiteralPath $promptDir -File -Filter *.md | ForEach-Object {
+            if ($qrcText -notmatch [regex]::Escape("prompts/$($_.Name)")) {
+                $violations.Add("提示词没有登记进 agent.qrc：$($_.Name)")
+            }
+            $bytes = [IO.File]::ReadAllBytes($_.FullName)
+            if ($bytes.Length -eq 0) {
+                $violations.Add("技能提示词为空：$($_.Name)")
+            }
+            if ($bytes.Length -gt 65536) {
+                $violations.Add("技能提示词超过 64 KB：$($_.Name)")
+            }
+            if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
+                $violations.Add("技能提示词带 UTF-8 BOM：$($_.Name)")
+            }
+            foreach ($line in (Get-Content -LiteralPath $_.FullName)) {
+                foreach ($pattern in $secretPatterns) {
+                    if ($line -match $pattern) {
+                        $violations.Add("技能提示词里出现密钥形态：$($_.Name)")
+                    }
+                }
+            }
+        }
+    }
+}
+$skillSource = Join-Path $repo 'src/agent/AgentSkill.cpp'
+if (Test-Path -LiteralPath $skillSource) {
+    $text = Get-Content -LiteralPath $skillSource -Raw
+    if ($text -match 'kCommonRules|systemPrompt\s*=\s*QStringLiteral|你在做|你是 WTFML 启动器内置') {
+        $violations.Add('AgentSkill.cpp 里仍有提示词正文（应放在 assets/agent/prompts）')
+    }
+} else {
+    $violations.Add('找不到 src/agent/AgentSkill.cpp')
+}
+$promptLibrary = Join-Path $repo 'src/agent/AgentPromptLibrary.cpp'
+if (Test-Path -LiteralPath $promptLibrary) {
+    $text = Get-Content -LiteralPath $promptLibrary -Raw
+    if ($text -notmatch 'Q_INIT_RESOURCE\(agent\)') {
+        $violations.Add('AgentPromptLibrary.cpp 缺少 Q_INIT_RESOURCE(agent)（静态库资源不会初始化）')
+    }
+} else {
+    $violations.Add('找不到 src/agent/AgentPromptLibrary.cpp')
+}
+
+# --- 4. `command.run` 不许出现在产品里 ----------------------------------------
 $registry = Join-Path $repo 'src/agent/AgentToolRegistry.cpp'
 if (Test-Path -LiteralPath $registry) {
     $text = Get-Content -LiteralPath $registry -Raw
@@ -91,9 +157,10 @@ if (Test-Path -LiteralPath $registry) {
     $violations.Add('找不到 src/agent/AgentToolRegistry.cpp')
 }
 
-# --- 4. 审批/确认闸的调用点必须还在 -------------------------------------------
+# --- 5. 审批/确认闸的调用点必须还在 -------------------------------------------
 $gateChecks = @(
     @{ File = 'src/agent/AgentLauncherTools.cpp'; Pattern = 'AgentApprovalPolicy::request'; What = '启动器工具审批闸' },
+    @{ File = 'src/agent/AgentTestLaunchToolEngine.cpp'; Pattern = 'AgentApprovalPolicy::request'; What = '测试启动审批闸' },
     @{ File = 'src/agent/AgentWebTools.cpp';       Pattern = 'AgentApprovalPolicy::request'; What = '联网工具审批闸' },
     @{ File = 'src/agent/AgentCommandTools.cpp';   Pattern = 'AgentApprovalPolicy::request'; What = '诊断命令审批闸' },
     @{ File = 'src/agent/AgentMcpToolEngine.cpp';  Pattern = 'AgentApprovalPolicy::request'; What = 'MCP 工具审批闸' },
@@ -113,7 +180,7 @@ foreach ($check in $gateChecks) {
     }
 }
 
-# --- 5. 危险开关默认值 --------------------------------------------------------
+# --- 6. 危险开关默认值 --------------------------------------------------------
 $settings = Join-Path $repo 'src/agent/AgentSettings.cpp'
 if (Test-Path -LiteralPath $settings) {
     $text = Get-Content -LiteralPath $settings -Raw

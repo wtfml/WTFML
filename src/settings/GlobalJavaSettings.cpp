@@ -1502,7 +1502,7 @@ bool GlobalJavaSettings::ensureJavaForVersion(
 
     // First, check if we already have the correct version configured
     if (!io.javaPath.isEmpty()) {
-        // 用户在「Java 版本不符」那个框里点了「仍然用这个 Java 启动」：他要的就是这条路径。
+        // 用户在「Java 版本不符」那个框里点了「仍使用此 Java 启动」：他要的就是这条路径。
         // 判在 javaMatchesMajor() **之前**是有意的 —— 那个函数总是冷启一个 JVM，而这里
         // 已经拿到过用户的明确授权，没必要再花那几十毫秒去确认一件他已经决定的事。
         if (allowMismatchedPath) {

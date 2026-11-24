@@ -556,7 +556,7 @@ void runInstanceFilesPagesTests() {
                     pumpUntil([&answerer] { return !answerer.answered.isEmpty(); }, 5000);
                 answerer.stop();
                 check(!moved && warned && !answerer.answered.isEmpty() &&
-                          answerer.answered.at(0).title == QStringLiteral("改动失败"),
+                          answerer.answered.at(0).title == QStringLiteral("修改失败"),
                       "★ T20.4 目标名已经有一份时不改：弹一句「改动失败」",
                       answerer.answered.isEmpty() ? QStringLiteral("没弹")
                                                   : answerer.answered.at(0).title);
@@ -1422,7 +1422,7 @@ void runInstanceFilesPagesTests() {
             check(savedNotDirty,
                   "★ T20.7 存完那一格不脏了（不脏的话用户接着点「返回」又被问一次"
                   "「改过要不要丢掉」——它明明刚存过）");
-            check(promptCount == 1 && promptTitle == QStringLiteral("世界设置有未保存的更改"),
+            check(promptCount == 1 && promptTitle == QStringLiteral("配置文件有未保存的更改"),
                   "★★ T20.7 改过之后点「返回」**先问一句**（那一问的字是 MainWindow 给的，"
                   "两处共用同一份）",
                   QStringLiteral("%1 条 / %2").arg(promptCount).arg(promptTitle));
@@ -2493,7 +2493,7 @@ void runInstanceFilesPagesTests() {
                   "用户要回退的是他刚才那一次保存）",
                   restoredText);
             check(restoredDirty &&
-                      restoredNote.startsWith(ConfigFileEditorPage::restoredPrefix()) &&
+                      restoredNote.startsWith(QStringLiteral("已恢复上次保存前的内容（")) &&
                       restoredNote.contains(QStringLiteral("保存")),
                   "★★ T20.10 取回来**只是摆进框里**：那一份是脏的、底下那行字说清它哪来的，"
                   "而且要用户按「保存」才写回盘上 —— 「还原」不许是一次悄悄的写入（不然用户"
@@ -2534,7 +2534,7 @@ void runInstanceFilesPagesTests() {
                   QStringLiteral("盘上换了=%1 那份留了备份=%2")
                       .arg(int(overwroteDisk))
                       .arg(int(sneakyKeptInBackup)));
-            check(gamePromptCount == 1 && gamePromptTitle == QStringLiteral("这个实例正开着游戏"),
+            check(gamePromptCount == 1 && gamePromptTitle == QStringLiteral("此实例正在运行游戏"),
                   "★★ T20.10 这个实例的游戏**在跑**时保存被挡住，而且说清了为什么（游戏手里"
                   "有一份内存副本，退出时会整份写回来）—— 判据和「游戏还在跑、窗口不许关」那一趟"
                   "是同一份（runningVersionIds()）",

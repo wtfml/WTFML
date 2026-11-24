@@ -35,6 +35,7 @@ enum class AgentWorkflowStage { Collect, AwaitPlanApproval, Execute, Verify, Rep
 class AgentWorkflow {
 public:
     void setSkill(const AgentSkill &skill);
+    void setInstanceId(const QString &instanceId) { m_instanceId = instanceId; }
     AgentSkill skill() const { return m_skill; }
     /// 换了技能/实例：旧计划作废，证据保留（旧工具结果仍是事实）。
     void reset(const QString &reason = QString());
@@ -75,6 +76,7 @@ private:
     bool isVerifyStep(const AgentPlanStep &step) const;
 
     AgentSkill m_skill;
+    QString m_instanceId;
     AgentWorkflowStage m_stage = AgentWorkflowStage::Collect;
     QString m_goal;
     QList<AgentPlanStep> m_steps;

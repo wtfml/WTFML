@@ -149,8 +149,8 @@ void MainWindow::applySettingsToUi() {
     QComboBox *behaviourCombo = m_ui->getLauncherBehaviourCombo();
     behaviourCombo->addItem(tr("不变"), int(LauncherBehaviour::Unchanged));
     behaviourCombo->addItem(tr("最小化启动器"), int(LauncherBehaviour::Minimize));
-    behaviourCombo->addItem(tr("收起启动器"), int(LauncherBehaviour::Close));
-    behaviourCombo->addItem(tr("收起启动器，游戏退出后自动回来"),
+    behaviourCombo->addItem(tr("隐藏启动器"), int(LauncherBehaviour::Close));
+    behaviourCombo->addItem(tr("隐藏启动器，游戏退出后自动恢复"),
                             int(LauncherBehaviour::CloseAndRestore));
     selectByEnumData(behaviourCombo, m_settings->launcherBehaviour());
 
@@ -193,7 +193,7 @@ void MainWindow::applySettingsToUi() {
     // 优先级：枚举值存在 itemData 里，文案是这里的 tr()。五档一一对应 ProcessPriority，
     // 顺序也按枚举来（Low → High）—— 界面从上往下就是"越来越抢 CPU"。
     QComboBox *priorityCombo = m_ui->getProcessPriorityCombo();
-    priorityCombo->addItem(tr("低（空闲时才算）"), int(ProcessPriority::Low));
+    priorityCombo->addItem(tr("低（仅在系统空闲时运行）"), int(ProcessPriority::Low));
     priorityCombo->addItem(tr("低于正常"), int(ProcessPriority::BelowNormal));
     priorityCombo->addItem(tr("正常（默认）"), int(ProcessPriority::Normal));
     priorityCombo->addItem(tr("高于正常"), int(ProcessPriority::AboveNormal));

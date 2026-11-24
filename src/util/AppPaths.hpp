@@ -104,6 +104,14 @@ inline QString minecraftDir() {
     return custom.isEmpty() ? defaultMinecraftDir() : custom;
 }
 
+/// 智能体测试启动的隔离工作区根：`<数据目录>/cache/agent-workspaces`。
+///
+/// 物理副本放在游戏根这一侧，和源实例同卷，复制不用跨盘。登记与日志在
+/// `AgentPaths::workspaceRecordsDir()`（`%LOCALAPPDATA%/WTFML/agent/workspaces`）。
+inline QString agentWorkspacesDir() {
+    return minecraftDir() + QStringLiteral("/cache/agent-workspaces");
+}
+
 /// 已安装版本的根目录：<数据目录>/versions
 inline QString versionsDir() { return minecraftDir() + QStringLiteral("/versions"); }
 

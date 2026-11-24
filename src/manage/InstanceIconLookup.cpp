@@ -238,8 +238,8 @@ Result lookupNetwork(const QStringList &paths, const Options &options) {
                 // 记成'问过了、没有'"。半真半假的一趟要是把负缓存写了，用户这一整个会话
                 // 都再也看不到图标（见 Result::problem 那段）。
                 result.problem = reply.networkError.isEmpty()
-                                     ? QObject::tr("Modrinth 反查回了 HTTP %1。").arg(reply.status)
-                                     : QObject::tr("Modrinth 反查没连上：%1").arg(reply.networkError);
+                                     ? QObject::tr("Modrinth 反查返回 HTTP %1。").arg(reply.status)
+                                     : QObject::tr("Modrinth 反查连接失败：%1").arg(reply.networkError);
                 return result;
             }
             QString problem;
@@ -296,9 +296,9 @@ Result lookupNetwork(const QStringList &paths, const Options &options) {
                 // 不影响那个判断，写进去的代价是下一趟把几十兆 jar 从头重读一遍
                 // （见 Result::iconProblem）。
                 result.iconProblem = reply.networkError.isEmpty()
-                                         ? QObject::tr("Modrinth 取图标地址时回了 HTTP %1。")
+                                         ? QObject::tr("Modrinth 获取图标地址时返回 HTTP %1。")
                                                .arg(reply.status)
-                                         : QObject::tr("Modrinth 取图标地址时没连上：%1")
+                                         : QObject::tr("Modrinth 获取图标地址时连接失败：%1")
                                                .arg(reply.networkError);
                 break;
             }
@@ -349,8 +349,8 @@ Result lookupNetwork(const QStringList &paths, const Options &options) {
             if (!reply.ok()) {
                 // 同上：已经认出来的留着，problem 立起来（那一句是给日志的）。
                 result.problem = reply.networkError.isEmpty()
-                                     ? QObject::tr("CurseForge 反查回了 HTTP %1。").arg(reply.status)
-                                     : QObject::tr("CurseForge 反查没连上：%1").arg(reply.networkError);
+                                     ? QObject::tr("CurseForge 反查返回 HTTP %1。").arg(reply.status)
+                                     : QObject::tr("CurseForge 反查连接失败：%1").arg(reply.networkError);
                 return result;
             }
             QString problem;
@@ -413,9 +413,9 @@ Result lookupNetwork(const QStringList &paths, const Options &options) {
                 // 的判据，见 Result::iconProblem 那段）：这一发失败不该让整趟作废，否则
                 // 每开一次设置页都要把几十兆 jar 从头重读重算一遍，换来的只是"图标可能来了"。
                 result.iconProblem = reply.networkError.isEmpty()
-                                         ? QObject::tr("CurseForge 取图标时回了 HTTP %1。")
+                                         ? QObject::tr("CurseForge 获取图标时返回 HTTP %1。")
                                                .arg(reply.status)
-                                         : QObject::tr("CurseForge 取图标时没连上：%1")
+                                         : QObject::tr("CurseForge 获取图标时连接失败：%1")
                                                .arg(reply.networkError);
                 break;
             }

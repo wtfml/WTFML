@@ -409,7 +409,7 @@ int UiServerSettingsChecks() {
             row1.path = QStringLiteral("C:/backups/world-1.zip");
             row1.when = QStringLiteral("2026-10-13 14:08");
             row1.size = QStringLiteral("12.4 MB");
-            row1.scope = QStringLiteral("这个服务端的整个世界文件夹");
+            row1.scope = QStringLiteral("此服务端的整个世界文件夹");
             ServerSettingsPage::BackupRow row2 = row1;
             row2.path = QStringLiteral("C:/backups/world-2.zip");
             row2.when = QStringLiteral("2026-10-12 09:30");

@@ -73,7 +73,7 @@ ResourceInstallController::selectTarget(ResourceCatalog::Kind kind,
     const QString defaultDir = instanceDir.isEmpty() ? AppPaths::minecraftDir()
                                                      : QDir(instanceDir).filePath(folder);
     const QString chosen = QFileDialog::getExistingDirectory(
-        &owner, MainWindow::tr("下载到哪个文件夹"), defaultDir);
+        &owner, MainWindow::tr("目标文件夹"), defaultDir);
     if (chosen.isEmpty()) {
         return std::nullopt;
     }
@@ -185,7 +185,7 @@ void ResourceInstallController::onProjectsFinished(const QString &requestKey,
     // 名字取不到**不算错**：那一条退成项目号显示（见 ModDependencies::buildPlan 那段），
     // 而"没有名字"挡不住"要不要一起下"这个决定。所以这里只记一句日志。
     if (!problem.isEmpty()) {
-        owner.appendLog(MainWindow::tr("前置模组的名字没取到：%1").arg(problem));
+        owner.appendLog(MainWindow::tr("未获取到前置模组的名称：%1").arg(problem));
     }
     // 名字进**会话级**那个缓存（详情页那一行读的是同一份）。取不到名字的那几条**不写**：
     // 写一个空串进去等于把"还没问过"说成"问过了、它没名字"。
@@ -244,7 +244,7 @@ void ResourceInstallController::onVersionsFinished(
         });
         m_check.answers.insert(requestKey, std::move(compatible));
     } else {
-        m_owner.appendLog(MainWindow::tr("前置版本列表没取到：%1").arg(problem));
+        m_owner.appendLog(MainWindow::tr("未获取到前置版本列表：%1").arg(problem));
     }
     if (m_check.pendingKeys.isEmpty()) {
         finishDependencyCheck();
@@ -367,7 +367,7 @@ void ResourceInstallController::installNow(ResourceCatalog::Kind kind, const QSt
         // 用户会当成启动器坏了，然后一遍遍重试 —— 那句话在那儿就写好了，用它。
         const QString note = file == nullptr ? QString() : file->unavailableNote;
         InlineMessage::warning(owner.m_ui->overlay(), MainWindow::tr("下载失败"),
-                               note.isEmpty() ? MainWindow::tr("这一版没有可下载的文件。") : note);
+                               note.isEmpty() ? MainWindow::tr("此版本无可下载的文件。") : note);
         return;
     }
 
@@ -472,7 +472,7 @@ void ResourceInstallController::installNow(ResourceCatalog::Kind kind, const QSt
     if (!extras.isEmpty() && !dependencyDir.isEmpty()) {
         // 主文件去的目录和前置去的目录**不是同一个**，日志上要说清 —— 不然用户看到
         // shaderpacks/ 里多了一个 zip、mods/ 里多了一个 jar，会以为是两回事。
-        owner.appendLog(MainWindow::tr("%1 个前置按模组装进 %2。")
+        owner.appendLog(MainWindow::tr("%1 个前置将作为模组安装到 %2。")
                             .arg(extras.size())
                             .arg(QDir::toNativeSeparators(dependencyDir)));
     }
@@ -503,7 +503,7 @@ void ResourceInstallController::installNow(ResourceCatalog::Kind kind, const QSt
     if (isBatchBusy()) {
         InlineMessage::information(
             owner.m_ui->overlay(), MainWindow::tr("暂时无法操作"),
-            MainWindow::tr("已有下载或安装任务正在进行，请结束后再下载这个。"));
+            MainWindow::tr("已有下载或安装任务正在进行，请待其结束后再下载此项。"));
         return;
     }
 
@@ -537,12 +537,12 @@ void ResourceInstallController::installNow(ResourceCatalog::Kind kind, const QSt
                 != InstanceFiles::ImportNameVerdict::Taken) {
                 break;
             }
-            InlineMessage::warning(owner.m_ui->overlay(), MainWindow::tr("换个名字"), problem);
+            InlineMessage::warning(owner.m_ui->overlay(), MainWindow::tr("更换名称"), problem);
         }
         if (isBatchBusy()) {
             InlineMessage::information(
                 owner.m_ui->overlay(), MainWindow::tr("暂时无法操作"),
-                MainWindow::tr("已有下载或安装任务正在进行，请结束后再下载这个。"));
+                MainWindow::tr("已有下载或安装任务正在进行，请待其结束后再下载此项。"));
             return;
         }
     }

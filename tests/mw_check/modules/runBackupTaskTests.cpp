@@ -333,7 +333,7 @@ void runBackupTaskTests() {
             check(invoked && !renamed,
                   "★★ T35.2b 这一号在「忙」名单上时世界改名被挡下（返回 false，不是悄悄改了）");
             check(g_modalTitle == QStringLiteral("重命名世界") &&
-                      g_modalText.contains(QStringLiteral("正在被另一项操作占用")),
+                      g_modalText.contains(QStringLiteral("正被另一项操作占用")),
                   "★★ T35.2b 挡下来时**当场说了一句人话**（说的是它正被占用，不是改名失败）",
                   g_modalTitle + QStringLiteral(" / ") + g_modalText);
             check(QFileInfo(worldDir).isDir() &&

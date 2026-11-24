@@ -448,7 +448,7 @@ QWidget *PresetManagePage::buildDetailsFields(QWidget *parent) {
     m_descriptionEdit = new QLineEdit(block);
     m_descriptionEdit->setObjectName(descriptionEditName());
     m_descriptionEdit->setPlaceholderText(QCoreApplication::translate("PresetManagePage", "说明（可选）"));
-    InputSizing::longValue(m_descriptionEdit, QCoreApplication::translate("PresetManagePage", "预设说明：一两句话，长度不定"));
+    InputSizing::longValue(m_descriptionEdit, QStringLiteral("预设说明：一两句话，长度不定"));  // i18n-ignore
     fields->addWidget(m_descriptionEdit);
 
     // Enter 也算「保存」（名字框里打完字顺手回车是最常见的动作）。

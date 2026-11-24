@@ -329,7 +329,7 @@ void ServerSettingsPageController::refreshWorlds() {
             row.size = BackupFiles::sizeText(info.size());
             row.safety = BackupFiles::nameIsSafety(info.fileName(), prefix);
             row.scope = row.safety ? MainWindow::tr("还原前的自动快照")
-                                   : MainWindow::tr("这个世界的整个文件夹");
+                                   : MainWindow::tr("此世界的整个文件夹");
             rows.append(row);
         }
     }
@@ -401,7 +401,7 @@ void ServerSettingsPageController::mergeEdits(int fromSection, int toSection) {
         // NOTE: 这一步**只动表单和基线，不写盘**（保存还是那唯一一条写盘的路）。
         page->setValues(m_owner.m_serverSettingsController->valuesFromRaw(page->rawText()));
     }
-    // 「世界备份」「体检」两页和这两样都不搭界，切过去什么都不用做。
+    // 「世界备份」「诊断」两页和这两样都不搭界，切过去什么都不用做。
 }
 
 void ServerSettingsPageController::save() {
@@ -416,16 +416,16 @@ void ServerSettingsPageController::save() {
         // **整份都不写**（而不是"能写的那几项先写下去"）：写盘是一发原子的 `QSaveFile`，
         // 写一半再报错，用户看着的是"保存了"而盘上是半份 —— 宁可让他把那一格改对再来。
         InlineMessage::warning(
-            m_owner.m_ui->overlay(), MainWindow::tr("有几项改不了"),
+            m_owner.m_ui->overlay(), MainWindow::tr("部分设置项无法修改"),
             MainWindow::tr("以下设置值无效，未保存：\n%1\n\n请在表单或「原始文本」中更正后重新保存。")
                 .arg(result.rejected.join(QStringLiteral("\n"))));
         return;
     }
     if (!result.ok) {
-        InlineMessage::critical(m_owner.m_ui->overlay(), MainWindow::tr("保存不了"), result.problem);
+        InlineMessage::critical(m_owner.m_ui->overlay(), MainWindow::tr("无法保存"), result.problem);
         return;
     }
-    m_owner.appendLog(MainWindow::tr("服务端 %1 的 server.properties 已保存（改了 %2 项）。")
+    m_owner.appendLog(MainWindow::tr("服务端 %1 的 server.properties 已保存（已修改 %2 项）。")
                           .arg(result.serverName)
                           .arg(result.changed));
     // 存完之后把这一页整个按**盘上那份新文件**重摆一遍（原文、表单基线、备份那一列、

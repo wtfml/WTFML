@@ -42,9 +42,9 @@ QList<Tasks::TaskStep> ModpackExportController::initialSteps() const {
     // Running —— 任务记出来的那一刻分析已经在路上了。
     const QStringList names{
         tr("规划：扫描实例文件并反查资源出处"),
-        tr("兼容性确认：清单不完整时问一句"),
+        tr("兼容性确认：清单不完整时询问"),
         tr("执行：写入整合包"),
-        tr("验证：核对写出来的文件"),
+        tr("验证：核对输出文件"),
     };
     QList<Tasks::TaskStep> steps;
     steps.reserve(names.size());
@@ -95,13 +95,13 @@ void ModpackExportController::exportPack(const QString &versionId,
     if (versionId.isEmpty() || targetPath.isEmpty()) return;
     if (m_busy) {
         InlineMessage::information(m_overlay, tr("正在导出"),
-                                   tr("已经有一份整合包正在打包，等它完成后再开始下一份。"));
+                                   tr("已有整合包正在打包，请待其完成后再开始下一个。"));
         return;
     }
     if (m_host.isBeingModified && m_host.isBeingModified(versionId)) {
         InlineMessage::information(
             m_overlay, tr("暂时无法操作"),
-            tr("「%1」的文件正在变动。等待安装、导入或检查完成后再导出。")
+            tr("「%1」的文件正在变动。请待安装、导入或检查完成后再导出。")
                 .arg(displayName(versionId)));
         return;
     }
@@ -110,9 +110,9 @@ void ModpackExportController::exportPack(const QString &versionId,
                             : ModpackExport::Format::Modrinth;
     const QString instanceDir = AppPaths::versionDir(versionId);
     if (!QFileInfo(instanceDir).isDir()) {
-        log(tr("导出失败：找不到实例目录 %1").arg(instanceDir));
+        log(tr("导出失败：未找到实例目录 %1").arg(instanceDir));
         InlineMessage::warning(m_overlay, tr("导出失败"),
-                               tr("找不到这个实例的目录：\n%1")
+                               tr("未找到此实例的目录：\n%1")
                                    .arg(QDir::toNativeSeparators(instanceDir)));
         return;
     }
@@ -225,7 +225,7 @@ void ModpackExportController::continueExport(const ModpackExport::ExportPlan &pl
     if (!reasons.isEmpty()) {
         setTaskDetail(tr("部分文件的来源未知"));
         const int choice = InlineMessage::ask(
-            m_overlay, MessageKind::Question, tr("继续导出吗"),
+            m_overlay, MessageKind::Question, tr("是否继续导出"),
             tr("%1\n\n继续导出会保留来源未知的文件。导入后，启动器无法单独更新这些文件或去除重复项。")
                 .arg(reasons.join(QStringLiteral("\n\n"))),
             {tr("继续导出"), tr("取消")}, 1, -1);
@@ -260,12 +260,12 @@ void ModpackExportController::continueExport(const ModpackExport::ExportPlan &pl
                 setTaskStepState(2, Tasks::TaskStepState::Done);
                 setTaskStepState(3, Tasks::TaskStepState::Running);
                 setTaskProgress(3, 4);
-                setTaskDetail(tr("正在核对写出来的文件…"));
+                setTaskDetail(tr("正在核对输出文件…"));
                 const QString verifyProblem = [] (const QString &path) {
                     const QFileInfo info(path);
                     if (!info.isFile()) return tr("打包已结束，但未找到输出文件：%1")
                                                    .arg(QDir::toNativeSeparators(path));
-                    if (info.size() <= 0) return tr("写出来的整合包是空的：%1")
+                    if (info.size() <= 0) return tr("导出的整合包为空：%1")
                                                    .arg(QDir::toNativeSeparators(path));
                     QFile file(path);
                     if (!file.open(QIODevice::ReadOnly)) {
@@ -274,7 +274,7 @@ void ModpackExportController::continueExport(const ModpackExport::ExportPlan &pl
                     }
                     const QByteArray magic = file.read(2);
                     if (magic != QByteArrayLiteral("PK")) {
-                        return tr("写出来的文件不是 zip（开头不是 PK）：%1")
+                        return tr("导出的文件不是 zip（开头不是 PK）：%1")
                             .arg(QDir::toNativeSeparators(path));
                     }
                     return QString();
@@ -291,7 +291,7 @@ void ModpackExportController::continueExport(const ModpackExport::ExportPlan &pl
                 finishTask(true);
                 const QString shown = QDir::toNativeSeparators(targetPath);
                 log(TextMarks::done(tr("整合包已导出：%1").arg(shown)));
-                QStringList lines{tr("已经写到：\n%1").arg(shown)};
+                QStringList lines{tr("已写入：\n%1").arg(shown)};
                 lines.append(tr("已识别 %1 个待检查文件中的 %2 个，并写入下载清单。其余 %3 个文件已包含在整合包中。")
                                  .arg(plan.queried).arg(plan.matched).arg(plan.overrides.size()));
                 if (plan.notDistributable > 0)
@@ -310,7 +310,7 @@ void ModpackExportController::continueExport(const ModpackExport::ExportPlan &pl
                     lines.append(tr("未导出 %1（共 %2 个文件）。保留接收方原有存档和截图。")
                                      .arg(plan.collect.skippedDirs.join(tr("、")),
                                           QString::number(plan.collect.skippedFileCount)));
-                lines.append(tr("这是 %1 的包：别人在启动器里用「导入整合包…」即可导入安装。")
+                lines.append(tr("导出格式：%1。他人可在启动器中通过「导入整合包…」导入安装。")
                                  .arg(format == ModpackExport::Format::CurseForge
                                           ? tr("CurseForge 规范") : tr("Modrinth 规范")));
                 InlineMessage::information(m_overlay, tr("导出完成"),

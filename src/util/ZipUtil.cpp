@@ -99,7 +99,7 @@ QString encodeCommand(const QString &script) {
  * @brief waitForFinished() 返回 false 之后，到底发生了什么。
  * @param failure process.error()（**必须在 kill 之前读**，kill 之后它可能已经变了）。
  * @param detail process.errorString()。
- * @param what 这次动作的名字（「解压」/「读整合包清单」），拼进句子里。**由调用方给**：这几句
+ * @param what 这次动作的名字（「解压」/「读取整合包清单」），拼进句子里。**由调用方给**：这几句
  * 里有一部分是直接弹给用户看的，主语写错了就是一句说不通的话（见 readEntry 的 what）。
  * @return 返回给用户看的一句话。
  *

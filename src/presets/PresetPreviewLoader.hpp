@@ -31,7 +31,7 @@ inline PreviewSnapshot preparePreview(const PreviewRequest &request) {
     QString reason;
     result.manifest = loadManifest(request.root, request.presetId, &ok, &reason);
     if (!ok) {
-        result.problem = QCoreApplication::translate("PresetPreviewLoader", "这一份读不出来：%1").arg(reason);
+        result.problem = QCoreApplication::translate("PresetPreviewLoader", "此预设无法读取：%1").arg(reason);
         return result;
     }
     auto target = readTargetSnapshot(request.instanceRoot, &result.problem);

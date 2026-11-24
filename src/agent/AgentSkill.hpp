@@ -18,6 +18,15 @@ struct AgentSkill {
     QString name;
     QString description;
     QString systemPrompt;
+    /// 提示词资源 id（`assets/agent/prompts/<id>.md`），和技能 id 分开是为了
+    /// `crash-rescue` → `crash_rescue.md` 这类命名差异。
+    QString promptId;
+    /// 加载时的 SHA-256（十六进制）；会话与报告可据此判断用的是哪一版提示词。
+    QString promptHash;
+    /// 人工版本号，改提示词时递增；hash 是内容算出来的，两者一起用。
+    int promptVersion = 1;
+    /// 非空 = 资源缺失/为空/超限/编码错误，技能不可用；调用方不要下发空提示。
+    QString promptProblem;
     /// 工具内部名白名单。空 = 不限制（自由对话沿用 Stage 1B 的全部工具）。
     QStringList allowedTools;
     /// 完成这条工作流至少要碰过的工具（缺了 `workflow.finish` 就拒绝）。
@@ -29,6 +38,7 @@ struct AgentSkill {
     QString completionCriteria;
     int version = 1;
 
+    bool promptAvailable() const { return promptProblem.isEmpty() && !systemPrompt.isEmpty(); }
     bool restrictsTools() const { return !allowedTools.isEmpty(); }
     bool allows(const QString &toolName) const {
         return allowedTools.isEmpty() || allowedTools.contains(toolName);

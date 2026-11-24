@@ -224,7 +224,8 @@ public:
                                              "QListWidget::item { background: transparent; border: none; }"));
         m_list->viewport()->setAutoFillBackground(false);
         box->addWidget(m_list, 1);
-        m_empty = popLabel(QCoreApplication::translate("MainWindowUI", "没有符合的实例"), 13, QFont::Normal, this);
+        m_empty = popLabel(QCoreApplication::translate("MainWindowUI", "无符合条"
+                                                                       "件的实例"), 13, QFont::Normal, this);
         m_empty->setObjectName(QStringLiteral("homePickerEmpty"));
         m_empty->setAlignment(Qt::AlignCenter);
         m_empty->setMinimumHeight(64);
@@ -633,8 +634,8 @@ T *openPopover(QWidget *anchor, const QString &name) {
 
 QString MainWindowUI::chooseResourceDownloadInstance(const QList<HomePickerInstance> &instances,
                                                       bool *otherFolder, bool importing) {
-    const QString title = importing ? QCoreApplication::translate("MainWindowUI", "装到哪个实例里")
-                                    : QCoreApplication::translate("MainWindowUI", "下载到哪个实例");
+    const QString title = importing ? QCoreApplication::translate("MainWindowUI", "选择目标实例")
+                                    : QCoreApplication::translate("MainWindowUI", "目标实例");
     const QString action = importing ? QCoreApplication::translate("MainWindowUI", "安装")
                                      : QCoreApplication::translate("MainWindowUI", "下载");
     InlineMessageBox box(MessageKind::Question, title,

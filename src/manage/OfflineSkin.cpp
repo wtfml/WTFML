@@ -101,13 +101,14 @@ bool save(const QString &uuid, const QImage &image, const QString &variant, QStr
     if (!image.save(&file, "PNG")) {
         file.cancelWriting();
         if (errorOut != nullptr) {
-            *errorOut = QCoreApplication::translate("OfflineSkin", "这张图存不成 PNG：%1").arg(file.errorString());
+            *errorOut = QCoreApplication::translate("OfflineSkin", "无法将图片保存"
+                                                                   "为 PNG：%1").arg(file.errorString());
         }
         return false;
     }
     if (!file.commit()) {
         if (errorOut != nullptr) {
-            *errorOut = QCoreApplication::translate("OfflineSkin", "皮肤图没写完整：%1").arg(file.errorString());
+            *errorOut = QCoreApplication::translate("OfflineSkin", "皮肤图片写入不完整：%1").arg(file.errorString());
         }
         return false;
     }

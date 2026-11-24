@@ -17,7 +17,8 @@ inline std::unique_ptr<QLockFile> acquirePresetWrite(const QString &root, QStrin
         QStringLiteral("wtfml-preset-write-%1.lock").arg(QString::fromLatin1(key))));
     lock->setStaleLockTime(0);
     if (!lock->tryLock(0)) {
-        if (problem) *problem = QCoreApplication::translate("PresetWriteLock", "这个实例的另一项预设应用尚未结束，请等待或取消后重试。");
+        if (problem) *problem = QCoreApplication::translate("PresetWriteLock", "此实例的另一项预设应用尚未"
+                                                                               "结束，请等待或取消后重试。");
         return {};
     }
     return lock;

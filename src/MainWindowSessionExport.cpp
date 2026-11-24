@@ -280,9 +280,9 @@ void MainWindow::exportLaunchScript(const QString &versionId, const QString &pat
 
     const QJsonObject versionJson = m_versionManager->getVersionJson(versionId);
     if (versionJson.isEmpty()) {
-        appendLog(tr("导出启动脚本失败：找不到版本 %1 的 version.json").arg(versionId));
+        appendLog(tr("导出启动脚本失败：未找到版本 %1 的 version.json").arg(versionId));
         InlineMessage::warning(m_ui->overlay(), tr("导出失败"),
-                               tr("找不到版本 %1 的 version.json，导出的启动脚本无法运行。")
+                               tr("未找到版本 %1 的 version.json，导出的启动脚本无法运行。")
                                    .arg(versionId));
         return;
     }
@@ -304,9 +304,8 @@ void MainWindow::exportLaunchScript(const QString &versionId, const QString &pat
             InlineMessage::warning(
                 m_ui->overlay(), tr("导出失败"),
                 tokenError.isEmpty()
-                    ? tr("导出启动脚本要先能拿到登录令牌。请先登录微软账号，"
-                         "或者在「账号与外观…」里添加一个离线账号。")
-                    : tr("%1\n\n导出启动脚本要先能拿到登录令牌，请重新登录后再试。")
+                    ? tr("导出启动脚本需要登录令牌。请先登录微软账号，或在「管理账号与皮肤」中添加离线账号。")
+                    : tr("%1\n\n导出启动脚本需要登录令牌，请重新登录后再试。")
                           .arg(tokenError));
             return;
         }
@@ -353,7 +352,7 @@ void MainWindow::exportLaunchScript(const QString &versionId, const QString &pat
     if (!written) {
         QString writeError = file.errorString();
         if (writeError.isEmpty()) {
-            writeError = tr("系统没给出原因。");
+            writeError = tr("系统未给出原因。");
         }
         appendLog(tr("导出启动脚本失败：%1").arg(writeError));
         InlineMessage::warning(m_ui->overlay(), tr("导出失败"),
@@ -365,15 +364,16 @@ void MainWindow::exportLaunchScript(const QString &versionId, const QString &pat
     const QString shown = QDir::toNativeSeparators(path);
     appendLog(TextMarks::done(tr("启动脚本已导出：%1").arg(shown)));
     QStringList notes;
-    notes.append(offlineMode ? tr("这一份用的是离线身份（游戏里就是这个名字）。")
-                             : tr("脚本不保存登录令牌。正版建议从启动器启动；高级用法需在运行环境中提供 WTFML_MC_ACCESS_TOKEN。"));
+    notes.append(offlineMode ? tr("此脚本使用离线身份（游戏内显示该名称）。")
+                             : tr("脚本不保存登录令牌。使用微软账号时建议从启动器启动；"
+                                  "高级用法需在运行环境中提供 WTFML_MC_ACCESS_TOKEN。"));
     if (javaSettings.javaPath.isEmpty()) {
         notes.append(tr("此实例未指定 Java。脚本将使用 PATH 中的 java 命令。"));
     }
     notes.append(tr("导出的是本次启动使用的参数。修改后可重新导出。"));
     InlineMessage::information(
         m_ui->overlay(), tr("导出完成"),
-        tr("已经写到：\n%1\n\n%2").arg(shown, notes.join(QStringLiteral("\n"))));
+        tr("已写入：\n%1\n\n%2").arg(shown, notes.join(QStringLiteral("\n"))));
 }
 
 void MainWindow::exportModpack(const QString &versionId, const QString &targetPath) {
@@ -395,7 +395,7 @@ void MainWindow::exportModpack(const QString &versionId, const QString &targetPa
     bool instanceExport = false;
     if (customLaunch) {
         instanceExport = InlineMessage::question(
-            m_ui->overlay(), tr("这个实例带自定义启动配置"),
+            m_ui->overlay(), tr("此实例含自定义启动配置"),
             tr("此实例修改了主类或 JVM 参数。使用 CurseForge 格式会丢失启动配置，导入后可能无法运行。\n\n可导出为 Prism / MultiMC 可导入的普通实例，或继续导出 CurseForge 清单。"),
             tr("普通实例（Prism）"), tr("仍然导出 CurseForge 清单"), true);
     }

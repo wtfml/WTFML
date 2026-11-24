@@ -57,7 +57,7 @@ QPixmap versionChannelMark(int channelIndex, int size);
 
 /// 加载器标志 —— 各家自己那张图（见文件头【哪些是画的、哪些是真图】）。
 /// @param index 走的是 MainWindowUI::modLoaderOptionNames() 那张表的顺序
-/// （0 Fabric / 1 Forge / 2 NeoForge / 3 OptiFine / 4 Quilt），第 5 个（「不装（纯原版）」）
+/// （0 Fabric / 1 Forge / 2 NeoForge / 3 OptiFine / 4 Quilt），第 5 个（「不安装（纯原版）」）
 /// 和越界的下标都给草方块 —— 那条路装的就是原版。
 /// @param size 边长（像素）。出图是 64×64 的成品等比缩到这么大（放大走最近邻、缩小走
 /// 平滑，见 .cpp）。**资源读不出来时也给草方块** —— 和"认不出下标"一条规矩。

@@ -40,7 +40,7 @@ QString categoryDescription(const QString &key) {
     if (key == QStringLiteral("config")) return QCoreApplication::translate("InstanceUpgradePage", "config 与 defaultconfigs");
     if (key == QStringLiteral("options")) return QCoreApplication::translate("InstanceUpgradePage", "键位、视频、声音");
     if (key == QStringLiteral("resourcepacks")) return QCoreApplication::translate("InstanceUpgradePage", "文件与启用顺序");
-    if (key == QStringLiteral("shaderpacks")) return QCoreApplication::translate("InstanceUpgradePage", "需要渲染器才生效");
+    if (key == QStringLiteral("shaderpacks")) return QCoreApplication::translate("InstanceUpgradePage", "需渲染器支持后生效");
     if (key == QStringLiteral("screenshots")) return QCoreApplication::translate("InstanceUpgradePage", "作为普通文件复制");
     if (key == QStringLiteral("schematics")) return QCoreApplication::translate("InstanceUpgradePage", "structures 等结构文件");
     if (key == QStringLiteral("servers")) return QCoreApplication::translate("InstanceUpgradePage", "servers.dat 里的条目");
@@ -132,7 +132,7 @@ InstanceUpgradePage::InstanceUpgradePage(QWidget *parent) : QWidget(parent) {
         layout->addWidget(m_targetLoaderVersion);
         m_instanceName = new QLineEdit(target);
         m_instanceName->setObjectName(instanceNameEditName());
-        m_instanceName->setPlaceholderText(QCoreApplication::translate("InstanceUpgradePage", "新实例的名字"));
+        m_instanceName->setPlaceholderText(QCoreApplication::translate("InstanceUpgradePage", "新实例名称"));
         InputSizing::shortValue(m_instanceName, InputSizing::kNameChars, InputSizing::Script::Han);
         layout->addWidget(m_instanceName);
         layout->addStretch();
@@ -358,7 +358,7 @@ void InstanceUpgradePage::setCategoryAmounts(
         if (amounts.contains(category.key)) {
             const auto amount = amounts.value(category.key);
             if (amount.first <= 0) {
-                text += QCoreApplication::translate("InstanceUpgradePage", " · 没有");
+                text += QCoreApplication::translate("InstanceUpgradePage", " · 无");
             } else {
                 text += QCoreApplication::translate("InstanceUpgradePage", " · %1 个 · %2")
                             .arg(amount.first)

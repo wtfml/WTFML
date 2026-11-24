@@ -15,6 +15,7 @@
 #include "ElidedLabel.hpp"
 #include "Theme.hpp"   // 按钮身份、`neutralFill()`（那几档中性灰）、`isDarkPalette()`
 #include "VersionIcons.hpp"
+#include "util/SentenceJoin.hpp"
 
 #include <QApplication>
 #include <QAction>
@@ -323,12 +324,12 @@ GameLogWindow::GameLogWindow(const QString &instanceName, QWidget *parent)
         m_exportLogAction->setToolTip(exportLogButtonTooltip());
         m_exportReportAction = menu->addAction(exportReportButtonText());
         m_exportReportAction->setToolTip(exportReportButtonTooltip());
-        m_externalAction = menu->addAction(tr("用外部程序打开"));
+        m_externalAction = menu->addAction(tr("使用外部程序打开"));
         m_externalAction->setVisible(false);  // 只有文件查看器用得上，见 beginFile()
         menu->setToolTipsVisible(true);
         menu->addSeparator();
         m_clearAction = menu->addAction(clearButtonText());
-        m_clearAction->setToolTip(tr("只清这个窗口里看到的内容，日志文件不受影响。"));
+        m_clearAction->setToolTip(tr("仅清空此窗口中的内容，日志文件不受影响。"));
         connect(m_moreButton, &QPushButton::clicked, this, [this, menu]() {
             menu->popup(m_moreButton->mapToGlobal(QPoint(m_moreButton->width() - menu->sizeHint().width(),
                                                          m_moreButton->height() + 4)));
@@ -835,7 +836,7 @@ void GameLogWindow::setFileProblem(const QString &problem) {
     m_model.clear();
     m_pending.clear();
     m_view->clear();
-    m_baseHint = tr("无法显示这份文件。");
+    m_baseHint = tr("无法显示此文件。");
     updateFilterButtons();
     m_view->setPlaceholderText(problem);
 }
@@ -1270,15 +1271,16 @@ QString GameLogWindow::fileWindowTitleText(const QString &fileName) {
 }
 
 QString GameLogWindow::fileHintText(qint64 cutHeadBytes, bool tailByDefault) {
-    QString text = QCoreApplication::translate("GameLogWindow", "已保存的日志，不再更新。");
+    QStringList sentences;
+    sentences << QCoreApplication::translate("GameLogWindow", "已保存的日志，不再更新。");
     if (cutHeadBytes > 0) {
-        text += QCoreApplication::translate("GameLogWindow", "文件过大，只读取了末尾部分。");
+        sentences << QCoreApplication::translate("GameLogWindow", "文件过大，只读取了末尾部分。");
     }
     if (tailByDefault) {
-        text += QCoreApplication::translate("GameLogWindow", "当前显示末尾 %1 行，可在右上角调整。")
-                    .arg(fileTailLines());
+        sentences << QCoreApplication::translate("GameLogWindow", "当前显示末尾 %1 行，可在右上角调整。")
+                         .arg(fileTailLines());
     }
-    return text;
+    return joinSentences(sentences);
 }
 
 QString GameLogWindow::hintText() {
@@ -1304,12 +1306,13 @@ QString GameLogWindow::exportReportButtonText() { return QCoreApplication::trans
 QString GameLogWindow::exportLogButtonTooltip() {
     // 这句话（和下面那句）唯一的用途就是把两颗键**分开**：它们只差"要不要给别人的那一份
     // 环境信息"，而这一点从键上的字看不出来。所以两句都写成"你会拿到什么"。
-    return QCoreApplication::translate("GameLogWindow", "把全部游戏输出存成文本文件（含被筛掉的几档，最多 %1 行）。")
+    return QCoreApplication::translate("GameLogWindow", "将全部游戏输出保存为文本文件（含已筛除的级别，最多 %1 行）。")
         .arg(maxLogBlocks());
 }
 
 QString GameLogWindow::exportReportButtonTooltip() {
-    return QCoreApplication::translate("GameLogWindow", "存一份可以直接发给别人的报告：启动器版本、系统、这个实例、退出码，" "加上错误那几行和完整日志。");
+    return QCoreApplication::translate("GameLogWindow", "导出可直接发送的报告，含启动器版本、系统、当前实例、"
+                                                        "退出码、错误行与完整日志。");
 }
 
 QString GameLogWindow::emptyPlaceholderText() { return QCoreApplication::translate("GameLogWindow", "等待游戏输出…"); }
@@ -1323,11 +1326,11 @@ QString GameLogWindow::searchPlaceholderText() {
 }
 
 QString GameLogWindow::searchEmptyPlaceholderText() {
-    return QCoreApplication::translate("GameLogWindow", "没有匹配的日志。换个关键词，或清空搜索框。");
+    return QCoreApplication::translate("GameLogWindow", "无匹配的日志。请更换关键词，或清空搜索框。");
 }
 
 QString GameLogWindow::searchTooltip() {
-    return QCoreApplication::translate("GameLogWindow", "只看包含这一串的行；导出仍是整份日志。");
+    return QCoreApplication::translate("GameLogWindow", "仅显示包含该字符串的行；导出仍为完整日志。");
 }
 
 QString GameLogWindow::searchText() const {
@@ -1339,7 +1342,8 @@ QString GameLogWindow::filterButtonText(LogLevel level, int count) {
 }
 
 QString GameLogWindow::filterButtonTooltip() {
-    return QCoreApplication::translate("GameLogWindow", "点一下就不显示这一档。数字是日志记录数（崩栈续行不重复计算）。" "窗口最多保留 %1 行文本。")
+    return QCoreApplication::translate("GameLogWindow", "单击后隐藏该级别。数字为日志记录数（崩栈续行不重复计"
+                                                        "算）。窗口最多保留 %1 行文本。")
         .arg(maxLogBlocks());
 }
 
@@ -1356,7 +1360,7 @@ int GameLogWindow::lineLimitOfIndex(int index) {
 }
 
 QString GameLogWindow::lineLimitTooltip() {
-    return QCoreApplication::translate("GameLogWindow", "只影响显示，日志一行都不会少（最多留 %1 行）。")
+    return QCoreApplication::translate("GameLogWindow", "仅影响显示，不会减少日志行数（最多保留 %1 行）。")
         .arg(maxLogBlocks());
 }
 

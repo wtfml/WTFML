@@ -262,7 +262,7 @@ void MainWindowUI::setupSettingsPage(QWidget *page) {
         fold->setFixedHeight(44);
     }
 
-    // 「账号与外观」窗的入口只在主页右上账号胶囊的浮层里；设置里不再有账户一节。
+    // 「账号与皮肤」窗的入口只在主页右上账号胶囊的浮层里；设置里不再有账户一节。
     // 这颗按钮留作隐藏的兼容入口（MainWindow / 验证工程按名字取它，直通同一个窗）。
     accountSkinSettingsButton = new QPushButton(accountSkinButtonText(), page);
     accountSkinSettingsButton->setObjectName(accountSkinSettingsButtonName());
@@ -452,7 +452,7 @@ void MainWindowUI::setupSettingsLaunchPanel(QStackedWidget *stack) {
     launcherBehaviourCombo->setObjectName(launcherBehaviourComboName());
     WheelGuard::install(launcherBehaviourCombo);
     addRow(runGroup, QCoreApplication::translate("MainWindowSettingsPage", "启动后"), launcherBehaviourCombo, Placement::Column,
-           QCoreApplication::translate("MainWindowSettingsPage", "收起仅隐藏窗口，游戏不受影响。"));
+           QCoreApplication::translate("MainWindowSettingsPage", "隐藏启动器仅隐藏窗口，游戏不受影响。"));
     showGameLogCheck = new QCheckBox(showGameLogCheckText(), form);
     showGameLogCheck->setObjectName(showGameLogCheckName());
     addSwitch(runGroup, showGameLogCheck, showGameLogRowText(), QCoreApplication::translate("MainWindowSettingsPage", "关闭后仍写入日志文件。"));
@@ -742,7 +742,9 @@ void MainWindowUI::setupSettingsLookPanel(QStackedWidget *stack) {
         auto *quote = new QCheckBox(QCoreApplication::translate("MainWindowSettingsPage", "每日一言"), form);
         quote->setObjectName(dailyQuoteCheckName());
         addSwitch(look, quote, QCoreApplication::translate("MainWindowSettingsPage", "每日一言"),
-                  QCoreApplication::translate("MainWindowSettingsPage", "每天向 hitokoto 和 ZenQuotes（zenquotes.io）取一句，不带个人信息；" "关闭后不请求。"));
+                  QCoreApplication::translate("MainWindowSettingsPage", "每天从 hitokoto 和 "
+                                                                        "ZenQuotes（zenquotes.io）获取一句，"
+                                                                        "不附带个人信息；关闭后不发起请求。"));
         dailyQuoteCheck = quote;
     }
 
@@ -760,7 +762,8 @@ void MainWindowUI::setupSettingsLookPanel(QStackedWidget *stack) {
         WheelGuard::install(spin);
         // 0–kHomeQuickMaxCount 的小整数：「− 值 +」步进器（值仍在这颗 QSpinBox 上，范围 / valueChanged / 持久化不动）。
         addRow(quick, label, Theme::makeNumberStepper(form, spin, 72), Placement::Natural,
-               QCoreApplication::translate("MainWindowSettingsPage", "数量较多时，放不下的卡片只显示图标和启动按钮。"));
+               QCoreApplication::translate("MainWindowSettingsPage", "数量较多时，空间不足的卡片仅显示图标"
+                                                                     "和启动按钮。"));
         *out = spin;
     };
     addCount(QCoreApplication::translate("MainWindowSettingsPage", "收藏"), homeFavoriteCountSpinName(), &homeFavoriteCountSpin);
@@ -881,7 +884,7 @@ void MainWindowUI::setupSettingsDownloadPanel(QStackedWidget *stack) {
     // CurseForge API key：明文显示（贴错了要能一眼看见；它本来就明文躺在配置里），可以留空（走社区镜像）。
     curseForgeApiKeyEdit = new QLineEdit(form);
     curseForgeApiKeyEdit->setObjectName(curseForgeApiKeyEditName());
-    InputSizing::longValue(curseForgeApiKeyEdit, QCoreApplication::translate("MainWindowSettingsPage", "API 密钥：约 60 个字符，明文显示便于核对"));
+    InputSizing::longValue(curseForgeApiKeyEdit, QStringLiteral("API 密钥：约 60 个字符，明文显示便于核对"));  // i18n-ignore
     curseForgeApiKeyEdit->setPlaceholderText(curseForgeApiKeyPlaceholder());
     addRow(source, curseForgeApiKeyRowText(), curseForgeApiKeyEdit);
 
@@ -932,7 +935,7 @@ QString MainWindowUI::themeSemanticText(int index) {
     case 2:
         return QCoreApplication::translate("MainWindowUI", "正常");
     case 3:
-        return QCoreApplication::translate("MainWindowUI", "报错");
+        return QCoreApplication::translate("MainWindowUI", "错误");
     default:
         return QString();
     }

@@ -150,10 +150,10 @@ bool supply(const QString &instanceDir, const ModpackImport::FileIssue &issue,
     }
     if (input.error() != QFileDevice::NoError || total != issue.size ||
         digest.result().toHex().compare(issue.sha1.toLatin1(), Qt::CaseInsensitive) != 0)
-        return fail(QObject::tr("SHA-1 校验不匹配，没有部署文件"));
+        return fail(QObject::tr("SHA-1 校验不匹配，未部署文件"));
     if (cancelled && cancelled()) return fail(QObject::tr("操作已取消或超时"));
     if (exists) return QFileInfo(source).canonicalFilePath() == QFileInfo(target).canonicalFilePath()
-        || fail(QObject::tr("目标已存在，请直接选择目标文件进行校验；没有覆盖任何内容"));
+        || fail(QObject::tr("目标已存在，请直接选择目标文件进行校验；未覆盖任何内容"));
     if (!safeTarget(instanceDir, issue.path) || QFileInfo::exists(target) || !output.commit())
         return fail(QObject::tr("目标发生变化或文件发布失败，未覆盖"));
     return true;
@@ -172,7 +172,7 @@ BatchResult supplyMatching(const QString &instanceDir,
         const qint64 size = file.size();
         bool candidate = false;
         for (const auto &issue : issues) if (issue.size == size && !issue.sha1.isEmpty()) candidate = true;
-        if (!candidate) { result.problems.append(QObject::tr("%1：没有大小匹配的缺项").arg(name)); continue; }
+        if (!candidate) { result.problems.append(QObject::tr("%1：无大小匹配的缺项").arg(name)); continue; }
         QCryptographicHash hash(QCryptographicHash::Sha1);
         qint64 total = 0;
         while (!file.atEnd()) {
@@ -197,7 +197,7 @@ BatchResult supplyMatching(const QString &instanceDir,
             else result.problems.append(QObject::tr("%1 → %2：%3").arg(name, issue.path, error));
             if (cancelled && cancelled()) { result.cancelled = true; return result; }
         }
-        if (!matched) result.problems.append(QObject::tr("%1：没有 SHA-1 匹配的缺项，未写入").arg(name));
+        if (!matched) result.problems.append(QObject::tr("%1：无 SHA-1 匹配的缺项，未写入").arg(name));
     }
     return result;
 }

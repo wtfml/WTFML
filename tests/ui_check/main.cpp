@@ -2434,7 +2434,7 @@ int main(int argc, char *argv[]) {
                   "（**不是**离线登录 —— 那种状态点开始会被「请先登录」挡回来）",
                   accountType->text());
             // 三种说法本身钉一遍：**三种而不是两种**是这次特意定的（见 .hpp 那段 NOTE）。
-            check(MainWindowUI::accountTypeOnlineText() == QStringLiteral("正版") &&
+            check(MainWindowUI::accountTypeOnlineText() == QStringLiteral("微软") &&
                       MainWindowUI::accountTypeOfflineText() == QStringLiteral("离线") &&
                       MainWindowUI::accountTypeNotLoggedInText() == QStringLiteral("未登录"),
                   "三种说法分别是 正版 / 离线 / 未登录（说明删减清单 §4）");

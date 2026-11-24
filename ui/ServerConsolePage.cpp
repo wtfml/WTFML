@@ -83,7 +83,7 @@ ServerConsolePage::ServerConsolePage(QWidget *parent) : QDialog(parent) {
         m_searchEdit->setObjectName(searchEditName());
         m_searchEdit->setPlaceholderText(searchPlaceholderText());
         m_searchEdit->setClearButtonEnabled(true);
-        InputSizing::longValue(m_searchEdit, QCoreApplication::translate("ServerConsolePage", "搜索框：筛选日志行，关键词长度不定"));
+        InputSizing::longValue(m_searchEdit, QStringLiteral("搜索框：筛选日志行，关键词长度不定"));  // i18n-ignore
         m_searchEdit->setToolTip(
             QCoreApplication::translate("ServerConsolePage", "只筛选当前显示的行；「导出日志…」仍导出完整日志。"));
         connect(m_searchEdit, &QLineEdit::textChanged, this, [this](const QString &text) {
@@ -98,7 +98,7 @@ ServerConsolePage::ServerConsolePage(QWidget *parent) : QDialog(parent) {
             m_lineLimitCombo->addItem(RuntimeOutputModel::lineLimitText(limit), limit);
         }
         m_lineLimitCombo->setToolTip(
-            QCoreApplication::translate("ServerConsolePage", "只影响显示，日志本身一行都不会少。"));
+            QCoreApplication::translate("ServerConsolePage", "仅影响显示，日志本身不会减少。"));
         m_lineLimitCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
         m_lineLimitCombo->setMinimumContentsLength(8);
         // 滚轮防护：这是一页"滚着看输出"的地方，鼠标划过下拉框的机会不少。
@@ -117,7 +117,7 @@ ServerConsolePage::ServerConsolePage(QWidget *parent) : QDialog(parent) {
         m_exportButton = new QPushButton(QCoreApplication::translate("ServerConsolePage", "导出日志…"), row);
         m_exportButton->setObjectName(exportLogButtonName());
         m_exportButton->setToolTip(
-            QCoreApplication::translate("ServerConsolePage", "把控制台全部输出存成文本文件（含被搜掉的行）。"));
+            QCoreApplication::translate("ServerConsolePage", "将控制台全部输出保存为文本文件（含被筛选排除的行）。"));
         // 只读、低频 ⇒ Ghost（和游戏日志窗那两颗导出键同一档）。
         Theme::markButton(m_exportButton, Theme::ButtonKind::Ghost);
         connect(m_exportButton, &QPushButton::clicked, this,
@@ -150,9 +150,9 @@ ServerConsolePage::ServerConsolePage(QWidget *parent) : QDialog(parent) {
         layout->setSpacing(8);
         m_commandEdit = new QLineEdit(row);
         m_commandEdit->setObjectName(MainWindowUI::serverConsoleCommandEditName());
-        InputSizing::longValue(m_commandEdit, QCoreApplication::translate("ServerConsolePage", "命令输入：像聊天框一样整行"));
+        InputSizing::longValue(m_commandEdit, QStringLiteral("命令输入：像聊天框一样整行"));  // i18n-ignore
         m_commandEdit->setPlaceholderText(
-            QCoreApplication::translate("ServerConsolePage", "往这个服务端敲一条命令（比如 say 大家好），回车发送"));
+            QCoreApplication::translate("ServerConsolePage", "向此服务端输入命令（如 say 大家好），按回车发送"));
         layout->addWidget(m_commandEdit, 1);
         m_sendButton = new QPushButton(MainWindowUI::serverConsoleSendText(), row);
         m_sendButton->setObjectName(MainWindowUI::serverConsoleSendButtonName());
@@ -199,7 +199,7 @@ ServerConsolePage::ServerConsolePage(QWidget *parent) : QDialog(parent) {
         layout->addStretch(1);
         m_forceKillButton = new QPushButton(MainWindowUI::serverConsoleForceKillText(), row);
         m_forceKillButton->setObjectName(MainWindowUI::serverConsoleForceKillButtonName());
-        // 强杀 = 可能丢存档 ⇒ 危险那一档的红（和「删除这个服务端」同一档）。
+        // 强杀 = 可能丢存档 ⇒ 危险那一档的红（和「删除服务端…」同一档）。
         Theme::markButton(m_forceKillButton, Theme::ButtonKind::Danger);
         m_forceKillButton->setToolTip(
             QCoreApplication::translate("ServerConsolePage", "不等待保存就强制结束进程，可能丢失存档。"));
@@ -207,7 +207,7 @@ ServerConsolePage::ServerConsolePage(QWidget *parent) : QDialog(parent) {
         m_stopButton = new QPushButton(MainWindowUI::serverConsoleStopText(), row);
         m_stopButton->setObjectName(MainWindowUI::serverConsoleStopButtonName());
         Theme::markButton(m_stopButton, Theme::ButtonKind::Neutral);
-        m_stopButton->setToolTip(QCoreApplication::translate("ServerConsolePage", "让它自己存盘、收尾，然后退出（推荐）。"));
+        m_stopButton->setToolTip(QCoreApplication::translate("ServerConsolePage", "保存存档、完成收尾后退出（推荐）。"));
         layout->addWidget(m_stopButton, 0);
         box->addWidget(row);
 
@@ -291,8 +291,9 @@ void ServerConsolePage::rebuildView() {
     } else if (m_model.matchingLineCount() == 0) {
         m_logView->setPlaceholderText(
             m_model.searchText().isEmpty()
-                ? QCoreApplication::translate("ServerConsolePage", "当前筛选下没有日志。")
-                : QCoreApplication::translate("ServerConsolePage", "没有匹配的日志。换个关键词，或清空搜索框。"));
+                ? QCoreApplication::translate("ServerConsolePage", "当前筛选下无日志。")
+                : QCoreApplication::translate("ServerConsolePage", "无匹配的日志。请更换关键词，"
+                                                                   "或清空搜索框。"));
     } else {
         m_logView->setPlaceholderText(QString());
     }
@@ -375,7 +376,7 @@ void ServerConsolePage::setDisplayLineLimit(int limit) {
 }
 
 QString ServerConsolePage::searchPlaceholderText() {
-    return QCoreApplication::translate("ServerConsolePage", "在这个控制台里找…（大小写不分）");
+    return QCoreApplication::translate("ServerConsolePage", "在此控制台中搜索…（不区分大小写）");
 }
 
 bool ServerConsolePage::stepHistory(int delta) {

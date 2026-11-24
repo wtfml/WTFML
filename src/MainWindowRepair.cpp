@@ -39,7 +39,7 @@ void MainWindow::repairInstanceFiles(const QString &versionId) {
     if (thisInstanceBusy) {
         InlineMessage::information(
             m_ui->overlay(), tr("暂时无法操作"),
-            tr("「%1」正在安装、导入或检查，请完成后再试。")
+            tr("「%1」正在安装、导入或检查，请待其完成后再试。")
                 .arg(instanceDisplayName(versionId)));
         return;
     }
@@ -47,7 +47,7 @@ void MainWindow::repairInstanceFiles(const QString &versionId) {
         || (m_serverInstall != nullptr && m_serverInstall->ownsDownloadBatch())) {
         InlineMessage::information(
             m_ui->overlay(), tr("暂时无法操作"),
-            tr("已有下载或安装任务正在进行，请结束后再检查这个实例。"));
+            tr("已有下载或安装任务正在进行，请待其结束后再检查此实例。"));
         return;
     }
 
@@ -61,7 +61,7 @@ void MainWindow::repairInstanceFiles(const QString &versionId) {
     }
     const QJsonObject versionJson = m_versionManager->getVersionJson(versionId);
     if (versionJson.isEmpty()) {
-        appendLog(tr("无法校验 %1 的文件：找不到 version.json").arg(versionId));
+        appendLog(tr("无法校验 %1 的文件：未找到 version.json").arg(versionId));
         InlineMessage::warning(
             m_ui->overlay(), tr("版本信息缺失"),
             tr("未找到 version.json，无法解析文件依赖。").arg(versionId));

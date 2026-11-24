@@ -137,7 +137,7 @@ int UiNavigationChecks(QMainWindow &window, MainWindowUI &ui, QComboBox * &insta
             // （「预设」那一行插在它前面）。
             check(loaderTree != nullptr && loaderTree->topLevelItemCount() == 7 &&
                       loaderTree->topLevelItem(6)->text(MainWindowUI::loaderTreeKeyColumn()) ==
-                          QStringLiteral("不装（纯原版）") &&
+                          QStringLiteral("不安装（纯原版）") &&
                       MainWindowUI::modLoaderNoneIndex() == 5,
                   "第 5 条是「不装（纯原版）」（0..4 留给五个加载器；树下标的映射没动，"
                   "只是树上多了一行预设）",

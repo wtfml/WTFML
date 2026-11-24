@@ -429,7 +429,7 @@ QList<FileRecord> collectFiles(const QString &rootDir, const QStringList &exclud
     }
     if (!QFileInfo(rootDir).isDir()) {
         if (problemOut != nullptr) {
-            *problemOut = QObject::tr("找不到这个目录：%1").arg(QDir::toNativeSeparators(rootDir));
+            *problemOut = QObject::tr("未找到此目录：%1").arg(QDir::toNativeSeparators(rootDir));
         }
         return QList<FileRecord>();
     }
@@ -516,7 +516,7 @@ WriteResult writeBackup(const Manifest &manifest, const QString &sourceDir,
     if (!DirectorySessionLock::acquire(gameRoot, &result.problem)) return result;
 
     if (manifest.root.isEmpty()) {
-        result.problem = QObject::tr("这一份没说清自己是什么（缺少顶层前缀），没有打包。");
+        result.problem = QObject::tr("缺少顶层前缀，未打包。");
         return result;
     }
 
@@ -528,7 +528,7 @@ WriteResult writeBackup(const Manifest &manifest, const QString &sourceDir,
         return result;
     }
     if (result.manifest.files.isEmpty()) {
-        result.problem = QObject::tr("这个目录是空的，没什么可备份的：%1")
+        result.problem = QObject::tr("此目录为空，无内容可备份：%1")
                              .arg(QDir::toNativeSeparators(sourceDir));
         return result;
     }
@@ -681,7 +681,7 @@ WriteResult writeBackup(const Manifest &manifest, const QString &sourceDir,
                                                     : QStringLiteral("%1-%2.%3").arg(stem).arg(n).arg(suffix));
         }
         if (QFileInfo::exists(target)) {
-            result.problem = QObject::tr("同名的备份太多了，换一个时间再试：%1")
+            result.problem = QObject::tr("同名备份过多，请稍后再试：%1")
                                  .arg(QDir::toNativeSeparators(targetZip));
             QFile::remove(manifestPath);
             return result;
@@ -693,7 +693,7 @@ WriteResult writeBackup(const Manifest &manifest, const QString &sourceDir,
     // 清单也放在已登记暂存内，崩溃后不在系统临时目录遗留文件清单。
     QFile::remove(manifestPath);
     if (!made) {
-        result.problem = error.isEmpty() ? QObject::tr("打包没有成功。") : error;
+        result.problem = error.isEmpty() ? QObject::tr("打包失败。") : error;
         return result;
     }
 
@@ -812,7 +812,7 @@ RestoreResult restoreBackup(const QString &zipPath, const QString &targetParentD
     // 会替换这个路径，拼错一层就会动到别人的东西。
     if (QFileInfo(target).fileName().compare(manifest.root, Qt::CaseInsensitive) != 0) {
         result.stage = RestoreResult::Stage::ReadManifest;
-        result.problem = QObject::tr("找不到备份记录中的目标目录（%1），未解压备份。")
+        result.problem = QObject::tr("未找到备份记录中的目标目录（%1），未解压备份。")
                              .arg(manifest.root);
         return result;
     }
@@ -862,7 +862,9 @@ RestoreResult restoreBackup(const QString &zipPath, const QString &targetParentD
         const QString link = firstLinkInside(target);
         if (!link.isEmpty()) {
             result.stage = RestoreResult::Stage::SafetySnapshot;
-            result.problem = QObject::tr("目标中包含链接：%1\n\n还原会用普通目录替换链接，安全快照无法恢复链接本身。已取消还原，原有内容已保留。\n\n若要继续，请先移走链接，再重试。")
+            result.problem = QObject::tr("目标中包含链接：%1\n\n还原会用普通目录替换链接，"
+                                         "安全快照无法恢复链接本身。已取消还原，原有内容已保留。\n\n如需继续，"
+                                         "请移除链接后重试。")
                                  .arg(QDir::toNativeSeparators(link));
             return result;
         }
@@ -893,7 +895,7 @@ RestoreResult restoreBackup(const QString &zipPath, const QString &targetParentD
             safety.safety = true;
             safety.createdAt = QDateTime::currentDateTime();
             safety.scope = QStringList{
-                QObject::tr("还原之前自动给「现在这一份」做的完整安全快照")};
+                QObject::tr("还原前自动创建的当前目录完整安全快照")};
 
             const QString dir = backupDir(safety.kind);
             QDir().mkpath(dir);
@@ -975,7 +977,7 @@ RestoreResult restoreBackup(const QString &zipPath, const QString &targetParentD
         result.stage = RestoreResult::Stage::Extract;
         QString message = QObject::tr("未完成解压：%1").arg(error);
         if (!result.safetyZip.isEmpty()) {
-            message += QObject::tr("\n还原之前的「现在这一份」在：%1")
+            message += QObject::tr("\n还原前的当前目录位于：%1")
                            .arg(QDir::toNativeSeparators(result.safetyZip));
         }
         result.problem = message;
@@ -998,7 +1000,7 @@ RestoreResult restoreBackup(const QString &zipPath, const QString &targetParentD
                               .arg(result.mismatched)
                               .arg(result.checked);
         if (!result.safetyZip.isEmpty()) {
-            message += QObject::tr("\n还原之前的「现在这一份」在：%1")
+            message += QObject::tr("\n还原前的当前目录位于：%1")
                            .arg(QDir::toNativeSeparators(result.safetyZip));
         }
         result.problem = message;
@@ -1066,7 +1068,7 @@ RestoreResult restoreBackup(const QString &zipPath, const QString &targetParentD
     if (existing.exists() && !QDir().rename(target, retained)) {
         if (managed) QFile::remove(journalPath);
         result.stage = RestoreResult::Stage::RemoveOld;
-        result.problem = QObject::tr("无法挪开原目录（可能正被游戏占用），原文件未删除。");
+        result.problem = QObject::tr("无法移开原目录（可能正被游戏占用），原文件未删除。");
         return result;
     }
     if (observer) observer(RestorePhase::OriginalRetained);

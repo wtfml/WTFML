@@ -333,7 +333,8 @@ void ActivityPopover::rebuild() {
         QPushButton *clear = nullptr;
         if (m_handlers.clearFinished) {
             clear = textButton(QCoreApplication::translate("ActivityPopover", "清除"), clearButtonName(), m_body);
-            clear->setToolTip(QCoreApplication::translate("ActivityPopover", "清除已结束记录，不影响下载好的文件"));
+            clear->setToolTip(QCoreApplication::translate("ActivityPopover", "清除已结束记录，"
+                                                                             "不影响已下载的文件"));
             connect(clear, &QPushButton::clicked, this, [this] {
                 if (m_handlers.clearFinished) m_handlers.clearFinished();
                 refresh();

@@ -31,7 +31,7 @@ Result exportInstance(const QString &instanceId, const QString &gameVersion,
     Result result;
     const QDir instance(AppPaths::versionDir(instanceId));
     if (!instance.exists()) {
-        result.problem = QCoreApplication::translate("InstanceExport", "找不到实例目录：%1").arg(instance.absolutePath());
+        result.problem = QCoreApplication::translate("InstanceExport", "未找到实例目录：%1").arg(instance.absolutePath());
         return result;
     }
     if (gameVersion.trimmed().isEmpty()) {
@@ -71,14 +71,14 @@ Result exportInstance(const QString &instanceId, const QString &gameVersion,
         QFile packFile(packPath);
         if (!packFile.open(QIODevice::WriteOnly)
             || packFile.write(QJsonDocument(pack).toJson()) < 0) {
-            result.problem = QCoreApplication::translate("InstanceExport", "写不了 mmc-pack.json。");
+            result.problem = QCoreApplication::translate("InstanceExport", "无法写入 mmc-pack.json。");
             return result;
         }
         packFile.close();
         const QString cfgPath = staging.filePath(QStringLiteral("instance.cfg"));
         QFile cfgFile(cfgPath);
         if (!cfgFile.open(QIODevice::WriteOnly)) {
-            result.problem = QCoreApplication::translate("InstanceExport", "写不了 instance.cfg。");
+            result.problem = QCoreApplication::translate("InstanceExport", "无法写入 instance.cfg。");
             return result;
         }
         cfgFile.write(QStringLiteral("InstanceType=OneSix\nname=%1\n").arg(displayName).toUtf8());

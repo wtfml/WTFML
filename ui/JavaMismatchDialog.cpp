@@ -70,7 +70,7 @@ JavaMismatchDialog::JavaMismatchDialog(const QString &instanceName, int expected
     m_textLabel->setPalette(bodyPalette);
     layout->addWidget(m_textLabel);
 
-    m_dontRemindCheck = new QCheckBox(tr("以后不再提醒这个实例"), this);
+    m_dontRemindCheck = new QCheckBox(tr("不再提醒此实例"), this);
     m_dontRemindCheck->setObjectName(dontRemindCheckName());
     m_dontRemindCheck->setToolTip(
         tr("此设置仅对当前实例生效，可在「高级选项 → 版本提醒」中修改。"));
@@ -87,7 +87,7 @@ JavaMismatchDialog::JavaMismatchDialog(const QString &instanceName, int expected
     layout->addStretch(1);
 
     auto *buttons = new QHBoxLayout;
-    m_continueButton = new QPushButton(tr("仍然用这个 Java 启动"), this);
+    m_continueButton = new QPushButton(tr("仍使用此 Java 启动"), this);
     m_continueButton->setObjectName(continueButtonName());
     // 默认按钮 = "什么都不改，照我钉的那个启动"。理由见 .hpp：一次误按回车不该改配置。
     m_continueButton->setDefault(true);

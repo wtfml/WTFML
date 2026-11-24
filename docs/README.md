@@ -19,9 +19,7 @@
 
 | 文档 | 内容 |
 | --- | --- |
-| [AGENT.md](features/AGENT.md) | 智能体（Agent）现行实现 + Stage 2–4 阶段计划：聊天、工具、审批、外发脱敏、存储、MCP 与工作流 |
-| [AGENT_STAGE1A.md](features/AGENT_STAGE1A.md) | 智能体 Stage 1A：Provider、会话、基础聊天 UI、盘上格式与待测网络错误 |
-| [AGENT_STAGE1B.md](features/AGENT_STAGE1B.md) | 智能体 Stage 1B：受控文件工具、审批、D11 外发、实例锁定、维护备份与待测项 |
+| [AGENT.md](features/AGENT.md) | 智能体（Agent）：模式、工具与上限、工作流、MCP、审批与外发、存储、提示词、测试与待人工验证 |
 | [DAILY_QUOTE.md](features/DAILY_QUOTE.md) | 主页「每日一言」：句子从哪三个站来、按日期定语种、限长与回退、字体选择、开关与隐私 |
 | [DIRECTORY_SESSION_LOCK.md](features/DIRECTORY_SESSION_LOCK.md) | 同一数据目录只允许一个窗口：锁的实现、目录/文件被占用、写入口审计、复制实例先暂存后发布、破坏性操作矩阵 |
 | [HIGH_SPEED_DOWNLOAD.md](features/HIGH_SPEED_DOWNLOAD.md) | 高速下载：暂停/显式继续/跨进程恢复、分段与限速、本机文件复用、速度与剩余时间 |
@@ -37,6 +35,7 @@
 | 文档 | 内容 |
 | --- | --- |
 | [BUILDING.md](dev/BUILDING.md) | 构建（动态 / 静态单文件）、跑起来之后数据与日志在哪、源码目录结构、开发与验证的常用命令 |
+| [AGENT_AUTONOMY.md](dev/AGENT_AUTONOMY.md) | 智能体自主修复（Stage 5）开发计划：启动测试、隔离工作区、事务回滚、崩溃快照与日志检索、模组兼容/二分、Prompt V2；提示词外置已完成 |
 | [COMMENT_STYLE.md](dev/COMMENT_STYLE.md) | 注释规范：写“为什么/约束”、不写“做了什么”；文件头、行内、类注释、TODO/FIXME/NOTE、正反例 |
 | [TESTING.md](dev/TESTING.md) | 测试怎么跑：`tools/test.ps1` 14 个套件、`ctest --preset`、CI 分片、超时与环境变量、模块与夹具边界、新增用例约定、Agent 套件、未覆盖项；日常看效果用 `tools/dev-build.ps1` / `tools/dev-run.ps1` |
 | [I18N.md](dev/I18N.md) | 界面英文：翻译文件与构建管线、怎么刷新 .ts、不翻标记、守卫 `tools/check-i18n.ps1`、测试为什么钉 zh_CN |

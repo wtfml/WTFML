@@ -95,9 +95,10 @@ inline bool acquire(const QString &root, QString *problem = nullptr) {
     if (!locked) {
         if (problem) {
             *problem = lock->error() == QLockFile::LockFailedError
-                ? QCoreApplication::translate("DirectorySessionLock", "这个数据目录已被另一份启动器占用，请先关闭那一份窗口。\n%1\n\n"
-                                 "如果确认没有别的启动器在运行（上一次是崩溃或强制结束的），"
-                                 "删掉这个文件再试：\n%2")
+                ? QCoreApplication::translate("DirectorySessionLock",
+                                              "此数据目录已被另一个启动器占用，请先关闭该窗口。\n%1\n\n"
+                                              "如确认没有其他启动器在运行（上次为崩溃或强制结束），"
+                                              "请删除此文件后重试：\n%2")
                       .arg(QDir::toNativeSeparators(root), QDir::toNativeSeparators(lockPath))
                 : QCoreApplication::translate("DirectorySessionLock", "无法取得数据目录的安全锁，未继续操作。\n%1\n\n"
                                  "锁文件：%2")

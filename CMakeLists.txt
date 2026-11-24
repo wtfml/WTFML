@@ -207,6 +207,14 @@ set(HEADER_FILES
     src/agent/AgentContextBuilder.hpp
     src/agent/AgentLoop.hpp
     src/agent/AgentSkill.hpp
+    src/agent/AgentPromptLibrary.hpp
+    src/agent/AgentWorkspaceStore.hpp
+    src/agent/AgentLaunchHost.hpp
+    src/agent/AgentTestLaunch.hpp
+    src/agent/AgentTestLaunchToolEngine.hpp
+    src/agent/AgentRepairHost.hpp
+    src/agent/AgentRepairTransaction.hpp
+    src/agent/AgentRepairToolEngine.hpp
     src/agent/AgentWinPath.hpp
     src/agent/AgentEgressPolicy.hpp
     src/agent/AgentArtifactStore.hpp
@@ -236,6 +244,8 @@ set(HEADER_FILES
     src/agent/AgentCommandTools.hpp
     src/controllers/AgentController.hpp
     src/controllers/AgentLauncherHostImpl.hpp
+    src/controllers/AgentTestLaunchRunner.hpp
+    src/controllers/AgentRepairRunner.hpp
     ui/AgentMarkdown.hpp
     ui/AgentViewTypes.hpp
     ui/AgentMessageView.hpp
@@ -395,6 +405,8 @@ set(HEADER_FILES
     src/util/ServerPing.hpp
     src/util/ErrorReport.hpp
     src/util/DownloadDiagnostics.hpp
+    # 几个完整句子接成一段：中文直接相接，英文那一个空格在译文里。
+    src/util/SentenceJoin.hpp
     # 工具箱那五件：纯逻辑层，各自的"照什么规矩、不做什么"
     # 都写在头文件开头那一段里。
     src/tools/TextFormat.hpp
@@ -550,6 +562,12 @@ set(SOURCE_FILES
     src/agent/AgentContextBuilder.cpp
     src/agent/AgentLoop.cpp
     src/agent/AgentSkill.cpp
+    src/agent/AgentPromptLibrary.cpp
+    src/agent/AgentWorkspaceStore.cpp
+    src/agent/AgentTestLaunch.cpp
+    src/agent/AgentTestLaunchToolEngine.cpp
+    src/agent/AgentRepairTransaction.cpp
+    src/agent/AgentRepairToolEngine.cpp
     src/agent/AgentWinPath.cpp
     src/agent/AgentEgressPolicy.cpp
     src/agent/AgentArtifactStore.cpp
@@ -577,6 +595,8 @@ set(SOURCE_FILES
     src/agent/AgentCommandTools.cpp
     src/controllers/AgentController.cpp
     src/controllers/AgentLauncherHostImpl.cpp
+    src/controllers/AgentTestLaunchRunner.cpp
+    src/controllers/AgentRepairRunner.cpp
     src/net/HttpClient.cpp
     src/manage/DroppedResource.cpp
     src/manage/FolderManager.cpp
@@ -800,6 +820,9 @@ set(SOURCE_FILES
     # 列在这儿就够了、不用再写 qt_add_resources。验证工程也要各自列一份（见那几个
     # CMakeLists 里同一行的注释）：漏了的表现是那几张图**静默变回草方块**。
     assets/icons.qrc
+    # 技能提示词与后续诊断知识。提示词正文不在 AgentSkill.cpp 里；改 .md 后
+    # 只重编这份资源。验证工程通过 wtfml_core_runtime 带同一份 qrc。
+    assets/agent/agent.qrc
     ui/VersionTreeDelegate.cpp
     ui/LoadingState.cpp
     ui/ResourceDetailPage.cpp

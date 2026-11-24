@@ -258,9 +258,9 @@ void addLegacyInfoDeclaration(Mod &mod, const QByteArray &bytes) {
     if (ranges.size() == 1) {
         declaration.game = ranges.first();
     } else if (ranges.size() > 1) {
-        declaration.problem = QObject::tr("mcmod.info 里多个 mod 的 acceptedMinecraftVersions 不一致");
+        declaration.problem = QObject::tr("mcmod.info 中多个 mod 的 acceptedMinecraftVersions 不一致");
     } else {
-        declaration.problem = QObject::tr("mcmod.info 没有 acceptedMinecraftVersions");
+        declaration.problem = QObject::tr("mcmod.info 缺少 acceptedMinecraftVersions");
     }
     mod.declarations.append(declaration);
 }
@@ -399,7 +399,7 @@ QString annotationAcceptedVersions(const QStringList &strings, bool *found, QStr
     *found = true;
     const int name = strings.indexOf(QStringLiteral("acceptedMinecraftVersions"));
     if (name < 0) {
-        if (problem) *problem = QObject::tr("旧 Forge @Mod 没有 acceptedMinecraftVersions");
+        if (problem) *problem = QObject::tr("旧 Forge @Mod 缺少 acceptedMinecraftVersions");
         return QString();
     }
     static const QRegularExpression range(
@@ -510,7 +510,7 @@ Scan scan(const QString &root, const QString &sourceId, const QString &cache, co
                 Declaration declaration;
                 declaration.loader = QStringLiteral("forge");
                 declaration.basis = QCoreApplication::translate("UpgradeAssessment", "旧 Forge 注解");
-                declaration.problem = QObject::tr("读不到模组条目表，旧 Forge 注解无法检查：%1")
+                declaration.problem = QObject::tr("无法读取模组条目表，旧 Forge 注解无法检查：%1")
                                           .arg(nestedProblem);
                 mod.declarations.append(declaration);
             }
@@ -576,10 +576,10 @@ Scan scan(const QString &root, const QString &sourceId, const QString &cache, co
                 declaration.loader = QStringLiteral("forge");
                 declaration.basis = QCoreApplication::translate("UpgradeAssessment", "旧 Forge 注解");
                 declaration.problem = classes.size() > take
-                    ? QObject::tr("旧 Forge 注解未完整扫描（候选 %1 个，只看了 %2 个）")
+                    ? QObject::tr("旧 Forge 注解未完整扫描（候选 %1 个，仅检查了 %2 个）")
                           .arg(classes.size()).arg(take)
                     : annotationProblem.isEmpty()
-                          ? QObject::tr("没有读到旧 Forge @Mod 注解")
+                          ? QObject::tr("未读取到旧 Forge @Mod 注解")
                           : QObject::tr("旧 Forge 注解无法解析：%1").arg(annotationProblem);
                 // 只有真的像旧模组（有 class 且没有任何现代声明）时才挂这条“未知”。
                 if (!classes.isEmpty()) mod.declarations.append(declaration);
@@ -685,7 +685,7 @@ Scan scan(const QString &root, const QString &sourceId, const QString &cache, co
                     }
                 }
                 if (chosen == nullptr) {
-                    check.problem = QObject::tr("嵌套 JAR 没有可读的兼容声明");
+                    check.problem = QObject::tr("嵌套 JAR 无可读取的兼容声明");
                 } else if (!chosen->problem.isEmpty()) {
                     check.problem = chosen->problem;
                 } else {
@@ -831,7 +831,7 @@ QString localState(const Mod &mod, const QString &game, const QString &loader,
             return QObject::tr("嵌套 JAR 声明无法解析");
         }
         if (!check.parsed || check.game.isNull() || check.game.isUndefined()) {
-            *basis += QObject::tr("；嵌套 %1：没有可读的 Minecraft 版本范围").arg(check.name);
+            *basis += QObject::tr("；嵌套 %1：无可读取的 Minecraft 版本范围").arg(check.name);
             return QObject::tr("嵌套 JAR 声明无法确认");
         }
         const auto nestedMatch = ModVersionDeclaration::matches(check.game, game);
@@ -988,7 +988,7 @@ void UpgradeAssessment::attach(InstanceSettingsDialog *dialog, VersionManager *v
             changes.append(QObject::tr("本次不替换模组文件（按逐项选择保留/禁用）。"));
         } else {
             changes.append(QObject::tr("必要前置会在下载阶段自动补齐，并在替换前再次列出实际文件。"));
-            changes.append(QObject::tr("替换失败或必要前置失败时整趟回滚，并写出原因报告。"));
+            changes.append(QObject::tr("替换失败或必要前置失败时整个更新流程回滚，并生成原因报告。"));
         }
         if (!unknownMods.isEmpty()) {
             changes.append(QObject::tr("声明未知/需确认 %1 项（必须逐项选择）：").arg(unknownMods.size()));

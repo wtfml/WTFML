@@ -263,7 +263,7 @@ void InstanceIconController::onInstanceIconLookupFinished(const InstanceIconLook
     if (!complete) {
         // 只记一句日志、**不弹窗**：图标取不到是常态（自己改过的 jar、作者没传过的、
         // 断网的），画个占位拼图就是正确的界面 —— 它挡不住用户做任何事。
-        m_host.log(tr("资源图标没查完：%1").arg(result.problem));
+        m_host.log(tr("资源图标查询未完成：%1").arg(result.problem));
     }
     for (const QString &path : runPaths) {
         if (foundPaths.contains(path)) {
@@ -280,7 +280,7 @@ void InstanceIconController::onInstanceIconLookupFinished(const InstanceIconLook
     // 而那几格退回占位拼图就是正确的界面（不弹窗，理由同上）。这句话得说，是因为"认出来了
     // 但没图"和"压根没认出来"在屏幕上是一个样子，而这两件事的下一步不一样。
     if (!result.iconProblem.isEmpty()) {
-        m_host.log(tr("有几个资源的图标地址没取到：%1").arg(result.iconProblem));
+        m_host.log(tr("部分资源的图标地址获取失败：%1").arg(result.iconProblem));
     }
     if (result.unreadable > 0) {
         m_host.log(tr("无法读取 %1 个文件，已跳过这些文件的图标。")

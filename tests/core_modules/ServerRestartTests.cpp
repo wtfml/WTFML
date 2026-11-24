@@ -19,7 +19,7 @@ void runServerRestartTests() {
                   && !ServerRestart::isAbnormal(ServerRestart::Why::CleanExit)
                   && !ServerRestart::isAbnormal(ServerRestart::Why::UserStop),
               "★★ ZAF0 只有 Crash 会触发自动重启的考虑");
-        check(ServerRestart::whyName(ServerRestart::Why::UserStop) == QStringLiteral("你自己停的")
+        check(ServerRestart::whyName(ServerRestart::Why::UserStop) == QStringLiteral("用户手动停止")
                   && ServerRestart::whyName(ServerRestart::Why::CleanExit)
                          == QStringLiteral("正常退出")
                   && ServerRestart::whyName(ServerRestart::Why::Crash)
