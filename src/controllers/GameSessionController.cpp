@@ -636,7 +636,7 @@ void GameSessionController::stopGameSession(int sessionId) {
     if (game.sessionId == 0) {
         // 用户看那两眼的时候它自己退出了。**不弹窗**：他什么都没做错，弹一个框只会让他
         // 以为出事了；面板上那一行也确实已经不在了。
-        m_host.log(tr("这个实例刚刚已经结束了。"));
+        m_host.log(tr("此实例已结束。"));
         return;
     }
     if (!confirmStopGame(game.displayName, 1)) {

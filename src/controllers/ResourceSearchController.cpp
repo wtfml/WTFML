@@ -412,7 +412,7 @@ void ResourceSearchController::fillResourceVersionRows(QTreeWidgetItem *gameItem
         }
     }
     if (shown.isEmpty()) {
-        m_owner.addResourcePlaceholderChild(gameItem, MainWindow::tr("这个游戏版本上没有可下载的版本。"));
+        m_owner.addResourcePlaceholderChild(gameItem, MainWindow::tr("此游戏版本暂无可下载的版本。"));
         return;
     }
 
@@ -470,7 +470,7 @@ void ResourceSearchController::onResourceVersionsFinished(const QString &request
                 auto &state = m_owner.m_resourcePage->state();
                 if (!state.open) return;
                 state.loaded = false;
-                m_owner.m_resourcePage->page()->setLoading(MainWindow::tr("正在读版本列表…"));
+                m_owner.m_resourcePage->page()->setLoading(MainWindow::tr("正在读取版本列表…"));
                 m_owner.m_resourceStore->fetchVersions(state.requestKey, state.projectId, state.source, QString());
             });
             return;

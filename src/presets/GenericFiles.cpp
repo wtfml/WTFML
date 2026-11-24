@@ -75,7 +75,7 @@ qint64 treeSize(const QString &absolutePath) {
 bool copyOneFile(const QString &source, const QString &target, QString *problemOut) {
     QFile in(source);
     if (!in.open(QIODevice::ReadOnly)) {
-        failWith(problemOut, QCoreApplication::translate("Presets", "读不了「%1」：%2").arg(source, in.errorString()));
+        failWith(problemOut, QCoreApplication::translate("Presets", "无法读取「%1」：%2").arg(source, in.errorString()));
         return false;
     }
     QSaveFile out(target);

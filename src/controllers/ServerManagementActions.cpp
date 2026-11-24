@@ -622,7 +622,7 @@ void ServerManagementActions::backupServerWorld(MainWindow *owner, const QString
     // ★ 跑完之后要把这一页的备份那一列**重摆一遍**（多了一份）—— 记下是哪个服务端。
     owner->m_backupController->startWrite(manifest, worldDir, zip,
                                    MainWindow::tr("备份世界「%1」").arg(worldName), entry.dirPath,
-                                   MainWindow::tr("备份完成"), serverId, MainWindow::tr("备份没有完成"));
+                                   MainWindow::tr("备份完成"), serverId, MainWindow::tr("备份未完成"));
 }
 
 void ServerManagementActions::restoreServerWorldBackup(MainWindow *owner, const QString &serverId, const QString &zipPath) {
@@ -677,7 +677,7 @@ void ServerManagementActions::restoreServerWorldBackup(MainWindow *owner, const 
     // `root`（zip 里那一层前缀）就是世界目录名 ⇒ 解到**服务端目录**底下正好落回原地。
     owner->m_backupController->startRestore(zipPath, serverDir,
                                      MainWindow::tr("还原世界「%1」").arg(worldName), serverDir,
-                                     MainWindow::tr("还原完成"), serverId, MainWindow::tr("还原没有完成"));
+                                     MainWindow::tr("还原完成"), serverId, MainWindow::tr("还原未完成"));
 }
 
 void ServerManagementActions::deleteServerBackup(MainWindow *owner, const QString &zipPath) {

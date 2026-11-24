@@ -185,7 +185,7 @@ void ResourceInstallController::onProjectsFinished(const QString &requestKey,
     // 名字取不到**不算错**：那一条退成项目号显示（见 ModDependencies::buildPlan 那段），
     // 而"没有名字"挡不住"要不要一起下"这个决定。所以这里只记一句日志。
     if (!problem.isEmpty()) {
-        owner.appendLog(MainWindow::tr("前置模组的名字没取到：%1").arg(problem));
+        owner.appendLog(MainWindow::tr("未获取到前置模组的名称：%1").arg(problem));
     }
     // 名字进**会话级**那个缓存（详情页那一行读的是同一份）。取不到名字的那几条**不写**：
     // 写一个空串进去等于把"还没问过"说成"问过了、它没名字"。
@@ -367,7 +367,7 @@ void ResourceInstallController::installNow(ResourceCatalog::Kind kind, const QSt
         // 用户会当成启动器坏了，然后一遍遍重试 —— 那句话在那儿就写好了，用它。
         const QString note = file == nullptr ? QString() : file->unavailableNote;
         InlineMessage::warning(owner.m_ui->overlay(), MainWindow::tr("下载失败"),
-                               note.isEmpty() ? MainWindow::tr("这一版没有可下载的文件。") : note);
+                               note.isEmpty() ? MainWindow::tr("此版本无可下载的文件。") : note);
         return;
     }
 

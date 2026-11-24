@@ -345,7 +345,7 @@ void BackupController::backupWorld(const QString &worldDir) {
         m_host.setFileOperationBusy(instanceId, true);
     }
     startWrite(manifest, worldDir, zip, tr("备份世界「%1」").arg(worldName), instanceId,
-               tr("备份完成"), QString(), tr("备份没有完成"));
+               tr("备份完成"), QString(), tr("备份未完成"));
 }
 
 void BackupController::restoreWorld(const QString &worldDir, InstanceSettingsDialog *dialog) {
@@ -395,7 +395,7 @@ void BackupController::restoreWorld(const QString &worldDir, InstanceSettingsDia
         m_host.setFileOperationBusy(instanceId, true);
     }
     startRestore(zip, QFileInfo(worldDir).absolutePath(), tr("还原世界「%1」").arg(worldName),
-                 instanceId, tr("还原完成"), QString(), tr("还原没有完成"));
+                 instanceId, tr("还原完成"), QString(), tr("还原未完成"));
     });
 }
 
@@ -438,7 +438,7 @@ void BackupController::snapshotInstance(const QString &versionId) {
     const QString instanceDir = AppPaths::versionDir(versionId);
     if (!QFileInfo(instanceDir).isDir()) {
         InlineMessage::warning(m_overlay, tr("创建快照"),
-                               tr("找不到这个实例的目录：\n%1")
+                               tr("未找到此实例的目录：\n%1")
                                    .arg(QDir::toNativeSeparators(instanceDir)));
         return;
     }
@@ -517,7 +517,7 @@ void BackupController::restoreInstance(const QString &versionId, InstanceSetting
     if (m_host.setFileOperationBusy) m_host.setFileOperationBusy(versionId, true);
     startRestore(zip, AppPaths::versionsDir(),
                  tr("还原「%1」的快照").arg(displayName(versionId)), versionId,
-                 tr("还原完成"), QString(), tr("还原没有完成"));
+                 tr("还原完成"), QString(), tr("还原未完成"));
     });
 }
 

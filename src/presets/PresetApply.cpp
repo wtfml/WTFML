@@ -55,7 +55,7 @@ bool readWholeFile(const QString &path, QByteArray *out, QString *problem) {
 bool writeWholeFile(const QString &path, const QByteArray &bytes, QString *problem) {
     QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly)) {
-        *problem = QCoreApplication::translate("Presets", "写不动「%1」：%2").arg(path, file.errorString());
+        *problem = QCoreApplication::translate("Presets", "无法写入「%1」：%2").arg(path, file.errorString());
         return false;
     }
     if (file.write(bytes) != bytes.size()) {
