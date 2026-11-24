@@ -688,9 +688,9 @@ public:
     static QString stateFilterText(StateFilter filter) {
         switch (filter) {
         case StateFilter::Enabled:
-            return QCoreApplication::translate("InstanceFilesPage", "启用");
+            return QCoreApplication::translate("InstanceFilesPage", "启用", "state filter");
         case StateFilter::Disabled:
-            return QCoreApplication::translate("InstanceFilesPage", "禁用");
+            return QCoreApplication::translate("InstanceFilesPage", "禁用", "state filter");
         case StateFilter::Update:
             return QCoreApplication::translate("InstanceFilesPage", "可更新");
         case StateFilter::All:

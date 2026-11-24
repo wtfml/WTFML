@@ -16,6 +16,7 @@
 #include "VersionIcons.hpp"
 
 #include <QAbstractButton>
+#include <QCoreApplication>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QLabel>
@@ -299,10 +300,10 @@ private:
         QString haystack = instance.title + QLatin1Char(' ') + instance.subtitle + QLatin1Char(' ') + instance.id
                            + QLatin1Char(' ') + instance.loaderKey + QLatin1Char(' ') + instance.folderPath
                            + QLatin1Char(' ') + instance.searchKeywords;
-        if (instance.loaderKey.isEmpty()) haystack += QStringLiteral(" 原版 纯净 vanilla 无加载器");
-        else haystack += QStringLiteral(" 模组 modded");
-        if (instance.favorite) haystack += QStringLiteral(" 收藏 置顶 favorite starred");
-        if (instance.recent) haystack += QStringLiteral(" 最近 上次游玩 recent played");
+        if (instance.loaderKey.isEmpty()) haystack += QStringLiteral(" 原版 纯净 vanilla 无加载器");  // i18n-ignore
+        else haystack += QStringLiteral(" 模组 modded");  // i18n-ignore
+        if (instance.favorite) haystack += QStringLiteral(" 收藏 置顶 favorite starred");  // i18n-ignore
+        if (instance.recent) haystack += QStringLiteral(" 最近 上次游玩 recent played");  // i18n-ignore
         return std::all_of(terms.cbegin(), terms.cend(),
                            [&haystack](const QString &term) { return haystack.contains(term, Qt::CaseInsensitive); });
     }
@@ -633,13 +634,13 @@ T *openPopover(QWidget *anchor, const QString &name) {
 QString MainWindowUI::chooseResourceDownloadInstance(const QList<HomePickerInstance> &instances,
                                                       bool *otherFolder, bool importing) {
     const QString title = importing ? QCoreApplication::translate("MainWindowUI", "装到哪个实例里")
-                                    : QStringLiteral("下载到哪个实例");
+                                    : QCoreApplication::translate("MainWindowUI", "下载到哪个实例");
     const QString action = importing ? QCoreApplication::translate("MainWindowUI", "安装")
-                                     : QStringLiteral("下载");
+                                     : QCoreApplication::translate("MainWindowUI", "下载");
     InlineMessageBox box(MessageKind::Question, title,
                          QCoreApplication::translate("MainWindowUI", "请选择目标实例或其他文件夹。"),
                          {action, QCoreApplication::translate("MainWindowUI", "其他文件夹…"),
-                          QStringLiteral("取消")}, -1, -1);
+                          QCoreApplication::translate("MainWindowUI", "取消")}, -1, -1);
     box.setObjectName(resourceDownloadInstancePickerName());
     auto *content = new InstancePickerList(instances, &box, true);
     content->setFixedHeight(34 + 4 + kDownloadPickerListHeight);

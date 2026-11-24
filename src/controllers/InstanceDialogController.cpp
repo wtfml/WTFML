@@ -355,11 +355,11 @@ void showLogFileInfo(InstanceSettingsDialog &dialog, const QString &key, const Q
     static QHash<QString, qint64> counted;
     const QFileInfo info(path);
     if (!info.isFile()) {
-        dialog.setLifecycleInfoText(key, path, QStringLiteral("读不出来：找不到这个文件。"));
+        dialog.setLifecycleInfoText(key, path, QCoreApplication::translate("InstanceDialogController", "读不出来：找不到这个文件。"));
         return;
     }
     const auto text = [info](qint64 lines) {
-        const QString lineText = lines >= 0 ? QStringLiteral("%1 行").arg(lines) : QStringLiteral("行数统计中…");
+        const QString lineText = lines >= 0 ? QCoreApplication::translate("InstanceDialogController", "%1 行").arg(lines) : QCoreApplication::translate("InstanceDialogController", "行数统计中…");
         return QStringList{info.fileName(),
                            info.lastModified().toString(QStringLiteral("yyyy-MM-dd HH:mm")),
                            FileHash::fileSizeText(info.size()), lineText}
@@ -384,7 +384,7 @@ void showLogFileInfo(InstanceSettingsDialog &dialog, const QString &key, const Q
             counted.insert(cacheKey, result.lines);
             dialog.setLifecycleInfoText(key, path, text(result.lines), toolTip);
         } else if (result.lines >= 0) {  // 放弃的那发 lines 记 -1，不报错
-            dialog.setLifecycleInfoText(key, path, QStringLiteral("读不出来：%1").arg(result.problem));
+            dialog.setLifecycleInfoText(key, path, QCoreApplication::translate("InstanceDialogController", "读不出来：%1").arg(result.problem));
         }
     });
     watcher->setFuture(QtConcurrent::run([path, token] {
