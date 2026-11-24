@@ -28,7 +28,7 @@ constexpr ExitCodeName kExitCodeNames[] = {
     {-1073741795, QT_TRANSLATE_NOOP("GameExitDiagnosis", "非法指令")},               // 0xC000001D STATUS_ILLEGAL_INSTRUCTION
     {-1073741676, QT_TRANSLATE_NOOP("GameExitDiagnosis", "整数除以零")},             // 0xC0000094 STATUS_INTEGER_DIVIDE_BY_ZERO
     {-1073741571, QT_TRANSLATE_NOOP("GameExitDiagnosis", "栈溢出")},                 // 0xC00000FD STATUS_STACK_OVERFLOW
-    {-1073741515, QT_TRANSLATE_NOOP("GameExitDiagnosis", "缺一个系统 DLL")},         // 0xC0000135 STATUS_DLL_NOT_FOUND
+    {-1073741515, QT_TRANSLATE_NOOP("GameExitDiagnosis", "缺少系统 DLL")},         // 0xC0000135 STATUS_DLL_NOT_FOUND
     {-1073741511, QT_TRANSLATE_NOOP("GameExitDiagnosis", "DLL 中的入口点未找到")},   // 0xC0000139 STATUS_ENTRYPOINT_NOT_FOUND
     {-1073741502, QT_TRANSLATE_NOOP("GameExitDiagnosis", "DLL 初始化失败")},         // 0xC0000142 STATUS_DLL_INIT_FAILED
     {-1073740940, QT_TRANSLATE_NOOP("GameExitDiagnosis", "堆损坏")},                 // 0xC0000374 STATUS_HEAP_CORRUPTION

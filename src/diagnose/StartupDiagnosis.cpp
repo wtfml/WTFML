@@ -374,14 +374,14 @@ Report analyze(const Inputs &inputs) {
             if (crash.text.contains(QStringLiteral("java.lang.OutOfMemoryError"))) {
                 outOfMemorySeen = true;
                 appendFinding(&report, Severity::Warning,
-                              QCoreApplication::translate("StartupDiagnosis", "最近一份崩溃报告是内存不足（OutOfMemoryError）"),
+                              QCoreApplication::translate("StartupDiagnosis", "最近一份崩溃报告为内存不足（OutOfMemoryError）"),
                               where,
                               QCoreApplication::translate("StartupDiagnosis", "请调大 Xmx（确认设备有空闲内存），" "或减少同时加载的模组。"));
             } else if (crash.text.contains(QStringLiteral("UnsupportedClassVersionError"))) {
                 javaVersionProblemSeen = true;
                 appendFinding(
                     &report, Severity::Problem,
-                    QCoreApplication::translate("StartupDiagnosis", "最近一份崩溃报告是 Java 版本不对（UnsupportedClassVersionError）"),
+                    QCoreApplication::translate("StartupDiagnosis", "最近一份崩溃报告为 Java 版本不匹配（UnsupportedClassVersionError）"),
                     where,
                     QCoreApplication::translate("StartupDiagnosis", "此崩溃表明有内容使用比当前 Java 更新的版本编译。" "请更换更新的 Java 后重试。"));
             } else if (crash.text.contains(QStringLiteral("NoClassDefFoundError"))
