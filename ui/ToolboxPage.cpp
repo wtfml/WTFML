@@ -1051,10 +1051,31 @@ QPushButton *makeCrumbButton(QWidget *parent, const QString &objectName, const Q
 // ---------------------------------------------------------------------------
 
 constexpr int kAnvilNarrowBelow = 640;
-constexpr int kAnvilLevelWidth = 72;
-constexpr int kAnvilKindWidth = 128;
-constexpr int kAnvilUsesWidth = 88;
+constexpr int kAnvilLevelWidth = 72;   // 等级列宽的下限
+constexpr int kAnvilKindWidth = 128;   // 物品列宽的下限
+constexpr int kAnvilUsesWidth = 88;    // 已用次数列宽的下限
 constexpr int kAnvilRemoveWidth = 32;
+
+/// 三列的实际宽：按当前语言的译文实测（文字宽 + 框内左右留白），下限是上面三个原值、上限 200，
+/// 所以中文不变、英文长词（Enchanted Book）不再被切半个字母。表头列宽与行内控件用同一个值。
+int anvilFittedWidth(const QStringList &texts, int floorWidth) {
+    const QFontMetrics metrics(Theme::textFont(QApplication::font(), Theme::TextRole::Body));
+    int widest = 0;
+    for (const QString &text : texts) widest = qMax(widest, metrics.horizontalAdvance(text));
+    return qBound(floorWidth, widest + 30, 200);
+}
+int anvilLevelWidth() {
+    return anvilFittedWidth({QStringLiteral("9") + QCoreApplication::translate("ToolboxPage", " 级")}, kAnvilLevelWidth);
+}
+int anvilKindWidth() {
+    return anvilFittedWidth({QCoreApplication::translate("ToolboxPage", "附魔书"),
+                             QCoreApplication::translate("ToolboxPage", "装备"),
+                             QCoreApplication::translate("ToolboxPage", "同上一件")},
+                            kAnvilKindWidth);
+}
+int anvilUsesWidth() {
+    return anvilFittedWidth({QStringLiteral("9") + QCoreApplication::translate("ToolboxPage", " 次")}, kAnvilUsesWidth);
+}
 
 QSpinBox *makeUnitSpin(QWidget *parent, int minimum, int maximum, const QString &unit, int width) {
     auto *spin = new QSpinBox(parent);
@@ -1080,11 +1101,11 @@ public:
         enchant->setFixedHeight(Theme::inputHeight());
         enchant->setMinimumWidth(200);
         enchant->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        level = makeUnitSpin(this, 1, 9, QCoreApplication::translate("ToolboxPage", " 级"), kAnvilLevelWidth);  // 附魔等级没有超过 5 的，给到 9 留余地
+        level = makeUnitSpin(this, 1, 9, QCoreApplication::translate("ToolboxPage", " 级"), anvilLevelWidth());  // 附魔等级没有超过 5 的，给到 9 留余地
         level->setValue(1);
         kind = new QComboBox(this);
-        kind->setFixedSize(kAnvilKindWidth, Theme::inputHeight());
-        uses = makeUnitSpin(this, 0, 9, QCoreApplication::translate("ToolboxPage", " 次"), kAnvilUsesWidth);
+        kind->setFixedSize(anvilKindWidth(), Theme::inputHeight());
+        uses = makeUnitSpin(this, 0, 9, QCoreApplication::translate("ToolboxPage", " 次"), anvilUsesWidth());
         uses->setToolTip(QCoreApplication::translate("ToolboxPage", "在铁砧上使用过的次数。"));
         remove = makeGlyphButton(this, QStringLiteral("anvilRemoveRow"), Glyph::Remove, QCoreApplication::translate("ToolboxPage", "删除此行"),
                                  QString(), kAnvilRemoveWidth);
@@ -1181,7 +1202,7 @@ public:
         grid->setHorizontalSpacing(10);
         const QStringList names{QCoreApplication::translate("ToolboxPage", "附魔"), QCoreApplication::translate("ToolboxPage", "等级"), QCoreApplication::translate("ToolboxPage", "物品"),
                                 QCoreApplication::translate("ToolboxPage", "已用次数")};
-        const int widths[] = {0, kAnvilLevelWidth, kAnvilKindWidth, kAnvilUsesWidth};
+        const int widths[] = {0, anvilLevelWidth(), anvilKindWidth(), anvilUsesWidth()};
         for (int i = 0; i < 4; ++i) {
             auto *label = makeMutedLabel(this);
             label->setText(names.at(i));

@@ -27744,7 +27744,7 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source> 次</source>
-            <translation> uses</translation>
+            <translation>×</translation>
         </message>
         <message>
             <source>附魔</source>
