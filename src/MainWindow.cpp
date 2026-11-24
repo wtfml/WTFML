@@ -527,7 +527,10 @@ MainWindow::MainWindow(QWidget *parent)
             [this](InstanceSettingsDialog *dialog, const QString &worldDir) {
                 showWorldSettingsPage(dialog, worldDir);
             },
-            [this](const QString &serverId) { m_serverSettings->refreshIfShowing(serverId); },
+            [this](const QString &serverId) {
+                if (m_serverSettings->isShowing(serverId)) m_serverSettings->refreshIfShowing(serverId);
+                else refreshServerList();
+            },
             // 还原一份实例期间它算「正在搬文件」：不能启动、不能删（见 restoreInstance()）。
             [this](const QString &id, bool busy) {
                 if (busy) {
@@ -540,7 +543,10 @@ MainWindow::MainWindow(QWidget *parent)
             // 服务端世界正在备份 / 还原：那一个服务端不能启动、不能删（见
             // `ServerRunController::fileBusy()` / `removeServer()` 那两道闸）。服务端不是
             // 实例，记不进 `installingVersionIds()`。
-            [this](const QString &id, bool busy) { m_serverRun->setFileBusy(id, busy); }},
+            [this](const QString &id, bool busy) {
+                m_serverRun->setFileBusy(id, busy);
+                m_serverSettings->refreshRunStateIfShowing(id);
+            }},
         this);
     m_serverPingController = new ServerPingController(
         ServerPingController::Host{

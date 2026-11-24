@@ -93,7 +93,7 @@ void runServerSettingsPageTests() {
           "运行中筛选会隐藏已停止的服务端");
 
     bool pageSeen = false;
-    QTimer::singleShot(0, [&pageSeen, &serverId, &originalProps, &propsTextOnDisk, &w, serverRow] {
+    QTimer::singleShot(0, [&pageSeen, &serverId, &serverDir, &originalProps, &propsTextOnDisk, &w, serverRow] {
         OverlayHost *host = currentPageOverlay();
         if (host == nullptr) {
             return;
@@ -109,6 +109,7 @@ void runServerSettingsPageTests() {
             page->findChild<QTreeWidget *>(MainWindowUI::serverSettingsSectionListName());
         auto *stack = page->findChild<QStackedWidget *>(MainWindowUI::serverSettingsStackName());
         auto *save = page->findChild<QPushButton *>(MainWindowUI::serverSettingsSaveButtonName());
+        auto *revert = page->findChild<QPushButton *>(MainWindowUI::serverSettingsRevertButtonName());
         auto *saveNote = page->findChild<QLabel *>(MainWindowUI::serverSettingsSaveNoteName());
         auto *backupNow =
             page->findChild<QPushButton *>(MainWindowUI::serverSettingsBackupNowButtonName());
@@ -142,9 +143,17 @@ void runServerSettingsPageTests() {
         }
 
         // ---------- ① 顶上说的是谁 + 表单起手摆的是盘上那一份 ----------
-        check(title->text() == serverId &&
-                  sections->topLevelItemCount() == MainWindowUI::serverSettingsSectionCount() &&
-                  stack->count() == MainWindowUI::serverSettingsSectionCount(),
+        using Section = ServerSettingsPage::Section;
+        const auto selectSection = [sections](Section section) {
+            for (QTreeWidgetItemIterator it(sections); *it; ++it) {
+                if ((*it)->data(0, Qt::UserRole).toInt() == static_cast<int>(section)) {
+                    sections->setCurrentItem(*it);
+                    return;
+                }
+            }
+        };
+        check(title->text() == serverId && sections->topLevelItemCount() == 6 &&
+                  stack->count() == static_cast<int>(Section::Count) && page->section() == Section::Overview,
               "★ T42.1 顶上那行字是**用户认得的那一个名字**，左栏四页摆齐了",
               title->text());
         check(textFieldOf(QStringLiteral("motd"))->text() == QStringLiteral("欢迎来到我的服务端")
@@ -157,6 +166,39 @@ void runServerSettingsPageTests() {
                   saveNote->text() == MainWindowUI::serverSettingsCleanNote(),
               "★ T42.1 刚开页 = 什么都没改 ⇒ 「保存」点不动、那行小字是「没有改动」",
               saveNote->text());
+
+        selectSection(Section::Launch);
+        auto *jvm = page->findChild<QLineEdit *>(QStringLiteral("serverSettingsJvm"));
+        auto *saveLaunch = page->findChild<QPushButton *>(QStringLiteral("serverSettingsSaveLaunch"));
+        if (jvm && saveLaunch) {
+            jvm->setText(QStringLiteral("-Dwtfml.test=1"));
+            saveLaunch->click();
+        }
+        check(jvm && saveLaunch && ServerRegistry::readMeta(serverId).jvmArguments == QStringLiteral("-Dwtfml.test=1") &&
+                  propsTextOnDisk() == originalProps,
+              "T42 JVM 参数写入服务端启动记录，保留 server.properties");
+
+        const QString secondWorld = QDir(serverDir).filePath(QStringLiteral("second-world"));
+        QDir().mkpath(secondWorld);
+        QFile secondLevel(QDir(secondWorld).filePath(QStringLiteral("level.dat")));
+        if (secondLevel.open(QIODevice::WriteOnly)) secondLevel.close();
+        selectSection(Section::Backups);
+        auto *worldSelector = page->findChild<QComboBox *>(QStringLiteral("serverSettingsWorldSelector"));
+        auto *activateWorld = page->findChild<QPushButton *>(QStringLiteral("serverSettingsActivateWorld"));
+        if (worldSelector) worldSelector->setCurrentIndex(worldSelector->findData(QStringLiteral("second-world")));
+        check(worldSelector && page->selectedWorld() == QStringLiteral("second-world") &&
+                  ServerRegistry::readProperties(serverId).value(QStringLiteral("level-name")) == QStringLiteral("world"),
+              "T42 浏览另一个存档不会改动启动世界");
+        if (activateWorld && worldSelector && revert) {
+            activateWorld->click();
+            selectSection(Section::RawText);
+            check(rawEdit->toPlainText().contains(QStringLiteral("level-name=second-world")) &&
+                      !propsTextOnDisk().contains(QStringLiteral("level-name=second-world")),
+                  "T42 启动世界与原始文本共用待保存的配置");
+            revert->click();
+            worldSelector->setCurrentIndex(worldSelector->findData(QStringLiteral("world")));
+        }
+        selectSection(Section::Common);
 
         // ---------- ② 表单改一格 → 保存带亮 → 保存 → 盘上只动了那一行 ----------
         textFieldOf(QStringLiteral("motd"))->setText(QStringLiteral("新的说明"));
@@ -186,7 +228,7 @@ void runServerSettingsPageTests() {
 
         // ---------- ③ 切到「原始文本」：表单那笔改动**已经合进文本**了 ----------
         // 这一步量的是"两页看到的不是两份东西"（见 `mergeServerSettingsEdits`）。
-        sections->setCurrentItem(sections->topLevelItem(static_cast<int>(ServerSettingsPage::Section::RawText)));
+        selectSection(Section::RawText);
         QApplication::processEvents();
         check(stack->currentIndex() == static_cast<int>(ServerSettingsPage::Section::RawText) &&
                   rawEdit->toPlainText() == afterSave,
@@ -210,7 +252,7 @@ void runServerSettingsPageTests() {
               afterRaw);
 
         // ---------- ⑤ 切回表单：按新那份重摆，基线也跟着换 ----------
-        sections->setCurrentItem(sections->topLevelItem(static_cast<int>(ServerSettingsPage::Section::Common)));
+        selectSection(Section::Common);
         QApplication::processEvents();
         check(stack->currentIndex() == static_cast<int>(ServerSettingsPage::Section::Common) &&
                   textFieldOf(QStringLiteral("motd"))->text() == QStringLiteral("新的说明") &&
@@ -272,8 +314,7 @@ void runServerSettingsPageTests() {
         {
             auto *playerNote =
                 page->findChild<QLabel *>(MainWindowUI::serverSettingsPlayerNoteName());
-            auto *playerCombo =
-                sections->topLevelItem(static_cast<int>(ServerSettingsPage::Section::Players));
+            auto *playerCombo = page->findChild<QComboBox *>(QStringLiteral("serverSettingsPlayerSelector"));
             auto *playerTree =
                 page->findChild<QTreeWidget *>(MainWindowUI::serverSettingsPlayerTreeName());
             auto *playerAdd = page->findChild<QPushButton *>(
@@ -286,20 +327,20 @@ void runServerSettingsPageTests() {
             check(playersWired,
                   "★ T42.10 玩家名单那一块整块找得到（下拉框 / 名单 / 两颗按钮 / 那行小字）");
             if (playersWired) {
-                sections->setCurrentItem(sections->topLevelItem(static_cast<int>(ServerSettingsPage::Section::Players)));
+                selectSection(Section::Players);
                 QApplication::processEvents();
                 check(stack->currentIndex()
                               == static_cast<int>(ServerSettingsPage::Section::Players)
-                          && playerCombo->childCount()
+                          && playerCombo->count()
                                  == MainWindowUI::serverSettingsPlayerListCount(),
                       "★ T42.10 切到玩家那一页：四份名单都在那个下拉框里"
                       "（`serverSettingsPlayerListCount()` 是上限）",
-                      QString::number(playerCombo->childCount()));
+                      QString::number(playerCombo->count()));
                 bool comboOk = true;
                 QStringList comboTitles;
-                for (int i = 0; i < playerCombo->childCount(); ++i) {
-                    comboTitles << playerCombo->child(i)->text(0);
-                    if (playerCombo->child(i)->text(0)
+                for (int i = 0; i < playerCombo->count(); ++i) {
+                    comboTitles << playerCombo->itemText(i);
+                    if (playerCombo->itemText(i)
                         != MainWindowUI::serverSettingsPlayerListTitle(i)) {
                         comboOk = false;
                     }
@@ -392,7 +433,7 @@ void runServerSettingsPageTests() {
             check(statusLabel != nullptr && workspace != nullptr,
                   "T42.11 前提：顶上那行状态和服务端工作区都找得到");
             if (statusLabel != nullptr && workspace != nullptr) {
-                sections->setCurrentItem(sections->topLevelItem(static_cast<int>(ServerSettingsPage::Section::Common)));
+                selectSection(Section::Common);
                 QApplication::processEvents();
                 // 改一格、**不保存**：下面要证明"只翻状态"不会把没保存的改动冲掉。
                 textFieldOf(QStringLiteral("motd"))->setText(QStringLiteral("还没保存的说明"));

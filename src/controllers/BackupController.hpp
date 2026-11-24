@@ -73,7 +73,8 @@ public:
                                const QString &title, const QString &targetId,
                                const QString &successTitle,
                                const QString &refreshServerId = QString(),
-                               const QString &failureTitle = QString());
+                               const QString &failureTitle = QString(),
+                               bool newTargetOnly = false);
     /// 任务中心那一项此刻按「取消」停不停得下来（那一颗按钮的唯一判据）。
     /// 只认**正在跑的这一趟**：`m_taskId` 之外的一律 false。
     bool canCancelTask(Tasks::TaskId id) const;

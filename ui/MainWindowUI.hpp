@@ -1436,27 +1436,6 @@ public:
         return QStringLiteral("serverSettingsField_") + key;
     }
 
-    /// 左栏那六页的标题。**顺序就是左栏的顺序**（`ServerSettingsPage::Section` 按下标对齐）。
-    /// 「内容」那一页是内容管理（模组 / 数据包）。
-    static int serverSettingsSectionCount() { return 6; }
-    static QString serverSettingsSectionTitle(int index) {
-        switch (index) {
-        case 0:
-            return QCoreApplication::translate("MainWindowUI", "常用设置");
-        case 1:
-            return QCoreApplication::translate("MainWindowUI", "原始文本");
-        case 2:
-            return QCoreApplication::translate("MainWindowUI", "内容");
-        case 3:
-            return QCoreApplication::translate("MainWindowUI", "世界备份");
-        case 4:
-            return QCoreApplication::translate("MainWindowUI", "玩家");
-        case 5:
-            return QCoreApplication::translate("MainWindowUI", "体检");
-        }
-        return QString();
-    }
-
     static QString serverSettingsSaveText() { return QCoreApplication::translate("MainWindowUI", "保存"); }
     static QString serverSettingsRevertText() { return QCoreApplication::translate("MainWindowUI", "放弃改动"); }
     static QString serverSettingsBackupNowText() { return QCoreApplication::translate("MainWindowUI", "立即备份"); }
@@ -1529,13 +1508,15 @@ public:
         return QStringLiteral("serverSettingsContentRefresh");
     }
     /// 那两类。**顺序就是下拉框的顺序**（`ServerContent::Kind` 按下标对齐）。
-    static int serverSettingsContentKindCount() { return 2; }
+    static int serverSettingsContentKindCount() { return 3; }
     static QString serverSettingsContentKindTitle(int index) {
         switch (index) {
         case 0:
             return QCoreApplication::translate("MainWindowUI", "模组");
         case 1:
             return QCoreApplication::translate("MainWindowUI", "数据包");
+        case 2:
+            return QCoreApplication::translate("MainWindowUI", "插件");
         }
         return QString();
     }

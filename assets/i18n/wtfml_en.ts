@@ -11500,6 +11500,126 @@ The game was not launched. You can set the Java path manually in Instance Settin
     <context>
         <name>MainWindow</name>
         <message>
+            <source>无法访问内容目录。请检查所选世界和目录位置。</source>
+            <translation>Could not access the content folder. Check the selected world and folder location.</translation>
+        </message>
+        <message>
+            <source>选择%1文件</source>
+            <translation>Select %1 Files</translation>
+        </message>
+        <message>
+            <source>Java 归档 (*.jar);;所有文件 (*.*)</source>
+            <translation>Java Archives (*.jar);;All Files (*.*)</translation>
+        </message>
+        <message>
+            <source>请先保存或放弃修改。</source>
+            <translation>Save or discard your changes first.</translation>
+        </message>
+        <message>
+            <source>正在处理服务端文件。</source>
+            <translation>A server file operation is in progress.</translation>
+        </message>
+        <message>
+            <source>没有可选的世界存档。</source>
+            <translation>No worlds are available.</translation>
+        </message>
+        <message>
+            <source>暂无服务端日志。</source>
+            <translation>No server logs are available yet.</translation>
+        </message>
+        <message>
+            <source>请选择有效的 Java 可执行文件。</source>
+            <translation>Select a valid Java executable.</translation>
+        </message>
+        <message>
+            <source>无法保存启动设置</source>
+            <translation>Could Not Save Launch Settings</translation>
+        </message>
+        <message>
+            <source>导出服务端迁移包</source>
+            <translation>Export Server Migration Archive</translation>
+        </message>
+        <message>
+            <source>ZIP 归档 (*.zip)</source>
+            <translation>ZIP Archives (*.zip)</translation>
+        </message>
+        <message>
+            <source>无法导出迁移包</source>
+            <translation>Could Not Export Migration Archive</translation>
+        </message>
+        <message>
+            <source>请选择服务端目录之外的新文件。</source>
+            <translation>Choose a new file outside the server folder.</translation>
+        </message>
+        <message>
+            <source>迁移包已导出</source>
+            <translation>Migration Archive Exported</translation>
+        </message>
+        <message>
+            <source>迁移包导出失败</source>
+            <translation>Migration Archive Export Failed</translation>
+        </message>
+        <message>
+            <source>导入服务端迁移包</source>
+            <translation>Import Server Migration Archive</translation>
+        </message>
+        <message>
+            <source>无法导入迁移包</source>
+            <translation>Could Not Import Migration Archive</translation>
+        </message>
+        <message>
+            <source>请选择由服务端设置导出的迁移包。</source>
+            <translation>Select a migration archive exported from the server settings.</translation>
+        </message>
+        <message>
+            <source>迁移包已导入</source>
+            <translation>Migration Archive Imported</translation>
+        </message>
+        <message>
+            <source>迁移包导入失败</source>
+            <translation>Migration Archive Import Failed</translation>
+        </message>
+        <message>
+            <source>无法创建升级副本</source>
+            <translation>Could Not Create Upgraded Copy</translation>
+        </message>
+        <message>
+            <source>版本号或构建号含有无效字符。</source>
+            <translation>A version or build number contains invalid characters.</translation>
+        </message>
+        <message>
+            <source>%1（%2 升级副本）</source>
+            <translation>%1 (%2 upgrade copy)</translation>
+        </message>
+        <message>
+            <source>准备服务端升级副本</source>
+            <translation>Preparing an Upgraded Server Copy</translation>
+        </message>
+        <message>
+            <source>游戏目录已切换，未发布升级副本。</source>
+            <translation>The game folder changed. The upgraded copy was not published.</translation>
+        </message>
+        <message>
+            <source>无法发布升级副本。</source>
+            <translation>Could not publish the upgraded copy.</translation>
+        </message>
+        <message>
+            <source>无法创建服务端暂存目录。</source>
+            <translation>Could not create the temporary server folder.</translation>
+        </message>
+        <message>
+            <source>升级副本的来源包含链接：%1。</source>
+            <translation>The source for the upgraded copy contains a link: %1.</translation>
+        </message>
+        <message>
+            <source>无法复制 %1。</source>
+            <translation>Could not copy %1.</translation>
+        </message>
+        <message>
+            <source>无法保存升级副本的安装记录。</source>
+            <translation>Could not save the installation record for the upgraded copy.</translation>
+        </message>
+        <message>
             <source>请切回原游戏文件夹再重试这次安装。</source>
             <translation>Switch back to the original game folder and retry the installation.</translation>
         </message>
@@ -20796,6 +20916,10 @@ Not supported by this preset category: %1.</translation>
     <context>
         <name>QObject</name>
         <message>
+            <source>目标已存在，原有文件已保留：%1</source>
+            <translation>The destination already exists. Existing files were kept: %1</translation>
+        </message>
+        <message>
             <source>%1：%2</source>
             <translation>%1:%2</translation>
         </message>
@@ -24251,6 +24375,10 @@ Please close the program occupying the port, or change the port in "Common Setti
     <context>
         <name>ServerContent</name>
         <message>
+            <source>插件</source>
+            <translation>Plugin</translation>
+        </message>
+        <message>
             <source>数据包</source>
             <translation>Datapacks</translation>
         </message>
@@ -25247,6 +25375,166 @@ Please close the program occupying the port, or change the port in "Common Setti
     </context>
     <context>
         <name>ServerSettingsPage</name>
+        <message>
+            <source>打开目录</source>
+            <translation>Open Folder</translation>
+        </message>
+        <message>
+            <source>控制台</source>
+            <translation>Console</translation>
+        </message>
+        <message>
+            <source>停止服务端</source>
+            <translation>Stop Server</translation>
+        </message>
+        <message>
+            <source>概览</source>
+            <translation>Overview</translation>
+        </message>
+        <message>
+            <source>启动设置</source>
+            <translation>Launch Settings</translation>
+        </message>
+        <message>
+            <source>设置</source>
+            <translation>Settings</translation>
+        </message>
+        <message>
+            <source>世界与玩家</source>
+            <translation>Worlds and Players</translation>
+        </message>
+        <message>
+            <source>世界</source>
+            <translation>Worlds</translation>
+        </message>
+        <message>
+            <source>玩家</source>
+            <translation>Players</translation>
+        </message>
+        <message>
+            <source>内容管理</source>
+            <translation>Content Management</translation>
+        </message>
+        <message>
+            <source>维护</source>
+            <translation>Maintenance</translation>
+        </message>
+        <message>
+            <source>诊断与补全</source>
+            <translation>Diagnostics and Repair</translation>
+        </message>
+        <message>
+            <source>日志</source>
+            <translation>Logs</translation>
+        </message>
+        <message>
+            <source>原始文本</source>
+            <translation>Raw Text</translation>
+        </message>
+        <message>
+            <source>迁移</source>
+            <translation>Migration</translation>
+        </message>
+        <message>
+            <source>升级</source>
+            <translation>Upgrade</translation>
+        </message>
+        <message>
+            <source>设为启动世界</source>
+            <translation>Set as Startup World</translation>
+        </message>
+        <message>
+            <source>玩家名单</source>
+            <translation>Player Lists</translation>
+        </message>
+        <message>
+            <source>Java 路径</source>
+            <translation>Java Path</translation>
+        </message>
+        <message>
+            <source>跟随全局 Java 设置</source>
+            <translation>Use Global Java Settings</translation>
+        </message>
+        <message>
+            <source>浏览…</source>
+            <translation>Browse…</translation>
+        </message>
+        <message>
+            <source>选择 Java 可执行文件</source>
+            <translation>Select a Java Executable</translation>
+        </message>
+        <message>
+            <source>跟随全局设置</source>
+            <translation>Use Global Settings</translation>
+        </message>
+        <message>
+            <source>最大内存</source>
+            <translation>Maximum Memory</translation>
+        </message>
+        <message>
+            <source>JVM 参数</source>
+            <translation>JVM Arguments</translation>
+        </message>
+        <message>
+            <source>保存启动设置</source>
+            <translation>Save Launch Settings</translation>
+        </message>
+        <message>
+            <source>刷新日志</source>
+            <translation>Refresh Log</translation>
+        </message>
+        <message>
+            <source>将服务端目录打包，包括世界、名单和配置。请先停止服务端。</source>
+            <translation>Stop the server before exporting its worlds, player lists, and configuration.</translation>
+        </message>
+        <message>
+            <source>导出迁移包…</source>
+            <translation>Export Migration Archive…</translation>
+        </message>
+        <message>
+            <source>导入迁移包…</source>
+            <translation>Import Migration Archive…</translation>
+        </message>
+        <message>
+            <source>安装新版本到独立的服务端副本。原服务端及存档会保留。</source>
+            <translation>Install the new version in a separate copy. The original server and its worlds are kept.</translation>
+        </message>
+        <message>
+            <source>目标游戏版本</source>
+            <translation>Target Game Version</translation>
+        </message>
+        <message>
+            <source>目标加载器版本</source>
+            <translation>Target Loader Version</translation>
+        </message>
+        <message>
+            <source>目标安装器版本</source>
+            <translation>Target Installer Version</translation>
+        </message>
+        <message>
+            <source>目标构建号（可留空）</source>
+            <translation>Target Build (Optional)</translation>
+        </message>
+        <message>
+            <source>创建升级副本</source>
+            <translation>Create Upgraded Copy</translation>
+        </message>
+        <message>
+            <source>%1（启动世界）</source>
+            <translation>%1 (startup world)</translation>
+        </message>
+        <message>
+            <source>%1（待保存）</source>
+            <translation>%1 (unsaved)</translation>
+        </message>
+        <message>
+            <source>备份完整服务端…</source>
+            <translation>Back Up Entire Server…</translation>
+        </message>
+        <message>
+            <source>该世界的下界或末地在独立目录中。请用完整服务端备份同时保留这些维度。</source>
+            <translation>This world's Nether or End is in a separate folder. Back up the entire server to include these dimensions.</translation>
+        </message>
         <message>
             <source>启动服务端</source>
             <translation>Start the server</translation>

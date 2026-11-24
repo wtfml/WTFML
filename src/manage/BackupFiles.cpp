@@ -412,6 +412,16 @@ bool nameIsSafety(const QString &fileName, const QString &prefix) {
     return fileName.mid(prefix.size()).startsWith(kSafetyMark);
 }
 
+bool matchesBackupPrefix(const QString &fileName, const QString &prefix) {
+    if (!fileName.startsWith(prefix, Qt::CaseInsensitive) || !fileName.endsWith(QLatin1String(".zip"), Qt::CaseInsensitive))
+        return false;
+    QString stamp = fileName.mid(prefix.size()).chopped(4);
+    const QString currentMark = QCoreApplication::translate("BackupFiles", "恢复前-");
+    if (stamp.startsWith(kSafetyMark)) stamp.remove(0, kSafetyMark.size());
+    else if (stamp.startsWith(currentMark)) stamp.remove(0, currentMark.size());
+    return QDateTime::fromString(stamp, QStringLiteral("yyyy-MM-dd-HHmmss")).isValid();
+}
+
 QList<FileRecord> collectFiles(const QString &rootDir, const QStringList &excludeTop,
                                QString *problemOut, const std::function<bool()> &cancelled) {
     if (problemOut != nullptr) {
@@ -766,7 +776,7 @@ bool hasRoomFor(qint64 freeBytes, qint64 neededBytes) {
 
 RestoreResult restoreBackup(const QString &zipPath, const QString &targetParentDir,
                             const std::function<bool()> &cancelled,
-                            const RestoreObserver &observer) {
+                            const RestoreObserver &observer, RestoreTarget policy) {
     RestoreResult result;
     const QString gameRoot = InstanceFiles::canonicalPath(AppPaths::minecraftDir());
     QString directoryProblem;
@@ -816,6 +826,11 @@ RestoreResult restoreBackup(const QString &zipPath, const QString &targetParentD
         return result;
     }
     const QFileInfo existing(target);
+    if (policy == RestoreTarget::NewOnly && (existing.exists() || existing.isSymLink() || existing.isJunction())) {
+        result.stage = RestoreResult::Stage::RemoveOld;
+        result.problem = QObject::tr("目标已存在，原有文件已保留：%1").arg(QDir::toNativeSeparators(target));
+        return result;
+    }
     {
         const qint64 free = QStorageInfo(targetParentDir).bytesAvailable();
         const qint64 needed = restoreSpaceNeeded(manifest);

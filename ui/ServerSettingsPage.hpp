@@ -75,7 +75,7 @@ class ServerSettingsPage : public QDialog {
     Q_OBJECT
 
 public:
-    /// 左栏那六页（**顺序就是左栏那一列的顺序**）。
+    /// 内容栈的页号。左栏顺序和分组独立于内容栈。
     enum class Section {
         Common = 0,  ///< 常用设置（表单）
         RawText,     ///< 原始文本（整份 `server.properties`）
@@ -83,7 +83,37 @@ public:
         Backups,     ///< 世界备份
         Players,     ///< 玩家名单（白名单 / 管理员 / 封禁两个）
         Check,       ///< 体检
+        Overview,
+        Launch,
+        Logs,
+        Migration,
+        Upgrade,
+        Count,
     };
+
+    struct LaunchSettings {
+        QString javaPath;
+        int memoryMb = 0;
+        QString jvmArguments;
+        bool operator==(const LaunchSettings &) const = default;
+    };
+
+    void setOverview(const QString &typeVersion, const QString &directory);
+    void setRunButtons(bool running, bool stopping);
+    void setLaunchSettings(const LaunchSettings &settings);
+    LaunchSettings launchSettings() const;
+    bool launchSettingsChanged() const { return launchSettings() != m_savedLaunch; }
+    void setWorlds(const QStringList &worlds, const QString &selected, const QString &startup,
+                   const QString &pending = QString());
+    QString selectedWorld() const;
+    void setContentCapabilities(bool mods, bool plugins);
+    void setLogText(const QString &text);
+    QString upgradeVersion() const;
+    QString upgradeLoader() const;
+    QString upgradeInstaller() const;
+    QString upgradeBuild() const;
+    void setUpgradeFields(const QString &version, const QString &loader, const QString &installer,
+                          const QString &build, bool available);
 
     /// 一格表单摆成什么控件（和 `ServerPropertiesForm::Kind` 一一对应；**翻译在
     /// `MainWindow` 那一段**，这一层只认自己的这个枚举）。
@@ -217,6 +247,7 @@ public:
     QString selectedBackup() const;
     /// 备份那一段顶上那句说明（世界在哪儿、备份落在哪儿 —— 由翻译点拼好）。
     void setBackupNote(const QString &text);
+    void setSplitWorldBackup(bool split);
 
     // ---------- ⑤ 玩家名单 ----------
     // / 现在选中哪一份名单（下标 = `ServerPlayers::List`，也是下拉框的下标）。
@@ -264,6 +295,16 @@ signals:
     void edited();
     void saveRequested();
     void startRequested();
+    void stopRequested();
+    void consoleRequested();
+    void openDirectoryRequested();
+    void launchSaveRequested();
+    void worldChanged();
+    void activateWorldRequested();
+    void refreshLogRequested();
+    void migrationRequested();
+    void migrationImportRequested();
+    void upgradeRequested();
     void revertRequested();
     void backupNowRequested();
     void restoreBackupRequested(const QString &zipPath);
@@ -310,6 +351,7 @@ private:
     void refreshPlayerActions();
     /// 内容那一页那几颗按钮的灰亮（没选 / 只读 ⇒ 点不动；「打开文件夹」「刷新」一直能按）。
     void refreshContentActions();
+    void refreshSectionActions();
     QWidget *fieldEditor(const QString &key) const;
     QTreeWidgetItem *backupItemAt(int row) const;
 
@@ -318,6 +360,33 @@ private:
     QLabel *m_statusLabel = nullptr;
     QTreeWidget *m_sectionList = nullptr;
     QStackedWidget *m_stack = nullptr;
+    QHash<int, QTreeWidgetItem *> m_sections;
+    QHash<int, QTreeWidgetItem *> m_contentSections;
+    QLabel *m_overviewType = nullptr;
+    QLabel *m_overviewDirectory = nullptr;
+    QPushButton *m_consoleButton = nullptr;
+    QLineEdit *m_launchJava = nullptr;
+    QPushButton *m_launchBrowse = nullptr;
+    QSpinBox *m_launchMemory = nullptr;
+    QLineEdit *m_launchJvm = nullptr;
+    QPushButton *m_launchSave = nullptr;
+    LaunchSettings m_savedLaunch;
+    QComboBox *m_worldSelector = nullptr;
+    bool m_splitWorldBackup = false;
+    QPushButton *m_activateWorld = nullptr;
+    QString m_startupWorld;
+    QComboBox *m_playerSelector = nullptr;
+    QPlainTextEdit *m_log = nullptr;
+    QPushButton *m_migration = nullptr;
+    QPushButton *m_migrationImport = nullptr;
+    QLineEdit *m_upgradeVersion = nullptr;
+    QLineEdit *m_upgradeLoader = nullptr;
+    QLineEdit *m_upgradeInstaller = nullptr;
+    QLineEdit *m_upgradeBuild = nullptr;
+    QPushButton *m_upgrade = nullptr;
+    bool m_upgradeAvailable = false;
+    bool m_running = false;
+    bool m_stopping = false;
 
     QScrollArea *m_formScroll = nullptr;
     QWidget *m_formBody = nullptr;

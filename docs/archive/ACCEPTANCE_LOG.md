@@ -284,3 +284,5 @@ python tools/acceptance_directory_boundary.py --exe <WTFMinecraftLauncher.exe> -
 2026-11-24｜服务端列表增加筛选和搜索，预设列表改为左分类右搜索｜`install-layout`、`main-window` 3182 项、Windows x64 构建与隔离启动通过｜运行中筛选随服务端起停更新，最小窗口下仅折行左侧预设分类。
 
 2026-11-24｜服务端与预设采用实例列表的彩色方块封面和类型列｜`install-layout`、`main-window`、`preset-install`、Windows x64 构建与隔离启动通过｜颜色按标识稳定分配，服务端类型列可显示加载器版本或构建号，预设类型列显示类别。
+
+2026-11-24｜服务端左栏按管理对象分组并接入启动参数、世界选择、插件管理和维护操作｜`main-window` 3192/3192、服务端界面 94/94、`core-servers` 796/796、`core-instances` 1869/1869，Windows x64 构建与隔离启动通过｜独立维度用整服迁移包备份，导入防覆盖，升级使用同类型副本。
