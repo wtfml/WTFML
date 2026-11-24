@@ -7,9 +7,9 @@
 环境：Windows、PowerShell 7、CMake、MinGW 13.1 和 Qt 6.10.1 的 `bin` 在 `PATH` 里。在仓库根目录运行：
 
 ```powershell
-./tools/test.ps1                                   # 按改动选模块：比较 origin/main...HEAD，并合并未提交/未跟踪文件
+./tools/test.ps1 -BaseRef origin/dev               # 按改动选模块：比较 origin/dev...HEAD，并合并未提交/未跟踪文件（平时往 dev 提交用这条）
 ./tools/test.ps1 -Suite quick                      # 固定的快速专项（16 项）
-./tools/test.ps1 -Suite full                       # 全部非 visual 测试（改了共享代码、发版前用）
+./tools/test.ps1 -Suite full                       # 全部非 visual 测试（推 main 之前跑）
 ./tools/test.ps1 -Suite full -ListOnly             # 只列测试，不构建、不执行
 ./tools/test.ps1 -Suite quick -NoBuild             # 用现有二进制跑，不保证对应最新源码
 ```

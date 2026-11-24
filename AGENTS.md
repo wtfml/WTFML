@@ -54,13 +54,14 @@ WTFML 是 C++23 + Qt 6 Widgets 写的 Minecraft 启动器，目前只有 Windows
 - 不提交日志、`.dmp`、`.bak`、`.orig`、`.rej`、`.stackdump`、`.tmp`、临时导出物和构建产物（`build*/` 等）。
 - 不提交 `.tongxi/` 或其他个人 agent 的工作目录；不提交密钥、令牌、`dev-login.json`、`credential.json`。
 - 改动先推到 `dev`（直接推送或向 `dev` 提 PR），不直接推 `main`。
-- `dev` 上 CI 通过、测试完成后，再把 `main` 快进到 `dev`（`git merge --ff-only dev`）；发版标签只打在 `main` 上。
+- 推 `main` 之前先按「验证规则」跑一次全量；全部通过、`dev` 的 CI 也通过，再把 `main` 快进到 `dev`（`git merge --ff-only dev`）。发版标签只打在 `main` 上。
 - 紧急修复如果直接改了 `main`，随即把 `main` 合回 `dev`。
 - 不 force push，不改写已推送的历史。
 
 ## 验证规则
 
-- 改了 `src/`、`ui/`、`tests/` 里的代码：先跑相关套件 `pwsh tools/test.ps1 …`，用法见 [docs/dev/TESTING.md](docs/dev/TESTING.md)；新增用例按那里的约定放。
+- 往 `dev` 提交：改了 `src/`、`ui/`、`tests/` 里的代码，只增量编改到的目标、跑对应的测试，不跑全量。命令是 `pwsh tools/test.ps1 -BaseRef origin/dev`；它退回全部测试时，用 `-Modules` 挑相关模块。用法见 [docs/dev/TESTING.md](docs/dev/TESTING.md)，新增用例按那里的约定放。
+- 推 `main`：在要推的那个提交上做全量构建和全量测试（`pwsh tools/test.ps1 -Suite full`，或在 GitHub 上对 `dev` 手动运行 Windows CI），全部通过才推；有失败就在 `dev` 上修好，再跑一次全量。
 - 改了文档、移动了文件：跑 `pwsh tools/check-doc-links.ps1` 和 `pwsh tools/check-repo-layout.ps1`，两个都要 PASS。
 - 改了 `src/` 或 `ui/` 里的界面文案：跑 `pwsh tools/check-i18n.ps1`。新写的中文要包 `tr()` / `QCoreApplication::translate()`，确不翻的行尾标 `// i18n-ignore`，流程见 [docs/dev/I18N.md](docs/dev/I18N.md)。
 - 交付时写清跑了什么、结果如何；没跑的写没跑，别写成通过。
