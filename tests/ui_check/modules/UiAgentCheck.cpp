@@ -29,8 +29,10 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QScrollBar>
 #include <QSettings>
 #include <QTemporaryDir>
+#include <QThread>
 #include <QToolButton>
 
 namespace {
@@ -346,6 +348,71 @@ int UiAgentCheck() {
               "智能体 UI：大量消息里最后几条仍在");
         page->clearMessages();
         QApplication::processEvents();
+    }
+
+    // 滚动跟随：底部文本更新只在本来就贴底时跟随；上翻后不抢位置；Ctrl+End 回到底部。
+    {
+        auto *scroll = qobject_cast<QScrollArea *>(find("agentMessageScroll"));
+        check(scroll != nullptr, "智能体 UI：找得到对话滚动区");
+        if (scroll != nullptr) {
+            QList<AgentView::Message> many;
+            for (int i = 0; i < 40; ++i) {
+                AgentView::Message message;
+                message.id = QStringLiteral("scroll-%1").arg(i);
+                message.user = false;
+                message.content =
+                    QStringLiteral("第 %1 条消息：这是一段用来撑高对话流的正文。").arg(i);
+                message.status = AgentView::MessageStatus::Complete;
+                many.append(message);
+            }
+            many.first().reasoning = QStringLiteral("先看日志，再看模组清单。");
+            page->setMessages(many);
+            QScrollBar *bar = scroll->verticalScrollBar();
+            // 消息行的几何是排队算的：等到真的溢出，再看跟随行为。
+            for (int i = 0; i < 100 && bar->maximum() <= 0; ++i) {
+                QApplication::processEvents();
+                QThread::msleep(5);
+            }
+            check(bar->maximum() > 0, "智能体 UI：对话流可以滚动",
+                  QString::number(bar->maximum()));
+            check(bar->value() == bar->maximum(), "智能体 UI：切会话后贴在底部",
+                  QStringLiteral("%1/%2").arg(bar->value()).arg(bar->maximum()));
+
+            // 上翻到顶后，底部文本更新不再把画面拽回最下方。
+            bar->setValue(0);
+            QApplication::processEvents();
+            AgentView::Message updated = many.last();
+            updated.content += QStringLiteral("（继续输出）");
+            page->upsertMessage(updated);
+            QApplication::processEvents();
+            check(bar->value() == 0, "智能体 UI：上翻后文本更新不强制回到最下方",
+                  QStringLiteral("%1/%2").arg(bar->value()).arg(bar->maximum()));
+
+            // 展开/折叠顶部那条的思考过程也不抢滚动位置。
+            const QList<QToolButton *> toggles =
+                page->findChildren<QToolButton *>(QStringLiteral("agentReasoningToggle"));
+            if (!toggles.isEmpty()) {
+                toggles.first()->click();
+                QApplication::processEvents();
+                check(bar->value() == 0, "智能体 UI：展开/折叠思考过程不抢滚动位置",
+                      QString::number(bar->value()));
+            }
+
+            // Ctrl+End 回到底部，之后的新内容继续跟随。
+            QKeyEvent endKey(QEvent::KeyPress, Qt::Key_End, Qt::ControlModifier);
+            QApplication::sendEvent(scroll->viewport(), &endKey);
+            QApplication::processEvents();
+            check(bar->value() == bar->maximum(), "智能体 UI：Ctrl+End 回到最新消息",
+                  QStringLiteral("%1/%2").arg(bar->value()).arg(bar->maximum()));
+            AgentView::Message follow = many.last();
+            follow.content += QStringLiteral("（再一行）");
+            page->upsertMessage(follow);
+            QApplication::processEvents();
+            check(bar->value() == bar->maximum(), "智能体 UI：贴底后更新继续跟随",
+                  QStringLiteral("%1/%2").arg(bar->value()).arg(bar->maximum()));
+            page->clearMessages();
+            QApplication::processEvents();
+        }
     }
 
     AgentView::ToolCard toolCard;

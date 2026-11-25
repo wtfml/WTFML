@@ -122,11 +122,15 @@ signals:
     void autoSafeToggled(bool enabled);
 
 private:
+    /// 强制回到底部并恢复"跟随最新"（切会话、发消息、Ctrl+End）。
+    void scrollToLatest();
+    /// 只在用户本来就贴着底时才跟随（流式正文/工具卡/提示的自动更新走这一条）。
+    void scrollToLatestIfSticky();
+    bool atBottom() const;
     void rebuildSessionRow(QListWidgetItem *item, const AgentView::SessionMeta &meta);
     void updateSendEnabled();
     void updateEmptyState();
     void updateComposerHint();
-    void scrollToLatest();
     void insertStreamWidget(QWidget *widget);
     AgentMessageView *viewFor(const QString &messageId);
     void showSessionMenu(const QPoint &position);
@@ -178,4 +182,6 @@ private:
     QString m_statusText;
     bool m_streaming = false;
     bool m_configured = false;
+    /// 用户是不是贴着底：贴底时新内容跟随，上翻后不抢位置（Ctrl+End 或滚回底部恢复）。
+    bool m_stickyBottom = true;
 };

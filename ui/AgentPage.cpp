@@ -670,6 +670,27 @@ AgentPage::AgentPage(QWidget *parent)
     // 弹簧系数 0：空状态（系数 1）在时整块高度归它、内容上下居中；不在时这根 Expanding 弹簧把消息顶到上面。
     m_messageLayout->addStretch(0);
     m_scroll->setWidget(host);
+    m_scroll->setFocusPolicy(Qt::StrongFocus);
+    m_scroll->viewport()->setFocusPolicy(Qt::StrongFocus);
+    m_scroll->setAccessibleDescription(
+        QCoreApplication::translate("AgentPage", "Ctrl+End 回到最新消息"));
+    m_scroll->installEventFilter(this);
+    m_scroll->viewport()->installEventFilter(this);
+    {
+        QScrollBar *bar = m_scroll->verticalScrollBar();
+        // 用户手动滚离底部 → 不再跟随；滚回底部（滚轮/拖动/键盘）→ 恢复跟随。
+        connect(bar, &QScrollBar::valueChanged, this, [this](int value) {
+            if (m_scroll == nullptr) return;
+            QScrollBar *scrollBar = m_scroll->verticalScrollBar();
+            m_stickyBottom = value >= scrollBar->maximum() - 8;
+        });
+        // 内容变高（流式正文、展开/折叠思考）时，只有本来就贴底才跟到新的底部。
+        connect(bar, &QScrollBar::rangeChanged, this, [this](int, int maximum) {
+            if (m_stickyBottom && m_scroll != nullptr) {
+                m_scroll->verticalScrollBar()->setValue(maximum);
+            }
+        });
+    }
     chatLayout->addWidget(m_scroll, 1);
 
     // ---------- 模式卡片（Stage 2）----------
@@ -774,11 +795,15 @@ AgentPage::AgentPage(QWidget *parent)
     connect(m_instanceChip, &QPushButton::clicked, this, &AgentPage::instanceChipRequested);
     connect(m_moreButton, &QPushButton::clicked, this, &AgentPage::openMoreMenu);
     connect(m_send, &QPushButton::clicked, this, [this] {
-        if (m_configured) emit sendRequested(m_composer->toPlainText());
+        if (!m_configured) return;
+        scrollToLatest();
+        emit sendRequested(m_composer->toPlainText());
     });
     connect(m_stop, &QPushButton::clicked, this, &AgentPage::stopRequested);
     connect(m_composer, &AgentComposer::sendRequested, this, [this] {
-        if (m_configured && !m_streaming) emit sendRequested(m_composer->toPlainText());
+        if (!m_configured || m_streaming) return;
+        scrollToLatest();
+        emit sendRequested(m_composer->toPlainText());
     });
     connect(m_composer, &QPlainTextEdit::textChanged, this, [this] {
         updateSendEnabled();
@@ -921,7 +946,7 @@ void AgentPage::upsertMessage(const AgentView::Message &message) {
         view->setMessage(message);
     }
     updateEmptyState();
-    scrollToLatest();
+    scrollToLatestIfSticky();
 }
 
 void AgentPage::removeMessage(const QString &messageId) {
@@ -959,7 +984,7 @@ void AgentPage::upsertToolCard(const AgentView::ToolCard &card) {
         view->setCard(card);
     }
     updateEmptyState();
-    scrollToLatest();
+    scrollToLatestIfSticky();
 }
 
 void AgentPage::clearToolCards() {
@@ -983,7 +1008,7 @@ void AgentPage::showApproval(const QJsonObject &request) {
     }
     m_approvalCard->setRequest(request);
     m_approvalCard->show();
-    scrollToLatest();
+    scrollToLatestIfSticky();
 }
 
 void AgentPage::hideApproval() {
@@ -1147,7 +1172,7 @@ void AgentPage::showNotice(const QString &text) {
     m_noticeText->setMinimumWidth(qMin(m_noticeText->fontMetrics().horizontalAdvance(text) + 4,
                                        m_noticeText->maximumWidth()));
     m_notice->setVisible(!text.isEmpty());
-    if (!text.isEmpty()) scrollToLatest();
+    if (!text.isEmpty()) scrollToLatestIfSticky();
 }
 
 void AgentPage::showEmptyState(bool empty) { m_emptyState->setVisible(empty); }
@@ -1173,11 +1198,27 @@ void AgentPage::updateSendEnabled() {
     m_send->setEnabled(m_configured && hasText && !m_streaming);
 }
 
+bool AgentPage::atBottom() const {
+    if (m_scroll == nullptr) return true;
+    const QScrollBar *bar = m_scroll->verticalScrollBar();
+    return bar->maximum() <= 0 || bar->value() >= bar->maximum() - 8;
+}
+
 void AgentPage::scrollToLatest() {
+    m_stickyBottom = true;
     QTimer::singleShot(0, this, [this] {
-        if (m_scroll != nullptr) {
-            m_scroll->verticalScrollBar()->setValue(m_scroll->verticalScrollBar()->maximum());
-        }
+        if (m_scroll == nullptr || !m_stickyBottom) return;
+        QScrollBar *bar = m_scroll->verticalScrollBar();
+        bar->setValue(bar->maximum());
+    });
+}
+
+void AgentPage::scrollToLatestIfSticky() {
+    if (!m_stickyBottom) return;
+    QTimer::singleShot(0, this, [this] {
+        if (m_scroll == nullptr || !m_stickyBottom) return;
+        QScrollBar *bar = m_scroll->verticalScrollBar();
+        bar->setValue(bar->maximum());
     });
 }
 
@@ -1206,6 +1247,14 @@ bool AgentPage::eventFilter(QObject *watched, QEvent *event) {
             m_title->setCursor(onText ? Qt::IBeamCursor : Qt::ArrowCursor);
         } else if (mouse->button() == Qt::LeftButton && onText) {
             beginTitleRename();
+            return true;
+        }
+    }
+    if (m_scroll != nullptr && (watched == m_scroll || watched == m_scroll->viewport()) &&
+        event->type() == QEvent::KeyPress) {
+        auto *key = static_cast<QKeyEvent *>(event);
+        if (key->key() == Qt::Key_End && (key->modifiers() & Qt::ControlModifier) != 0) {
+            scrollToLatest();
             return true;
         }
     }
