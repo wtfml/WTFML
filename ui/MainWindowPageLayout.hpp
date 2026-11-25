@@ -77,10 +77,8 @@ inline constexpr int kHomeHeroInset = 8;
 /// 右上账号胶囊的宽（设计稿按内容约 180；名字长了在里面省略）。
 inline constexpr int kHomeAccountPillWidth = 184;
 inline constexpr int kHomeAccountPillHeight = 44;
-/// 实例带卡片的宽 / 高（设计稿 .card：196 宽，封面 48 + 上下 8）。
-/// 196 是**下限**、320 是上限：卡片宽度跟着实例名走（名字整句放得下就宽一点，放不下
-/// 才在 320 那档省略），一排里不给它分"剩下的宽度"。
-inline constexpr int kHomeTileWidth = 196;
+/// 实例带等分可用宽度。放不下名称和版本时切换为图标加播放钮。
+inline constexpr int kHomeTileMinTextWidth = 160;
 inline constexpr int kHomeTileMaxWidth = 320;
 inline constexpr int kHomeTileHeight = 64;
 /// 主页启动区卡片底下给「启动游戏」柔光留的余量（光晕向下偏 10、模糊 30）。

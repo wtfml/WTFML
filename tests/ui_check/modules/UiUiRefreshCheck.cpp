@@ -685,28 +685,42 @@ int UiUiRefreshCheck(QApplication &app) {
             expect(preview.findChild<QWidget *>(QStringLiteral("homeQuickPopup")) == nullptr,
                    "the strip has no per-card popup any more");
         }
-        // 实例带的版本串：卡片宽度同时计入名字行和版本行，较长的版本串完整显示（196~320 之间）。
+        // 名称和版本长度差异较大时，最近和收藏仍按相同宽度分配卡片。
         {
             MainWindowUI::HomeQuickItem wide = quick;
             wide.key = QStringLiteral("wide-version");
             wide.name = QStringLiteral("Pack");
             wide.detail = QStringLiteral("Minecraft 1.21.11-pre1 / NeoForge 21.11.0");
-            ui.setHomeQuickRows({quick}, {wide}, {quick});
+            auto longTile = longCard;
+            longTile.key = QStringLiteral("long-preview");
+            const QList<MainWindowUI::HomeQuickItem> items{quick, longTile, wide};
+            ui.setHomeQuickRows({quick}, items, items);
             settle();
-            auto *favSection = home->findChild<QWidget *>(QStringLiteral("homeFavoriteSection"));
-            auto *wideCard = favSection ? favSection->findChild<QPushButton *>(QStringLiteral("homeQuickCard_wide-version"))
-                                        : nullptr;
-            auto *wideVersion = wideCard ? wideCard->findChild<QLabel *>(QStringLiteral("homeQuickTileVersion")) : nullptr;
-            const int need = wideVersion ? wideVersion->fontMetrics().horizontalAdvance(wideVersion->text()) : -1;
-            expect(wideCard && wideVersion && wideVersion->text() == QStringLiteral("NeoForge 1.21.11-pre1") &&
-                       wideVersion->width() >= need && wideCard->width() > MainWindowPageLayout::kHomeTileWidth &&
-                       wideCard->width() <= MainWindowPageLayout::kHomeTileMaxWidth,
-                   "a card whose version line is wider than its name widens to show the whole version");
+            for (const auto mode : {MainWindowUI::HomeQuickMode::Favorite, MainWindowUI::HomeQuickMode::Recent}) {
+                ui.setHomeQuickMode(mode);
+                settle();
+                const auto sectionName = mode == MainWindowUI::HomeQuickMode::Favorite
+                    ? QStringLiteral("homeFavoriteSection") : QStringLiteral("homeQuickRecentSection");
+                auto *section = home->findChild<QWidget *>(sectionName);
+                const auto findCard = [section](const QString &name) {
+                    return section ? section->findChild<QPushButton *>(name) : nullptr;
+                };
+                auto *first = findCard(QStringLiteral("homeQuickCard_preview"));
+                auto *second = findCard(QStringLiteral("homeQuickCard_long-preview"));
+                auto *third = findCard(QStringLiteral("homeQuickCard_wide-version"));
+                expect(first && second && third && first->width() == second->width() && second->width() == third->width() &&
+                           third->mapTo(section, QPoint(third->width(), 0)).x() <= section->width() &&
+                           third->toolTip().contains(QStringLiteral("NeoForge 1.21.11-pre1")),
+                       "short and long quick cards share equal widths and keep their full labels in tooltips");
+            }
             ui.setHomeQuickRows({quick}, {longCard}, {quick});
+            ui.setHomeQuickMode(MainWindowUI::HomeQuickMode::Favorite);
             settle();
         }
         // 实例带收起 / 展开：点箭头卡片排隐藏、页签留着，再点恢复；收起时点页签先展开再切过去。
         {
+            const QSize previousSize = preview.size();
+            preview.resize(MainWindowPageLayout::kMainWindowMinWidth, previousSize.height());
             QList<MainWindowUI::HomeQuickItem> tiles;
             for (int i = 0; i < 4; ++i) {
                 auto item = longCard;
@@ -717,12 +731,13 @@ int UiUiRefreshCheck(QApplication &app) {
             ui.setHomeQuickMode(MainWindowUI::HomeQuickMode::Favorite);
             settle();
             auto *section = home->findChild<QWidget *>(QStringLiteral("homeFavoriteSection"));
+            auto *first = section ? section->findChild<QPushButton *>(QStringLiteral("homeQuickCard_compact-0")) : nullptr;
             auto *last = section ? section->findChild<QPushButton *>(QStringLiteral("homeQuickCard_compact-3")) : nullptr;
             auto *version = last ? last->findChild<QLabel *>(QStringLiteral("homeQuickTileVersion")) : nullptr;
-            auto *play = last ? last->findChild<QPushButton *>(QStringLiteral("homeQuickPlay")) : nullptr;
-            expect(section && last && version && play && !version->isVisibleTo(last) && !play->isHidden() &&
+            expect(section && first && last && version && first->width() == last->width() && version->isVisibleTo(last) &&
                        last->mapTo(section, QPoint(last->width(), 0)).x() <= section->width(),
-                   "overflowing recent or favorite cards shrink to icon and play without clipping");
+                   "four long cards fit the minimum window width with equal widths and visible version labels");
+            preview.resize(previousSize);
             ui.setHomeQuickRows({quick}, {longCard}, {quick});
             settle();
         }
