@@ -19,6 +19,7 @@
 
 | 能力 | 模块 |
 | --- | --- |
+| 本地修复病例库（P2） | `AgentRepairCases`、`AgentRepairToolEngine`、`AgentLauncherTools`（`priorCases`）、设置页「记住修复病例」 |
 | 提示词与技能 | `AgentPromptLibrary`、`AgentSkill`、`assets/agent/prompts/` |
 | 诊断知识（崩溃规则、里程碑） | `AgentKnowledgeRules`、`assets/agent/knowledge/` |
 | 崩溃解析、日志索引、mixin 归属 | `AgentCrashSnapshot`、`AgentLogIndex`、`AgentMixinOwnership` |
@@ -37,6 +38,7 @@
   transactions/<id>/diffs/           文本差异与文件清单
   transactions/<id>/backups/         该事务触达文件的备份
   transactions/<id>/audit.json       Auto-safe 审计（范围、操作、验证、回滚、结果）
+  repair-cases/<id>.json             本地修复病例（症状键/动作标签/验证结果，默认关闭）
   workspaces/<id>.json               工作区登记：来源、用途、状态、日志位置
   workspaces/<id>/logs/<launchId>/   测试启动原始日志（本地，不进模型）
   staging/                           下载与二分快照的暂存区（结束后删）
@@ -48,7 +50,7 @@
 
 | 项 | 状态 |
 | --- | --- |
-| 修复病例库（P2） | 未实现：`agent/repair-cases/` 的规则/动作/验证结果没有落盘，也没有本地排序 |
+| 修复病例库（P2）的规模 | 已实现（2026-11-25）：≤200 条、每条 ≤12 个动作标签；不按实例/游戏版本分桶，跨机器要手拷 `agent/repair-cases/`。写/读上限只有单元测试，没有实盘大库测量 |
 | 真机验收 A9–A13 | 未做：真实 1.20.1 实例的启动/提交/回滚、120 模组二分、Auto-safe 一次批准跑完、真实模型行为，清单见 AGENT §13.3 |
 | CurseForge 修复 | 只接 Modrinth，不按名称/slug 猜项目 |
 | `logs.search` 正则与异步扫描 | 只有字面量 + 6 s 预算；100 MB 实测见 [PERFORMANCE](PERFORMANCE.md) |

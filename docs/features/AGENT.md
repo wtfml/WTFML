@@ -100,6 +100,7 @@ agent/
   sessions/<uuid>.meta.json          标题/时间/固定/加密/skill/instanceLock/哈希/删除状态
   sessions/.recovery/<uuid>/         稳定点快照（最多 3 份）
   artifacts/<uuid>/<id>.enc + .meta.json   模型可读 artifact（DPAPI，meta 只有大小/哈希）
+  repair-cases/<uuid>.json            本地修复病例库（默认关闭，只存结构化字段）
   backups/maintenance/<id>/original.enc + meta.json   维护备份（owner/source/sourceSessionId）
   mcp/servers.json, mcp/confirmations.json            MCP 配置与确认记录
   logs/
@@ -115,7 +116,7 @@ agent/
 
 ### 6.4 artifacts
 
-模型可读 artifact 只存脱敏内容并 DPAPI 加密；本地原始存档 id 不在模型可见空间；`artifact.read` 每次重新脱敏；大文本 artifact 只存这次读取的窗口。
+模型可读 artifact 只存脱敏内容并 DPAPI 加密；本地原始存档 id 不在模型可见空间；`artifact.read` 每次重新脱敏；大文本 artifact 只存这次读取的窗口。单会话配额 64 MB，按会话目录里密文的总字节算：写之前先算，超了就拒绝新的 artifact（`artifact.read` 不受影响，删会话一并清掉）。
 
 ### 6.5 多实例隔离与会话锁定
 
@@ -177,7 +178,7 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 
 ### 9.2 风险与审批矩阵
 
-只读自动；完整实例清单、完整模组文件名、配置读取、设置写、模组启停、备份创建与恢复逐次审批；命令与外部 MCP 逐次审批；没有会话级目录放行。唯一例外是 D12 Auto-safe：用户显式打开且计划已批准后，计划范围内的写/启动/提交不再逐次确认，范围外与硬禁止项照旧。
+只读自动；完整实例清单、完整模组文件名、配置读取、设置写、模组启停、备份创建与恢复逐次审批；命令与外部 MCP 逐次审批。联网工具（`web.search` / `web.fetch`）额外提供“本会话允许此来源”：点过之后同一个 host 在这个会话里不再逐次弹审批，换 host、换会话、重启后都要重新确认。唯一另一处例外是 D12 Auto-safe：用户显式打开且计划已批准后，计划范围内的写/启动/提交不再逐次确认，范围外与硬禁止项照旧。
 
 ### 9.3 文件工具（5 个，只作用于锁定实例）
 
@@ -205,7 +206,7 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 | `diagnostics.crash` | 最近异常退出事实 + 规则提示；正常退出报错 |
 | `logs.tail` | ≤500 行（默认 120），读盘 ≤256 KB；实例 `logs/latest.log` → 数据根 `latest.log` → `wtfml.log`；路径换 `<path>` |
 | `crash.list` | 实例 `crash-reports/` 优先 + 数据根兜底，同名去重，≤20 份；每份读头 8 KB；`detail=full` 要确认 |
-| `diagnostics.crashSnapshot` | 解析最新一份崩溃报告（或日志尾）：环境、崩溃阶段、异常链、模组嫌疑、命中规则、建议验证；报告 8 MB、输出 16 KB、10 s 预算 |
+| `diagnostics.crashSnapshot` | 解析最新一份崩溃报告（或日志尾）：环境、崩溃阶段、异常链、模组嫌疑、命中规则、建议验证；报告 8 MB、输出 16 KB、10 s 预算；额外给 `signature`（结构字段拼的症状键，可直接喂给 `repair.begin`）与 `priorCases`（开启病例库时同签名的历史动作按本地成功率排前 3 条） |
 | `logs.search` | 字面量（大小写不敏感），带行号与前后文；≤200 条，结果 ≤24 KB 字符，扫描 6 s 预算；路径换 `<path>` |
 | `logs.readRange` | 行号从 1 开始；≤500 行、≤256 KB；起点越界回空表并标 `truncated` |
 | `crash.readFull` | 读整份报告（≤8 MB）；只回分段目录与每段摘要，原文脱敏后进 artifact；输出 ≤24 KB |
@@ -254,7 +255,7 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 
 | 工具 | 行为 | 审批 |
 | --- | --- | --- |
-| `repair.begin` | 复制隔离工作区、记录源实例基线；返回 `transactionId` / `workspaceId` | 每次 |
+| `repair.begin` | 复制隔离工作区、记录源实例基线；返回 `transactionId` / `workspaceId`；可选 `symptomKey`（从 `diagnostics.crashSnapshot` 的 `signature` 抄来，只允许 `[A-Za-z0-9_.:+\|-]`、≤160 字符） | 每次 |
 | `repair.diff` | 比较工作区与基线，列新增/修改/删除、哈希和配置预览 | 自动 |
 | `repair.verify` | 在事务工作区调 `instance.testLaunch`，把里程碑/崩溃/超时写进事务 | 事务内自动 |
 | `repair.finish` | `commit` 先核对源文件哈希、备份、原子重放差异；`rollback` 只丢弃工作区 | commit 每次；rollback 自动 |
@@ -265,6 +266,7 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 - `settings.set` 在事务内只记旧值/新值，`repair.finish(commit)` 时才通过启动器设置写回；旧值不一致就拒绝提交。
 - 提交前逐个核对源文件 SHA-256 等于基线；源文件被外部修改就拒绝并列出文件。提交失败按已应用文件备份回滚，回滚失败保留现场。
 - `workflow.finish` 检测到未收尾事务时拒绝报完成；`repair.verify` 可作为计划的验证步，`repair.finish` 可在失败后回滚。
+- 病例库（默认关闭，设置页「记住修复病例」）：`repair.verify` 把「症状键、范围/设置/改动类别标签、验证结果」写进 `agent/repair-cases/`，`repair.finish` 只把结果改成 `committed` / `rolled_back`。同签名同动作合并成一条（尝试 +1、成功 +1 看验证），本地按拉普拉斯平滑成功率 + 最近使用排序；相对路径明细只存本地，发给模型的 `priorCases` 只有动作类别与结果。
 
 #### 9.4.4 崩溃快照与日志检索（Stage 5.3）
 
@@ -289,6 +291,8 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 上限：置信度封顶 0.95，不返回 1.0；`matchedRules` ≤8、嫌疑 ≤8、`causeChain` ≤8、建议验证 ≤8；证据 `id`/`kind`/`source`/`capturedAt`/`sha256`/`excerpt`，摘录 ≤400 字符且已脱敏。mixin 配置归属只读 JAR 里的声明（`fabric.mod.json`、`quilt.mod.json`、`META-INF/mods.toml`、`META-INF/neoforge.mods.toml`、`META-INF/MANIFEST.MF`），读不到就标 `unknown`，不按文件名猜。
 
 限制：日志搜索在调用线程上顺序扫描，100 MB 实测见 [PERFORMANCE](../dev/PERFORMANCE.md)；超过 6 s 预算回部分结果并标 `truncated`。正则搜索未开放。
+
+日志与崩溃报告进模型、进 artifact 前统一过 `AgentDiagnosticProjection::scrubLogText()`：先遮凭据（`AgentRedaction`），再把本机绝对路径换成 `<path>`，然后把启动参数里的 `--accessToken` / `--uuid` / `--username` / `--xuid` / `--clientid` / `--userProperties` 的值、MAC 地址、Windows 用户 SID、`HWID` / `MachineGuid` / `serial` 这类硬件标识字段换成占位符，最后把本机账户名（`USERNAME` / `USER` / 主目录最后一段；短于 4 个字符的不动）整词换成 `<user>`。显卡/驱动/音频设备型号不在剔除范围：它们是判断驱动问题的证据。
 
 #### 9.4.5 模组兼容与文件修复（Stage 5.4）
 
@@ -356,8 +360,8 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 
 | 工具 | 审批 | 关键上限 |
 | --- | --- | --- |
-| `web.fetch` | 每次 | 只 http/https；全部 A/AAAA 必须公网（拒绝 loopback/私网/链路本地/组播/保留，含 `::ffff:`）；连接已校验 IP，Host 与 TLS 主机名仍用原 host；重定向 ≤5 跳且每跳重检；强制直连（不继承系统代理）；文本类 Content-Type；响应 2 MB、正文 20 万字符；超时 20 s |
-| `web.search` | 每次 | 只支持 SearXNG（设置里填地址）；查询 ≤400 字符；≤20 条结果；摘要遮凭据 |
+| `web.fetch` | 每次（或本会话同一 host 已放行） | 只 http/https；全部 A/AAAA 必须公网（拒绝 loopback/私网/链路本地/组播/保留，含 `::ffff:`）；连接已校验 IP，Host 与 TLS 主机名仍用原 host；重定向 ≤5 跳且每跳重检；强制直连（不继承系统代理）；文本类 Content-Type；响应 2 MB、正文 20 万字符；超时 20 s |
+| `web.search` | 每次（或本会话 SearXNG host 已放行） | 只支持 SearXNG（设置里填地址）；查询 ≤400 字符；≤20 条结果；摘要遮凭据 |
 | `command.diagnose` | 每次 | **默认关闭**；spec 固定：`java -version`(20 s)、`where java`(15 s)、`ping -n 4 <host>`、`nslookup <host>`、`netstat -ano`、`ipconfig /all`（30 s）；host 只接受 `[A-Za-z0-9.:_-]{1,253}`；输出 ≤256 KB；Job Object 清理进程树 |
 
 #### 9.5.1 命令 spec
@@ -472,7 +476,7 @@ Collect → AwaitPlanApproval → Execute*（每步审批）→ Verify → Repor
 | 单次 API 响应 / SSE 单行 | 16 MB / 1 MB |
 | 单条工具参数 / 单条工具内联结果 | 64 KB / 16 KB |
 | 单会话正文 / 消息条数 / 快照 | 8 MB / 2000 条 / 3 份 |
-| 单轮工具步数 / 单会话总数 | 8 / 40（总数按会话累计，见 §14 未覆盖） |
+| 单轮工具步数 / 单会话总数 | 8 / 40（总数跨回合、跨重启按会话累计；被上限挡住的那次不执行也不计数） |
 | 重试 / 模型请求总时长 | 2 次 / 10 分钟（可取消） |
 | 工具超时 | 文件 30 s、MCP 120 s、命令 60 s、联网 20 s |
 | 测试启动 | 1–600 s，观察 0–60 s，重复 1–3 次；工作区记录/日志在本地 |
@@ -484,6 +488,8 @@ Collect → AwaitPlanApproval → Execute*（每步审批）→ Verify → Repor
 | Auto-safe | 60 min、20 次启动；一次只有一个授权；不随会话记忆 |
 | 修复事务 | 范围 5 类；基线文件 ≤20000 个、总大小 ≤512 MB；单实例同时 1 个活动事务；提交备份在 `agent/transactions/<id>/backups/` |
 | 目录列表 / `fs.read` / `fs.write` | 2000 项 / 256 KB（最大 1 MB）/ 1 MB |
+| artifact 单会话配额 | 64 MB（按会话目录密文总字节；0 表示不限，只在测试里用） |
+| 修复病例库 | ≤200 条、每条 ≤12 个动作标签与 ≤12 条路径明细；症状键 ≤160 字符；默认关闭 |
 | MCP 单行 / 命令输出 | 8 MB / 256 KB |
 
 ## 13. 测试
@@ -505,7 +511,11 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 - 会话与凭据：元数据/正文往返、损坏隔离、快照、整会话加密、Credential Manager + DPAPI 后备、脱敏。
 - 工具与安全：路径攻击矩阵、句柄级校验、审批矩阵、D11 边界表、artifact 分离、实例锁、备份生命周期、诊断投影、工作流闸门、MCP 协议/确认闸/假服务器、联网地址策略（假传输）、诊断命令、测试启动参数/审批/里程碑、工作区登记与清理、事务基线/差异/设置增量/审批、崩溃规则加载与坏规则跳过、崩溃报告解析、嫌疑角色与置信度、mixin 配置归属、日志行索引与按行读取、模组声明解析、兼容性判定（加载器/版本/缺前置/重复/损坏/平台结论）、修复工具的审批与失败不改工作区、二分的缩减/依赖保留/组合冲突/不可复现/不一致/预算与工作区恢复、提示词 V2（六类条款、五个报告状态、预算、无崩溃签名、工具引用都在白名单内、自由对话不放行修复工具）、Auto-safe（范围/时效/启动预算/硬禁止/审计落盘、复合层替用户点允许、验证失败自动回滚）。
 - UI/集成：页面几何与状态、模式胶囊、工具卡/审批卡、真窗口里只读模式拒绝写、MCP 管理器接线、实例目录日志/崩溃报告读取。
-- 性能基线：2000 条会话读写/加密、上下文裁剪、智能体页 2000 条消息重摆（数字见 perf-notes）。
+- 性能基线：2000 条会话读写/加密、上下文裁剪、智能体页 2000 条消息（只摆末尾 200 条，数字见 perf-notes）。
+- 会话与配额：单会话工具调用总数（跨回合累计、切会话带过来的计数、超限不执行）、artifact 单会话配额（写到上限就停、已写内容仍可读、0 表示不限）。
+- 联网会话放行：审批卡给出「本会话允许」、同一 host 不再逐次确认、换 host 与换会话仍要审批。
+- 日志字段投影：启动参数的账户字段、MAC、SID、硬件标识字段、点名账户名的整词替换与短名字豁免。
+- 修复病例库：默认关闭时空转、落盘与读回、同键合并计数、本地排序、结果更新、键与条数上限。
 
 ### 13.3 待人工验证（核心）
 
@@ -550,25 +560,23 @@ pwsh tools/check-agent-release.ps1                             # 发布检查
 | 显卡 / Native 崩溃 | `diagnostics.crashSnapshot` 认 `hs_err_pid` 与 `EXCEPTION_ACCESS_VIOLATION`，与内存/模组问题分开报；可测试启动复现 | 不解析 native 模块归属，不改驱动或渲染后端 |
 | 世界 / 存档崩溃 | 有限的崩溃诊断；可复制世界到工作区用 `quickPlay` 验证；可在副本里二分 | 事务不提交世界/存档，也不做原件提交后验证 |
 
-Stage 5 的八个阶段已于 2026-11-24 全部完成，交付与代码位置见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)。剩余工作只有 P2 修复病例库与人工验收项，见 [ROADMAP](../ROADMAP.md)。
+Stage 5 的八个阶段已于 2026-11-24 全部完成，P2 修复病例库于 2026-11-25 补齐（默认关闭，见 §9.4.3 与 §12），交付与代码位置见 [AGENT_AUTONOMY](../dev/AGENT_AUTONOMY.md)。剩余工作只有人工验收项与 Stage 3 未开放的工具，见 [ROADMAP](../ROADMAP.md)。
 
 未覆盖：
 
 | 项 | 状态 |
 | --- | --- |
-| 单会话工具调用总数（设计 40） | 未实现（只有单轮 8 步） |
 | 模组平台查询（CurseForge） | 未实现；S5.4 只接 Modrinth，不按名称/slug 猜项目 |
 | 二分的不一致判定 | 确认阶段出现不一致最多加跑一轮，仍不一致回 `inconclusive`；不做统计意义上的 flaky 概率 |
 | 二分时的世界 | 只按工作区 `quickPlay` 可选进副本世界；不验证存档一致性，也不判断世界崩溃与模组的归属 |
-| 修复病例库（P2） | 未实现：`agent/repair-cases/` 的规则/动作/验证结果还没有落盘，也没有参与本地排序 |
 | 自由对话的模型行为验收 | 白名单与提示词在本地断言，真实模型是否按提示词先诊断后动手见 A12 |
 | Auto-safe 的真机行为 | 本地夹具覆盖范围/审计/自动回滚；真实游戏里"一次批准跑完并提交"、关窗清理见 A13 |
 | `mods.installFix` 的补丁式回滚 | 失败时只撤销本次复制的文件；已完成的事务由 `repair.finish` 回滚 |
-| artifact 单会话配额（设计 64 MB） | 未实现，不拒绝 |
-| 联网工具的"本会话允许" | 审批卡按钮文案有，联网引擎未实现会话放行 |
-| 日志里的裸用户名/启动参数/硬件指纹 | 只替换路径形态 |
+| 病例库的跨实例迁移 | 存在本机一份，不按实例/游戏版本分桶，也不合并不同版本的统计；换机器带走需要手动拷 `agent/repair-cases/` |
+| 病例库对模型的影响 | 只作为 `priorCases` 提示，不改变工具判据、不自动重放历史动作 |
+| 日志字段投影的边界 | 只认固定形态（启动参数名、MAC、SID、几个硬件标识字段、本机账户名）；显卡/驱动/音频型号保留作证据，自造字段名不处理 |
+| 长会话窗口 | 只保留末尾 200 条视图，更早的点按钮补一页；搜索/跳转到窗口外消息未做 |
 | 资源搜索/安装/更新工具、Brave/Tavily、HTTP/SSE MCP、`command.run` | 未实现（见 [ROADMAP](../ROADMAP.md)） |
 | 高 DPI/读屏/长路径/换用户解密/视觉套件 | 人工项，见 §13.3 |
-| 长会话一次重摆（2000 条约 3.8 s） | 未优化，见 perf-notes |
 
-剩余计划只在 [ROADMAP](../ROADMAP.md) 维护：G1B 复测、网络错误验收、A2–A13 中未做的人工项、P2 修复病例库、Stage 3 剩余工具、性能与长会话渲染。
+剩余计划只在 [ROADMAP](../ROADMAP.md) 维护：G1B 复测、网络错误验收、A1–A13 中未做的人工项、Stage 3 剩余工具、其它列表与复杂页面的性能收口。

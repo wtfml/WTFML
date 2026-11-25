@@ -27,11 +27,13 @@
 
 | 项 | 内容 | 2026-11-19 |
 | --- | --- | --- |
-| `agent-page-2000-messages` | 一次性 `setMessages(2000)` 并处理一轮事件 | 3820 ms |
+| `agent-page-2000-messages` | 一次性 `setMessages(2000)` 并处理一轮事件（2026-11-19，未窗口化） | 3820 ms |
+| `agent-page-2000-messages` | 同上（2026-11-25，只摆末尾 200 条） | 56 ms |
+| `agent-page-2000-windowed` | 窗口化后实际创建的 `AgentMessageView` 个数 | 200 个 |
 
 量法：先建好 2000 条 `AgentView::Message`，`QElapsedTimer` 包住 `setMessages` + 一次 `processEvents()`。这一项量的是"极端长会话一次全量重摆"的代价，不是滚动帧率；日常会话切回来走的是同一路径，所以它是上界。
 
-已知：3820 ms 出现在 offscreen 首次布局（含 2000 个 `AgentMessageView` 的创建与 Markdown 渲染），说明**长会话一次性重摆偏慢**。这一项只记录不改实现：真机滚动/切会话的手感留在 [AGENT](../../features/AGENT.md) §13.3 的人工项里确认；若不可接受，下一步是会话消息懒加载 / 邻居窗口渲染。
+已知：3820 ms 出现在 offscreen 首次布局（含 2000 个 `AgentMessageView` 的创建与 Markdown 渲染），说明长会话一次性重摆偏慢。现在的做法是窗口化：`AgentPage` 只渲染末尾 200 条（`kMessageWindow`），更早的点顶部「显示更早的 N 条消息」再补一页，追加新消息时回收最老的一页视图；2000 条一次 `setMessages` 降到 56 ms，视图数 200。量法与上面同一条用例（`ui_check_agent`，offscreen，`build/verification-mingw13` Release），只多了一个窗口化后的视图计数打印。限制：窗口外的消息不参与查找/跳转，真机长会话的手感仍留在 [AGENT](../../features/AGENT.md) §13.3 的人工项里。
 
 ## 3. 未测量
 

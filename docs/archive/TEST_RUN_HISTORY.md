@@ -42,6 +42,7 @@
 | 11-05 | 例行检查 + `-Suite quick` | 归属检查 PASS；quick 12/12（11.85 s）；文档引用检查 PASS | 当时 129 条 md 链接 + 48 条源码 docs 引用 |
 | 11-10 | Agent Stage 1A | `verify_agent` 145、`ui_check_agent` 28、`mw_check_agent` 22 | `wtfml.ui`、`main-window`、`token-protection-fault`、核心基线、`test-modules/test-runner/ci-partitions` 同轮通过；细节见 [AGENT](../features/AGENT.md) |
 | 11-10 | Agent Stage 1B | `verify_agent` 306、`ui_check_agent` 39、`mw_check_agent` 31 | junction 夹具建不出来时输出 `SKIP`，不计通过；见 [AGENT](../features/AGENT.md) |
+| 11-25 | 智能体 P2 病例库 + 四项未覆盖上限（`-BaseRef origin/dev`） | affected 59/59（659.45 s）；`verify_agent` 1496、`ui_check_agent` 97、`mw_check_agent` 101 | `20261125-153144-6981a10c`；智能体页 2000 条消息 3820 → 56 ms（窗口化只摆末尾 200 条） |
 
 ## 真机与实网验收
 
