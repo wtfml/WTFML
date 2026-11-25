@@ -35,7 +35,10 @@ public:
         QString apiKey;
         QString systemPrompt;
         int maxRetry = 2;
+        /// 单个回合最多几轮工具（模型 → 工具 → 模型算一轮）。
         int maxToolSteps = 8;
+        /// 单个会话累计最多几次工具调用；0 = 不设上限。跨回合累计，切会话时由控制器写入。
+        int maxSessionToolCalls = 40;
         QList<int> retryDelaysMs{1000, 4000};
     };
 
@@ -59,10 +62,16 @@ public:
     void cancel();
     /// 用户对当前待审批请求作出决定；只有 AwaitingApproval 状态才生效。
     void resolveApproval(bool approved);
+    /// 用户点“本会话允许”：这一次照常执行，同一个来源在本会话里不再逐次确认。
+    void resolveSessionApproval();
 
     bool busy() const;
     State state() const { return m_state; }
     Agent::Message assistantMessage() const { return m_assistant; }
+
+    /// 切会话时写入这个会话已经用掉的工具调用次数（会话累计上限用）。
+    void setSessionToolCalls(int used);
+    int sessionToolCalls() const { return m_sessionToolCalls; }
 
     /// 测试专用：把退避压成 0，避免单测等 1s/4s。
     void setRetryDelaysForTest(const QList<int> &delays);
@@ -107,6 +116,7 @@ private:
     int m_retryAttempt = 0;
     int m_generation = 0;
     int m_toolSteps = 0;
+    int m_sessionToolCalls = 0;
     int m_nextToolCall = 0;
     QList<Agent::ToolCall> m_toolQueue;
     QString m_approvalId;

@@ -64,6 +64,19 @@ QString sanitizeEvidence(const QString &text);
 /// 让证据对不上号，留着原路径又会带出用户名和目录结构。
 QString scrubPaths(const QString &text);
 
+/// 路径之外的账户与硬件痕迹，就地换成占位符：
+/// - 启动参数里的账户字段（`--accessToken` / `--uuid` / `--username` / `--xuid` 等）→ `<redacted>`；
+/// - MAC 地址 → `<mac>`；Windows 用户 SID → `<sid>`；
+/// - `HWID=` / `MachineGuid=` / `serial=` 这类硬件标识字段 → `<redacted>`；
+/// - @p knownNames 里点名的账户名（`` 整词，短于 4 个字符的不动）→ `<user>`。
+QString scrubIdentifiers(const QString &text, const QStringList &knownNames = {});
+
+/// 日志/崩溃报告进模型或 artifact 之前的统一出口：`redact`（凭据）之外的路径 + 账户 + 硬件痕迹。
+QString scrubLogText(const QString &text);
+
+/// 本机账户名候选（`USERNAME` / `USER` / 主目录最后一段），只用来做整词替换。
+QStringList localAccountNames();
+
 /// 启动诊断 → 允许进模型上下文的 JSON。`report.findings` 的 `detail` 只过 sanitize 后再给。
 QJsonObject startup(const StartupDiagnosis::Report &report, const InstanceFacts &facts,
                     QList<Evidence> *evidence);

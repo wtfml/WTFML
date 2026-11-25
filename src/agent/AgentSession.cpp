@@ -24,6 +24,7 @@ QJsonObject AgentSessionMeta::toJson() const {
         {QStringLiteral("messageCount"), messageCount},
         {QStringLiteral("bodySha256"), bodySha256},
         {QStringLiteral("policyVersion"), policyVersion},
+        {QStringLiteral("toolCalls"), toolCalls},
         {QStringLiteral("lastTurnState"), lastTurnState},
         {QStringLiteral("deletionState"), deletionState},
     };
@@ -56,6 +57,7 @@ AgentSessionMeta AgentSessionMeta::fromJson(const QJsonObject &object) {
     meta.messageCount = object.value(QStringLiteral("messageCount")).toInt(0);
     meta.bodySha256 = object.value(QStringLiteral("bodySha256")).toString();
     meta.policyVersion = object.value(QStringLiteral("policyVersion")).toInt(1);
+    meta.toolCalls = object.value(QStringLiteral("toolCalls")).toInt(0);
     meta.lastTurnState =
         object.value(QStringLiteral("lastTurnState")).toString(QStringLiteral("complete"));
     meta.deletionState =

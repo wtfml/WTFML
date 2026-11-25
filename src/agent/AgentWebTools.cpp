@@ -27,6 +27,12 @@ QJsonObject objectSchema(const QStringList &required, const QJsonObject &propert
                        {QStringLiteral("additionalProperties"), false}};
 }
 
+/// 「审批请求已失效」只有一句：两个审批入口（逐次 / 本会话）共用，别写第二份。
+const QString &approvalExpiredText() {
+    static const QString text = QStringLiteral("审批请求已失效。");
+    return text;
+}
+
 QJsonObject webEgress(const QString &host) {
     return QJsonObject{{QStringLiteral("kind"), QStringLiteral("web")},
                        {QStringLiteral("decision"), QStringLiteral("confirm")},
@@ -142,6 +148,11 @@ AgentToolResult AgentWebTools::invoke(const Agent::ToolCall &call) {
     } else {
         return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("未知工具。"));
     }
+    // 本会话已经放行过同一个 host：不再弹审批，直接走同一段请求代码。
+    const QString sessionHost = approval.url.host().toLower();
+    if (!sessionHost.isEmpty() && sessionAllowed(context, sessionHost)) {
+        return startApproved(approval);
+    }
     const QString approvalId = QUuid::createUuid().toString(QUuid::WithoutBraces);
     m_approvals.insert(approvalId, approval);
     const QString target = approval.url.host();
@@ -164,7 +175,7 @@ AgentToolResult AgentWebTools::invoke(const Agent::ToolCall &call) {
 
 AgentToolResult AgentWebTools::resolveApproval(const QString &approvalId, bool approved) {
     if (!m_approvals.contains(approvalId)) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("审批请求已失效。"));
+        return errorResult(Agent::ErrorKind::ToolError, approvalExpiredText());
     }
     const Approval approval = m_approvals.take(approvalId);
     if (!approved) {
@@ -173,6 +184,33 @@ AgentToolResult AgentWebTools::resolveApproval(const QString &approvalId, bool a
         result.data = QJsonObject{{QStringLiteral("denied"), true}};
         return result;
     }
+    return startApproved(approval);
+}
+
+AgentToolResult AgentWebTools::resolveSessionApproval(const QString &approvalId) {
+    if (!m_approvals.contains(approvalId)) {
+        return errorResult(Agent::ErrorKind::ToolError, approvalExpiredText());
+    }
+    const Approval approval = m_approvals.take(approvalId);
+    rememberSession(approval.context, approval.url.host().toLower());
+    AgentToolResult result = startApproved(approval);
+    if (result.status == AgentToolResult::Status::Pending) {
+        result.summary = tr("本会话已放行 %1，正在联网获取…").arg(approval.url.host());
+    }
+    return result;
+}
+
+bool AgentWebTools::sessionAllowed(const AgentToolContext &context, const QString &host) const {
+    if (context.sessionId.isEmpty() || host.isEmpty()) return false;
+    return m_sessionHosts.value(context.sessionId).contains(host);
+}
+
+void AgentWebTools::rememberSession(const AgentToolContext &context, const QString &host) {
+    if (context.sessionId.isEmpty() || host.isEmpty()) return;
+    m_sessionHosts[context.sessionId].insert(host);
+}
+
+AgentToolResult AgentWebTools::startApproved(const Approval &approval) {
     const QString requestId = newRequestId();
     RunningFlight flight;
     flight.call = approval.call;

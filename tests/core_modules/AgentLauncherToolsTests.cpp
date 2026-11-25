@@ -7,6 +7,8 @@
 #include "Support.hpp"
 
 #include "agent/AgentArtifactStore.hpp"
+#include "agent/AgentRepairCases.hpp"
+#include "agent/AgentSettings.hpp"
 #include "agent/AgentLauncherTools.hpp"
 #include "agent/AgentTool.hpp"
 
@@ -619,11 +621,46 @@ void runAgentLauncherToolsTests() {
             QString::fromUtf8(QJsonDocument(result.data).toJson(QJsonDocument::Compact));
         check(!snapshotText.contains(QStringLiteral("C:\\\\Users")),
               "启动器工具：crashSnapshot 不含本机路径");
+        const QString snapshotSignature =
+            result.data.value(QStringLiteral("signature")).toString();
+        check(!snapshotSignature.isEmpty() && snapshotSignature.startsWith(QStringLiteral("crash:")),
+              "启动器工具：crashSnapshot 给出症状键", snapshotSignature);
+        check(!result.data.contains(QStringLiteral("priorCases")),
+              "启动器工具：病例库关闭时不给历史病例");
         result = tools.invoke(callFor(QStringLiteral("diagnostics.crashSnapshot"),
                                       QJsonObject{{QStringLiteral("reportId"),
                                                    QStringLiteral("nope.txt")}}));
         check(result.status == AgentToolResult::Status::Error,
               "启动器工具：未知 reportId 被拒");
+
+        // 病例库打开：同签名的历史病例按本地排序回来，只有动作标签与结果，没有路径明细。
+        AgentSettings::setRepairCasesEnabled(true);
+        {
+            AgentRepairCase::Store cases;
+            AgentRepairCase::Case item;
+            item.signature = snapshotSignature;
+            item.actions = {QStringLiteral("file:disabled:mods")};
+            item.files = {QStringLiteral("mods/example-1.0.jar.disabled")};
+            item.outcome = QStringLiteral("verified");
+            item.verified = true;
+            QString caseProblem;
+            check(cases.record(item, &caseProblem), "启动器工具：病例落进沙盒", caseProblem);
+        }
+        result = tools.invoke(callFor(QStringLiteral("diagnostics.crashSnapshot")));
+        const QJsonArray prior = result.data.value(QStringLiteral("priorCases")).toArray();
+        check(prior.size() == 1, "启动器工具：同签名的历史病例回来了",
+              QString::number(prior.size()));
+        const QJsonObject priorCase = prior.isEmpty() ? QJsonObject() : prior.first().toObject();
+        check(priorCase.value(QStringLiteral("actions")).toArray().size() == 1 &&
+                  priorCase.value(QStringLiteral("successes")).toInt() == 1,
+              "启动器工具：历史病例带动作和成功次数");
+        const QString priorText =
+            QString::fromUtf8(QJsonDocument(priorCase).toJson(QJsonDocument::Compact));
+        check(!priorCase.contains(QStringLiteral("files")) &&
+                  !priorText.contains(QStringLiteral("example-1.0")),
+              "启动器工具：历史病例不带相对路径明细", priorText);
+        AgentSettings::setRepairCasesEnabled(false);
+        AgentRepairCase::Store().clear(nullptr);
 
         // 崩溃报告全文：只回分段摘要，原文进 artifact 且已脱敏。
         result = tools.invoke(callFor(QStringLiteral("crash.readFull"),

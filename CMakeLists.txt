@@ -215,6 +215,7 @@ set(HEADER_FILES
     src/agent/AgentRepairHost.hpp
     src/agent/AgentRepairTransaction.hpp
     src/agent/AgentRepairToolEngine.hpp
+    src/agent/AgentRepairCases.hpp
     src/agent/AgentWinPath.hpp
     src/agent/AgentEgressPolicy.hpp
     src/agent/AgentArtifactStore.hpp
@@ -579,6 +580,7 @@ set(SOURCE_FILES
     src/agent/AgentTestLaunchToolEngine.cpp
     src/agent/AgentRepairTransaction.cpp
     src/agent/AgentRepairToolEngine.cpp
+    src/agent/AgentRepairCases.cpp
     src/agent/AgentWinPath.cpp
     src/agent/AgentEgressPolicy.cpp
     src/agent/AgentArtifactStore.cpp

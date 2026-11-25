@@ -116,6 +116,7 @@ signals:
     void instanceChosen(const QString &instanceId);
     void approvalAllowed(const QString &approvalId);
     void approvalDenied(const QString &approvalId);
+    void approvalSessionAllowed(const QString &approvalId);
     /// 点了模式卡片。
     void skillChosen(const QString &skillId);
     /// 点了 Auto-safe 开关。
@@ -133,6 +134,13 @@ private:
     void updateComposerHint();
     void insertStreamWidget(QWidget *widget);
     AgentMessageView *viewFor(const QString &messageId);
+    /// 长会话窗口：只渲染末尾一段，前面的用「显示更早的消息」按需补。
+    int messageIndex(const QString &messageId) const;
+    int streamStartIndex() const;
+    void renderMessage(const AgentView::Message &message, int layoutIndex);
+    void trimVisibleWindow();
+    void updateLoadEarlier();
+    void loadEarlier();
     void showSessionMenu(const QPoint &position);
     /// 「重命名」：当前会话就地改顶行标题，别的会话就地改列表里那一行。
     void promptRename(const QString &sessionId);
@@ -173,6 +181,10 @@ private:
     QLabel *m_keyHint = nullptr;
     QPushButton *m_send = nullptr;
     QPushButton *m_stop = nullptr;
+    QPushButton *m_loadEarlier = nullptr;
+    /// 会话里的全部消息；`m_views` 只是 `m_allMessages[m_visibleFrom..]` 那一段的视图。
+    QList<AgentView::Message> m_allMessages;
+    int m_visibleFrom = 0;
     QHash<QString, AgentMessageView *> m_views;
     QHash<QString, AgentToolCard *> m_toolCards;
     AgentApprovalCard *m_approvalCard = nullptr;

@@ -49,9 +49,10 @@ AgentApprovalCard::AgentApprovalCard(QWidget *parent) : QWidget(parent) {
     m_egress->setForegroundRole(QPalette::PlaceholderText);
     layout->addWidget(m_egress);
     auto *buttons = new QHBoxLayout;
-    m_sessionAllow = new QPushButton(tr("本会话允许此目录"), this);
+    // 只有联网工具会让这个按钮出现，所以文案说“来源”而不是“目录”。
+    m_sessionAllow = new QPushButton(tr("本会话允许此来源"), this);
     m_sessionAllow->setObjectName(QStringLiteral("agentApprovalSessionAllow"));
-    m_sessionAllow->hide();  // Stage 1B 不提供
+    m_sessionAllow->hide();
     m_allow = new QPushButton(tr("允许本次"), this);
     m_allow->setObjectName(QStringLiteral("agentApprovalAllow"));
     m_deny = new QPushButton(tr("拒绝"), this);
@@ -67,6 +68,9 @@ AgentApprovalCard::AgentApprovalCard(QWidget *parent) : QWidget(parent) {
     });
     connect(m_deny, &QPushButton::clicked, this, [this] {
         if (!m_approvalId.isEmpty()) emit denied(m_approvalId);
+    });
+    connect(m_sessionAllow, &QPushButton::clicked, this, [this] {
+        if (!m_approvalId.isEmpty()) emit sessionAllowed(m_approvalId);
     });
 }
 

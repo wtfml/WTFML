@@ -40,6 +40,9 @@ struct AgentRepairTransactionRecord {
     QJsonObject baseline; ///< 相对路径 -> SHA-256
     QJsonObject settings; ///< key -> {old, new}
     QJsonObject verification;
+    /// 本地修复病例库用的症状键与动作标签（P2）：验证时写入，提交/回滚时只改结果。
+    QString symptomKey;
+    QStringList actions;
     QString problem;
     QDateTime createdAt;
     QDateTime updatedAt;

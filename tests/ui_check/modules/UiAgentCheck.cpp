@@ -346,6 +346,58 @@ int UiAgentCheck() {
               QStringLiteral("%1ms").arg(elapsed));
         check(page->findChildren<AgentMessageView *>().size() >= 2,
               "智能体 UI：大量消息里最后几条仍在");
+
+        // 长会话窗口：一次只摆末尾 200 条，更早的点按钮再补一页（2000 条全摆约 3.8 s）。
+        // 计数前先把 deleteLater 的旧视图真的销毁，否则数到的是"待删除"的上一批。
+        auto flushDeletes = [] {
+            QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+            QApplication::processEvents();
+        };
+        flushDeletes();
+        const int rendered = page->findChildren<AgentMessageView *>().size();
+        std::printf("[perf] agent-page-2000-windowed=%d views\n", rendered);
+        std::fflush(stdout);
+        check(rendered <= 220, "智能体 UI：2000 条消息只渲染末尾一窗", QString::number(rendered));
+        auto *loadEarlier = qobject_cast<QPushButton *>(find("agentLoadEarlier"));
+        check(loadEarlier != nullptr && loadEarlier->isVisible(),
+              "智能体 UI：长会话给出「显示更早的消息」",
+              loadEarlier != nullptr ? loadEarlier->text() : QStringLiteral("没找到"));
+        const int beforeLoad = rendered;
+        if (loadEarlier != nullptr) {
+            loadEarlier->click();
+            QApplication::processEvents();
+        }
+        flushDeletes();
+        const int afterLoad = page->findChildren<AgentMessageView *>().size();
+        check(afterLoad > beforeLoad, "智能体 UI：点一下补回更早的一页",
+              QStringLiteral("%1 → %2").arg(beforeLoad).arg(afterLoad));
+        page->clearMessages();
+        QApplication::processEvents();
+        flushDeletes();
+        check(page->findChildren<AgentMessageView *>().isEmpty(),
+              "智能体 UI：清空消息不留视图");
+    }
+
+    // 短会话不出现「显示更早的消息」，所有消息都在。
+    {
+        QList<AgentView::Message> few;
+        for (int i = 0; i < 12; ++i) {
+            AgentView::Message message;
+            message.id = QStringLiteral("few-%1").arg(i);
+            message.user = (i % 2 == 0);
+            message.content = QStringLiteral("第 %1 条").arg(i);
+            message.status = AgentView::MessageStatus::Complete;
+            few.append(message);
+        }
+        page->setMessages(few);
+        QApplication::processEvents();
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        auto *loadEarlierFew = qobject_cast<QPushButton *>(find("agentLoadEarlier"));
+        check(page->findChildren<AgentMessageView *>().size() == 12,
+              "智能体 UI：短会话全部渲染",
+              QString::number(page->findChildren<AgentMessageView *>().size()));
+        check(loadEarlierFew == nullptr || !loadEarlierFew->isVisible(),
+              "智能体 UI：短会话不出现「显示更早的消息」");
         page->clearMessages();
         QApplication::processEvents();
     }

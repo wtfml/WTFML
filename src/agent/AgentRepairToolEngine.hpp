@@ -45,6 +45,7 @@ private:
         AgentToolContext context;
         QStringList scopes;
         QString transactionId;
+        QString symptomKey;   ///< 病例库症状键（可选，模型从崩溃快照里抄来）
         QString displayName;
         QString summary;
         QString preview;
@@ -59,6 +60,8 @@ private:
     AgentToolResult approvalRequired(const Pending &pending);
     void finishVerification(const Agent::ToolCall &call, const AgentTestLaunchSummary &summary);
     void deliver(const Agent::ToolCall &call, const AgentToolResult &result);
+    /// 病例库（P2）：把这份事务的动作标签与验证结果写进本地病例库（默认关闭时空转）。
+    void recordCaseFor(const QString &transactionId, bool verified, const QString &outcome);
 
     AgentRepairHost *m_repairHost = nullptr;
     AgentLaunchHost *m_launchHost = nullptr;

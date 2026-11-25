@@ -65,9 +65,13 @@ public:
     /// Stage 3：诊断命令总开关，**默认关闭**（§9.5.1）。
     static bool diagnoseCommandsEnabled();
     static void setDiagnoseCommandsEnabled(bool enabled);
+    /// P2 修复病例库，**默认关闭**：关着的时候既不落盘也不参与排序。
+    static bool repairCasesEnabled();
+    static void setRepairCasesEnabled(bool enabled);
 
     static QString webSearchKey() { return QStringLiteral("Agent/WebSearchEndpoint"); }
     static QString diagnoseCommandsKey() { return QStringLiteral("Agent/DiagnoseCommands"); }
+    static QString repairCasesKey() { return QStringLiteral("Agent/RepairCases"); }
 
     static QString profilesKey() { return QStringLiteral("Agent/Profiles"); }
     static QString activeKey() { return QStringLiteral("Agent/ActiveProfile"); }

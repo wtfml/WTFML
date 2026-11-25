@@ -56,4 +56,38 @@ void runAgentArtifactTests() {
           "artifact：不存在的 id 拒绝");
     check(store.removeSession(QStringLiteral("s1")) && !QDir(store.sessionDir(QStringLiteral("s1"))).exists(),
           "artifact：删除会话清理目录");
+
+    // ---------- 单会话配额（默认 64 MB，测试压到 1 KB） ----------
+    {
+        AgentArtifactStore quota(fixture.path() + QStringLiteral("/quota"));
+        check(quota.sessionQuotaBytes() == AgentArtifactStore::defaultSessionQuotaBytes(),
+              "artifact：默认配额是 64 MB",
+              QString::number(quota.sessionQuotaBytes()));
+        quota.setSessionQuotaBytes(1024);
+        const QString text(300, QLatin1Char('x'));
+        QString id;
+        int written = 0;
+        QString quotaProblem;
+        for (int i = 0; i < 8; ++i) {
+            if (!quota.putModelReadable(QStringLiteral("sq"), text, &id, &quotaProblem)) break;
+            written += 1;
+        }
+        check(written >= 1 && written < 8, "artifact：写到配额就停",
+              QStringLiteral("written=%1").arg(written));
+        check(quotaProblem.contains(QStringLiteral("上限")), "artifact：拒绝原因说明是配额",
+              quotaProblem);
+        check(quota.sessionBytes(QStringLiteral("sq")) <= 1024,
+              "artifact：落盘字节不超过配额",
+              QString::number(quota.sessionBytes(QStringLiteral("sq"))));
+        QString readBack;
+        QString readProblem;
+        check(!id.isEmpty() &&
+                  quota.readModel(QStringLiteral("sq"), id, 0, 1000, &readBack, &readProblem),
+              "artifact：超出配额时新内容不落盘");
+        check(quota.sessionQuotaBytes() == 1024, "artifact：配额可以按测试改小");
+        quota.setSessionQuotaBytes(0);
+        check(quota.putModelReadable(QStringLiteral("sq"), text, &id, &quotaProblem),
+              "artifact：配额 0 表示不限", quotaProblem);
+        check(quota.removeSession(QStringLiteral("sq")), "artifact：配额测试目录可清理");
+    }
 }

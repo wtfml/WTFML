@@ -138,6 +138,7 @@ private:
     QList<AgentInstanceInfo> instances() const;
     AgentInstanceInfo lockedInstance() const;
     void onApproval(bool approved);
+    void onSessionApproval();
     void onSkillChosen(const QString &skillId);
     void onAutoSafeToggled(bool enabled);
     void disableAutoSafe(const QString &reason);

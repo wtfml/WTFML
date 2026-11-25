@@ -63,6 +63,7 @@ QString recoveryDir(const QString &sessionId) { return recoveryRootDir() + QLati
 QString maintenanceBackupDir() { return dataDir() + QStringLiteral("/backups/maintenance"); }
 QString workspaceRecordsDir() { return dataDir() + QStringLiteral("/workspaces"); }
 QString transactionsDir() { return dataDir() + QStringLiteral("/transactions"); }
+QString repairCasesDir() { return dataDir() + QStringLiteral("/repair-cases"); }
 QString modStagingDir() { return dataDir() + QStringLiteral("/staging"); }
 QString mcpConfigDir() { return dataDir() + QStringLiteral("/mcp"); }
 QString logsDir() { return dataDir() + QStringLiteral("/logs"); }

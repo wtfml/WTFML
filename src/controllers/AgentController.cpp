@@ -289,6 +289,9 @@ AgentController::AgentController(AgentPage *page, OverlayHost *overlay, QObject 
         }
     });
     connect(m_loop, &AgentLoop::toolCallStarted, this, [this](const Agent::ToolCall &call) {
+        // 单会话工具调用上限按会话累计（跨回合、跨重启），落进会话元数据。
+        m_session.meta.toolCalls += 1;
+        scheduleSave();
         if (m_page == nullptr) return;
         AgentView::ToolCard card;
         card.id = call.id;
@@ -352,6 +355,9 @@ void AgentController::wirePage() {
     connect(m_page, &AgentPage::encryptToggled, this, &AgentController::onEncryptToggled);
     connect(m_page, &AgentPage::approvalAllowed, this, [this](const QString &) { onApproval(true); });
     connect(m_page, &AgentPage::approvalDenied, this, [this](const QString &) { onApproval(false); });
+    connect(m_page, &AgentPage::approvalSessionAllowed, this, [this](const QString &) {
+        onSessionApproval();
+    });
     connect(m_page, &AgentPage::instanceChipRequested, this, &AgentController::onInstanceMenuRequested);
     connect(m_page, &AgentPage::instanceChosen, this, &AgentController::onInstanceChosen);
     connect(m_page, &AgentPage::sessionExportRequested, this, &AgentController::onExport);
@@ -756,6 +762,7 @@ void AgentController::onSend(const QString &text) {
     refreshSessions();
 
     applySkillToLoop();
+    m_loop->setSessionToolCalls(m_session.meta.toolCalls);
     m_loop->setHistory(m_session.messages);
     m_loop->start();
 }
@@ -780,6 +787,7 @@ void AgentController::onRetry(const QString &messageId) {
     removeTrailingFailedAssistant();
     flushSave(false);
     applySkillToLoop();
+    m_loop->setSessionToolCalls(m_session.meta.toolCalls);
     m_loop->setHistory(m_session.messages);
     m_loop->start();
 }
@@ -1452,6 +1460,14 @@ void AgentController::refreshAutoSafeUi() {
                  QString::number(remaining)));
 }
 
+void AgentController::onSessionApproval() {
+    if (m_session.meta.id.isEmpty() || m_session.pendingApproval.isEmpty()) return;
+    m_session.pendingApproval = {};
+    flushSave(true);
+    if (m_page != nullptr) m_page->hideApproval();
+    m_loop->resolveSessionApproval();
+}
+
 void AgentController::onApproval(bool approved) {
     if (m_session.meta.id.isEmpty() || m_session.pendingApproval.isEmpty()) return;
     const QString approvalId =
@@ -1526,6 +1542,7 @@ void AgentController::openSettings() {
     page->setStrictEgress(AgentSettings::strictEgress());
     page->setWebSearchEndpoint(AgentSettings::webSearchEndpoint());
     page->setDiagnoseCommands(AgentSettings::diagnoseCommandsEnabled());
+    page->setRepairCases(AgentSettings::repairCasesEnabled());
     connect(page, &AgentSettingsPage::saveRequested, this, &AgentController::onSettingsSave);
     connect(page, &AgentSettingsPage::testRequested, this, &AgentController::onSettingsTest);
     connect(page, &AgentSettingsPage::mcpSettingsRequested, this,
@@ -1591,6 +1608,7 @@ void AgentController::onSettingsSave() {
     }
     AgentSettings::setWebSearchEndpoint(endpoint);
     AgentSettings::setDiagnoseCommandsEnabled(page->diagnoseCommands());
+    AgentSettings::setRepairCasesEnabled(page->repairCases());
     if (m_toolEngine != nullptr) m_toolEngine->setStrictEgress(page->strictEgress());
     if (m_launcherTools != nullptr) m_launcherTools->setStrictEgress(page->strictEgress());
     m_profile = profile;

@@ -49,6 +49,9 @@ constexpr int kColumnMax = 760;              // 对话流与输入岛最宽（�
 constexpr int kGroupHeaderRole = Qt::UserRole + 2;  // 「固定 / 今天 / 更早」小标题行
 constexpr int kTimeRole = Qt::UserRole + 3;         // 会话行右侧的相对时间
 constexpr int kEditingRole = Qt::UserRole + 4;      // 这一行正在就地改名：字不画，让给输入框
+// 长会话窗口：一次只画最后 200 条，更早的点「显示更早的消息」再补一页。
+// 2000 条一次全摆的实测约 3.8 s（perf-notes AGENT_STAGE4），窗口化后是它的一页。
+constexpr int kMessageWindow = 200;
 
 QColor accentInk() { return Theme::textTone(Theme::tokens().accentInk, Theme::tokens().deep); }
 
@@ -644,6 +647,14 @@ AgentPage::AgentPage(QWidget *parent)
     }
     m_messageLayout->addWidget(m_emptyState, 1);
 
+    // 长会话窗口：只画末尾一段消息，更早的点这个按钮再补一页（2000 条一次全摆约 3.8 s）。
+    m_loadEarlier = new QPushButton(QCoreApplication::translate("AgentPage", "显示更早的消息"), m_messageHost);
+    m_loadEarlier->setObjectName(QStringLiteral("agentLoadEarlier"));
+    m_loadEarlier->setCursor(Qt::PointingHandCursor);
+    m_loadEarlier->hide();
+    connect(m_loadEarlier, &QPushButton::clicked, this, &AgentPage::loadEarlier);
+    m_messageLayout->addWidget(m_loadEarlier, 0, Qt::AlignHCenter);
+
     // 系统提示（「已改回明文」「已停止生成」这类）：不是消息，居中一行淡字 + 两侧细线，跟在流的末尾。
     m_notice = new QWidget(m_messageHost);
     m_notice->setObjectName(QStringLiteral("agentNotice"));
@@ -927,33 +938,55 @@ void AgentPage::insertStreamWidget(QWidget *widget) {
 
 void AgentPage::setMessages(const QList<AgentView::Message> &messages) {
     clearMessages();
-    for (const AgentView::Message &message : messages) {
-        upsertMessage(message);
+    m_allMessages = messages;
+    m_visibleFrom = qMax(0, messages.size() - kMessageWindow);
+    for (int i = m_visibleFrom; i < m_allMessages.size(); ++i) {
+        renderMessage(m_allMessages.at(i), streamStartIndex() + (i - m_visibleFrom));
     }
+    updateLoadEarlier();
     updateEmptyState();
     scrollToLatest();
 }
 
 void AgentPage::upsertMessage(const AgentView::Message &message) {
+    int index = messageIndex(message.id);
+    if (index < 0) {
+        m_allMessages.append(message);
+        index = m_allMessages.size() - 1;
+    } else {
+        m_allMessages[index] = message;
+    }
+    if (index < m_visibleFrom) {
+        // 窗口外的旧消息只更新数据；等用户点「显示更早的消息」再画。
+        updateLoadEarlier();
+        return;
+    }
     AgentMessageView *view = viewFor(message.id);
     if (view == nullptr) {
-        view = new AgentMessageView(message, m_messageHost);
-        connect(view, &AgentMessageView::retryRequested, this, &AgentPage::retryRequested);
-        m_views.insert(message.id, view);
-        insertStreamWidget(view);
+        renderMessage(message, -1);
         // 自己说的话靠右一块淡底气泡，助手的话铺满（样张 .msg.me / .msg.ai）。
     } else {
         view->setMessage(message);
     }
+    trimVisibleWindow();
+    updateLoadEarlier();
     updateEmptyState();
     scrollToLatestIfSticky();
 }
 
 void AgentPage::removeMessage(const QString &messageId) {
+    const int index = messageIndex(messageId);
+    if (index >= 0) {
+        m_allMessages.removeAt(index);
+        if (index < m_visibleFrom) m_visibleFrom -= 1;
+        m_visibleFrom = qBound(0, m_visibleFrom, m_allMessages.size());
+    }
     AgentMessageView *view = m_views.take(messageId);
-    if (view == nullptr) return;
-    m_messageLayout->removeWidget(view);
-    view->deleteLater();
+    if (view != nullptr) {
+        m_messageLayout->removeWidget(view);
+        view->deleteLater();
+    }
+    updateLoadEarlier();
     updateEmptyState();
 }
 
@@ -964,9 +997,82 @@ void AgentPage::clearMessages() {
         m_messageLayout->removeWidget(view);
         view->deleteLater();
     }
+    m_allMessages.clear();
+    m_visibleFrom = 0;
     clearToolCards();
     hideApproval();
+    updateLoadEarlier();
     updateEmptyState();
+}
+
+int AgentPage::messageIndex(const QString &messageId) const {
+    for (int i = 0; i < m_allMessages.size(); ++i) {
+        if (m_allMessages.at(i).id == messageId) return i;
+    }
+    return -1;
+}
+
+int AgentPage::streamStartIndex() const {
+    // 流里的顺序：空状态 · 更早按钮 · 消息/工具卡/审批卡 … · 系统提示 · 弹簧。
+    const int anchor = m_messageLayout->indexOf(m_loadEarlier);
+    return anchor >= 0 ? anchor + 1 : 1;
+}
+
+void AgentPage::renderMessage(const AgentView::Message &message, int layoutIndex) {
+    AgentMessageView *view = new AgentMessageView(message, m_messageHost);
+    connect(view, &AgentMessageView::retryRequested, this, &AgentPage::retryRequested);
+    m_views.insert(message.id, view);
+    if (layoutIndex < 0) {
+        insertStreamWidget(view);
+    } else {
+        m_messageLayout->insertWidget(layoutIndex, view);
+    }
+}
+
+void AgentPage::trimVisibleWindow() {
+    // 只在末尾追加时回收最老的已渲染消息，保持窗口大小；用户点「显示更早的消息」补回来的
+    // 那一段在下一次追加时同样会被回收，避免长会话越滚越慢。
+    while (m_allMessages.size() - m_visibleFrom > kMessageWindow) {
+        const QString oldest = m_allMessages.at(m_visibleFrom).id;
+        AgentMessageView *view = m_views.take(oldest);
+        if (view != nullptr) {
+            m_messageLayout->removeWidget(view);
+            view->deleteLater();
+        }
+        m_visibleFrom += 1;
+    }
+}
+
+void AgentPage::updateLoadEarlier() {
+    if (m_loadEarlier == nullptr) return;
+    const int hidden = m_visibleFrom;
+    m_loadEarlier->setVisible(hidden > 0);
+    if (hidden > 0) {
+        m_loadEarlier->setText(
+            QCoreApplication::translate("AgentPage", "显示更早的 %1 条消息").arg(hidden));
+    }
+}
+
+void AgentPage::loadEarlier() {
+    if (m_visibleFrom <= 0) return;
+    QScrollBar *bar = m_scroll != nullptr ? m_scroll->verticalScrollBar() : nullptr;
+    const int beforeValue = bar != nullptr ? bar->value() : 0;
+    const int beforeMax = bar != nullptr ? bar->maximum() : 0;
+    const int from = qMax(0, m_visibleFrom - kMessageWindow);
+    // 从旧到新插到现有窗口之前：插完顺序仍是 m_allMessages 的顺序。
+    for (int i = from; i < m_visibleFrom; ++i) {
+        renderMessage(m_allMessages.at(i), streamStartIndex() + (i - from));
+    }
+    m_visibleFrom = from;
+    updateLoadEarlier();
+    // 内容向上长高：按滚动范围长大的量平移同样的距离，阅读位置不动、也不跳回底部。
+    if (m_scroll != nullptr) {
+        QScrollBar *bar = m_scroll->verticalScrollBar();
+        m_messageHost->layout()->activate();
+        const int grown = bar->maximum() - beforeMax;
+        m_stickyBottom = false;
+        bar->setValue(qBound(0, beforeValue + qMax(0, grown), bar->maximum()));
+    }
 }
 
 void AgentPage::setToolCards(const QList<AgentView::ToolCard> &cards) {
@@ -1004,6 +1110,8 @@ void AgentPage::showApproval(const QJsonObject &request) {
                 &AgentPage::approvalAllowed);
         connect(m_approvalCard, &AgentApprovalCard::denied, this,
                 &AgentPage::approvalDenied);
+        connect(m_approvalCard, &AgentApprovalCard::sessionAllowed, this,
+                &AgentPage::approvalSessionAllowed);
         insertStreamWidget(m_approvalCard);
     }
     m_approvalCard->setRequest(request);

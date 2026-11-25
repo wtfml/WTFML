@@ -2,7 +2,8 @@
  * @file AgentApprovalCard.hpp
  * @brief 写/外发审批卡：目标、摘要、预览/diff、备份提示、允许/拒绝。
  *
- * Stage 1B **不提供**“本会话允许此目录”；sessionAllowAvailable 恒为 false。
+ * `sessionAllowAvailable` 只对允许会话放行的工具（`web.search` / `web.fetch`）为真；
+ * 其它工具的按钮一直隐藏。
  */
 
 #pragma once
@@ -26,6 +27,8 @@ public:
 signals:
     void allowed(const QString &approvalId);
     void denied(const QString &approvalId);
+    /// 本会话允许：这一次照常执行，同一来源在本会话内不再逐次确认。
+    void sessionAllowed(const QString &approvalId);
 
 protected:
     void paintEvent(QPaintEvent *event) override;

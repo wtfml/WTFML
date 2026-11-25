@@ -7,6 +7,7 @@
 
 #include "AgentApprovalPolicy.hpp"
 #include "AgentArtifactStore.hpp"
+#include "AgentRepairCases.hpp"
 #include "AgentCrashSnapshot.hpp"
 #include "AgentDiagnosticProjection.hpp"
 #include "AgentKnowledgeRules.hpp"
@@ -116,7 +117,8 @@ bool wantsFull(const Agent::ToolCall &call) {
 QString scrubLine(const QString &text, int *hits) {
     const AgentRedaction::Result redacted = AgentRedaction::redact(text);
     if (hits != nullptr) *hits += redacted.hits;
-    return AgentDiagnosticProjection::scrubPaths(redacted.text);
+    // 路径之外还有账户与硬件痕迹：启动参数、MAC、SID、本机用户名。
+    return AgentDiagnosticProjection::scrubLogText(redacted.text);
 }
 
 /// 读文件前 @p maxBytes 字节；@p truncated 说明原文件更长（不是读失败）。
@@ -920,10 +922,21 @@ AgentToolResult AgentLauncherTools::handleCrashSnapshot(const Agent::ToolCall &c
         }
     }
     const AgentCrashSnapshot::Snapshot snapshot = AgentCrashSnapshot::build(input);
-    const QJsonObject data = snapshot.json;
+    QJsonObject data = snapshot.json;
     const QJsonObject crash = data.value(QStringLiteral("crash")).toObject();
     const QString exception = crash.value(QStringLiteral("exception")).toString();
     const QString phase = crash.value(QStringLiteral("phase")).toString();
+    // 症状键：结构字段拼出来的本地键，喂给 repair.begin 后能把结果记进病例库。
+    const QString signature = AgentRepairCase::crashSignature(exception, phase,
+                                                             snapshot.matchedRuleIds);
+    if (!signature.isEmpty()) data.insert(QStringLiteral("signature"), signature);
+    // 病例库默认关闭；开着时只给排在前面的几条动作标签与结果统计，不给原文和路径。
+    AgentRepairCase::Store cases;
+    QJsonArray priorCases;
+    for (const AgentRepairCase::Entry &entry : cases.ranked(signature, 3)) {
+        priorCases.append(entry.toModelJson());
+    }
+    if (!priorCases.isEmpty()) data.insert(QStringLiteral("priorCases"), priorCases);
     const QString summary =
         QCoreApplication::translate("AgentLauncherTools", "崩溃快照：%1，阶段 %2，命中 %3 条规则，嫌疑 %4 个")
             .arg(exception.isEmpty()
@@ -961,8 +974,8 @@ AgentToolResult AgentLauncherTools::handleCrashReadFull(const Agent::ToolCall &c
         return errorResult(Agent::ErrorKind::ToolError,
                            QCoreApplication::translate("AgentLauncherTools", "崩溃报告读不动。"));
     }
-    // 本机路径先换掉再进 artifact：artifact.read 只做凭据遮挡，不管路径。
-    const QString text = AgentDiagnosticProjection::scrubPaths(raw);
+    // 本机路径、账户与硬件痕迹先换掉再进 artifact：artifact.read 只做凭据遮挡，不管这些。
+    const QString text = AgentDiagnosticProjection::scrubLogText(raw);
     AgentArtifactStore artifacts;
     QString artifactId;
     QString artifactProblem;

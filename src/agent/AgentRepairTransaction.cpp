@@ -100,6 +100,8 @@ QJsonObject AgentRepairTransactionRecord::toJson() const {
         {QStringLiteral("baseline"), baseline},
         {QStringLiteral("settings"), settings},
         {QStringLiteral("verification"), verification},
+        {QStringLiteral("symptomKey"), symptomKey},
+        {QStringLiteral("actions"), QJsonArray::fromStringList(actions)},
         {QStringLiteral("problem"), problem},
         {QStringLiteral("createdAt"), createdAt.toString(Qt::ISODate)},
         {QStringLiteral("updatedAt"), updatedAt.toString(Qt::ISODate)},
@@ -118,6 +120,10 @@ AgentRepairTransactionRecord AgentRepairTransactionRecord::fromJson(const QJsonO
     record.baseline = object.value(QStringLiteral("baseline")).toObject();
     record.settings = object.value(QStringLiteral("settings")).toObject();
     record.verification = object.value(QStringLiteral("verification")).toObject();
+    record.symptomKey = object.value(QStringLiteral("symptomKey")).toString();
+    for (const QJsonValue &value : object.value(QStringLiteral("actions")).toArray()) {
+        if (value.isString()) record.actions.append(value.toString());
+    }
     record.problem = object.value(QStringLiteral("problem")).toString();
     record.createdAt = QDateTime::fromString(object.value(QStringLiteral("createdAt")).toString(),
                                              Qt::ISODate);

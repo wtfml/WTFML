@@ -30,6 +30,7 @@ public:
     QJsonArray schemas() const override;
     AgentToolResult invoke(const Agent::ToolCall &call) override;
     AgentToolResult resolveApproval(const QString &approvalId, bool approved) override;
+    AgentToolResult resolveSessionApproval(const QString &approvalId) override;
     void cancelPending() override;
     bool committing() const override;
     bool handles(const QString &internalName) const override;
@@ -47,6 +48,8 @@ private:
     /// ApprovalRequired 时按 Auto-safe 判定：放行就替用户点"允许"，否则原样交回 UI。
     AgentToolResult applyAutoSafe(const Agent::ToolCall &call, const AgentToolResult &result,
                                   AgentToolEngine *engine);
+    AgentToolResult resolveApprovalInternal(const QString &approvalId, bool approved,
+                                            bool sessionScope);
     /// 记审计需要的节点：repair.begin 绑事务、repair.verify 记验证、repair.finish 收尾写审计。
     void observeResult(const Agent::ToolCall &call, AgentToolResult *result);
 

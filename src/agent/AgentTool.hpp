@@ -60,6 +60,12 @@ public:
     virtual QJsonArray schemas() const = 0;
     virtual AgentToolResult invoke(const Agent::ToolCall &call) = 0;
     virtual AgentToolResult resolveApproval(const QString &approvalId, bool approved) = 0;
+    /// 用户点“本会话允许”：这一次照常执行，同一个来源在本会话里不再逐次确认。
+    /// 只有 `AgentApprovalPolicy::allowsSessionApproval()` 的工具会让 UI 给出这个按钮；
+    /// 默认实现等同于“允许本次”，不改变其它工具的行为。
+    virtual AgentToolResult resolveSessionApproval(const QString &approvalId) {
+        return resolveApproval(approvalId, true);
+    }
     virtual void cancelPending() = 0;
     /// 文件提交阶段：取消只能登记“提交后停止”，不能强杀。
     virtual bool committing() const { return false; }

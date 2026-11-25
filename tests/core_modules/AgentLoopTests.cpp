@@ -367,6 +367,58 @@ void runAgentLoopTests() {
               "Loop 工具：待审批时取消会清空 pending，不执行");
     }
     {
+        // 单会话工具调用总数（设计 40）：跨回合累计，超过就不再执行工具。
+        FakeModelClient client;
+        client.useTools = true;
+        FakeToolEngine engine;
+        AgentLoop loop(&client);
+        loop.setToolEngine(&engine);
+        AgentLoop::Config config;
+        config.profile.baseUrl = QStringLiteral("https://api.example.com/v1");
+        config.profile.model = QStringLiteral("m");
+        config.apiKey = QStringLiteral("k");
+        config.maxSessionToolCalls = 1;
+        loop.setConfig(config);
+        loop.setHistory({user(QStringLiteral("查一下目录"))});
+        loop.start();
+        check(waitFor([&] { return loop.state() == AgentLoop::State::AwaitingApproval; }),
+              "Loop 会话上限：第一次工具调用照常审批");
+        loop.resolveApproval(true);
+        check(waitFor([&] { return loop.state() == AgentLoop::State::Completed; }),
+              "Loop 会话上限：第一次工具调用完成");
+        check(loop.sessionToolCalls() == 1, "Loop 会话上限：会话计数 +1",
+              QString::number(loop.sessionToolCalls()));
+
+        client.toolRounds = 0;  // 再让模型发一次工具调用
+        loop.setHistory({user(QStringLiteral("再查一次"))});
+        loop.start();
+        check(waitFor([&] { return loop.state() == AgentLoop::State::Failed; }),
+              "Loop 会话上限：第二次工具调用被挡");
+        check(loop.sessionToolCalls() == 1, "Loop 会话上限：被挡的那次不计入次数");
+        bool sawLimit = false;
+        for (const Agent::Message &message : loop.history()) {
+            if (message.role == Agent::Role::Assistant &&
+                message.errorText.contains(QStringLiteral("上限"))) {
+                sawLimit = true;
+            }
+        }
+        check(sawLimit, "Loop 会话上限：失败原因写清是会话上限");
+
+        // 切会话时控制器写入已用次数：从 40 开始，第一条工具调用就挡住。
+        FakeModelClient seeded;
+        seeded.useTools = true;
+        FakeToolEngine seededEngine;
+        AgentLoop seededLoop(&seeded);
+        seededLoop.setToolEngine(&seededEngine);
+        seededLoop.setConfig(config);
+        seededLoop.setSessionToolCalls(config.maxSessionToolCalls);
+        seededLoop.setHistory({user(QStringLiteral("查一下目录"))});
+        seededLoop.start();
+        check(waitFor([&] { return seededLoop.state() == AgentLoop::State::Failed; }),
+              "Loop 会话上限：切会话带过来的计数生效");
+        check(seededEngine.invokeCount == 0, "Loop 会话上限：超限的工具一次都不执行");
+    }
+    {
         FakeModelClient client;
         client.useTools = true;
         AsyncFakeEngine engine;

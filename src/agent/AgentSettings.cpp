@@ -218,6 +218,14 @@ void AgentSettings::setDiagnoseCommandsEnabled(bool enabled) {
     QSettings().setValue(diagnoseCommandsKey(), enabled);
 }
 
+bool AgentSettings::repairCasesEnabled() {
+    return QSettings().value(repairCasesKey(), false).toBool();
+}
+
+void AgentSettings::setRepairCasesEnabled(bool enabled) {
+    QSettings().setValue(repairCasesKey(), enabled);
+}
+
 QString AgentSettings::activeProfileId() {
     QSettings settings;
     return settings.value(activeKey()).toString();

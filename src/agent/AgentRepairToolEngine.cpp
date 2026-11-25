@@ -6,6 +6,7 @@
 #include "AgentRepairToolEngine.hpp"
 
 #include "AgentApprovalPolicy.hpp"
+#include "AgentRepairCases.hpp"
 #include "AgentTestLaunchToolEngine.hpp"
 #include "AgentWorkspaceStore.hpp"
 
@@ -81,6 +82,34 @@ QStringList parseScopes(const QJsonValue &value, QString *problem) {
     return scopes;
 }
 
+/// 病例库的动作标签有界词表：范围、设置键、改动文件的目录与类别。故意不含自由文本，
+/// 相对路径明细只留在本地 JSON 里。
+QString casePathClass(const QString &relativePath) {
+    if (relativePath.startsWith(QStringLiteral("mods/"))) return QStringLiteral("mods");
+    if (relativePath.startsWith(QStringLiteral("config/")) ||
+        relativePath.startsWith(QStringLiteral("defaultconfigs/"))) {
+        return QStringLiteral("config");
+    }
+    if (relativePath.contains(QLatin1Char('/'))) return QStringLiteral("sub");
+    return QStringLiteral("root");
+}
+
+QString caseChangeClass(const AgentRepairFileChange &change) {
+    const QString suffix = QStringLiteral(":") + casePathClass(change.relativePath);
+    switch (change.kind) {
+    case AgentRepairFileChange::Kind::Added:
+        return QStringLiteral("added") + suffix;
+    case AgentRepairFileChange::Kind::Deleted:
+        return QStringLiteral("deleted") + suffix;
+    case AgentRepairFileChange::Kind::Modified:
+        break;
+    }
+    return (change.relativePath.endsWith(QStringLiteral(".jar.disabled"))
+                ? QStringLiteral("disabled")
+                : QStringLiteral("changed")) +
+           suffix;
+}
+
 QString textPreview(const QString &path) {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) return {};
@@ -111,7 +140,9 @@ QList<AgentToolSpec> AgentRepairToolEngine::specs() {
           QJsonObject{{QStringLiteral("type"), QStringLiteral("array")},
                       {QStringLiteral("maxItems"), 20},
                       {QStringLiteral("items"), stringField(QStringLiteral("string"), 128)}}},
-         {QStringLiteral("diskBudgetMb"), integerField(32768)}});
+         {QStringLiteral("diskBudgetMb"), integerField(32768)},
+         {QStringLiteral("symptomKey"),
+          stringField(QStringLiteral("string"), AgentRepairCase::maxSignatureChars())}});
     const QJsonObject txSchema = objectSchema(
         QStringLiteral("transactionId"),
         {{QStringLiteral("transactionId"), stringField(QStringLiteral("string"), 80)}});
@@ -237,11 +268,19 @@ AgentToolResult AgentRepairToolEngine::handleBegin(const Agent::ToolCall &call,
     if (m_store.activeForInstance(context.instanceId, nullptr, &problem)) {
         return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("这个实例已有活动事务。"));  // i18n-ignore
     }
+    const QString symptomKey =
+        call.arguments.value(QStringLiteral("symptomKey")).toString().trimmed();
+    if (!symptomKey.isEmpty() && !AgentRepairCase::validSignature(symptomKey)) {
+        return errorResult(Agent::ErrorKind::ToolError,
+                           QStringLiteral("symptomKey 只允许字母、数字和 _.:+|-，最多 %1 个字符。")  // i18n-ignore
+                               .arg(AgentRepairCase::maxSignatureChars()));
+    }
     Pending pending;
     pending.kind = Pending::Kind::Begin;
     pending.call = call;
     pending.context = context;
     pending.scopes = scopes;
+    pending.symptomKey = symptomKey;
     pending.displayName = QStringLiteral("创建修复事务");  // i18n-ignore
     pending.summary = QStringLiteral("为「%1」创建隔离工作区，范围：%2。")  // i18n-ignore
                           .arg(context.instanceName.isEmpty() ? context.instanceId : context.instanceName,
@@ -361,6 +400,9 @@ AgentToolResult AgentRepairToolEngine::handleVerify(const Agent::ToolCall &call,
             m_store.updateState(transactionId, summary.ok ? QStringLiteral("ready_to_commit")
                                                           : QStringLiteral("failed"),
                                 summary.problem, nullptr);
+            recordCaseFor(transactionId, summary.ok,
+                          summary.ok ? QStringLiteral("verified")
+                                     : QStringLiteral("not_verified"));
             AgentToolResult result;
             result.status = summary.ok ? AgentToolResult::Status::Ok
                                        : AgentToolResult::Status::Error;
@@ -497,6 +539,7 @@ AgentToolResult AgentRepairToolEngine::handleFinish(const Agent::ToolCall &call,
                 result.error.kind = Agent::ErrorKind::ToolError;
                 result.error.message = result.summary;
             }
+            recordCaseFor(transactionId, finish.ok, QStringLiteral("rolled_back"));
             deliver(activeCall, result);
         },
         &problem);
@@ -562,10 +605,18 @@ AgentToolResult AgentRepairToolEngine::resolveApproval(const QString &approvalId
         m_activeCall = pending.call;
         const Agent::ToolCall activeCall = pending.call;
         QString problem;
+        const QString symptomKey = pending.symptomKey;
         const bool started = m_repairHost->beginTransaction(
             pending.context.instanceId, pending.scopes,
-            [this, activeCall](const AgentRepairBeginResult &begin) {
+            [this, activeCall, symptomKey](const AgentRepairBeginResult &begin) {
                 if (!m_active) return;
+                if (begin.ok && !symptomKey.isEmpty()) {
+                    AgentRepairTransactionRecord created;
+                    if (m_store.load(begin.transactionId, &created, nullptr)) {
+                        created.symptomKey = symptomKey;
+                        m_store.save(created, nullptr);
+                    }
+                }
                 AgentToolResult result;
                 result.status = begin.ok ? AgentToolResult::Status::Ok
                                          : AgentToolResult::Status::Error;
@@ -618,6 +669,9 @@ AgentToolResult AgentRepairToolEngine::resolveApproval(const QString &approvalId
                 result.error.kind = Agent::ErrorKind::ToolError;
                 result.error.message = result.summary;
             }
+            recordCaseFor(transactionId, finish.ok && finish.committed,
+                          finish.ok ? QStringLiteral("committed")
+                                    : QStringLiteral("commit_failed"));
             deliver(activeCall, result);
         },
         &problem);
@@ -631,6 +685,63 @@ AgentToolResult AgentRepairToolEngine::resolveApproval(const QString &approvalId
     result.status = AgentToolResult::Status::Pending;
     result.summary = QStringLiteral("正在提交事务、备份原文件…");  // i18n-ignore
     return result;
+}
+
+void AgentRepairToolEngine::recordCaseFor(const QString &transactionId, bool verified,
+                                          const QString &outcome) {
+    AgentRepairCase::Store cases;
+    if (!cases.enabled()) return;  // 默认关闭：不落盘、不读盘
+    AgentRepairTransactionRecord record;
+    if (!m_store.load(transactionId, &record, nullptr)) return;
+    QString signature = record.symptomKey;
+    if (!AgentRepairCase::validSignature(signature)) {
+        signature = AgentRepairCase::repairSignature(record.scopes);
+    }
+    if (!AgentRepairCase::validSignature(signature)) return;
+
+    // 提交/回滚只改结果；动作标签在验证那一步已经记进事务日志。
+    if (outcome != QStringLiteral("verified") && outcome != QStringLiteral("not_verified")) {
+        cases.markOutcome(signature, record.actions, outcome, nullptr);
+        return;
+    }
+
+    QStringList files;
+    QStringList actions;
+    for (const QString &scope : record.scopes) actions.append(QStringLiteral("scope:") + scope);
+    for (const QString &key : record.settings.keys()) {
+        actions.append(QStringLiteral("setting:") + key);
+    }
+    AgentWorkspaceStore workspaceStore;
+    AgentWorkspaceRecord workspace;
+    QString problem;
+    if (workspaceStore.load(record.workspaceId, &workspace, &problem)) {
+        const QString workspaceRoot =
+            workspace.rootPath + QStringLiteral("/versions/") + workspace.versionId;
+        const QList<AgentRepairFileChange> changes = AgentRepairTransactionStore::diff(
+            workspaceRoot, record.baseline, record.scopes, &problem);
+        for (const AgentRepairFileChange &change : changes) {
+            files.append(change.relativePath);
+            actions.append(QStringLiteral("file:") + caseChangeClass(change));
+        }
+    }
+    actions.removeDuplicates();
+
+    AgentRepairTransactionRecord updated;
+    if (m_store.load(transactionId, &updated, nullptr)) {
+        updated.symptomKey = signature;
+        updated.actions = actions.mid(0, AgentRepairCase::maxActions());
+        m_store.save(updated, nullptr);
+    }
+
+    AgentRepairCase::Case item;
+    item.signature = signature;
+    item.actions = updated.actions.isEmpty() ? actions : updated.actions;
+    item.files = files;
+    item.outcome = outcome;
+    item.verified = verified;
+    item.attempts = 1;
+    item.successes = verified ? 1 : 0;
+    cases.record(item, nullptr);
 }
 
 void AgentRepairToolEngine::cancelPending() {

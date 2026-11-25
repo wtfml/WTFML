@@ -147,6 +147,8 @@ set(PROJECT_SOURCES
     ${REPO_ROOT}/src/agent/AgentRepairTransaction.hpp
     ${REPO_ROOT}/src/agent/AgentRepairToolEngine.cpp
     ${REPO_ROOT}/src/agent/AgentRepairToolEngine.hpp
+    ${REPO_ROOT}/src/agent/AgentRepairCases.cpp
+    ${REPO_ROOT}/src/agent/AgentRepairCases.hpp
     ${REPO_ROOT}/assets/agent/agent.qrc
     ${REPO_ROOT}/src/agent/AgentWinPath.cpp
     ${REPO_ROOT}/src/agent/AgentWinPath.hpp

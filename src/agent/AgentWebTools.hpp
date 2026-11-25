@@ -2,9 +2,9 @@
  * @file AgentWebTools.hpp
  * @brief Stage 3 联网工具：`web.search`（SearXNG）与 `web.fetch`（pinned-IP 抓取）。
  *
- * 两道闸：每次调用都要审批（搜索词/URL 会发给第三方）；网络层再按 `AgentWebPolicy`
- * 校验全部 A/AAAA、逐跳重定向重检、强制直连。结果是不可信内容：HTML 转文本、遮凭据、
- * 截断后进上下文。
+ * 两道闸：每次调用都要审批（搜索词/URL 会发给第三方），用户选“本会话允许”后同一个 host
+ * 在本会话内不再逐次确认；网络层再按 `AgentWebPolicy` 校验全部 A/AAAA、逐跳重定向重检、
+ * 强制直连。结果是不可信内容：HTML 转文本、遮凭据、截断后进上下文。
  */
 
 #pragma once
@@ -14,6 +14,7 @@
 #include "AgentWebTransport.hpp"
 
 #include <QHash>
+#include <QSet>
 #include <QJsonObject>
 #include <QObject>
 #include <QString>
@@ -35,6 +36,8 @@ public:
     QJsonArray schemas() const override;
     AgentToolResult invoke(const Agent::ToolCall &call) override;
     AgentToolResult resolveApproval(const QString &approvalId, bool approved) override;
+    /// 本会话放行：这一次照常执行，同一个 host 在同一个 sessionId 下后续不再弹审批。
+    AgentToolResult resolveSessionApproval(const QString &approvalId) override;
     void cancelPending() override;
     bool handles(const QString &internalName) const override;
     void setCompletionSink(AgentToolSink sink) override { m_sink = std::move(sink); }
@@ -69,12 +72,18 @@ private:
     AgentToolResult searchResult(const RunningFlight &flight, const AgentHttpResponse &response) const;
     AgentToolResult errorResult(Agent::ErrorKind kind, const QString &message,
                                 const QJsonObject &data = {}) const;
+    /// 审批通过后的统一入口（逐次允许和本会话放行走同一段）。
+    AgentToolResult startApproved(const Approval &approval);
+    bool sessionAllowed(const AgentToolContext &context, const QString &host) const;
+    void rememberSession(const AgentToolContext &context, const QString &host);
     QString newRequestId() const;
 
     AgentWebTransport *m_transport = nullptr;
     ContextProvider m_provider;
     AgentToolSink m_sink;
     QHash<QString, Approval> m_approvals;
+    /// 会话 id → 已放行的 host（只在内存里，重启/切会话即失效）。
+    QHash<QString, QSet<QString>> m_sessionHosts;
     QHash<QString, RunningFlight> m_running;
     mutable int m_counter = 1;
 };

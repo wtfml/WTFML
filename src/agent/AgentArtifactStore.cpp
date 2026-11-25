@@ -18,11 +18,15 @@
 #include <QSaveFile>
 #include <QUuid>
 
+#include <algorithm>
+
 namespace {
 const QByteArray &artifactMagic() {
     static const QByteArray magic("WTFML-AGENT-ARTIFACT-1\n");
     return magic;
 }
+constexpr qint64 kDefaultSessionQuotaBytes = 64 * 1024 * 1024;
+
 QString sha256(const QByteArray &bytes) {
     return QString::fromLatin1(QCryptographicHash::hash(bytes, QCryptographicHash::Sha256).toHex());
 }
@@ -33,6 +37,17 @@ AgentArtifactStore::AgentArtifactStore(const QString &root)
 
 void AgentArtifactStore::setRoot(const QString &root) {
     m_root = root.isEmpty() ? AgentPaths::artifactsRootDir() : QDir::cleanPath(root);
+}
+
+qint64 AgentArtifactStore::defaultSessionQuotaBytes() { return kDefaultSessionQuotaBytes; }
+
+qint64 AgentArtifactStore::sessionBytes(const QString &sessionId) const {
+    const QDir dir(sessionDir(sessionId));
+    if (!dir.exists()) return 0;
+    qint64 total = 0;
+    const QFileInfoList files = dir.entryInfoList({QStringLiteral("*.enc")}, QDir::Files);
+    for (const QFileInfo &info : files) total += std::max<qint64>(0, info.size());
+    return total;
 }
 
 QString AgentArtifactStore::sessionDir(const QString &sessionId) const {
@@ -61,6 +76,14 @@ bool AgentArtifactStore::put(const QString &sessionId, const QString &content, b
     const QByteArray encrypted = SecretProtector::protect(plain, artifactMagic());
     if (encrypted.isEmpty()) {
         if (problem != nullptr) *problem = QStringLiteral("artifact DPAPI 加密失败，拒绝落盘。");
+        return false;
+    }
+    if (m_sessionQuotaBytes > 0 &&
+        sessionBytes(sessionId) + encrypted.size() > m_sessionQuotaBytes) {
+        if (problem != nullptr) {
+            *problem = QStringLiteral("本会话的 artifact 已到上限（%1 MB），不再写入新的。")  // i18n-ignore
+                           .arg(double(m_sessionQuotaBytes) / (1024.0 * 1024.0), 0, 'f', 1);
+        }
         return false;
     }
     const QString dir = sessionDir(sessionId);

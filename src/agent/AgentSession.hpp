@@ -55,6 +55,8 @@ struct AgentSessionMeta {
     QJsonObject provider;
     AgentInstanceLock instanceLock;
     int messageCount = 0;
+    /// 这个会话已经用掉的工具调用次数（单会话上限按它累计，跨重启保留）。
+    int toolCalls = 0;
     QString bodySha256;
     int policyVersion = 1;
     QString lastTurnState = QStringLiteral("complete");

@@ -260,6 +260,68 @@ void runAgentWebToolsTests() {
     result = tools.invoke(fetch);
     tools.resolveApproval(result.approval.value(QStringLiteral("approvalId")).toString(), true);
     // 假设结果还没回来就取消：这里的结果已经同步交付，所以只验审批清空后旧 id 失效。
+    // ---------- 本会话允许（web.search / web.fetch） ----------
+    {
+        FakeTransport sessionTransport;
+        AgentWebTools sessionTools(&sessionTransport, [](QString *contextProblem) {
+            AgentToolContext context;
+            context.sessionId = QStringLiteral("session-allow");
+            if (contextProblem != nullptr) contextProblem->clear();
+            return context;
+        });
+        AgentToolResult sessionSink;
+        bool sessionSinkCalled = false;
+        sessionTools.setCompletionSink(
+            [&sessionSink, &sessionSinkCalled](const Agent::ToolCall &,
+                                               const AgentToolResult &value) {
+                sessionSink = value;
+                sessionSinkCalled = true;
+            });
+        Agent::ToolCall page =
+            callFor(QStringLiteral("web.fetch"),
+                    QJsonObject{{QStringLiteral("url"), QStringLiteral("https://example.com/a")}});
+        AgentToolResult first = sessionTools.invoke(page);
+        check(first.status == AgentToolResult::Status::ApprovalRequired,
+              "联网会话：第一次仍然要审批");
+        check(first.approval.value(QStringLiteral("sessionAllowAvailable")).toBool(),
+              "联网会话：审批卡给「本会话允许」按钮");
+        sessionTransport.responses = {okText(QStringLiteral("<html><body>第一次</body></html>"),
+                                             QStringLiteral("text/html"))};
+        const AgentToolResult allowed = sessionTools.resolveSessionApproval(
+            first.approval.value(QStringLiteral("approvalId")).toString());
+        check(allowed.status == AgentToolResult::Status::Pending &&
+                  sessionSinkCalled && sessionSink.status == AgentToolResult::Status::Ok,
+              "联网会话：本会话放行后这次照常抓取", sessionSink.summary);
+
+        sessionTransport.responses = {okText(QStringLiteral("<html><body>第二次</body></html>"),
+                                             QStringLiteral("text/html"))};
+        sessionSinkCalled = false;
+        const AgentToolResult second = sessionTools.invoke(page);
+        check(second.status == AgentToolResult::Status::Pending,
+              "联网会话：同一个 host 不再弹审批");
+        check(sessionSinkCalled && sessionSink.status == AgentToolResult::Status::Ok,
+              "联网会话：直接抓取并交付");
+
+        const AgentToolResult other =
+            sessionTools.invoke(callFor(QStringLiteral("web.fetch"),
+                                        QJsonObject{{QStringLiteral("url"),
+                                                     QStringLiteral("https://other.example.org/b")}}));
+        check(other.status == AgentToolResult::Status::ApprovalRequired,
+              "联网会话：换一个 host 仍要审批");
+        check(sessionTransport.requests.size() == 2, "联网会话：只发了放行后的两次请求",
+              QString::number(sessionTransport.requests.size()));
+
+        // 另一个会话不受影响：放行按 sessionId 分。
+        AgentWebTools otherSession(&sessionTransport, [](QString *contextProblem) {
+            AgentToolContext context;
+            context.sessionId = QStringLiteral("session-other");
+            if (contextProblem != nullptr) contextProblem->clear();
+            return context;
+        });
+        check(otherSession.invoke(page).status == AgentToolResult::Status::ApprovalRequired,
+              "联网会话：放行不外溢到别的会话");
+    }
+
     const AgentToolResult stale = tools.resolveApproval(QStringLiteral("nope"), true);
     check(stale.status == AgentToolResult::Status::Error, "联网工具：失效审批被拒");
 }

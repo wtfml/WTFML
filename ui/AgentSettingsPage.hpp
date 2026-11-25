@@ -48,6 +48,9 @@ public:
     QString webSearchEndpoint() const;
     void setDiagnoseCommands(bool enabled);
     bool diagnoseCommands() const;
+    /// P2 修复病例库开关（默认关闭）。
+    void setRepairCases(bool enabled);
+    bool repairCases() const;
 
 signals:
     void saveRequested();
@@ -91,6 +94,7 @@ private:
     QPushButton *m_mcp = nullptr;
     QLineEdit *m_searxng = nullptr;
     ToggleSwitch *m_diagnoseToggle = nullptr;
+    ToggleSwitch *m_repairCasesToggle = nullptr;
     QPushButton *m_save = nullptr;
     QPushButton *m_clearKeyButton = nullptr;
     QPushButton *m_deleteProfile = nullptr;

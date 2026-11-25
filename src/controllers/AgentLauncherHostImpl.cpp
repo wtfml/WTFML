@@ -437,9 +437,9 @@ bool AgentLauncherHostImpl::logTail(const QString &instanceId, int lines, QStrin
         return false;
     }
     const QStringList tail = lastLines(raw, qBound(1, lines, 500));
-    // 路径/账户字段不外发（§9.4.1）：日志里出现本机路径的地方一律替换成占位符。
+    // 路径/账户字段不外发（§9.4.1）：本机路径、启动参数、MAC/SID、用户名的位置一律替换。
     QString joined = tail.join(QLatin1Char('\n'));
-    joined = AgentDiagnosticProjection::scrubPaths(joined);
+    joined = AgentDiagnosticProjection::scrubLogText(joined);
     if (text != nullptr) *text = joined;
     if (relativeSource != nullptr) *relativeSource = source;
     return true;
@@ -480,7 +480,7 @@ bool AgentLauncherHostImpl::crashReports(const QString &instanceId,
         report.modifiedAt = file.modifiedAt;
         report.bytes = file.bytes;
         report.headText =
-            AgentDiagnosticProjection::scrubPaths(readHead(file.path, kCrashHeadBytes));
+            AgentDiagnosticProjection::scrubLogText(readHead(file.path, kCrashHeadBytes));
         items->append(report);
     }
     return true;

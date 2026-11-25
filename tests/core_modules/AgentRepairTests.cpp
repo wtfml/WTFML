@@ -6,6 +6,8 @@
 #include "Support.hpp"
 
 #include "agent/AgentLaunchHost.hpp"
+#include "agent/AgentRepairCases.hpp"
+#include "agent/AgentSettings.hpp"
 #include "agent/AgentRepairHost.hpp"
 #include "agent/AgentRepairToolEngine.hpp"
 #include "agent/AgentTestLaunch.hpp"
@@ -247,6 +249,85 @@ void runAgentRepairTests() {
           "事务：commit 结果交付");
     check(deliveredResult.data.value(QStringLiteral("committed")).toBool(),
           "事务：commit 结果标记已提交");
+
+    // ---------- 病例库：验证/提交写进本地病例库（默认关闭，打开后才落盘） ----------
+    {
+        AgentSettings::setRepairCasesEnabled(true);
+        AgentRepairCase::Store cases;
+        cases.clear(nullptr);
+
+        AgentRepairTransactionRecord caseRecord = record;
+        caseRecord.id = AgentRepairTransactionStore::newId();
+        caseRecord.workspaceId = QStringLiteral("ws-case");
+        caseRecord.state = QStringLiteral("ready");
+        caseRecord.verification = {};
+        caseRecord.symptomKey = QStringLiteral("crash:java.lang.OutOfMemoryError|rule:heap");
+        AgentRepairTransactionStore caseStore;
+        check(caseStore.create(caseRecord, &problem), "病例库：事务夹具创建", problem);
+
+        FakeRepairHost caseRepairHost;
+        FakeLaunchHost caseLaunchHost;
+        AgentRepairToolEngine caseEngine(&caseRepairHost, &caseLaunchHost,
+                                         [](QString *contextProblem) {
+                                             if (contextProblem != nullptr) contextProblem->clear();
+                                             return testContext();
+                                         });
+        bool caseDelivered = false;
+        AgentToolResult caseResult;
+        caseEngine.setCompletionSink([&](const Agent::ToolCall &, const AgentToolResult &value) {
+            caseDelivered = true;
+            caseResult = value;
+        });
+        const AgentToolResult caseVerify = caseEngine.invoke(
+            callFor(QStringLiteral("repair.verify"),
+                    QJsonObject{{QStringLiteral("transactionId"), caseRecord.id}}));
+        check(caseVerify.status == AgentToolResult::Status::Pending, "病例库：验证进入等待");
+        AgentTestLaunchSummary caseSummary;
+        caseSummary.ok = true;
+        caseSummary.launchId = QStringLiteral("launch-case");
+        caseSummary.workspaceId = QStringLiteral("ws-case");
+        AgentTestLaunchRunResult caseRun;
+        caseRun.milestoneReached = true;
+        caseSummary.runs.append(caseRun);
+        caseLaunchHost.launchDone(caseSummary);
+        check(caseDelivered && caseResult.status == AgentToolResult::Status::Ok,
+              "病例库：验证通过");
+        QList<AgentRepairCase::Case> written = cases.all();
+        check(written.size() == 1, "病例库：验证后落盘一条",
+              QString::number(written.size()));
+        check(!written.isEmpty() && written.constFirst().signature == caseRecord.symptomKey,
+              "病例库：症状键来自 repair.begin 的参数");
+        check(!written.isEmpty() &&
+                  written.constFirst().actions.contains(QStringLiteral("scope:mods")),
+              "病例库：动作标签带事务范围");
+        check(!written.isEmpty() && written.constFirst().outcome == QStringLiteral("verified"),
+              "病例库：验证结果写进病例");
+
+        AgentToolResult commit = caseEngine.invoke(
+            callFor(QStringLiteral("repair.finish"),
+                    QJsonObject{{QStringLiteral("transactionId"), caseRecord.id},
+                                {QStringLiteral("action"), QStringLiteral("commit")}}));
+        check(commit.status == AgentToolResult::Status::ApprovalRequired,
+              "病例库：提交仍要审批");
+        caseEngine.resolveApproval(commit.approval.value(QStringLiteral("approvalId")).toString(),
+                                   true);
+        AgentRepairFinishResult caseFinish;
+        caseFinish.ok = true;
+        caseFinish.committed = true;
+        caseFinish.transactionId = caseRecord.id;
+        caseRepairHost.finishDone(caseFinish);
+        written = cases.all();
+        check(written.size() == 1 &&
+                  written.constFirst().outcome == QStringLiteral("committed"),
+              "病例库：提交后结果改成 committed");
+        check(written.size() == 1 && written.constFirst().attempts == 1,
+              "病例库：提交不重复计一次尝试");
+
+        // 关掉开关：后面的验证不再落盘。
+        AgentSettings::setRepairCasesEnabled(false);
+        cases.clear(nullptr);
+        check(cases.all().isEmpty(), "病例库：清理后为空");
+    }
 
     // ---------- Auto-safe：验证失败自动回滚 ----------
     {

@@ -7,6 +7,7 @@
 
 #include "AgentRedaction.hpp"
 
+#include <QFileInfo>
 #include <QRegularExpression>
 #include <QStringList>
 
@@ -100,6 +101,68 @@ QString scrubPaths(const QString &text) {
     QString result = text;
     result.replace(localPathPattern(), QStringLiteral("<path>"));
     return result;
+}
+
+namespace {
+
+const QRegularExpression &launchArgPattern() {
+    // 只遮“启动参数名 + 值”，参数名保留，方便判断是谁在启动。
+    static const QRegularExpression pattern(QStringLiteral(
+        R"((?i)(--(?:accesstoken|uuid|username|xuid|clientid|userproperties|auth\w*)\s+)(\S+))"));
+    return pattern;
+}
+
+const QRegularExpression &macPattern() {
+    static const QRegularExpression pattern(
+        QStringLiteral(R"(\b(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}\b)"));
+    return pattern;
+}
+
+const QRegularExpression &sidPattern() {
+    static const QRegularExpression pattern(QStringLiteral(R"(\bS-1-5-21(?:-\d{5,}){3,4}\b)"));
+    return pattern;
+}
+
+const QRegularExpression &hardwareFieldPattern() {
+    static const QRegularExpression pattern(QStringLiteral(
+        R"((?i)\b(hwid|machineguid|machine_id|deviceid|device_id|boardid|serial(?:number)?)(\s*[:=]\s*)([^\s,;]+))"));
+    return pattern;
+}
+
+}  // namespace
+
+QStringList localAccountNames() {
+    QStringList names;
+    for (const char *key : {"USERNAME", "USER", "USERPROFILE"}) {
+        QString value = qEnvironmentVariable(key).trimmed();
+        if (value.isEmpty()) continue;
+        if (QLatin1String(key) == QLatin1String("USERPROFILE")) {
+            value = QFileInfo(value).fileName();
+        }
+        if (!value.isEmpty() && !names.contains(value, Qt::CaseInsensitive)) names.append(value);
+    }
+    return names;
+}
+
+QString scrubIdentifiers(const QString &text, const QStringList &knownNames) {
+    if (text.isEmpty()) return text;
+    QString result = text;
+    result.replace(launchArgPattern(), QStringLiteral("\\1<redacted>"));
+    result.replace(macPattern(), QStringLiteral("<mac>"));
+    result.replace(sidPattern(), QStringLiteral("<sid>"));
+    result.replace(hardwareFieldPattern(), QStringLiteral("\\1\\2<redacted>"));
+    for (const QString &name : knownNames) {
+        if (name.size() < 4) continue;  // 太短的名字会把正常单词打掉
+        const QRegularExpression pattern(
+            QStringLiteral("\\b%1\\b").arg(QRegularExpression::escape(name)),
+            QRegularExpression::CaseInsensitiveOption);
+        result.replace(pattern, QStringLiteral("<user>"));
+    }
+    return result;
+}
+
+QString scrubLogText(const QString &text) {
+    return scrubIdentifiers(scrubPaths(text), localAccountNames());
 }
 
 QJsonObject startup(const StartupDiagnosis::Report &report, const InstanceFacts &facts,

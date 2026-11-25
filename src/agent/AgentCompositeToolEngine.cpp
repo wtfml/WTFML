@@ -221,7 +221,18 @@ AgentToolResult AgentCompositeToolEngine::invoke(const Agent::ToolCall &call) {
     return result;
 }
 
-AgentToolResult AgentCompositeToolEngine::resolveApproval(const QString &approvalId, bool approved) {
+AgentToolResult AgentCompositeToolEngine::resolveApproval(const QString &approvalId,
+                                                          bool approved) {
+    return resolveApprovalInternal(approvalId, approved, false);
+}
+
+AgentToolResult AgentCompositeToolEngine::resolveSessionApproval(const QString &approvalId) {
+    return resolveApprovalInternal(approvalId, true, true);
+}
+
+AgentToolResult AgentCompositeToolEngine::resolveApprovalInternal(const QString &approvalId,
+                                                                 bool approved,
+                                                                 bool sessionScope) {
     AgentToolEngine *engine = m_approvalOwner.take(approvalId);
     if (engine == nullptr) {
         AgentToolResult result;
@@ -232,7 +243,8 @@ AgentToolResult AgentCompositeToolEngine::resolveApproval(const QString &approva
         return result;
     }
     const Agent::ToolCall call = m_approvalCalls.take(approvalId);
-    AgentToolResult result = engine->resolveApproval(approvalId, approved);
+    AgentToolResult result = sessionScope ? engine->resolveSessionApproval(approvalId)
+                                          : engine->resolveApproval(approvalId, approved);
     if (result.status == AgentToolResult::Status::Pending) return result;
     // 计划批准 = Auto-safe 的授权范围（写哪些文件/键/模组）。
     if (m_autoSafe != nullptr && m_autoSafe->enabled() && m_workflow != nullptr &&

@@ -315,8 +315,21 @@ void AgentLoop::appendAssistantToHistory() {
     m_assistantAppended = true;
 }
 
+void AgentLoop::setSessionToolCalls(int used) { m_sessionToolCalls = qMax(0, used); }
+
 void AgentLoop::processToolCalls() {
     while (m_nextToolCall < m_toolQueue.size()) {
+        if (m_config.maxSessionToolCalls > 0 &&
+            m_sessionToolCalls >= m_config.maxSessionToolCalls) {
+            Agent::Error error;
+            error.kind = Agent::ErrorKind::ToolError;
+            error.message = tr("本会话的工具调用已达上限（%1 次）。需要继续排查时开一个新会话。")
+                                .arg(m_config.maxSessionToolCalls);
+            m_toolQueue.clear();
+            m_nextToolCall = 0;
+            deliverFailure(error);
+            return;
+        }
         const Agent::ToolCall call = m_toolQueue.at(m_nextToolCall);
         emit toolCallStarted(call);
         if (m_toolEngine == nullptr) {
@@ -379,8 +392,27 @@ void AgentLoop::handleToolOutcome(const Agent::ToolCall &call, const AgentToolRe
     if (!result.error.isEmpty()) body.insert(QStringLiteral("error"), result.error.toJson());
     toolMessage.content = QString::fromUtf8(QJsonDocument(body).toJson(QJsonDocument::Compact));
     m_history.append(toolMessage);
+    m_sessionToolCalls += 1;
     emit messageAdded(toolMessage);
     emit toolCallFinished(call, result);
+}
+
+void AgentLoop::resolveSessionApproval() {
+    if (m_state != State::AwaitingApproval || m_toolEngine == nullptr) return;
+    const QString approvalId = m_approvalId;
+    m_approvalId.clear();
+    setState(State::ExecutingTool);
+    const AgentToolResult result = m_toolEngine->resolveSessionApproval(approvalId);
+    if (result.status == AgentToolResult::Status::Pending) {
+        m_asyncPending = true;
+        m_asyncGeneration = m_generation;
+        m_pendingCall = {};
+        return;
+    }
+    handleToolOutcome(m_pendingCall, result);
+    m_pendingCall = {};
+    ++m_nextToolCall;
+    processToolCalls();
 }
 
 void AgentLoop::resolveApproval(bool approved) {

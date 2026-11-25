@@ -226,6 +226,13 @@ AgentSettingsPage::AgentSettingsPage(QWidget *parent) : QDialog(parent) {
     row(tools, QStringLiteral("允许诊断命令"), m_diagnoseToggle, Placement::Column,
         QStringLiteral("默认关闭。打开后可以执行固定的诊断命令（java -version、ping、nslookup、"
                        "netstat -ano 等），每次都要确认；任意命令始终不开放。"));
+    m_repairCasesToggle = toggle("agentRepairCasesToggle", false);
+    row(tools, QCoreApplication::translate("AgentSettingsPage", "记住修复病例"), m_repairCasesToggle,
+        Placement::Column,
+        QCoreApplication::translate("AgentSettingsPage",
+                                    "默认关闭。打开后把「症状、改动、验证结果」记在本机，"
+                                    "下次遇到同类崩溃时按成功率排序提示；只记结构化字段，"
+                                    "不保存日志原文，也不额外外发。"));
 
     form->addWidget(m_advanced);
     auto *protocol = new SettingsGroup(QCoreApplication::translate("AgentSettingsPage", "协议适配"), m_advanced);
@@ -482,6 +489,14 @@ void AgentSettingsPage::setDiagnoseCommands(bool enabled) {
 
 bool AgentSettingsPage::diagnoseCommands() const {
     return m_diagnoseToggle != nullptr && m_diagnoseToggle->isChecked();
+}
+
+void AgentSettingsPage::setRepairCases(bool enabled) {
+    if (m_repairCasesToggle != nullptr) m_repairCasesToggle->setChecked(enabled);
+}
+
+bool AgentSettingsPage::repairCases() const {
+    return m_repairCasesToggle != nullptr && m_repairCasesToggle->isChecked();
 }
 
 void AgentSettingsPage::setStrictEgress(bool strict) { m_strict->setChecked(strict); }

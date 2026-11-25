@@ -156,4 +156,43 @@ void runAgentDiagnosticProjectionTests() {
         QStringLiteral("at C:\\mc\\versions\\a.jar:12"));
     check(!scrubbed.contains(QStringLiteral("C:\\mc")), "投影：scrubPaths 换掉盘符路径");
     check(scrubbed.contains(QStringLiteral("<path>")), "投影：scrubPaths 留占位符");
+
+    // ---------- 日志字段投影：启动参数、MAC、SID、硬件标识、裸用户名 ----------
+    const QString raw = QStringLiteral(
+        "Setting user: Alice, launch --accessToken abcdef1234567890 --uuid "
+        "069a79f444e94726a5befca90e38aaf5\\n"
+        "eth0 01:23:45:67:89:AB, sid S-1-5-21-1111111-2222222-3333333-4444, "
+        "HWID=ABC123DEF, MachineGuid: 9f8e7d6c, C:\\\\Users\\\\Alice\\\\x.log");
+    const QString projected = AgentDiagnosticProjection::scrubIdentifiers(
+        raw, {QStringLiteral("Alice")});
+    check(!projected.contains(QStringLiteral("abcdef1234567890")),
+          "投影：启动参数里的令牌被遮", projected);
+    check(projected.contains(QStringLiteral("--accessToken")),
+          "投影：启动参数名保留（看得出是谁在启动）");
+    check(!projected.contains(QStringLiteral("069a79f4")) &&
+              projected.contains(QStringLiteral("--uuid <redacted>")),
+          "投影：启动参数里的 uuid 被遮");
+    check(!projected.contains(QStringLiteral("01:23:45:67:89:AB")) &&
+              projected.contains(QStringLiteral("<mac>")),
+          "投影：MAC 地址被遮");
+    check(!projected.contains(QStringLiteral("S-1-5-21-1111111")) &&
+              projected.contains(QStringLiteral("<sid>")),
+          "投影：Windows SID 被遮");
+    check(!projected.contains(QStringLiteral("ABC123DEF")) &&
+              !projected.contains(QStringLiteral("9f8e7d6c")) &&
+              projected.contains(QStringLiteral("<redacted>")),
+          "投影：硬件标识字段被遮");
+    check(!projected.contains(QStringLiteral("Alice")) &&
+              projected.contains(QStringLiteral("<user>")),
+          "投影：点名的账户名换成 <user>");
+    check(AgentDiagnosticProjection::scrubIdentifiers(QStringLiteral("bin 目录"),
+                                                      {QStringLiteral("bin")}) ==
+              QStringLiteral("bin 目录"),
+          "投影：短名字不参与整词替换");
+    const QString logText =
+        AgentDiagnosticProjection::scrubLogText(QStringLiteral("在 C:\\\\Users\\\\bob\\\\a.log 里"));
+    check(logText.contains(QStringLiteral("<path>")) && !logText.contains(QStringLiteral("C:\\")),
+          "投影：scrubLogText 先换路径再过字段规则", logText);
+    check(!AgentDiagnosticProjection::localAccountNames().isEmpty(),
+          "投影：本机账户名候选读得到（测试环境至少有一个）");
 }
