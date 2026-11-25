@@ -17919,20 +17919,56 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
     <context>
         <name>OptionValueDelegate</name>
         <message>
-            <source>关闭</source>
-            <translation>Off</translation>
-        </message>
-        <message>
-            <source>开启</source>
-            <translation>On</translation>
-        </message>
-        <message>
             <source>自动</source>
             <translation>Auto</translation>
         </message>
         <message>
-            <source> 区块</source>
-            <translation> chunks</translation>
+            <source>中</source>
+            <translation>Normal</translation>
+        </message>
+        <message>
+            <source>广角</source>
+            <translation>Quake Pro</translation>
+        </message>
+        <message>
+            <source>昏暗</source>
+            <translation>Moody</translation>
+        </message>
+        <message>
+            <source>默认</source>
+            <translation>Default</translation>
+        </message>
+        <message>
+            <source>明亮</source>
+            <translation>Bright</translation>
+        </message>
+        <message>
+            <source>无限制</source>
+            <translation>Unlimited</translation>
+        </message>
+        <message>
+            <source>%1 fps</source>
+            <translation>%1 fps</translation>
+        </message>
+        <message>
+            <source>%1个区块</source>
+            <translation>%1 chunks</translation>
+        </message>
+        <message>
+            <source>*哈欠*</source>
+            <translation>*yawn*</translation>
+        </message>
+        <message>
+            <source>超高速！！！</source>
+            <translation>HYPERSPEED!!!</translation>
+        </message>
+        <message>
+            <source>关</source>
+            <translation>OFF</translation>
+        </message>
+        <message>
+            <source>开</source>
+            <translation>ON</translation>
         </message>
     </context>
     <context>
@@ -18781,8 +18817,8 @@ Not supported by this preset category: %1.</translation>
             <translation>Game options</translation>
         </message>
         <message>
-            <source>按键</source>
-            <translation>Button</translation>
+            <source>按键绑定</source>
+            <translation>Key Binds</translation>
         </message>
         <message>
             <source>模组</source>
@@ -19627,28 +19663,16 @@ Not supported by this preset category: %1.</translation>
     <context>
         <name>PresetOptionCatalog</name>
         <message>
-            <source>视角</source>
-            <translation>Perspective</translation>
-        </message>
-        <message>
-            <source>画面</source>
-            <translation>Picture</translation>
-        </message>
-        <message>
             <source>界面尺寸</source>
-            <translation>Interface size</translation>
+            <translation>GUI Scale</translation>
         </message>
         <message>
             <source>渲染距离</source>
-            <translation>Rendering distance</translation>
+            <translation>Render Distance</translation>
         </message>
         <message>
             <source>模拟距离</source>
-            <translation>Simulated distance</translation>
-        </message>
-        <message>
-            <source>帧率上限</source>
-            <translation>Frame rate cap</translation>
+            <translation>Simulation Distance</translation>
         </message>
         <message>
             <source>亮度</source>
@@ -19656,15 +19680,11 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>垂直同步</source>
-            <translation>Vertical sync</translation>
+            <translation>VSync</translation>
         </message>
         <message>
             <source>全屏</source>
-            <translation>Full screen</translation>
-        </message>
-        <message>
-            <source>画质</source>
-            <translation>Image quality</translation>
+            <translation>Fullscreen</translation>
         </message>
         <message>
             <source>流畅</source>
@@ -19675,20 +19695,12 @@ Not supported by this preset category: %1.</translation>
             <translation>Fancy</translation>
         </message>
         <message>
-            <source>极佳</source>
-            <translation>Fabulous!</translation>
-        </message>
-        <message>
             <source>粒子效果</source>
-            <translation>Particle effects</translation>
+            <translation>Particles</translation>
         </message>
         <message>
             <source>全部</source>
             <translation>All</translation>
-        </message>
-        <message>
-            <source>减少</source>
-            <translation>Decreased</translation>
         </message>
         <message>
             <source>最少</source>
@@ -19696,51 +19708,23 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>云</source>
-            <translation>Cloud</translation>
-        </message>
-        <message>
-            <source>关闭</source>
-            <translation>Off</translation>
-        </message>
-        <message>
-            <source>快速</source>
-            <translation>Fast</translation>
-        </message>
-        <message>
-            <source>精细</source>
-            <translation>Fancy</translation>
+            <translation>Clouds</translation>
         </message>
         <message>
             <source>实体阴影</source>
-            <translation>Solid shadow</translation>
+            <translation>Entity Shadows</translation>
         </message>
         <message>
             <source>视角摇晃</source>
-            <translation>Angle of view shakes</translation>
+            <translation>View Bobbing</translation>
         </message>
         <message>
             <source>自动跳跃</source>
-            <translation>Automatic jump</translation>
-        </message>
-        <message>
-            <source>操作</source>
-            <translation>Operate</translation>
+            <translation>Auto-Jump</translation>
         </message>
         <message>
             <source>鼠标灵敏度</source>
-            <translation>Mouse sensitivity</translation>
-        </message>
-        <message>
-            <source>反转鼠标</source>
-            <translation>Invert mouse</translation>
-        </message>
-        <message>
-            <source>原始鼠标输入</source>
-            <translation>Raw mouse input</translation>
-        </message>
-        <message>
-            <source>潜行方式</source>
-            <translation>Stealth mode</translation>
+            <translation>Sensitivity</translation>
         </message>
         <message>
             <source>按住</source>
@@ -19751,12 +19735,8 @@ Not supported by this preset category: %1.</translation>
             <translation>Toggle</translation>
         </message>
         <message>
-            <source>疾跑方式</source>
-            <translation>Sprint style</translation>
-        </message>
-        <message>
             <source>主手</source>
-            <translation>Main hand</translation>
+            <translation>Main Hand</translation>
         </message>
         <message>
             <source>右手</source>
@@ -19768,39 +19748,15 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>失去焦点时暂停</source>
-            <translation>Pause when focus is lost</translation>
-        </message>
-        <message>
-            <source>字幕</source>
-            <translation>Subtitle</translation>
-        </message>
-        <message>
-            <source>辅助功能</source>
-            <translation>Accessibility</translation>
+            <translation>Pause on lost focus</translation>
         </message>
         <message>
             <source>高对比度</source>
-            <translation>High contrast</translation>
-        </message>
-        <message>
-            <source>隐藏闪电闪光</source>
-            <translation>Hidden lightning flash</translation>
+            <translation>High Contrast</translation>
         </message>
         <message>
             <source>屏幕扭曲效果</source>
-            <translation>Screen distortion effect</translation>
-        </message>
-        <message>
-            <source>视角变化效果</source>
-            <translation>Perspective change effect</translation>
-        </message>
-        <message>
-            <source>黑暗效果</source>
-            <translation>Dark effect</translation>
-        </message>
-        <message>
-            <source>聊天显示</source>
-            <translation>Chat display</translation>
+            <translation>Distortion Effects</translation>
         </message>
         <message>
             <source>聊天</source>
@@ -19811,44 +19767,16 @@ Not supported by this preset category: %1.</translation>
             <translation>Shown</translation>
         </message>
         <message>
-            <source>仅命令</source>
-            <translation>Commands only</translation>
-        </message>
-        <message>
             <source>隐藏</source>
             <translation>Hidden</translation>
         </message>
         <message>
-            <source>聊天颜色</source>
-            <translation>Chat color</translation>
-        </message>
-        <message>
-            <source>聊天链接</source>
-            <translation>Chat link</translation>
-        </message>
-        <message>
-            <source>打开链接前确认</source>
-            <translation>Confirm before opening link</translation>
-        </message>
-        <message>
-            <source>聊天不透明度</source>
-            <translation>Chat opacity</translation>
-        </message>
-        <message>
-            <source>聊天缩放</source>
-            <translation>Chat zoom</translation>
-        </message>
-        <message>
             <source>主音量</source>
-            <translation>Master volume</translation>
+            <translation>Master Volume</translation>
         </message>
         <message>
             <source>音乐</source>
             <translation>Music</translation>
-        </message>
-        <message>
-            <source>唱片</source>
-            <translation>Jukebox and note blocks</translation>
         </message>
         <message>
             <source>天气</source>
@@ -19860,11 +19788,11 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>敌对生物</source>
-            <translation>Hostile creatures</translation>
+            <translation>Hostile Creatures</translation>
         </message>
         <message>
             <source>友好生物</source>
-            <translation>Friendly creatures</translation>
+            <translation>Friendly Creatures</translation>
         </message>
         <message>
             <source>玩家</source>
@@ -19872,31 +19800,7 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>环境</source>
-            <translation>Ambient and environment</translation>
-        </message>
-        <message>
-            <source>语音</source>
-            <translation>Voice</translation>
-        </message>
-        <message>
-            <source>声音</source>
-            <translation>Sound</translation>
-        </message>
-        <message>
-            <source>前进</source>
-            <translation>Move forward</translation>
-        </message>
-        <message>
-            <source>后退</source>
-            <translation>Move backward</translation>
-        </message>
-        <message>
-            <source>左移</source>
-            <translation>Strafe left</translation>
-        </message>
-        <message>
-            <source>右移</source>
-            <translation>Strafe right</translation>
+            <translation>Ambient/Environment</translation>
         </message>
         <message>
             <source>跳跃</source>
@@ -19911,64 +19815,184 @@ Not supported by this preset category: %1.</translation>
             <translation>Sprint</translation>
         </message>
         <message>
-            <source>物品栏</source>
-            <translation>Open inventory</translation>
-        </message>
-        <message>
-            <source>丢弃物品</source>
-            <translation>Drop item</translation>
-        </message>
-        <message>
-            <source>交换副手物品</source>
-            <translation>Swap item with offhand</translation>
-        </message>
-        <message>
-            <source>打开聊天</source>
-            <translation>Open chat</translation>
-        </message>
-        <message>
             <source>输入命令</source>
-            <translation>Open command</translation>
-        </message>
-        <message>
-            <source>玩家列表</source>
-            <translation>List players</translation>
+            <translation>Open Command</translation>
         </message>
         <message>
             <source>切换视角</source>
-            <translation>Toggle perspective</translation>
+            <translation>Toggle Perspective</translation>
         </message>
         <message>
             <source>截图</source>
-            <translation>Take screenshot</translation>
-        </message>
-        <message>
-            <source>切换全屏</source>
-            <translation>Toggle fullscreen</translation>
+            <translation>Take Screenshot</translation>
         </message>
         <message>
             <source>进度</source>
             <translation>Advancements</translation>
         </message>
         <message>
-            <source>按键</source>
-            <translation>Button</translation>
-        </message>
-        <message>
-            <source>攻击 / 破坏</source>
-            <translation>Attack / Destroy</translation>
-        </message>
-        <message>
-            <source>使用 / 放置</source>
-            <translation>Use/place</translation>
-        </message>
-        <message>
             <source>选取方块</source>
-            <translation>Select box</translation>
+            <translation>Pick Block</translation>
         </message>
         <message>
-            <source>快捷栏 </source>
-            <translation>Shortcut bar</translation>
+            <source>视场角</source>
+            <translation>FOV</translation>
+        </message>
+        <message>
+            <source>视频设置</source>
+            <translation>Video Settings</translation>
+        </message>
+        <message>
+            <source>最大帧率</source>
+            <translation>Max Framerate</translation>
+        </message>
+        <message>
+            <source>图像品质</source>
+            <translation>Graphics</translation>
+        </message>
+        <message>
+            <source>极佳！</source>
+            <translation>Fabulous!</translation>
+        </message>
+        <message>
+            <source>少量</source>
+            <translation>Decreased</translation>
+        </message>
+        <message>
+            <source>关</source>
+            <translation>OFF</translation>
+        </message>
+        <message>
+            <source>按键控制</source>
+            <translation>Controls</translation>
+        </message>
+        <message>
+            <source>鼠标设置</source>
+            <translation>Mouse Settings</translation>
+        </message>
+        <message>
+            <source>鼠标反转</source>
+            <translation>Invert Mouse</translation>
+        </message>
+        <message>
+            <source>原始输入</source>
+            <translation>Raw Input</translation>
+        </message>
+        <message>
+            <source>隐藏式字幕</source>
+            <translation>Show Subtitles</translation>
+        </message>
+        <message>
+            <source>辅助功能设置</source>
+            <translation>Accessibility Settings</translation>
+        </message>
+        <message>
+            <source>隐藏天空闪烁效果</source>
+            <translation>Hide Lightning Flashes</translation>
+        </message>
+        <message>
+            <source>视场角效果</source>
+            <translation>FOV Effects</translation>
+        </message>
+        <message>
+            <source>黑暗脉动效果</source>
+            <translation>Darkness Pulsing</translation>
+        </message>
+        <message>
+            <source>聊天设置</source>
+            <translation>Chat Settings</translation>
+        </message>
+        <message>
+            <source>仅限命令</source>
+            <translation>Commands Only</translation>
+        </message>
+        <message>
+            <source>颜色</source>
+            <translation>Colors</translation>
+        </message>
+        <message>
+            <source>网页链接</source>
+            <translation>Web Links</translation>
+        </message>
+        <message>
+            <source>链接提示</source>
+            <translation>Prompt on Links</translation>
+        </message>
+        <message>
+            <source>聊天文本不透明度</source>
+            <translation>Chat Text Opacity</translation>
+        </message>
+        <message>
+            <source>聊天文本大小</source>
+            <translation>Chat Text Size</translation>
+        </message>
+        <message>
+            <source>音乐和声音选项</source>
+            <translation>Music &amp; Sound Options</translation>
+        </message>
+        <message>
+            <source>唱片机/音符盒</source>
+            <translation>Jukebox/Note Blocks</translation>
+        </message>
+        <message>
+            <source>复述功能/语音</source>
+            <translation>Voice/Speech</translation>
+        </message>
+        <message>
+            <source>按键绑定</source>
+            <translation>Key Binds</translation>
+        </message>
+        <message>
+            <source>向前移动</source>
+            <translation>Walk Forwards</translation>
+        </message>
+        <message>
+            <source>向后移动</source>
+            <translation>Walk Backwards</translation>
+        </message>
+        <message>
+            <source>向左移动</source>
+            <translation>Strafe Left</translation>
+        </message>
+        <message>
+            <source>向右移动</source>
+            <translation>Strafe Right</translation>
+        </message>
+        <message>
+            <source>开启/关闭物品栏</source>
+            <translation>Open/Close Inventory</translation>
+        </message>
+        <message>
+            <source>丢弃所选物品</source>
+            <translation>Drop Selected Item</translation>
+        </message>
+        <message>
+            <source>与副手交换物品</source>
+            <translation>Swap Item With Off Hand</translation>
+        </message>
+        <message>
+            <source>打开聊天栏</source>
+            <translation>Open Chat</translation>
+        </message>
+        <message>
+            <source>显示玩家列表</source>
+            <translation>List Players</translation>
+        </message>
+        <message>
+            <source>切换全屏显示</source>
+            <translation>Toggle Fullscreen</translation>
+        </message>
+        <message>
+            <source>攻击/摧毁</source>
+            <translation>Attack/Destroy</translation>
+        </message>
+        <message>
+            <source>使用物品/放置方块</source>
+            <translation>Use Item/Place Block</translation>
+        </message>
+        <message>
+            <source>快捷栏%1</source>
+            <translation>Hotbar Slot %1</translation>
         </message>
     </context>
     <context>
@@ -19988,10 +20012,6 @@ Not supported by this preset category: %1.</translation>
         <message>
             <source>纳入预设</source>
             <translation>Include default</translation>
-        </message>
-        <message>
-            <source>按键</source>
-            <translation>Button</translation>
         </message>
         <message>
             <source>设置值</source>
@@ -20014,32 +20034,112 @@ Not supported by this preset category: %1.</translation>
             <translation>Space</translation>
         </message>
         <message>
-            <source>左 Shift</source>
+            <source>左Shift</source>
             <translation>Left Shift</translation>
         </message>
         <message>
-            <source>左 Ctrl</source>
-            <translation>Left Ctrl</translation>
+            <source>左Ctrl</source>
+            <translation>Left Control</translation>
         </message>
         <message>
-            <source>左 Alt</source>
+            <source>左Alt</source>
             <translation>Left Alt</translation>
         </message>
         <message>
-            <source>鼠标左键</source>
-            <translation>Left mouse button</translation>
+            <source>左Win</source>
+            <translation>Left Win</translation>
         </message>
         <message>
-            <source>鼠标右键</source>
-            <translation>Right mouse button</translation>
+            <source>右Shift</source>
+            <translation>Right Shift</translation>
         </message>
         <message>
-            <source>鼠标中键</source>
-            <translation>Middle mouse button</translation>
+            <source>右Ctrl</source>
+            <translation>Right Control</translation>
         </message>
         <message>
-            <source>未绑定</source>
-            <translation>Unbound</translation>
+            <source>右Alt</source>
+            <translation>Right Alt</translation>
+        </message>
+        <message>
+            <source>右Win</source>
+            <translation>Right Win</translation>
+        </message>
+        <message>
+            <source>小键盘 Enter</source>
+            <translation>Keypad Enter</translation>
+        </message>
+        <message>
+            <source>上方向键</source>
+            <translation>Up Arrow</translation>
+        </message>
+        <message>
+            <source>下方向键</source>
+            <translation>Down Arrow</translation>
+        </message>
+        <message>
+            <source>左方向键</source>
+            <translation>Left Arrow</translation>
+        </message>
+        <message>
+            <source>右方向键</source>
+            <translation>Right Arrow</translation>
+        </message>
+        <message>
+            <source>Esc</source>
+            <translation>Escape</translation>
+        </message>
+        <message>
+            <source>菜单</source>
+            <translation>Menu</translation>
+        </message>
+        <message>
+            <source>小键盘 +</source>
+            <translation>Keypad +</translation>
+        </message>
+        <message>
+            <source>小键盘 .</source>
+            <translation>Keypad Decimal</translation>
+        </message>
+        <message>
+            <source>小键盘 /</source>
+            <translation>Keypad /</translation>
+        </message>
+        <message>
+            <source>小键盘 =</source>
+            <translation>Keypad =</translation>
+        </message>
+        <message>
+            <source>小键盘 *</source>
+            <translation>Keypad *</translation>
+        </message>
+        <message>
+            <source>小键盘 -</source>
+            <translation>Keypad -</translation>
+        </message>
+        <message>
+            <source>未指定</source>
+            <translation>Not Bound</translation>
+        </message>
+        <message>
+            <source>左键</source>
+            <translation>Left Button</translation>
+        </message>
+        <message>
+            <source>中键</source>
+            <translation>Middle Button</translation>
+        </message>
+        <message>
+            <source>右键</source>
+            <translation>Right Button</translation>
+        </message>
+        <message>
+            <source>小键盘 %1</source>
+            <translation>Keypad %1</translation>
+        </message>
+        <message>
+            <source>鼠标按键%1</source>
+            <translation>Button %1</translation>
         </message>
     </context>
     <context>

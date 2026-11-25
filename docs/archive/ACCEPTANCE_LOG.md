@@ -304,3 +304,5 @@ python tools/acceptance_directory_boundary.py --exe <WTFMinecraftLauncher.exe> -
 2026-11-24｜智能体 Prompt V2 与知识分层（S5.6）｜`verify_agent` 1359/1359、`mw_check_agent` 98/98、`mw_check` 3192/3192、`verify_launch` 370/370、`ui_check_agent` 77/77，产品目标严格编译通过，`check-agent-release.ps1`/`check-i18n.ps1`/`check-test-modules.ps1`/`check-doc-links.ps1`/`check-repo-layout.ps1` PASS｜自由对话白名单摘掉 Stage 5 修复工具后，真实模型行为仍需人工验收（A12）；提示词总量 7.7 KB，最长的崩溃急救 1.9 KB。
 
 2026-11-24｜智能体 Auto-safe 事务授权（S5.7，D12 产品确认）｜`verify_agent` 1413/1413、`mw_check_agent` 101/101、`ui_check_agent` 84/84、`mw_check` 3192/3192、`verify_launch` 370/370，产品目标严格编译通过，`check-agent-release.ps1`/`check-i18n.ps1`/`check-test-modules.ps1`/`check-doc-links.ps1`/`check-repo-layout.ps1` PASS｜计划内写/启动/提交不再逐步确认，`options.txt`（计划外）仍审批、`args.extraJvm` 直接拒绝；验证失败自动回滚；真机一次批准跑完并提交、关窗清理未跑（A13）。
+
+2026-11-25｜收窄预设选项名称列，按键绑定直接编辑并采用原版中英文案｜`install-layout`、`design-defaults`、`preset-install`、双语离屏预览、Windows x64 构建与隔离启动通过｜启用「游戏设置」后，未改动的按键绑定默认值也写入实例。

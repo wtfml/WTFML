@@ -491,6 +491,13 @@ int UiInstallLayoutCheck(QApplication &app) {
                        graphics->column() == 0 && render->column() == 2 &&
                        vsync && bobbing && vsync->row() == bobbing->row() && bobbing->column() == 2,
                    "vanilla video options keep their original left and right slots");
+            detailed.resize(760, 500);
+            detailed.show();
+            app.processEvents();
+            expect(table && table->columnWidth(0) < table->columnWidth(1) &&
+                       table->columnWidth(2) < table->columnWidth(3),
+                   "paired game controls get more space than their option names");
+            detailed.hide();
             auto *guiScale = detailed.findChild<QComboBox *>("presetValue_guiScale");
             expect(guiScale && guiScale->isEnabled() && guiScale->currentData().toString() == "0" && guiScale->findData("2") > 0,
                    "GUI scale can be edited directly using its automatic and numeric values");
@@ -521,7 +528,7 @@ int UiInstallLayoutCheck(QApplication &app) {
                 auto *angle = table->cellWidget(fov, 1)->findChild<QSlider *>();
                 auto *angleLabel = table->cellWidget(fov, 1)->findChild<QLabel *>();
                 expect(raw == QStringLiteral("0.0") && angle && angle->value() == 70 &&
-                           angleLabel && angleLabel->text() == QStringLiteral("70°") &&
+                           angleLabel && angleLabel->text() == QStringLiteral("中") &&
                            valueIsNotPainted && normal != selected,
                        "preset value editor draws the formatted value without the raw value underneath");
             } else expect(false, "field of view option exists");
@@ -540,27 +547,40 @@ int UiInstallLayoutCheck(QApplication &app) {
             expect(importedValues.value("gamma") == "2.5" && importedValues.value("futureOption") == "keep:raw" &&
                        importedValues.value("renderDistance") == "12",
                    "older presets keep their imported values and include displayed defaults for missing options");
+            auto *chatOpacity = detailed.findChild<QWidget *>("presetValue_chatOpacity");
+            auto *opacitySlider = chatOpacity ? chatOpacity->findChild<QSlider *>() : nullptr;
+            auto *opacityLabel = chatOpacity ? chatOpacity->findChild<QLabel *>() : nullptr;
+            if (opacitySlider) opacitySlider->setValue(0);
+            expect(opacityLabel && opacityLabel->text() == "10%" && values(detailed).value("chatOpacity") == "0",
+                   "chat opacity uses the vanilla readout and stores the original normalized value");
             PresetOptionsEditor bindings({}, nullptr, PresetOptionsEditor::Mode::Keys);
             auto *keyTable = bindings.findChild<QTableWidget *>("presetOptionsEditorTable");
-            expect(keyTable->rowCount()>=25 && bindings.entries().isEmpty(), "key page exposes vanilla bindings independently of settings");
+            const auto bindingDefaults = values(bindings);
+            expect(keyTable->rowCount() >= 25 && bindingDefaults.value("key_key.jump") == "key.keyboard.space" &&
+                       bindingDefaults.value("key_key.forward") == "key.keyboard.w",
+                   "key presets include the displayed defaults without requiring edits");
             auto *jump = bindings.findChild<QPushButton *>("presetValue_key_key.jump");
             int jumpRow=-1;
             for(int row=0;row<keyTable->rowCount();++row) if(keyTable->item(row,0)->text()=="key_key.jump") jumpRow=row;
             if(jump && jumpRow>=0) {
-                keyTable->item(jumpRow,0)->setCheckState(Qt::Checked);
+                expect(jump->isEnabled() && !keyTable->item(jumpRow, 0)->flags().testFlag(Qt::ItemIsUserCheckable),
+                       "key bindings are directly editable without a row checkbox");
                 jump->click();
                 QKeyEvent press(QEvent::KeyPress, Qt::Key_R, Qt::NoModifier);
                 QApplication::sendEvent(jump,&press);
-                expect(bindings.entries().size()==1 && bindings.entries().first().value=="key.keyboard.r",
+                auto edited = bindingDefaults;
+                edited["key_key.jump"] = "key.keyboard.r";
+                expect(values(bindings) == edited,
                        "key capture writes Minecraft binding rather than Qt shortcut text");
                 jump->click();
                 QKeyEvent cancel(QEvent::KeyPress,Qt::Key_Escape,Qt::NoModifier);
                 QApplication::sendEvent(jump,&cancel);
-                expect(bindings.entries().first().value=="key.keyboard.r", "escape cancels key recording without losing the binding");
+                expect(values(bindings) == edited, "escape cancels key recording without losing the binding");
                 jump->click();
                 QKeyEvent clear(QEvent::KeyPress,Qt::Key_Backspace,Qt::NoModifier);
                 QApplication::sendEvent(jump,&clear);
-                expect(bindings.entries().first().value=="key.keyboard.unknown", "clearing a binding uses the game unbound key value");
+                expect(values(bindings).value("key_key.jump") == "key.keyboard.unknown" && jump->text() == "未指定",
+                       "clearing a binding shows the game's own unbound label and saves its key identifier");
             } else expect(false,"jump binding control exists");
             auto *search=detailed.findChild<QLineEdit *>("presetOptionsSearch");
             search->setText("声音");

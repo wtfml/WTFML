@@ -20,7 +20,6 @@
 #include <QLineEdit>
 #include <QSignalBlocker>
 #include <QApplication>
-#include <QLocale>
 #include <functional>
 #include <utility>
 
@@ -89,10 +88,32 @@ private:
     void updateLabel() {
         const int position = m_slider->value();
         QString text = QString::number(position);
-        if (m_spec.kind == Kind::Fraction) text = QLocale().toString(position / 10.0, 'f', position % 10 == 0 ? 0 : 1) + '%';
-        else if (m_spec.key == "fov") text += QStringLiteral("°");
-        else if (m_spec.key == "maxFps") text += QStringLiteral(" FPS");
-        else if (m_spec.key.endsWith("Distance")) text += QCoreApplication::translate("OptionValueDelegate", " 区块");
+        if (m_spec.key == "fov") {
+            if (position == 70) text = QCoreApplication::translate("OptionValueDelegate", "中");
+            if (position == 110) text = QCoreApplication::translate("OptionValueDelegate", "广角");
+        } else if (m_spec.key == "gamma") {
+            const int brightness = position / 10;
+            text = QString::number(brightness);
+            if (brightness == 0) text = QCoreApplication::translate("OptionValueDelegate", "昏暗");
+            if (brightness == 50) text = QCoreApplication::translate("OptionValueDelegate", "默认");
+            if (brightness == 100) text = QCoreApplication::translate("OptionValueDelegate", "明亮");
+        } else if (m_spec.key == "maxFps") {
+            text = position == 260 ? QCoreApplication::translate("OptionValueDelegate", "无限制")
+                                   : QCoreApplication::translate("OptionValueDelegate", "%1 fps").arg(position);
+        } else if (m_spec.key.endsWith("Distance")) {
+            text = QCoreApplication::translate("OptionValueDelegate", "%1个区块").arg(position);
+        } else if (m_spec.key == "chatOpacity") {
+            // 游戏将 0–1 的保存值显示为 10%–100%。
+            text = QString::number(10 + position * 9 / 100) + '%';
+        } else if (m_spec.kind == Kind::Fraction) {
+            const bool sensitivity = m_spec.key == "mouseSensitivity";
+            const int percent = sensitivity ? position / 5 : position / 10;
+            text = QString::number(percent) + '%';
+            if (sensitivity && position == 0) text = QCoreApplication::translate("OptionValueDelegate", "*哈欠*");
+            if (sensitivity && position == 1000) text = QCoreApplication::translate("OptionValueDelegate", "超高速！！！");
+            if (position == 0 && m_spec.key.startsWith("soundCategory_"))
+                text = QCoreApplication::translate("OptionValueDelegate", "关");
+        }
         m_label->setText(text);
     }
 
@@ -101,19 +122,74 @@ private:
     QLabel *m_label;
 };
 
-QString keyLabel(QString value) {
-    const QHash<QString, QString> names{
+QString keyLabel(const QString &value) {
+    static const QHash<QString, QString> names{
         {"key.keyboard.space", QCoreApplication::translate("PresetOptionsEditor", "空格")},
-        {"key.keyboard.left.shift", QCoreApplication::translate("PresetOptionsEditor", "左 Shift")},
-        {"key.keyboard.left.control", QCoreApplication::translate("PresetOptionsEditor", "左 Ctrl")},
-        {"key.keyboard.left.alt", QCoreApplication::translate("PresetOptionsEditor", "左 Alt")},
-        {"key.keyboard.tab", "Tab"},
-        {"key.mouse.left", QCoreApplication::translate("PresetOptionsEditor", "鼠标左键")},
-        {"key.mouse.right", QCoreApplication::translate("PresetOptionsEditor", "鼠标右键")},
-        {"key.mouse.middle", QCoreApplication::translate("PresetOptionsEditor", "鼠标中键")},
-        {"key.keyboard.unknown", QCoreApplication::translate("PresetOptionsEditor", "未绑定")},
+        {"key.keyboard.left.shift", QCoreApplication::translate("PresetOptionsEditor", "左Shift")},
+        {"key.keyboard.left.control", QCoreApplication::translate("PresetOptionsEditor", "左Ctrl")},
+        {"key.keyboard.left.alt", QCoreApplication::translate("PresetOptionsEditor", "左Alt")},
+        {"key.keyboard.left.win", QCoreApplication::translate("PresetOptionsEditor", "左Win")},
+        {"key.keyboard.right.shift", QCoreApplication::translate("PresetOptionsEditor", "右Shift")},
+        {"key.keyboard.right.control", QCoreApplication::translate("PresetOptionsEditor", "右Ctrl")},
+        {"key.keyboard.right.alt", QCoreApplication::translate("PresetOptionsEditor", "右Alt")},
+        {"key.keyboard.right.win", QCoreApplication::translate("PresetOptionsEditor", "右Win")},
+        {"key.keyboard.tab", QStringLiteral("Tab")},
+        {"key.keyboard.enter", QStringLiteral("Enter")},
+        {"key.keyboard.keypad.enter", QCoreApplication::translate("PresetOptionsEditor", "小键盘 Enter")},
+        {"key.keyboard.up", QCoreApplication::translate("PresetOptionsEditor", "上方向键")},
+        {"key.keyboard.down", QCoreApplication::translate("PresetOptionsEditor", "下方向键")},
+        {"key.keyboard.left", QCoreApplication::translate("PresetOptionsEditor", "左方向键")},
+        {"key.keyboard.right", QCoreApplication::translate("PresetOptionsEditor", "右方向键")},
+        {"key.keyboard.insert", QStringLiteral("Insert")},
+        {"key.keyboard.delete", QStringLiteral("Delete")},
+        {"key.keyboard.home", QStringLiteral("Home")},
+        {"key.keyboard.end", QStringLiteral("End")},
+        {"key.keyboard.page.up", QStringLiteral("Page Up")},
+        {"key.keyboard.page.down", QStringLiteral("Page Down")},
+        {"key.keyboard.minus", QStringLiteral("-")},
+        {"key.keyboard.equal", QStringLiteral("=")},
+        {"key.keyboard.left.bracket", QStringLiteral("[")},
+        {"key.keyboard.right.bracket", QStringLiteral("]")},
+        {"key.keyboard.semicolon", QStringLiteral(";")},
+        {"key.keyboard.apostrophe", QStringLiteral("'")},
+        {"key.keyboard.comma", QStringLiteral(",")},
+        {"key.keyboard.period", QStringLiteral(".")},
+        {"key.keyboard.slash", QStringLiteral("/")},
+        {"key.keyboard.backslash", QStringLiteral("\\")},
+        {"key.keyboard.grave.accent", QStringLiteral("`")},
+        {"key.keyboard.caps.lock", QStringLiteral("Caps Lock")},
+        {"key.keyboard.escape", QCoreApplication::translate("PresetOptionsEditor", "Esc")},
+        {"key.keyboard.backspace", QStringLiteral("Backspace")},
+        {"key.keyboard.pause", QStringLiteral("Pause")},
+        {"key.keyboard.num.lock", QStringLiteral("Num Lock")},
+        {"key.keyboard.scroll.lock", QStringLiteral("Scroll Lock")},
+        {"key.keyboard.print.screen", QStringLiteral("Print Screen")},
+        {"key.keyboard.menu", QCoreApplication::translate("PresetOptionsEditor", "菜单")},
+        {"key.keyboard.world.1", QStringLiteral("World 1")},
+        {"key.keyboard.world.2", QStringLiteral("World 2")},
+        {"key.keyboard.keypad.add", QCoreApplication::translate("PresetOptionsEditor", "小键盘 +")},
+        {"key.keyboard.keypad.decimal", QCoreApplication::translate("PresetOptionsEditor", "小键盘 .")},
+        {"key.keyboard.keypad.divide", QCoreApplication::translate("PresetOptionsEditor", "小键盘 /")},
+        {"key.keyboard.keypad.equal", QCoreApplication::translate("PresetOptionsEditor", "小键盘 =")},
+        {"key.keyboard.keypad.multiply", QCoreApplication::translate("PresetOptionsEditor", "小键盘 *")},
+        {"key.keyboard.keypad.subtract", QCoreApplication::translate("PresetOptionsEditor", "小键盘 -")},
+        {"key.keyboard.unknown", QCoreApplication::translate("PresetOptionsEditor", "未指定")},
+        {"key.mouse.left", QCoreApplication::translate("PresetOptionsEditor", "左键")},
+        {"key.mouse.middle", QCoreApplication::translate("PresetOptionsEditor", "中键")},
+        {"key.mouse.right", QCoreApplication::translate("PresetOptionsEditor", "右键")},
     };
-    if (names.contains(value)) return names.value(value);
+    if (const auto known = names.constFind(value); known != names.cend()) return *known;
+    if (value.startsWith("key.keyboard.keypad.")) {
+        const QStringView digit = QStringView(value).sliced(qsizetype(sizeof("key.keyboard.keypad.") - 1));
+        if (digit.size() == 1 && digit.front().isDigit())
+            return QCoreApplication::translate("PresetOptionsEditor", "小键盘 %1").arg(digit);
+    }
+    if (value.startsWith("key.mouse.")) {
+        bool numeric = false;
+        const int button = value.mid(10).toInt(&numeric);
+        if (numeric && button > 0)
+            return QCoreApplication::translate("PresetOptionsEditor", "鼠标按键%1").arg(button);
+    }
     if (value.startsWith("key.keyboard.")) return value.mid(13).toUpper();
     return value;
 }
@@ -209,8 +285,8 @@ public:
             if (spec->kind == Kind::Boolean || spec->kind == Kind::Choice || spec->key == "guiScale") {
                 auto *combo = new QComboBox(parent);
                 if (spec->kind == Kind::Boolean) {
-                    combo->addItem(QCoreApplication::translate("OptionValueDelegate", "关闭"), "false");
-                    combo->addItem(QCoreApplication::translate("OptionValueDelegate", "开启"), "true");
+                    combo->addItem(QCoreApplication::translate("OptionValueDelegate", "关"), "false");
+                    combo->addItem(QCoreApplication::translate("OptionValueDelegate", "开"), "true");
                 } else if (spec->key == "guiScale") {
                     combo->addItem(QCoreApplication::translate("OptionValueDelegate", "自动"), "0");
                     for (int scale = 1; scale <= spec->maximum; ++scale)
@@ -271,13 +347,15 @@ PresetOptionsEditor::PresetOptionsEditor(const QList<Entry> &entries, QWidget *p
     const bool paired = mode == Mode::Options;
     m_table = new QTableWidget(0, paired ? 4 : 2, this);
     m_table->setObjectName(QStringLiteral("presetOptionsEditorTable"));
-    m_table->setHorizontalHeaderLabels({
-        QCoreApplication::translate("PresetOptionsEditor", "纳入预设"),
-        mode == Mode::Keys ? QCoreApplication::translate("PresetOptionsEditor", "按键")
-                           : QCoreApplication::translate("PresetOptionsEditor", "设置值"),
-    });
-    m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    m_table->horizontalHeader()->setVisible(!paired);
+    auto *header = m_table->horizontalHeader();
+    header->setSectionResizeMode(QHeaderView::Stretch);
+    header->setVisible(mode == Mode::All);
+    if (mode == Mode::All) {
+        m_table->setHorizontalHeaderLabels({
+            QCoreApplication::translate("PresetOptionsEditor", "纳入预设"),
+            QCoreApplication::translate("PresetOptionsEditor", "设置值"),
+        });
+    }
     m_table->verticalHeader()->hide();
     m_table->verticalHeader()->setDefaultSectionSize(48);
     m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -333,6 +411,7 @@ PresetOptionsEditor::PresetOptionsEditor(const QList<Entry> &entries, QWidget *p
         addPairs(videoRows);
         addGroup(PresetOptionCatalog::find(QStringLiteral("autoJump"))->group);
         addPairs(controlRows);
+        addGroup(PresetOptionCatalog::find(QStringLiteral("mouseSensitivity"))->group);
         addPairs(mouseRows);
         addGroup(PresetOptionCatalog::find(QStringLiteral("highContrast"))->group);
         addPairs(accessibilityRows);
@@ -355,6 +434,11 @@ PresetOptionsEditor::PresetOptionsEditor(const QList<Entry> &entries, QWidget *p
         place(spec, newRow(), 0);
     }
     m_options = existing + m_options;
+    if (paired) {
+        // 只按选项名称占宽，两边的控件分走剩余空间。
+        header->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+        header->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    }
     connect(search, &QLineEdit::textChanged, this, [this, groupedEnd](const QString &text) {
         const QString query = text.trimmed();
         QSet<int> matches;
@@ -415,7 +499,7 @@ PresetOptionsEditor::PresetOptionsEditor(const QList<Entry> &entries, QWidget *p
 QTableWidgetItem *PresetOptionsEditor::append(const Entry &entry, int row, int column, bool included) {
     using namespace PresetOptionCatalog;
     auto *key = new QTableWidgetItem(entry.key);
-    const bool chooseIndividually = m_mode != Mode::Options;
+    const bool chooseIndividually = m_mode == Mode::All;
     key->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
     if (chooseIndividually) {
         key->setFlags(key->flags() | Qt::ItemIsUserCheckable);
@@ -455,7 +539,7 @@ QTableWidgetItem *PresetOptionsEditor::append(const Entry &entry, int row, int c
 QList<PresetOptionsEditor::Entry> PresetOptionsEditor::entries() const {
     QList<Entry> result;
     for (const auto *item : m_options) {
-        if (m_mode == Mode::Options || item->checkState() == Qt::Checked) {
+        if (m_mode != Mode::All || item->checkState() == Qt::Checked) {
             result.append({item->text().trimmed(), m_table->item(item->row(), item->column() + 1)->text()});
         }
     }

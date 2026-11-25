@@ -1000,7 +1000,8 @@ int runPresetInstallChecks() {
     check(Presets::saveManifest(presetRoot, manifest), "edited settings manifest saves atomically");
     const auto gameRoot = scratch.filePath(QStringLiteral("settings-instance")); QDir().mkpath(gameRoot);
     QFile config(gameRoot + "/options.txt");
-    check(config.open(QIODevice::WriteOnly) && config.write("fov:0.0\nunknownPreserved:yes\n") > 0,
+    check(config.open(QIODevice::WriteOnly) &&
+              config.write("fov:0.0\nkey_key.jump:key.keyboard.r\nunknownPreserved:yes\n") > 0,
           "settings target fixture is isolated"); config.close();
     Presets::PresetApplyRequest apply;
     apply.instanceId = QStringLiteral("test"); apply.instanceRoot = gameRoot;
@@ -1027,8 +1028,9 @@ int runPresetInstallChecks() {
         const bool reopened = config.open(QIODevice::ReadOnly);
         const auto after = config.readAll(); config.close();
         check(enableGame && enabled.ok && overwritten.ok && reopened && after.contains("fov:0.0") &&
-                  after.contains("renderDistance:12") && after.contains("unknownPreserved:yes"),
-              "enabling the group overwrites an existing value and adds defaults even without edits");
+                  after.contains("renderDistance:12") && after.contains("key_key.jump:key.keyboard.space") &&
+                  after.contains("unknownPreserved:yes"),
+              "enabling the group overwrites settings and key bindings even when their controls were untouched");
     }
     const QString preview = qEnvironmentVariable("WTFML_PRESET_PREVIEW_DIR");
     if (!preview.isEmpty()) {

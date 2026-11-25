@@ -66,7 +66,7 @@ QStringList PresetEditorPage::sectionTitles() {
     return {
         QCoreApplication::translate("PresetEditorPage", "概览"),
         QCoreApplication::translate("PresetEditorPage", "游戏选项"),
-        QCoreApplication::translate("PresetEditorPage", "按键"),
+        QCoreApplication::translate("PresetEditorPage", "按键绑定"),
         QCoreApplication::translate("PresetEditorPage", "模组"),
         QCoreApplication::translate("PresetEditorPage", "资源包"),
         QCoreApplication::translate("PresetEditorPage", "数据包"),

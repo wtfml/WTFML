@@ -17379,19 +17379,55 @@ Minecraft %2 / %3 %4</source>
     <context>
         <name>OptionValueDelegate</name>
         <message>
-            <source>关闭</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>开启</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>自动</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source> 区块</source>
+            <source>中</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>广角</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>昏暗</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>默认</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>明亮</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无限制</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 fps</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1个区块</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>*哈欠*</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>超高速！！！</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>关</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>开</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -18239,7 +18275,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>按键</source>
+            <source>按键绑定</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19085,14 +19121,6 @@ Minecraft %2 / %3 %4</source>
     <context>
         <name>PresetOptionCatalog</name>
         <message>
-            <source>视角</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>画面</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>界面尺寸</source>
             <translation type="unfinished"></translation>
         </message>
@@ -19102,10 +19130,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>模拟距离</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>帧率上限</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19121,19 +19145,11 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>画质</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>流畅</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>高品质</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>极佳</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19145,27 +19161,11 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>减少</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>最少</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>云</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>关闭</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>快速</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>精细</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19181,23 +19181,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>操作</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>鼠标灵敏度</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>反转鼠标</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>原始鼠标输入</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>潜行方式</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19206,10 +19190,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>切换</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>疾跑方式</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19229,35 +19209,11 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>字幕</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>辅助功能</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>高对比度</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>隐藏闪电闪光</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>屏幕扭曲效果</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>视角变化效果</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>黑暗效果</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>聊天显示</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19269,31 +19225,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>仅命令</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>隐藏</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>聊天颜色</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>聊天链接</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>打开链接前确认</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>聊天不透明度</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>聊天缩放</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19302,10 +19234,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>音乐</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>唱片</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19333,30 +19261,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>语音</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>声音</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>前进</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>后退</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>左移</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>右移</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>跳跃</source>
             <translation type="unfinished"></translation>
         </message>
@@ -19369,27 +19273,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>物品栏</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>丢弃物品</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>交换副手物品</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>打开聊天</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>输入命令</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>玩家列表</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19401,23 +19285,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>切换全屏</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>进度</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>按键</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>攻击 / 破坏</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>使用 / 放置</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19425,7 +19293,163 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>快捷栏 </source>
+            <source>视场角</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>视频设置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>最大帧率</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>图像品质</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>极佳！</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>少量</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>关</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>按键控制</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>鼠标设置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>鼠标反转</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>原始输入</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>隐藏式字幕</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>辅助功能设置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>隐藏天空闪烁效果</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>视场角效果</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>黑暗脉动效果</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>聊天设置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>仅限命令</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>颜色</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>网页链接</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>链接提示</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>聊天文本不透明度</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>聊天文本大小</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>音乐和声音选项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>唱片机/音符盒</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>复述功能/语音</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>按键绑定</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>向前移动</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>向后移动</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>向左移动</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>向右移动</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>开启/关闭物品栏</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>丢弃所选物品</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>与副手交换物品</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>打开聊天栏</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>显示玩家列表</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>切换全屏显示</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>攻击/摧毁</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>使用物品/放置方块</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>快捷栏%1</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -19445,10 +19469,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>纳入预设</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>按键</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19472,31 +19492,111 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>左 Shift</source>
+            <source>左Shift</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>左 Ctrl</source>
+            <source>左Ctrl</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>左 Alt</source>
+            <source>左Alt</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>鼠标左键</source>
+            <source>左Win</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>鼠标右键</source>
+            <source>右Shift</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>鼠标中键</source>
+            <source>右Ctrl</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>未绑定</source>
+            <source>右Alt</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>右Win</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>小键盘 Enter</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>上方向键</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>下方向键</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>左方向键</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>右方向键</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Esc</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>菜单</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>小键盘 +</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>小键盘 .</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>小键盘 /</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>小键盘 =</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>小键盘 *</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>小键盘 -</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未指定</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>左键</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>中键</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>右键</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>小键盘 %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>鼠标按键%1</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
