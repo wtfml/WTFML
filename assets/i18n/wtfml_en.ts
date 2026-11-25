@@ -21661,6 +21661,14 @@ How to complete: Open the project page above, find the file matching the game ve
             <source>开</source>
             <translation>ON</translation>
         </message>
+        <message>
+            <source>%1秒</source>
+            <translation>%1 second(s)</translation>
+        </message>
+        <message>
+            <source>%1像素</source>
+            <translation>%1 px</translation>
+        </message>
     </context>
     <context>
         <name>OverlayHost</name>
@@ -22821,8 +22829,8 @@ Not captured: %1</translation>
             <translation>Extract from instance</translation>
         </message>
         <message>
-            <source>基本设置</source>
-            <translation>General</translation>
+            <source>预设设置</source>
+            <translation>Preset settings</translation>
         </message>
         <message>
             <source>应用到实例</source>
@@ -23173,6 +23181,14 @@ Not captured: %1</translation>
         <message>
             <source>未选择预设</source>
             <translation>No preset selected</translation>
+        </message>
+        <message>
+            <source>内容管理</source>
+            <translation>Content management</translation>
+        </message>
+        <message>
+            <source>实例操作</source>
+            <translation>Instance actions</translation>
         </message>
     </context>
     <context>
@@ -23575,10 +23591,6 @@ Not captured: %1</translation>
             <translation>Mouse Settings</translation>
         </message>
         <message>
-            <source>鼠标反转</source>
-            <translation>Invert Mouse</translation>
-        </message>
-        <message>
             <source>原始输入</source>
             <translation>Raw Input</translation>
         </message>
@@ -23643,10 +23655,6 @@ Not captured: %1</translation>
             <translation>Narrator/Voice</translation>
         </message>
         <message>
-            <source>按键绑定</source>
-            <translation>Key Binds</translation>
-        </message>
-        <message>
             <source>向前移动</source>
             <translation>Walk Forward</translation>
         </message>
@@ -23697,6 +23705,494 @@ Not captured: %1</translation>
         <message>
             <source>快捷栏%1</source>
             <translation>Hotbar Slot %1</translation>
+        </message>
+        <message>
+            <source>反转鼠标Y轴</source>
+            <translation>Invert Mouse Y</translation>
+        </message>
+        <message>
+            <source>自定义皮肤</source>
+            <translation>Skin Customization</translation>
+        </message>
+        <message>
+            <source>疾跑间隔</source>
+            <translation>Sprint Window</translation>
+        </message>
+        <message>
+            <source>管理员用品标签页</source>
+            <translation>Operator Items Tab</translation>
+        </message>
+        <message>
+            <source>滚轮灵敏度</source>
+            <translation>Scroll Sensitivity</translation>
+        </message>
+        <message>
+            <source>离散滚动</source>
+            <translation>Discrete Scrolling</translation>
+        </message>
+        <message>
+            <source>反转鼠标X轴</source>
+            <translation>Invert Mouse X</translation>
+        </message>
+        <message>
+            <source>允许光标变化</source>
+            <translation>Allow Cursor Changes</translation>
+        </message>
+        <message>
+            <source>生物群系过渡距离</source>
+            <translation>Biome Blend</translation>
+        </message>
+        <message>
+            <source>区块构建器</source>
+            <translation>Chunk Builder</translation>
+        </message>
+        <message>
+            <source>线程化</source>
+            <translation>Threaded</translation>
+        </message>
+        <message>
+            <source>半阻塞</source>
+            <translation>Semi Blocking</translation>
+        </message>
+        <message>
+            <source>全阻塞</source>
+            <translation>Fully Blocking</translation>
+        </message>
+        <message>
+            <source>平滑光照</source>
+            <translation>Smooth Lighting</translation>
+        </message>
+        <message>
+            <source>Mipmap级别</source>
+            <translation>Mipmap Levels</translation>
+        </message>
+        <message>
+            <source>实体渲染距离</source>
+            <translation>Entity Distance</translation>
+        </message>
+        <message>
+            <source>云层距离</source>
+            <translation>Cloud Distance</translation>
+        </message>
+        <message>
+            <source>可透视树叶</source>
+            <translation>See-Through Leaves</translation>
+        </message>
+        <message>
+            <source>改进透明显示</source>
+            <translation>Improved Transparency</translation>
+        </message>
+        <message>
+            <source>纹理过滤</source>
+            <translation>Texture Filtering</translation>
+        </message>
+        <message>
+            <source>无</source>
+            <translation>None</translation>
+        </message>
+        <message>
+            <source>RGSS</source>
+            <translation>RGSS</translation>
+        </message>
+        <message>
+            <source>各向异性</source>
+            <translation>Anisotropic</translation>
+        </message>
+        <message>
+            <source>各向异性过滤</source>
+            <translation>Anisotropic Filtering</translation>
+        </message>
+        <message>
+            <source>天气效果半径</source>
+            <translation>Weather Effect Radius</translation>
+        </message>
+        <message>
+            <source>降低帧率</source>
+            <translation>Reduce FPS when</translation>
+        </message>
+        <message>
+            <source>最小化时</source>
+            <translation>Minimized</translation>
+        </message>
+        <message>
+            <source>无操作时</source>
+            <translation>AFK</translation>
+        </message>
+        <message>
+            <source>独占全屏</source>
+            <translation>Exclusive Fullscreen</translation>
+        </message>
+        <message>
+            <source>自动保存指示器</source>
+            <translation>Autosave Indicator</translation>
+        </message>
+        <message>
+            <source>显示晕影</source>
+            <translation>Show Vignette</translation>
+        </message>
+        <message>
+            <source>攻击指示器</source>
+            <translation>Attack Indicator</translation>
+        </message>
+        <message>
+            <source>十字准星</source>
+            <translation>Crosshair</translation>
+        </message>
+        <message>
+            <source>快捷栏</source>
+            <translation>Hotbar</translation>
+        </message>
+        <message>
+            <source>区块淡入时长</source>
+            <translation>Chunk Fade Time</translation>
+        </message>
+        <message>
+            <source>图形API</source>
+            <translation>Graphics API</translation>
+        </message>
+        <message>
+            <source>默认</source>
+            <translation>Default</translation>
+        </message>
+        <message>
+            <source>优先使用OpenGL</source>
+            <translation>Prefer OpenGL</translation>
+        </message>
+        <message>
+            <source>优先使用Vulkan（实验性）</source>
+            <translation>Prefer Vulkan (Experimental)</translation>
+        </message>
+        <message>
+            <source>菜单背景模糊程度</source>
+            <translation>Menu Background Blur</translation>
+        </message>
+        <message>
+            <source>文本背景不透明度</source>
+            <translation>Text Background Opacity</translation>
+        </message>
+        <message>
+            <source>文本背景</source>
+            <translation>Text Background</translation>
+        </message>
+        <message>
+            <source>全局</source>
+            <translation>Everywhere</translation>
+        </message>
+        <message>
+            <source>复述功能</source>
+            <translation>Narrator</translation>
+        </message>
+        <message>
+            <source>复述所有</source>
+            <translation>Narrates All</translation>
+        </message>
+        <message>
+            <source>复述聊天消息</source>
+            <translation>Narrates Chat</translation>
+        </message>
+        <message>
+            <source>复述系统消息</source>
+            <translation>Narrates System</translation>
+        </message>
+        <message>
+            <source>通知显示时长</source>
+            <translation>Notification Time</translation>
+        </message>
+        <message>
+            <source>受伤抖动效果</source>
+            <translation>Damage Tilt</translation>
+        </message>
+        <message>
+            <source>附魔光效闪烁速度</source>
+            <translation>Glint Speed</translation>
+        </message>
+        <message>
+            <source>附魔光效闪烁强度</source>
+            <translation>Glint Strength</translation>
+        </message>
+        <message>
+            <source>黑白徽标</source>
+            <translation>Monochrome Logo</translation>
+        </message>
+        <message>
+            <source>全景图滚动速度</source>
+            <translation>Panorama Scroll Speed</translation>
+        </message>
+        <message>
+            <source>隐藏闪烁标语</source>
+            <translation>Hide Splash Texts</translation>
+        </message>
+        <message>
+            <source>复述功能快捷键</source>
+            <translation>Narrator Hotkey</translation>
+        </message>
+        <message>
+            <source>同步矿车转动</source>
+            <translation>Rotate with Minecarts</translation>
+        </message>
+        <message>
+            <source>高对比度方块轮廓</source>
+            <translation>High Contrast Block Outlines</translation>
+        </message>
+        <message>
+            <source>行距</source>
+            <translation>Line Spacing</translation>
+        </message>
+        <message>
+            <source>聊天延迟</source>
+            <translation>Chat Delay</translation>
+        </message>
+        <message>
+            <source>宽度</source>
+            <translation>Width</translation>
+        </message>
+        <message>
+            <source>聚焦高度</source>
+            <translation>Focused Height</translation>
+        </message>
+        <message>
+            <source>淡化高度</source>
+            <translation>Unfocused Height</translation>
+        </message>
+        <message>
+            <source>命令提示</source>
+            <translation>Command Suggestions</translation>
+        </message>
+        <message>
+            <source>隐藏匹配的名称</source>
+            <translation>Hide Matched Names</translation>
+        </message>
+        <message>
+            <source>简化调试信息</source>
+            <translation>Reduced Debug Info</translation>
+        </message>
+        <message>
+            <source>仅显示安全的聊天</source>
+            <translation>Only Show Secure Chat</translation>
+        </message>
+        <message>
+            <source>保存未发送的聊天消息</source>
+            <translation>Save Unsent Chats</translation>
+        </message>
+        <message>
+            <source>定向音频</source>
+            <translation>Directional Audio</translation>
+        </message>
+        <message>
+            <source>音乐播放频率</source>
+            <translation>Music Frequency</translation>
+        </message>
+        <message>
+            <source>频繁</source>
+            <translation>Frequent</translation>
+        </message>
+        <message>
+            <source>持续</source>
+            <translation>Constant</translation>
+        </message>
+        <message>
+            <source>音乐弹窗</source>
+            <translation>Music Toast</translation>
+        </message>
+        <message>
+            <source>不显示</source>
+            <translation>Never</translation>
+        </message>
+        <message>
+            <source>暂停菜单</source>
+            <translation>Pause Menu</translation>
+        </message>
+        <message>
+            <source>暂停菜单和弹窗</source>
+            <translation>Pause Menu and Toast</translation>
+        </message>
+        <message>
+            <source>披风</source>
+            <translation>Cape</translation>
+        </message>
+        <message>
+            <source>外套</source>
+            <translation>Jacket</translation>
+        </message>
+        <message>
+            <source>左袖</source>
+            <translation>Left Sleeve</translation>
+        </message>
+        <message>
+            <source>右袖</source>
+            <translation>Right Sleeve</translation>
+        </message>
+        <message>
+            <source>左裤腿</source>
+            <translation>Left Pant Leg</translation>
+        </message>
+        <message>
+            <source>右裤腿</source>
+            <translation>Right Pant Leg</translation>
+        </message>
+        <message>
+            <source>帽子</source>
+            <translation>Hat</translation>
+        </message>
+        <message>
+            <source>移动</source>
+            <translation>Movement</translation>
+        </message>
+        <message>
+            <source>多人游戏</source>
+            <translation>Multiplayer</translation>
+        </message>
+        <message>
+            <source>好友屏幕</source>
+            <translation>Friends Screen</translation>
+        </message>
+        <message>
+            <source>社交屏幕</source>
+            <translation>Social Interactions Screen</translation>
+        </message>
+        <message>
+            <source>游戏内容</source>
+            <translation>Gameplay</translation>
+        </message>
+        <message>
+            <source>物品栏</source>
+            <translation>Inventory</translation>
+        </message>
+        <message>
+            <source>创造模式</source>
+            <translation>Creative Mode</translation>
+        </message>
+        <message>
+            <source>保存快捷栏</source>
+            <translation>Save Hotbar Activator</translation>
+        </message>
+        <message>
+            <source>加载快捷栏</source>
+            <translation>Load Hotbar Activator</translation>
+        </message>
+        <message>
+            <source>旁观</source>
+            <translation>Spectator</translation>
+        </message>
+        <message>
+            <source>高亮玩家</source>
+            <translation>Highlight Players</translation>
+        </message>
+        <message>
+            <source>呼出快捷栏</source>
+            <translation>Select On Hotbar</translation>
+        </message>
+        <message>
+            <source>杂项</source>
+            <translation>Miscellaneous</translation>
+        </message>
+        <message>
+            <source>切换电影视角</source>
+            <translation>Toggle Cinematic Camera</translation>
+        </message>
+        <message>
+            <source>快捷操作</source>
+            <translation>Quick Actions</translation>
+        </message>
+        <message>
+            <source>切换界面</source>
+            <translation>Toggle GUI</translation>
+        </message>
+        <message>
+            <source>切换旁观者着色器效果</source>
+            <translation>Toggle Spectator Shader Effects</translation>
+        </message>
+        <message>
+            <source>调试</source>
+            <translation>Debug</translation>
+        </message>
+        <message>
+            <source>切换叠加层</source>
+            <translation>Toggle Overlay</translation>
+        </message>
+        <message>
+            <source>调试修饰键</source>
+            <translation>Debug Modifier Key</translation>
+        </message>
+        <message>
+            <source>调试崩溃</source>
+            <translation>Debug Crash</translation>
+        </message>
+        <message>
+            <source>重新加载区块</source>
+            <translation>Reload Chunks</translation>
+        </message>
+        <message>
+            <source>显示判定箱</source>
+            <translation>Show Hitboxes</translation>
+        </message>
+        <message>
+            <source>清除聊天消息</source>
+            <translation>Clear Chat</translation>
+        </message>
+        <message>
+            <source>显示区块边界</source>
+            <translation>Show Chunk Boundaries</translation>
+        </message>
+        <message>
+            <source>显示高级提示框</source>
+            <translation>Show Advanced Tooltips</translation>
+        </message>
+        <message>
+            <source>复制数据</source>
+            <translation>Copy Data</translation>
+        </message>
+        <message>
+            <source>循环切换旁观模式</source>
+            <translation>Cycle Spectator</translation>
+        </message>
+        <message>
+            <source>游戏模式切换器</source>
+            <translation>Game Mode Switcher</translation>
+        </message>
+        <message>
+            <source>调试选项</source>
+            <translation>Debug Options</translation>
+        </message>
+        <message>
+            <source>切换失去焦点时暂停</source>
+            <translation>Toggle Lost Focus Pause</translation>
+        </message>
+        <message>
+            <source>转储动态纹理</source>
+            <translation>Dump Dynamic Textures</translation>
+        </message>
+        <message>
+            <source>重新加载资源包</source>
+            <translation>Reload Resource Packs</translation>
+        </message>
+        <message>
+            <source>开始/停止分析</source>
+            <translation>Start/Stop Profiling</translation>
+        </message>
+        <message>
+            <source>复制位置</source>
+            <translation>Copy Location</translation>
+        </message>
+        <message>
+            <source>转储版本信息</source>
+            <translation>Dump Version Info</translation>
+        </message>
+        <message>
+            <source>分析图表</source>
+            <translation>Profiling Chart</translation>
+        </message>
+        <message>
+            <source>FPS图表</source>
+            <translation>FPS Charts</translation>
+        </message>
+        <message>
+            <source>网络图表</source>
+            <translation>Network Charts</translation>
+        </message>
+        <message>
+            <source>光照贴图纹理</source>
+            <translation>Lightmap Texture</translation>
         </message>
     </context>
     <context>
@@ -23844,6 +24340,10 @@ Not captured: %1</translation>
         <message>
             <source>鼠标按键%1</source>
             <translation>Button %1</translation>
+        </message>
+        <message>
+            <source>重置</source>
+            <translation>Reset</translation>
         </message>
     </context>
     <context>

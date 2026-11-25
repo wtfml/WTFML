@@ -65,6 +65,8 @@ const QSet<QString> &hardwareKeys() {
     static const QSet<QString> keys = {
         QStringLiteral("fullscreen"),            // 窗口模式（F11 那一下记的就是它）
         QStringLiteral("fullscreenResolution"),  // 全屏分辨率（值里自己还带冒号）
+        QStringLiteral("exclusiveFullscreen"),  // 独占模式跟随显示环境
+        QStringLiteral("preferredGraphicsBackend"),  // 图形 API 取决于驱动支持
         QStringLiteral("guiScale"),              // 界面缩放
         QStringLiteral("touchscreen"),           // 有没有触摸屏
     };
@@ -116,6 +118,14 @@ const QSet<QString> &gameKeys() {
         QStringLiteral("useNativeTransport"), QStringLiteral("skipMultiplayerWarning"),
         QStringLiteral("skipRealms32bitWarning"), QStringLiteral("hideBundleTutorial"),
         QStringLiteral("realmsNotifications"),
+        // 新版视频、按键控制、鼠标、聊天、辅助功能和声音选项。
+        "prioritizeChunkUpdates", "mipmapLevels", "cloudRange", "cutoutLeaves", "improvedTransparency",
+        "textureFiltering", "maxAnisotropyBit", "weatherRadius", "inactivityFpsLimit", "showAutosaveIndicator",
+        "vignette", "chunkSectionFadeInTime", "toggleAttack", "toggleUse", "sprintWindow", "invertXMouse",
+        "allowCursorChanges", "hideMatchedNames", "onlyShowSecureChat", "saveChatDrafts", "hideSplashTexts",
+        "directionalAudio", "musicFrequency", "musicToast", "modelPart_cape", "modelPart_jacket",
+        "modelPart_left_sleeve", "modelPart_right_sleeve", "modelPart_left_pants_leg", "modelPart_right_pants_leg",
+        "modelPart_hat",
     };
     return keys;
 }
@@ -366,6 +376,24 @@ QSet<QString> defaultSelection(const OptionsFile &source) {
 
 QList<OptionsConflict> optionsConflicts(const OptionsFile &source, const OptionsFile &target,
                                         const QSet<QString> &selected) {
+    // 原版允许默认键共享。自定义键加入同一个绑定时仍报告冲突。
+    static const QHash<QString, QSet<QString>> sharedDefaults{
+        {"key.keyboard.a", {"key_key.left", "key_key.debug.reloadChunk"}},
+        {"key.keyboard.s", {"key_key.back", "key_key.debug.dumpDynamicTextures"}},
+        {"key.keyboard.d", {"key_key.right", "key_key.debug.clearChat"}},
+        {"key.keyboard.t", {"key_key.chat", "key_key.debug.reloadResourcePacks"}},
+        {"key.keyboard.p", {"key_key.socialInteractions", "key_key.debug.focusPause"}},
+        {"key.mouse.middle", {"key_key.pickItem", "key_key.spectatorHotbar"}},
+        {"key.keyboard.c", {"key_key.saveToolbarActivator", "key_key.debug.crash", "key_key.debug.copyLocation"}},
+        {"key.keyboard.l", {"key_key.advancements", "key_key.debug.profiling"}},
+        {"key.keyboard.g", {"key_key.quickActions", "key_key.debug.showChunkBorders"}},
+        {"key.keyboard.f4", {"key_key.toggleSpectatorShaderEffects", "key_key.debug.switchGameMode"}},
+        {"key.keyboard.f3", {"key_key.debug.overlay", "key_key.debug.modifier"}},
+        {"key.keyboard.1", {"key_key.debug.profilingChart", "key_key.hotbar.1"}},
+        {"key.keyboard.2", {"key_key.debug.fpsCharts", "key_key.hotbar.2"}},
+        {"key.keyboard.3", {"key_key.debug.networkCharts", "key_key.hotbar.3"}},
+        {"key.keyboard.4", {"key_key.debug.lightmapTexture", "key_key.hotbar.4"}},
+    };
     // ① 预设这一侧：勾中的标准按键，按**绑定串**分堆（空绑定不算 —— 未绑定可以有一堆）。
     QHash<QString, QStringList> byBinding;
     QSet<QString> sourceKeys;
@@ -375,8 +403,9 @@ QList<OptionsConflict> optionsConflicts(const OptionsFile &source, const Options
             continue;
         }
         sourceKeys.insert(line.key);
-        if (!line.value.trimmed().isEmpty()) {
-            byBinding[line.value.trimmed()] << line.key;
+        const QString binding = line.value.trimmed();
+        if (!binding.isEmpty() && binding != "key.keyboard.unknown") {
+            byBinding[binding] << line.key;
         }
     }
 
@@ -390,8 +419,9 @@ QList<OptionsConflict> optionsConflicts(const OptionsFile &source, const Options
             continue;
         }
         targetKeys.insert(line.key);
-        if (!line.value.trimmed().isEmpty()) {
-            targetByBinding[line.value.trimmed()] << line.key;
+        const QString binding = line.value.trimmed();
+        if (!binding.isEmpty() && binding != "key.keyboard.unknown") {
+            targetByBinding[binding] << line.key;
         }
     }
 
@@ -400,6 +430,12 @@ QList<OptionsConflict> optionsConflicts(const OptionsFile &source, const Options
         const QStringList otherKeys = targetByBinding.value(it.key());
         if (it.value().size() + otherKeys.size() < 2) {
             continue;  // 只有一条动作用它 ⇒ 不冲突（预设内部不重复、目标上也没别家）
+        }
+        const auto shared = sharedDefaults.constFind(it.key());
+        if (shared != sharedDefaults.cend()) {
+            const auto isDefault = [&shared](const QString &key) { return shared->contains(key); };
+            if (std::all_of(it.value().cbegin(), it.value().cend(), isDefault) &&
+                std::all_of(otherKeys.cbegin(), otherKeys.cend(), isDefault)) continue;
         }
         OptionsConflict conflict;
         conflict.binding = it.key();

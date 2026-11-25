@@ -298,16 +298,27 @@ int runPresetPreviewChecks() {
             presetList->itemClicked(matches.first(), 0);
             check(pump([&] { return !editorController.detailsLoading() && !embeddedManager->isBusy(); }),
                   "preset details loaded for inline editing");
-            auto *tabs = embeddedManager->findChild<QListWidget *>("presetDetailNav");
+            auto *tabs = embeddedManager->findChild<QTreeWidget *>("presetDetailNav");
             auto *detailPages = embeddedManager->findChild<QStackedWidget *>("presetDetailPages");
             auto *headerAction = embeddedManager->findChild<QPushButton *>(PresetManagePage::saveDetailsButtonName());
-            check(tabs && tabs->count() == 9 && headerAction && headerAction->isHidden(),
+            auto *settings = tabs ? tabs->topLevelItem(1) : nullptr;
+            auto *game = tabs ? tabs->topLevelItem(2) : nullptr;
+            auto *resources = tabs ? tabs->topLevelItem(3) : nullptr;
+            auto *transfer = tabs ? tabs->topLevelItem(4) : nullptr;
+            const bool grouped = tabs && tabs->topLevelItemCount() == 5 && settings && game && game->childCount() == 2 &&
+                resources && resources->childCount() == 3 && transfer && transfer->childCount() == 2;
+            check(grouped && headerAction && headerAction->isHidden(),
                   "existing preset opens with editor tabs in its detail sidebar and no editor button");
-            if (tabs && detailPages) {
-                tabs->setCurrentRow(2);
+            if (grouped && detailPages) {
+                auto *keys = game->child(1);
+                auto *extract = transfer->child(0);
+                tabs->setCurrentItem(settings);
                 auto *inlineEditor = visibleEditor();
                 auto *sections = inlineEditor ? inlineEditor->findChild<QStackedWidget *>("presetEditorSections") : nullptr;
                 auto *inlineName = inlineEditor ? inlineEditor->findChild<QLineEdit *>("presetEditorName") : nullptr;
+                check(inlineName && sections && sections->currentIndex() == 0,
+                      "Preset Settings opens the name, icon and enabled parts page");
+                tabs->setCurrentItem(game->child(0));
                 check(inlineEditor && sections && detailPages->currentWidget() == inlineEditor &&
                           !inlineEditor->isWindow() && sections->currentIndex() == 1 &&
                           !inlineEditor->findChild<QListWidget *>("presetEditorNavigation"),
@@ -316,19 +327,19 @@ int runPresetPreviewChecks() {
                 auto *optionTable = sections ? sections->currentWidget()->findChild<QTableWidget *>() : nullptr;
                 check(optionTable && optionTable->mapTo(detailPages, QPoint(optionTable->width(), 0)).x() == detailPages->width(),
                       "inline editor table reaches the page edge so its scrollbar shares the common column");
-                tabs->setCurrentRow(3);
+                tabs->setCurrentItem(keys);
                 check(sections && sections->currentIndex() == 2 && visibleEditor() == inlineEditor,
                       "Keys tab reuses the same editor document");
                 if (inlineName) inlineName->setText("Unsaved inline change");
                 choice = 3;
-                tabs->setCurrentRow(7);
-                check(inlineEditor && tabs->currentRow() == 3 && visibleEditor() == inlineEditor && inlineEditor->isDirty(),
+                tabs->setCurrentItem(extract);
+                check(inlineEditor && tabs->currentItem() == keys && visibleEditor() == inlineEditor && inlineEditor->isDirty(),
                       "cancelling departure restores the editor tab and keeps the unsaved document");
                 choice = 2;
-                tabs->setCurrentRow(7);
+                tabs->setCurrentItem(extract);
                 check(!visibleEditor() && detailPages->currentIndex() == 1,
                       "discarding changes switches to Extract from Instance");
-                tabs->setCurrentRow(8);
+                tabs->setCurrentItem(transfer->child(1));
                 check(detailPages->currentIndex() == 2, "Apply to Instance remains available in the same sidebar");
             }
         }

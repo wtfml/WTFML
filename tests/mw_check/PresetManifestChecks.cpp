@@ -89,8 +89,8 @@ int runPresetManifestChecks() {
     check(presetRow(list, idA) && presetRow(list, idB) && presetRow(list, idC),
           "grouped preset list lists every catalog entry as a row");
     auto *name = page->findChild<QLineEdit *>(PresetManagePage::nameEditName());
-    auto *tabs = page->findChild<QListWidget *>(QStringLiteral("presetDetailNav"));
-    const auto *editTab = tabs ? tabs->item(1) : nullptr;
+    auto *tabs = page->findChild<QTreeWidget *>(QStringLiteral("presetDetailNav"));
+    const auto *editTab = tabs ? tabs->topLevelItem(1) : nullptr;
     check(editTab != nullptr, "preset details offer an editing tab");
     const auto canEdit = [editTab] { return editTab && editTab->flags().testFlag(Qt::ItemIsEnabled); };
     auto *create = page->findChild<QPushButton *>(PresetManagePage::newButtonName());

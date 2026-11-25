@@ -310,8 +310,16 @@ python tools/acceptance_directory_boundary.py --exe <WTFMinecraftLauncher.exe> -
 2026-11-25｜智能体 P2 修复病例库与四项未覆盖上限（会话工具总数、artifact 配额、联网本会话放行、日志字段投影）｜`verify_agent` 1496/1496、`ui_check_agent` 97/97、`mw_check_agent` 101/101，产品目标严格编译通过，`check-agent-release.ps1`/`check-i18n.ps1`/`check-test-modules.ps1`/`check-doc-links.ps1`/`check-repo-layout.ps1`/`check-surface-registry.ps1` PASS｜智能体页 2000 条消息从 3820 ms 降到 56 ms（只摆末尾 200 条）；病例库只在本机存结构化字段，`priorCases` 里不含相对路径明细；日志投影保留显卡/驱动型号作证据。
 
 2026-11-25｜主页最近与收藏实例卡片按行等宽｜`ui-refresh`、`launch-card`、Windows x64 构建与隔离启动通过｜长短名称混排等宽，最小窗口下四张卡片完整可见。
+2026-11-25｜预设详情左栏采用实例设置的分组导航｜`install-layout`、`preset-install`、离屏预览、Windows x64 构建与隔离启动通过｜分组标题可折叠，取消离开时保留原选中项和未保存修改。
+
+2026-11-25｜预设设置独立成页，左栏分为游戏设置、内容管理和实例操作｜`install-layout`、`preset-install`、离屏预览、Windows x64 构建与隔离启动通过｜名称、图标和启用部分从一级入口打开，切到游戏选项时复用编辑文档。
+
+2026-11-25｜游戏设置逐项重置、最大帧率按十帧跳档，补全 26.2 原版键位及常用设置｜`core-presets`、`ui-language`、`ui-refresh`、`install-layout`、`preset-install` 和 Windows x64 构建通过｜未绑定和原版共享默认键位不报冲突，超出范围的旧值可重置回对应控件。
+
 2026-11-26｜智能体工具名/技能名走翻译、模型侧说明与内嵌资源校验报错不翻译（#112）｜`verify_agent` 1502/1502、`ui_check_agent` 97/97、`mw_check_agent`（compact 入口）102/102，affected 59/59（738.32 s），`check-i18n`（基线 1047 → 1007）/`check-test-modules`/`check-surface-registry`/`check-agent-release`/`check-doc-links`/`check-repo-layout` PASS｜工具卡原来显示线上名 `fs.read`，现在显示注册表里的显示名；`confidenceBasis` 改为不翻译的 `规则 + 分档: 细节`；提示词坏掉时界面只剩一句兜底，细节进日志。
+
 2026-11-26｜崩溃卡片「使用智能体询问」改为另起崩溃急救会话并询问 Auto-safe｜`main-window-agent` 118/118（新增 13 条：另起会话、会话元数据记 `crash-rescue`、锁定崩溃实例、提问带「直接开工」与退出码、这一轮系统提示是崩溃急救）、`core-agent` 通过，产品目标严格编译通过，`check-i18n`/`check-doc-links`/`check-repo-layout` PASS｜已锁别的实例的会话也会被改成这次崩的实例；Auto-safe 问话默认落在「逐步确认」；合并 dev 后 `inspection` 统一叫「实例诊断」、44 条 `unfinished` 全部来自 #129 的备份文案，真机弹窗未跑。
+
 2026-11-27｜任务详情页加「询问智能体」，与崩溃卡片同一入口｜merged origin/dev 后 affected 59/59（740 s，含 `main-window-agent` 126 断言里的新增 5 条：账本那一条进了、另起会话、崩溃急救 + 锁实例、提问要求直接开工并带退出码、点下去自动发出一问），产品目标严格编译通过，`check-i18n`/`check-doc-links`/`check-repo-layout`/`check-surface-registry` PASS｜那颗钮先收页再排到下一轮转发（`evict()` 是请求，同一次调用里开新页会撞在没让开的那一层上）；和 #130 的「查看会话」并存，两颗各按各的能力位露；真机点按未跑。
 2026-11-27｜去掉工具调用次数上限与 Auto-safe 时效/启动预算，加重复调用复用与思考过程点击折叠｜`core-agent` 通过、`ui-agent` 102/102（新增：点思考正文折叠、再点展开、拖选不折叠、折叠后按钮写字数），产品目标严格编译通过，`check-i18n`/`check-doc-links` PASS｜`maxToolSteps`/`maxSessionToolCalls` 默认 0（不限），计划步数上限也去掉；同一工具同参数最近 3 次内成功过就复用结果（`data.reusedRepeat`）；Auto-safe 改由复合引擎每次调用前 `revalidate()` 复核会话与实例，换一个当场关掉；真实模型长会话与真机 Auto-safe 跑满未验。
 2026-11-27｜智能体模型目录、上下文顶满与自动另起一段、思考强度胶囊｜merged origin/dev（#136 实例设置改版等）后 affected 59/59（846 s），`core-agent` 含新增的 128K 不截断 / 32K 报 90% 两条，`ui-agent` 115/115（新增 13 条：目录自检、选厂商填地址、模型清单兜底、选模型填上限、高级默认收起、思考胶囊换档与收起、点思考正文折叠），产品目标严格编译通过，`check-i18n`/`check-doc-links`/`check-repo-layout`/`check-surface-registry` PASS｜厂商目录放 `ui/`（ui 不许 include src）；`GET /models` 拉不到回落内置清单；上一轮上下文 ≥90% 时下一次发送自动另起一段并带一句摘要（不做 LLM 压缩）；首轮并行跑 `core-presets` 的 PL7 因临时目录被占失败过一次，单跑与复跑均通过；订阅制/OAuth 入口记进 ROADMAP 暂不做；真实各厂商列表接口与真机自动切段未验。

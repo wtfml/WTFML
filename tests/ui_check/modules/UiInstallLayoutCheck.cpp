@@ -5,6 +5,7 @@
 #include "PresetOptionsEditor.hpp"
 #include "NewServerPage.hpp"
 #include <QKeyEvent>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QSlider>
 #include <QStyleOptionViewItem>
@@ -231,15 +232,40 @@ int UiInstallLayoutCheck(QApplication &app) {
             presets->itemClicked(presets->currentItem(), 0);
             details.show();
             app.processEvents();
-            auto *nav = details.findChild<QListWidget *>("presetDetailNav");
+            auto *nav = details.findChild<QTreeWidget *>("presetDetailNav");
             auto *header = details.findChild<QWidget *>("presetDetailHeader");
             auto *action = details.findChild<QPushButton *>(PresetManagePage::applyButtonName());
             auto *title = details.findChild<QLabel *>("presetDetailTitle");
             expect(catalogHeader && catalogHeader->isHidden() && catalogModes && catalogModes->isHidden(),
                    "preset details replace the catalog heading and mode switches");
             expect(header && action && header->isAncestorOf(action) && title && title->text() == preset.name &&
-                       nav && nav->width() == InstanceSettingsDialog::navigationTreeWidth(),
+                       nav && nav->width() == InstanceSettingsDialog::fittedNavigationTreeWidth(nav),
                    "preset details put the preset name and apply action above an instance-width sidebar");
+            auto *settings = nav ? nav->topLevelItem(1) : nullptr;
+            auto *gameGroup = nav ? nav->topLevelItem(2) : nullptr;
+            auto *resourceGroup = nav ? nav->topLevelItem(3) : nullptr;
+            auto *transferGroup = nav ? nav->topLevelItem(4) : nullptr;
+            expect(nav && nav->topLevelItemCount() == 5 && nav->topLevelItem(0)->text(0) == "概览" &&
+                       settings && settings->text(0) == "预设设置" && settings->childCount() == 0 &&
+                       gameGroup && gameGroup->text(0) == "游戏设置" && gameGroup->childCount() == 2 &&
+                       resourceGroup && resourceGroup->text(0) == "内容管理" && resourceGroup->childCount() == 3 &&
+                       transferGroup && transferGroup->text(0) == "实例操作" && transferGroup->childCount() == 2,
+                   "preset navigation keeps preset settings separate from game, content and instance groups");
+            if (nav && gameGroup) {
+                const auto groupClick = [&] {
+                    const QPoint pos = nav->visualItemRect(gameGroup).center();
+                    const QPoint global = nav->viewport()->mapToGlobal(pos);
+                    QMouseEvent press(QEvent::MouseButtonPress, pos, global, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                    QMouseEvent release(QEvent::MouseButtonRelease, pos, global, Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+                    QApplication::sendEvent(nav->viewport(), &press);
+                    QApplication::sendEvent(nav->viewport(), &release);
+                };
+                groupClick();
+                expect(!gameGroup->isExpanded() && nav->currentItem() == nav->topLevelItem(0),
+                       "clicking a preset heading collapses its group without changing pages");
+                groupClick();
+                expect(gameGroup->isExpanded(), "clicking a collapsed preset heading expands it again");
+            }
             if (preview) {
                 QDir().mkpath("build/install-previews");
                 expect(window.grab().save("build/install-previews/preset-detail-overview.png"),
@@ -252,8 +278,8 @@ int UiInstallLayoutCheck(QApplication &app) {
                 editor->selectSection(section);
                 details.embedEditor(editor);
             });
-            if (preview && nav) {
-                nav->setCurrentRow(2);
+            if (preview && nav && gameGroup) {
+                nav->setCurrentItem(gameGroup->child(0));
                 app.processEvents();
                 expect(window.grab().save("build/install-previews/preset-detail-editor.png"),
                        "embedded preset editor preview saved");
@@ -505,6 +531,15 @@ int UiInstallLayoutCheck(QApplication &app) {
             auto *guiScale = detailed.findChild<QComboBox *>("presetValue_guiScale");
             expect(guiScale && guiScale->isEnabled() && guiScale->currentData().toString() == "0" && guiScale->findData("2") > 0,
                    "GUI scale can be edited directly using its automatic and numeric values");
+            auto *resetScale = detailed.findChild<QPushButton *>("presetReset_guiScale");
+            if (guiScale) guiScale->setCurrentIndex(guiScale->findData("2"));
+            expect(resetScale && resetScale->isEnabled(), "a changed dropdown can be reset independently");
+            if (resetScale) resetScale->click();
+            expect(resetScale && !resetScale->isEnabled() && values(detailed).value("guiScale") == "0",
+                   "dropdown reset writes the vanilla automatic setting");
+            expect(defaults.value("toggleAttack") == "false" && defaults.value("toggleUse") == "false" &&
+                       defaults.value("sprintWindow") == "7" && defaults.value("operatorItemsTab") == "false",
+                   "the preset includes all vanilla controls shown in the controls screen");
             const auto *fovItem = itemFor("fov");
             const int fov = fovItem ? fovItem->row() : -1;
             if (fov >= 0) {
@@ -546,11 +581,26 @@ int UiInstallLayoutCheck(QApplication &app) {
                 edited["gamma"] = "0.865";
                 expect(values(detailed) == edited, "slider changes save alongside every untouched game option");
             }
+            auto *fps = detailed.findChild<QWidget *>("presetValue_maxFps");
+            auto *fpsSlider = fps ? fps->findChild<QSlider *>() : nullptr;
+            auto *resetFps = detailed.findChild<QPushButton *>("presetReset_maxFps");
+            expect(fpsSlider && fpsSlider->minimum() == 1 && fpsSlider->maximum() == 26,
+                   "framerate has only the game's 26 selectable positions");
+            if (fpsSlider) fpsSlider->triggerAction(QAbstractSlider::SliderSingleStepAdd);
+            expect(values(detailed).value("maxFps") == "130", "one framerate step changes the stored value by ten fps");
+            if (resetFps) resetFps->click();
+            expect(resetFps && !resetFps->isEnabled() && values(detailed).value("maxFps") == "120" &&
+                       values(detailed).value("gamma") == "0.865", "resetting FPS restores its default independently");
             PresetOptionsEditor imported({{"gamma","2.5"},{"futureOption","keep:raw"}}, nullptr, PresetOptionsEditor::Mode::Options);
             const auto importedValues = values(imported);
             expect(importedValues.value("gamma") == "2.5" && importedValues.value("futureOption") == "keep:raw" &&
                        importedValues.value("renderDistance") == "12",
                    "older presets keep their imported values and include displayed defaults for missing options");
+            auto *resetImported = imported.findChild<QPushButton *>("presetReset_gamma");
+            if (resetImported) resetImported->click();
+            auto *resetBrightness = imported.findChild<QWidget *>("presetValue_gamma");
+            expect(resetImported && resetBrightness && resetBrightness->findChild<QSlider *>() &&
+                       values(imported).value("gamma") == "0.5", "resetting an out-of-range value restores its slider");
             auto *chatOpacity = detailed.findChild<QWidget *>("presetValue_chatOpacity");
             auto *opacitySlider = chatOpacity ? chatOpacity->findChild<QSlider *>() : nullptr;
             auto *opacityLabel = chatOpacity ? chatOpacity->findChild<QLabel *>() : nullptr;
@@ -561,7 +611,9 @@ int UiInstallLayoutCheck(QApplication &app) {
             auto *keyTable = bindings.findChild<QTableWidget *>("presetOptionsEditorTable");
             const auto bindingDefaults = values(bindings);
             expect(keyTable->rowCount() >= 25 && bindingDefaults.value("key_key.jump") == "key.keyboard.space" &&
-                       bindingDefaults.value("key_key.forward") == "key.keyboard.w",
+                       bindingDefaults.size() == 61 && bindingDefaults.value("key_key.friends") == "key.keyboard.o" &&
+                       bindingDefaults.value("key_key.socialInteractions") == "key.keyboard.p" &&
+                       bindingDefaults.value("key_key.smoothCamera") == "key.keyboard.unknown",
                    "key presets include the displayed defaults without requiring edits");
             auto *jump = bindings.findChild<QPushButton *>("presetValue_key_key.jump");
             int jumpRow=-1;
@@ -585,6 +637,10 @@ int UiInstallLayoutCheck(QApplication &app) {
                 QApplication::sendEvent(jump,&clear);
                 expect(values(bindings).value("key_key.jump") == "key.keyboard.unknown" && jump->text() == "未指定",
                        "clearing a binding shows the game's own unbound label and saves its key identifier");
+                auto *resetJump = bindings.findChild<QPushButton *>("presetReset_key_key.jump");
+                if (resetJump) resetJump->click();
+                expect(resetJump && !resetJump->isEnabled() && jump->text() == "空格" && values(bindings) == bindingDefaults,
+                       "key reset restores the original game binding");
             } else expect(false,"jump binding control exists");
             auto *search=detailed.findChild<QLineEdit *>("presetOptionsSearch");
             search->setText("声音");
@@ -604,6 +660,10 @@ int UiInstallLayoutCheck(QApplication &app) {
                 app.processEvents();
                 QDir().mkpath(QStringLiteral("build/install-previews"));
                 preview.grab().save(QStringLiteral("build/install-previews/preset-game-options.png"));
+                bindings.resize(780, 720);
+                bindings.show();
+                app.processEvents();
+                bindings.grab().save(QStringLiteral("build/install-previews/preset-key-bindings.png"));
             }
         }
         {

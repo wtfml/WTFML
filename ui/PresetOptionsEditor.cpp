@@ -17,9 +17,11 @@
 #include "PresetOptionCatalog.hpp"
 #include <QKeyEvent>
 #include <QMouseEvent>
+#include <QResizeEvent>
 #include <QLineEdit>
 #include <QSignalBlocker>
 #include <QApplication>
+#include <cmath>
 #include <functional>
 #include <utility>
 
@@ -30,36 +32,75 @@ constexpr int kFiltered = Qt::UserRole + 1;
 // 原版 Java 1.21.1 的选项槽位。空槽对应预设目录中没有的游戏选项。
 using Pair = std::pair<const char *, const char *>;
 const auto videoRows = {
-    Pair{"graphicsMode", "renderDistance"}, Pair{nullptr, "simulationDistance"}, Pair{nullptr, "maxFps"},
-    Pair{"enableVsync", "bobView"}, Pair{"guiScale", nullptr}, Pair{"gamma", "renderClouds"},
-    Pair{"fullscreen", "particles"}, Pair{nullptr, "entityShadows"},
+    Pair{"graphicsMode", "renderDistance"}, Pair{"prioritizeChunkUpdates", "simulationDistance"}, Pair{"ao", "maxFps"},
+    Pair{"enableVsync", "bobView"}, Pair{"guiScale", "attackIndicator"}, Pair{"gamma", "renderClouds"},
+    Pair{"fullscreen", "particles"}, Pair{"mipmapLevels", "entityShadows"}, Pair{"cloudRange", "biomeBlendRadius"},
+    Pair{"entityDistanceScaling", "weatherRadius"}, Pair{"cutoutLeaves", "improvedTransparency"},
+    Pair{"textureFiltering", "maxAnisotropyBit"}, Pair{"inactivityFpsLimit", "exclusiveFullscreen"},
+    Pair{"showAutosaveIndicator", "vignette"}, Pair{"chunkSectionFadeInTime", "preferredGraphicsBackend"},
 };
-const auto mouseRows = {Pair{"mouseSensitivity", "invertYMouse"}, Pair{nullptr, "rawMouseInput"}};
-const auto controlRows = {Pair{"toggleCrouch", "toggleSprint"}, Pair{"autoJump", nullptr}};
+const auto mouseRows = {
+    Pair{"mouseSensitivity", "mouseWheelSensitivity"}, Pair{"discrete_mouse_scroll", "invertXMouse"},
+    Pair{"invertYMouse", "allowCursorChanges"}, Pair{"rawMouseInput", nullptr},
+};
+const auto controlRows = {
+    Pair{"toggleCrouch", "toggleSprint"}, Pair{"toggleAttack", "toggleUse"}, Pair{"autoJump", "sprintWindow"},
+    Pair{"operatorItemsTab", "pauseOnLostFocus"},
+};
 const auto accessibilityRows = {
-    Pair{nullptr, "showSubtitles"}, Pair{"highContrast", nullptr},
-    Pair{"screenEffectScale", "fovEffectScale"}, Pair{"darknessEffectScale", nullptr},
-    Pair{"hideLightningFlash", nullptr},
+    Pair{"narrator", "showSubtitles"}, Pair{"highContrast", "highContrastBlockOutline"},
+    Pair{"menuBackgroundBlurriness", "textBackgroundOpacity"}, Pair{"backgroundForChatOnly", "notificationDisplayTime"},
+    Pair{"screenEffectScale", "fovEffectScale"}, Pair{"darknessEffectScale", "damageTiltStrength"},
+    Pair{"glintSpeed", "glintStrength"}, Pair{"hideLightningFlash", "darkMojangStudiosBackground"},
+    Pair{"panoramaScrollSpeed", "hideSplashTexts"}, Pair{"narratorHotkey", "rotateWithMinecart"},
 };
 const auto chatRows = {
     Pair{"chatVisibility", "chatColors"}, Pair{"chatLinks", "chatLinksPrompt"},
-    Pair{"chatOpacity", nullptr}, Pair{"chatScale", nullptr},
+    Pair{"chatOpacity", "chatDelay"}, Pair{"chatScale", "chatLineSpacing"},
+    Pair{"chatWidth", "chatHeightFocused"}, Pair{"chatHeightUnfocused", "autoSuggestions"},
+    Pair{"hideMatchedNames", "reducedDebugInfo"}, Pair{"onlyShowSecureChat", "saveChatDrafts"},
 };
 const auto soundRows = {
     Pair{"soundCategory_master", nullptr}, Pair{"soundCategory_music", "soundCategory_record"},
     Pair{"soundCategory_weather", "soundCategory_block"}, Pair{"soundCategory_hostile", "soundCategory_neutral"},
-    Pair{"soundCategory_player", "soundCategory_ambient"}, Pair{"soundCategory_voice", nullptr},
+    Pair{"soundCategory_player", "soundCategory_ambient"}, Pair{"soundCategory_voice", "directionalAudio"},
+    Pair{"musicFrequency", "musicToast"},
+};
+const auto skinRows = {
+    Pair{"modelPart_cape", "modelPart_jacket"}, Pair{"modelPart_left_sleeve", "modelPart_right_sleeve"},
+    Pair{"modelPart_left_pants_leg", "modelPart_right_pants_leg"}, Pair{"modelPart_hat", "mainHand"},
+};
+
+class PairedOptionsTable final : public QTableWidget {
+public:
+    explicit PairedOptionsTable(QWidget *parent) : QTableWidget(0, 4, parent) {}
+
+    void fitLabels(int viewportWidth) {
+        // 长标签允许省略，给每个值控件和重置按钮留出宽度。
+        for (const int column : {0, 2}) {
+            const int labelWidth = qMin(sizeHintForColumn(column), viewportWidth / 5);
+            if (labelWidth > 0 && columnWidth(column) != labelWidth) setColumnWidth(column, labelWidth);
+        }
+    }
+
+protected:
+    bool viewportEvent(QEvent *event) override {
+        const bool handled = QTableWidget::viewportEvent(event);
+        if (event->type() == QEvent::Resize) fitLabels(static_cast<QResizeEvent *>(event)->size().width());
+        return handled;
+    }
 };
 
 class OptionSlider final : public QWidget {
 public:
-    OptionSlider(const Option &spec, QWidget *parent) : QWidget(parent), m_spec(spec) {
+    OptionSlider(const Option &spec, QWidget *parent)
+        : QWidget(parent), m_spec(spec), m_logarithmic(spec.key == "mouseWheelSensitivity"),
+          m_scale(m_logarithmic ? 100 : spec.step > 0 ? 1.0 / spec.step : spec.kind == Kind::Fraction ? 1000 : 1) {
         auto *layout = new QHBoxLayout(this);
         layout->setContentsMargins(8, 0, 8, 0);
         m_slider = new QSlider(Qt::Horizontal, this);
         m_slider->setAccessibleName(spec.name);
-        const int factor = spec.kind == Kind::Fraction ? 1000 : 1;
-        m_slider->setRange(qRound(spec.minimum * factor), qRound(spec.maximum * factor));
+        m_slider->setRange(sliderPosition(spec.minimum), sliderPosition(spec.maximum));
         m_label = new QLabel(this);
         m_label->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
         layout->addWidget(m_slider, 1);
@@ -69,30 +110,38 @@ public:
     }
 
     void load(const QString &value) {
+        const QSignalBlocker blocker(m_slider);
         const double number = value.toDouble();
-        m_slider->setValue(qRound(m_spec.key == "fov" ? 70 + 40 * number
-            : m_spec.kind == Kind::Fraction ? 1000 * number : number));
+        m_slider->setValue(sliderPosition(m_spec.key == "fov" ? 70 + 40 * number : number));
         updateLabel();
     }
 
     QString value() const {
-        const int position = m_slider->value();
+        const double position = displayValue();
         if (m_spec.key == "fov") return QString::number((position - 70) / 40.0);
-        if (m_spec.kind == Kind::Fraction) return QString::number(position / 1000.0);
         return QString::number(position);
     }
 
     QSlider *slider() const { return m_slider; }
 
 private:
+    int sliderPosition(double value) const {
+        return qRound((m_logarithmic ? std::log10(value) : value) * m_scale);
+    }
+
+    double displayValue() const {
+        const double position = m_slider->value() / m_scale;
+        return m_logarithmic ? std::pow(10.0, position) : position;
+    }
+
     void updateLabel() {
-        const int position = m_slider->value();
+        const double position = displayValue();
         QString text = QString::number(position);
         if (m_spec.key == "fov") {
             if (position == 70) text = QCoreApplication::translate("OptionValueDelegate", "中");
             if (position == 110) text = QCoreApplication::translate("OptionValueDelegate", "广角");
         } else if (m_spec.key == "gamma") {
-            const int brightness = position / 10;
+            const int brightness = m_slider->value() / 10;
             text = QString::number(brightness);
             if (brightness == 0) text = QCoreApplication::translate("OptionValueDelegate", "昏暗");
             if (brightness == 50) text = QCoreApplication::translate("OptionValueDelegate", "默认");
@@ -100,17 +149,28 @@ private:
         } else if (m_spec.key == "maxFps") {
             text = position == 260 ? QCoreApplication::translate("OptionValueDelegate", "无限制")
                                    : QCoreApplication::translate("OptionValueDelegate", "%1 fps").arg(position);
-        } else if (m_spec.key.endsWith("Distance")) {
-            text = QCoreApplication::translate("OptionValueDelegate", "%1个区块").arg(position);
+        } else if (m_spec.key.endsWith("Distance") || m_spec.key == "cloudRange") {
+            text = QCoreApplication::translate("OptionValueDelegate", "%1个区块").arg(int(position));
+        } else if (m_logarithmic) {
+            text = QString::number(position, 'f', 2);
+        } else if (m_spec.key == "maxAnisotropyBit") {
+            text = QStringLiteral("%1×").arg(1 << int(position));
+        } else if (m_spec.key == "chatDelay" || m_spec.key == "chunkSectionFadeInTime") {
+            text = QCoreApplication::translate("OptionValueDelegate", "%1秒").arg(QString::number(position));
+        } else if (m_spec.key == "notificationDisplayTime") {
+            text = QStringLiteral("%1×").arg(QString::number(position));
+        } else if (m_spec.key == "chatWidth" || m_spec.key == "chatHeightFocused" || m_spec.key == "chatHeightUnfocused") {
+            const bool width = m_spec.key == "chatWidth";
+            text = QCoreApplication::translate("OptionValueDelegate", "%1像素").arg(int(position * (width ? 280 : 160) + (width ? 40 : 20)));
         } else if (m_spec.key == "chatOpacity") {
             // 游戏将 0–1 的保存值显示为 10%–100%。
-            text = QString::number(10 + position * 9 / 100) + '%';
+            text = QString::number(10 + m_slider->value() * 9 / 100) + '%';
         } else if (m_spec.kind == Kind::Fraction) {
             const bool sensitivity = m_spec.key == "mouseSensitivity";
-            const int percent = sensitivity ? position / 5 : position / 10;
+            const int percent = qRound(position * (sensitivity ? 200 : 100));
             text = QString::number(percent) + '%';
             if (sensitivity && position == 0) text = QCoreApplication::translate("OptionValueDelegate", "*哈欠*");
-            if (sensitivity && position == 1000) text = QCoreApplication::translate("OptionValueDelegate", "超高速！！！");
+            if (sensitivity && position == 1) text = QCoreApplication::translate("OptionValueDelegate", "超高速！！！");
             if (position == 0 && m_spec.key.startsWith("soundCategory_"))
                 text = QCoreApplication::translate("OptionValueDelegate", "关");
         }
@@ -118,6 +178,8 @@ private:
     }
 
     const Option &m_spec;
+    const bool m_logarithmic;
+    const double m_scale;
     QSlider *m_slider;
     QLabel *m_label;
 };
@@ -203,7 +265,12 @@ public:
             armed = true; setProperty("wtfmlKeyCaptureArmed", true); setText(QCoreApplication::translate("KeyCapture", "请按键…")); setFocus();
         });
     }
-    void setValue(const QString &value) { current = value; setText(keyLabel(value)); }
+    void setValue(const QString &value) {
+        armed = false;
+        setProperty("wtfmlKeyCaptureArmed", false);
+        current = value;
+        setText(keyLabel(value));
+    }
     std::function<void(const QString &)> changed;
 protected:
     void focusOutEvent(QFocusEvent *event) override {
@@ -316,8 +383,11 @@ public:
         if (auto *key = dynamic_cast<KeyCapture *>(editor)) { key->setValue(index.data().toString()); return; }
         if (auto *slider = dynamic_cast<OptionSlider *>(editor)) { slider->load(index.data().toString()); return; }
         if (auto *combo = qobject_cast<QComboBox *>(editor)) {
-            int selected = combo->findData(index.data().toString());
-            if (selected < 0) { combo->addItem(index.data().toString(), index.data().toString()); selected = combo->count()-1; }
+            const auto value = index.data().toString();
+            int selected = combo->findData(value);
+            if (selected < 0 && value.startsWith('"') && value.endsWith('"') && value.size() >= 2)
+                selected = combo->findData(value.mid(1, value.size() - 2));
+            if (selected < 0) { combo->addItem(value, value); selected = combo->count()-1; }
             combo->setCurrentIndex(selected); return;
         }
         QStyledItemDelegate::setEditorData(editor, index);
@@ -354,10 +424,15 @@ PresetOptionsEditor::PresetOptionsEditor(const QList<Entry> &entries, QWidget *p
     search->setClearButtonEnabled(true);
     layout->addWidget(search);
     const bool paired = mode == Mode::Options;
-    m_table = new QTableWidget(0, paired ? 4 : 2, this);
+    auto *pairedTable = paired ? new PairedOptionsTable(this) : nullptr;
+    m_table = pairedTable ? pairedTable : new QTableWidget(0, 2, this);
     m_table->setObjectName(QStringLiteral("presetOptionsEditorTable"));
     auto *header = m_table->horizontalHeader();
     header->setSectionResizeMode(QHeaderView::Stretch);
+    if (paired) {
+        header->setSectionResizeMode(0, QHeaderView::Fixed);
+        header->setSectionResizeMode(2, QHeaderView::Fixed);
+    }
     header->setVisible(mode == Mode::All);
     if (mode == Mode::All) {
         m_table->setHorizontalHeaderLabels({
@@ -428,6 +503,18 @@ PresetOptionsEditor::PresetOptionsEditor(const QList<Entry> &entries, QWidget *p
         addPairs(chatRows);
         addGroup(PresetOptionCatalog::find(QStringLiteral("soundCategory_master"))->group);
         addPairs(soundRows);
+        addGroup(PresetOptionCatalog::find(QStringLiteral("mainHand"))->group);
+        addPairs(skinRows);
+    } else if (mode == Mode::Keys) {
+        QString activeGroup;
+        for (const auto &spec : PresetOptionCatalog::all()) {
+            if (spec.kind != Kind::Key) continue;
+            if (spec.group != activeGroup) {
+                activeGroup = spec.group;
+                addGroup(activeGroup);
+            }
+            place(spec, newRow(), 0);
+        }
     }
     const int groupedEnd = m_table->rowCount();
     for (int index = 0; index < entries.size(); ++index) {
@@ -443,11 +530,7 @@ PresetOptionsEditor::PresetOptionsEditor(const QList<Entry> &entries, QWidget *p
         place(spec, newRow(), 0);
     }
     m_options = existing + m_options;
-    if (paired) {
-        // 只按选项名称占宽，两边的控件分走剩余空间。
-        header->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-        header->setSectionResizeMode(2, QHeaderView::ResizeToContents);
-    }
+    if (pairedTable) pairedTable->fitLabels(pairedTable->viewport()->width());
     connect(search, &QLineEdit::textChanged, this, [this, groupedEnd](const QString &text) {
         const QString query = text.trimmed();
         QSet<int> matches;
@@ -515,25 +598,69 @@ QTableWidgetItem *PresetOptionsEditor::append(const Entry &entry, int row, int c
         key->setCheckState(included ? Qt::Checked : Qt::Unchecked);
     }
     const auto *spec = PresetOptionCatalog::find(entry.key);
-    key->setToolTip(spec ? spec->group + " / " + entry.key : entry.key);
+    key->setToolTip(spec ? spec->name + QLatin1Char('\n') + spec->group + " / " + entry.key : entry.key);
     auto *value = new QTableWidgetItem(entry.value);
+    value->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
     m_table->setItem(row, column, key);
     m_table->setItem(row, column + 1, value);
+    QWidget *cell = nullptr;
+    if (spec) {
+        cell = new QWidget(m_table);
+        auto *layout = new QHBoxLayout(cell);
+        layout->setContentsMargins(0, 0, 0, 0);
+        layout->setSpacing(4);
+        layout->addWidget(createValueEditor(value, cell), 1);
+        auto *reset = new QPushButton(QCoreApplication::translate("PresetOptionsEditor", "重置"), cell);
+        reset->setObjectName(QStringLiteral("presetReset_") + entry.key);
+        reset->setAutoDefault(false);
+        Theme::markButton(reset, Theme::ButtonKind::Neutral);
+        reset->setAccessibleDescription(spec->name);
+        const auto canReset = [spec](const QString &raw) {
+            if (raw == spec->initial) return false;
+            if (spec->kind != Kind::Integer && spec->kind != Kind::Fraction) return true;
+            bool numeric = false;
+            const double number = raw.toDouble(&numeric);
+            return !numeric || number != spec->initial.toDouble();
+        };
+        reset->setEnabled(canReset(entry.value));
+        layout->addWidget(reset);
+        connect(m_table, &QTableWidget::itemChanged, reset, [value, reset, canReset](const QTableWidgetItem *changed) {
+            if (changed == value) reset->setEnabled(canReset(value->text()));
+        });
+        connect(reset, &QPushButton::clicked, this, [this, cell, layout, value, spec] {
+            value->setText(spec->initial);
+            auto *editor = layout->itemAt(0)->widget();
+            if (qobject_cast<QLineEdit *>(editor)) {
+                delete editor;
+                layout->insertWidget(0, createValueEditor(value, cell), 1);
+            } else {
+                m_table->itemDelegate()->setEditorData(editor, m_table->indexFromItem(value));
+            }
+        });
+    } else {
+        cell = createValueEditor(value, m_table);
+    }
+    cell->setEnabled(!chooseIndividually || included);
+    m_table->setCellWidget(row, column + 1, cell);
+    return key;
+}
+
+QWidget *PresetOptionsEditor::createValueEditor(QTableWidgetItem *value, QWidget *parent) {
+    const QModelIndex index = m_table->indexFromItem(value);
+    const QString key = index.siblingAtColumn(value->column() - 1).data().toString();
+    const auto *spec = PresetOptionCatalog::find(key);
     // 未识别或超出控件范围的导入值仍按原文保留，不能静默截断。
     bool valid = true;
-    const double number = entry.value.toDouble(&valid);
-    const double display = entry.key == "fov" ? 70 + 40 * number : number;
+    const double number = value->text().toDouble(&valid);
+    const double display = key == "fov" ? 70 + 40 * number : number;
     bool supported = spec != nullptr;
     if (spec && (spec->kind == Kind::Integer || spec->kind == Kind::Fraction))
         supported = valid && display >= spec->minimum && display <= spec->maximum;
-    const QModelIndex index = m_table->indexFromItem(value);
-    QWidget *editor = supported ? m_table->itemDelegate()->createEditor(m_table, {}, index)
-                                : new QLineEdit(m_table);
+    QWidget *editor = supported ? m_table->itemDelegate()->createEditor(parent, {}, index)
+                                : new QLineEdit(parent);
     if (supported) m_table->itemDelegate()->setEditorData(editor, index);
-    else qobject_cast<QLineEdit *>(editor)->setText(entry.value);
-    editor->setObjectName("presetValue_" + entry.key);
-    editor->setEnabled(!chooseIndividually || included);
-    m_table->setCellWidget(row, column + 1, editor);
+    else qobject_cast<QLineEdit *>(editor)->setText(value->text());
+    editor->setObjectName(QStringLiteral("presetValue_") + key);
     const auto commit = [this, editor, value, supported] {
         if (supported) m_table->itemDelegate()->setModelData(editor,m_table->model(),m_table->indexFromItem(value));
         else value->setText(qobject_cast<QLineEdit *>(editor)->text());
@@ -543,7 +670,7 @@ QTableWidgetItem *PresetOptionsEditor::append(const Entry &entry, int row, int c
     else if (auto *slider = dynamic_cast<OptionSlider *>(editor)) connect(slider->slider(), &QSlider::valueChanged, this, commit);
     else if (auto *combo = qobject_cast<QComboBox *>(editor)) connect(combo,qOverload<int>(&QComboBox::currentIndexChanged),this,commit);
     else if (auto *line = qobject_cast<QLineEdit *>(editor)) connect(line,&QLineEdit::textChanged,this,commit);
-    return key;
+    return editor;
 }
 QList<PresetOptionsEditor::Entry> PresetOptionsEditor::entries() const {
     QList<Entry> result;

@@ -21164,6 +21164,14 @@ SHA-256：%2
             <source>开</source>
             <translation type="unfinished"></translation>
         </message>
+        <message>
+            <source>%1秒</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1像素</source>
+            <translation type="unfinished"></translation>
+        </message>
     </context>
     <context>
         <name>OverlayHost</name>
@@ -22322,7 +22330,7 @@ SHA-256：%2
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>基本设置</source>
+            <source>预设设置</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -22672,6 +22680,14 @@ SHA-256：%2
         </message>
         <message>
             <source>未选择预设</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>内容管理</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>实例操作</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -23075,10 +23091,6 @@ SHA-256：%2
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>鼠标反转</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>原始输入</source>
             <translation type="unfinished"></translation>
         </message>
@@ -23143,10 +23155,6 @@ SHA-256：%2
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>按键绑定</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>向前移动</source>
             <translation type="unfinished"></translation>
         </message>
@@ -23196,6 +23204,494 @@ SHA-256：%2
         </message>
         <message>
             <source>快捷栏%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>反转鼠标Y轴</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>自定义皮肤</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>疾跑间隔</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>管理员用品标签页</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>滚轮灵敏度</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>离散滚动</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>反转鼠标X轴</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>允许光标变化</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>生物群系过渡距离</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>区块构建器</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>线程化</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>半阻塞</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>全阻塞</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>平滑光照</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Mipmap级别</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>实体渲染距离</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>云层距离</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>可透视树叶</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>改进透明显示</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>纹理过滤</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>RGSS</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>各向异性</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>各向异性过滤</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>天气效果半径</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>降低帧率</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>最小化时</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无操作时</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>独占全屏</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>自动保存指示器</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>显示晕影</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>攻击指示器</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>十字准星</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>快捷栏</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>区块淡入时长</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>图形API</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>默认</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>优先使用OpenGL</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>优先使用Vulkan（实验性）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>菜单背景模糊程度</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>文本背景不透明度</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>文本背景</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>全局</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>复述功能</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>复述所有</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>复述聊天消息</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>复述系统消息</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>通知显示时长</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>受伤抖动效果</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>附魔光效闪烁速度</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>附魔光效闪烁强度</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>黑白徽标</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>全景图滚动速度</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>隐藏闪烁标语</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>复述功能快捷键</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>同步矿车转动</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>高对比度方块轮廓</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>行距</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>聊天延迟</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>宽度</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>聚焦高度</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>淡化高度</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>命令提示</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>隐藏匹配的名称</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>简化调试信息</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>仅显示安全的聊天</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>保存未发送的聊天消息</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>定向音频</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>音乐播放频率</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>频繁</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>持续</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>音乐弹窗</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>不显示</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>暂停菜单</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>暂停菜单和弹窗</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>披风</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>外套</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>左袖</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>右袖</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>左裤腿</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>右裤腿</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>帽子</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>移动</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>多人游戏</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>好友屏幕</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>社交屏幕</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>游戏内容</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>物品栏</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>创造模式</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>保存快捷栏</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>加载快捷栏</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>旁观</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>高亮玩家</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>呼出快捷栏</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>杂项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>切换电影视角</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>快捷操作</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>切换界面</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>切换旁观者着色器效果</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>调试</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>切换叠加层</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>调试修饰键</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>调试崩溃</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>重新加载区块</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>显示判定箱</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>清除聊天消息</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>显示区块边界</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>显示高级提示框</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>复制数据</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>循环切换旁观模式</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>游戏模式切换器</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>调试选项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>切换失去焦点时暂停</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>转储动态纹理</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>重新加载资源包</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>开始/停止分析</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>复制位置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>转储版本信息</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>分析图表</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>FPS图表</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>网络图表</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>光照贴图纹理</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -23343,6 +23839,10 @@ SHA-256：%2
         </message>
         <message>
             <source>鼠标按键%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>重置</source>
             <translation type="unfinished"></translation>
         </message>
     </context>

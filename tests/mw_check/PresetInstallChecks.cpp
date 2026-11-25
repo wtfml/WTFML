@@ -34,6 +34,7 @@
 #include "controllers/PresetController.hpp"
 #include "presets/PresetApply.hpp"
 #include "presets/PresetWorkspace.hpp"
+#include "presets/VanillaOptions.hpp"
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QTemporaryDir>
@@ -1029,8 +1030,12 @@ int runPresetInstallChecks() {
         const auto after = config.readAll(); config.close();
         check(enableGame && enabled.ok && overwritten.ok && reopened && after.contains("fov:0.0") &&
                   after.contains("renderDistance:12") && after.contains("key_key.jump:key.keyboard.space") &&
+                  after.contains("sprintWindow:7") && after.contains("key_key.friends:key.keyboard.o") &&
                   after.contains("unknownPreserved:yes"),
               "enabling the group overwrites settings and key bindings even when their controls were untouched");
+        check(Presets::optionsConflicts(Presets::parseOptions(after), {},
+                                      Presets::defaultSelection(Presets::parseOptions(after))).isEmpty(),
+              "original shared or unassigned bindings are not reported as conflicts");
     }
     const QString preview = qEnvironmentVariable("WTFML_PRESET_PREVIEW_DIR");
     if (!preview.isEmpty()) {

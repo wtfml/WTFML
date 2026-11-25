@@ -23,6 +23,7 @@
 #include "OverlayHost.hpp"
 #include "PresetEditorPage.hpp"
 #include "AutoHeight.hpp"
+#include "RowActivation.hpp"
 #include "Theme.hpp"
 #include "VersionIcons.hpp"
 
@@ -49,6 +50,7 @@
 #include <QTimer>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
+#include <QTreeWidgetItemIterator>
 #include <QVBoxLayout>
 
 using namespace MainWindowPageLayout;
@@ -63,6 +65,18 @@ constexpr int kSectionListHeight = 118;
 constexpr int kPlanListHeight = 132;
 constexpr int kDetailPageRole = Qt::UserRole;
 constexpr int kEditorSectionRole = Qt::UserRole + 1;
+
+QTreeWidgetItem *detailNavItem(const QString &text, bool topLevel = false) {
+    auto *item = new QTreeWidgetItem({text});
+    item->setToolTip(0, text);
+    item->setSizeHint(0, QSize(0, kDetailNavRowHeight));
+    if (topLevel) {
+        QFont font = Theme::textFont(item->font(0), Theme::TextRole::Body);
+        font.setBold(true);
+        item->setFont(0, font);
+    }
+    return item;
+}
 /// 预设行上那三个数据槽（外面喂进来的值，页面里只用不翻）。
 ///
 /// ★ 号码从 `Qt::UserRole + 20` 起，别往 +1 / +2 上挪：`MainWindowUI::groupIdRole()`
@@ -303,29 +317,31 @@ void PresetManagePage::buildDetailLayer() {
     columns->setSpacing(kColumnSpacing);
     body->addLayout(columns, 1);
 
-    m_detailNav = new QListWidget(m_detailLayer);
+    m_detailNav = new QTreeWidget(m_detailLayer);
     m_detailNav->setObjectName(QStringLiteral("presetDetailNav"));
-    m_detailNav->setFixedWidth(InstanceSettingsDialog::navigationTreeWidth());
+    m_detailNav->setHeaderHidden(true);
+    m_detailNav->setIndentation(16);
     m_detailNav->setFrameShape(QFrame::NoFrame);
-    // 留出实例设置导航树的分支缩进，让选中块和文字也对齐。
-    m_detailNav->setStyleSheet(QStringLiteral("QListWidget{background:transparent;border:none;padding-left:16px;}"));
+    m_detailNav->setStyleSheet(QStringLiteral("QTreeWidget { background: transparent; }"));
     m_detailNav->viewport()->setAutoFillBackground(false);
     m_detailNav->setMouseTracking(true);
-    QFont navFont = Theme::textFont(m_detailNav->font(), Theme::TextRole::Body);
-    navFont.setBold(true);
-    m_detailNav->setFont(navFont);
+    m_detailNav->setFont(Theme::textFont(m_detailNav->font(), Theme::TextRole::Body));
     m_detailNav->setSelectionMode(QAbstractItemView::SingleSelection);
     m_detailNav->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_detailNav->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_detailNav->setFocusPolicy(Qt::NoFocus);
-    int pageIndex = 0;
-    for (const QString &text : {QCoreApplication::translate("PresetManagePage", "概览"), QCoreApplication::translate("PresetManagePage", "从实例提取"),
-                                QCoreApplication::translate("PresetManagePage", "应用到实例")}) {
-        auto *item = new QListWidgetItem(text, m_detailNav);
-        item->setSizeHint(QSize(0, detailNavRowHeight(navFont)));
-        item->setData(kDetailPageRole, pageIndex++);
-    }
-    m_detailNav->setCurrentRow(0);
+    auto *overview = detailNavItem(QCoreApplication::translate("PresetManagePage", "概览"), true);
+    overview->setData(0, kDetailPageRole, 0);
+    m_detailNav->addTopLevelItem(overview);
+    auto *transfer = detailNavItem(tr("实例操作"), true);
+    transfer->setFlags(Qt::ItemIsEnabled);
+    m_detailNav->addTopLevelItem(transfer);
+    auto *extract = detailNavItem(QCoreApplication::translate("PresetManagePage", "从实例提取"));
+    auto *apply = detailNavItem(QCoreApplication::translate("PresetManagePage", "应用到实例"));
+    extract->setData(0, kDetailPageRole, 1);
+    apply->setData(0, kDetailPageRole, 2);
+    transfer->addChildren({extract, apply});
+    transfer->setExpanded(true);
+    m_detailNav->setCurrentItem(overview);
+    m_detailNav->setFixedWidth(InstanceSettingsDialog::fittedNavigationTreeWidth(m_detailNav));
     columns->addWidget(m_detailNav);
     m_applyButton = new QPushButton(QCoreApplication::translate("PresetManagePage", "应用"), identity.widget);
     m_applyButton->setObjectName(applyButtonName());
@@ -364,18 +380,19 @@ void PresetManagePage::buildDetailLayer() {
         body->addStretch(1);
     }));
     columns->addWidget(m_detailPages, 1);
-    connect(m_detailNav, &QListWidget::currentItemChanged, this,
-            [this](QListWidgetItem *item, QListWidgetItem *previous) {
+    connect(m_detailNav, &QTreeWidget::currentItemChanged, this,
+            [this](QTreeWidgetItem *item, QTreeWidgetItem *previous) {
         if (!item) return;
-        const QVariant section = item->data(kEditorSectionRole);
+        const QVariant section = item->data(0, kEditorSectionRole);
+        const QVariant page = item->data(0, kDetailPageRole);
         if (section.isValid()) {
             if (m_embeddedEditor) m_embeddedEditor->selectSection(section.toInt());
             else emit editSectionRequested(currentPresetId(), section.toInt());
             if (m_embeddedEditor) return;
-        } else {
+        } else if (page.isValid()) {
             if (m_embeddedEditor) m_embeddedEditor->reject();
             if (!m_embeddedEditor) {
-                m_detailPages->setCurrentIndex(item->data(kDetailPageRole).toInt());
+                m_detailPages->setCurrentIndex(page.toInt());
                 return;
             }
         }
@@ -383,6 +400,9 @@ void PresetManagePage::buildDetailLayer() {
         const QSignalBlocker blocker(m_detailNav);
         m_detailNav->setCurrentItem(previous);
     });
+    connectRowActivation(m_detailNav, [](QTreeWidgetItem *item) {
+        item->setExpanded(!item->isExpanded());
+    }, [](const QTreeWidgetItem *item) { return item && item->childCount() > 0; });
     connect(m_applyButton, &QPushButton::clicked, this, [this] {
         if (!m_planCanApply || m_busy) return;
         const QString presetId = currentPresetId();
@@ -404,16 +424,22 @@ void PresetManagePage::enableEditorTabs() {
     m_saveDetailsButton->hide();
     m_nameEdit->hide();
     m_nameEdit->parentWidget()->hide();
-    m_detailNav->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    m_detailNav->setFocusPolicy(Qt::StrongFocus);
-    auto titles = PresetEditorPage::sectionTitles();
-    titles[0] = QCoreApplication::translate("PresetManagePage", "基本设置");
-    for (int section = 0; section < titles.size(); ++section) {
-        auto *item = new QListWidgetItem(titles.at(section));
-        item->setSizeHint(QSize(0, detailNavRowHeight(m_detailNav->font())));
-        item->setData(kEditorSectionRole, section);
-        m_detailNav->insertItem(section + 1, item);
+    const auto titles = PresetEditorPage::sectionTitles();
+    auto *settings = detailNavItem(tr("预设设置"), true);
+    settings->setData(0, kEditorSectionRole, 0);
+    auto *game = detailNavItem(tr("游戏设置"), true);
+    auto *resources = detailNavItem(tr("内容管理"), true);
+    game->setFlags(Qt::ItemIsEnabled);
+    resources->setFlags(Qt::ItemIsEnabled);
+    m_detailNav->insertTopLevelItems(1, {settings, game, resources});
+    for (int section = 1; section < titles.size(); ++section) {
+        auto *item = detailNavItem(titles.at(section));
+        item->setData(0, kEditorSectionRole, section);
+        (section < 3 ? game : resources)->addChild(item);
     }
+    game->setExpanded(true);
+    resources->setExpanded(true);
+    m_detailNav->setFixedWidth(InstanceSettingsDialog::fittedNavigationTreeWidth(m_detailNav));
     refreshActions();
 }
 
@@ -430,11 +456,11 @@ void PresetManagePage::removeEmbeddedEditor() {
     m_detailPages->removeWidget(editor);
     const QSignalBlocker blocker(m_detailNav);
     auto *active = m_detailNav->currentItem();
-    if (!active || active->data(kEditorSectionRole).isValid()) {
-        m_detailNav->setCurrentRow(0);
+    if (!active || !active->data(0, kDetailPageRole).isValid()) {
+        m_detailNav->setCurrentItem(m_detailNav->topLevelItem(0));
         active = m_detailNav->currentItem();
     }
-    m_detailPages->setCurrentIndex(active->data(kDetailPageRole).toInt());
+    m_detailPages->setCurrentIndex(active->data(0, kDetailPageRole).toInt());
     m_applyButton->show();
 }
 
@@ -1425,9 +1451,9 @@ void PresetManagePage::refreshActions() {
                                     ? QString()
                                     : QCoreApplication::translate("PresetManagePage", "综合预设和旧版混合预设不设默认：默认只对四类预设生效。"));
     m_saveDetailsButton->setEnabled(editable && !m_saveDetailsButton->isHidden());
-    for (int row = 0; row < m_detailNav->count(); ++row) {
-        auto *item = m_detailNav->item(row);
-        if (item->data(kEditorSectionRole).isValid()) {
+    for (QTreeWidgetItemIterator it(m_detailNav); *it; ++it) {
+        auto *item = *it;
+        if (item->data(0, kEditorSectionRole).isValid()) {
             item->setFlags(editable ? Qt::ItemIsEnabled | Qt::ItemIsSelectable : Qt::NoItemFlags);
         }
     }

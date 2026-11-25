@@ -374,7 +374,7 @@ private:
     /// 顶上那块图标（这份预设自带的图标；没有就是拼图）——和实例设置页那块同一个位置。
     QLabel *m_identityIcon = nullptr;
     /// 详情和编辑共用左栏导航，右侧随标签切换。
-    QListWidget *m_detailNav = nullptr;
+    QTreeWidget *m_detailNav = nullptr;
     QStackedWidget *m_detailPages = nullptr;
     PresetEditorPage *m_embeddedEditor = nullptr;
 

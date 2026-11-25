@@ -11,6 +11,7 @@ public:
     QList<Entry> entries() const;
 private:
     QTableWidgetItem *append(const Entry &entry, int row, int column, bool included = true);
+    QWidget *createValueEditor(QTableWidgetItem *value, QWidget *parent);
     const Mode m_mode;
     QTableWidget *m_table;
     QList<QTableWidgetItem *> m_options;
