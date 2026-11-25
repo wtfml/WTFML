@@ -396,8 +396,8 @@ Select "Sign out" to try again.</translation>
     <context>
         <name>AgentApprovalCard</name>
         <message>
-            <source>本会话允许此目录</source>
-            <translation>Allow folder for this chat</translation>
+            <source>本会话允许此来源</source>
+            <translation>Allow source for this chat</translation>
         </message>
         <message>
             <source>允许本次</source>
@@ -665,6 +665,13 @@ Select "Sign out" to try again.</translation>
         </message>
     </context>
     <context>
+        <name>AgentLoop</name>
+        <message>
+            <source>本会话的工具调用已达上限（%1 次）。需要继续排查时开一个新会话。</source>
+            <translation>This chat has reached its tool-call limit (%1). Start a new chat to keep troubleshooting.</translation>
+        </message>
+    </context>
+    <context>
         <name>AgentMessageView</name>
         <message>
             <source>思考过程</source>
@@ -705,6 +712,10 @@ Select "Sign out" to try again.</translation>
     </context>
     <context>
         <name>AgentPage</name>
+        <message>
+            <source>显示更早的 %1 条消息</source>
+            <translation>Show %1 earlier messages</translation>
+        </message>
         <message>
             <source>会话</source>
             <translation>Chats</translation>
@@ -926,6 +937,14 @@ Select "Sign out" to try again.</translation>
     </context>
     <context>
         <name>AgentSettingsPage</name>
+        <message>
+            <source>记住修复病例</source>
+            <translation>Remember repair cases</translation>
+        </message>
+        <message>
+            <source>默认关闭。打开后把「症状、改动、验证结果」记在本机，下次遇到同类崩溃时按成功率排序提示；只记结构化字段，不保存日志原文，也不额外外发。</source>
+            <translation>Off by default. When on, each symptom, change and verification result is stored locally and ranked by success rate the next time a similar crash appears. Only structured fields are stored; no raw logs, and nothing extra leaves the machine.</translation>
+        </message>
         <message>
             <source>API 与模型设置</source>
             <translation>API and model settings</translation>
@@ -1213,6 +1232,13 @@ Select "Sign out" to try again.</translation>
         <message>
             <source>发送输入的文字，以及关联实例的日志末尾、最新崩溃报告和版本信息。发送前移除账号信息。读取配置及其他文件前须确认。</source>
             <translation>Sends text you type along with the linked instance's log tail, latest crash report, and version info (account info is stripped). Reading configs or other files requires approval.</translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentWebTools</name>
+        <message>
+            <source>本会话已放行 %1，正在联网获取…</source>
+            <translation>%1 is allowed for this chat; fetching…</translation>
         </message>
     </context>
     <context>

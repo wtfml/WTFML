@@ -384,7 +384,7 @@
     <context>
         <name>AgentApprovalCard</name>
         <message>
-            <source>本会话允许此目录</source>
+            <source>本会话允许此来源</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -651,6 +651,13 @@
         </message>
     </context>
     <context>
+        <name>AgentLoop</name>
+        <message>
+            <source>本会话的工具调用已达上限（%1 次）。需要继续排查时开一个新会话。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>AgentMessageView</name>
         <message>
             <source>思考过程</source>
@@ -691,6 +698,10 @@
     </context>
     <context>
         <name>AgentPage</name>
+        <message>
+            <source>显示更早的 %1 条消息</source>
+            <translation type="unfinished"></translation>
+        </message>
         <message>
             <source>会话</source>
             <translation type="unfinished"></translation>
@@ -912,6 +923,14 @@
     </context>
     <context>
         <name>AgentSettingsPage</name>
+        <message>
+            <source>记住修复病例</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>默认关闭。打开后把「症状、改动、验证结果」记在本机，下次遇到同类崩溃时按成功率排序提示；只记结构化字段，不保存日志原文，也不额外外发。</source>
+            <translation type="unfinished"></translation>
+        </message>
         <message>
             <source>API 与模型设置</source>
             <translation type="unfinished"></translation>
@@ -1198,6 +1217,13 @@
         </message>
         <message>
             <source>发送输入的文字，以及关联实例的日志末尾、最新崩溃报告和版本信息。发送前移除账号信息。读取配置及其他文件前须确认。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentWebTools</name>
+        <message>
+            <source>本会话已放行 %1，正在联网获取…</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
