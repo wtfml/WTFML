@@ -148,7 +148,7 @@ int UiLanguageChecks(MainWindowUI &ui, QTabWidget *tabs) {
                   QString::fromLatin1(clouds->choices[2].value) == QStringLiteral("true") &&
                   forward != nullptr && forward->initial == QStringLiteral("key.keyboard.w"),
               "英文预设保留 Minecraft 配置值和按键标识");
-        check(QCoreApplication::translate("PresetOptionCatalog", "精细") == QStringLiteral("Fancy"),
+        check(QCoreApplication::translate("PresetOptionCatalog", "高品质") == QStringLiteral("Fancy"),
               "英文预设翻译云效果选项");
 
         WorldSettingsPage world;
