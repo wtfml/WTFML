@@ -8,6 +8,7 @@
 #include "AgentBackupIndex.hpp"
 #include "AgentRedaction.hpp"
 
+#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
@@ -28,10 +29,12 @@ Agent::Error makeError(Agent::ErrorKind kind, const QString &message) {
 
 QString lineDiff(const QString &oldText, const QString &newText) {
     if (oldText == newText) return {};
-    QString diff = QStringLiteral("--- 当前\n+++ 写入\n");
+    QString diff = QStringLiteral("--- %1\n+++ %2\n")
+                       .arg(QCoreApplication::translate("AgentFileTools", "当前内容"),
+                            QCoreApplication::translate("AgentFileTools", "写入内容"));
     for (const QString &line : oldText.split(QLatin1Char('\n'))) diff += QStringLiteral("- ") + line + QLatin1Char('\n');
     for (const QString &line : newText.split(QLatin1Char('\n'))) diff += QStringLiteral("+ ") + line + QLatin1Char('\n');
-    if (diff.size() > 20000) diff = diff.left(20000) + QStringLiteral("\n…（diff 已截断）");
+    if (diff.size() > 20000) diff = diff.left(20000) + QCoreApplication::translate("AgentFileTools", "\n…（diff 已截断）");
     return diff;
 }
 }  // namespace
@@ -77,11 +80,12 @@ AgentDirMetadata AgentFileTools::list(const QString &root, const QString &relati
             result.totalSize += entry.size();
         }
     }
-    result.summary = QStringLiteral("目录：%1 个文件，%2 个子目录，合计 %3 字节%4")
+    result.summary = (result.truncated
+                          ? QCoreApplication::translate("AgentFileTools", "目录：%1 个文件，%2 个子目录，合计 %3 字节（超过 2000 项，统计不完整）")
+                          : QCoreApplication::translate("AgentFileTools", "目录：%1 个文件，%2 个子目录，合计 %3 字节"))
                          .arg(result.fileCount)
                          .arg(result.directoryCount)
-                         .arg(result.totalSize)
-                         .arg(result.truncated ? QStringLiteral("（超过 2000 项，已截断统计）") : QString());
+                         .arg(result.totalSize);
     return result;
 }
 
@@ -124,12 +128,12 @@ AgentFileReadResult AgentFileTools::read(const QString &root, const QString &rel
     }
     if (info.isDirectory) {
         result.error = makeError(Agent::ErrorKind::ToolError,
-                                 QStringLiteral("目标是目录，不能按文件读取。"));
+                                 QCoreApplication::translate("AgentFileTools", "目标是目录，不能按文件读取。"));
         return result;
     }
     QFile file(info.finalPath);
     if (!file.open(QIODevice::ReadOnly)) {
-        result.error = makeError(Agent::ErrorKind::ToolError, QStringLiteral("文件不可读。"));
+        result.error = makeError(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentFileTools", "无法读取文件。"));
         return result;
     }
     const int limit = qBound(1024, maxBytes <= 0 ? maxInlineBytes() : maxBytes, maxReadBytes());
@@ -141,7 +145,7 @@ AgentFileReadResult AgentFileTools::read(const QString &root, const QString &rel
     if (AgentWinPath::looksBinary(result.raw)) {
         result.binary = true;
         result.error = makeError(Agent::ErrorKind::EgressBlocked,
-                                 QStringLiteral("检测到二进制内容；只允许文件名/哈希等元数据。"));
+                                 QCoreApplication::translate("AgentFileTools", "检测到二进制内容，只能读取文件名、哈希等元数据。"));
         return result;
     }
     const QString text = QString::fromUtf8(result.raw);
@@ -159,11 +163,11 @@ AgentWritePlan AgentFileTools::prepareWrite(const QString &root, const QString &
     plan.newContent = content;
     if (!isConfigWhitelist(relativePath)) {
         plan.error = makeError(Agent::ErrorKind::EgressBlocked,
-                               QStringLiteral("Stage 1B 只允许写 config/**、defaultconfigs/**、options.txt。"));
+                               QCoreApplication::translate("AgentFileTools", "只允许写入 config/**、defaultconfigs/** 和 options.txt。"));
         return plan;
     }
     if (content.toUtf8().size() > 1024 * 1024) {
-        plan.error = makeError(Agent::ErrorKind::ToolError, QStringLiteral("写入内容超过 1 MB。"));
+        plan.error = makeError(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentFileTools", "写入内容超过 1 MB。"));
         return plan;
     }
     QString normalized;
@@ -182,7 +186,7 @@ AgentWritePlan AgentFileTools::prepareWrite(const QString &root, const QString &
     if (!AgentWinPath::resolveExisting(root, normalized, false, &current, &problem)) {
         if (!expectedSha256.isEmpty() || !identityToken.isEmpty()) {
             plan.error = makeError(Agent::ErrorKind::ToolError,
-                                   QStringLiteral("目标不存在，但调用方提供了旧内容哈希/身份 token。"));
+                                   QCoreApplication::translate("AgentFileTools", "目标不存在，但调用提供了 expectedSha256 或 fileIdentityToken。"));
             return plan;
         }
         plan.creatingNew = true;
@@ -192,28 +196,28 @@ AgentWritePlan AgentFileTools::prepareWrite(const QString &root, const QString &
         return plan;
     }
     if (current.isDirectory) {
-        plan.error = makeError(Agent::ErrorKind::ToolError, QStringLiteral("目标是目录，不能写入。"));
+        plan.error = makeError(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentFileTools", "目标是目录，不能写入。"));
         return plan;
     }
     if (expectedSha256.isEmpty() || identityToken.isEmpty()) {
         plan.error = makeError(Agent::ErrorKind::ToolError,
-                               QStringLiteral("覆盖已有文件必须提供 expectedSha256 和 fileIdentityToken。"));
+                               QCoreApplication::translate("AgentFileTools", "覆盖已有文件必须提供 expectedSha256 和 fileIdentityToken。"));
         return plan;
     }
     if (identityToken != AgentWinPath::identityToken(current)) {
         plan.error = makeError(Agent::ErrorKind::ToolError,
-                               QStringLiteral("文件身份已变化，请重新读取后再试。"));
+                               QCoreApplication::translate("AgentFileTools", "文件身份已变化，请重新读取后再试。"));
         return plan;
     }
     QFile file(current.finalPath);
     if (!file.open(QIODevice::ReadOnly)) {
-        plan.error = makeError(Agent::ErrorKind::ToolError, QStringLiteral("原文件不可读。"));
+        plan.error = makeError(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentFileTools", "无法读取原文件。"));
         return plan;
     }
     const QByteArray oldBytes = file.readAll();
     if (sha256(oldBytes) != expectedSha256) {
         plan.error = makeError(Agent::ErrorKind::ToolError,
-                               QStringLiteral("文件内容哈希已变化，请重新读取后再试。"));
+                               QCoreApplication::translate("AgentFileTools", "文件内容已变化，请重新读取后再试。"));
         return plan;
     }
     plan.oldContent = QString::fromUtf8(oldBytes);
@@ -243,7 +247,7 @@ AgentWriteResult AgentFileTools::commitWrite(const QString &root, const AgentWri
     if (!AgentWinPath::resolveParent(root, normalized, &parent, &problem) ||
         AgentWinPath::identityToken(parent) != plan.parentIdentityToken) {
         result.error = makeError(Agent::ErrorKind::ToolError,
-                                 QStringLiteral("父目录身份已变化，拒绝提交。"));
+                                 QCoreApplication::translate("AgentFileTools", "父目录身份已变化，已拒绝提交。"));
         return result;
     }
     AgentWinPath::Info current;
@@ -251,39 +255,39 @@ AgentWriteResult AgentFileTools::commitWrite(const QString &root, const AgentWri
     if (plan.creatingNew) {
         if (exists) {
             result.error = makeError(Agent::ErrorKind::ToolError,
-                                     QStringLiteral("准备新建的文件在提交前已被创建，拒绝覆盖。"));
+                                     QCoreApplication::translate("AgentFileTools", "待新建的文件在提交前已存在，已拒绝覆盖。"));
             return result;
         }
     } else {
         if (!exists || current.isDirectory) {
             result.error = makeError(Agent::ErrorKind::ToolError,
-                                     QStringLiteral("目标在提交前消失或被替换。"));
+                                     QCoreApplication::translate("AgentFileTools", "目标在提交前消失或被替换。"));
             return result;
         }
         if (AgentWinPath::identityToken(current) != plan.identityToken) {
             result.error = makeError(Agent::ErrorKind::ToolError,
-                                     QStringLiteral("目标在提交前被替换/修改，拒绝写入。"));
+                                     QCoreApplication::translate("AgentFileTools", "目标在提交前被替换或修改，已拒绝写入。"));
             return result;
         }
         QFile oldFile(current.finalPath);
         if (!oldFile.open(QIODevice::ReadOnly)) {
-            result.error = makeError(Agent::ErrorKind::ToolError, QStringLiteral("目标不可读。"));
+            result.error = makeError(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentFileTools", "无法读取目标。"));
             return result;
         }
         const QByteArray oldBytes = oldFile.readAll();
         if (sha256(oldBytes) != plan.expectedSha256) {
             result.error = makeError(Agent::ErrorKind::ToolError,
-                                     QStringLiteral("目标内容在提交前变化，拒绝写入。"));
+                                     QCoreApplication::translate("AgentFileTools", "目标内容在提交前已变化，已拒绝写入。"));
             return result;
         }
         result.bytesBefore = oldBytes.size();
         if (m_backups != nullptr) {
             QString backupProblem;
             if (!m_backups->createFromBytes(sourceSessionId, instanceId, normalized, oldBytes,
-                                            QStringLiteral("fs.write 前备份"), &result.backupId,
+                                            QCoreApplication::translate("AgentFileTools", "写入文件前的备份"), &result.backupId,
                                             &backupProblem)) {
                 result.error = makeError(Agent::ErrorKind::ToolError,
-                                         QStringLiteral("写前备份失败：%1").arg(backupProblem));
+                                         QCoreApplication::translate("AgentFileTools", "写入前备份失败：%1").arg(backupProblem));
                 return result;
             }
             result.backupDir = m_backups->dirFor(result.backupId);
@@ -295,18 +299,18 @@ AgentWriteResult AgentFileTools::commitWrite(const QString &root, const AgentWri
     const QByteArray bytes = plan.newContent.toUtf8();
     if (!file.open(QIODevice::WriteOnly)) {
         result.error = makeError(Agent::ErrorKind::ToolError,
-                                 QStringLiteral("无法创建临时文件：%1").arg(file.errorString()));
+                                 QCoreApplication::translate("AgentFileTools", "无法创建临时文件：%1").arg(file.errorString()));
         return result;
     }
     if (file.write(bytes) != bytes.size()) {
         result.error = makeError(Agent::ErrorKind::ToolError,
-                                 QStringLiteral("写入临时文件失败：%1").arg(file.errorString()));
+                                 QCoreApplication::translate("AgentFileTools", "写入临时文件失败：%1").arg(file.errorString()));
         file.cancelWriting();
         return result;
     }
     if (!file.commit()) {
         result.error = makeError(Agent::ErrorKind::ToolError,
-                                 QStringLiteral("原子提交失败：%1；原文件与备份保留。")
+                                 QCoreApplication::translate("AgentFileTools", "无法提交写入：%1。原文件和备份均已保留。")
                                      .arg(file.errorString()));
         return result;
     }
@@ -314,13 +318,13 @@ AgentWriteResult AgentFileTools::commitWrite(const QString &root, const AgentWri
     QString verifyProblem;
     if (!AgentWinPath::resolveExisting(root, normalized, false, &after, &verifyProblem)) {
         result.error = makeError(Agent::ErrorKind::ToolError,
-                                 QStringLiteral("写后回读失败：%1").arg(verifyProblem));
+                                 QCoreApplication::translate("AgentFileTools", "写入后无法回读：%1").arg(verifyProblem));
         return result;
     }
     QFile verify(finalPath);
     if (!verify.open(QIODevice::ReadOnly) || verify.readAll() != bytes) {
         result.error = makeError(Agent::ErrorKind::ToolError,
-                                 QStringLiteral("写后内容校验失败；备份保留。"));
+                                 QCoreApplication::translate("AgentFileTools", "写入后内容校验失败，备份已保留。"));
         return result;
     }
     result.ok = true;
