@@ -1359,7 +1359,7 @@ RestoreResult restoreFiles(const QString &instanceDir, const QList<FilePayload> 
     const QFileInfo rootInfo(instanceDir);
     if (!rootInfo.isDir() || isLinkToElsewhere(rootInfo)) {
         return fail(RestoreResult::Stage::ReadManifest,
-                    QObject::tr("实例目录不存在或是链接，已拒绝还原：%1")
+                    QObject::tr("实例目录不存在或为链接，已拒绝还原：%1")
                         .arg(QDir::toNativeSeparators(instanceDir)));
     }
     // ① 路径：逐段合法、不重名、途经的每一层都不是链接，落点不是目录。
@@ -1450,9 +1450,9 @@ RestoreResult restoreFiles(const QString &instanceDir, const QList<FilePayload> 
         return restored;
     };
     const auto failAndRollBack = [&](RestoreResult::Stage stage, const QString &problem) {
-        if (rollBack()) return fail(stage, problem + QObject::tr("已恢复还原前的内容。"));
+        if (rollBack()) return fail(stage, problem + QObject::tr("已回滚到还原前的内容。"));
         result.recoveryFailed = true;
-        return fail(stage, problem + QObject::tr("部分文件未能恢复，请从还原前的备份手动恢复：%1")
+        return fail(stage, problem + QObject::tr("部分文件未能回滚，请从还原前的备份手动还原：%1")
                                          .arg(QDir::toNativeSeparators(result.safetyZip)));
     };
     for (const FilePayload &file : files) {

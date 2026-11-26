@@ -272,8 +272,8 @@ AgentToolResult AgentFileToolEngine::handleWrite(const Agent::ToolCall &call,
                             AgentRedaction::preview(plan.newContent, 4000),
                             AgentRedaction::redact(plan.diff).text,
                             workspaceId.isEmpty()
-                                ? QCoreApplication::translate("AgentFileToolEngine", "写入前会先备份，可在实例概览页「从快照恢复…」中还原。")
-                                : QCoreApplication::translate("AgentFileToolEngine", "写入修复工作区，不另做备份。"),
+                                ? QCoreApplication::translate("AgentFileToolEngine", "写入前会先备份，可在实例设置「备份与操作」页的「从快照恢复…」中还原。")
+                                : QCoreApplication::translate("AgentFileToolEngine", "写入修复工作区，不另行备份。"),
                             pending.egress);
 }
 

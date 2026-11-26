@@ -132,7 +132,7 @@ QString BackupController::agentPickLine(const QList<AgentBackups::Item> &group) 
         return tr("智能体写入前备份：「%1」%2（%3）").arg(title, what, time);
     }
     if (newest.trigger == AgentBackups::kTriggerBeforeRestore) {
-        return tr("智能体恢复前备份：%1（%2，%3）").arg(files, sizeText(bytes), time);
+        return tr("智能体还原前备份：%1（%2，%3）").arg(files, sizeText(bytes), time);
     }
     const QString scope = newest.scope.isEmpty() ? first
         : newest.scope.split(QLatin1Char('+'), Qt::SkipEmptyParts).join(tr("、"));
@@ -586,7 +586,7 @@ void BackupController::restoreInstance(const QString &versionId, InstanceSetting
             for (const QString &path : item.paths) paths.insert(path.toLower());
         }
         const QString body = group.constFirst().trigger == AgentBackups::kTriggerWrite
-            ? tr("将撤销该会话对「%1」中 %2 个文件的修改，恢复为会话首次写入前的内容。其他文件不变。还原前会先备份这些文件的当前内容。\n\n待还原备份：\n%3")
+            ? tr("将撤销该会话对「%1」中 %2 个文件的修改，还原为会话首次写入前的内容。其他文件不变。还原前会先备份这些文件的当前内容。\n\n待还原备份：\n%3")
             : tr("将用备份覆盖「%1」中的 %2 个文件。其他文件不变，备份后新增的文件也将保留。还原前会先备份这些文件的当前内容。\n\n待还原备份：\n%3");
         const QPointer<BackupController> alive(this);
         if (!InlineMessage::question(m_overlay, tr("还原智能体备份"),

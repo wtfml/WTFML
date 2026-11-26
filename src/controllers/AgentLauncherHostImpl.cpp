@@ -785,7 +785,7 @@ bool AgentLauncherHostImpl::restoreBackup(const QString &sessionId, const QStrin
     }
     const QString instanceId = item.instanceId;
     if (instanceId.isEmpty()) {
-        return failWith(QCoreApplication::translate("AgentLauncherHostImpl", "备份元数据缺少实例 ID，已拒绝恢复。"));
+        return failWith(QCoreApplication::translate("AgentLauncherHostImpl", "备份元数据缺少实例 ID，已拒绝还原。"));
     }
     const QString root = instanceDir(instanceId);
     if (!QFileInfo(root).isDir()) {
@@ -796,7 +796,7 @@ bool AgentLauncherHostImpl::restoreBackup(const QString &sessionId, const QStrin
         ((m_owner->m_launcherManager != nullptr && m_owner->m_launcherManager->isVersionRunning(instanceId)) ||
          m_owner->installingVersionIds().contains(instanceId) ||
          (m_owner->m_backupController != nullptr && m_owner->m_backupController->busy()))) {
-        return failWith(QCoreApplication::translate("AgentLauncherHostImpl", "实例正在运行，或正被复制、备份、还原或安装占用，已拒绝恢复。请等待其结束后再试。"));
+        return failWith(QCoreApplication::translate("AgentLauncherHostImpl", "实例正在运行或正被其他操作占用，已拒绝还原。请等待结束后再试。"));
     }
     QList<BackupFiles::FilePayload> files;
     if (!AgentBackups::readFiles(item, &m_maintenance, &files, problem)) return false;

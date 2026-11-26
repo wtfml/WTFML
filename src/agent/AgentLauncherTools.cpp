@@ -1490,7 +1490,7 @@ AgentToolResult AgentLauncherTools::handleBackupCreate(const Agent::ToolCall &ca
                                 .arg(plan.scope)
                                 .arg(plan.relativePaths.size());
     return approvalRequired(pending, QCoreApplication::translate("AgentLauncherTools", "创建维护备份"), summary, preview, QString(),
-                            QCoreApplication::translate("AgentLauncherTools", "备份保存在启动器备份目录，删除会话不会删除它。"),
+                            QCoreApplication::translate("AgentLauncherTools", "备份保存在启动器备份目录，删除会话不影响备份。"),
                             pending.egress);
 }
 
@@ -1522,12 +1522,12 @@ AgentToolResult AgentLauncherTools::handleBackupRestore(const Agent::ToolCall &c
     if (!found) return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentLauncherTools", "找不到该备份。"));
     if (!target.restorable) {
         return errorResult(Agent::ErrorKind::ToolError,
-                           QCoreApplication::translate("AgentLauncherTools", "该备份由启动器管理，请在实例概览页「从快照恢复…」中还原。"));
+                           QCoreApplication::translate("AgentLauncherTools", "该备份由启动器管理，请在实例设置「备份与操作」页的「从快照恢复…」中还原。"));
     }
     // 只准写回会话锁定的实例（D8）：备份记的是别的实例就拒绝，不跟着元数据写过去。
     if (target.instanceId.isEmpty() || target.instanceId != context.instanceId) {
         return errorResult(Agent::ErrorKind::ToolError,
-                           QCoreApplication::translate("AgentLauncherTools", "该备份不属于当前锁定的实例，已拒绝恢复。"));
+                           QCoreApplication::translate("AgentLauncherTools", "该备份不属于当前锁定的实例，已拒绝还原。"));
     }
     Pending pending;
     pending.kind = Pending::Kind::BackupRestore;

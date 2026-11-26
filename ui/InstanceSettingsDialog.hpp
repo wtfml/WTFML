@@ -1747,7 +1747,7 @@ signals:
     void createSnapshotRequested();
 
     /**
-     * @brief 用户点了概览栏那颗「从快照恢复…」。
+     * @brief 用户点了备份与操作页那颗「从快照恢复…」。
      *
      * 挑哪一份、确认、以及"还原之前先给现在这一份做安全快照"全在 MainWindow 那边。
      */

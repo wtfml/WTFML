@@ -695,11 +695,11 @@ int MwAgentChecks(QApplication &app) {
         const bool refused = !host.restoreBackup(QStringLiteral("mw-session"), backupId, &snapshot, &problem);
         window.releaseFileOperationBusyForTest(instanceId);
         check(refused && readOptions() == QByteArray("fov:110\n"),
-              "★ 备份闸：实例正被占用时拒绝恢复，文件不动", problem);
+              "★ 备份闸：实例正被占用时拒绝还原，文件不动", problem);
         problem.clear();
         check(host.restoreBackup(QStringLiteral("mw-session"), backupId, &snapshot, &problem) &&
                   readOptions() == QByteArray("fov:70\n") && !snapshot.isEmpty(),
-              "备份闸：占用解除后恢复成功并留下恢复前备份", problem);
+              "备份闸：占用解除后还原成功并留下还原前备份", problem);
         check(!window.instanceBusyForTest(instanceId),
               "备份闸：恢复结束后实例不再记成忙");
         QDir(root).removeRecursively();
