@@ -5,6 +5,7 @@
 
 #include "AgentInstanceLock.hpp"
 
+#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDir>
@@ -22,7 +23,7 @@ QString gameRootId(const QString &gameRootPath) {
 
 bool lock(AgentSession *session, const AgentInstanceInfo &info, QString *problem) {
     if (session == nullptr || !info.isValid()) {
-        if (problem != nullptr) *problem = QStringLiteral("没有可锁定的实例。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentInstanceLock", "没有可锁定的实例。");
         return false;
     }
     AgentInstanceLock value;
@@ -44,8 +45,8 @@ bool isUsable(const AgentInstanceLock &lock, const AgentInstanceInfo &current) {
 }
 
 QString chipText(const AgentInstanceLock &lock, const AgentInstanceInfo &current) {
-    if (!lock.isValid()) return current.isValid() ? current.name : QStringLiteral("无");
-    return isUsable(lock, current) ? lock.name : QStringLiteral("%1（不可用）").arg(lock.name);
+    if (!lock.isValid()) return current.isValid() ? current.name : QCoreApplication::translate("AgentInstanceLock", "无");
+    return isUsable(lock, current) ? lock.name : QCoreApplication::translate("AgentInstanceLock", "%1（不可用）").arg(lock.name);
 }
 
 }  // namespace AgentInstanceLocks

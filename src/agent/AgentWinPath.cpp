@@ -5,6 +5,7 @@
 
 #include "AgentWinPath.hpp"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
 #include <QRegularExpression>
@@ -57,12 +58,12 @@ bool reservedSegment(const QString &segment, QString *problem) {
     static const QStringList fixed{QStringLiteral("CON"), QStringLiteral("PRN"),
                                    QStringLiteral("AUX"), QStringLiteral("NUL")};
     if (fixed.contains(upper)) {
-        if (problem != nullptr) *problem = QStringLiteral("路径使用 Windows 保留设备名：%1").arg(segment);
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentWinPath", "路径使用 Windows 保留设备名：%1").arg(segment);
         return true;
     }
     static const QRegularExpression com(QStringLiteral("^(COM|LPT)[1-9]$"));
     if (com.match(upper).hasMatch()) {
-        if (problem != nullptr) *problem = QStringLiteral("路径使用 Windows 保留设备名：%1").arg(segment);
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentWinPath", "路径使用 Windows 保留设备名：%1").arg(segment);
         return true;
     }
     return false;
@@ -79,24 +80,24 @@ struct HandleCloser {
 bool fillInfo(HANDLE handle, const QString &expectedPath, Info *info, QString *problem) {
     FILE_ATTRIBUTE_TAG_INFO tag{};
     if (!GetFileInformationByHandleEx(handle, FileAttributeTagInfo, &tag, sizeof(tag))) {
-        if (problem != nullptr) *problem = QStringLiteral("读取文件属性失败。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentWinPath", "无法读取文件属性。");
         return false;
     }
     if ((tag.FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0) {
-        if (problem != nullptr) *problem = QStringLiteral("路径包含 reparse/junction/symlink，已拒绝。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentWinPath", "路径包含重解析点（junction 或符号链接），已拒绝。");
         return false;
     }
     wchar_t finalBuffer[32768] = {};
     const DWORD length = GetFinalPathNameByHandleW(handle, finalBuffer, 32767, FILE_NAME_NORMALIZED);
     if (length == 0 || length >= 32767) {
-        if (problem != nullptr) *problem = QStringLiteral("无法读取最终路径。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentWinPath", "无法读取最终路径。");
         return false;
     }
     const QString finalPath = stripWinPrefix(QString::fromWCharArray(finalBuffer, int(length)));
     const QString expected = canonicalTextPath(expectedPath);
     if (QString::compare(finalPath, expected, Qt::CaseInsensitive) != 0) {
         if (problem != nullptr) {
-            *problem = QStringLiteral("最终路径与预期不一致（可能是 junction/symlink 逃逸）：%1")
+            *problem = QCoreApplication::translate("AgentWinPath", "最终路径与预期不一致，可能经 junction 或符号链接指向别处：%1")
                            .arg(finalPath);
         }
         return false;
@@ -104,17 +105,17 @@ bool fillInfo(HANDLE handle, const QString &expectedPath, Info *info, QString *p
 
     FILE_ID_INFO fileId{};
     if (!GetFileInformationByHandleEx(handle, FileIdInfo, &fileId, sizeof(fileId))) {
-        if (problem != nullptr) *problem = QStringLiteral("无法读取文件 ID。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentWinPath", "无法读取文件 ID。");
         return false;
     }
     FILE_BASIC_INFO basic{};
     if (!GetFileInformationByHandleEx(handle, FileBasicInfo, &basic, sizeof(basic))) {
-        if (problem != nullptr) *problem = QStringLiteral("无法读取文件时间。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentWinPath", "无法读取文件时间。");
         return false;
     }
     LARGE_INTEGER size{};
     if (!GetFileSizeEx(handle, &size)) {
-        if (problem != nullptr) *problem = QStringLiteral("无法读取文件大小。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentWinPath", "无法读取文件大小。");
         return false;
     }
     info->finalPath = finalPath;
@@ -138,7 +139,7 @@ bool openAndValidate(const QString &path, bool directory, Info *info, QString *p
                                 OPEN_EXISTING, flags, nullptr);
     if (handle == INVALID_HANDLE_VALUE) {
         if (problem != nullptr) {
-            *problem = QStringLiteral("无法打开路径（错误码 %1）：%2").arg(int(GetLastError())).arg(path);
+            *problem = QCoreApplication::translate("AgentWinPath", "无法打开路径（错误码 %1）：%2").arg(int(GetLastError())).arg(path);
         }
         return false;
     }
@@ -154,20 +155,20 @@ bool normalizeRelative(const QString &relative, QString *normalized, QString *pr
         if (problem != nullptr) *problem = text;
         return false;
     };
-    if (relative.isEmpty()) return reject(QStringLiteral("相对路径为空。"));
-    if (relative.size() > 1024) return reject(QStringLiteral("相对路径过长。"));
+    if (relative.isEmpty()) return reject(QCoreApplication::translate("AgentWinPath", "相对路径为空。"));
+    if (relative.size() > 1024) return reject(QCoreApplication::translate("AgentWinPath", "相对路径过长。"));
     QString value = QDir::fromNativeSeparators(relative);
     if (value.startsWith(kSlash) || value.startsWith(kBackslash) || QDir::isAbsolutePath(value) ||
         QRegularExpression(QStringLiteral("^[A-Za-z]:")).match(value).hasMatch() ||
         (value.size() >= 2 && value.at(0) == kBackslash && value.at(1) == kBackslash)) {
-        return reject(QStringLiteral("只接受实例内相对路径。"));
+        return reject(QCoreApplication::translate("AgentWinPath", "只接受实例目录内的相对路径。"));
     }
-    if (value.contains(QLatin1Char(':'))) return reject(QStringLiteral("路径不能包含冒号/ADS。"));
+    if (value.contains(QLatin1Char(':'))) return reject(QCoreApplication::translate("AgentWinPath", "路径不能包含冒号（ADS）。"));
     for (const QChar ch : value) {
         if (ch.unicode() < 0x20 || ch == QLatin1Char('<') || ch == QLatin1Char('>') ||
             ch == QLatin1Char('"') || ch == QLatin1Char('|') || ch == QLatin1Char('?') ||
             ch == QLatin1Char('*')) {
-            return reject(QStringLiteral("路径包含非法字符。"));
+            return reject(QCoreApplication::translate("AgentWinPath", "路径包含非法字符。"));
         }
     }
     const QStringList parts = value.split(kSlash);
@@ -175,15 +176,15 @@ bool normalizeRelative(const QString &relative, QString *normalized, QString *pr
     for (const QString &part : parts) {
         if (part.isEmpty()) continue;
         if (part == QStringLiteral("..") || part == QStringLiteral(".")) {
-            return reject(QStringLiteral("路径不能包含 . 或 .. 段。"));
+            return reject(QCoreApplication::translate("AgentWinPath", "路径不能包含 . 或 .. 段。"));
         }
         if (part.endsWith(QLatin1Char('.')) || part.endsWith(QLatin1Char(' '))) {
-            return reject(QStringLiteral("路径段不能以点或空格结尾：%1").arg(part));
+            return reject(QCoreApplication::translate("AgentWinPath", "路径段不能以点或空格结尾：%1").arg(part));
         }
         if (reservedSegment(part, problem)) return false;
         cleaned.append(part);
     }
-    if (cleaned.isEmpty()) return reject(QStringLiteral("相对路径为空。"));
+    if (cleaned.isEmpty()) return reject(QCoreApplication::translate("AgentWinPath", "相对路径为空。"));
     if (normalized != nullptr) *normalized = cleaned.join(kSlash);
     return true;
 }
@@ -193,7 +194,7 @@ bool resolveRoot(const QString &root, Info *info, QString *problem) {
     return openAndValidate(root, true, info, problem);
 #else
     Q_UNUSED(info);
-    if (problem != nullptr) *problem = QStringLiteral("尚未实现非 Windows 句柄级路径校验。");
+    if (problem != nullptr) *problem = QCoreApplication::translate("AgentWinPath", "非 Windows 系统尚不支持句柄级路径校验。");
     return false;
 #endif
 }
@@ -206,14 +207,14 @@ bool resolveExisting(const QString &root, const QString &relative, bool expectDi
 #if defined(Q_OS_WIN)
     if (!openAndValidate(path, expectDirectory, info, problem)) return false;
     if (expectDirectory && !info->isDirectory) {
-        if (problem != nullptr) *problem = QStringLiteral("目标不是目录。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentWinPath", "目标不是目录。");
         return false;
     }
     return true;
 #else
     Q_UNUSED(expectDirectory);
     Q_UNUSED(info);
-    if (problem != nullptr) *problem = QStringLiteral("尚未实现非 Windows 句柄级路径校验。");
+    if (problem != nullptr) *problem = QCoreApplication::translate("AgentWinPath", "非 Windows 系统尚不支持句柄级路径校验。");
     return false;
 #endif
 }
@@ -228,7 +229,7 @@ bool resolveParent(const QString &root, const QString &relative, Info *info, QSt
 #if defined(Q_OS_WIN)
         return openAndValidate(root, true, info, problem);
 #else
-        if (problem != nullptr) *problem = QStringLiteral("尚未实现非 Windows 句柄级路径校验。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentWinPath", "非 Windows 系统尚不支持句柄级路径校验。");
         return false;
 #endif
     }

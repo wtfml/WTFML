@@ -8,6 +8,7 @@
 #include "AgentPaths.hpp"
 #include "util/SecretProtector.hpp"
 
+#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
@@ -84,19 +85,19 @@ bool AgentBackupIndex::createFromBytes(const QString &sourceSessionId, const QSt
     const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     const QString dir = dirFor(id);
     if (!QDir().mkpath(dir)) {
-        if (problem != nullptr) *problem = QStringLiteral("无法创建维护备份目录。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentBackupIndex", "无法创建维护备份目录。");
         return false;
     }
     const QByteArray encrypted = SecretProtector::protect(original, backupMagic());
     if (encrypted.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("备份 DPAPI 加密失败，拒绝保存。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentBackupIndex", "备份加密失败，未保存。");
         return false;
     }
     {
         QSaveFile file(dir + QStringLiteral("/original.enc"));
         if (!file.open(QIODevice::WriteOnly) || file.write(encrypted) != encrypted.size() ||
             !file.commit()) {
-            if (problem != nullptr) *problem = QStringLiteral("备份内容写盘失败。");
+            if (problem != nullptr) *problem = QCoreApplication::translate("AgentBackupIndex", "备份内容写入失败。");
             return false;
         }
     }
@@ -108,7 +109,7 @@ bool AgentBackupIndex::createFromBytes(const QString &sourceSessionId, const QSt
     entry.originalPaths = {relativePath};
     entry.sha256 = QString::fromLatin1(
         QCryptographicHash::hash(original, QCryptographicHash::Sha256).toHex());
-    entry.restoreHint = QStringLiteral("本机当前 Windows 用户可通过 Agent 备份元数据恢复。");
+    entry.restoreHint = QStringLiteral("Restorable by the current Windows user on this device via the agent backup metadata.");  // i18n-ignore: stored metadata, never shown
     entry.size = original.size();
     entry.createdAt = QDateTime::currentDateTimeUtc();
     if (!writeMeta(entry, problem)) {
@@ -123,7 +124,7 @@ bool AgentBackupIndex::createFromFiles(const QString &sourceSessionId, const QSt
                                       const QList<QPair<QString, QByteArray>> &files,
                                       const QString &reason, QString *backupId, QString *problem) {
     if (files.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("没有可备份的文件。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentBackupIndex", "没有可备份的文件。");
         return false;
     }
     QJsonArray array;
@@ -141,13 +142,13 @@ bool AgentBackupIndex::createFromFiles(const QString &sourceSessionId, const QSt
     const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     const QString dir = dirFor(id);
     if (!QDir().mkpath(dir)) {
-        if (problem != nullptr) *problem = QStringLiteral("无法创建维护备份目录。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentBackupIndex", "无法创建维护备份目录。");
         return false;
     }
     const QByteArray encrypted = SecretProtector::protect(payload, backupMagic());
     if (encrypted.isEmpty()) {
         QDir(dir).removeRecursively();
-        if (problem != nullptr) *problem = QStringLiteral("备份 DPAPI 加密失败，拒绝保存。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentBackupIndex", "备份加密失败，未保存。");
         return false;
     }
     {
@@ -155,7 +156,7 @@ bool AgentBackupIndex::createFromFiles(const QString &sourceSessionId, const QSt
         if (!file.open(QIODevice::WriteOnly) || file.write(encrypted) != encrypted.size() ||
             !file.commit()) {
             QDir(dir).removeRecursively();
-            if (problem != nullptr) *problem = QStringLiteral("备份内容写盘失败。");
+            if (problem != nullptr) *problem = QCoreApplication::translate("AgentBackupIndex", "备份内容写入失败。");
             return false;
         }
     }
@@ -167,7 +168,7 @@ bool AgentBackupIndex::createFromFiles(const QString &sourceSessionId, const QSt
     entry.originalPaths = paths;
     entry.sha256 = QString::fromLatin1(
         QCryptographicHash::hash(payload, QCryptographicHash::Sha256).toHex());
-    entry.restoreHint = QStringLiteral("本机当前 Windows 用户可通过 Agent 备份元数据恢复。");
+    entry.restoreHint = QStringLiteral("Restorable by the current Windows user on this device via the agent backup metadata.");  // i18n-ignore: stored metadata, never shown
     entry.size = payload.size();
     entry.createdAt = QDateTime::currentDateTimeUtc();
     if (!writeMeta(entry, problem)) {
@@ -206,7 +207,7 @@ bool AgentBackupIndex::readFiles(const QString &backupId,
         }
     }
     if (result.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("备份内容为空或格式认不出来。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentBackupIndex", "备份内容为空或格式无法识别。");
         return false;
     }
     if (files != nullptr) *files = result;
@@ -219,7 +220,7 @@ bool AgentBackupIndex::writeMeta(const AgentBackupEntry &entry, QString *problem
     if (!file.open(QIODevice::WriteOnly) ||
         file.write(QJsonDocument(entry.toJson()).toJson(QJsonDocument::Indented)) < 0 ||
         !file.commit()) {
-        if (problem != nullptr) *problem = QStringLiteral("备份元数据写盘失败。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentBackupIndex", "备份元数据写入失败。");
         return false;
     }
     return true;
@@ -249,12 +250,12 @@ bool AgentBackupIndex::readOriginal(const QString &backupId, QByteArray *bytes,
                                     QString *problem) {
     QFile file(dirFor(backupId) + QStringLiteral("/original.enc"));
     if (!file.open(QIODevice::ReadOnly)) {
-        if (problem != nullptr) *problem = QStringLiteral("备份不存在。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentBackupIndex", "备份不存在。");
         return false;
     }
     const QByteArray plain = SecretProtector::unprotect(file.readAll(), backupMagic());
     if (plain.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("备份无法解密。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentBackupIndex", "备份无法解密。");
         return false;
     }
     if (bytes != nullptr) *bytes = plain;
@@ -268,7 +269,7 @@ bool AgentBackupIndex::removeOwnedBackup(const QString &backupId, QString *probl
         AgentBackupEntry::fromJson(QJsonDocument::fromJson(meta.readAll()).object());
     meta.close();
     if (entry.owner != QStringLiteral("agent")) {
-        if (problem != nullptr) *problem = QStringLiteral("只允许清理 owner=agent 的备份。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentBackupIndex", "只能清理智能体创建的备份（owner=agent）。");
         return false;
     }
     QDir dir(dirFor(backupId));
@@ -279,6 +280,6 @@ bool AgentBackupIndex::removeOwnedBackup(const QString &backupId, QString *probl
     const QFileInfoList dirs = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
     for (const QFileInfo &child : dirs) ok = QDir(child.absoluteFilePath()).removeRecursively() && ok;
     ok = QDir().rmdir(dir.absolutePath()) && ok;
-    if (!ok && problem != nullptr) *problem = QStringLiteral("备份目录未能完全删除。");
+    if (!ok && problem != nullptr) *problem = QCoreApplication::translate("AgentBackupIndex", "备份目录未能完全删除。");
     return ok;
 }
