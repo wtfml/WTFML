@@ -13992,6 +13992,10 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>不再提示</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>无法刷新登录凭据</source>
             <translation type="unfinished"></translation>
         </message>
@@ -17512,10 +17516,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>启动 %1</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>停止游戏</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
