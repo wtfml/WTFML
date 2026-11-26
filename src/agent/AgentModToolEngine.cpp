@@ -117,23 +117,23 @@ QList<AgentToolSpec> AgentModToolEngine::specs() {
     list.append(spec(
         QStringLiteral("mods.analyzeCompatibility"),
         QCoreApplication::translate("AgentModToolEngine", "模组兼容性分析"),
-        QStringLiteral("读每个模组 JAR 的本地声明（加载器/游戏版本/Java/前置），对照实例判断"  // i18n-ignore
-                       "加载器不匹配、版本不兼容、缺前置、重复、文件损坏；offline=false 时"  // i18n-ignore
-                       "经确认后把 SHA-1 发给 Modrinth 补平台结论。"),  // i18n-ignore
+        QStringLiteral("Read local declarations (loader/game version/Java/dependencies) from each mod JAR and check them against the instance to detect "
+                       "loader mismatches, version incompatibilities, missing dependencies, duplicates, and corruption; "
+                       "when offline=false, query Modrinth by SHA-1 after user confirmation."),
         AgentRisk::NetworkRead,
         objectSchema({}, {{QStringLiteral("offline"), boolField()}})));
     list.append(spec(
         QStringLiteral("mods.verifyFiles"),
         QCoreApplication::translate("AgentModToolEngine", "校验模组文件"),
-        QStringLiteral("逐个检查 mods/ 下的 JAR：zip 结构、大小、SHA-1；platform=true 时经确认"  // i18n-ignore
-                       "后按哈希在 Modrinth 找回候选版本。"),  // i18n-ignore
+        QStringLiteral("Inspect every JAR under mods/ for zip integrity, size, and SHA-1; "
+                       "when platform=true, look up candidate versions on Modrinth by hash after user confirmation."),
         AgentRisk::NetworkRead,
         objectSchema({}, {{QStringLiteral("platform"), boolField()}})));
     list.append(spec(
         QStringLiteral("mods.installFix"),
         QCoreApplication::translate("AgentModToolEngine", "修复模组文件"),
-        QStringLiteral("只接受 projectId/versionId/expectedSha1：本地解析下载地址，下载到暂存目录，"  // i18n-ignore
-                       "校验大小和 SHA-1 后写进事务工作区（可补齐必需前置）；没有活动事务时拒绝。"),  // i18n-ignore
+        QStringLiteral("Accepts only projectId/versionId/expectedSha1: resolve download URL locally, download to staging, "
+                       "verify size and SHA-1, then install into the transaction workspace (can also fetch missing mandatory dependencies); rejects without an active transaction."),
         AgentRisk::Write,
         objectSchema({QStringLiteral("projectId"), QStringLiteral("workspaceId")},
                      {{QStringLiteral("projectId"), stringField(QStringLiteral("string"), 64)},
@@ -144,8 +144,8 @@ QList<AgentToolSpec> AgentModToolEngine::specs() {
     list.append(spec(
         QStringLiteral("mods.bisect"),
         QCoreApplication::translate("AgentModToolEngine", "依赖感知二分"),
-        QStringLiteral("在事务工作区里反复启停模组并启动游戏，用 delta debugging 找出"  // i18n-ignore
-                       "哪些模组一起启用才崩；必需前置始终启用，结束后工作区恢复基线。"),  // i18n-ignore
+        QStringLiteral("Repeatedly toggle mods and launch the game inside a transaction workspace using delta debugging "
+                       "to find which mods crash together; mandatory dependencies stay enabled and the workspace baseline is restored afterwards."),
         AgentRisk::Command,
         objectSchema({QStringLiteral("workspaceId")},
                      {{QStringLiteral("workspaceId"), stringField(QStringLiteral("string"), 80)},
@@ -165,8 +165,8 @@ QList<AgentToolSpec> AgentModToolEngine::specs() {
     list.append(spec(
         QStringLiteral("instance.repairCore"),
         QCoreApplication::translate("AgentModToolEngine", "修复游戏核心文件"),
-        QStringLiteral("按实例声明的官方大小与 SHA-1 重下客户端 jar、库和资源索引；"  // i18n-ignore
-                       "每次审批，事务活动期间拒绝。"),  // i18n-ignore
+        QStringLiteral("Redownload client JAR, libraries, and asset index matching the instance's official size and SHA-1; "
+                       "requires per-action approval and rejects while a transaction is active."),
         AgentRisk::Destructive, objectSchema({}, {})));
     return list;
 }
@@ -968,8 +968,8 @@ void AgentModToolEngine::copyStagedIntoWorkspace(Run run) {
                            {QStringLiteral("installed"), installed},
                            {QStringLiteral("dependenciesFetched"), int(run.targets.size()) - 1},
                            {QStringLiteral("note"),
-                            QCoreApplication::translate("AgentModToolEngine", "只改了事务工作区；用 repair.diff 看改动，repair.verify 验证，"
-                                  "repair.finish 提交或回滚。")}};  // i18n-ignore
+                            QStringLiteral("Only modified the transaction workspace; inspect with repair.diff, "
+                                           "verify with repair.verify, and commit or roll back with repair.finish.")}};
     const QString summary = QCoreApplication::translate("AgentModToolEngine", "模组修复：%1 个文件已写进工作区（事务 %2）")
                                 .arg(run.staged.size())
                                 .arg(run.pending.transactionId);
@@ -997,8 +997,8 @@ void AgentModToolEngine::startRepairCore(const Pending &pending) {
                 }
                 const QJsonObject data{{QStringLiteral("repaired"), true},
                                        {QStringLiteral("note"),
-                                        QCoreApplication::translate("AgentModToolEngine", "已把缺文件/哈希不符的文件排进下载并等它收尾；"
-                                              "再跑 instance.integrity 复核分组计数。")}};  // i18n-ignore
+                                        QStringLiteral("Queued missing or hash-mismatched files for download and awaited completion; "
+                                                       "run instance.integrity again to recheck category counts.")}};
                 finishWithData(run, data,
                                QCoreApplication::translate("AgentModToolEngine", "核心文件已按官方大小与 SHA-1 修复完成。"));
             });

@@ -175,7 +175,7 @@ AgentToolResult AgentMcpToolEngine::resultFromContent(const Agent::ToolCall &cal
         } else if (type == QStringLiteral("image")) {
             images.append(item.value(QStringLiteral("mimeType")).toString());
         } else {
-            text += QStringLiteral("[%1 内容未内联]").arg(type);
+            text += QStringLiteral("[%1 content not inlined]").arg(type);
             text += QLatin1Char('\n');
         }
     }
@@ -198,7 +198,7 @@ AgentToolResult AgentMcpToolEngine::resultFromContent(const Agent::ToolCall &cal
     bool truncated = false;
     if (inlineText.toUtf8().size() > kInlineResultBytes) {
         inlineText = QString::fromUtf8(inlineText.toUtf8().left(kInlineResultBytes)) +
-                     QStringLiteral("\n…（MCP 结果已截断）");
+                     QStringLiteral("\n…(MCP result truncated)");
         truncated = true;
     }
     data.insert(QStringLiteral("content"), inlineText);

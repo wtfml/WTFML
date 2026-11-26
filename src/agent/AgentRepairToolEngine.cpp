@@ -54,7 +54,7 @@ AgentToolSpec spec(const QString &name, const QString &displayName, const QStrin
 QJsonObject localEgress() {
     return QJsonObject{{QStringLiteral("kind"), QStringLiteral("local")},
                        {QStringLiteral("decision"), QStringLiteral("auto")},
-                       {QStringLiteral("reason"), QStringLiteral("事务只在本机工作区，不发送文件内容")},  // i18n-ignore
+                       {QStringLiteral("reason"), QStringLiteral("Transactions stay inside the local workspace and never send file contents")},
                        {QStringLiteral("redactionHits"), 0}};
 }
 
@@ -71,13 +71,13 @@ QStringList parseScopes(const QJsonValue &value, QString *problem) {
     for (const QString &raw : parts) {
         const QString scope = raw.trimmed();
         if (!AgentRepairTransactionStore::validScope(scope)) {
-            if (problem != nullptr) *problem = QStringLiteral("不认识的修复范围：%1").arg(scope);  // i18n-ignore
+            if (problem != nullptr) *problem = QStringLiteral("Unknown repair scope: %1").arg(scope);
             return {};
         }
         if (!scopes.contains(scope)) scopes.append(scope);
     }
     if (scopes.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("至少选择一个修复范围。");  // i18n-ignore
+        if (problem != nullptr) *problem = QStringLiteral("Select at least one repair scope.");
         return {};
     }
     return scopes;
@@ -163,19 +163,19 @@ QList<AgentToolSpec> AgentRepairToolEngine::specs() {
           enumField({QStringLiteral("commit"), QStringLiteral("rollback")})}});
     return {
         spec(QStringLiteral("repair.begin"), QCoreApplication::translate("AgentRepairToolEngine", "开始修复事务"),
-             QStringLiteral("复制隔离工作区并记录基线；后续写工具用 workspaceId 落到工作区。"),  // i18n-ignore
+             QStringLiteral("Create an isolated workspace copy and record its baseline; subsequent write tools target the workspace via workspaceId."),
              AgentRisk::Write, beginSchema),
         spec(QStringLiteral("repair.diff"), QCoreApplication::translate("AgentRepairToolEngine", "查看事务差异"),
-             QStringLiteral("列出工作区相对基线的改动文件、哈希和配置预览。"),  // i18n-ignore
+             QStringLiteral("List modified files, hashes, and config previews in the workspace relative to baseline."),
              AgentRisk::ReadOnly, txSchema),
         spec(QStringLiteral("repair.verify"), QCoreApplication::translate("AgentRepairToolEngine", "验证修复事务"),
-             QStringLiteral("在事务工作区跑测试启动，记录里程碑/崩溃/超时到事务日志。"),  // i18n-ignore
+             QStringLiteral("Run a test launch in the transaction workspace and record milestones, crashes, or timeouts to the transaction log."),
              AgentRisk::Command, verifySchema),
         spec(QStringLiteral("repair.finish"), QCoreApplication::translate("AgentRepairToolEngine", "提交或回滚事务"),
-             QStringLiteral("commit 先备份再重放差异；rollback 丢弃工作区。"),  // i18n-ignore
+             QStringLiteral("commit creates a backup before replaying diffs; rollback discards the workspace."),
              AgentRisk::Write, finishSchema),
         spec(QStringLiteral("repair.status"), QCoreApplication::translate("AgentRepairToolEngine", "查看修复事务"),
-             QStringLiteral("列出活动/中断事务、状态和验证结果；不返回本机路径。"),  // i18n-ignore
+             QStringLiteral("List active/interrupted transactions, status, and verification outcomes; never returns local paths."),
              AgentRisk::ReadOnly, objectSchema(QString(), {})),
     };
 }

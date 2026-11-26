@@ -30,37 +30,37 @@ bool validateValue(const QJsonValue &schemaValue, const QJsonValue &value, const
     const QString type = schema.value(QStringLiteral("type")).toString();
     if (type == QStringLiteral("string")) {
         if (!value.isString()) {
-            if (problem != nullptr) *problem = QStringLiteral("%1 必须是字符串。").arg(path);
+            if (problem != nullptr) *problem = QStringLiteral("%1 must be a string.").arg(path);
             return false;
         }
         const int maxLength = schema.value(QStringLiteral("maxLength")).toInt(-1);
         if (maxLength >= 0 && value.toString().size() > maxLength) {
-            if (problem != nullptr) *problem = QStringLiteral("%1 超过最大长度。").arg(path);
+            if (problem != nullptr) *problem = QStringLiteral("%1 exceeds maxLength.").arg(path);
             return false;
         }
     } else if (type == QStringLiteral("integer") || type == QStringLiteral("number")) {
         if (!value.isDouble()) {
-            if (problem != nullptr) *problem = QStringLiteral("%1 必须是数字。").arg(path);
+            if (problem != nullptr) *problem = QStringLiteral("%1 must be a number.").arg(path);
             return false;
         }
         if (type == QStringLiteral("integer") && value.toDouble() != double(value.toInt())) {
-            if (problem != nullptr) *problem = QStringLiteral("%1 必须是整数。").arg(path);
+            if (problem != nullptr) *problem = QStringLiteral("%1 must be an integer.").arg(path);
             return false;
         }
         const int maximum = schema.value(QStringLiteral("maximum")).toInt(-1);
         if (maximum >= 0 && value.toDouble() > maximum) {
-            if (problem != nullptr) *problem = QStringLiteral("%1 超过最大值。").arg(path);
+            if (problem != nullptr) *problem = QStringLiteral("%1 exceeds maximum.").arg(path);
             return false;
         }
     } else if (type == QStringLiteral("array")) {
         if (!value.isArray()) {
-            if (problem != nullptr) *problem = QStringLiteral("%1 必须是数组。").arg(path);  // i18n-ignore
+            if (problem != nullptr) *problem = QStringLiteral("%1 must be an array.").arg(path);
             return false;
         }
         const QJsonArray array = value.toArray();
         const int maxItems = schema.value(QStringLiteral("maxItems")).toInt(-1);
         if (maxItems >= 0 && array.size() > maxItems) {
-            if (problem != nullptr) *problem = QStringLiteral("%1 超过最多条数。").arg(path);  // i18n-ignore
+            if (problem != nullptr) *problem = QStringLiteral("%1 exceeds maxItems.").arg(path);
             return false;
         }
         const QJsonObject items = schema.value(QStringLiteral("items")).toObject();
@@ -74,7 +74,7 @@ bool validateValue(const QJsonValue &schemaValue, const QJsonValue &value, const
         }
     } else if (type == QStringLiteral("object")) {
         if (!value.isObject()) {
-            if (problem != nullptr) *problem = QStringLiteral("%1 必须是对象。").arg(path);
+            if (problem != nullptr) *problem = QStringLiteral("%1 must be an object.").arg(path);
             return false;
         }
         const QJsonObject object = value.toObject();
@@ -82,7 +82,8 @@ bool validateValue(const QJsonValue &schemaValue, const QJsonValue &value, const
         for (const QJsonValue &required : schema.value(QStringLiteral("required")).toArray()) {
             if (!object.contains(required.toString())) {
                 if (problem != nullptr) {
-                    *problem = QStringLiteral("%1 缺少必填字段 %2。").arg(path, required.toString());
+                    *problem = QStringLiteral("%1 is missing required field %2.")
+                                   .arg(path, required.toString());
                 }
                 return false;
             }
@@ -92,7 +93,7 @@ bool validateValue(const QJsonValue &schemaValue, const QJsonValue &value, const
             if (!properties.contains(it.key())) {
                 if (!allowAdditional) {
                     if (problem != nullptr) {
-                        *problem = QStringLiteral("%1 含未知字段 %2。").arg(path, it.key());
+                        *problem = QStringLiteral("%1 contains unknown field %2.").arg(path, it.key());
                     }
                     return false;
                 }
@@ -111,7 +112,7 @@ bool validateValue(const QJsonValue &schemaValue, const QJsonValue &value, const
             if (candidate == value) found = true;
         }
         if (!found) {
-            if (problem != nullptr) *problem = QStringLiteral("%1 不在允许的枚举值里。").arg(path);
+            if (problem != nullptr) *problem = QStringLiteral("%1 is not in allowed enum values.").arg(path);
             return false;
         }
     }
@@ -135,7 +136,7 @@ QList<AgentToolSpec> AgentToolRegistry::fileBuiltins() {
     QList<AgentToolSpec> list;
     list.append(AgentToolSpec{
         QStringLiteral("fs.list"), QCoreApplication::translate("AgentToolRegistry", "查看目录概况"),
-        QStringLiteral("只返回锁定实例内的目录元数据（数量/大小），不返回文件名。"),
+        QStringLiteral("Return directory metadata only (file counts and sizes) inside the locked instance; does not return filenames."),
         AgentRisk::ReadOnly,
         objectSchema({QStringLiteral("path")},
                      {{QStringLiteral("path"),
@@ -143,7 +144,7 @@ QList<AgentToolSpec> AgentToolRegistry::fileBuiltins() {
                                    {QStringLiteral("maxLength"), 1024}}}})});
     list.append(AgentToolSpec{
         QStringLiteral("fs.listNames"), QCoreApplication::translate("AgentToolRegistry", "查看完整文件名"),
-        QStringLiteral("返回目录内完整文件名；每次都需要用户确认，截断到 2000 项。"),
+        QStringLiteral("Return full filenames in a directory; requires user confirmation every time, truncated at 2000 items."),
         AgentRisk::ReadOnly,
         objectSchema({QStringLiteral("path")},
                      {{QStringLiteral("path"),
@@ -154,7 +155,7 @@ QList<AgentToolSpec> AgentToolRegistry::fileBuiltins() {
                                    {QStringLiteral("maximum"), 2000}}}})});
     list.append(AgentToolSpec{
         QStringLiteral("fs.read"), QCoreApplication::translate("AgentToolRegistry", "读取文本文件"),
-        QStringLiteral("读取锁定实例内的文本；默认 256 KB，最大 1 MB；二进制拒绝。"),
+        QStringLiteral("Read a text file inside the locked instance; default 256 KB, max 1 MB; rejects binary files."),
         AgentRisk::ReadOnly,
         objectSchema({QStringLiteral("path")},
                      {{QStringLiteral("path"),
@@ -165,8 +166,8 @@ QList<AgentToolSpec> AgentToolRegistry::fileBuiltins() {
                                    {QStringLiteral("maximum"), 1048576}}}})});
     list.append(AgentToolSpec{
         QStringLiteral("fs.write"), QCoreApplication::translate("AgentToolRegistry", "写入文本配置"),
-        QStringLiteral("只允许 config/**、defaultconfigs/**、options.txt；必须带旧内容哈希与身份 token；"
-                       "每次审批，写前备份，原子写，写后校验。"),
+        QStringLiteral("Only allows config/**, defaultconfigs/**, and options.txt; requires expectedSha256 (previous SHA-256) and fileIdentityToken; "
+                       "per-action approval, pre-write backup, atomic write, and post-write verification."),
         AgentRisk::Write,
         objectSchema({QStringLiteral("path"), QStringLiteral("content")},
                      {{QStringLiteral("path"),
@@ -186,7 +187,7 @@ QList<AgentToolSpec> AgentToolRegistry::fileBuiltins() {
                                    {QStringLiteral("maxLength"), 80}}}})});
     list.append(AgentToolSpec{
         QStringLiteral("artifact.read"), QCoreApplication::translate("AgentToolRegistry", "读取模型 artifact"),
-        QStringLiteral("只读本会话模型可读 artifact；每次重新脱敏；本地原始存档不可读。"),
+        QStringLiteral("Read only model-readable artifacts of this session; re-redacted on every read; raw local copies are unreadable."),
         AgentRisk::ReadOnly,
         objectSchema({QStringLiteral("artifactId")},
                      {{QStringLiteral("artifactId"),

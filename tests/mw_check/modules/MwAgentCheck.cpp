@@ -144,7 +144,7 @@ int MwAgentChecks(QApplication &app) {
     check(fake.starts == 1, "真窗口：只发一次请求");
     check(!fake.lastRequest.apiKey.isEmpty() && fake.lastRequest.apiKey == secret,
           "真窗口：请求构造时带上 key（只在内存里）");
-    check(fake.lastRequest.systemPrompt.contains(QStringLiteral("没有")),
+    check(fake.lastRequest.systemPrompt.contains(QStringLiteral("no repair transactions")),
           "真窗口：系统提示说明无工具权限");
 
     AgentSession loaded;

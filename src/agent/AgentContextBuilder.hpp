@@ -26,6 +26,10 @@ public:
     static int estimateTokens(const QString &text);
     static QString omissionMarker(int omittedCount);
     static int reservedOutputTokens(int maxOutput);
+    /// 运行期读取当前实际加载的界面语言名（不缓存，切换后下一轮生效）。
+    static QString interfaceLanguageName();
+    static QString runtimeContextLine();
+    static QString withRuntimeContext(const QString &systemPrompt);
 
     /// @param history 完整历史；返回的是准备发给模型的那一份（不含系统提示）。
     static QList<Agent::Message> build(const QList<Agent::Message> &history,

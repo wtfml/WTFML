@@ -34,7 +34,7 @@ QList<AgentToolSpec> AgentWorkflowEngine::specs() {
     QList<AgentToolSpec> list;
     list.append(AgentToolSpec{
         QStringLiteral("workflow.submitPlan"), QCoreApplication::translate("AgentWorkflowEngine", "提交修复计划"),
-        QStringLiteral("结构化提交修复计划；每个写步骤都会在执行时单独审批，批准计划不等于批准写入。"),
+        QStringLiteral("Submit a structured repair plan; each write step still requires separate approval at execution time, and approving the plan does not approve writes."),
         AgentRisk::ReadOnly,
         objectSchema({QStringLiteral("goal"), QStringLiteral("steps")},
                      {{QStringLiteral("goal"),
@@ -45,7 +45,7 @@ QList<AgentToolSpec> AgentWorkflowEngine::specs() {
                                    {QStringLiteral("maxItems"), 20}}}})});
     list.append(AgentToolSpec{
         QStringLiteral("workflow.finish"), QCoreApplication::translate("AgentWorkflowEngine", "提交完成报告"),
-        QStringLiteral("提交报告前本地核对：计划是否批准、有没有验证步、有没有证据。缺一项就拒绝。"),
+        QStringLiteral("Verify locally before submitting the report: plan approved, verification step completed, and evidence present; rejects if any check is missing."),
         AgentRisk::ReadOnly,
         objectSchema({QStringLiteral("report")},
                      {{QStringLiteral("report"),

@@ -5,6 +5,8 @@
 
 #include "AgentContextBuilder.hpp"
 
+#include "../../ui/UiLanguage.hpp"
+
 namespace {
 
 bool isCjk(uint ucs4) {
@@ -39,6 +41,20 @@ int AgentContextBuilder::reservedOutputTokens(int maxOutput) {
 
 QString AgentContextBuilder::omissionMarker(int omittedCount) {
     return QStringLiteral("（更早的 %1 条消息已省略）").arg(qMax(0, omittedCount));
+}
+
+QString AgentContextBuilder::interfaceLanguageName() {
+    return UiLanguage::isEnglish() ? QStringLiteral("English") : QStringLiteral("Simplified Chinese");
+}
+
+QString AgentContextBuilder::runtimeContextLine() {
+    return QStringLiteral("Interface language: %1").arg(interfaceLanguageName());
+}
+
+QString AgentContextBuilder::withRuntimeContext(const QString &systemPrompt) {
+    const QString contextLine = runtimeContextLine();
+    if (systemPrompt.isEmpty()) return contextLine;
+    return systemPrompt + QStringLiteral("\n\n") + contextLine;
 }
 
 QList<Agent::Message> AgentContextBuilder::build(const QList<Agent::Message> &history,

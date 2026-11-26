@@ -1351,9 +1351,12 @@ void AgentController::applySkillToLoop() {
     config.profile = m_profile;
     config.apiKey = currentApiKey();
     QString prompt = m_workflow.skill().systemPrompt;
-    const QString status = m_workflow.statusLine();
-    if (!status.isEmpty()) {
-        prompt += QStringLiteral("\n\n当前工作流状态（本地记账，不要复述给用户）：%1。").arg(status);
+    if (m_workflow.active()) {
+        const QByteArray statusJson =
+            QJsonDocument(m_workflow.statusJson()).toJson(QJsonDocument::Compact);
+        prompt += QStringLiteral(
+                      "\n\nCurrent workflow state (local bookkeeping, do not repeat to the user): %1")
+                      .arg(QString::fromUtf8(statusJson));
     }
     config.systemPrompt = prompt;
     m_loop->setConfig(config);

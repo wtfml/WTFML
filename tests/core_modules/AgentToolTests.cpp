@@ -148,9 +148,9 @@ void runAgentToolTests() {
     check(bigAllowed.data.value(QStringLiteral("content")).toString().toUtf8().size() <= 16 * 1024 + 100,
           "工具：大文本内联部分被截断");
     const QString bigHint = bigAllowed.data.value(QStringLiteral("content")).toString();
-    check(bigHint.contains(QStringLiteral("本次读取内容")) &&
-              bigHint.contains(QStringLiteral("已脱敏")) &&
-              !bigHint.contains(QStringLiteral("完整内容")),
+    check(bigHint.contains(QStringLiteral("model-readable artifact")) &&
+              bigHint.contains(QStringLiteral("redacted")) &&
+              !bigHint.contains(QStringLiteral("full content")),
           "工具：artifact 提示说明是本次读取内容、且同样已脱敏");
 
     QFile credential(root + QStringLiteral("/.env"));

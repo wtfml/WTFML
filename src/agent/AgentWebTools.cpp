@@ -56,14 +56,13 @@ QList<AgentToolSpec> AgentWebTools::specs() {
     QList<AgentToolSpec> list;
     list.append(AgentToolSpec{
         QStringLiteral("web.search"), QCoreApplication::translate("AgentWebTools", "联网搜索"),
-        QStringLiteral("用设置里的 SearXNG 实例搜一次；搜索词会发给第三方，每次都要确认。"),
+        QStringLiteral("Run one search via the configured SearXNG instance; queries are sent to a third party and require per-action confirmation."),
         AgentRisk::NetworkRead,
         objectSchema({QStringLiteral("query")},
                      {{QStringLiteral("query"), stringField(400)}})});
     list.append(AgentToolSpec{
         QStringLiteral("web.fetch"), QCoreApplication::translate("AgentWebTools", "抓取网页"),
-        QStringLiteral("只抓 http/https 公网地址；全部 A/AAAA 校验、逐跳重定向重检、强制直连；"
-                       "HTML 转文本后返回。"),
+        QStringLiteral("Fetch public http/https URLs only; full A/AAAA validation, per-hop redirect rechecks, direct connection enforced; returns HTML converted to text."),
         AgentRisk::NetworkRead,
         objectSchema({QStringLiteral("url")},
                      {{QStringLiteral("url"), stringField(2048)}})});
