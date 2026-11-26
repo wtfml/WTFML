@@ -55,6 +55,7 @@ struct AgentHostBackupRef {
     QString source;
     QString label;
     QString sourceSessionId;
+    QString instanceId;     ///< 备份来自哪个实例；恢复只准写回会话锁定的那一个
     QDateTime createdAt;
     qint64 bytes = 0;
     bool restorable = true;

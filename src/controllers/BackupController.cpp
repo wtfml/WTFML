@@ -1,6 +1,7 @@
 #include "BackupController.hpp"
 #include <QCoreApplication>
 #include "manage/BackupFiles.hpp"
+#include "agent/AgentBackupIndex.hpp"
 
 #include "ActivityCenterController.hpp"
 #include "util/AppPaths.hpp"
@@ -16,6 +17,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QHash>
+#include <QSet>
 #include <QMetaObject>
 #include <QThread>
 #include <QUrl>
@@ -94,6 +96,48 @@ QString BackupController::pickLine(const QString &zipPath, const QString &from) 
         line += tr(" / 来自「%1」").arg(from);
     }
     return line;
+}
+
+QString BackupController::agentPickLine(const QList<AgentBackups::Item> &group) {
+    if (group.isEmpty()) return QString();
+    // 组里同一个文件只算最早那一份（还原时也只用它）。
+    QStringList paths;
+    QSet<QString> seen;
+    qint64 bytes = 0;
+    QString sessionTitle;
+    for (auto it = group.crbegin(); it != group.crend(); ++it) {
+        bool fresh = false;
+        for (const QString &path : it->paths) {
+            if (seen.contains(path.toLower())) continue;
+            seen.insert(path.toLower());
+            paths.append(path);
+            fresh = true;
+        }
+        if (fresh) bytes += it->bytes;
+        if (!it->sessionTitle.isEmpty()) sessionTitle = it->sessionTitle;
+    }
+    const AgentBackups::Item &newest = group.constFirst();
+    const QString time = newest.createdAt.toString(QStringLiteral("yyyy-MM-dd HH:mm"));
+    const QString first = paths.isEmpty() ? QString() : paths.constFirst();
+    const QString files = paths.size() > 1 ? tr("%1 等 %2 个文件").arg(first).arg(paths.size()) : first;
+    if (newest.trigger == AgentBackups::kTriggerWrite) {
+        if (sessionTitle.isEmpty()) {
+            return tr("智能体写入前备份：%1（%2，%3）").arg(files, sizeText(bytes), time);
+        }
+        // 选择框一行约 30 个字：会话名放前面并截短，多文件只写个数、不写大小，时间才不被省略号吃掉。
+        constexpr int kTitleChars = 6;
+        const QString title = sessionTitle.size() > kTitleChars
+            ? sessionTitle.left(kTitleChars) + QChar(0x2026) : sessionTitle;
+        const QString what = paths.size() > 1 ? tr("%1 个文件").arg(paths.size()) : first;
+        return tr("智能体写入前备份：「%1」%2（%3）").arg(title, what, time);
+    }
+    if (newest.trigger == AgentBackups::kTriggerBeforeRestore) {
+        return tr("智能体还原前备份：%1（%2，%3）").arg(files, sizeText(bytes), time);
+    }
+    const QString scope = newest.scope.isEmpty() ? first
+        : newest.scope.split(QLatin1Char('+'), Qt::SkipEmptyParts).join(tr("、"));
+    return tr("智能体备份：%1（%2 个文件，%3，%4）")
+        .arg(scope).arg(paths.size()).arg(sizeText(bytes), time);
 }
 
 void BackupController::openFolder(BackupFiles::Kind kind) {
@@ -211,7 +255,9 @@ void BackupController::inspectRecovery() {
 }
 
 void BackupController::pickZip(BackupFiles::Kind kind, const QString &label, const QString &what,
-                               std::function<void(QString)> selected) {
+                               std::function<void(QString)> selected,
+                               const QString &agentInstanceId,
+                               std::function<void(QList<AgentBackups::Item>, QString)> agentSelected) {
     const QString dir = BackupFiles::backupDir(kind);
     const QString prefix = BackupFiles::backupFilePrefix(label);
     const QString gameRoot = AppPaths::minecraftDir();
@@ -219,12 +265,19 @@ void BackupController::pickZip(BackupFiles::Kind kind, const QString &label, con
     m_abort.storeRelaxed(0);
     log(tr("正在后台检查备份清单……"));
     auto *scanner = QThread::create([this, kind, label, what, dir, prefix, gameRoot,
-                                    selected = std::move(selected)] {
+                                    selected = std::move(selected), agentInstanceId,
+                                    agentSelected = std::move(agentSelected)] {
     QElapsedTimer deadline;
     deadline.start();
     QStringList zips;
     QStringList rejected;
     QHash<QString, QString> sourceNames;
+    QHash<QString, QDateTime> zipTimes;
+    QList<AgentBackups::Item> agentItems;
+    if (!agentInstanceId.isEmpty()) {
+        AgentBackupIndex legacy;  // 冻结的旧库，只读
+        agentItems = AgentBackups::list(agentInstanceId, &legacy);
+    }
     const QFileInfoList entries =
         QDir(dir).entryInfoList(QStringList{QStringLiteral("*.zip")}, QDir::Files, QDir::Name);
     for (const QFileInfo &entry : entries) {
@@ -247,6 +300,7 @@ void BackupController::pickZip(BackupFiles::Kind kind, const QString &label, con
             continue;
         }
         zips.append(entry.absoluteFilePath());
+        zipTimes.insert(entry.absoluteFilePath(), manifest.createdAt);
         if (kind == BackupFiles::Kind::World) {
             sourceNames.insert(entry.absoluteFilePath(), manifest.sourceInstanceName);
         }
@@ -254,7 +308,9 @@ void BackupController::pickZip(BackupFiles::Kind kind, const QString &label, con
     QMetaObject::invokeMethod(this, [this, kind, what, dir, prefix, gameRoot,
                                    timedOut = deadline.elapsed() > 240000,
                                    zips = std::move(zips), rejected = std::move(rejected),
-                                   sourceNames = std::move(sourceNames), selected]() mutable {
+                                   sourceNames = std::move(sourceNames), selected,
+                                   zipTimes = std::move(zipTimes),
+                                   agentItems = std::move(agentItems), agentSelected]() mutable {
     m_scanning = false;
     if (m_abort.loadRelaxed() || AppPaths::minecraftDir() != gameRoot) return;
     if (timedOut) {
@@ -262,7 +318,7 @@ void BackupController::pickZip(BackupFiles::Kind kind, const QString &label, con
             tr("检查已停止，未还原任何文件。请检查备份所在磁盘，或减少目录中的归档后重试。"));
         return;
     }
-    if (zips.isEmpty()) {
+    if (zips.isEmpty() && agentItems.isEmpty()) {
         if (!rejected.isEmpty()) {
             InlineMessage::information(
                 m_overlay, tr("暂无可还原的备份"),
@@ -283,19 +339,44 @@ void BackupController::pickZip(BackupFiles::Kind kind, const QString &label, con
     // "越上面越新"当场不成立，点下去还原的其实是很久以前那份。
     // 排序挪进 `BackupFiles::sortBackupsNewestFirst()`（纯函数，verify 里有一条钉子）。
     zips = BackupFiles::sortBackupsNewestFirst(zips, prefix);
+    // 智能体备份按时间混排进来；`fs.write` 的同一会话归成一行（选中 = 撤销这次会话的修改）。
+    struct Row {
+        QDateTime at;
+        QString zip;
+        QList<AgentBackups::Item> group;
+    };
+    QList<Row> rows;
+    for (const QString &zip : std::as_const(zips)) rows.append({zipTimes.value(zip), zip, {}});
+    QHash<QString, int> sessionRows;
+    for (const AgentBackups::Item &item : std::as_const(agentItems)) {
+        const bool grouped = item.trigger == AgentBackups::kTriggerWrite && !item.sessionId.isEmpty();
+        if (grouped && sessionRows.contains(item.sessionId)) {
+            rows[sessionRows.value(item.sessionId)].group.append(item);
+            continue;
+        }
+        if (grouped) sessionRows.insert(item.sessionId, int(rows.size()));
+        rows.append({item.createdAt, QString(), {item}});
+    }
+    std::stable_sort(rows.begin(), rows.end(),
+                     [](const Row &a, const Row &b) { return a.at > b.at; });
     QStringList items;
-    for (const QString &zip : std::as_const(zips)) {
-        items.append(pickLine(zip, sourceNames.value(zip)));
+    for (const Row &entry : std::as_const(rows)) {
+        items.append(entry.group.isEmpty() ? pickLine(entry.zip, sourceNames.value(entry.zip))
+                                           : agentPickLine(entry.group));
     }
     int row = -1;
     const QPointer<BackupController> alive(this);
     if (!InlineMessage::pickFromList(m_overlay, tr("选择备份"),
                                      tr("选择要还原的备份。列表按时间从新到旧排列。"), items, 0, &row)
-        || row < 0 || row >= zips.size()) {
+        || row < 0 || row >= rows.size()) {
         return;
     }
     if (!alive) return;
-    selected(zips.at(row));
+    if (rows.at(row).group.isEmpty()) {
+        selected(rows.at(row).zip);
+    } else if (agentSelected) {
+        agentSelected(rows.at(row).group, items.at(row));
+    }
     }, Qt::QueuedConnection);
     });
     connect(scanner, &QThread::finished, scanner, &QObject::deleteLater);
@@ -492,6 +573,35 @@ void BackupController::restoreInstance(const QString &versionId, InstanceSetting
     const QString instanceDir = AppPaths::versionDir(versionId);
     const QPointer<InstanceSettingsDialog> guardedDialog(dialog);
     const QString root = AppPaths::minecraftDir();
+    const auto blocked = [this, versionId, root] {
+        return AppPaths::minecraftDir() != root || busy()
+               || (m_host.isRunning && m_host.isRunning(versionId))
+               || (m_host.isBeingModified && m_host.isBeingModified(versionId));
+    };
+    const auto agentSelected = [this, versionId, guardedDialog, blocked](
+                                   const QList<AgentBackups::Item> &group, const QString &line) {
+        if (blocked() || group.isEmpty()) return;
+        QSet<QString> paths;
+        for (const AgentBackups::Item &item : group) {
+            for (const QString &path : item.paths) paths.insert(path.toLower());
+        }
+        const QString body = group.constFirst().trigger == AgentBackups::kTriggerWrite
+            ? tr("将撤销该会话对「%1」中 %2 个文件的修改，还原为会话首次写入前的内容。其他文件不变。还原前会先备份这些文件的当前内容。\n\n待还原备份：\n%3")
+            : tr("将用备份覆盖「%1」中的 %2 个文件。其他文件不变，备份后新增的文件也将保留。还原前会先备份这些文件的当前内容。\n\n待还原备份：\n%3");
+        const QPointer<BackupController> alive(this);
+        if (!InlineMessage::question(m_overlay, tr("还原智能体备份"),
+                                     body.arg(displayName(versionId)).arg(paths.size()).arg(line),
+                                     tr("还原"), tr("取消"), false, true)) {
+            return;
+        }
+        if (!alive || blocked()) return;
+        m_restoreInstanceId = versionId;
+        m_restoreDialog = guardedDialog.data();
+        if (m_restoreDialog != nullptr) m_restoreDialog->setEnabled(false);
+        if (m_host.setFileOperationBusy) m_host.setFileOperationBusy(versionId, true);
+        startFilesRestore(versionId, group,
+                          tr("还原「%1」的智能体备份").arg(displayName(versionId)));
+    };
     pickZip(BackupFiles::Kind::Instance, QFileInfo(instanceDir).fileName(), tr("此实例"),
             [this, versionId, guardedDialog, root](const QString &zip) {
     auto *dialog = guardedDialog.data();
@@ -519,7 +629,7 @@ void BackupController::restoreInstance(const QString &versionId, InstanceSetting
     startRestore(zip, AppPaths::versionsDir(),
                  tr("还原「%1」的快照").arg(displayName(versionId)), versionId,
                  tr("还原完成"), QString(), tr("还原未完成"));
-    });
+    }, versionId, agentSelected);
 }
 
 Tasks::TaskId BackupController::startWrite(const BackupFiles::Manifest &manifest,
@@ -612,6 +722,63 @@ Tasks::TaskId BackupController::startRestore(const QString &zipPath,
     }
     log(tr("%1：%2 → %3").arg(title, QDir::toNativeSeparators(zipPath),
                               QDir::toNativeSeparators(targetParentDir)));
+    runRestoreJob([zipPath, targetParentDir, newTargetOnly](const std::function<bool()> &cancelled) {
+        return BackupFiles::restoreBackup(
+            zipPath, targetParentDir, cancelled, {},
+            newTargetOnly ? BackupFiles::RestoreTarget::NewOnly : BackupFiles::RestoreTarget::Replace);
+    }, successTitle, failureTitle);
+    return m_taskId;
+}
+
+Tasks::TaskId BackupController::startFilesRestore(const QString &instanceId,
+                                                  const QList<AgentBackups::Item> &group,
+                                                  const QString &title) {
+    QList<Tasks::TaskStep> steps{{tr("读取备份"), Tasks::TaskStepState::Running, {}},
+                                 {tr("备份当前文件"), Tasks::TaskStepState::Pending, {}},
+                                 {tr("写回文件"), Tasks::TaskStepState::Pending, {}},
+                                 {tr("核对文件"), Tasks::TaskStepState::Pending, {}}};
+    m_taskId = m_activity->begin(Tasks::TaskKind::Backup, title, instanceId, steps);
+    if (m_taskId != Tasks::invalidTaskId()) {
+        Tasks::TaskCapabilities caps = m_activity->tasks()->snapshot(m_taskId).capabilities;
+        caps.canCancel = true;
+        m_activity->tasks()->setCapabilities(m_taskId, caps);
+    }
+    m_refreshServerId.clear();
+    m_busyServerId.clear();
+    const QString instanceDir = AppPaths::versionDir(instanceId);
+    log(tr("%1：%2").arg(title, QDir::toNativeSeparators(instanceDir)));
+    runRestoreJob([group, instanceDir, instanceId](const std::function<bool()> &cancelled) {
+        // group 从新到旧；倒着读，同一个文件只留最早那一份（会话第一次写入前的原样）。
+        QList<BackupFiles::FilePayload> files;
+        QSet<QString> seen;
+        AgentBackupIndex legacy;
+        for (auto it = group.crbegin(); it != group.crend(); ++it) {
+            QList<BackupFiles::FilePayload> part;
+            QString problem;
+            if (!AgentBackups::readFiles(*it, &legacy, &part, &problem)) {
+                BackupFiles::RestoreResult failed;
+                failed.stage = BackupFiles::RestoreResult::Stage::ReadManifest;
+                failed.problem = problem;
+                return failed;
+            }
+            for (const BackupFiles::FilePayload &file : std::as_const(part)) {
+                if (seen.contains(file.path.toLower())) continue;
+                seen.insert(file.path.toLower());
+                files.append(file);
+            }
+        }
+        BackupFiles::Manifest safety;
+        safety.root = QStringLiteral("files");
+        safety.label = instanceId;
+        safety.sourceInstanceId = instanceId;
+        return BackupFiles::restoreFiles(instanceDir, files, safety, cancelled);
+    }, tr("还原完成"), tr("还原未完成"));
+    return m_taskId;
+}
+
+void BackupController::runRestoreJob(
+    std::function<BackupFiles::RestoreResult(const std::function<bool()> &)> job,
+    const QString &successTitle, const QString &failureTitle) {
     m_abort.storeRelaxed(0);
     m_userCancelled.store(false, std::memory_order_relaxed);
     if (m_thread != nullptr) {
@@ -620,15 +787,14 @@ Tasks::TaskId BackupController::startRestore(const QString &zipPath,
         m_thread->wait();
         m_thread = nullptr;
     }
-    m_thread = QThread::create([this, zipPath, targetParentDir, successTitle, failureTitle, newTargetOnly] {
+    m_thread = QThread::create([this, job = std::move(job), successTitle, failureTitle] {
         // 还原也接上和创建备份同一条停止条件（关窗 / 整项 600 秒预算）。
         // 快照、暂存解压和校验均可停；仅最终改名发布/回滚的短临界区不可取消。
         QElapsedTimer elapsed;
         elapsed.start();
-        const auto result = BackupFiles::restoreBackup(
-            zipPath, targetParentDir, [this, &elapsed] {
-                return m_abort.loadRelaxed() != 0 || elapsed.elapsed() >= 600000;
-            }, {}, newTargetOnly ? BackupFiles::RestoreTarget::NewOnly : BackupFiles::RestoreTarget::Replace);
+        const auto result = job([this, &elapsed] {
+            return m_abort.loadRelaxed() != 0 || elapsed.elapsed() >= 600000;
+        });
         // 同 startWrite()：关窗不发，用户取消照常收尾。
         if (m_abort.loadRelaxed() == 0 || m_userCancelled.load(std::memory_order_relaxed)) {
             QMetaObject::invokeMethod(this, [this, result, successTitle, failureTitle] {
@@ -643,7 +809,6 @@ Tasks::TaskId BackupController::startRestore(const QString &zipPath,
     });
     connect(m_thread, &QThread::finished, m_thread, &QObject::deleteLater);
     m_thread->start();
-    return m_taskId;
 }
 
 void BackupController::writeFinished(const BackupFiles::WriteResult &result,

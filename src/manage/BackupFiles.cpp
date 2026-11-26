@@ -19,6 +19,7 @@
 #include <QLocale>
 #include <QObject>
 #include <QSet>
+#include <QSaveFile>
 #include <QStorageInfo>
 #include <QTemporaryDir>
 #include <QUuid>
@@ -41,6 +42,7 @@ namespace {
 const char *kFormatTag = "wtfml-backup/1";
 const char *kKindWorld = "world";
 const char *kKindInstance = "instance";
+const char *kKindFiles = "files";
 
 /// 「还原之前自动做的那一份」在文件名里那段记号（`backupFileName(…, safety=true)` 把它
 /// 插在前缀和时间戳中间）。**一处定义**：`nameIsSafety()`（认人）、`matchesBackupPrefix()`
@@ -168,7 +170,12 @@ QString safeLabel(const QString &label) {
 }
 
 QString kindKey(Kind kind) {
-    return QString::fromLatin1(kind == Kind::Instance ? kKindInstance : kKindWorld);
+    switch (kind) {
+    case Kind::Instance: return QString::fromLatin1(kKindInstance);
+    case Kind::Files: return QString::fromLatin1(kKindFiles);
+    case Kind::World: break;
+    }
+    return QString::fromLatin1(kKindWorld);
 }
 
 /// 字符串数组那一小段（范围 / 排除表），空的项一律不记 —— 空串进清单只会让读回来的人
@@ -270,6 +277,11 @@ QByteArray manifestToJson(const Manifest &manifest) {
     if (manifest.safety) {
         root.insert(QStringLiteral("safety"), true);
     }
+    if (manifest.kind == Kind::Files) {
+        root.insert(QStringLiteral("trigger"), manifest.trigger);
+        root.insert(QStringLiteral("sessionId"), manifest.sessionId);
+        root.insert(QStringLiteral("sessionTitle"), manifest.sessionTitle);
+    }
     root.insert(QStringLiteral("fileCount"), manifest.fileCount());
     root.insert(QStringLiteral("totalBytes"), manifest.totalBytes);
 
@@ -308,6 +320,8 @@ Manifest manifestFromJson(const QByteArray &bytes, bool *ok) {
         manifest.kind = Kind::World;
     } else if (kind == QLatin1String(kKindInstance)) {
         manifest.kind = Kind::Instance;
+    } else if (kind == QLatin1String(kKindFiles)) {
+        manifest.kind = Kind::Files;
     } else {
         return Manifest();  // 认不出的档 → 整份不认（宁可说"读不动"，也不猜）
     }
@@ -324,6 +338,9 @@ Manifest manifestFromJson(const QByteArray &bytes, bool *ok) {
                                                Qt::ISODate);
     manifest.scope = stringListOf(root.value(QStringLiteral("scope")));
     manifest.excluded = stringListOf(root.value(QStringLiteral("excluded")));
+    manifest.trigger = root.value(QStringLiteral("trigger")).toString();
+    manifest.sessionId = root.value(QStringLiteral("sessionId")).toString();
+    manifest.sessionTitle = root.value(QStringLiteral("sessionTitle")).toString();
 
     const QJsonArray files = root.value(QStringLiteral("files")).toArray();
     manifest.files.reserve(files.size());
@@ -365,8 +382,12 @@ QString backupRoot() {
 }
 
 QString backupDir(Kind kind) {
-    return backupRoot() + (kind == Kind::Instance ? QStringLiteral("/instances")
-                                                  : QStringLiteral("/worlds"));
+    switch (kind) {
+    case Kind::Instance: return backupRoot() + QStringLiteral("/instances");
+    case Kind::Files: return backupRoot() + QStringLiteral("/files");
+    case Kind::World: break;
+    }
+    return backupRoot() + QStringLiteral("/worlds");
 }
 
 QString backupFilePrefix(const QString &label) {
@@ -735,9 +756,20 @@ Manifest readManifest(const QString &zipPath, bool *ok, QString *problemOut) {
 
     QByteArray bytes;
     QString error;
-    const ZipUtil::EntryStatus status =
-        ZipUtil::readEntry(zipPath, manifestEntryName(), &bytes, &error,
-                           QObject::tr("读取备份清单"));
+    // Files 备份是目录：清单直接躺在目录里，不起 PowerShell。
+    if (QFileInfo(zipPath).isDir()) {
+        QFile file(QDir(zipPath).filePath(manifestEntryName()));
+        if (!file.open(QIODevice::ReadOnly)) {
+            if (problemOut != nullptr) {
+                *problemOut = QObject::tr("未找到备份元数据（%1）。").arg(manifestEntryName());
+            }
+            return Manifest();
+        }
+        bytes = file.readAll();
+    }
+    const ZipUtil::EntryStatus status = !bytes.isEmpty() ? ZipUtil::EntryStatus::Ok
+        : ZipUtil::readEntry(zipPath, manifestEntryName(), &bytes, &error,
+                             QObject::tr("读取备份清单"));
     // 「不是我们做的包」和「读不动」在这个 switch 里是**两句不同的话**：
     // 前者是用户拿错了文件（或者那个包是别的启动器做的），后者是这个文件本身坏了。
     // 合成一句的话，用户会去怀疑一个其实好好的文件。
@@ -1191,6 +1223,276 @@ int verifyTree(const QString &dir, const QList<FileRecord> &files,
 
 QString scopeLine(const QString &what, int fileCount) {
     return QObject::tr("%1（%2 个文件）").arg(what).arg(fileCount);
+}
+
+namespace {
+
+/// Files 备份里的相对路径：逐段都得是 `isSafeComponent()` 认的目录名 / 文件名。
+bool isSafeRelativePath(const QString &path) {
+    if (path.isEmpty()) return false;
+    const QStringList parts = path.split(QLatin1Char('/'));
+    return std::all_of(parts.cbegin(), parts.cend(), isSafeComponent);
+}
+
+bool writeBytes(const QString &path, const QByteArray &bytes) {
+    if (!QDir().mkpath(QFileInfo(path).absolutePath())) return false;
+    QSaveFile file(path);
+    return file.open(QIODevice::WriteOnly) && file.write(bytes) == bytes.size() && file.commit();
+}
+
+QString sha1Of(const QByteArray &bytes) {
+    return QString::fromLatin1(QCryptographicHash::hash(bytes, QCryptographicHash::Sha1).toHex());
+}
+
+}  // namespace
+
+WriteResult writeFilesBackup(const Manifest &manifest, const QList<FilePayload> &files,
+                             const QString &targetDir) {
+    WriteResult result;
+    result.manifest = manifest;
+    result.manifest.kind = Kind::Files;
+    result.manifest.files.clear();
+    result.manifest.totalBytes = 0;
+    result.zipPath = targetDir;
+    for (const FilePayload &file : files) {
+        if (!isSafeRelativePath(file.path)) {
+            result.problem = QObject::tr("备份中的路径无效：%1").arg(file.path);
+            return result;
+        }
+        FileRecord record;
+        record.path = file.path;
+        record.size = file.data.size();
+        record.sha1 = sha1Of(file.data);
+        result.manifest.files.append(record);
+        result.manifest.totalBytes += record.size;
+    }
+    if (files.isEmpty() || !result.manifest.isValid()) {
+        result.problem = QObject::tr("没有可备份的文件。");
+        return result;
+    }
+    const QString gameRoot = InstanceFiles::canonicalPath(AppPaths::minecraftDir());
+    if (!DirectorySessionLock::acquire(gameRoot, &result.problem)) return result;
+    if (QFileInfo::exists(targetDir)) {
+        result.problem = QObject::tr("备份目录已存在，未覆盖：%1").arg(QDir::toNativeSeparators(targetDir));
+        return result;
+    }
+    // 同级暂存目录：写完再一次改名发布；列表与清理都不认带 `.pending-` 的目录。
+    const QString pending = targetDir + QStringLiteral(".pending-") +
+                            QUuid::createUuid().toString(QUuid::WithoutBraces);
+    const QString payloadRoot = pending + QLatin1Char('/') + result.manifest.root;
+    bool written = QDir().mkpath(payloadRoot);
+    for (int i = 0; written && i < files.size(); ++i) {
+        written = writeBytes(payloadRoot + QLatin1Char('/') + files.at(i).path, files.at(i).data);
+    }
+    written = written && writeBytes(pending + QLatin1Char('/') + manifestEntryName(),
+                                    manifestToJson(result.manifest));
+    if (!written || !QDir().rename(pending, targetDir)) {
+        QDir(pending).removeRecursively();
+        result.problem = QObject::tr("无法写入备份目录：%1").arg(QDir::toNativeSeparators(targetDir));
+        return result;
+    }
+    result.ok = true;
+    return result;
+}
+
+bool readFilesPayload(const QString &backupDir, QList<FilePayload> *files, QString *problemOut) {
+    if (files != nullptr) files->clear();
+    bool ok = false;
+    QString problem;
+    const Manifest manifest = readManifest(backupDir, &ok, &problem);
+    if (ok && manifest.kind != Kind::Files) {
+        ok = false;
+        problem = QObject::tr("不是文件备份。");
+    }
+    QList<FilePayload> out;
+    for (int i = 0; ok && i < manifest.files.size(); ++i) {
+        const FileRecord &record = manifest.files.at(i);
+        const bool safe = isSafeRelativePath(record.path);
+        FilePayload payload{record.path, {}};
+        QFile file(QDir(backupDir).filePath(manifest.root + QLatin1Char('/') + record.path));
+        if (safe && file.open(QIODevice::ReadOnly)) payload.data = file.readAll();
+        if (!safe || payload.data.size() != record.size || sha1Of(payload.data) != record.sha1) {
+            ok = false;
+            problem = QObject::tr("备份内容已损坏或被修改：%1").arg(record.path);
+        }
+        out.append(payload);
+    }
+    if (ok && out.isEmpty()) {
+        ok = false;
+        problem = QObject::tr("备份中没有文件。");
+    }
+    if (problemOut != nullptr) *problemOut = ok ? QString() : problem;
+    if (ok && files != nullptr) *files = out;
+    return ok;
+}
+
+QList<FilesBackup> listFilesBackups(const QString &instanceId) {
+    QList<FilesBackup> out;
+    const QFileInfoList dirs =
+        QDir(backupDir(Kind::Files)).entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+    for (const QFileInfo &dir : dirs) {
+        if (dir.fileName().contains(QStringLiteral(".pending-")) || isLinkToElsewhere(dir)) continue;
+        bool ok = false;
+        const Manifest manifest = readManifest(dir.absoluteFilePath(), &ok, nullptr);
+        if (!ok || manifest.kind != Kind::Files) continue;
+        if (!instanceId.isEmpty() && manifest.sourceInstanceId != instanceId) continue;
+        out.append({dir.absoluteFilePath(), manifest});
+    }
+    std::stable_sort(out.begin(), out.end(), [](const FilesBackup &a, const FilesBackup &b) {
+        return a.manifest.createdAt > b.manifest.createdAt;
+    });
+    return out;
+}
+
+RestoreResult restoreFiles(const QString &instanceDir, const QList<FilePayload> &files,
+                           const Manifest &safetyTemplate, const std::function<bool()> &cancelled) {
+    RestoreResult result;
+    result.targetPath = instanceDir;
+    const auto fail = [&result](RestoreResult::Stage stage, const QString &problem) {
+        result.stage = stage;
+        result.problem = problem;
+        return result;
+    };
+    if (files.isEmpty()) {
+        return fail(RestoreResult::Stage::ReadManifest, QObject::tr("备份中没有文件。"));
+    }
+    const QFileInfo rootInfo(instanceDir);
+    if (!rootInfo.isDir() || isLinkToElsewhere(rootInfo)) {
+        return fail(RestoreResult::Stage::ReadManifest,
+                    QObject::tr("实例目录不存在或为链接，已拒绝还原：%1")
+                        .arg(QDir::toNativeSeparators(instanceDir)));
+    }
+    // ① 路径：逐段合法、不重名、途经的每一层都不是链接，落点不是目录。
+    QSet<QString> seen;
+    Manifest wanted;
+    for (const FilePayload &file : files) {
+        bool safe = isSafeRelativePath(file.path) && !seen.contains(file.path.toLower());
+        seen.insert(file.path.toLower());
+        const QStringList parts = file.path.split(QLatin1Char('/'));
+        QString current = instanceDir;
+        for (int i = 0; safe && i < parts.size(); ++i) {
+            current += QLatin1Char('/') + parts.at(i);
+            const QFileInfo info(current);
+            const bool last = i == parts.size() - 1;
+            safe = !isLinkToElsewhere(info) &&
+                   (!info.exists() || (last ? info.isFile() : info.isDir()));
+        }
+        if (!safe) {
+            return fail(RestoreResult::Stage::ReadManifest,
+                        QObject::tr("备份中的路径无效或目标含链接，已拒绝还原：%1").arg(file.path));
+        }
+        wanted.files.append({file.path, file.data.size(), sha1Of(file.data)});
+    }
+    // ② 空间：写回这些文件，外加安全备份那一份。
+    QStorageInfo storage(instanceDir);
+    storage.refresh();
+    const qint64 freeBytes = storage.isValid() && storage.isReady() ? storage.bytesAvailable() : -1;
+    if (!hasRoomFor(freeBytes, restoreSpaceNeeded(wanted) * 2)) {
+        return fail(RestoreResult::Stage::Space, QObject::tr("磁盘空间不足，未还原任何文件。"));
+    }
+    const QString gameRoot = InstanceFiles::canonicalPath(AppPaths::minecraftDir());
+    QString lockProblem;
+    if (!DirectorySessionLock::acquire(gameRoot, &lockProblem)) {
+        return fail(RestoreResult::Stage::Space, lockProblem);
+    }
+    if (cancelled && cancelled()) {
+        return fail(RestoreResult::Stage::SafetySnapshot, QObject::tr("还原已取消，未改动任何文件。"));
+    }
+    // ③ 安全备份：这些文件此刻的内容；原先不存在的记下来，回滚时删掉。
+    QList<FilePayload> originals;
+    QStringList created;
+    for (const FilePayload &file : files) {
+        const QString path = instanceDir + QLatin1Char('/') + file.path;
+        QFile current(path);
+        if (!QFileInfo::exists(path)) {
+            created.append(path);
+        } else if (current.open(QIODevice::ReadOnly)) {
+            originals.append({file.path, current.readAll()});
+        } else {
+            return fail(RestoreResult::Stage::SafetySnapshot,
+                        QObject::tr("无法读取当前文件，已中止还原：%1").arg(file.path));
+        }
+    }
+    if (!originals.isEmpty()) {
+        Manifest safety = safetyTemplate;
+        safety.kind = Kind::Files;
+        safety.safety = true;
+        safety.trigger = QStringLiteral("before-restore");
+        safety.createdAt = QDateTime::currentDateTime();
+        if (safety.root.isEmpty()) safety.root = QStringLiteral("files");
+        if (safety.label.isEmpty()) safety.label = safety.root;
+        const QString target = QDir(backupDir(Kind::Files))
+                                   .filePath(QUuid::createUuid().toString(QUuid::WithoutBraces));
+        QDir().mkpath(backupDir(Kind::Files));
+        const WriteResult written = writeFilesBackup(safety, originals, target);
+        if (!written.ok) {
+            return fail(RestoreResult::Stage::SafetySnapshot,
+                        QObject::tr("无法备份当前文件，已中止还原：%1").arg(written.problem));
+        }
+        result.safetyZip = target;
+    }
+    if (cancelled && cancelled()) {
+        return fail(RestoreResult::Stage::Extract, QObject::tr("还原已取消，未改动任何文件。"));
+    }
+    // ④ 写回；⑤ 核对。任一失败都把已动过的改回去 —— 只改写过的：没轮到的（含写失败那一个，
+    // QSaveFile 失败不动原文件）本来就没变，再去写反而会在只读文件上把回滚判成失败。
+    QSet<QString> written;
+    const auto rollBack = [&]() {
+        bool restored = true;
+        for (const FilePayload &original : originals) {
+            if (!written.contains(original.path)) continue;
+            restored = writeBytes(instanceDir + QLatin1Char('/') + original.path, original.data) &&
+                       restored;
+        }
+        for (const QString &path : created) {
+            restored = (!QFileInfo::exists(path) || QFile::remove(path)) && restored;
+        }
+        return restored;
+    };
+    const auto failAndRollBack = [&](RestoreResult::Stage stage, const QString &problem) {
+        if (rollBack()) return fail(stage, problem + QObject::tr("已回滚到还原前的内容。"));
+        result.recoveryFailed = true;
+        return fail(stage, problem + QObject::tr("部分文件未能回滚，请从还原前的备份手动还原：%1")
+                                         .arg(QDir::toNativeSeparators(result.safetyZip)));
+    };
+    for (const FilePayload &file : files) {
+        if (!writeBytes(instanceDir + QLatin1Char('/') + file.path, file.data)) {
+            return failAndRollBack(RestoreResult::Stage::Extract,
+                                   QObject::tr("无法写回 %1。").arg(file.path));
+        }
+        written.insert(file.path);
+    }
+    result.mismatched = verifyTree(instanceDir, wanted.files);
+    if (result.mismatched > 0) {
+        return failAndRollBack(RestoreResult::Stage::Verify,
+                               QObject::tr("写回后有 %1 个文件校验未通过。").arg(result.mismatched));
+    }
+    result.checked = int(files.size());
+    result.ok = true;
+    return result;
+}
+
+QStringList pruneFilesBackups(const QString &instanceId, const QString &protectedSessionId,
+                              int maxCount, qint64 maxBytes, int exemptNewest) {
+    QStringList removed;
+    if (instanceId.isEmpty()) return removed;
+    int keptCount = 0;
+    qint64 keptBytes = 0;
+    for (const FilesBackup &backup : listFilesBackups(instanceId)) {
+        const qint64 bytes = backup.manifest.totalBytes;
+        const bool protectedSession =
+            !protectedSessionId.isEmpty() && backup.manifest.sessionId == protectedSessionId;
+        const bool drop = !protectedSession &&
+                          (keptCount >= maxCount ||
+                           (keptCount >= exemptNewest && keptBytes + bytes > maxBytes));
+        if (drop) {
+            if (QDir(backup.path).removeRecursively()) removed.append(backup.path);
+            continue;
+        }
+        ++keptCount;
+        keptBytes += bytes;
+    }
+    return removed;
 }
 
 }  // namespace BackupFiles

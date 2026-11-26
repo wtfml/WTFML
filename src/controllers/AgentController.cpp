@@ -176,8 +176,7 @@ AgentController::AgentController(AgentPage *page, OverlayHost *overlay, QObject 
       m_overlay(overlay),
       m_store(),
       m_artifacts(),
-      m_backups(),
-      m_files(&m_backups) {
+      m_files(true) {
     QString problem;
     if (!AgentPaths::ensureDataDir(&problem) && m_page != nullptr) {
         m_page->showNotice(problem);
@@ -944,6 +943,7 @@ void AgentController::approveToolForTest(bool approved) { onApproval(approved); 
 AgentToolContext AgentController::toolContext(QString *problem) {
     AgentToolContext context;
     context.sessionId = m_session.meta.id;
+    context.sessionTitle = m_session.meta.title;
     context.providerHost = QUrl(m_profile.baseUrl).host();
     context.strictEgress = AgentSettings::strictEgress();
     if (context.sessionId.isEmpty()) {

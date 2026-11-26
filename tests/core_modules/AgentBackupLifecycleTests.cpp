@@ -7,6 +7,7 @@
 
 #include "agent/AgentBackupIndex.hpp"
 #include "agent/AgentSessionStore.hpp"
+#include "util/AppPaths.hpp"
 
 #include <QDir>
 #include <QFile>
@@ -122,4 +123,64 @@ void runAgentBackupLifecycleTests() {
     check(backups.readFiles(singleId, &single, &problem), "备份：单文件备份也能走 readFiles",
           problem);
     check(single.size() == 1, "备份：单文件备份读回一条");
+
+    // ---------- #129：旧库冻结，但照旧列得出、还原得了 ----------
+    // 新备份落在当前游戏文件夹（cache/backups/files）；旧库里的条目按原 id 一起列出。
+    const QString originalGameDir = AppPaths::minecraftDir();
+    AppPaths::setMinecraftDir(fixture.path() + QStringLiteral("/game"));
+    QString writeId;
+    check(backups.createFromBytes(QStringLiteral("session-9"), QStringLiteral("1.20.1"),
+                                  QStringLiteral("options.txt"), QByteArray("fov:70\n"),
+                                  QStringLiteral("写入文件前的备份"), &writeId, &problem),  // i18n-ignore
+          "备份：旧库写入一份 fs.write 备份", problem);
+    const QList<AgentBackups::Item> legacyItems = AgentBackups::list(QStringLiteral("1.20.1"), &backups);
+    const auto itemOf = [&legacyItems](const QString &id) {
+        for (const AgentBackups::Item &item : legacyItems) {
+            if (item.backupId == id) return item;
+        }
+        return AgentBackups::Item();
+    };
+    check(itemOf(writeId).legacy() && itemOf(writeId).trigger == AgentBackups::kTriggerWrite &&
+              itemOf(writeId).sessionId == QStringLiteral("session-9") &&
+              itemOf(multiId).trigger == AgentBackups::kTriggerCreate &&
+              itemOf(multiId).scope == QStringLiteral("config+mods"),
+          "备份：旧库条目按原 id 列出，按 reason 认出来源");
+    check(AgentBackups::list(QStringLiteral("other-instance"), &backups).isEmpty(),
+          "备份：旧库条目只出现在自己的实例下");
+    const QString instanceDir = fixture.path() + QStringLiteral("/game/versions/1.20.1");
+    QDir().mkpath(instanceDir);
+    QFile current(instanceDir + QStringLiteral("/options.txt"));
+    check(current.open(QIODevice::WriteOnly), "备份：造当前的 options.txt", current.fileName());
+    current.write("fov:110\n");
+    current.close();
+    QList<BackupFiles::FilePayload> legacyFiles;
+    check(AgentBackups::readFiles(itemOf(writeId), &backups, &legacyFiles, &problem) &&
+              legacyFiles.size() == 1,
+          "备份：旧库条目照旧解密读回", problem);
+    BackupFiles::Manifest safety;
+    safety.root = QStringLiteral("files");
+    safety.label = QStringLiteral("1.20.1");
+    safety.sourceInstanceId = QStringLiteral("1.20.1");
+    const BackupFiles::RestoreResult restoredLegacy =
+        BackupFiles::restoreFiles(instanceDir, legacyFiles, safety);
+    QFile after(instanceDir + QStringLiteral("/options.txt"));
+    after.open(QIODevice::ReadOnly);
+    check(restoredLegacy.ok && after.readAll() == QByteArray("fov:70\n"),
+          "备份：旧库条目还原成功", restoredLegacy.problem);
+    after.close();
+    const QList<AgentBackups::Item> afterRestore = AgentBackups::list(QStringLiteral("1.20.1"), &backups);
+    // 新格式时间只到秒，和同一秒写的旧条目谁先谁后不定：按内容找，不按位置。
+    check(std::any_of(afterRestore.cbegin(), afterRestore.cend(),
+                      [](const AgentBackups::Item &item) {
+                          return !item.legacy() &&
+                                 item.trigger == AgentBackups::kTriggerBeforeRestore;
+                      }),
+          "备份：还原前快照写进新格式，旧库不再增加");
+    QList<AgentBackupEntry> frozen;
+    backups.list(&frozen, nullptr);
+    check(std::none_of(frozen.cbegin(), frozen.cend(), [](const AgentBackupEntry &entry) {
+              return entry.reason.contains(QStringLiteral("恢复"));  // i18n-ignore
+          }),
+          "备份：旧库没有新写入");
+    AppPaths::setMinecraftDir(originalGameDir);
 }

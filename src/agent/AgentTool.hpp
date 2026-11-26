@@ -29,6 +29,7 @@ struct AgentToolContext {
     QString rootPath;
     QString providerHost;
     bool strictEgress = false;
+    QString sessionTitle;  ///< 写进备份清单，备份列表按它标明来自哪次会话
 };
 
 struct AgentToolSpec {

@@ -166,7 +166,6 @@ private:
     OverlayHost *m_overlay = nullptr;
     AgentSessionStore m_store;
     AgentArtifactStore m_artifacts;
-    AgentBackupIndex m_backups;
     AgentFileTools m_files;
     AgentFileToolEngine *m_toolEngine = nullptr;
     AgentLauncherHost *m_launcherHost = nullptr;
