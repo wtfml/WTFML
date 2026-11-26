@@ -10,6 +10,7 @@
 //   · 每个表面拍一张 900×620、出厂默认主题（暮色雪山 dark）的样张；
 //   · 扫出「还长着 Qt 默认样子」的控件，按类别计数；
 //   · 设 WTFML_SURFACE_SHOTS=<目录> 时写样张与 surfaces.tsv / findings.tsv。
+//   · 同一个开关下另写 textfit.tsv：「文字放不下」的开发期巡检，只报告、不进退出码。
 //   · 设 WTFML_SURFACE_THEME=emerald|ocean 时换主题（默认出厂暮色雪山）。
 //
 // 表面清单（哪个入口算什么键）在 `tests/ui_check/surface-registry.txt`，由
@@ -98,6 +99,8 @@ struct SurfaceRecord {
     QString shotFile;
     bool shotOk = false;
     QList<SurfaceFinding> findings;
+    /// 文字放不下的巡检记录（只在设了 WTFML_SURFACE_SHOTS 时采，不参与判据）。
+    QList<SurfaceScan::TextFitFinding> textFits;
     /// 强制画一遍这一整块（grab）的耗时。这是 offscreen `ui_check`（-O0）里的绘制成本，
     /// 不是产品 Release 的首帧；只用来在 95 个表面之间横向比，超过 50 ms 的进 B 类候选。
     double paintMs = -1.0;
@@ -107,8 +110,8 @@ struct SurfaceRecord {
 
 class Sweep {
 public:
-    Sweep(QApplication &app, QMainWindow &window, MainWindowUI &ui, const QString &shotDir)
-        : m_app(app), m_window(window), m_ui(ui), m_shotDir(shotDir) {}
+    Sweep(QApplication &app, QMainWindow &window, MainWindowUI &ui, const QString &shotDir, bool english)
+        : m_app(app), m_window(window), m_ui(ui), m_shotDir(shotDir), m_english(english) {}
 
     const QList<SurfaceRecord> &records() const { return m_records; }
 
@@ -144,12 +147,15 @@ public:
         }
         rec.findings = SurfaceScan::scanWidgets(root);
         rec.findings += SurfaceScan::probePageTransitions(root, m_app);
+        // 只报告：设了样张目录才量，量完单独写一张表，不进 rec.findings。
+        if (!m_shotDir.isEmpty()) rec.textFits = SurfaceScan::scanTextFit(root, m_english);
         pump();
         rec.shotOk = capture(rec, shotTarget != nullptr ? shotTarget : root);
         m_records.append(rec);
-        std::printf("== %-38s %-3d 处  paint %6.1f ms%s  %s\n", qPrintable(key),
+        std::printf("== %-38s %-3d 处  paint %6.1f ms%s%s  %s\n", qPrintable(key),
                     int(rec.findings.size()), rec.paintMs,
                     rec.openMs >= 0 ? qPrintable(QStringLiteral("  open %1 ms").arg(rec.openMs, 0, 'f', 1)) : "",
+                    rec.textFits.isEmpty() ? "" : qPrintable(QStringLiteral("  textfit %1").arg(rec.textFits.size())),
                     rec.shotOk ? qPrintable(rec.shotFile) : "无样张");
         for (const SurfaceFinding &finding : rec.findings) {
             std::printf("     - %-18s %-20s %-28s %s\n", qPrintable(finding.kind), qPrintable(finding.cls),
@@ -184,6 +190,24 @@ public:
                 }
             }
         }
+        // 文字放不下：只报告，不进判据。
+        QFile textfit(QDir(m_shotDir).filePath(QStringLiteral("textfit.tsv")));
+        if (textfit.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream out(&textfit);
+            out.setEncoding(QStringConverter::Utf8);
+            out << "surface\tkind\tclass\twidget\ttext\tshown\tneed\tavail\n";
+            const auto cell = [](QString v) {
+                return v.replace('\t', ' ').replace('\r', ' ').replace('\n', ' ');
+            };
+            for (const SurfaceRecord &rec : m_records) {
+                for (const SurfaceScan::TextFitFinding &fit : rec.textFits) {
+                    out << rec.key << '\t' << fit.kind << '\t' << fit.cls << '\t' << fit.name << '\t'
+                        << cell(fit.source) << '\t' << cell(fit.shown) << '\t'
+                        << (fit.need >= 0 ? QString::number(fit.need) : QString()) << '\t'
+                        << (fit.avail >= 0 ? QString::number(fit.avail) : QString()) << '\n';
+                }
+            }
+        }
     }
 
 private:
@@ -210,6 +234,7 @@ private:
     QMainWindow &m_window;
     MainWindowUI &m_ui;
     QString m_shotDir;
+    bool m_english = false;
     QList<SurfaceRecord> m_records;
 };
 
@@ -264,7 +289,9 @@ int UiSurfaceSweepCheck(QApplication &app) {
     window.show();
     for (int i = 0; i < 6; ++i) app.processEvents();
 
-    Sweep sweep(app, window, ui, shotDir);
+    const bool english =
+        qEnvironmentVariable("WTFML_SURFACE_LANGUAGE") == QLatin1String(UiLanguage::kEnglish);
+    Sweep sweep(app, window, ui, shotDir, english);
     const auto pump = [&sweep] { sweep.pump(); };
 
     // 覆盖层整页：开 → 摆 → 扫 → 收。

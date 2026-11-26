@@ -8,10 +8,15 @@
 //
 // 检测「换页动效」的办法：打开 Anim，切一页，看有没有 `wtfmlPageCurtain`
 // （`Anim::pageAppear()` 挂上去的那块幕布）露出来 —— 有就是接了，没有就是硬切。
+//
+// scanTextFit() 是「文字放不下」的开发期巡检：只写 textfit.tsv，**不参与退出码**。
+// 量宽靠字体度量、省略靠 elidedText 复算，是启发式的，给人挑页面用，别当守卫。
 #pragma once
 
 #include "Animations.hpp"
 
+#include <QAbstractButton>
+#include <QAbstractItemModel>
 #include <QAbstractItemView>
 #include <QAbstractScrollArea>
 #include <QApplication>
@@ -21,9 +26,12 @@
 #include <QHash>
 #include <QHeaderView>
 #include <QItemDelegate>
+#include <QLabel>
 #include <QLayout>
+#include <QLineEdit>
 #include <QPlainTextEdit>
 #include <QRadioButton>
+#include <QRegularExpression>
 #include <QScrollArea>
 #include <QStackedWidget>
 #include <QTabBar>
@@ -35,6 +43,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <functional>
 #include <typeinfo>
 #if defined(__GNUC__)
 #include <cxxabi.h>
@@ -264,6 +273,149 @@ inline QList<SurfaceFinding> probePageTransitions(QWidget *root, QApplication &a
         }
     }
     Anim::setEnabled(wasEnabled);
+    return out;
+}
+
+// ---------------------------------------------------------------- 文字放不下
+
+/// 一条「文字放不下」。source 是控件上设的整段原文，shown 是实际画出来的样子
+/// （省略过的话带 …，和原文不同）；need/avail 只在量过宽高时有值。
+struct TextFitFinding {
+    QString kind;    ///< elided / clipped / wrap-clipped / header / item / han
+    QString cls;
+    QString name;
+    QString source;
+    QString shown;
+    int need = -1;
+    int avail = -1;
+};
+
+inline bool hasHan(const QString &text) {
+    static const QRegularExpression re(QStringLiteral("\\p{Han}"));
+    return re.match(text).hasMatch();
+}
+
+/// 逐类量「设上去的字」和「这块地方给得下多少」。只在 WTFML_SURFACE_SHOTS 下跑。
+/// @param english 英文巡检时额外把可见文字里的汉字单独记一类（中文巡检时满屏都是，不记）。
+inline QList<TextFitFinding> scanTextFit(QWidget *root, bool english) {
+    QList<TextFitFinding> out;
+    if (root == nullptr) return out;
+    const auto add = [&out](const QString &kind, QWidget *w, const QString &source, const QString &shown,
+                            int need, int avail) {
+        TextFitFinding f;
+        f.kind = kind;
+        f.cls = runtimeClassName(w);
+        f.name = labelOf(w);
+        f.source = source;
+        f.shown = shown;
+        f.need = need;
+        f.avail = avail;
+        out.append(f);
+    };
+
+    // 换行标签：heightForWidth 比实际高度高就是末行被裁。
+    const auto checkWrapped = [&add, english](QWidget *w, const QString &text) {
+        auto *label = qobject_cast<QLabel *>(w);
+        if (label == nullptr || text.trimmed().isEmpty()) return;
+        const int want = label->heightForWidth(label->width());
+        if (want > label->height()) add(QStringLiteral("wrap-clipped"), w, text, text, want, label->height());
+        if (english && hasHan(text)) add(QStringLiteral("han"), w, text, text, -1, -1);
+    };
+
+    // 单行：量宽度，装不下分「会省略」和「硬裁」两种（靠 ElidedLabel 写的 elideMode 属性认）。
+    const auto checkSingle = [&add, english](QWidget *w, const QString &text, const QFont &font, int avail) {
+        // 富文本（拼接用的 <span>）和开关复选框（markSwitch 把文字挪到旁边一行，自己不画字）不算。
+        if (text.trimmed().isEmpty() || avail <= 0 || Qt::mightBeRichText(text)) return;
+        if (w->property("wtfmlSwitch").toBool()) return;
+        const QFontMetrics fm(font);
+        const int need = fm.horizontalAdvance(text);
+        if (need > avail) {
+            const bool elideCapable = w->property("elideMode").isValid();
+            const Qt::TextElideMode mode = static_cast<Qt::TextElideMode>(
+                elideCapable ? w->property("elideMode").toInt() : int(Qt::ElideRight));
+            const QString shown = elideCapable ? fm.elidedText(text, mode, avail) : text;
+            add(elideCapable ? QStringLiteral("elided") : QStringLiteral("clipped"), w, text, shown, need, avail);
+        }
+        if (english && hasHan(text)) add(QStringLiteral("han"), w, text, text, -1, -1);
+    };
+
+    for (QWidget *w : root->findChildren<QWidget *>()) {
+        if (!w->isVisible() || w->width() <= 0) continue;
+        if (qobject_cast<QComboBox *>(w->parentWidget()) != nullptr) continue;
+
+        if (auto *view = qobject_cast<QAbstractItemView *>(w)) {
+            // 列表/表格项：代理画的字，按可视矩形量。
+            if (QAbstractItemModel *model = view->model()) {
+                const QFontMetrics fm(view->font());
+                std::function<void(const QModelIndex &, int)> walk;
+                walk = [&](const QModelIndex &parent, int depth) {
+                        const int rows = qMin(model->rowCount(parent), 40);
+                        const int cols = qMin(model->columnCount(parent), 8);
+                        for (int r = 0; r < rows; ++r) {
+                            for (int c = 0; c < cols; ++c) {
+                                const QModelIndex idx = model->index(r, c, parent);
+                                const QString text = model->data(idx, Qt::DisplayRole).toString();
+                                if (text.trimmed().isEmpty()) continue;
+                                const QRect rect = view->visualRect(idx);
+                                if (rect.width() <= 0) continue;
+                                const int need = fm.horizontalAdvance(text);
+                                if (need > rect.width() - 4)
+                                    add(QStringLiteral("item"), w, text, text, need, rect.width());
+                                if (english && hasHan(text)) add(QStringLiteral("han"), w, text, text, -1, -1);
+                            }
+                            const QModelIndex child = model->index(r, 0, parent);
+                            if (depth > 0 && model->hasChildren(child)) walk(child, depth - 1);
+                        }
+                    };
+                walk(QModelIndex(), 1);
+            }
+            // 表头：段宽装不下就是硬裁（表头不省略）。
+            QHeaderView *header = nullptr;
+            if (auto *tree = qobject_cast<QTreeView *>(view)) header = tree->header();
+            if (auto *table = qobject_cast<QTableView *>(view)) header = table->horizontalHeader();
+            if (header != nullptr && header->isVisible() && header->model() != nullptr) {
+                const QFontMetrics fm(header->font());
+                for (int i = 0; i < header->count(); ++i) {
+                    if (header->isSectionHidden(i)) continue;
+                    const QString label = header->model()->headerData(i, header->orientation()).toString();
+                    if (label.trimmed().isEmpty()) continue;
+                    const int need = fm.horizontalAdvance(label) + 12;
+                    const int avail = header->sectionSize(i);
+                    if (need > avail) add(QStringLiteral("header"), header, label, label, need, avail);
+                    if (english && hasHan(label)) add(QStringLiteral("han"), header, label, label, -1, -1);
+                }
+            }
+            continue;
+        }
+        if (auto *label = qobject_cast<QLabel *>(w)) {
+            const QString text = label->text();
+            if (label->wordWrap()) {
+                checkWrapped(label, text);
+            } else {
+                const QMargins m = label->contentsMargins();
+                checkSingle(label, text, label->font(),
+                            label->contentsRect().width() - m.left() - m.right());
+            }
+            continue;
+        }
+        if (auto *button = qobject_cast<QAbstractButton *>(w)) {
+            const QString text = button->text();
+            if (text.trimmed().isEmpty()) continue;  // 纯图标按钮不量
+            int extra = 0;
+            if (!button->icon().isNull()) extra = button->iconSize().width() + 4;
+            checkSingle(button, text, button->font(), button->contentsRect().width() - extra);
+            continue;
+        }
+        if (auto *edit = qobject_cast<QLineEdit *>(w)) {
+            checkSingle(edit, edit->placeholderText(), edit->font(), edit->contentsRect().width());
+            continue;
+        }
+        if (auto *tabs = qobject_cast<QTabBar *>(w)) {
+            for (int i = 0; i < tabs->count(); ++i)
+                checkSingle(tabs, tabs->tabText(i), tabs->font(), tabs->tabRect(i).width());
+            continue;
+        }
+    }
     return out;
 }
 
