@@ -63,17 +63,29 @@ void runSchematicInfoTests() {
     {
         const auto assets = root + QStringLiteral("/assets");
         const QString hash(40, QLatin1Char('a'));
+        const QString englishHash(40, QLatin1Char('b'));
         QDir().mkpath(assets + QStringLiteral("/indexes"));
         QDir().mkpath(assets + QStringLiteral("/objects/aa"));
+        QDir().mkpath(assets + QStringLiteral("/objects/bb"));
         writeFileAt(assets + QStringLiteral("/indexes/current.json"),
-                    QStringLiteral("{\"objects\":{\"minecraft/lang/zh_cn.json\":{\"hash\":\"%1\"}}}").arg(hash).toUtf8());
+                    QStringLiteral("{\"objects\":{\"minecraft/lang/zh_cn.json\":{\"hash\":\"%1\"},"
+                                   "\"minecraft/lang/en_us.json\":{\"hash\":\"%2\"}}}")
+                        .arg(hash, englishHash).toUtf8());
         writeFileAt(assets + QStringLiteral("/objects/aa/") + hash,
                     QStringLiteral("{\"block.minecraft.stone\":\"石头\",\"block.example.blue.metal\":\"蓝色金属\"}").toUtf8());
+        writeFileAt(assets + QStringLiteral("/objects/bb/") + englishHash,
+                    QStringLiteral("{\"block.minecraft.stone\":\"Stone\",\"block.example.blue.metal\":\"Blue Metal\"}").toUtf8());
         const auto names = SchematicInfo::loadChineseBlockNames(assets, QStringLiteral("current"));
         check(SchematicInfo::chineseBlockName(names, QStringLiteral("minecraft:stone")) == QStringLiteral("石头") &&
                   SchematicInfo::chineseBlockName(names, QStringLiteral("example:blue/metal")) == QStringLiteral("蓝色金属") &&
                   SchematicInfo::chineseBlockName(names, QStringLiteral("missing:rock")).isEmpty(),
               "原理图材料从本地语言资源取中文名，未知方块由界面保留 ID");
+        const auto english = SchematicInfo::loadBlockNames(assets, QStringLiteral("current"), QStringLiteral("en_us"));
+        check(SchematicInfo::chineseBlockName(english, QStringLiteral("minecraft:stone")) == QStringLiteral("Stone") &&
+                  SchematicInfo::chineseBlockName(english, QStringLiteral("example:blue/metal")) == QStringLiteral("Blue Metal"),
+              "原理图材料按界面语言取名称：英文界面读 en_us.json");
+        check(SchematicInfo::loadBlockNames(assets, QStringLiteral("current"), QStringLiteral("../outside")).isEmpty(),
+              "非法语言代号不会读到资源目录之外");
         check(SchematicInfo::loadChineseBlockNames(assets, QStringLiteral("../outside")).isEmpty(),
               "非法资源索引号不会读到资源目录之外");
     }
