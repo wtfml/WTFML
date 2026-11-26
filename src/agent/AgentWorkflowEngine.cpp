@@ -7,6 +7,7 @@
 
 #include "AgentApprovalPolicy.hpp"
 
+#include <QCoreApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QUuid>
@@ -32,7 +33,7 @@ QJsonObject planEgress() {
 QList<AgentToolSpec> AgentWorkflowEngine::specs() {
     QList<AgentToolSpec> list;
     list.append(AgentToolSpec{
-        QStringLiteral("workflow.submitPlan"), QStringLiteral("提交修复计划"),
+        QStringLiteral("workflow.submitPlan"), QCoreApplication::translate("AgentWorkflowEngine", "提交修复计划"),
         QStringLiteral("结构化提交修复计划；每个写步骤都会在执行时单独审批，批准计划不等于批准写入。"),
         AgentRisk::ReadOnly,
         objectSchema({QStringLiteral("goal"), QStringLiteral("steps")},
@@ -43,7 +44,7 @@ QList<AgentToolSpec> AgentWorkflowEngine::specs() {
                        QJsonObject{{QStringLiteral("type"), QStringLiteral("array")},
                                    {QStringLiteral("maxItems"), 20}}}})});
     list.append(AgentToolSpec{
-        QStringLiteral("workflow.finish"), QStringLiteral("提交完成报告"),
+        QStringLiteral("workflow.finish"), QCoreApplication::translate("AgentWorkflowEngine", "提交完成报告"),
         QStringLiteral("提交报告前本地核对：计划是否批准、有没有验证步、有没有证据。缺一项就拒绝。"),
         AgentRisk::ReadOnly,
         objectSchema({QStringLiteral("report")},

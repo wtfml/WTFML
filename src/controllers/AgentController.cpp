@@ -1224,7 +1224,7 @@ void AgentController::onMcpConnect(const QString &serverId) {
 void AgentController::onMcpDisconnect(const QString &serverId) {
     if (m_mcpManager == nullptr) return;
     m_mcpManager->stop(serverId);
-    if (m_mcpPage != nullptr) m_mcpPage->setLog(QStringLiteral("已断开。重新连接前会再次要求确认。"));
+    if (m_mcpPage != nullptr) m_mcpPage->setLog(QCoreApplication::translate("AgentController", "已断开。重新连接前须再次确认。"));
     refreshMcpPage();
 }
 
@@ -1232,7 +1232,7 @@ void AgentController::onMcpAdd() {
     if (m_mcpManager == nullptr || m_mcpPage == nullptr) return;
     AgentView::McpServerDraft draft;
     draft.enabled = true;
-    if (!AgentMcpPage::editDraft(m_mcpPage, QStringLiteral("添加 MCP 服务器"), &draft)) return;
+    if (!AgentMcpPage::editDraft(m_mcpPage, QCoreApplication::translate("AgentController", "添加 MCP 服务器"), &draft)) return;
     const McpServerConfig server = serverFrom(draft);
     const QString problem = McpTrustStore::validateConfig(server);
     if (!problem.isEmpty()) {
@@ -1245,7 +1245,7 @@ void AgentController::onMcpAdd() {
         return;
     }
     m_mcpManager->reload(&saveProblem);
-    m_mcpPage->setLog(QStringLiteral("已保存「%1」，首次启动前会确认可执行文件身份。")
+    m_mcpPage->setLog(QCoreApplication::translate("AgentController", "已保存「%1」，首次启动前须确认可执行文件身份。")
                           .arg(server.name));
     refreshMcpPage();
 }
@@ -1258,7 +1258,7 @@ void AgentController::onMcpEdit(const QString &serverId) {
     }
     if (!existing.isValid()) return;
     AgentView::McpServerDraft draft = draftFrom(existing);
-    if (!AgentMcpPage::editDraft(m_mcpPage, QStringLiteral("编辑 MCP 服务器"), &draft)) return;
+    if (!AgentMcpPage::editDraft(m_mcpPage, QCoreApplication::translate("AgentController", "编辑 MCP 服务器"), &draft)) return;
     const McpServerConfig updated = serverFrom(draft);
     const QString problem = McpTrustStore::validateConfig(updated);
     if (!problem.isEmpty()) {
@@ -1275,7 +1275,7 @@ void AgentController::onMcpEdit(const QString &serverId) {
         return;
     }
     m_mcpManager->reload(&saveProblem);
-    m_mcpPage->setLog(QStringLiteral("已保存「%1」；配置变了，下次启动要重新确认。")
+    m_mcpPage->setLog(QCoreApplication::translate("AgentController", "已保存「%1」；配置已变更，下次启动须重新确认。")
                           .arg(updated.name));
     refreshMcpPage();
 }
@@ -1283,9 +1283,11 @@ void AgentController::onMcpEdit(const QString &serverId) {
 void AgentController::onMcpRemove(const QString &serverId) {
     if (m_mcpManager == nullptr || m_mcpPage == nullptr) return;
     const int choice = InlineMessage::ask(
-        m_overlay, MessageKind::Question, QStringLiteral("删除 MCP 服务器"),
-        QStringLiteral("删除这个服务器的配置和确认记录；只删配置，不删你机器上的程序。"),
-        QStringList{QStringLiteral("删除"), QStringLiteral("取消")}, 1, 1);
+        m_overlay, MessageKind::Question, QCoreApplication::translate("AgentController", "删除 MCP 服务器"),
+        QCoreApplication::translate("AgentController", "删除此服务器的配置和确认记录；仅删除配置，不删除本机程序。"),
+        QStringList{QCoreApplication::translate("AgentController", "删除"),
+                    QCoreApplication::translate("AgentController", "取消")},
+        1, 1);
     if (choice != 0) return;
     m_mcpManager->stop(serverId);
     QString problem;
@@ -1294,7 +1296,7 @@ void AgentController::onMcpRemove(const QString &serverId) {
         return;
     }
     m_mcpManager->reload(&problem);
-    m_mcpPage->setLog(QStringLiteral("已删除。"));
+    m_mcpPage->setLog(QCoreApplication::translate("AgentController", "已删除。"));
     refreshMcpPage();
 }
 
@@ -1325,7 +1327,7 @@ void AgentController::openMcpSettings() {
     }
     m_mcpManager->reload(nullptr);
     refreshMcpPage();
-    m_overlay->showPage(m_mcpPage, QStringLiteral("MCP 服务器"));
+    m_overlay->showPage(m_mcpPage, QCoreApplication::translate("AgentController", "MCP 服务器"));
 }
 
 void AgentController::setLauncherHost(AgentLauncherHost *host) {

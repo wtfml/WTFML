@@ -1,6 +1,6 @@
 src/agent/AgentArtifactStore.cpp	10
 src/agent/AgentBackupIndex.cpp	15
-src/agent/AgentCommandTools.cpp	27
+src/agent/AgentCommandTools.cpp	26
 src/agent/AgentCompositeToolEngine.cpp	8
 src/agent/AgentContextBuilder.cpp	1
 src/agent/AgentDiagnosticProjection.cpp	2
@@ -8,7 +8,7 @@ src/agent/AgentEgressPolicy.cpp	7
 src/agent/AgentFileToolEngine.cpp	20
 src/agent/AgentFileTools.cpp	28
 src/agent/AgentInstanceLock.cpp	3
-src/agent/AgentLauncherTools.cpp	135
+src/agent/AgentLauncherTools.cpp	96
 src/agent/AgentLoop.cpp	7
 src/agent/AgentMcpToolEngine.cpp	15
 src/agent/AgentPaths.cpp	1
@@ -19,14 +19,14 @@ src/agent/AgentSession.cpp	4
 src/agent/AgentSessionStore.cpp	31
 src/agent/AgentSettings.cpp	13
 src/agent/AgentSettings.hpp	1
-src/agent/AgentSkill.cpp	15
+src/agent/AgentSkill.cpp	10
 src/agent/AgentSseParser.cpp	2
-src/agent/AgentToolRegistry.cpp	20
+src/agent/AgentToolRegistry.cpp	15
 src/agent/AgentWebPolicy.cpp	8
-src/agent/AgentWebTools.cpp	29
+src/agent/AgentWebTools.cpp	27
 src/agent/AgentWinPath.cpp	22
 src/agent/AgentWorkflow.cpp	30
-src/agent/AgentWorkflowEngine.cpp	15
+src/agent/AgentWorkflowEngine.cpp	13
 src/agent/McpClient.cpp	33
 src/agent/McpManager.cpp	8
 src/agent/McpProtocol.cpp	6
@@ -37,7 +37,7 @@ src/agent/QtAgentWebTransport.cpp	2
 src/auth/AuthManager.cpp	9
 src/auth/TokenStore.cpp	14
 src/controllers/ActivityCenterController.cpp	1
-src/controllers/AgentController.cpp	30
+src/controllers/AgentController.cpp	18
 src/controllers/AgentLauncherHostImpl.cpp	28
 src/controllers/ConnectionsController.cpp	1
 src/controllers/InstanceUpdateCheckController.cpp	1
@@ -62,7 +62,7 @@ src/presets/PresetApply.cpp	7
 src/presets/PresetCapture.cpp	6
 src/presets/PresetPlanner.cpp	11
 src/presets/ResourcePackPreset.cpp	4
-src/settings/GlobalJavaSettings.cpp	9
+src/settings/GlobalJavaSettings.cpp	8
 src/settings/LauncherSettings.cpp	3
 src/tools/TextFormat.cpp	21
 src/util/DailyQuote.cpp	41
@@ -73,5 +73,3 @@ src/util/SecretProtector.cpp	4
 src/util/StartupAcceptance.hpp	1
 src/util/ZipUtil.cpp	53
 src/util/ZipUtil.hpp	3
-ui/AgentMcpPage.cpp	30
-ui/AgentSettingsPage.cpp	8

@@ -449,18 +449,18 @@ Snapshot build(const SnapshotInput &input) {
         return text;
     }();
     for (const QString &modId : parsed.mixinMods) {
-        addSuspect(&drafts, &order, modId, 1, tr("Mixin apply for mod 语句"));
+        addSuspect(&drafts, &order, modId, 1, QStringLiteral("Mixin apply for mod statement"));
     }
     for (const QString &config : parsed.mixinConfigs) {
         const QString normalized = AgentMixinOwnership::normalizeConfig(config);
         const QString owner = input.mixinOwners.value(normalized);
         if (!owner.isEmpty()) {
-            addSuspect(&drafts, &order, owner, 2, tr("mixin 配置 %1").arg(config));
+            addSuspect(&drafts, &order, owner, 2, QStringLiteral("mixin config %1").arg(config));
             continue;
         }
         // 读不到归属就标 unknown：不按文件名猜模组。
         addSuspect(&drafts, &order, QStringLiteral("unknown"), 3,
-                   tr("mixin 配置 %1 无归属声明").arg(config));
+                   QStringLiteral("mixin config %1 has no owner declaration").arg(config));
     }
     // 失败区文本/栈帧里出现的已装模组：算“被提到/栈帧”，不算根因。
     for (const ModEntry &entry : parsed.modList) {
@@ -468,16 +468,17 @@ Snapshot build(const SnapshotInput &input) {
         if (!wordContains(parsed.failureRegion, entry.modId)) continue;
         const bool inFrame = wordContains(stackText, entry.modId);
         addSuspect(&drafts, &order, entry.modId, inFrame ? 1 : 3,
-                   inFrame ? tr("栈帧含该模组") : tr("失败区文本提及"));
+                   inFrame ? QStringLiteral("stack frame includes mod")
+                           : QStringLiteral("mentioned in failure section"));
     }
     for (const QString &modId : parsed.suspectedMods) {
         if (isPlatformModId(modId)) continue;
-        addSuspect(&drafts, &order, modId, 3, tr("报告头 Suspected Mods"));
+        addSuspect(&drafts, &order, modId, 3, QStringLiteral("Suspected Mods header in report"));
     }
     for (const AgentKnowledge::CrashRule &rule : hits) {
         for (const QString &modId : rule.suspects) {
             if (isPlatformModId(modId)) continue;
-            addSuspect(&drafts, &order, modId, 3, tr("规则 %1 的线索").arg(rule.id));
+            addSuspect(&drafts, &order, modId, 3, QStringLiteral("clue from rule %1").arg(rule.id));
         }
     }
 
@@ -523,7 +524,7 @@ Snapshot build(const SnapshotInput &input) {
         row.confidence = rounded(qMin(0.95, confidence));
         row.basis = (primaryRule.isEmpty() ? QStringLiteral("no-rule") : primaryRule) +
                     QStringLiteral(" + ") + tierLabel;
-        if (!draft.detail.isEmpty()) row.basis += tr("（%1）").arg(draft.detail);
+        if (!draft.detail.isEmpty()) row.basis += QStringLiteral(" (%1)").arg(draft.detail);
         row.tier = draft.tier;
         rows.append(row);
     }

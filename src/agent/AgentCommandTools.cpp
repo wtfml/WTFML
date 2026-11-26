@@ -9,6 +9,7 @@
 #include "AgentRedaction.hpp"
 #include "AgentSettings.hpp"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QJsonArray>
 #include <QProcess>
@@ -94,7 +95,7 @@ QList<AgentToolSpec> AgentCommandTools::specs() {
     QStringList ids;
     for (const AgentCommandSpec &spec : AgentCommandSpecs::all()) ids.append(spec.id);
     return {AgentToolSpec{
-        QStringLiteral("command.diagnose"), QStringLiteral("诊断命令"),
+        QStringLiteral("command.diagnose"), QCoreApplication::translate("AgentCommandTools", "诊断命令"),
         QStringLiteral("只执行固定诊断命令（java -version、ping、nslookup、netstat -ano 等）；"
                        "默认关闭，每次都要审批。"),
         AgentRisk::Command,
