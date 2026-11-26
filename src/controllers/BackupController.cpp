@@ -276,7 +276,7 @@ void BackupController::pickZip(BackupFiles::Kind kind, const QString &label, con
                 .arg(what, QDir::toNativeSeparators(dir)));
         return;
     }
-    // 文件名不能按字典序排（`std::greater<QString>`）：自动留下的「恢复前-」
+    // 文件名不能按字典序排（`std::greater<QString>`）：自动留下的安全快照（`before-restore-`）
     // 安全快照在名字里多插了一段汉字，而汉字的码位在数字之后 ⇒ 每一份安全快照都会
     // 排到**最新的常规备份前面**。刚还原过一次，列表最上面就是刚才自动留的那一份，
     // "越上面越新"当场不成立，点下去还原的其实是很久以前那份。
