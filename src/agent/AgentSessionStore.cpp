@@ -8,6 +8,7 @@
 #include "AgentPaths.hpp"
 #include "AgentSessionCrypto.hpp"
 
+#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDir>
@@ -73,16 +74,16 @@ bool AgentSessionStore::writeAtomic(const QString &path, const QByteArray &bytes
                                     QString *problem) const {
     const QFileInfo info(path);
     if (!QDir().mkpath(info.absolutePath())) {
-        if (problem != nullptr) *problem = QStringLiteral("无法创建目录：%1").arg(info.absolutePath());
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentSessionStore", "无法创建目录：%1").arg(info.absolutePath());
         return false;
     }
     QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly)) {
-        if (problem != nullptr) *problem = QStringLiteral("无法写入：%1").arg(path);
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentSessionStore", "无法写入：%1").arg(path);
         return false;
     }
     if (file.write(bytes) != bytes.size() || !file.commit()) {
-        if (problem != nullptr) *problem = QStringLiteral("写盘失败：%1").arg(path);
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentSessionStore", "写盘失败：%1").arg(path);
         return false;
     }
     return true;
@@ -92,25 +93,25 @@ bool AgentSessionStore::readMeta(const QString &path, AgentSessionMeta *meta,
                                  QString *problem) const {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        if (problem != nullptr) *problem = QStringLiteral("读不到元数据：%1").arg(path);
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentSessionStore", "无法读取元数据：%1").arg(path);
         return false;
     }
     QJsonParseError error;
     const QJsonDocument document = QJsonDocument::fromJson(file.readAll(), &error);
     if (error.error != QJsonParseError::NoError || !document.isObject()) {
-        if (problem != nullptr) *problem = QStringLiteral("元数据损坏：%1").arg(path);
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentSessionStore", "元数据损坏：%1").arg(path);
         return false;
     }
     const AgentSessionMeta parsed = AgentSessionMeta::fromJson(document.object());
     if (parsed.schema > 1) {
         if (problem != nullptr) {
-            *problem = QStringLiteral("会话版本过新（schema %1），当前版本不覆盖原文件。")
+            *problem = QCoreApplication::translate("AgentSessionStore", "会话版本过新（schema %1），当前版本不覆盖原文件。")
                            .arg(parsed.schema);
         }
         return false;
     }
     if (parsed.id.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("元数据缺少 id：%1").arg(path);
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentSessionStore", "元数据缺少 id：%1").arg(path);
         return false;
     }
     *meta = parsed;
@@ -128,7 +129,7 @@ bool AgentSessionStore::create(AgentSession *session, QString *problem) {
     }
     AgentSession created;
     created.meta.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    created.meta.title = QStringLiteral("新对话");
+    created.meta.title = AgentSessionTitle::defaultTitle();
     created.meta.createdAt = QDateTime::currentDateTimeUtc();
     created.meta.updatedAt = created.meta.createdAt;
     created.meta.encrypted = false;
@@ -142,12 +143,12 @@ bool AgentSessionStore::create(AgentSession *session, QString *problem) {
 
 bool AgentSessionStore::save(const AgentSession &session, bool snapshot, QString *problem) {
     if (session.meta.id.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("会话没有 id。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentSessionStore", "会话缺少 id。");
         return false;
     }
     if (session.messages.size() > maxMessages()) {
         if (problem != nullptr) {
-            *problem = QStringLiteral("会话超过 %1 条消息，已停止追加，请导出或新建会话。")
+            *problem = QCoreApplication::translate("AgentSessionStore", "会话超过 %1 条消息，已停止追加，可导出或新建会话。")
                            .arg(maxMessages());
         }
         return false;
@@ -165,7 +166,7 @@ bool AgentSessionStore::save(const AgentSession &session, bool snapshot, QString
     QByteArray plain = QJsonDocument(body).toJson(QJsonDocument::Indented);
     if (plain.size() > maxBodyBytes()) {
         if (problem != nullptr) {
-            *problem = QStringLiteral("会话正文超过 %1 MB，已停止追加，请导出或新建会话。")
+            *problem = QCoreApplication::translate("AgentSessionStore", "会话正文超过 %1 MB，已停止追加，可导出或新建会话。")
                            .arg(maxBodyBytes() / (1024 * 1024));
         }
         return false;
@@ -187,7 +188,7 @@ bool AgentSessionStore::save(const AgentSession &session, bool snapshot, QString
         finalBytes = AgentSessionCrypto::encrypt(plain);
         if (finalBytes.isEmpty()) {
             if (problem != nullptr) {
-                *problem = QStringLiteral("整会话加密失败，原正文保留（不会半加密）。");
+                *problem = QCoreApplication::translate("AgentSessionStore", "整会话加密失败，已保留原正文。");
             }
             return false;
         }
@@ -200,7 +201,7 @@ bool AgentSessionStore::save(const AgentSession &session, bool snapshot, QString
     // 切换加密状态后，另一种格式的旧正文必须删掉；删不掉不算保存成功（否则明文还在）。
     const QString stale = meta.encrypted ? plainBodyPath(meta.id) : encryptedBodyPath(meta.id);
     if (QFileInfo::exists(stale) && !QFile::remove(stale)) {
-        if (problem != nullptr) *problem = QStringLiteral("旧正文删不掉：%1").arg(stale);
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentSessionStore", "无法删除旧正文：%1").arg(stale);
         return false;
     }
     if (!writeMeta(meta, problem)) {
@@ -214,7 +215,7 @@ bool AgentSessionStore::save(const AgentSession &session, bool snapshot, QString
 
 bool AgentSessionStore::load(const QString &sessionId, AgentSession *session, QString *problem) {
     if (session == nullptr || sessionId.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("会话 id 为空。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentSessionStore", "会话 id 为空。");
         return false;
     }
     AgentSessionMeta meta;
@@ -225,13 +226,13 @@ bool AgentSessionStore::load(const QString &sessionId, AgentSession *session, QS
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
         if (problem != nullptr) {
-            *problem = meta.encrypted ? QStringLiteral("无法解密：加密正文不存在或不可读。")
-                                      : QStringLiteral("读不到会话正文：%1").arg(path);
+            *problem = meta.encrypted ? QCoreApplication::translate("AgentSessionStore", "无法解密：加密正文不存在或不可读。")
+                                      : QCoreApplication::translate("AgentSessionStore", "无法读取会话正文：%1").arg(path);
         }
         return false;
     }
     if (file.size() > maxBodyBytes()) {
-        if (problem != nullptr) *problem = QStringLiteral("会话正文超过大小上限，拒绝载入。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentSessionStore", "会话正文超过大小上限，拒绝载入。");
         return false;
     }
     QByteArray stored = file.readAll();
@@ -242,7 +243,7 @@ bool AgentSessionStore::load(const QString &sessionId, AgentSession *session, QS
         plain = AgentSessionCrypto::decrypt(stored);
         if (plain.isEmpty()) {
             // 明确不回退明文：换用户/换机器/值损坏都只能报错。
-            if (problem != nullptr) *problem = QStringLiteral("无法解密该会话（换用户/换机器或内容损坏）。");
+            if (problem != nullptr) *problem = QCoreApplication::translate("AgentSessionStore", "无法解密该会话（账户变更、设备变更或内容损坏）。");
             return false;
         }
     }
@@ -252,7 +253,7 @@ bool AgentSessionStore::load(const QString &sessionId, AgentSession *session, QS
     if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
         quarantine(path, nullptr);
         if (problem != nullptr) {
-            *problem = QStringLiteral("会话正文损坏，已隔离原文件；可从恢复快照手动恢复。");
+            *problem = QCoreApplication::translate("AgentSessionStore", "会话正文损坏，已隔离原文件，可从恢复快照手动恢复。");
         }
         return false;
     }
@@ -260,7 +261,7 @@ bool AgentSessionStore::load(const QString &sessionId, AgentSession *session, QS
     const int schema = root.value(QStringLiteral("schema")).toInt(1);
     if (schema > 1) {
         if (problem != nullptr) {
-            *problem = QStringLiteral("会话版本过新（schema %1），不覆盖原文件。").arg(schema);
+            *problem = QCoreApplication::translate("AgentSessionStore", "会话版本过新（schema %1），不覆盖原文件。").arg(schema);
         }
         return false;
     }
@@ -324,7 +325,7 @@ bool AgentSessionStore::list(QList<AgentSessionMeta> *metas, QString *problem) {
         // 损坏的元数据不当作空会话，也不从列表里悄悄消失。
         AgentSessionMeta broken;
         broken.id = file.fileName().chopped(QStringLiteral(".meta.json").size());
-        broken.title = QStringLiteral("损坏，已隔离");
+        broken.title = QCoreApplication::translate("AgentSessionStore", "损坏，已隔离");
         broken.updatedAt = file.lastModified().toUTC();
         broken.corrupt = true;
         if (!broken.id.isEmpty()) {
@@ -346,7 +347,7 @@ bool AgentSessionStore::rename(const QString &sessionId, const QString &title, Q
     AgentSessionMeta meta;
     if (!readMeta(metaPath(sessionId), &meta, problem)) return false;
     QString cleaned = title.simplified();
-    if (cleaned.isEmpty()) cleaned = QStringLiteral("新对话");
+    if (cleaned.isEmpty()) cleaned = AgentSessionTitle::defaultTitle();
     meta.title = cleaned.left(80);
     meta.updatedAt = QDateTime::currentDateTimeUtc();
     return writeMeta(meta, problem);
@@ -382,7 +383,7 @@ bool AgentSessionStore::completeDeletion(const QString &sessionId, QString *prob
     if (!readMeta(metaPath(sessionId), &meta, problem)) return false;
     if (meta.deletionState != QLatin1String("pending") &&
         meta.deletionState != QLatin1String("deleting")) {
-        if (problem != nullptr) *problem = QStringLiteral("会话没有待删除标记。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentSessionStore", "会话没有待删除标记。");
         return false;
     }
     meta.deletionState = QStringLiteral("deleting");
@@ -390,7 +391,7 @@ bool AgentSessionStore::completeDeletion(const QString &sessionId, QString *prob
 
     for (const QString &path : {plainBodyPath(sessionId), encryptedBodyPath(sessionId)}) {
         if (QFileInfo::exists(path) && !QFile::remove(path)) {
-            if (problem != nullptr) *problem = QStringLiteral("正文删除失败：%1").arg(path);
+            if (problem != nullptr) *problem = QCoreApplication::translate("AgentSessionStore", "正文删除失败：%1").arg(path);
             if (stageOut != nullptr) *stageOut = QStringLiteral("body");
             return false;
         }
@@ -398,7 +399,7 @@ bool AgentSessionStore::completeDeletion(const QString &sessionId, QString *prob
     for (const QString &path : {recoveryDir(sessionId), artifactDir(sessionId)}) {
         QDir dir(path);
         if (dir.exists() && !dir.removeRecursively()) {
-            if (problem != nullptr) *problem = QStringLiteral("会话附属文件删除失败：%1").arg(path);
+            if (problem != nullptr) *problem = QCoreApplication::translate("AgentSessionStore", "会话附属文件删除失败：%1").arg(path);
             if (stageOut != nullptr) *stageOut = path.endsWith(QStringLiteral("artifacts"))
                                                     ? QStringLiteral("artifacts")
                                                     : QStringLiteral("snapshots");
@@ -406,7 +407,7 @@ bool AgentSessionStore::completeDeletion(const QString &sessionId, QString *prob
         }
     }
     if (QFileInfo::exists(metaPath(sessionId)) && !QFile::remove(metaPath(sessionId))) {
-        if (problem != nullptr) *problem = QStringLiteral("元数据删除失败：%1").arg(metaPath(sessionId));
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentSessionStore", "元数据删除失败：%1").arg(metaPath(sessionId));
         if (stageOut != nullptr) *stageOut = QStringLiteral("metadata");
         return false;
     }
@@ -435,7 +436,7 @@ bool AgentSessionStore::finalizePendingDeletions(QStringList *problems) {
         if (!completeDeletion(meta.id, &error, &stage)) {
             ok = false;
             if (problems != nullptr) {
-                problems->append(QStringLiteral("%1（%2）：%3").arg(meta.id, stage, error));
+                problems->append(QCoreApplication::translate("AgentSessionStore", "%1（%2）：%3").arg(meta.id, stage, error));
             }
         }
     }
@@ -445,12 +446,12 @@ bool AgentSessionStore::finalizePendingDeletions(QStringList *problems) {
 void AgentSessionStore::snapshotAfterSave(const QString &id, QString *problem) const {
     const QString directory = recoveryDir(id) + QLatin1Char('/') + recoveryStamp();
     if (!QDir().mkpath(directory)) {
-        if (problem != nullptr) *problem = QStringLiteral("无法创建恢复快照目录。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentSessionStore", "无法创建恢复快照目录。");
         return;
     }
     const QString metaSource = metaPath(id);
     if (!QFile::copy(metaSource, directory + QStringLiteral("/meta.json"))) {
-        if (problem != nullptr) *problem = QStringLiteral("恢复快照复制元数据失败。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentSessionStore", "恢复快照复制元数据失败。");
     }
     QString bodySource = plainBodyPath(id);
     if (!QFileInfo::exists(bodySource)) {
@@ -458,7 +459,7 @@ void AgentSessionStore::snapshotAfterSave(const QString &id, QString *problem) c
     }
     if (QFileInfo::exists(bodySource) &&
         !QFile::copy(bodySource, directory + QLatin1Char('/') + QFileInfo(bodySource).fileName())) {
-        if (problem != nullptr) *problem = QStringLiteral("恢复快照复制正文失败。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentSessionStore", "恢复快照复制正文失败。");
     }
 
     QDir root(recoveryDir(id));
@@ -472,6 +473,6 @@ void AgentSessionStore::snapshotAfterSave(const QString &id, QString *problem) c
 void AgentSessionStore::quarantine(const QString &path, QString *problem) const {
     const QString target = path + QStringLiteral(".corrupt-") + nowStamp();
     if (!QFile::rename(path, target) && problem != nullptr) {
-        *problem = QStringLiteral("损坏文件隔离失败：%1").arg(path);
+        *problem = QCoreApplication::translate("AgentSessionStore", "损坏文件隔离失败：%1").arg(path);
     }
 }

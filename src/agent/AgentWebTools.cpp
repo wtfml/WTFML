@@ -30,7 +30,7 @@ QJsonObject objectSchema(const QStringList &required, const QJsonObject &propert
 
 /// 「审批请求已失效」只有一句：两个审批入口（逐次 / 本会话）共用，别写第二份。
 const QString &approvalExpiredText() {
-    static const QString text = QStringLiteral("审批请求已失效。");
+    static const QString text = QCoreApplication::translate("AgentWebTools", "审批请求已失效。");
     return text;
 }
 
@@ -38,7 +38,7 @@ QJsonObject webEgress(const QString &host) {
     return QJsonObject{{QStringLiteral("kind"), QStringLiteral("web")},
                        {QStringLiteral("decision"), QStringLiteral("confirm")},
                        {QStringLiteral("reason"),
-                        QStringLiteral("请求会发给第三方站点 %1").arg(host)},
+                        QCoreApplication::translate("AgentWebTools", "请求将发送至第三方站点 %1").arg(host)},
                        {QStringLiteral("redactionHits"), 0}};
 }
 
@@ -113,7 +113,7 @@ AgentToolResult AgentWebTools::invoke(const Agent::ToolCall &call) {
         return errorResult(Agent::ErrorKind::ToolError, problem);
     }
     if (m_transport == nullptr) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("联网组件未接入。"));
+        return errorResult(Agent::ErrorKind::ToolError, tr("联网组件未接入。"));
     }
     AgentToolContext context;
     if (m_provider != nullptr) {
@@ -127,18 +127,18 @@ AgentToolResult AgentWebTools::invoke(const Agent::ToolCall &call) {
         approval.kind = Approval::Kind::Search;
         approval.query = call.arguments.value(QStringLiteral("query")).toString().trimmed();
         if (approval.query.isEmpty()) {
-            return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("搜索词不能为空。"));
+            return errorResult(Agent::ErrorKind::ToolError, tr("搜索词不能为空。"));
         }
         const QString endpoint = AgentSettings::webSearchEndpoint();
         if (endpoint.isEmpty()) {
             return errorResult(Agent::ErrorKind::ToolError,
-                               QStringLiteral("先在 API 设置里填 SearXNG 实例地址，才能联网搜索。"));
+                               tr("需先在 API 设置中填写 SearXNG 实例地址，再执行联网搜索。"));
         }
         approval.url = QUrl(endpoint);
         const AgentWebPolicy::UrlCheck check = AgentWebPolicy::validateUrl(approval.url);
         if (!check.ok) {
             return errorResult(Agent::ErrorKind::ToolError,
-                               QStringLiteral("SearXNG 地址不可用：%1").arg(check.problem));
+                               tr("SearXNG 地址不可用：%1").arg(check.problem));
         }
     } else if (internal == QStringLiteral("web.fetch")) {
         approval.kind = Approval::Kind::Fetch;
@@ -146,7 +146,7 @@ AgentToolResult AgentWebTools::invoke(const Agent::ToolCall &call) {
         const AgentWebPolicy::UrlCheck check = AgentWebPolicy::validateUrl(approval.url);
         if (!check.ok) return errorResult(Agent::ErrorKind::ToolError, check.problem);
     } else {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("未知工具。"));
+        return errorResult(Agent::ErrorKind::ToolError, tr("未知工具。"));
     }
     // 本会话已经放行过同一个 host：不再弹审批，直接走同一段请求代码。
     const QString sessionHost = approval.url.host().toLower();
@@ -157,14 +157,14 @@ AgentToolResult AgentWebTools::invoke(const Agent::ToolCall &call) {
     m_approvals.insert(approvalId, approval);
     const QString target = approval.url.host();
     const QString summary = approval.kind == Approval::Kind::Search
-                                ? QStringLiteral("联网搜索：%1").arg(approval.query)
-                                : QStringLiteral("抓取网页：%1").arg(approval.url.toString());
+                                ? tr("联网搜索：%1").arg(approval.query)
+                                : tr("抓取网页：%1").arg(approval.url.toString());
     QJsonObject request = AgentApprovalPolicy::request(
         call.name,
-        approval.kind == Approval::Kind::Search ? QStringLiteral("联网搜索")
-                                                : QStringLiteral("抓取网页"),
+        approval.kind == Approval::Kind::Search ? tr("联网搜索")
+                                                : tr("抓取网页"),
         target, summary, approval.url.toString(), QString(),
-        QStringLiteral("只连公网地址；不跟随到内网；结果按不可信内容处理。"), webEgress(target));
+        tr("仅连接公网地址，不跟随至内网；结果按不可信内容处理。"), webEgress(target));
     request.insert(QStringLiteral("approvalId"), approvalId);
     AgentToolResult result;
     result.status = AgentToolResult::Status::ApprovalRequired;
@@ -180,7 +180,7 @@ AgentToolResult AgentWebTools::resolveApproval(const QString &approvalId, bool a
     const Approval approval = m_approvals.take(approvalId);
     if (!approved) {
         AgentToolResult result =
-            errorResult(Agent::ErrorKind::ApprovalDenied, QStringLiteral("用户拒绝了这次联网请求。"));
+            errorResult(Agent::ErrorKind::ApprovalDenied, tr("用户拒绝了此次联网请求。"));
         result.data = QJsonObject{{QStringLiteral("denied"), true}};
         return result;
     }
@@ -221,7 +221,7 @@ AgentToolResult AgentWebTools::startApproved(const Approval &approval) {
     startFetch(requestId, approval.url, 0, flight.search, approval.call, approval.context);
     AgentToolResult result;
     result.status = AgentToolResult::Status::Pending;
-    result.summary = QStringLiteral("正在联网获取…");
+    result.summary = tr("正在联网获取…");
     return result;
 }
 
@@ -241,7 +241,7 @@ void AgentWebTools::startFetch(const QString &requestId, const QUrl &url, int re
         if (!m_running.contains(requestId)) return;
         if (!ok) {
             finish(requestId, errorResult(Agent::ErrorKind::Network,
-                                          QStringLiteral("解析失败：%1").arg(error)));
+                                          tr("解析失败：%1").arg(error)));
             return;
         }
         QString addressProblem;
@@ -270,7 +270,7 @@ void AgentWebTools::onResponse(const QString &requestId, const AgentHttpResponse
     const RunningFlight flight = m_running.value(requestId);
     if (flight.redirects >= AgentWebPolicy::kMaxRedirects) {
         finish(requestId, errorResult(Agent::ErrorKind::Network,
-                                      QStringLiteral("重定向次数超过上限（%1）。")
+                                      tr("重定向次数超过上限（%1）。")
                                           .arg(AgentWebPolicy::kMaxRedirects)));
         return;
     }
@@ -279,7 +279,7 @@ void AgentWebTools::onResponse(const QString &requestId, const AgentHttpResponse
         const AgentWebPolicy::UrlCheck check = AgentWebPolicy::validateUrl(next);
         if (!check.ok) {
             finish(requestId, errorResult(Agent::ErrorKind::EgressBlocked,
-                                          QStringLiteral("重定向目标不可用：%1").arg(check.problem)));
+                                          tr("重定向目标不可用：%1").arg(check.problem)));
             return;
         }
         // 每一跳都重新解析 + 全地址校验 + pinned-IP 连接，不复用上一跳结果。
@@ -293,12 +293,12 @@ void AgentWebTools::onResponse(const QString &requestId, const AgentHttpResponse
     }
     if (response.status >= 400) {
         finish(requestId, errorResult(Agent::ErrorKind::Network,
-                                      QStringLiteral("目标返回 HTTP %1。").arg(response.status)));
+                                      tr("目标返回 HTTP %1。").arg(response.status)));
         return;
     }
     if (!AgentWebPolicy::contentTypeAllowed(response.contentType)) {
         finish(requestId, errorResult(Agent::ErrorKind::EgressBlocked,
-                                      QStringLiteral("拒绝解析这个 Content-Type：%1")
+                                      tr("拒绝解析此 Content-Type：%1")
                                           .arg(response.contentType)));
         return;
     }
@@ -315,7 +315,8 @@ QJsonObject egressFor(const QUrl &url) {
     return QJsonObject{{QStringLiteral("kind"), QStringLiteral("web")},
                        {QStringLiteral("decision"), QStringLiteral("confirm")},
                        {QStringLiteral("reason"),
-                        QStringLiteral("内容来自第三方站点 %1，按不可信数据处理").arg(url.host())}};
+                        QStringLiteral("Content retrieved from third-party site %1; treat as untrusted")
+                            .arg(url.host())}};  // i18n-ignore
 }
 
 }  // namespace
@@ -331,7 +332,7 @@ AgentToolResult AgentWebTools::fetchResult(const RunningFlight &flight,
     if (AgentWebPolicy::truncateText(&output)) truncated = true;
     AgentToolResult result;
     result.status = AgentToolResult::Status::Ok;
-    result.summary = QStringLiteral("抓取完成：%1（HTTP %2，%3 字节）")
+    result.summary = tr("抓取完成：%1（HTTP %2，%3 字节）")
                          .arg(flight.currentUrl.host())
                          .arg(response.status)
                          .arg(response.body.size());
@@ -350,7 +351,7 @@ AgentToolResult AgentWebTools::searchResult(const RunningFlight &flight,
     const QJsonDocument document = QJsonDocument::fromJson(response.body);
     if (!document.isObject()) {
         return errorResult(Agent::ErrorKind::Protocol,
-                           QStringLiteral("SearXNG 返回的不是 JSON。"));
+                           tr("SearXNG 返回内容不是有效 JSON。"));
     }
     QJsonArray results;
     for (const QJsonValue &value : document.object().value(QStringLiteral("results")).toArray()) {
@@ -366,7 +367,7 @@ AgentToolResult AgentWebTools::searchResult(const RunningFlight &flight,
     }
     AgentToolResult result;
     result.status = AgentToolResult::Status::Ok;
-    result.summary = QStringLiteral("搜索完成：%1 条结果").arg(results.size());
+    result.summary = tr("搜索完成：%1 条结果").arg(results.size());
     result.data = QJsonObject{{QStringLiteral("query"), flight.currentUrl.query()},
                               {QStringLiteral("results"), results},
                               {QStringLiteral("untrusted"), true},
@@ -386,7 +387,7 @@ void AgentWebTools::cancelPending() {
     for (const QString &id : ids) {
         const RunningFlight flight = m_running.take(id);
         AgentToolResult result =
-            errorResult(Agent::ErrorKind::Cancelled, QStringLiteral("这次联网请求已取消。"));
+            errorResult(Agent::ErrorKind::Cancelled, tr("已取消本次联网请求。"));
         if (m_sink) m_sink(flight.call, result);
     }
 }

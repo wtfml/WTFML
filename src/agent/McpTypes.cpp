@@ -5,6 +5,7 @@
 
 #include "McpTypes.hpp"
 
+#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -72,12 +73,12 @@ bool McpExecutableIdentity::sameAs(const McpExecutableIdentity &other) const {
 }
 
 QString McpExecutableIdentity::summary() const {
-    if (!isValid()) return QStringLiteral("身份不可用");
-    QString text = QStringLiteral("%1\nSHA-256：%2\n大小：%3 字节")
+    if (!isValid()) return QCoreApplication::translate("McpTypes", "身份不可用");
+    QString text = QCoreApplication::translate("McpTypes", "%1\nSHA-256：%2\n大小：%3 字节")
                        .arg(absolutePath, sha256)
                        .arg(size);
-    if (!modifiedAt.isEmpty()) text += QStringLiteral("\n修改时间：%1").arg(modifiedAt);
-    if (!fileId.isEmpty()) text += QStringLiteral("\n文件 ID：%1").arg(fileId);
+    if (!modifiedAt.isEmpty()) text += QCoreApplication::translate("McpTypes", "\n修改时间：%1").arg(modifiedAt);
+    if (!fileId.isEmpty()) text += QCoreApplication::translate("McpTypes", "\n文件 ID：%1").arg(fileId);
     return text;
 }
 

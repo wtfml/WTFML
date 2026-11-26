@@ -5,6 +5,7 @@
 
 #include "AgentWebPolicy.hpp"
 
+#include <QCoreApplication>
 #include <QRegularExpression>
 #include <QStringList>
 
@@ -97,23 +98,23 @@ UrlCheck validateUrl(const QUrl &url) {
     check.host = url.host();
     check.scheme = url.scheme().toLower();
     if (!url.isValid()) {
-        check.problem = QStringLiteral("URL 不合法。");
+        check.problem = QCoreApplication::translate("AgentWebPolicy", "URL 无效。");
         return check;
     }
     if (check.scheme != QStringLiteral("http") && check.scheme != QStringLiteral("https")) {
-        check.problem = QStringLiteral("只允许 http/https，拒绝 %1。").arg(url.scheme());
+        check.problem = QCoreApplication::translate("AgentWebPolicy", "仅允许 http/https，拒绝 %1。").arg(url.scheme());
         return check;
     }
     if (!url.userInfo().isEmpty()) {
-        check.problem = QStringLiteral("URL 里不能带用户信息。");
+        check.problem = QCoreApplication::translate("AgentWebPolicy", "URL 不能包含用户信息。");
         return check;
     }
     if (url.hasFragment()) {
-        check.problem = QStringLiteral("URL 里不能带片段。");
+        check.problem = QCoreApplication::translate("AgentWebPolicy", "URL 不能包含片段。");
         return check;
     }
     if (check.host.isEmpty()) {
-        check.problem = QStringLiteral("URL 缺少主机名。");
+        check.problem = QCoreApplication::translate("AgentWebPolicy", "URL 缺少主机名。");
         return check;
     }
     check.ok = true;
@@ -122,13 +123,13 @@ UrlCheck validateUrl(const QUrl &url) {
 
 bool allAddressesAllowed(const QList<QHostAddress> &addresses, QString *problem) {
     if (addresses.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("域名解析不出任何地址。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentWebPolicy", "域名无法解析为任何地址。");
         return false;
     }
     for (const QHostAddress &address : addresses) {
         if (!addressAllowed(address)) {
             if (problem != nullptr) {
-                *problem = QStringLiteral("目标地址 %1 属于 %2，拒绝连接。")
+                *problem = QCoreApplication::translate("AgentWebPolicy", "目标地址 %1 属于 %2，拒绝连接。")
                                .arg(address.toString(), ipClassName(classify(address)));
             }
             return false;
@@ -196,7 +197,7 @@ QString htmlToText(const QString &html) {
 bool truncateText(QString *text, int maxChars) {
     if (text == nullptr) return false;
     if (text->size() <= maxChars) return false;
-    *text = text->left(maxChars) + QStringLiteral("\n…（已截断）");
+    *text = text->left(maxChars) + QStringLiteral("\n...(truncated)");  // i18n-ignore
     return true;
 }
 

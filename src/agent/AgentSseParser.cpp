@@ -5,6 +5,7 @@
 
 #include "AgentSseParser.hpp"
 
+#include <QCoreApplication>
 #include <QString>
 
 namespace {
@@ -51,7 +52,7 @@ QList<AgentSseParser::Event> AgentSseParser::feed(const QByteArray &chunk) {
             m_failed = true;
             Event event;
             event.kind = Event::Kind::Error;
-            event.error = QStringLiteral("SSE 单行超过 1 MB，已中止。");
+            event.error = QCoreApplication::translate("AgentSseParser", "SSE 单行超过 1 MB，已中止。");
             events.append(event);
             break;
         }
@@ -97,7 +98,7 @@ QList<AgentSseParser::Event> AgentSseParser::feed(const QByteArray &chunk) {
         m_failed = true;
         Event event;
         event.kind = Event::Kind::Error;
-        event.error = QStringLiteral("SSE 行缓冲超过 1 MB，已中止。");
+        event.error = QCoreApplication::translate("AgentSseParser", "SSE 行缓冲超过 1 MB，已中止。");
         events.append(event);
         m_buffer.clear();
     }

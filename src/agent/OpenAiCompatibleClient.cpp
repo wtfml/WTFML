@@ -110,7 +110,7 @@ void OpenAiCompatibleClient::begin(const Agent::ModelRequest &request, bool conn
     if (request.apiKey.isEmpty() && request.authMode != QLatin1String("none")) {
         Agent::Error error;
         error.kind = Agent::ErrorKind::NoConfiguration;
-        error.message = QStringLiteral("无可用的 API Key，请先在设置中配置。");
+        error.message = tr("无可用 API Key，需先在设置中配置。");
         emit failed(request.requestId, error);
         return;
     }
@@ -169,7 +169,7 @@ void OpenAiCompatibleClient::feedReply(const QString &requestId, QNetworkReply *
     if (request->totalBytes > maxResponseBytes()) {
         Agent::Error error;
         error.kind = Agent::ErrorKind::Protocol;
-        error.message = QStringLiteral("模型响应超过 16 MB 上限，已中止。");
+        error.message = tr("模型响应超过 16 MB 上限，已中止。");
         reply->abort();
         failRequest(requestId, error);
         return;
@@ -206,7 +206,7 @@ void OpenAiCompatibleClient::processStreamJson(const QString &requestId, ActiveR
     if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
         Agent::Error error;
         error.kind = Agent::ErrorKind::Protocol;
-        error.message = QStringLiteral("模型返回了无法解析的流式数据。");
+        error.message = tr("模型返回了无法解析的流式数据。");
         request->reply->abort();
         failRequest(requestId, error);
         return;
@@ -274,7 +274,7 @@ void OpenAiCompatibleClient::processNonStreamBody(const QString &requestId, Acti
     if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
         Agent::Error error;
         error.kind = Agent::ErrorKind::Protocol;
-        error.message = QStringLiteral("模型返回了无法解析的 JSON。");
+        error.message = tr("模型返回了无法解析的 JSON。");
         failRequest(requestId, error);
         return;
     }
@@ -290,7 +290,7 @@ void OpenAiCompatibleClient::processNonStreamBody(const QString &requestId, Acti
     if (choices.isEmpty()) {
         Agent::Error error;
         error.kind = Agent::ErrorKind::Protocol;
-        error.message = QStringLiteral("模型响应里没有 choices。");
+        error.message = tr("模型响应缺少 choices。");
         failRequest(requestId, error);
         return;
     }
@@ -354,7 +354,7 @@ void OpenAiCompatibleClient::finishReply(const QString &requestId, ActiveRequest
     if (request->aborted) {
         Agent::Error error;
         error.kind = Agent::ErrorKind::Cancelled;
-        error.message = QStringLiteral("已停止生成。");
+        error.message = tr("已停止生成。");
         failRequest(requestId, error);
         return;
     }
@@ -363,15 +363,15 @@ void OpenAiCompatibleClient::finishReply(const QString &requestId, ActiveRequest
         const bool ok = status >= 200 && status < 300;
         QString summary;
         if (ok) {
-            summary = QStringLiteral("连接成功（HTTP %1，耗时 %2 ms）。").arg(status).arg(elapsed);
+            summary = tr("连接成功（HTTP %1，耗时 %2 ms）。").arg(status).arg(elapsed);
         } else if (status == 404) {
-            summary = QStringLiteral("服务端不支持模型列表（HTTP 404）；无法通过列表验证，但配置格式有效。");
+            summary = tr("服务端不支持模型列表（HTTP 404）；无法通过列表验证，但配置格式有效。");
         } else if (status == 401 || status == 403) {
-            summary = QStringLiteral("认证失败（HTTP %1），请检查 API Key。").arg(status);
+            summary = tr("认证失败（HTTP %1），需检查 API Key。").arg(status);
         } else if (status == 0) {
             summary = classifyNetworkError(reply).message;
         } else {
-            summary = QStringLiteral("连接失败（HTTP %1）。").arg(status);
+            summary = tr("连接失败（HTTP %1）。").arg(status);
         }
         emit connectionTested(requestId, ok, status, summary);
         cleanup(request);
@@ -385,7 +385,7 @@ void OpenAiCompatibleClient::finishReply(const QString &requestId, ActiveRequest
         Agent::Error error = classifyNetworkError(reply);
         if (!request->text.isEmpty() || !request->toolCalls.isEmpty()) {
             error.kind = Agent::ErrorKind::Network;
-            error.message = QStringLiteral("流已开始后中断，已保留收到的部分内容。");
+            error.message = tr("流已开始后中断，已保留收到的部分内容。");
             error.retryable = false;
         }
         failRequest(requestId, error);
@@ -415,7 +415,7 @@ void OpenAiCompatibleClient::finishReply(const QString &requestId, ActiveRequest
         request->finishReason.isEmpty()) {
         Agent::Error error;
         error.kind = Agent::ErrorKind::Protocol;
-        error.message = QStringLiteral("模型返回了空响应。");
+        error.message = tr("模型返回了空响应。");
         failRequest(requestId, error);
         return;
     }
@@ -457,34 +457,34 @@ Agent::Error OpenAiCompatibleClient::classifyNetworkError(QNetworkReply *reply) 
     switch (reply->error()) {
     case QNetworkReply::OperationCanceledError:
         error.kind = Agent::ErrorKind::Cancelled;
-        error.message = QStringLiteral("已停止生成。");
+        error.message = tr("已停止生成。");
         break;
     case QNetworkReply::TimeoutError:
-        error.message = QStringLiteral("请求超时。");
+        error.message = tr("请求超时。");
         error.retryable = true;
         break;
     case QNetworkReply::SslHandshakeFailedError:
-        error.message = QStringLiteral("TLS 证书握手失败；不会忽略证书错误。");
+        error.message = tr("TLS 证书握手失败；不会忽略证书错误。");
         break;
     case QNetworkReply::HostNotFoundError:
-        error.message = QStringLiteral("找不到模型服务主机（DNS 失败）。");
+        error.message = tr("无法解析模型服务主机（DNS 失败）。");
         error.retryable = true;
         break;
     case QNetworkReply::ConnectionRefusedError:
-        error.message = QStringLiteral("模型服务拒绝连接。");
+        error.message = tr("模型服务拒绝连接。");
         error.retryable = true;
         break;
     case QNetworkReply::RemoteHostClosedError:
-        error.message = QStringLiteral("模型服务提前关闭了连接。");
+        error.message = tr("模型服务提前关闭连接。");
         error.retryable = true;
         break;
     case QNetworkReply::TemporaryNetworkFailureError:
     case QNetworkReply::NetworkSessionFailedError:
-        error.message = QStringLiteral("网络暂时不可用。");
+        error.message = tr("网络暂时不可用。");
         error.retryable = true;
         break;
     default:
-        error.message = QStringLiteral("网络请求失败（%1）。").arg(reply->errorString());
+        error.message = tr("网络请求失败（%1）。").arg(reply->errorString());
         break;
     }
     return error;
@@ -495,36 +495,36 @@ Agent::Error OpenAiCompatibleClient::classifyHttpStatus(int status, const QByteA
     error.httpStatus = status;
     if (status == 401 || status == 403) {
         error.kind = Agent::ErrorKind::Unauthorized;
-        error.message = QStringLiteral("认证失败（HTTP %1），请检查 API Key/权限。").arg(status);
+        error.message = tr("认证失败（HTTP %1），需检查 API Key 或权限。").arg(status);
         return error;
     }
     if (status == 429) {
         error.kind = Agent::ErrorKind::RateLimited;
-        error.message = QStringLiteral("请求被限流（HTTP 429）。");
+        error.message = tr("请求被限流（HTTP 429）。");
         error.retryable = true;
         return error;
     }
     const QString summary = bodySummary(body);
     if (status == 402 || summary.contains(QLatin1String("quota"), Qt::CaseInsensitive) ||
-        summary.contains(QStringLiteral("余额"), Qt::CaseInsensitive) ||
-        summary.contains(QStringLiteral("配额"), Qt::CaseInsensitive)) {
+        summary.contains(QStringLiteral("余额"), Qt::CaseInsensitive) ||  // i18n-ignore
+        summary.contains(QStringLiteral("配额"), Qt::CaseInsensitive)) {  // i18n-ignore
         error.kind = Agent::ErrorKind::Quota;
-        error.message = summary.isEmpty() ? QStringLiteral("额度/配额不足。") : summary;
+        error.message = summary.isEmpty() ? tr("额度或配额不足。") : summary;
         return error;
     }
     if (status >= 500) {
         error.kind = Agent::ErrorKind::Network;
-        error.message = QStringLiteral("模型服务暂时不可用（HTTP %1）。").arg(status);
+        error.message = tr("模型服务暂时不可用（HTTP %1）。").arg(status);
         error.retryable = true;
         return error;
     }
     if (status >= 300 && status < 400) {
         error.kind = Agent::ErrorKind::Protocol;
-        error.message = QStringLiteral("模型服务返回了重定向（HTTP %1）；本客户端不跟随重定向。").arg(status);
+        error.message = tr("模型服务返回了重定向（HTTP %1）；本客户端不跟随重定向。").arg(status);
         return error;
     }
     error.kind = Agent::ErrorKind::Protocol;
-    error.message = summary.isEmpty() ? QStringLiteral("模型服务返回 HTTP %1。").arg(status) : summary;
+    error.message = summary.isEmpty() ? tr("模型服务返回 HTTP %1。").arg(status) : summary;
     return error;
 }
 

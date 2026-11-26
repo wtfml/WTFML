@@ -9,13 +9,14 @@
 
 #pragma once
 
+#include <QCoreApplication>
 #include <QJsonObject>
 #include <QList>
 #include <QString>
 
 struct AgentProviderProfile {
     QString id = QStringLiteral("default");
-    QString name = QStringLiteral("默认模型服务");
+    QString name = QCoreApplication::translate("AgentSettings", "默认模型服务");
     QString baseUrl;
     QString model;
     int contextWindow = 32768;
