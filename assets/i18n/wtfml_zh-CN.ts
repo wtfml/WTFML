@@ -1010,6 +1010,14 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>会话不存在</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>该会话已删除。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>SearXNG 地址须为 http/https。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -1506,10 +1514,6 @@
         </message>
         <message>
             <source>列模组</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>完整性体检</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -3600,6 +3604,97 @@
         </message>
         <message>
             <source>SSE 行缓冲超过 1 MB，已中止。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentTaskLedger</name>
+        <message>
+            <source>智能体：检查「%1」的文件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智能体：校验「%1」的模组文件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智能体：分析「%1」的模组兼容性</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智能体：备份「%1」</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智能体：还原「%1」的备份</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智能体：修改「%1」中的 %2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智能体：启用模组 %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智能体：禁用模组 %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智能体：修改启动器设置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智能体：下载修复模组</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智能体：测试启动「%1」</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智能体：二分定位「%1」的问题模组</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智能体修复计划：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>计划已作废。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>正在写回实例文件，完成后才能取消。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>等待确认</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已拒绝，未修改任何内容。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已拒绝第 %1 步，计划未继续。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>等待在会话中继续</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已离开智能体页或已停止，操作未继续。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已在任务中心取消。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>修复事务未提交，原实例未改动。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -10097,18 +10192,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>%1
-%2
-目标文件：%3
-加载器：%4 / 游戏：%5</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>模组更新差异</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>将更新 %1 项。请查看依赖变化与需确认项；不会自动补装或删除依赖。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -10188,6 +10272,25 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>所选项无可安装的更新，请先检查更新。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1
+%2
+目标文件：%3
+%4</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>将更新 %1 项。下方列出依赖变化与需确认项，更新不会自动补装或删除模组。本预览不代表完整的依赖检查，也不保证游戏能正常启动。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>将更新 %1 项。更新完成后将检查并补装缺失的必装前置，不会删除现有模组。本预览不代表完整的依赖检查，也不保证游戏能正常启动。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>检查新增依赖并补全</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -15218,7 +15321,23 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>本次更新的模组未发现缺失的新增必装前置。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>正在自动补全 %1 个新增必装前置：%2。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>、</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>已有下载或安装任务正在进行，请等待其结束后再下载此项。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>补全「%1」的 %2 个前置模组</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -17426,6 +17545,10 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>启动器窗口大小</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>启动时按上次关闭时的大小打开。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -19393,10 +19516,6 @@ SHA-256：%2
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>移除声明不删除现有模组；此预览不是完整依赖求解或启动兼容保证。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>选中 %1 项 / 已识别启用文件 %2 项 / 未识别启用文件 %3 项</source>
             <translation type="unfinished"></translation>
         </message>
@@ -19507,6 +19626,46 @@ SHA-256：%2
         </message>
         <message>
             <source>需确认：%1 未在%2中找到，不代表确定未安装。此步骤不会自动补装依赖。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 等 %2 项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>兼容本实例（%1 · %2）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>加载器：未注明</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>加载器：支持 %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>加载器：未注明支持 %1（声明：%2）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>加载器：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>游戏版本：未注明</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>游戏版本：支持 %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>游戏版本：未列出 %1（声明：%2）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>游戏版本：%1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -28573,11 +28732,19 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>无 IPv6 网络</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>其余</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>连接被拒绝</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>该服务器只有 IPv6 地址，本机当前没有可用的 IPv6 网络。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -30008,6 +30175,10 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         </message>
         <message>
             <source>暂停下载</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>查看会话</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
