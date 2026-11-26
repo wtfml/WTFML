@@ -204,7 +204,7 @@ AgentToolResult AgentFileToolEngine::handleRead(const Agent::ToolCall &call,
             m_artifacts->putModelReadable(context.sessionId, content, &modelArtifact,
                                           &artifactProblem)) {
             content = content.left(16 * 1024) + QChar(10) +
-                      QStringLiteral("…(this read is stored in a model-readable artifact and also redacted; not the full file)");
+                      QStringLiteral("…(content from this read is stored in a model-readable artifact, also redacted)");
         }
     }
     result.data = QJsonObject{{QStringLiteral("path"), relative},
@@ -376,7 +376,7 @@ AgentToolResult AgentFileToolEngine::resolveApproval(const QString &approvalId, 
                 m_artifacts->putModelReadable(pending.context.sessionId, content, &modelArtifact,
                                               &artifactProblem)) {
                 content = content.left(16 * 1024) + QChar(10) +
-                          QStringLiteral("…(this read is stored in a model-readable artifact and also redacted; not the full file)");
+                          QStringLiteral("…(content from this read is stored in a model-readable artifact, also redacted)");
             }
         }
         result.data = QJsonObject{{QStringLiteral("content"), content},

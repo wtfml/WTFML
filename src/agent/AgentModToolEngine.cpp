@@ -117,7 +117,7 @@ QList<AgentToolSpec> AgentModToolEngine::specs() {
     list.append(spec(
         QStringLiteral("mods.analyzeCompatibility"),
         QCoreApplication::translate("AgentModToolEngine", "模组兼容性分析"),
-        QStringLiteral("Read local declarations (loader/game version/Java/dependencies) from each mod JAR to detect "
+        QStringLiteral("Read local declarations (loader/game version/Java/dependencies) from each mod JAR and check them against the instance to detect "
                        "loader mismatches, version incompatibilities, missing dependencies, duplicates, and corruption; "
                        "when offline=false, query Modrinth by SHA-1 after user confirmation."),
         AgentRisk::NetworkRead,
@@ -126,14 +126,14 @@ QList<AgentToolSpec> AgentModToolEngine::specs() {
         QStringLiteral("mods.verifyFiles"),
         QCoreApplication::translate("AgentModToolEngine", "校验模组文件"),
         QStringLiteral("Inspect every JAR under mods/ for zip integrity, size, and SHA-1; "
-                       "when platform=true, look up candidate versions on Modrinth by hash after confirmation."),
+                       "when platform=true, look up candidate versions on Modrinth by hash after user confirmation."),
         AgentRisk::NetworkRead,
         objectSchema({}, {{QStringLiteral("platform"), boolField()}})));
     list.append(spec(
         QStringLiteral("mods.installFix"),
         QCoreApplication::translate("AgentModToolEngine", "修复模组文件"),
         QStringLiteral("Accepts only projectId/versionId/expectedSha1: resolve download URL locally, download to staging, "
-                       "verify size and SHA-1, then install into transaction workspace (with missing mandatory dependencies); rejects without an active transaction."),
+                       "verify size and SHA-1, then install into the transaction workspace (can also fetch missing mandatory dependencies); rejects without an active transaction."),
         AgentRisk::Write,
         objectSchema({QStringLiteral("projectId"), QStringLiteral("workspaceId")},
                      {{QStringLiteral("projectId"), stringField(QStringLiteral("string"), 64)},
@@ -145,7 +145,7 @@ QList<AgentToolSpec> AgentModToolEngine::specs() {
         QStringLiteral("mods.bisect"),
         QCoreApplication::translate("AgentModToolEngine", "依赖感知二分"),
         QStringLiteral("Repeatedly toggle mods and launch the game inside a transaction workspace using delta debugging "
-                       "to find which mods crash together; mandatory dependencies stay enabled and the baseline is restored afterwards."),
+                       "to find which mods crash together; mandatory dependencies stay enabled and the workspace baseline is restored afterwards."),
         AgentRisk::Command,
         objectSchema({QStringLiteral("workspaceId")},
                      {{QStringLiteral("workspaceId"), stringField(QStringLiteral("string"), 80)},
@@ -165,7 +165,7 @@ QList<AgentToolSpec> AgentModToolEngine::specs() {
     list.append(spec(
         QStringLiteral("instance.repairCore"),
         QCoreApplication::translate("AgentModToolEngine", "修复游戏核心文件"),
-        QStringLiteral("Redownload client jar, libraries, and asset index matching the instance's official size and SHA-1; "
+        QStringLiteral("Redownload client JAR, libraries, and asset index matching the instance's official size and SHA-1; "
                        "requires per-action approval and rejects while a transaction is active."),
         AgentRisk::Destructive, objectSchema({}, {})));
     return list;

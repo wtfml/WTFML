@@ -163,7 +163,7 @@ QList<AgentToolSpec> AgentRepairToolEngine::specs() {
           enumField({QStringLiteral("commit"), QStringLiteral("rollback")})}});
     return {
         spec(QStringLiteral("repair.begin"), QCoreApplication::translate("AgentRepairToolEngine", "开始修复事务"),
-             QStringLiteral("Copy an isolated workspace and record its baseline; subsequent write tools target the workspace via workspaceId."),
+             QStringLiteral("Create an isolated workspace copy and record its baseline; subsequent write tools target the workspace via workspaceId."),
              AgentRisk::Write, beginSchema),
         spec(QStringLiteral("repair.diff"), QCoreApplication::translate("AgentRepairToolEngine", "查看事务差异"),
              QStringLiteral("List modified files, hashes, and config previews in the workspace relative to baseline."),

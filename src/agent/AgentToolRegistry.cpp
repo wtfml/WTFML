@@ -166,7 +166,7 @@ QList<AgentToolSpec> AgentToolRegistry::fileBuiltins() {
                                    {QStringLiteral("maximum"), 1048576}}}})});
     list.append(AgentToolSpec{
         QStringLiteral("fs.write"), QCoreApplication::translate("AgentToolRegistry", "写入文本配置"),
-        QStringLiteral("Only allows config/**, defaultconfigs/**, and options.txt; requires previous SHA-256 and fileIdentityToken; "
+        QStringLiteral("Only allows config/**, defaultconfigs/**, and options.txt; requires expectedSha256 (previous SHA-256) and fileIdentityToken; "
                        "per-action approval, pre-write backup, atomic write, and post-write verification."),
         AgentRisk::Write,
         objectSchema({QStringLiteral("path"), QStringLiteral("content")},
@@ -187,7 +187,7 @@ QList<AgentToolSpec> AgentToolRegistry::fileBuiltins() {
                                    {QStringLiteral("maxLength"), 80}}}})});
     list.append(AgentToolSpec{
         QStringLiteral("artifact.read"), QCoreApplication::translate("AgentToolRegistry", "读取模型 artifact"),
-        QStringLiteral("Read only model-readable artifacts of this session; re-redacted on every read; raw local archives are unreadable."),
+        QStringLiteral("Read only model-readable artifacts of this session; re-redacted on every read; raw local copies are unreadable."),
         AgentRisk::ReadOnly,
         objectSchema({QStringLiteral("artifactId")},
                      {{QStringLiteral("artifactId"),
