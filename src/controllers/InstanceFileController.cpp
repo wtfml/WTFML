@@ -314,7 +314,9 @@ void InstanceFileController::removeMany(const QStringList &paths) {
                                    if (linkCount > 0)
                                        sentences << tr("其中 %1 个为链接，仅删除链接本身，指向的目标不受影响。")
                                                         .arg(linkCount);
-                                   sentences << tr("内容将移入回收站，可从回收站恢复。");
+                                   sentences << (linkCount > 0
+                                                     ? tr("文件和文件夹将移入回收站，可从回收站恢复；链接将直接删除。")
+                                                     : tr("内容将移入回收站，可从回收站恢复。"));
                                    return joinSentences(sentences);
                                }())));
     if (InlineMessage::ask(m_overlay, MessageKind::Question, tr("删除文件"), question,

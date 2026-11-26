@@ -66,14 +66,14 @@ void McpClient::setupJobObject() {
     if (m_jobHandle != 0) return;
     HANDLE job = CreateJobObjectW(nullptr, nullptr);
     if (job == nullptr) {
-        emitLog(QStringLiteral("MCP：Job Object 创建失败，进程树可能残留。"));
+        emitLog(QStringLiteral("MCP：Job Object 创建失败，进程树可能残留。"));  // i18n-ignore
         return;
     }
     JOBOBJECT_EXTENDED_LIMIT_INFORMATION info{};
     info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
     if (!SetInformationJobObject(job, JobObjectExtendedLimitInformation, &info, sizeof(info))) {
         CloseHandle(job);
-        emitLog(QStringLiteral("MCP：Job Object 限制设置失败。"));
+        emitLog(QStringLiteral("MCP：Job Object 限制设置失败。"));  // i18n-ignore
         return;
     }
     HANDLE process = OpenProcess(PROCESS_SET_QUOTA | PROCESS_TERMINATE, FALSE,
@@ -118,15 +118,15 @@ void McpClient::start(const McpServerConfig &server, const McpExecutableIdentity
     m_stopping = false;
 
     if (!m_identity.isValid()) {
-        setState(State::Failed, QStringLiteral("可执行文件身份不可用，拒绝启动。"));
+        setState(State::Failed, tr("可执行文件身份不可用，拒绝启动。"));
         return;
     }
     if (!QFileInfo(server.command).isAbsolute()) {
-        setState(State::Failed, QStringLiteral("可执行文件必须是绝对路径。"));
+        setState(State::Failed, tr("可执行文件须为绝对路径。"));
         return;
     }
     if (!QFileInfo(server.command).exists()) {
-        setState(State::Failed, QStringLiteral("可执行文件不存在。"));
+        setState(State::Failed, tr("可执行文件不存在。"));
         return;
     }
 
@@ -160,24 +160,24 @@ void McpClient::start(const McpServerConfig &server, const McpExecutableIdentity
     connect(m_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
         if (m_stopping || m_process == nullptr) return;
         if (error == QProcess::FailedToStart) {
-            failSession(QStringLiteral("服务器进程起不来。"));
+            failSession(tr("服务器进程无法启动。"));
         }
     });
     connect(m_process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
             [this](int code, QProcess::ExitStatus status) {
                 if (m_stopping) return;
                 Q_UNUSED(status);
-                failSession(QStringLiteral("服务器进程结束了（退出码 %1），不会自动重启。").arg(code));
+                failSession(tr("服务器进程已退出（退出码 %1），不会自动重启。").arg(code));
             });
 
-    setState(State::Starting, QStringLiteral("正在启动服务器…"));
+    setState(State::Starting, tr("正在启动服务器…"));
     m_process->start();
 }
 
 void McpClient::onStarted() {
     if (m_process == nullptr) return;
     setupJobObject();
-    setState(State::Handshaking, QStringLiteral("正在握手…"));
+    setState(State::Handshaking, tr("正在握手…"));
     const QJsonObject params{
         {QStringLiteral("protocolVersion"), McpProtocol::supportedProtocolVersion()},
         {QStringLiteral("capabilities"), QJsonObject{}},
@@ -194,7 +194,7 @@ void McpClient::startRequest(const QString &id, Pending::Kind kind, const QByteA
                              int timeoutMs, const QString &toolName) {
     if (m_process == nullptr) return;
     if (m_pending.size() >= McpLimits::kMaxPendingRequests) {
-        failPending(id, Agent::ErrorKind::ToolError, QStringLiteral("同时进行的 MCP 请求太多。"));
+        failPending(id, Agent::ErrorKind::ToolError, tr("并发 MCP 请求过多。"));
         return;
     }
     Pending pending;
@@ -204,12 +204,12 @@ void McpClient::startRequest(const QString &id, Pending::Kind kind, const QByteA
     pending.timer->setSingleShot(true);
     pending.timer->setInterval(timeoutMs);
     connect(pending.timer, &QTimer::timeout, this, [this, id, kind] {
-        const QString what = kind == Pending::Kind::Initialize ? QStringLiteral("握手")
-                             : kind == Pending::Kind::List     ? QStringLiteral("列工具")
-                                                               : QStringLiteral("工具调用");
+        const QString what = kind == Pending::Kind::Initialize ? tr("握手")
+                             : kind == Pending::Kind::List     ? tr("列工具")
+                                                               : tr("工具调用");
         failPending(id, Agent::ErrorKind::Protocol,
-                    QStringLiteral("MCP %1超时，已按配置终止服务器进程。").arg(what));
-        failSession(QStringLiteral("MCP %1超时，不自动重启。").arg(what));
+                    tr("MCP %1超时，已按配置终止服务器进程。").arg(what));
+        failSession(tr("MCP %1超时，不自动重启。").arg(what));
     });
     pending.timer->start();
     m_pending.insert(id, pending);
@@ -258,7 +258,7 @@ void McpClient::failSession(const QString &reason) {
 
 void McpClient::stop() {
     m_stopping = true;
-    failAllPending(Agent::ErrorKind::Cancelled, QStringLiteral("MCP 会话已停止。"));
+    failAllPending(Agent::ErrorKind::Cancelled, tr("MCP 会话已停止。"));
     killProcessTree();
     if (m_process != nullptr) {
         m_process->disconnect(this);
@@ -267,7 +267,7 @@ void McpClient::stop() {
     }
     m_tools.clear();
     if (m_state != State::Idle) {
-        setState(State::Idle, QStringLiteral("已停止。"));
+        setState(State::Idle, tr("已停止。"));
         emit toolsChanged();
     }
     m_stopping = false;
@@ -278,10 +278,10 @@ void McpClient::onReadyRead() {
     m_buffer += m_process->readAllStandardOutput();
     if (m_buffer.size() > McpLimits::kMaxLineBytes * 2) {
         // 单行超过上限还等不到换行：按垃圾行处理，绝不让缓冲无界增长。
-        emitLog(QStringLiteral("stdout 出现超长行，已丢弃。"));
+        emitLog(QStringLiteral("stdout 出现超长行，已丢弃。"));  // i18n-ignore
         m_buffer.clear();
         if (++m_junkLines > McpLimits::kMaxJunkLines) {
-            failSession(QStringLiteral("stdout 垃圾行太多，已终止会话。"));
+            failSession(tr("stdout 无效输出过多，已终止会话。"));
         }
         return;
     }
@@ -299,9 +299,9 @@ void McpClient::handleLine(const QByteArray &line) {
     const McpProtocol::Frame frame = McpProtocol::parseLine(line);
     if (!frame.valid) {
         ++m_junkLines;
-        emitLog(QStringLiteral("stdout 非协议内容：%1").arg(frame.problem));
+        emitLog(QStringLiteral("stdout 非协议内容：%1").arg(frame.problem));  // i18n-ignore
         if (m_junkLines > McpLimits::kMaxJunkLines) {
-            failSession(QStringLiteral("stdout 垃圾行太多，已终止会话。"));
+            failSession(tr("stdout 无效输出过多，已终止会话。"));
         }
         return;
     }
@@ -319,7 +319,7 @@ void McpClient::handleLine(const QByteArray &line) {
     }
     if (!frame.hasId) return;
     if (!m_pending.contains(frame.id)) {
-        emitLog(QStringLiteral("收到未知请求 id 的回包：%1").arg(frame.id));
+        emitLog(QStringLiteral("收到未知请求 id 的回包：%1").arg(frame.id));  // i18n-ignore
         return;
     }
     handleResponse(frame.id, frame.hasError, frame.error, frame.result);
@@ -330,7 +330,7 @@ void McpClient::handleResponse(const QString &id, const bool hasError, const QJs
     const Pending pending = m_pending.value(id);
     finishPending(id);
     if (hasError) {
-        const QString message = QStringLiteral("MCP 错误 %1：%2")
+        const QString message = tr("MCP 错误 %1：%2")
                                     .arg(error.value(QStringLiteral("code")).toInt())
                                     .arg(error.value(QStringLiteral("message")).toString());
         if (pending.kind == Pending::Kind::Call) {
@@ -344,11 +344,11 @@ void McpClient::handleResponse(const QString &id, const bool hasError, const QJs
     case Pending::Kind::Initialize: {
         m_protocolVersion = result.value(QStringLiteral("protocolVersion")).toString();
         if (m_protocolVersion.isEmpty()) {
-            failSession(QStringLiteral("服务器没有回协议版本。"));
+            failSession(tr("服务器未返回协议版本。"));
             return;
         }
         if (m_protocolVersion < QStringLiteral("2024-11-05")) {
-            failSession(QStringLiteral("服务器协议版本 %1 太旧（至少 2024-11-05）。")
+            failSession(tr("服务器协议版本 %1 过旧（最低要求 2024-11-05）。")
                             .arg(m_protocolVersion));
             return;
         }
@@ -359,7 +359,7 @@ void McpClient::handleResponse(const QString &id, const bool hasError, const QJs
         m_listCursor.clear();
         m_listPages = 0;
         m_tools.clear();
-        setState(State::Listing, QStringLiteral("正在列工具…"));
+        setState(State::Listing, tr("正在获取工具列表…"));
         sendToolsList();
         return;
     }
@@ -373,11 +373,11 @@ void McpClient::handleResponse(const QString &id, const bool hasError, const QJs
             return;
         }
         if (!next.isEmpty()) {
-            emitLog(QStringLiteral("tools/list 超过 %1 页，剩下的没有列出来。")
+            emitLog(QStringLiteral("tools/list 超过 %1 页，剩下的没有列出来。")  // i18n-ignore
                         .arg(McpLimits::kMaxListPages));
         }
         m_listCursor.clear();
-        setState(State::Ready, QStringLiteral("就绪（%1 个工具）").arg(m_tools.size()));
+        setState(State::Ready, tr("就绪（%1 个工具）").arg(m_tools.size()));
         emit toolsChanged();
         return;
     }
@@ -390,7 +390,7 @@ void McpClient::handleResponse(const QString &id, const bool hasError, const QJs
 void McpClient::parseToolsResult(const QJsonObject &result) {
     for (const QJsonValue &value : result.value(QStringLiteral("tools")).toArray()) {
         if (m_tools.size() >= McpLimits::kMaxTools) {
-            emitLog(QStringLiteral("服务器工具数超过 %1，多余的没有列出来。")
+            emitLog(QStringLiteral("服务器工具数超过 %1，多余的没有列出来。")  // i18n-ignore
                         .arg(McpLimits::kMaxTools));
             return;
         }
@@ -426,14 +426,14 @@ void McpClient::requestToolList() {
     m_tools.clear();
     m_listCursor.clear();
     m_listPages = 0;
-    setState(State::Listing, QStringLiteral("工具清单变了，正在重列…"));
+    setState(State::Listing, tr("工具清单已变更，正在重新获取…"));
     sendToolsList();
 }
 
 QString McpClient::callTool(const QString &toolName, const QJsonObject &arguments) {
     if (m_state != State::Ready || m_process == nullptr) return QString();
     if (m_pending.size() >= McpLimits::kMaxPendingRequests) {
-        emitLog(QStringLiteral("MCP 同时进行的请求太多，已拒绝这一次调用。"));
+        emitLog(QStringLiteral("MCP 同时进行的请求太多，已拒绝这一次调用。"));  // i18n-ignore
         return QString();
     }
     const QString id = QStringLiteral("call-%1").arg(m_nextRequestId++);
@@ -453,7 +453,7 @@ void McpClient::cancelCall(const QString &requestId) {
         m_process->write(McpProtocol::encodeNotification(
             QStringLiteral("notifications/cancelled"),
             QJsonObject{{QStringLiteral("requestId"), requestId},
-                        {QStringLiteral("reason"), QStringLiteral("用户取消")}}));
+                        {QStringLiteral("reason"), QStringLiteral("用户取消")}}));  // i18n-ignore
     }
-    failPending(requestId, Agent::ErrorKind::Cancelled, QStringLiteral("用户取消了这次 MCP 调用。"));
+    failPending(requestId, Agent::ErrorKind::Cancelled, tr("用户取消了本次 MCP 调用。"));
 }

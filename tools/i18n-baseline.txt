@@ -62,7 +62,7 @@ src/presets/PresetApply.cpp	7
 src/presets/PresetCapture.cpp	6
 src/presets/PresetPlanner.cpp	11
 src/presets/ResourcePackPreset.cpp	4
-src/settings/GlobalJavaSettings.cpp	9
+src/settings/GlobalJavaSettings.cpp	8
 src/settings/LauncherSettings.cpp	3
 src/tools/TextFormat.cpp	21
 src/util/DailyQuote.cpp	41
@@ -71,7 +71,5 @@ src/util/FileAssociations.cpp	31
 src/util/LogFileReader.cpp	4
 src/util/SecretProtector.cpp	4
 src/util/StartupAcceptance.hpp	1
-src/util/ZipUtil.cpp	53
+src/util/ZipUtil.cpp	10
 src/util/ZipUtil.hpp	3
-ui/AgentMcpPage.cpp	30
-ui/AgentSettingsPage.cpp	8

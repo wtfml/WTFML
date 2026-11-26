@@ -66,18 +66,41 @@
 #include "settings/GameWindowSettings.hpp"
 #include "settings/LauncherSettings.hpp"
 #include "schematic/SchematicInfo.hpp"
+#include "util/ZipUtil.hpp"
+#include "UiLanguage.hpp"
+
+#include <QLocale>
 
 namespace {
-/// 取中文方块名表。只缓存读到内容的结果：资源还没下载时下一次点击要能重新找。
-QJsonObject cachedChineseBlockNames(const QString &assetsRoot, const QString &assetIndexId) {
+/// 方块名跟着界面语言走：中文 `zh_cn`，英文 `en_us`。只缓存读到内容的结果：
+/// 资源还没下载时下一次点击要能重新找。
+QString schematicLanguageCode() {
+    return UiLanguage::resolve(UiLanguage::readSetting(), QLocale::system().uiLanguages()) ==
+                   QLatin1String("en")
+               ? QStringLiteral("en_us")
+               : QStringLiteral("zh_cn");
+}
+
+QJsonObject cachedBlockNames(const QString &assetsRoot, const QString &assetIndexId,
+                             const QString &language, const QString &jarPath) {
     static QMutex mutex;
     static QHash<QString, QJsonObject> cache;
-    const QString key = assetsRoot + QLatin1Char('|') + assetIndexId;
+    const QString key = assetsRoot + QLatin1Char('|') + assetIndexId + QLatin1Char('|') + language;
     {
         const QMutexLocker locker(&mutex);
         if (const auto hit = cache.constFind(key); hit != cache.constEnd()) return *hit;
     }
-    const QJsonObject names = SchematicInfo::loadChineseBlockNames(assetsRoot, assetIndexId);
+    QJsonObject names = SchematicInfo::loadBlockNames(assetsRoot, assetIndexId, language);
+    // 英文名在版本 jar 的 assets/minecraft/lang/en_us.json 里，资源索引里通常没有。
+    if (names.isEmpty() && !jarPath.isEmpty()) {
+        QByteArray bytes;
+        QString error;
+        if (ZipUtil::readEntry(jarPath, QStringLiteral("assets/minecraft/lang/%1.json").arg(language),
+                               &bytes, &error, QObject::tr("读取方块名称"), 8 * 1024 * 1024) ==
+            ZipUtil::EntryStatus::Ok) {
+            names = SchematicInfo::blockNamesFromJson(bytes);
+        }
+    }
     if (!names.isEmpty()) {
         const QMutexLocker locker(&mutex);
         cache.insert(key, names);
@@ -91,7 +114,8 @@ QString assetIndexIdOf(const QJsonObject &version) {
 }
 
 void showSchematicDetails(OverlayHost *overlay, QWidget *parent, const QString &path,
-                          const QString &assetsRoot, const QString &assetIndexId) {
+                          const QString &assetsRoot, const QString &assetIndexId,
+                          const QString &jarPath) {
     ChromeDialog detail(parent, true);
     detail.setObjectName(QStringLiteral("schematicDetailsDialog"));
     detail.setWindowTitle(QObject::tr("方块统计"));
@@ -101,7 +125,7 @@ void showSchematicDetails(OverlayHost *overlay, QWidget *parent, const QString &
     summary->setWordWrap(true);
     layout->addWidget(summary);
     auto *search = new QLineEdit(&detail);
-    search->setPlaceholderText(QObject::tr("搜索中文名或方块 ID，例如石头 / minecraft:stone"));
+    search->setPlaceholderText(QObject::tr("搜索方块名称或 ID，例如石头 / minecraft:stone"));
     search->setClearButtonEnabled(true);
     layout->addWidget(search);
     auto *table = new QTableWidget(0, 2, &detail);
@@ -161,8 +185,10 @@ void showSchematicDetails(OverlayHost *overlay, QWidget *parent, const QString &
             search->setEnabled(true);
             copy->setEnabled(true);
         });
-    watcher->setFuture(QtConcurrent::run([path, assetsRoot, assetIndexId] {
-        return Details{SchematicInfo::read(path), cachedChineseBlockNames(assetsRoot, assetIndexId)};
+    const QString language = schematicLanguageCode();
+    watcher->setFuture(QtConcurrent::run([path, assetsRoot, assetIndexId, jarPath, language] {
+        return Details{SchematicInfo::read(path),
+                       cachedBlockNames(assetsRoot, assetIndexId, language, jarPath)};
     }));
     overlay->execPrompt(&detail, false);
 }
@@ -738,7 +764,8 @@ void InstanceDialogController::open(const QString &versionId, const QString &pag
                 connect(schematics, &InstanceFilesPage::infoDetailsRequested, schematics,
                     [this, &targetId](const QString &path) {
                         const QString indexId = assetIndexIdOf(m_owner->m_versionManager->getVersionJson(targetId));
-                        showSchematicDetails(m_owner->m_ui->overlay(), m_owner, path, AppPaths::assetsDir(), indexId);
+                        showSchematicDetails(m_owner->m_ui->overlay(), m_owner, path, AppPaths::assetsDir(), indexId,
+                                         InstanceFiles::jarPath(targetId));
                     });
                 connect(
                     schematics, &InstanceFilesPage::infoRequested, schematics,
@@ -765,9 +792,11 @@ void InstanceDialogController::open(const QString &versionId, const QString &pag
                                                 SchematicInfo::summaryText(info, targetVersion),
                                                 SchematicInfo::topBlocksText(info, language));
                             });
-                        reader->setFuture(QtConcurrent::run([path, indexId] {
+                        reader->setFuture(QtConcurrent::run([path, indexId, targetId] {
+                            const QString language = schematicLanguageCode();
                             return Read{SchematicInfo::read(path),
-                                        cachedChineseBlockNames(AppPaths::assetsDir(), indexId)};
+                                        cachedBlockNames(AppPaths::assetsDir(), indexId, language,
+                                                         InstanceFiles::jarPath(targetId))};
                         }));
                     });
             }
@@ -931,9 +960,10 @@ void InstanceDialogController::open(const QString &versionId, const QString &pag
                 dialog.setLifecycleInfoText(
                     key, path, SchematicInfo::summaryText(info, targetVersion),
                     SchematicInfo::topBlocksText(
-                        info, cachedChineseBlockNames(
+                        info, cachedBlockNames(
                                   AppPaths::assetsDir(),
-                                  assetIndexIdOf(m_owner->m_versionManager->getVersionJson(targetId)))));
+                                  assetIndexIdOf(m_owner->m_versionManager->getVersionJson(targetId)),
+                                  schematicLanguageCode(), InstanceFiles::jarPath(targetId))));
             });
 
     connect(&dialog, &InstanceSettingsDialog::diagnosisRequested, &dialog,

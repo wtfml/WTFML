@@ -19,6 +19,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QHBoxLayout>
+#include "FlowLayout.hpp"
 #include <QItemSelectionModel>
 #include <QLabel>
 #include <QLineEdit>
@@ -661,10 +662,20 @@ void InstanceFilesPage::placeAboveList(QWidget *widget) {
 void InstanceFilesPage::setCompactHeader(QPushButton *leadingAction) {
     if (m_compactHeader) return;
     m_compactHeader = true;
-    auto *actions = qobject_cast<QHBoxLayout *>(m_pathRow->layout());
-    actions->removeWidget(m_pathLabel);
-    if (leadingAction) actions->insertWidget(0, leadingAction);
-    actions->insertStretch(actions->indexOf(m_join) + 1, 1);
+    // 路径挪去搜索行后这一排只剩按钮：换成可折行的布局，英文放不下时「刷新 / 打开文件夹」折下去。
+    delete m_pathRow->layout();
+    auto *actions = new FlowLayout(8, 8);
+    for (QPushButton *button : {leadingAction, m_download, m_batch, m_import, m_join})
+        if (button) actions->addWidget(button);
+    actions->addStretch();
+    auto *tail = new QWidget(m_pathRow);  // 这两颗成组，一起换行
+    auto *tailRow = new QHBoxLayout(tail);
+    tailRow->setContentsMargins(0, 0, 0, 0);
+    tailRow->setSpacing(8);
+    tailRow->addWidget(m_refresh);
+    tailRow->addWidget(m_openFolder);
+    actions->addWidget(tail);
+    m_pathRow->setLayout(actions);
     auto *search = qobject_cast<QHBoxLayout *>(m_searchRow->layout());
     search->setStretchFactor(m_search, 2);
     search->addWidget(m_pathLabel, 1);

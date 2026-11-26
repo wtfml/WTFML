@@ -1375,7 +1375,7 @@ public:
     static QString serverSettingsPickZipButtonName() {
         return QStringLiteral("serverSettingsPickZip");
     }
-    static QString serverSettingsPickZipText() { return QCoreApplication::translate("MainWindowUI", "选择本地 zip…"); }
+    static QString serverSettingsPickZipText() { return QCoreApplication::translate("MainWindowUI", "选择本地 ZIP…"); }
     static QString serverSettingsRawEditName() { return QStringLiteral("serverSettingsRawText"); }
     static QString serverSettingsRawNoteName() { return QStringLiteral("serverSettingsRawNote"); }
     static QString serverSettingsBackupNoteName() {
@@ -1663,8 +1663,8 @@ public:
     /// 账号弹层（毛玻璃，从主页右上那颗账号胶囊下面弹出、右边对齐）。
     static QString accountPopoverName() { return QStringLiteral("accountPopover"); }
 
-    /// 主页启动区 / 实例带上的动作：启动、停止、开实例设置、打开实例切换弹层、设为当前实例。
-    enum class HomeQuickAction { Launch, Stop, Edit, SwitchInstance, Select };
+    /// 主页启动区 / 实例带上的动作：启动、开实例设置、打开实例切换弹层、设为当前实例。
+    enum class HomeQuickAction { Launch, Edit, SwitchInstance, Select };
     enum class HomeQuickMode { Current, Recent, Favorite };
     struct HomeQuickItem {
         QString key;
@@ -1735,7 +1735,7 @@ public:
     }
     QString chooseResourceDownloadInstance(const QList<HomePickerInstance> &instances,
                                            bool *otherFolder, bool importing = false);
-    /// 当前实例在不在跑：启动区主按钮在「启动游戏」/「停止游戏」之间换（MainWindow 每次重画底栏时给）。
+    /// 保留的运行态通知入口：当前实例已在跑时主按钮仍保持「启动游戏」（用于多开），停止统一走底栏运行面板。
     void setHomeLaunchRunning(bool running);
     /// 主页启动卡片（issue #65）：点「启动游戏」后，启动区那一行原地换成「手写 W + 步骤 / 进度 + 取消」，
     /// 眉题、实例名、元信息三行只换字，整块高度不变。数据由 MainWindow 从任务中心那一项启动任务翻过来。

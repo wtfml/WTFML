@@ -51,6 +51,8 @@ struct Entry {
     QString versionId;
     QString displayName;
     QString accountName;
+    /// 同实例并发序号（1 起：#1, #2…；仅单份运行且未多开时为 0，不显示序号）。
+    int instanceNumber = 0;
 
     // 服务端进程字段
     QString serverId;
@@ -58,6 +60,55 @@ struct Entry {
     bool serverStopping = false;
     bool serverForceKillAllowed = false;
 };
+
+struct InstanceSlot {
+    QString versionId;
+    int instanceNumber = 0;
+    bool instanceNumbered = false;
+};
+
+struct InstanceNumberAssignment {
+    int instanceNumber = 1;
+    bool instanceNumbered = false;
+};
+
+/// 仅当处于“需要展示序号”状态时返回正序号，否则返回 0（单开不加序号）。
+inline int displayedInstanceNumber(int instanceNumber, bool instanceNumbered) {
+    return instanceNumbered && instanceNumber > 0 ? instanceNumber : 0;
+}
+
+/// 多开时在实例名后补 `#N`（`instanceNumber <= 0` 或名字为空时原样返回）。
+inline QString numberedName(const QString &baseName, int instanceNumber) {
+    if (baseName.isEmpty() || instanceNumber <= 0) {
+        return baseName;
+    }
+    return QStringLiteral("%1 #%2").arg(baseName).arg(instanceNumber);
+}
+
+/// 为同一实例新启动的会话分配序号，并在出现多份同时运行时同步标亮现有同实例会话。
+inline InstanceNumberAssignment assignNextInstanceNumber(QList<InstanceSlot> &activeSessions,
+                                                         const QString &versionId) {
+    int maxExisting = 0;
+    bool hasOtherSameInstance = false;
+    for (const InstanceSlot &slot : activeSessions) {
+        if (slot.versionId == versionId) {
+            hasOtherSameInstance = true;
+            maxExisting = qMax(maxExisting, slot.instanceNumber);
+        }
+    }
+    if (!hasOtherSameInstance) {
+        return {1, false};
+    }
+    for (InstanceSlot &slot : activeSessions) {
+        if (slot.versionId == versionId) {
+            if (slot.instanceNumber <= 0) {
+                slot.instanceNumber = 1;
+            }
+            slot.instanceNumbered = true;
+        }
+    }
+    return {maxExisting + 1, true};
+}
 
 /// 进程总计数（客户端与服务端合计）。
 inline int totalCount(const QList<Entry> &entries) {

@@ -28,6 +28,7 @@
 #include <QMimeData>
 #include <QGridLayout>
 #include <QHBoxLayout>
+#include "FlowLayout.hpp"
 #include <QHeaderView>
 #include <QIcon>
 #include <QItemSelectionModel>
@@ -327,14 +328,10 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
         const auto buttonRow = [page, layout, commandWidth](const QList<QPushButton *> &buttons) {
             auto *rowHost = new QWidget(page);
             rowHost->setObjectName(QStringLiteral("instanceMaintenanceActionRow"));
-            auto *row = new QHBoxLayout(rowHost);
-            row->setContentsMargins(0, 0, 0, 0);
-            row->setSpacing(8);
+            // 每颗都是 commandWidth，排不下就折行（缩窄会裁掉英文长标签）。
+            auto *row = new FlowLayout(8, 8);
+            rowHost->setLayout(row);
             layout->addWidget(rowHost);
-            // 宽够时每颗都是 commandWidth；900 宽窗口里三颗排不下（r133 第 6 项），就一起等宽缩到字宽 + 24。
-            int count = 0;
-            for (auto *button : buttons) count += button != nullptr;
-            rowHost->setMaximumWidth(count * commandWidth + qMax(0, count - 1) * row->spacing());
             for (auto *button : buttons) {
                 if (!button) continue;
                 if (auto *previous = button->parentWidget(); previous && previous != page && previous != rowHost)
@@ -346,11 +343,9 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
                     button->setToolTip(restoreSnapshotTooltip() + QLatin1Char('\n') + restoreSnapshotHint());
                 if (button->property("wtfmlButtonKind").toString().isEmpty())
                     Theme::markButton(button, Theme::ButtonKind::Neutral);
-                button->setFixedHeight(actionButtonHeight());
-                button->setMinimumWidth(button->fontMetrics().horizontalAdvance(button->text()) + 24);
-                button->setMaximumWidth(commandWidth);
-                button->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);  // Ignored：按 stretch 等分，不看各自字宽
-                row->addWidget(button, 1);
+                button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+                button->setFixedSize(commandWidth, actionButtonHeight());
+                row->addWidget(button);
                 button->show();
             }
         };
@@ -590,7 +585,9 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
                 auto *assessmentLayout = new QVBoxLayout(assessment);
                 assessmentLayout->setContentsMargins(0, 0, 0, 0);
                 assessmentLayout->addWidget(new QLabel(tr("版本与迁移评估"), assessment));
-                plan->setFixedHeight(104);
+                const int lineHeight = plan->fontMetrics().lineSpacing();
+                plan->setMinimumHeight(lineHeight * 4 + 16);
+                plan->setMaximumHeight(lineHeight * 10 + 16);
                 assessmentLayout->addWidget(plan);
                 auto *summary = new QLabel(tr("模组声明：正在读取…"), assessment);
                 summary->setObjectName(QStringLiteral("instanceUpgradeModSummary"));
@@ -647,7 +644,7 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
                 auto *rollback = action(tr("回滚最近一次更新…"), [this] { emit rollbackUpgradeRequested(); });
                 rollback->setObjectName(QStringLiteral("instanceUpgradeRollbackButton"));
                 layout->removeWidget(apply); layout->removeWidget(inPlace); layout->removeWidget(rollback);
-                auto *actions = new QHBoxLayout;
+                auto *actions = new FlowLayout(6, 6);
                 Theme::markButton(apply, Theme::ButtonKind::Primary);
                 Theme::markButton(inPlace, Theme::ButtonKind::Danger);
                 actions->addWidget(apply); actions->addWidget(inPlace); actions->addStretch(); actions->addWidget(rollback);

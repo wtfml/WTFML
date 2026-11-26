@@ -557,7 +557,11 @@ namespace InlineMessage {
 
 int ask(OverlayHost *host, MessageKind kind, const QString &title, const QString &text,
         const QStringList &buttons, int defaultIndex, int destructiveIndex,
-        bool dismissOnOutsideClick, const QString &note) {
+        bool dismissOnOutsideClick, const QString &note, const QString &checkBoxText,
+        bool *checkBoxChecked) {
+    if (checkBoxChecked != nullptr) {
+        *checkBoxChecked = false;
+    }
     if (host == nullptr) {
         // 没有覆盖层可摆（构造中途、或者验证工程单独测某个控件）。**不许静默吞掉** ——
         // "该说的话没说"是最难查的那一类故障。写一行日志，调用方照旧拿到"什么都没选"。
@@ -594,7 +598,13 @@ int ask(OverlayHost *host, MessageKind kind, const QString &title, const QString
     // 那行小字**在 execPrompt 之前**补上：卡片摆上去之后几何就定了，之后再插一行会让
     // 它开在原来的高度上、把按钮行挤出边框。
     box.setNote(note);
+    if (!checkBoxText.isEmpty()) {
+        box.setCheckBox(checkBoxText);
+    }
     host->execPrompt(&box, dismissOnOutsideClick);
+    if (checkBoxChecked != nullptr) {
+        *checkBoxChecked = box.checkBoxChecked();
+    }
     return box.clickedIndex();
 }
 

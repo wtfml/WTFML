@@ -335,53 +335,162 @@ QString applyPlanUnit(SectionKind kind) {
     return QCoreApplication::translate("Presets", "项");
 }
 
+namespace {
+
+/// 计划行里的"东西"按段分组：英文要选对名词，中文都还是「项」或「个」。
+enum class PlanUnit { Items, Servers, Files, DataPacks };
+
+PlanUnit planUnitFor(SectionKind kind) {
+    switch (kind) {
+    case SectionKind::ServerList:
+        return PlanUnit::Servers;
+    case SectionKind::GenericFiles:
+        return PlanUnit::Files;
+    case SectionKind::Custom:
+        return PlanUnit::DataPacks;
+    case SectionKind::VanillaOptions:
+    case SectionKind::VanillaKeys:
+    case SectionKind::MalilibKeys:
+        break;
+    }
+    return PlanUnit::Items;
+}
+
+enum class PlanPart { Removed, Deferred, Skipped, NeedsChoice, Conflict };
+
+/// 计划行的一段：模板自带量词和标点，跟在逗号后的那一档自带前导逗号。
+QString countPart(PlanUnit unit, PlanPart part, int count, bool leading) {
+    switch (part) {
+    case PlanPart::Removed:
+        switch (unit) {
+        case PlanUnit::Items:
+            return leading ? QCoreApplication::translate("Presets", "删除 %1 项").arg(count)
+                           : QCoreApplication::translate("Presets", "，删除 %1 项").arg(count);
+        case PlanUnit::Servers:
+            return leading ? QCoreApplication::translate("Presets", "删除 %1 个", "服务器条目").arg(count)
+                           : QCoreApplication::translate("Presets", "，删除 %1 个", "服务器条目").arg(count);
+        case PlanUnit::Files:
+            return leading ? QCoreApplication::translate("Presets", "删除 %1 个", "文件").arg(count)
+                           : QCoreApplication::translate("Presets", "，删除 %1 个", "文件").arg(count);
+        case PlanUnit::DataPacks:
+            return leading ? QCoreApplication::translate("Presets", "删除 %1 个", "数据包").arg(count)
+                           : QCoreApplication::translate("Presets", "，删除 %1 个", "数据包").arg(count);
+        }
+        break;
+    case PlanPart::Deferred:
+        switch (unit) {
+        case PlanUnit::Items:
+            return leading ? QCoreApplication::translate("Presets", "待应用 %1 项").arg(count)
+                           : QCoreApplication::translate("Presets", "，待应用 %1 项").arg(count);
+        case PlanUnit::Servers:
+            return leading ? QCoreApplication::translate("Presets", "待应用 %1 个", "服务器条目").arg(count)
+                           : QCoreApplication::translate("Presets", "，待应用 %1 个", "服务器条目").arg(count);
+        case PlanUnit::Files:
+            return leading ? QCoreApplication::translate("Presets", "待应用 %1 个", "文件").arg(count)
+                           : QCoreApplication::translate("Presets", "，待应用 %1 个", "文件").arg(count);
+        case PlanUnit::DataPacks:
+            return leading ? QCoreApplication::translate("Presets", "待应用 %1 个", "数据包").arg(count)
+                           : QCoreApplication::translate("Presets", "，待应用 %1 个", "数据包").arg(count);
+        }
+        break;
+    case PlanPart::Skipped:
+        switch (unit) {
+        case PlanUnit::Items:
+            return leading ? QCoreApplication::translate("Presets", "跳过 %1 项").arg(count)
+                           : QCoreApplication::translate("Presets", "，跳过 %1 项").arg(count);
+        case PlanUnit::Servers:
+            return leading ? QCoreApplication::translate("Presets", "跳过 %1 个", "服务器条目").arg(count)
+                           : QCoreApplication::translate("Presets", "，跳过 %1 个", "服务器条目").arg(count);
+        case PlanUnit::Files:
+            return leading ? QCoreApplication::translate("Presets", "跳过 %1 个", "文件").arg(count)
+                           : QCoreApplication::translate("Presets", "，跳过 %1 个", "文件").arg(count);
+        case PlanUnit::DataPacks:
+            return leading ? QCoreApplication::translate("Presets", "跳过 %1 个", "数据包").arg(count)
+                           : QCoreApplication::translate("Presets", "，跳过 %1 个", "数据包").arg(count);
+        }
+        break;
+    case PlanPart::NeedsChoice:
+        switch (unit) {
+        case PlanUnit::Items:
+            return QCoreApplication::translate("Presets", "待选择 %1 项").arg(count);
+        case PlanUnit::Servers:
+            return QCoreApplication::translate("Presets", "待选择 %1 个", "服务器条目").arg(count);
+        case PlanUnit::Files:
+            return QCoreApplication::translate("Presets", "待选择 %1 个", "文件").arg(count);
+        case PlanUnit::DataPacks:
+            return QCoreApplication::translate("Presets", "待选择 %1 个", "数据包").arg(count);
+        }
+        break;
+    case PlanPart::Conflict:
+        return leading ? QCoreApplication::translate("Presets", "冲突 %1 项").arg(count)
+                       : QCoreApplication::translate("Presets", "，冲突 %1 项").arg(count);
+    }
+    return QString();
+}
+
+/// 「动词 + 数量 + 量词」的完整模板（单独显示的那一档）。
+QString primaryCountText(PlanUnit unit, ApplyMode mode, int count) {
+    const QString verb = applyPlanVerb(mode);
+    switch (unit) {
+    case PlanUnit::Items:
+        return QCoreApplication::translate("Presets", "%1 %2 项").arg(verb).arg(count);
+    case PlanUnit::Servers:
+        return QCoreApplication::translate("Presets", "%1 %2 个", "服务器条目").arg(verb).arg(count);
+    case PlanUnit::Files:
+        return QCoreApplication::translate("Presets", "%1 %2 个", "文件").arg(verb).arg(count);
+    case PlanUnit::DataPacks:
+        return QCoreApplication::translate("Presets", "%1 %2 个", "数据包").arg(verb).arg(count);
+    }
+    return QString();
+}
+
+}  // namespace
+
 QString applyPlanRowText(const ApplyPlanRow &row) {
     if (row.blocked) {
         return QCoreApplication::translate("Presets", "无法完成");
     }
 
+    const PlanUnit unit = planUnitFor(row.kind);
+
     // 这一档我们做不了主 ⇒ 这一行只说得出口这一件事（`count` 那一趟必然是 0）。
     if (row.needsChoice > 0) {
-        return QCoreApplication::translate("Presets", "待选择 %1 %2")
-            .arg(row.needsChoice)
-            .arg(applyPlanUnit(row.kind));
+        return countPart(unit, PlanPart::NeedsChoice, row.needsChoice, true);
     }
 
-    const QString unit = applyPlanUnit(row.kind);
     QStringList parts;
 
     if (row.count > 0) {
-        parts.append(applyPlanVerb(row.mode) + QLatin1Char(' ') + QString::number(row.count) +
-                     QLatin1Char(' ') + unit);
+        parts.append(primaryCountText(unit, row.mode, row.count));
     } else if (row.removed > 0) {
         // 会动的数是 0、却要删东西 —— 这就是"空段铺上去 = 把那一片清空"那一档。
         // 只写「覆盖 0 项」等于把最要紧的那半截藏起来了。
         parts.append(applyPlanVerb(row.mode));
     } else if (row.deferred > 0) {
         // 全是"目标上没有那个世界"的：这一行只说得出口"它们先记着"。
-        parts.append(QCoreApplication::translate("Presets", "待应用 %1 %2").arg(row.deferred).arg(unit));
+        parts.append(countPart(unit, PlanPart::Deferred, row.deferred, true));
     }
 
     if (!parts.isEmpty()) {
         if (row.removed > 0) {
-            parts.append(QCoreApplication::translate("Presets", "删除 %1 %2").arg(row.removed).arg(unit));
+            parts.append(countPart(unit, PlanPart::Removed, row.removed, false));
         }
         if (row.conflictCount > 0) {
-            parts.append(QCoreApplication::translate("Presets", "冲突 %1 项").arg(row.conflictCount));
+            parts.append(countPart(unit, PlanPart::Conflict, row.conflictCount, false));
         }
         if (row.deferred > 0 && row.count > 0) {
             // 只在这一行已经有"部署"那半截时补一句；全待应用的那种上面已经说过了。
-            parts.append(QCoreApplication::translate("Presets", "待应用 %1 %2").arg(row.deferred).arg(unit));
+            parts.append(countPart(unit, PlanPart::Deferred, row.deferred, false));
         }
         if (row.skipped > 0) {
-            parts.append(QCoreApplication::translate("Presets", "跳过 %1 %2").arg(row.skipped).arg(unit));
+            parts.append(countPart(unit, PlanPart::Skipped, row.skipped, false));
         }
-        return parts.join(QCoreApplication::translate("Presets", "，"));
+        return parts.join(QString());
     }
 
     // 会动的、要删的、有冲突的都没有 ⇒ 这一行要么是"跳过"，要么是"没什么可动的"。
     if (row.skipped > 0) {
-        return QCoreApplication::translate("Presets", "跳过 %1 %2").arg(row.skipped).arg(unit);
+        return countPart(unit, PlanPart::Skipped, row.skipped, true);
     }
     if (row.mode == ApplyMode::Skip) {
         return applyPlanVerb(ApplyMode::Skip);

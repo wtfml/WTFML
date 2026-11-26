@@ -1,6 +1,7 @@
 #include "PresetModEditor.hpp"
 #include <QCoreApplication>
 #include "InputSizing.hpp"
+#include "FlowLayout.hpp"
 #include "Theme.hpp"
 #include <QCheckBox>
 #include <QComboBox>
@@ -68,11 +69,11 @@ PresetModEditor::PresetModEditor(const QList<Entry> &entries, QWidget *parent) :
     m_table->setAlternatingRowColors(false);
     m_table->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
     m_table->horizontalHeader()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
-    m_table->horizontalHeader()->setSectionResizeMode(5, QHeaderView::ResizeToContents);
+    m_table->horizontalHeader()->setSectionResizeMode(5, QHeaderView::Stretch);  // 末列收余宽，英文不出横滚条
     m_table->verticalHeader()->hide();  // 行号没有用处（顺序不影响安装），和预设选项表一样不显示
     layout->addWidget(m_table, 1);
     for (const auto &entry : entries) append(entry);
-    auto *actions = new QHBoxLayout;
+    auto *actions = new FlowLayout(6, 6);  // 嵌在预设编辑器里时右栏窄，要能折行
     auto *add = new QPushButton(QCoreApplication::translate("PresetModEditor", "添加模组"), this);
     auto *remove = new QPushButton(QCoreApplication::translate("PresetModEditor", "移除选中"), this);
     add->setAutoDefault(false); remove->setAutoDefault(false);

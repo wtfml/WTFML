@@ -9,6 +9,7 @@
 #include "Theme.hpp"
 
 #include <QCheckBox>
+#include <QCoreApplication>
 #include <QDialogButtonBox>
 #include <QFormLayout>
 #include <QFrame>
@@ -35,20 +36,22 @@ QLabel *caption(QWidget *parent, const QString &name) {
 }
 
 QString stateText(const AgentView::McpServerRow &row) {
-    if (!row.enabled) return QStringLiteral("未启用");
+    if (!row.enabled) return QCoreApplication::translate("AgentMcpPage", "未启用");
     if (row.state == QStringLiteral("ready")) {
-        return QStringLiteral("已连接（%1 个工具）").arg(row.toolCount);
+        return QCoreApplication::translate("AgentMcpPage", "已连接（%1 个工具）").arg(row.toolCount);
     }
-    if (row.state == QStringLiteral("idle") || row.state.isEmpty()) return QStringLiteral("未连接");
-    if (row.state == QStringLiteral("failed")) return QStringLiteral("失败");
-    return QStringLiteral("连接中…");
+    if (row.state == QStringLiteral("idle") || row.state.isEmpty()) {
+        return QCoreApplication::translate("AgentMcpPage", "未连接");
+    }
+    if (row.state == QStringLiteral("failed")) return QCoreApplication::translate("AgentMcpPage", "失败");
+    return QCoreApplication::translate("AgentMcpPage", "连接中…");
 }
 
 }  // namespace
 
 AgentMcpPage::AgentMcpPage(QWidget *parent) : QDialog(parent) {
     setObjectName(QStringLiteral("agentMcpPage"));
-    setWindowTitle(QStringLiteral("MCP 服务器"));
+    setWindowTitle(tr("MCP 服务器"));
     setModal(true);
     resize(620, 560);
 
@@ -56,7 +59,7 @@ AgentMcpPage::AgentMcpPage(QWidget *parent) : QDialog(parent) {
     root->setContentsMargins(18, 16, 18, 16);
     root->setSpacing(10);
 
-    auto *title = new QLabel(QStringLiteral("MCP 服务器（stdio）"), this);
+    auto *title = new QLabel(tr("MCP 服务器（stdio）"), this);
     title->setObjectName(QStringLiteral("agentMcpTitle"));
     QFont titleFont = title->font();
     titleFont.setPixelSize(Theme::textSize(Theme::TextRole::Heading));
@@ -64,9 +67,7 @@ AgentMcpPage::AgentMcpPage(QWidget *parent) : QDialog(parent) {
     root->addWidget(title);
 
     m_note = caption(this, QStringLiteral("agentMcpNote"));
-    m_note->setText(QStringLiteral(
-        "MCP 服务器以当前 Windows 用户权限运行，可能读写本机文件和网络；只添加你信任的服务器。"
-        "首次启动、配置修改和重新连接前都会要求确认，可执行文件变了会重新确认。"));
+    m_note->setText(tr("MCP 服务器以当前 Windows 用户权限运行，可读写本机文件与网络。仅添加可信服务器；首次启动、修改配置、重新连接或可执行文件变更前均须确认。"));
     root->addWidget(m_note);
 
     auto *scroll = new QScrollArea(this);
@@ -80,7 +81,7 @@ AgentMcpPage::AgentMcpPage(QWidget *parent) : QDialog(parent) {
     m_listLayout->setContentsMargins(0, 0, 0, 0);
     m_listLayout->setSpacing(8);
     m_empty = caption(host, QStringLiteral("agentMcpEmpty"));
-    m_empty->setText(QStringLiteral("还没有服务器。点下面的「添加服务器…」。"));
+    m_empty->setText(tr("暂无服务器。"));
     m_listLayout->addWidget(m_empty);
     m_listLayout->addStretch(1);
     scroll->setWidget(host);
@@ -93,11 +94,11 @@ AgentMcpPage::AgentMcpPage(QWidget *parent) : QDialog(parent) {
     auto *buttons = new QHBoxLayout;
     buttons->setContentsMargins(0, 0, 0, 0);
     buttons->setSpacing(8);
-    auto *add = new QPushButton(QStringLiteral("添加服务器…"), this);
+    auto *add = new QPushButton(tr("添加服务器…"), this);
     add->setObjectName(QStringLiteral("agentMcpAdd"));
-    auto *refresh = new QPushButton(QStringLiteral("刷新"), this);
+    auto *refresh = new QPushButton(tr("刷新"), this);
     refresh->setObjectName(QStringLiteral("agentMcpRefresh"));
-    auto *close = new QPushButton(QStringLiteral("关闭"), this);
+    auto *close = new QPushButton(tr("关闭"), this);
     close->setObjectName(QStringLiteral("agentMcpClose"));
     buttons->addWidget(add);
     buttons->addWidget(refresh);
@@ -168,8 +169,8 @@ void AgentMcpPage::rebuild() {
         layout->addWidget(command);
         auto *identity = caption(frame, QStringLiteral("agentMcpRowIdentity"));
         identity->setText(row.identityShort.isEmpty()
-                              ? QStringLiteral("尚未确认（首次启动前会确认可执行文件身份）")
-                              : QStringLiteral("SHA-256：%1…").arg(row.identityShort));
+                              ? tr("尚未确认（首次启动前须确认可执行文件身份）")
+                              : tr("SHA-256：%1…").arg(row.identityShort));
         layout->addWidget(identity);
         if (!row.detail.isEmpty()) {
             auto *detail = caption(frame, QStringLiteral("agentMcpRowDetail"));
@@ -179,15 +180,14 @@ void AgentMcpPage::rebuild() {
         auto *rowButtons = new QHBoxLayout;
         rowButtons->setContentsMargins(0, 0, 0, 0);
         auto *connectButton = new QPushButton(
-            row.state == QStringLiteral("ready") ? QStringLiteral("重新连接")
-                                                 : QStringLiteral("连接"),
+            row.state == QStringLiteral("ready") ? tr("重新连接") : tr("连接"),
             frame);
         connectButton->setObjectName(QStringLiteral("agentMcpConnect_") + row.id);
-        auto *disconnectButton = new QPushButton(QStringLiteral("断开"), frame);
+        auto *disconnectButton = new QPushButton(tr("断开"), frame);
         disconnectButton->setObjectName(QStringLiteral("agentMcpDisconnect_") + row.id);
-        auto *editButton = new QPushButton(QStringLiteral("编辑…"), frame);
+        auto *editButton = new QPushButton(tr("编辑…"), frame);
         editButton->setObjectName(QStringLiteral("agentMcpEdit_") + row.id);
-        auto *removeButton = new QPushButton(QStringLiteral("删除"), frame);
+        auto *removeButton = new QPushButton(tr("删除"), frame);
         removeButton->setObjectName(QStringLiteral("agentMcpRemove_") + row.id);
         rowButtons->addStretch(1);
         rowButtons->addWidget(connectButton);
@@ -222,31 +222,30 @@ bool AgentMcpPage::editDraft(QWidget *parent, const QString &title,
     name->setObjectName(QStringLiteral("agentMcpNameEdit"));
     auto *command = new QLineEdit(draft->command, &dialog);
     command->setObjectName(QStringLiteral("agentMcpCommandEdit"));
-    command->setPlaceholderText(QStringLiteral("绝对路径，例如 C:\\Servers\\mcp\\server.exe"));
+    command->setPlaceholderText(QCoreApplication::translate("AgentMcpPage", "绝对路径，例如 C:\\Servers\\mcp\\server.exe"));
     auto *arguments = new QPlainTextEdit(draft->arguments, &dialog);
     arguments->setObjectName(QStringLiteral("agentMcpArgumentsEdit"));
     arguments->setFrameShape(QFrame::NoFrame);
     arguments->setMaximumHeight(90);
-    arguments->setPlaceholderText(QStringLiteral("一行一个参数，不经过 shell"));
+    arguments->setPlaceholderText(QCoreApplication::translate("AgentMcpPage", "一行一个参数，不经过 shell"));
     auto *workingDirectory = new QLineEdit(draft->workingDirectory, &dialog);
     workingDirectory->setObjectName(QStringLiteral("agentMcpWorkdirEdit"));
     auto *environment = new QLineEdit(draft->environmentNames, &dialog);
     environment->setObjectName(QStringLiteral("agentMcpEnvEdit"));
-    environment->setPlaceholderText(QStringLiteral("要透传的环境变量名，逗号分隔（只记名字）"));
-    auto *enabled = new QCheckBox(QStringLiteral("启用这个服务器"), &dialog);
+    environment->setPlaceholderText(QCoreApplication::translate("AgentMcpPage", "透传的环境变量名，逗号分隔（仅保存名称）"));
+    auto *enabled = new QCheckBox(QCoreApplication::translate("AgentMcpPage", "启用服务器"), &dialog);
     enabled->setObjectName(QStringLiteral("agentMcpEnabledEdit"));
     Theme::markSwitch(enabled);
     enabled->setChecked(draft->enabled);
-    form->addRow(QStringLiteral("名称"), name);
-    form->addRow(QStringLiteral("可执行文件"), command);
-    form->addRow(QStringLiteral("参数"), arguments);
-    form->addRow(QStringLiteral("工作目录"), workingDirectory);
-    form->addRow(QStringLiteral("环境变量"), environment);
+    form->addRow(QCoreApplication::translate("AgentMcpPage", "名称"), name);
+    form->addRow(QCoreApplication::translate("AgentMcpPage", "可执行文件"), command);
+    form->addRow(QCoreApplication::translate("AgentMcpPage", "参数"), arguments);
+    form->addRow(QCoreApplication::translate("AgentMcpPage", "工作目录"), workingDirectory);
+    form->addRow(QCoreApplication::translate("AgentMcpPage", "环境变量"), environment);
     form->addRow(QString(), enabled);
     layout->addLayout(form);
     auto *note = caption(&dialog, QStringLiteral("agentMcpEditNote"));
-    note->setText(QStringLiteral(
-        "保存配置后需要重新确认（首次启动或配置变化都会要求确认）。不会自动下载或安装任何 MCP 服务器。"));
+    note->setText(QCoreApplication::translate("AgentMcpPage", "保存配置后须重新确认；不会自动下载或安装 MCP 服务器。"));
     layout->addWidget(note);
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
     layout->addWidget(buttons);

@@ -208,7 +208,7 @@ AgentController::AgentController(AgentPage *page, OverlayHost *overlay, QObject 
     QString mcpProblem;
     m_mcpManager = new McpManager(&m_mcpStore, this);
     if (!m_mcpManager->reload(&mcpProblem) && m_page != nullptr) {
-        m_page->showNotice(QStringLiteral("MCP 配置读取失败：%1").arg(mcpProblem));
+        m_page->showNotice(QCoreApplication::translate("AgentController", "MCP 配置读取失败：%1").arg(mcpProblem));
     }
     m_mcpTools = new AgentMcpToolEngine(
         m_mcpManager, [this](QString *problem) { return toolContext(problem); }, this);
@@ -1185,26 +1185,24 @@ bool AgentController::confirmAndStart(const QString &serverId, bool reconnect) {
         refreshMcpPage();
         return true;
     }
-    QString text = QStringLiteral("服务器：%1\n%2\n\n参数：%3\n工作目录：%4\n环境变量：%5\n\n"
-                                  "该服务器以当前 Windows 用户权限运行，可能读写本机文件和网络；"
-                                  "只添加你信任的服务器。")
+    QString text = QCoreApplication::translate("AgentController", "服务器：%1\n%2\n\n参数：%3\n工作目录：%4\n环境变量：%5\n\n该服务器以当前 Windows 用户权限运行，可能读写本机文件与网络；仅添加可信服务器。")
                        .arg(gate.server.name, gate.identity.summary(),
                             gate.server.arguments.isEmpty()
-                                ? QStringLiteral("（无）")
+                                ? QCoreApplication::translate("AgentController", "（无）")
                                 : gate.server.arguments.join(QStringLiteral("  ")),
                             gate.server.workingDirectory.isEmpty()
-                                ? QStringLiteral("（agent 数据目录）")
+                                ? QCoreApplication::translate("AgentController", "（智能体数据目录）")
                                 : gate.server.workingDirectory,
                             gate.server.environmentNames.isEmpty()
-                                ? QStringLiteral("（不继承）")
-                                : gate.server.environmentNames.join(QStringLiteral("、")));
+                                ? QCoreApplication::translate("AgentController", "（不继承）")
+                                : gate.server.environmentNames.join(QCoreApplication::translate("AgentController", "、")));
     if (!gate.reason.isEmpty()) text = gate.reason + QStringLiteral("\n\n") + text;
     const int choice = InlineMessage::ask(
         m_overlay, MessageKind::Question,
-        reconnect ? QStringLiteral("重新连接 MCP 服务器") : QStringLiteral("启动 MCP 服务器"),
-        text, QStringList{QStringLiteral("确认并连接"), QStringLiteral("取消")}, 1, 1);
+        reconnect ? QCoreApplication::translate("AgentController", "重新连接 MCP 服务器") : QCoreApplication::translate("AgentController", "启动 MCP 服务器"),
+        text, QStringList{QCoreApplication::translate("AgentController", "确认并连接"), QCoreApplication::translate("AgentController", "取消")}, 1, 1);
     if (choice != 0) {
-        if (m_mcpPage != nullptr) m_mcpPage->setLog(QStringLiteral("已取消：没有启动服务器。"));
+        if (m_mcpPage != nullptr) m_mcpPage->setLog(QCoreApplication::translate("AgentController", "已取消：未启动服务器。"));
         refreshMcpPage();
         return false;
     }
@@ -1234,7 +1232,7 @@ void AgentController::onMcpConnect(const QString &serverId) {
 void AgentController::onMcpDisconnect(const QString &serverId) {
     if (m_mcpManager == nullptr) return;
     m_mcpManager->stop(serverId);
-    if (m_mcpPage != nullptr) m_mcpPage->setLog(QStringLiteral("已断开。重新连接前会再次要求确认。"));
+    if (m_mcpPage != nullptr) m_mcpPage->setLog(QCoreApplication::translate("AgentController", "已断开。重新连接前须再次确认。"));
     refreshMcpPage();
 }
 
@@ -1242,7 +1240,7 @@ void AgentController::onMcpAdd() {
     if (m_mcpManager == nullptr || m_mcpPage == nullptr) return;
     AgentView::McpServerDraft draft;
     draft.enabled = true;
-    if (!AgentMcpPage::editDraft(m_mcpPage, QStringLiteral("添加 MCP 服务器"), &draft)) return;
+    if (!AgentMcpPage::editDraft(m_mcpPage, QCoreApplication::translate("AgentController", "添加 MCP 服务器"), &draft)) return;
     const McpServerConfig server = serverFrom(draft);
     const QString problem = McpTrustStore::validateConfig(server);
     if (!problem.isEmpty()) {
@@ -1255,7 +1253,7 @@ void AgentController::onMcpAdd() {
         return;
     }
     m_mcpManager->reload(&saveProblem);
-    m_mcpPage->setLog(QStringLiteral("已保存「%1」，首次启动前会确认可执行文件身份。")
+    m_mcpPage->setLog(QCoreApplication::translate("AgentController", "已保存「%1」，首次启动前须确认可执行文件身份。")
                           .arg(server.name));
     refreshMcpPage();
 }
@@ -1268,7 +1266,7 @@ void AgentController::onMcpEdit(const QString &serverId) {
     }
     if (!existing.isValid()) return;
     AgentView::McpServerDraft draft = draftFrom(existing);
-    if (!AgentMcpPage::editDraft(m_mcpPage, QStringLiteral("编辑 MCP 服务器"), &draft)) return;
+    if (!AgentMcpPage::editDraft(m_mcpPage, QCoreApplication::translate("AgentController", "编辑 MCP 服务器"), &draft)) return;
     const McpServerConfig updated = serverFrom(draft);
     const QString problem = McpTrustStore::validateConfig(updated);
     if (!problem.isEmpty()) {
@@ -1285,7 +1283,7 @@ void AgentController::onMcpEdit(const QString &serverId) {
         return;
     }
     m_mcpManager->reload(&saveProblem);
-    m_mcpPage->setLog(QStringLiteral("已保存「%1」；配置变了，下次启动要重新确认。")
+    m_mcpPage->setLog(QCoreApplication::translate("AgentController", "已保存「%1」；配置已变更，下次启动须重新确认。")
                           .arg(updated.name));
     refreshMcpPage();
 }
@@ -1293,9 +1291,11 @@ void AgentController::onMcpEdit(const QString &serverId) {
 void AgentController::onMcpRemove(const QString &serverId) {
     if (m_mcpManager == nullptr || m_mcpPage == nullptr) return;
     const int choice = InlineMessage::ask(
-        m_overlay, MessageKind::Question, QStringLiteral("删除 MCP 服务器"),
-        QStringLiteral("删除这个服务器的配置和确认记录；只删配置，不删你机器上的程序。"),
-        QStringList{QStringLiteral("删除"), QStringLiteral("取消")}, 1, 1);
+        m_overlay, MessageKind::Question, QCoreApplication::translate("AgentController", "删除 MCP 服务器"),
+        QCoreApplication::translate("AgentController", "删除此服务器的配置和确认记录；仅删除配置，不删除本机程序。"),
+        QStringList{QCoreApplication::translate("AgentController", "删除"),
+                    QCoreApplication::translate("AgentController", "取消")},
+        1, 1);
     if (choice != 0) return;
     m_mcpManager->stop(serverId);
     QString problem;
@@ -1304,7 +1304,7 @@ void AgentController::onMcpRemove(const QString &serverId) {
         return;
     }
     m_mcpManager->reload(&problem);
-    m_mcpPage->setLog(QStringLiteral("已删除。"));
+    m_mcpPage->setLog(QCoreApplication::translate("AgentController", "已删除。"));
     refreshMcpPage();
 }
 
@@ -1329,13 +1329,13 @@ void AgentController::openMcpSettings() {
         connect(m_mcpManager, &McpManager::logLine, this,
                 [this](const QString &serverId, const QString &text) {
                     if (m_mcpPage != nullptr) {
-                        m_mcpPage->setLog(QStringLiteral("%1：%2").arg(serverId, text));
+                        m_mcpPage->setLog(QCoreApplication::translate("AgentController", "%1：%2").arg(serverId, text));
                     }
                 });
     }
     m_mcpManager->reload(nullptr);
     refreshMcpPage();
-    m_overlay->showPage(m_mcpPage, QStringLiteral("MCP 服务器"));
+    m_overlay->showPage(m_mcpPage, QCoreApplication::translate("AgentController", "MCP 服务器"));
 }
 
 void AgentController::setLauncherHost(AgentLauncherHost *host) {
@@ -1359,9 +1359,12 @@ void AgentController::applySkillToLoop() {
     config.profile = m_profile;
     config.apiKey = currentApiKey();
     QString prompt = m_workflow.skill().systemPrompt;
-    const QString status = m_workflow.statusLine();
-    if (!status.isEmpty()) {
-        prompt += QStringLiteral("\n\n当前工作流状态（本地记账，不要复述给用户）：%1。").arg(status);
+    if (m_workflow.active()) {
+        const QByteArray statusJson =
+            QJsonDocument(m_workflow.statusJson()).toJson(QJsonDocument::Compact);
+        prompt += QStringLiteral(
+                      "\n\nCurrent workflow state (local bookkeeping, do not repeat to the user): %1")
+                      .arg(QString::fromUtf8(statusJson));
     }
     config.systemPrompt = prompt;
     m_loop->setConfig(config);
@@ -1406,8 +1409,8 @@ void AgentController::onSkillChosen(const QString &skillId) {
     refreshSkillUi();
     if (m_page != nullptr) {
         m_page->showNotice(skill.id == QStringLiteral("general")
-                               ? QStringLiteral("已回到自由对话。")
-                               : QStringLiteral("已切到「%1」：%2").arg(skill.name, skill.description));
+                               ? QCoreApplication::translate("AgentController", "已切换至自由对话。")
+                               : QCoreApplication::translate("AgentController", "已切换至「%1」：%2").arg(skill.name, skill.description));
     }
 }
 
@@ -1613,7 +1616,7 @@ void AgentController::onSettingsSave() {
         const QUrl url(endpoint);
         if (!url.isValid() || (url.scheme() != QStringLiteral("http") &&
                                url.scheme() != QStringLiteral("https"))) {
-            page->setStatus(QStringLiteral("SearXNG 地址必须是 http/https。"), true);
+            page->setStatus(QCoreApplication::translate("AgentController", "SearXNG 地址须为 http/https。"), true);
             return;
         }
     }

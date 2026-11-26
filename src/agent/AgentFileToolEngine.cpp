@@ -48,7 +48,7 @@ QJsonArray AgentFileToolEngine::schemas() const {
 AgentToolResult AgentFileToolEngine::invoke(const Agent::ToolCall &call) {
     const QString internalName = AgentToolRegistry::internalName(call.name);
     const AgentToolSpec spec = AgentToolRegistry::find(internalName);
-    if (spec.name.isEmpty()) return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("未知工具。"));
+    if (spec.name.isEmpty()) return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentFileToolEngine", "未知工具。"));
     QString problem;
     if (!AgentToolRegistry::validateArguments(spec.schema, call.arguments, &problem)) {
         return errorResult(Agent::ErrorKind::ToolError, problem);
@@ -65,7 +65,7 @@ AgentToolResult AgentFileToolEngine::invoke(const Agent::ToolCall &call) {
     if (internalName == QStringLiteral("fs.read")) return handleRead(routed, context);
     if (internalName == QStringLiteral("fs.write")) return handleWrite(routed, context);
     if (internalName == QStringLiteral("artifact.read")) return handleArtifactRead(routed, context);
-    return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("工具未实现。"));
+    return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentFileToolEngine", "工具未实现。"));
 }
 
 QJsonObject AgentFileToolEngine::egressJson(const AgentEgressPolicy::Result &result,
@@ -103,7 +103,7 @@ AgentToolResult AgentFileToolEngine::handleList(const Agent::ToolCall &call,
     pending.summary = metadata.summary;
     if (egress.decision == AgentEgressPolicy::Decision::Confirm) {
         return approvalRequired(pending, metadata.summary, QString(), QString(),
-                                QStringLiteral("只返回目录元数据，不含文件名。"), pending.egress);
+                                QCoreApplication::translate("AgentFileToolEngine", "只返回目录元数据，不含文件名。"), pending.egress);
     }
     AgentToolResult result;
     result.status = AgentToolResult::Status::Ok;
@@ -147,9 +147,9 @@ AgentToolResult AgentFileToolEngine::handleListNames(const Agent::ToolCall &call
     pending.content = redacted.text;
     pending.names = names;
     pending.namesTruncated = truncated;
-    pending.summary = QStringLiteral("完整文件名清单：%1 项%2")
-                          .arg(names.size())
-                          .arg(truncated ? QStringLiteral("（已截断）") : QString());
+    pending.summary = (truncated ? QCoreApplication::translate("AgentFileToolEngine", "完整文件名清单：%1 项（已截断）")
+                                 : QCoreApplication::translate("AgentFileToolEngine", "完整文件名清单：%1 项"))
+                          .arg(names.size());
     return approvalRequired(pending, pending.summary,
                             AgentRedaction::preview(redacted.text, 4000), QString(),
                             QCoreApplication::translate("AgentFileToolEngine", "不提供「本会话允许此目录」，每次均需重新确认。"),
@@ -161,7 +161,7 @@ AgentToolResult AgentFileToolEngine::handleRead(const Agent::ToolCall &call,
     const QString relative = call.arguments.value(QStringLiteral("path")).toString();
     const AgentEgressPolicy::Kind kind = AgentEgressPolicy::kindForPath(relative);
     if (kind == AgentEgressPolicy::Kind::CredentialFile) {
-        return errorResult(Agent::ErrorKind::EgressBlocked, QStringLiteral("凭据文件禁止读取。"));
+        return errorResult(Agent::ErrorKind::EgressBlocked, QCoreApplication::translate("AgentFileToolEngine", "禁止读取凭据文件。"));
     }
     const int maxBytes = call.arguments.value(QStringLiteral("maxBytes")).toInt(0);
     const AgentFileReadResult read = m_files->read(context.rootPath, relative, maxBytes);
@@ -183,14 +183,14 @@ AgentToolResult AgentFileToolEngine::handleRead(const Agent::ToolCall &call,
     pending.egress = egressJson(egress, kind);
     pending.read = read;
     pending.content = egress.redactedContent;
-    pending.summary = QStringLiteral("读取文本：%1（%2 字节%3）")
+    pending.summary = (read.truncated ? QCoreApplication::translate("AgentFileToolEngine", "读取文本：%1（%2 字节，已截断）")
+                                      : QCoreApplication::translate("AgentFileToolEngine", "读取文本：%1（%2 字节）"))
                           .arg(relative)
-                          .arg(read.size)
-                          .arg(read.truncated ? QStringLiteral("，已截断") : QString());
+                          .arg(read.size);
     if (egress.decision == AgentEgressPolicy::Decision::Confirm) {
         return approvalRequired(pending, pending.summary,
                                 AgentRedaction::preview(egress.redactedContent, 4000), QString(),
-                                QStringLiteral("确认后只发送脱敏片段；不提供会话级目录放行。"),
+                                QCoreApplication::translate("AgentFileToolEngine", "确认后只发送脱敏片段，不提供本会话的目录放行。"),
                                 pending.egress);
     }
     AgentToolResult result;
@@ -204,7 +204,7 @@ AgentToolResult AgentFileToolEngine::handleRead(const Agent::ToolCall &call,
             m_artifacts->putModelReadable(context.sessionId, content, &modelArtifact,
                                           &artifactProblem)) {
             content = content.left(16 * 1024) + QChar(10) +
-                      QStringLiteral("…（本次读取内容见模型可读 artifact，同样已脱敏）");
+                      QStringLiteral("…(content from this read is stored in a model-readable artifact, also redacted)");
         }
     }
     result.data = QJsonObject{{QStringLiteral("path"), relative},
@@ -235,7 +235,7 @@ AgentToolResult AgentFileToolEngine::handleWrite(const Agent::ToolCall &call,
         if (!workspaces.load(workspaceId, &workspace, &problem) ||
             workspace.sourceInstanceId != context.instanceId) {
             return errorResult(Agent::ErrorKind::ToolError,
-                               problem.isEmpty() ? QStringLiteral("工作区与当前实例不匹配。") : problem);  // i18n-ignore
+                               problem.isEmpty() ? QCoreApplication::translate("AgentFileToolEngine", "工作区与当前实例不匹配。") : problem);
         }
         writeContext.rootPath = workspace.rootPath + QStringLiteral("/versions/") +
                                 workspace.versionId;
@@ -245,7 +245,7 @@ AgentToolResult AgentFileToolEngine::handleWrite(const Agent::ToolCall &call,
         QString problem;
         if (transactions.activeForInstance(context.instanceId, &active, &problem)) {
             return errorResult(Agent::ErrorKind::ToolError,
-                               QStringLiteral("事务活动期间不能直接写原实例；请带 workspaceId 写工作区。"));  // i18n-ignore
+                               QCoreApplication::translate("AgentFileToolEngine", "修复事务进行中，不能直接写入原实例。请带 workspaceId 写入工作区。"));
         }
     }
     const AgentWritePlan plan = m_files->prepareWrite(writeContext.rootPath, relative, content,
@@ -264,14 +264,14 @@ AgentToolResult AgentFileToolEngine::handleWrite(const Agent::ToolCall &call,
     pending.egress = egressJson(egress, request.kind);
     pending.writePlan = plan;
     pending.content = request.content;
-    pending.summary = QStringLiteral("写入 %1（%2 → %3 字节）")
+    pending.summary = QCoreApplication::translate("AgentFileToolEngine", "写入 %1（%2 → %3 字节）")
                           .arg(relative)
                           .arg(plan.oldSize)
                           .arg(plan.newContent.toUtf8().size());
     return approvalRequired(pending, pending.summary,
                             AgentRedaction::preview(plan.newContent, 4000),
                             AgentRedaction::redact(plan.diff).text,
-                            QStringLiteral("写前备份到维护备份目录（owner=agent，含 sourceSessionId）。"),
+                            QCoreApplication::translate("AgentFileToolEngine", "写入前会先备份到维护备份目录。"),
                             pending.egress);
 }
 
@@ -286,7 +286,7 @@ AgentToolResult AgentFileToolEngine::handleArtifactRead(const Agent::ToolCall &c
         !m_artifacts->readModel(context.sessionId, artifactId, offset, length, &content,
                                 &problem)) {
         return errorResult(Agent::ErrorKind::EgressBlocked,
-                           problem.isEmpty() ? QStringLiteral("artifact 不存在或不可读。") : problem);
+                           problem.isEmpty() ? QCoreApplication::translate("AgentFileToolEngine", "artifact 不存在或不可读。") : problem);
     }
     AgentEgressPolicy::Request request;
     request.kind = AgentEgressPolicy::Kind::ArtifactRead;
@@ -298,7 +298,7 @@ AgentToolResult AgentFileToolEngine::handleArtifactRead(const Agent::ToolCall &c
     }
     AgentToolResult result;
     result.status = AgentToolResult::Status::Ok;
-    result.summary = QStringLiteral("读取模型 artifact（已重新脱敏）。");
+    result.summary = QCoreApplication::translate("AgentFileToolEngine", "读取 artifact（已重新脱敏）。");
     result.data = QJsonObject{{QStringLiteral("artifactId"), artifactId},
                               {QStringLiteral("content"), egress.redactedContent},
                               {QStringLiteral("offset"), offset},
@@ -330,13 +330,13 @@ AgentToolResult AgentFileToolEngine::approvalRequired(const Pending &pending,
 
 AgentToolResult AgentFileToolEngine::resolveApproval(const QString &approvalId, bool approved) {
     if (!m_pending.contains(approvalId)) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("审批请求已失效。"));
+        return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentFileToolEngine", "审批请求已失效。"));
     }
     const Pending pending = m_pending.take(approvalId);
     if (!approved) {
         AgentToolResult result;
         result.status = AgentToolResult::Status::Error;
-        result.summary = QStringLiteral("用户拒绝了本次操作；未写入任何内容。");
+        result.summary = QCoreApplication::translate("AgentFileToolEngine", "用户已拒绝本次操作，未写入任何内容。");
         result.error.kind = Agent::ErrorKind::ApprovalDenied;
         result.error.message = result.summary;
         result.data = QJsonObject{{QStringLiteral("denied"), true}};
@@ -376,7 +376,7 @@ AgentToolResult AgentFileToolEngine::resolveApproval(const QString &approvalId, 
                 m_artifacts->putModelReadable(pending.context.sessionId, content, &modelArtifact,
                                               &artifactProblem)) {
                 content = content.left(16 * 1024) + QChar(10) +
-                          QStringLiteral("…（本次读取内容见模型可读 artifact，同样已脱敏）");
+                          QStringLiteral("…(content from this read is stored in a model-readable artifact, also redacted)");
             }
         }
         result.data = QJsonObject{{QStringLiteral("content"), content},
@@ -399,8 +399,8 @@ AgentToolResult AgentFileToolEngine::resolveApproval(const QString &approvalId, 
         result.status = AgentToolResult::Status::Ok;
         result.summary =
             write.unchanged
-                ? QStringLiteral("文件内容未变化，未写入。")
-                : QStringLiteral("写入成功：%1 → %2 字节，已备份并校验。")
+                ? QCoreApplication::translate("AgentFileToolEngine", "文件内容未变化，未写入。")
+                : QCoreApplication::translate("AgentFileToolEngine", "写入成功：%1 → %2 字节，已备份并校验。")
                       .arg(write.bytesBefore)
                       .arg(write.bytesAfter);
         result.data = QJsonObject{{QStringLiteral("sha256"), write.sha256},
@@ -413,7 +413,7 @@ AgentToolResult AgentFileToolEngine::resolveApproval(const QString &approvalId, 
         return result;
     }
     }
-    return errorResult(Agent::ErrorKind::Internal, QStringLiteral("未知审批类型。"));
+    return errorResult(Agent::ErrorKind::Internal, QCoreApplication::translate("AgentFileToolEngine", "未知审批类型。"));
 }
 
 void AgentFileToolEngine::cancelPending() { m_pending.clear(); }

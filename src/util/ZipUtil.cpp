@@ -10,6 +10,7 @@
  */
 #include "ZipUtil.hpp"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -111,11 +112,11 @@ QString describeProcessFailure(QProcess::ProcessError failure, const QString &de
                                const QString &what) {
     switch (failure) {
     case QProcess::FailedToStart:
-        return QStringLiteral("%1没跑起来（%2）。").arg(what, detail);
+        return QCoreApplication::translate("ZipUtil", "%1无法启动（%2）。").arg(what, detail);
     case QProcess::Crashed:
-        return QStringLiteral("%1时进程被强行结束了（%2）。").arg(what, detail);
+        return QCoreApplication::translate("ZipUtil", "%1过程中进程被强制结束（%2）。").arg(what, detail);
     default:
-        return QStringLiteral("%1超时").arg(what);
+        return QCoreApplication::translate("ZipUtil", "%1超时").arg(what);
     }
 }
 
@@ -169,7 +170,7 @@ bool runPowershell(const QString &script, int timeoutMs, QByteArray *stdoutOut,
                    const std::function<bool()> &cancelled = {},
                    const std::function<void(const QByteArray &)> &onStdoutLine = {}) {
     if (cancelled && cancelled()) {
-        if (errorOut) *errorOut = QStringLiteral("%1已取消或超时。").arg(what);
+        if (errorOut) *errorOut = QCoreApplication::translate("ZipUtil", "%1已取消或超时。").arg(what);
         return false;
     }
     const QString encoded = encodeCommand(script);
@@ -184,8 +185,9 @@ bool runPowershell(const QString &script, int timeoutMs, QByteArray *stdoutOut,
     // `powershell` 那几个开关和引号 —— 编码后的正文是 ASCII，字节数就是字符数。
     if (encoded.size() > 32000) {
         if (errorOut != nullptr) {
-            *errorOut = QStringLiteral("%1失败：递给 PowerShell 的脚本太长了（编码后 %2 个字符，"
-                                       "Windows 一条命令行最多三万多）。")
+            *errorOut = QCoreApplication::translate(
+                            "ZipUtil",
+                            "%1失败：要传给 PowerShell 的脚本过长（编码后 %2 个字符，Windows 命令行上限约 3.2 万字符）。")
                             .arg(what)
                             .arg(encoded.size());
         }
@@ -243,7 +245,7 @@ bool runPowershell(const QString &script, int timeoutMs, QByteArray *stdoutOut,
         process.kill();
         process.waitForFinished(5000);
         if (errorOut != nullptr) {
-            *errorOut = interrupted ? QStringLiteral("%1已取消或超时。").arg(what)
+            *errorOut = interrupted ? QCoreApplication::translate("ZipUtil", "%1已取消或超时。").arg(what)
                                     : describeProcessFailure(failure, detail, what);
         }
         return false;
@@ -261,7 +263,7 @@ bool runPowershell(const QString &script, int timeoutMs, QByteArray *stdoutOut,
             const QString raw = QString::fromLocal8Bit(process.readAllStandardError());
             const QString err = readProcessError(raw);
             *errorOut = err.isEmpty()
-                            ? QStringLiteral("PowerShell 退出码 %1").arg(process.exitCode())
+                            ? QCoreApplication::translate("ZipUtil", "PowerShell 退出码 %1").arg(process.exitCode())
                             : err;
         }
         return false;
@@ -279,14 +281,14 @@ bool ZipUtil::extractArchives(const QStringList &archives, const QString &target
                               const std::function<void(int done, int total)> &progress) {
     if (archives.isEmpty()) {
         if (errorOut) {
-            *errorOut = QStringLiteral("没有需要解压的压缩包");
+            *errorOut = QCoreApplication::translate("ZipUtil", "没有需要解压的压缩包");
         }
         return false;
     }
 
     if (!QDir().mkpath(targetDir)) {
         if (errorOut) {
-            *errorOut = QStringLiteral("无法创建目录：%1").arg(targetDir);
+            *errorOut = QCoreApplication::translate("ZipUtil", "无法创建目录：%1").arg(targetDir);
         }
         return false;
     }
@@ -395,10 +397,10 @@ bool ZipUtil::extractArchives(const QStringList &archives, const QString &target
                  : std::function<void(const QByteArray &)>{};
 
     QString failure;
-    if (!runPowershell(script, 180000, nullptr, &failure, QStringLiteral("解压"), {}, onLine)) {
+    if (!runPowershell(script, 180000, nullptr, &failure, QCoreApplication::translate("ZipUtil", "解压压缩包"), {}, onLine)) {
         if (errorOut) {
             *errorOut = failure.isEmpty()
-                            ? QStringLiteral("解压失败（%1 个压缩包）").arg(archives.size())
+                            ? QCoreApplication::translate("ZipUtil", "解压失败（%1 个压缩包）").arg(archives.size())
                             : failure;
         }
         return false;
@@ -413,7 +415,7 @@ QHash<QString, ZipUtil::ArchiveMetadata> ZipUtil::readMetadataBatch(
     if (problem) problem->clear();
     if (archives.isEmpty()) return result;
     if (archives.size() > 10000 || entryNames.size() > 16) {
-        if (problem) *problem = QStringLiteral("元数据批次过大，未读取。");
+        if (problem) *problem = QCoreApplication::translate("ZipUtil", "元数据批次过大，未读取。");
         return result;
     }
     QTemporaryDir scratch;
@@ -425,7 +427,7 @@ QHash<QString, ZipUtil::ArchiveMetadata> ZipUtil::readMetadataBatch(
     const QByteArray bytes = QJsonDocument(QJsonObject{{"archives", archivePaths},
         {"entries", QJsonArray::fromStringList(entryNames)}}).toJson(QJsonDocument::Compact);
     if (!scratch.isValid() || !manifest.open(QIODevice::WriteOnly) || manifest.write(bytes) != bytes.size()) {
-        if (problem) *problem = QStringLiteral("无法准备批量元数据读取。");
+        if (problem) *problem = QCoreApplication::translate("ZipUtil", "无法准备批量元数据读取。");
         return result;
     }
     manifest.close();
@@ -499,7 +501,7 @@ try {
 } finally {$writer.Dispose()}
 )PS").arg(psFilePath(input), psFilePath(output));
     QByteArray ignored;
-    runPowershell(script, 60000, &ignored, problem, QStringLiteral("批量读取模组声明"), cancelled);
+    runPowershell(script, 60000, &ignored, problem, QCoreApplication::translate("ZipUtil", "读取模组信息"), cancelled);
     QFile file(output);
     if (!file.open(QIODevice::ReadOnly) || file.size() > 32 * 1024 * 1024) return result;
     const QSet<QString> requested(archives.cbegin(), archives.cend());
@@ -516,7 +518,7 @@ try {
             if (entries.contains(name)) {
                 const auto decoded = QByteArray::fromBase64(entries.value(name).toString().toLatin1());
                 if (decoded.size() <= 1024 * 1024) metadata.entries.insert(name, decoded);
-                else metadata.entryProblems.insert(name, QStringLiteral("声明超过 1 MiB 限制"));
+                else metadata.entryProblems.insert(name, QCoreApplication::translate("ZipUtil", "声明超过 1 MiB 限制"));
             }
             if (problems.contains(name)) metadata.entryProblems.insert(name, problems.value(name).toString());
         }
@@ -615,7 +617,7 @@ ZipUtil::EntryStatus ZipUtil::readEntry(const QString &archive, const QString &e
     if (process.exitStatus() != QProcess::NormalExit) {
         QFile::remove(tempPath);
         if (errorOut != nullptr) {
-            *errorOut = QStringLiteral("%1时 PowerShell 被强行结束了").arg(what);
+            *errorOut = QCoreApplication::translate("ZipUtil", "%1过程中 PowerShell 被强制结束").arg(what);
         }
         return EntryStatus::Failed;
     }
@@ -629,14 +631,14 @@ ZipUtil::EntryStatus ZipUtil::readEntry(const QString &archive, const QString &e
     }
     if (code == 5) {
         QFile::remove(tempPath);
-        if (errorOut) *errorOut = QStringLiteral("%1：声明超过读取大小上限，未采用。").arg(what);
+        if (errorOut) *errorOut = QCoreApplication::translate("ZipUtil", "%1：声明超过读取大小上限，未采用。").arg(what);
         return EntryStatus::Failed;
     }
     if (code != 0) {
         QFile::remove(tempPath);
         if (errorOut != nullptr) {
             const QString err = readProcessError(QString::fromLocal8Bit(stderrBytes));
-            *errorOut = err.isEmpty() ? QStringLiteral("%1失败（退出码 %2）").arg(what).arg(code) : err;
+            *errorOut = err.isEmpty() ? QCoreApplication::translate("ZipUtil", "%1失败（退出码 %2）").arg(what).arg(code) : err;
         }
         return EntryStatus::Failed;
     }
@@ -649,7 +651,7 @@ ZipUtil::EntryStatus ZipUtil::readEntry(const QString &archive, const QString &e
 
     if (!read) {
         if (errorOut != nullptr) {
-            *errorOut = QStringLiteral("读不出临时文件 %1").arg(tempPath);
+            *errorOut = QCoreApplication::translate("ZipUtil", "无法读取临时文件 %1").arg(tempPath);
         }
         return EntryStatus::Failed;
     }
@@ -715,7 +717,7 @@ ZipUtil::EntryStatus ZipUtil::extractEntryToFile(const QString &archive, const Q
     }
     if (process.exitStatus() != QProcess::NormalExit) {
         if (errorOut != nullptr) {
-            *errorOut = QStringLiteral("%1时 PowerShell 被强行结束了").arg(what);
+            *errorOut = QCoreApplication::translate("ZipUtil", "%1过程中 PowerShell 被强制结束").arg(what);
         }
         return EntryStatus::Failed;
     }
@@ -731,7 +733,7 @@ ZipUtil::EntryStatus ZipUtil::extractEntryToFile(const QString &archive, const Q
             const QString err =
                 readProcessError(QString::fromLocal8Bit(process.readAllStandardError()));
             *errorOut =
-                err.isEmpty() ? QStringLiteral("%1失败（退出码 %2）").arg(what).arg(code) : err;
+                err.isEmpty() ? QCoreApplication::translate("ZipUtil", "%1失败（退出码 %2）").arg(what).arg(code) : err;
         }
         return EntryStatus::Failed;
     }
@@ -802,7 +804,7 @@ ZipUtil::EntryStatus ZipUtil::listEntries(const QString &archive, QStringList *o
     if (process.exitStatus() != QProcess::NormalExit) {
         QFile::remove(tempPath);
         if (errorOut != nullptr) {
-            *errorOut = QStringLiteral("%1时 PowerShell 被强行结束了").arg(what);
+            *errorOut = QCoreApplication::translate("ZipUtil", "%1过程中 PowerShell 被强制结束").arg(what);
         }
         return EntryStatus::Failed;
     }
@@ -815,7 +817,7 @@ ZipUtil::EntryStatus ZipUtil::listEntries(const QString &archive, QStringList *o
         if (errorOut != nullptr) {
             // readProcessError() 的理由见它上面那一段（CLIXML 那一层）。
             const QString err = readProcessError(QString::fromLocal8Bit(stderrBytes));
-            *errorOut = err.isEmpty() ? QStringLiteral("%1失败（退出码 %2）").arg(what).arg(code) : err;
+            *errorOut = err.isEmpty() ? QCoreApplication::translate("ZipUtil", "%1失败（退出码 %2）").arg(what).arg(code) : err;
         }
         return EntryStatus::Failed;
     }
@@ -827,7 +829,7 @@ ZipUtil::EntryStatus ZipUtil::listEntries(const QString &archive, QStringList *o
     QFile::remove(tempPath);
     if (!read) {
         if (errorOut != nullptr) {
-            *errorOut = QStringLiteral("读不出临时文件 %1").arg(tempPath);
+            *errorOut = QCoreApplication::translate("ZipUtil", "无法读取临时文件 %1").arg(tempPath);
         }
         return EntryStatus::Failed;
     }
@@ -840,7 +842,7 @@ ZipUtil::EntryStatus ZipUtil::listEntries(const QString &archive, QStringList *o
             return EntryStatus::Ok;
         }
         if (errorOut != nullptr) {
-            *errorOut = QStringLiteral("%1：条目表读不回来（临时文件里不是 JSON）").arg(what);
+            *errorOut = QCoreApplication::translate("ZipUtil", "%1：无法读取条目表（临时文件不是 JSON）").arg(what);
         }
         return EntryStatus::Failed;
     }
@@ -875,13 +877,13 @@ bool ZipUtil::extractSubtrees(const QStringList &archives, const QString &target
     }
     if (archives.isEmpty() || roots.isEmpty()) {
         if (errorOut) {
-            *errorOut = QStringLiteral("没有需要解压的压缩包");
+            *errorOut = QCoreApplication::translate("ZipUtil", "没有需要解压的压缩包");
         }
         return false;
     }
     if (!QDir().mkpath(targetDir)) {
         if (errorOut) {
-            *errorOut = QStringLiteral("无法创建目录：%1").arg(targetDir);
+            *errorOut = QCoreApplication::translate("ZipUtil", "无法创建目录：%1").arg(targetDir);
         }
         return false;
     }
@@ -904,7 +906,7 @@ bool ZipUtil::extractSubtrees(const QStringList &archives, const QString &target
     }
     if (normalized.isEmpty()) {
         if (errorOut) {
-            *errorOut = QStringLiteral("没有需要解压的目录");
+            *errorOut = QCoreApplication::translate("ZipUtil", "没有需要解压的目录");
         }
         return false;
     }
@@ -988,7 +990,7 @@ bool ZipUtil::extractSubtrees(const QStringList &archives, const QString &target
     QByteArray stdoutBytes;
     QString failure;
     if (!runPowershell(script, 900 * 1000, &stdoutBytes, &failure,
-                       QStringLiteral("解压"), cancelled)) {
+                       QCoreApplication::translate("ZipUtil", "解压压缩包"), cancelled)) {
         if (errorOut) {
             *errorOut = failure;
         }
@@ -1054,10 +1056,10 @@ bool ZipUtil::gunzipTo(const QString &sourceGz, const QString &targetPath, QStri
     // 一秒出头；给它 15 秒是为了"机器正忙"时别误判，同时"没装 PowerShell / 被安全
     // 软件拦下"那一档不会让用户干等（那一档根本不进等待，直接 FailedToStart）。
     QString failure;
-    if (!runPowershell(script, 15000, nullptr, &failure, QStringLiteral("解压 gzip"))) {
+    if (!runPowershell(script, 15000, nullptr, &failure, QCoreApplication::translate("ZipUtil", "解压 gzip 文件"))) {
         if (errorOut != nullptr) {
             const QString reason = readProcessError(failure);
-            *errorOut = reason.isEmpty() ? QStringLiteral("解压 gzip 失败") : reason;
+            *errorOut = reason.isEmpty() ? QCoreApplication::translate("ZipUtil", "解压 gzip 失败") : reason;
         }
         return false;
     }
@@ -1112,10 +1114,10 @@ bool ZipUtil::gzipFrom(const QString &sourcePath, const QString &targetGz, QStri
     // System.IO.Compression、过安全软件的首扫）—— CI runner 上冷启动偶尔就吃掉十几秒，
     // 于是夹具超时、整个 core-instances 判死（2026-11-02 连挂两次的 `ZL6`）。
     // 60 秒和 readEntry() 那一档对齐：真出问题时仍然会失败，只是不再把"机器慢"当"文件坏"。
-    if (!runPowershell(script, 60000, nullptr, &failure, QStringLiteral("压缩 gzip"))) {
+    if (!runPowershell(script, 60000, nullptr, &failure, QCoreApplication::translate("ZipUtil", "压缩为 gzip"))) {
         if (errorOut != nullptr) {
             const QString reason = readProcessError(failure);
-            *errorOut = reason.isEmpty() ? QStringLiteral("写 gzip 失败") : reason;
+            *errorOut = reason.isEmpty() ? QCoreApplication::translate("ZipUtil", "写入 gzip 文件失败") : reason;
         }
         return false;
     }
@@ -1125,12 +1127,12 @@ bool ZipUtil::gzipFrom(const QString &sourcePath, const QString &targetGz, QStri
 bool ZipUtil::createZip(const QString &targetZip, const QList<ZipSource> &entries,
                         QString *errorOut, const std::function<bool()> &cancelled) {
     if (cancelled && cancelled()) {
-        if (errorOut) *errorOut = QStringLiteral("打包已取消或超时。");
+        if (errorOut) *errorOut = QCoreApplication::translate("ZipUtil", "打包已取消或超时。");
         return false;
     }
     if (targetZip.trimmed().isEmpty()) {
         if (errorOut != nullptr) {
-            *errorOut = QStringLiteral("没有给出要写到哪去。");
+            *errorOut = QCoreApplication::translate("ZipUtil", "未指定输出文件。");
         }
         return false;
     }
@@ -1147,7 +1149,7 @@ bool ZipUtil::createZip(const QString &targetZip, const QList<ZipSource> &entrie
     // "失败时旧文件一个字节不动"这句保证也跟着变复杂，而这条路上没有谁需要覆盖语义。
     if (QFileInfo::exists(targetZip)) {
         if (errorOut != nullptr) {
-            *errorOut = QStringLiteral("目标文件已经存在，没有覆盖它：%1")
+            *errorOut = QCoreApplication::translate("ZipUtil", "目标文件已经存在，未覆盖：%1")
                             .arg(QDir::toNativeSeparators(targetZip));
         }
         return false;
@@ -1155,7 +1157,7 @@ bool ZipUtil::createZip(const QString &targetZip, const QList<ZipSource> &entrie
     for (const ZipSource &entry : entries) {
         if (entry.entryName.trimmed().isEmpty() || entry.sourcePath.trimmed().isEmpty()) {
             if (errorOut != nullptr) {
-                *errorOut = QStringLiteral("打包的条目表里有空名字或者空来源。");
+                *errorOut = QCoreApplication::translate("ZipUtil", "打包的条目表包含空名称或空来源。");
             }
             return false;
         }
@@ -1164,7 +1166,7 @@ bool ZipUtil::createZip(const QString &targetZip, const QList<ZipSource> &entrie
         // 会归一），所以这种错在自测里是看不见的。在这里直接拦掉。
         if (entry.entryName.contains(QLatin1Char('\\'))) {
             if (errorOut != nullptr) {
-                *errorOut = QStringLiteral("打包的条目名里有反斜杠：%1").arg(entry.entryName);
+                *errorOut = QCoreApplication::translate("ZipUtil", "打包的条目名包含反斜杠：%1").arg(entry.entryName);
             }
             return false;
         }
@@ -1196,7 +1198,7 @@ bool ZipUtil::createZip(const QString &targetZip, const QList<ZipSource> &entrie
         QFile tableFile(tablePath);
         if (!tableFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             if (errorOut != nullptr) {
-                *errorOut = QStringLiteral("打包的条目表写不出来：%1").arg(tablePath);
+                *errorOut = QCoreApplication::translate("ZipUtil", "无法写入打包条目表：%1").arg(tablePath);
             }
             return false;
         }
@@ -1209,7 +1211,7 @@ bool ZipUtil::createZip(const QString &targetZip, const QList<ZipSource> &entrie
         const QByteArray payload = QJsonDocument(table).toJson(QJsonDocument::Compact);
         if (tableFile.write(payload) != payload.size()) {
             if (errorOut != nullptr) {
-                *errorOut = QStringLiteral("打包的条目表写不完整：%1（临时目录还剩多少空间？）")
+                *errorOut = QCoreApplication::translate("ZipUtil", "打包条目表写入不完整：%1（请检查临时目录空间）")
                                 .arg(tablePath);
             }
             tableFile.close();
@@ -1263,7 +1265,7 @@ bool ZipUtil::createZip(const QString &targetZip, const QList<ZipSource> &entrie
     QString failure;
     // 开工之前已经确认过目标不在（见上面那段），所以走到这儿目标**只可能是我们刚建的**
     // ⇒ 失败时删掉它删的是我们自己写的半成品，不会碰到谁的文件。
-    const bool ok = runPowershell(script, 1800 * 1000, nullptr, &failure, QStringLiteral("打包"), cancelled);
+    const bool ok = runPowershell(script, 1800 * 1000, nullptr, &failure, QCoreApplication::translate("ZipUtil", "打包压缩包"), cancelled);
     // 临时表两份出路都要删（成功、失败都一样）—— 它躺在系统临时目录里，里面是用户的
     // 实例里都有哪些文件，没理由留一份。
     QFile::remove(tablePath);
@@ -1271,7 +1273,7 @@ bool ZipUtil::createZip(const QString &targetZip, const QList<ZipSource> &entrie
         // 半成品删掉（见 .hpp）。NOTE: 删的是**我们写的那个目标路径**，不碰别的。
         QFile::remove(targetZip);
         if (errorOut != nullptr) {
-            *errorOut = failure.isEmpty() ? QStringLiteral("打包失败") : failure;
+            *errorOut = failure.isEmpty() ? QCoreApplication::translate("ZipUtil", "打包失败") : failure;
         }
         return false;
     }

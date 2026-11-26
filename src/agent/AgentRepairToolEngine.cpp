@@ -12,6 +12,7 @@
 
 #include "../util/AppPaths.hpp"
 
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QFile>
 #include <QDir>
@@ -53,7 +54,7 @@ AgentToolSpec spec(const QString &name, const QString &displayName, const QStrin
 QJsonObject localEgress() {
     return QJsonObject{{QStringLiteral("kind"), QStringLiteral("local")},
                        {QStringLiteral("decision"), QStringLiteral("auto")},
-                       {QStringLiteral("reason"), QStringLiteral("事务只在本机工作区，不发送文件内容")},  // i18n-ignore
+                       {QStringLiteral("reason"), QStringLiteral("Transactions stay inside the local workspace and never send file contents")},
                        {QStringLiteral("redactionHits"), 0}};
 }
 
@@ -70,13 +71,13 @@ QStringList parseScopes(const QJsonValue &value, QString *problem) {
     for (const QString &raw : parts) {
         const QString scope = raw.trimmed();
         if (!AgentRepairTransactionStore::validScope(scope)) {
-            if (problem != nullptr) *problem = QStringLiteral("不认识的修复范围：%1").arg(scope);  // i18n-ignore
+            if (problem != nullptr) *problem = QStringLiteral("Unknown repair scope: %1").arg(scope);
             return {};
         }
         if (!scopes.contains(scope)) scopes.append(scope);
     }
     if (scopes.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("至少选择一个修复范围。");  // i18n-ignore
+        if (problem != nullptr) *problem = QStringLiteral("Select at least one repair scope.");
         return {};
     }
     return scopes;
@@ -281,7 +282,7 @@ AgentToolResult AgentRepairToolEngine::handleBegin(const Agent::ToolCall &call,
     pending.context = context;
     pending.scopes = scopes;
     pending.symptomKey = symptomKey;
-    pending.displayName = QStringLiteral("创建修复事务");  // i18n-ignore
+    pending.displayName = QCoreApplication::translate("AgentRepairToolEngine", "创建修复事务");
     pending.summary = QStringLiteral("为「%1」创建隔离工作区，范围：%2。")  // i18n-ignore
                           .arg(context.instanceName.isEmpty() ? context.instanceId : context.instanceName,
                                scopes.join(QStringLiteral("、")));  // i18n-ignore
@@ -508,7 +509,7 @@ AgentToolResult AgentRepairToolEngine::handleFinish(const Agent::ToolCall &call,
         pending.call = call;
         pending.context = context;
         pending.transactionId = record.id;
-        pending.displayName = QStringLiteral("提交修复事务");  // i18n-ignore
+        pending.displayName = QCoreApplication::translate("AgentRepairToolEngine", "提交修复事务");
         pending.summary = QStringLiteral("把事务 %1 的差异提交到原实例；提交前逐个核对基线哈希。")  // i18n-ignore
                               .arg(record.id);
         pending.preview = QStringLiteral("先备份原文件，再原子替换；失败自动回滚。");  // i18n-ignore

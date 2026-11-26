@@ -141,8 +141,8 @@ QList<AgentToolSpec> AgentModToolEngine::specs() {
     list.append(spec(
         QStringLiteral("mods.bisect"),
         QCoreApplication::translate("AgentModToolEngine", "依赖感知二分"),
-        QStringLiteral("在事务工作区里反复启停模组并启动游戏，用 delta debugging 找出"  // i18n-ignore
-                       "哪些模组一起启用才崩；必需前置始终启用，结束后工作区恢复基线。"),  // i18n-ignore
+        QStringLiteral("Repeatedly toggle mods and launch the game inside a transaction workspace using delta debugging "
+                       "to find which mods crash together; mandatory dependencies stay enabled and the workspace baseline is restored afterwards."),
         AgentRisk::Command,
         objectSchema({QStringLiteral("workspaceId")},
                      {{QStringLiteral("workspaceId"), stringField(QStringLiteral("string"), 80)},
@@ -971,8 +971,8 @@ void AgentModToolEngine::copyStagedIntoWorkspace(Run run) {
                            {QStringLiteral("installed"), installed},
                            {QStringLiteral("dependenciesFetched"), int(run.targets.size()) - 1},
                            {QStringLiteral("note"),
-                            QCoreApplication::translate("AgentModToolEngine", "只改了事务工作区；用 repair.diff 看改动，repair.verify 验证，"
-                                  "repair.finish 提交或回滚。")}};  // i18n-ignore
+                            QStringLiteral("Only modified the transaction workspace; inspect with repair.diff, "
+                                           "verify with repair.verify, and commit or roll back with repair.finish.")}};
     const QString summary = QCoreApplication::translate("AgentModToolEngine", "模组修复：%1 个文件已写进工作区（事务 %2）")
                                 .arg(run.staged.size())
                                 .arg(run.pending.transactionId);
@@ -1000,8 +1000,8 @@ void AgentModToolEngine::startRepairCore(const Pending &pending) {
                 }
                 const QJsonObject data{{QStringLiteral("repaired"), true},
                                        {QStringLiteral("note"),
-                                        QCoreApplication::translate("AgentModToolEngine", "已把缺文件/哈希不符的文件排进下载并等它收尾；"
-                                              "再跑 instance.integrity 复核分组计数。")}};  // i18n-ignore
+                                        QStringLiteral("Queued missing or hash-mismatched files for download and awaited completion; "
+                                                       "run instance.integrity again to recheck category counts.")}};
                 finishWithData(run, data,
                                QCoreApplication::translate("AgentModToolEngine", "核心文件已按官方大小与 SHA-1 修复完成。"));
             });

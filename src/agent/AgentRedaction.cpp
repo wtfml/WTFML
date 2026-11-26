@@ -5,6 +5,7 @@
 
 #include "AgentRedaction.hpp"
 
+#include <QCoreApplication>
 #include <QRegularExpression>
 #include <QSet>
 
@@ -231,7 +232,7 @@ QString preview(const QString &text, int maxChars) {
     if (maxChars <= 0 || result.text.size() <= maxChars) {
         return result.text;
     }
-    return result.text.left(maxChars) + QStringLiteral("\n…（已截断）");
+    return result.text.left(maxChars) + QCoreApplication::translate("AgentRedaction", "\n…（已截断）");
 }
 
 }  // namespace AgentRedaction

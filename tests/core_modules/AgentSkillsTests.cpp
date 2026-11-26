@@ -39,20 +39,25 @@ void runAgentSkillsTests() {
     check(general.promptVersion >= 1, "提示词：general 有版本号");
     check(general.promptProblem.isEmpty(), "提示词：general 资源可加载", general.promptProblem);
     check(general.promptHash.size() == 64, "提示词：general 有 SHA-256", general.promptHash);
-    check(general.systemPrompt.contains(QStringLiteral("工具")) &&
-              general.systemPrompt.contains(QStringLiteral("用户确认")),
+    check(general.systemPrompt.contains(QStringLiteral("tools")) &&
+              general.systemPrompt.contains(QStringLiteral("user confirmation")),
           "技能：系统提示与实际下发的工具一致（可读、写入须确认）");
-    check(general.systemPrompt.contains(QStringLiteral("没有事务")) &&
-              general.systemPrompt.contains(QStringLiteral("崩溃急救")),
+    check(general.systemPrompt.contains(QStringLiteral("no repair transactions")) &&
+              general.systemPrompt.contains(QStringLiteral("Crash Rescue")),
           "提示词：自由对话说明修复要切模式");
-    check(general.systemPrompt.contains(QStringLiteral("证据")) &&
-              general.systemPrompt.contains(QStringLiteral("无法确认")),
+    check(general.systemPrompt.contains(QStringLiteral("evidence")) &&
+              general.systemPrompt.contains(QStringLiteral("cannot confirm")),
           "技能：系统提示要求引用证据");
-    check(general.systemPrompt.contains(QStringLiteral("凭据")),
+    check(general.systemPrompt.contains(QStringLiteral("credentials")),
           "提示词：共享规则覆盖凭据");
+    check(general.systemPrompt.contains(
+              QStringLiteral("Reply in the language of the user's most recent message")) &&
+              general.systemPrompt.contains(
+                  QStringLiteral("interface language stated in the context")),
+          "提示词：共享规则要求按最新消息或界面语言回复");
 
     const AgentSkill inspection = AgentSkillRegistry::find(QStringLiteral("inspection"));
-    check(inspection.name == QStringLiteral("实例体检"), "技能：体检已注册");
+    check(inspection.name == QStringLiteral("实例诊断"), "技能：体检已注册");
     check(inspection.readOnly, "技能：体检是只读");
     check(!inspection.requiresPlan, "技能：体检不要求计划");
     check(inspection.allowedTools.contains(QStringLiteral("diagnostics.startup")),
@@ -64,7 +69,7 @@ void runAgentSkillsTests() {
     check(inspection.requiredTools.contains(QStringLiteral("diagnostics.startup")),
           "技能：体检必须跑启动诊断才能报完成");
     check(inspection.promptId == QStringLiteral("inspection"), "提示词：体检的资源 id");
-    check(inspection.systemPrompt.contains(QStringLiteral("全程只读")),
+    check(inspection.systemPrompt.contains(QStringLiteral("strictly read-only")),
           "提示词：体检保留只读约束");
     check(!inspection.systemPrompt.contains(QStringLiteral("workflow.submitPlan")),
           "提示词：体检不接修复协议");
@@ -88,8 +93,8 @@ void runAgentSkillsTests() {
     check(crash.systemPrompt.contains(QStringLiteral("workflow.submitPlan")) &&
               crash.systemPrompt.contains(QStringLiteral("workflow.finish")),
           "提示词：崩溃急救带修复协议");
-    check(crash.systemPrompt.contains(QStringLiteral("验证步")) &&
-              crash.systemPrompt.contains(QStringLiteral("回退方式")),
+    check(crash.systemPrompt.contains(QStringLiteral("verification step")) &&
+              crash.systemPrompt.contains(QStringLiteral("rollback method")),
           "提示词：修复协议要求验证与回退");
 
     const AgentSkill upgrade = AgentSkillRegistry::find(QStringLiteral("upgrade"));
@@ -113,7 +118,7 @@ void runAgentSkillsTests() {
         check(!skill.promptHash.isEmpty(), "提示词：每个技能都有哈希", skill.id);
         check(skill.systemPrompt.size() <= AgentPromptLibrary::maxPromptBytes(),
               "提示词：每个技能不超过硬上限", skill.id);
-        check(skill.systemPrompt.contains(QStringLiteral("证据 id")),
+        check(skill.systemPrompt.contains(QStringLiteral("evidence id")),
               "提示词：共享规则覆盖每个技能", skill.id);
     }
 
@@ -121,18 +126,18 @@ void runAgentSkillsTests() {
     {
         const AgentSkill crashV2 = AgentSkillRegistry::find(QStringLiteral("crash-rescue"));
         // 六类条款：执行优先、验证、回滚、证据、禁止猜测、审批边界。
-        check(crashV2.systemPrompt.contains(QStringLiteral("直接做")),
+        check(crashV2.systemPrompt.contains(QStringLiteral("act directly")),
               "提示词 V2：崩溃急救写了执行优先", crashV2.id);
         check(crashV2.systemPrompt.contains(QStringLiteral("repair.verify")) ||
-                  crashV2.systemPrompt.contains(QStringLiteral("验证")),
+                  crashV2.systemPrompt.contains(QStringLiteral("verify")),
               "提示词 V2：崩溃急救要求验证");
         check(crashV2.systemPrompt.contains(QStringLiteral("rollback")),
               "提示词 V2：崩溃急救要求失败回滚");
-        check(crashV2.systemPrompt.contains(QStringLiteral("证据 id")),
+        check(crashV2.systemPrompt.contains(QStringLiteral("evidence id")),
               "提示词 V2：崩溃急救要求引用证据");
-        check(crashV2.systemPrompt.contains(QStringLiteral("不猜")),
+        check(crashV2.systemPrompt.contains(QStringLiteral("Do not guess")),
               "提示词 V2：崩溃急救禁止猜测");
-        check(crashV2.systemPrompt.contains(QStringLiteral("审批")),
+        check(crashV2.systemPrompt.contains(QStringLiteral("approval")),
               "提示词 V2：崩溃急救写明审批边界");
         check(crashV2.systemPrompt.contains(QStringLiteral("diagnostics.crashSnapshot")) &&
                   crashV2.systemPrompt.contains(QStringLiteral("matchedRules")),
@@ -143,7 +148,8 @@ void runAgentSkillsTests() {
                   crashV2.systemPrompt.contains(QStringLiteral("not_fixed")) &&
                   crashV2.systemPrompt.contains(QStringLiteral("needs_user")),
               "提示词 V2：崩溃急救写清五个报告状态");
-        check(crashV2.systemPrompt.contains(QStringLiteral("缺的是工具、权限还是外部信息")),
+        check(crashV2.systemPrompt.contains(
+                  QStringLiteral("whether a tool, permission, or external information is missing")),
               "提示词 V2：需要用户时说清缺什么");
         check(crashV2.systemPrompt.contains(QStringLiteral("mods.bisect")),
               "提示词 V2：崩溃急救指向二分工具");

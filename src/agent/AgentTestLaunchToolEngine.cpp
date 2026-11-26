@@ -71,7 +71,7 @@ AgentToolSpec spec() {
 QJsonObject localEgress() {
     return QJsonObject{{QStringLiteral("kind"), QStringLiteral("local")},
                        {QStringLiteral("decision"), QStringLiteral("auto")},
-                       {QStringLiteral("reason"), QStringLiteral("测试启动只在本机工作区，不发送文件内容")},  // i18n-ignore
+                       {QStringLiteral("reason"), QStringLiteral("Test launch runs in the local workspace and never sends file contents")},
                        {QStringLiteral("redactionHits"), 0}};
 }
 
@@ -100,12 +100,12 @@ bool AgentTestLaunchToolEngine::parseOptions(const QJsonObject &arguments,
     const QJsonValue timeoutValue = arguments.value(QStringLiteral("timeoutSeconds"));
     if (!timeoutValue.isUndefined()) {
         if (!timeoutValue.isDouble()) {
-            if (problem != nullptr) *problem = QStringLiteral("timeoutSeconds 必须是整数。");  // i18n-ignore
+            if (problem != nullptr) *problem = QStringLiteral("timeoutSeconds must be an integer.");
             return false;
         }
         options->timeoutSeconds = timeoutValue.toInt();
         if (options->timeoutSeconds < 1 || options->timeoutSeconds > kMaxTimeoutSeconds) {
-            if (problem != nullptr) *problem = QStringLiteral("timeoutSeconds 必须在 1–600 之间。");  // i18n-ignore
+            if (problem != nullptr) *problem = QStringLiteral("timeoutSeconds must be between 1 and 600.");
             return false;
         }
     } else {
@@ -115,12 +115,12 @@ bool AgentTestLaunchToolEngine::parseOptions(const QJsonObject &arguments,
     const QJsonValue settleValue = arguments.value(QStringLiteral("settleSeconds"));
     if (!settleValue.isUndefined()) {
         if (!settleValue.isDouble()) {
-            if (problem != nullptr) *problem = QStringLiteral("settleSeconds 必须是整数。");  // i18n-ignore
+            if (problem != nullptr) *problem = QStringLiteral("settleSeconds must be an integer.");
             return false;
         }
         options->settleSeconds = settleValue.toInt();
         if (options->settleSeconds < 0 || options->settleSeconds > kMaxSettleSeconds) {
-            if (problem != nullptr) *problem = QStringLiteral("settleSeconds 必须在 0–60 之间。");  // i18n-ignore
+            if (problem != nullptr) *problem = QStringLiteral("settleSeconds must be between 0 and 60.");
             return false;
         }
     } else {
@@ -130,12 +130,12 @@ bool AgentTestLaunchToolEngine::parseOptions(const QJsonObject &arguments,
     const QJsonValue repeatValue = arguments.value(QStringLiteral("repeat"));
     if (!repeatValue.isUndefined()) {
         if (!repeatValue.isDouble()) {
-            if (problem != nullptr) *problem = QStringLiteral("repeat 必须是整数。");  // i18n-ignore
+            if (problem != nullptr) *problem = QStringLiteral("repeat must be an integer.");
             return false;
         }
         options->repeat = repeatValue.toInt();
         if (options->repeat < 1 || options->repeat > kMaxRepeat) {
-            if (problem != nullptr) *problem = QStringLiteral("repeat 必须在 1–3 之间。");  // i18n-ignore
+            if (problem != nullptr) *problem = QStringLiteral("repeat must be between 1 and 3.");
             return false;
         }
     } else {
@@ -144,14 +144,14 @@ bool AgentTestLaunchToolEngine::parseOptions(const QJsonObject &arguments,
 
     const QString milestone = arguments.value(QStringLiteral("milestone")).toString();
     if (!milestone.isEmpty() && !AgentTestLaunchMilestones::validMilestone(milestone)) {
-        if (problem != nullptr) *problem = QStringLiteral("milestone 只支持 process_started/main_menu/world_loaded。");  // i18n-ignore
+        if (problem != nullptr) *problem = QStringLiteral("milestone only supports process_started/main_menu/world_loaded.");
         return false;
     }
     options->milestone = AgentTestLaunchMilestones::normalizeMilestone(milestone);
 
     const QString expect = arguments.value(QStringLiteral("expect")).toString();
     if (!expect.isEmpty() && expect != QStringLiteral("stable") && expect != QStringLiteral("crash")) {
-        if (problem != nullptr) *problem = QStringLiteral("expect 只支持 stable/crash。");  // i18n-ignore
+        if (problem != nullptr) *problem = QStringLiteral("expect only supports stable/crash.");
         return false;
     }
     options->expectCrash = expect == QStringLiteral("crash");
@@ -159,7 +159,7 @@ bool AgentTestLaunchToolEngine::parseOptions(const QJsonObject &arguments,
     const QJsonValue capture = arguments.value(QStringLiteral("captureLogs"));
     if (!capture.isUndefined()) {
         if (!capture.isBool()) {
-            if (problem != nullptr) *problem = QStringLiteral("captureLogs 必须是布尔值。");  // i18n-ignore
+            if (problem != nullptr) *problem = QStringLiteral("captureLogs must be a boolean.");
             return false;
         }
         options->captureLogs = capture.toBool();
@@ -168,14 +168,14 @@ bool AgentTestLaunchToolEngine::parseOptions(const QJsonObject &arguments,
     const QJsonValue quickPlay = arguments.value(QStringLiteral("quickPlay"));
     if (!quickPlay.isUndefined() && !quickPlay.isNull()) {
         if (!quickPlay.isObject()) {
-            if (problem != nullptr) *problem = QStringLiteral("quickPlay 必须是对象。");  // i18n-ignore
+            if (problem != nullptr) *problem = QStringLiteral("quickPlay must be an object.");
             return false;
         }
         const QJsonObject object = quickPlay.toObject();
         const QString world = object.value(QStringLiteral("world")).toString();
         if (!world.isEmpty()) {
             if (!safeRelativeName(world)) {
-                if (problem != nullptr) *problem = QStringLiteral("quickPlay.world 只能是世界名，不能带路径。");  // i18n-ignore
+                if (problem != nullptr) *problem = QStringLiteral("quickPlay.world must be a world name without path separators.");
                 return false;
             }
             options->quickPlayWorld = world;
@@ -183,7 +183,7 @@ bool AgentTestLaunchToolEngine::parseOptions(const QJsonObject &arguments,
     }
 
     if (options->milestone == QStringLiteral("world_loaded") && options->quickPlayWorld.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("milestone=world_loaded 需要 quickPlay.world。");  // i18n-ignore
+        if (problem != nullptr) *problem = QStringLiteral("milestone=world_loaded requires quickPlay.world.");
         return false;
     }
     return true;

@@ -858,7 +858,7 @@ void PresetManagePage::rebuildPresetList(const QString &selectId, bool emitSelec
             auto *item = new QTreeWidgetItem(group);
             QString label = preset->name;
             if (preset->isDefault) {
-                label += QCoreApplication::translate("PresetManagePage", "（默认）");
+                label = QCoreApplication::translate("PresetManagePage", "%1（默认）").arg(label);
             }
             item->setText(0, label);
             item->setData(0, kRoleId, preset->id);
@@ -1177,7 +1177,7 @@ void PresetManagePage::showPreset(const QString &id, const QString &name,
                                .arg(title, section.modeText)
                                .arg(section.itemCount);
             if (!section.summary.isEmpty()) {
-                text += QCoreApplication::translate("PresetManagePage", "（%1）").arg(section.summary);
+                text = QCoreApplication::translate("PresetManagePage", "%1（%2）").arg(text, section.summary);
             }
             auto *item = new QListWidgetItem(text, m_sectionList);
             item->setToolTip(QCoreApplication::translate("PresetManagePage", "%1（%2）").arg(title, section.kindText));
@@ -1196,7 +1196,7 @@ void PresetManagePage::fillInstances(QComboBox *combo, const QList<InstanceItem>
     for (const InstanceItem &instance : instances) {
         QString text = instance.name;
         if (instance.running) {
-            text += QCoreApplication::translate("PresetManagePage", "（正在运行）");
+            text = QCoreApplication::translate("PresetManagePage", "%1（正在运行）").arg(text);
         }
         combo->addItem(text, instance.id);
         if (instance.id == keep) {

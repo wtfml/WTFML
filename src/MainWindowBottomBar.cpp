@@ -234,6 +234,8 @@ QList<RunningProcesses::Entry> MainWindow::runningProcessEntries() const {
         entry.versionId = game.versionId;
         entry.displayName = game.displayName.isEmpty() ? instanceDisplayName(game.versionId) : game.displayName;
         entry.accountName = game.accountName;
+        entry.instanceNumber =
+            RunningProcesses::displayedInstanceNumber(game.instanceNumber, game.instanceNumbered);
         entries.append(entry);
     }
     for (const QString &serverId : runningServers) {
@@ -269,9 +271,8 @@ void MainWindow::updateBottomBarRunState() {
     QLabel *runStateDetailLabel = m_ui->getRunStateDetailLabel();
     QLabel *runStateMarkLabel = m_ui->getRunStateMarkLabel();
     const QList<RunningProcesses::Entry> entries = runningProcessEntries();
-    // 主页启动区主按钮：当前实例在跑就写「停止游戏」（和这一格看的是同一份会话事实）。
+    // 主页启动区主按钮始终保持「启动游戏」（即使当前实例在跑也可再次启动多开）；这里仍取当前选中实例 ID 给详情显示用。
     const QString currentId = selectedVersionId(m_ui->getInstalledVersionCombo());
-    m_ui->setHomeLaunchRunning(!currentId.isEmpty() && m_launcherManager->isVersionRunning(currentId));
 
     const int totalCount = RunningProcesses::totalCount(entries);
     const bool anyRunning = totalCount > 0;
@@ -302,7 +303,10 @@ void MainWindow::updateBottomBarRunState() {
         const bool showDetail = MainWindowUI::runStateShowsDetail(
             m_ui->isHomeTabCurrent(), currentId, only.versionId, false);
         runStateDetailLabel->setVisible(showDetail);
-        runStateDetailLabel->setText(showDetail ? instanceDisplayName(only.versionId) : QString());
+        runStateDetailLabel->setText(
+            showDetail
+                ? RunningProcesses::numberedName(instanceDisplayName(only.versionId), only.instanceNumber)
+                : QString());
         return;
     }
 
@@ -316,7 +320,8 @@ void MainWindow::updateBottomBarRunState() {
     lines.reserve(entries.size());
     for (const RunningProcesses::Entry &entry : entries) {
         if (entry.kind == RunningProcesses::Entry::Kind::Client) {
-            const QString name = instanceDisplayName(entry.versionId);
+            const QString name =
+                RunningProcesses::numberedName(instanceDisplayName(entry.versionId), entry.instanceNumber);
             lines.append((clientCount > 1 && !entry.accountName.isEmpty())
                              ? MainWindowUI::runStateDetailWithAccount(name, entry.accountName)
                              : name);

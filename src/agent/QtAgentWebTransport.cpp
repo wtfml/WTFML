@@ -36,7 +36,7 @@ void QtAgentWebTransport::resolve(const QString &host, ResolveCallback done) {
         }
         QList<QHostAddress> addresses = info.addresses();
         if (addresses.isEmpty()) {
-            if (done) done(false, {}, QStringLiteral("域名解析不出地址。"));
+            if (done) done(false, {}, tr("域名无法解析为有效地址。"));
             return;
         }
         if (done) done(true, addresses, QString());
@@ -86,7 +86,7 @@ void QtAgentWebTransport::get(const AgentHttpRequest &request, ResponseCallback 
         if (error != QNetworkReply::NoError && error != QNetworkReply::OperationCanceledError) {
             shared->error = reply->errorString();
         } else if (error == QNetworkReply::OperationCanceledError && !shared->truncated) {
-            shared->error = QStringLiteral("请求超时或已取消。");
+            shared->error = tr("请求超时或已取消。");
         }
         shared->ok = shared->error.isEmpty();
         reply->deleteLater();

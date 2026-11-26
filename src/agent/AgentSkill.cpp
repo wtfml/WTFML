@@ -141,7 +141,8 @@ QList<AgentSkill> AgentSkillRegistry::builtins() {
         QCoreApplication::translate("AgentSkill", "只读：跑启动诊断/完整性/模组统计，列出问题与下一步。"),
         QStringLiteral("inspection"), false, readOnlyTools(), true, false,
         {QStringLiteral("diagnostics.startup")},
-        QStringLiteral("至少一条证据；给出问题分级与下一步选项；全程没有写操作。"), 2));
+        QStringLiteral("At least one evidence item; severity-ranked findings and next steps; strictly read-only."),  // i18n-ignore
+        3));
 
     list.append(make(
         QStringLiteral("crash-rescue"),
@@ -149,9 +150,8 @@ QList<AgentSkill> AgentSkillRegistry::builtins() {
         QCoreApplication::translate("AgentSkill", "诊断 + 计划 + 逐步审批修复 + 验证；每步可拒绝、可回退。"),
         QStringLiteral("crash_rescue"), true, QStringList(readOnlyTools() + repairTools()), false,
         true, {QStringLiteral("diagnostics.crash")},
-        QStringLiteral("计划已批准；每步都有结果；至少一条证据；有验证步骤；"
-                       "报告写明回退方式与未解决项。"),
-        4));
+        QStringLiteral("Plan approved; results for every step; at least one evidence item; verification step completed; report states rollback method and unresolved items."),  // i18n-ignore
+        5));
 
     list.append(make(
         QStringLiteral("upgrade"),
@@ -160,7 +160,8 @@ QList<AgentSkill> AgentSkillRegistry::builtins() {
         QStringLiteral("upgrade"), false,
         QStringList(readOnlyTools() + QStringList{QStringLiteral("backup.create")}), false, true,
         {QStringLiteral("upgrade.inspect")},
-        QStringLiteral("给出兼容性结论与风险；执行交给现有向导；有证据。"), 2));
+        QStringLiteral("Compatibility verdict and risks provided; execution handed off to native wizard; backed by evidence."),  // i18n-ignore
+        3));
 
     list.append(make(
         QStringLiteral("mods"),
@@ -168,7 +169,8 @@ QList<AgentSkill> AgentSkillRegistry::builtins() {
         QCoreApplication::translate("AgentSkill", "列模组、读声明查兼容/缺前置、启停或备份、按平台记录修复文件；不猜文件名兼容性。"),
         QStringLiteral("mods"), true, QStringList(readOnlyTools() + repairTools()), false, true,
         {QStringLiteral("mods.list")},
-        QStringLiteral("模组清单有证据；每个改动都有结果；不确定项写明。"), 5));
+        QStringLiteral("Mod inventory backed by evidence; outcomes for every change; uncertainties explicitly noted."),  // i18n-ignore
+        6));
 
     return list;
 }

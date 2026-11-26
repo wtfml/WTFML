@@ -82,7 +82,7 @@ QWidget *makeRow(QWidget *parent, const QString &labelText, QLineEdit **editOut,
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(8);
     auto *label = new QLabel(labelText, row);
-    label->setFixedWidth(96);
+    label->setProperty("wtfmlFormLabel", true);
     layout->addWidget(label);
     auto *edit = new QLineEdit(row);
     edit->setObjectName(objectName);
@@ -100,7 +100,7 @@ QWidget *makeControlRow(QWidget *parent, const QString &labelText, QWidget *cont
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(8);
     auto *label = new QLabel(labelText, row);
-    label->setFixedWidth(96);
+    label->setProperty("wtfmlFormLabel", true);
     layout->addWidget(label);
     control->setParent(row);
     layout->addWidget(control, stretchControl ? 100 : 0);
@@ -235,6 +235,16 @@ NewServerPage::NewServerPage(QWidget *parent) : QDialog(parent) {
             makeControlRow(serverCard, tr("内存上限"), m_memorySpin, false));
     }
     bodyLayout->addWidget(serverCard);
+    // 标签列同宽：下限 96，译文更长时按最宽的那条。
+    int labelWidth = 96;
+    QList<QLabel *> labels;
+    for (QLabel *label : serverCard->findChildren<QLabel *>()) {
+        if (!label->property("wtfmlFormLabel").toBool()) continue;
+        label->ensurePolished();
+        labelWidth = qMax(labelWidth, label->sizeHint().width());
+        labels.append(label);
+    }
+    for (QLabel *label : labels) label->setFixedWidth(labelWidth);
 
     // 内容装不满时**上对齐**（和安装页那条收尾同一个写法）。
     bodyLayout->addStretch(1);

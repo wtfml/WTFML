@@ -7,6 +7,7 @@
 
 #include "AgentRedaction.hpp"
 
+#include <QCoreApplication>
 #include <QFileInfo>
 
 namespace AgentEgressPolicy {
@@ -94,12 +95,12 @@ Result evaluate(const Request &request) {
     result.containsCredentials = AgentRedaction::containsCredentials(request.content);
     if (request.kind == Kind::CredentialFile || request.kind == Kind::CredentialStore) {
         result.decision = Decision::Block;
-        result.reason = QStringLiteral("凭据文件/凭据存储禁止读取和发送。");
+        result.reason = QCoreApplication::translate("AgentEgressPolicy", "禁止读取和发送凭据文件或凭据存储。");
         return result;
     }
     if (request.kind == Kind::Binary) {
         result.decision = Decision::Block;
-        result.reason = QStringLiteral("二进制文件只允许元数据，不读取/发送内容。");
+        result.reason = QCoreApplication::translate("AgentEgressPolicy", "二进制文件仅提供元数据，不读取或发送内容。");
         return result;
     }
     if (request.kind == Kind::DirectoryMetadata ||
@@ -107,8 +108,8 @@ Result evaluate(const Request &request) {
         request.kind == Kind::InstanceListSummary) {
         result.decision = request.strictMode ? Decision::Confirm : Decision::Auto;
         result.needsNotice = !request.strictMode;
-        result.reason = request.strictMode ? QStringLiteral("严格模式：元数据也要逐次确认。")
-                                           : QStringLiteral("自动读取；可能发送给当前模型服务。");
+        result.reason = request.strictMode ? QCoreApplication::translate("AgentEgressPolicy", "严格模式：元数据同样需逐次确认。")
+                                           : QCoreApplication::translate("AgentEgressPolicy", "自动读取，可能发送至当前模型服务。");
         return result;
     }
     if (request.kind == Kind::Log || request.kind == Kind::CrashReport ||
@@ -117,15 +118,15 @@ Result evaluate(const Request &request) {
         result.needsNotice = !request.strictMode;
         result.redactedContent = AgentRedaction::redact(request.content).text;
         result.redactionHits = AgentRedaction::redact(request.content).hits;
-        result.reason = request.strictMode ? QStringLiteral("严格模式：日志/崩溃/artifact 逐次确认。")
-                                           : QStringLiteral("自动读取；已脱敏；可能发送给当前模型服务。");
+        result.reason = request.strictMode ? QCoreApplication::translate("AgentEgressPolicy", "严格模式：日志、崩溃报告与 artifact 需逐次确认。")
+                                           : QCoreApplication::translate("AgentEgressPolicy", "自动读取且已脱敏，可能发送至当前模型服务。");
         return result;
     }
     // 配置文件、完整文件名清单、其他文本、完整实例列表：每次都确认，没有会话级目录放行。
     result.decision = Decision::Confirm;
     result.redactedContent = AgentRedaction::redact(request.content).text;
     result.redactionHits = AgentRedaction::redact(request.content).hits;
-    result.reason = QStringLiteral("需要逐次确认；确认后只发送脱敏片段。");
+    result.reason = QCoreApplication::translate("AgentEgressPolicy", "需逐次确认；确认后仅发送脱敏片段。");
     return result;
 }
 

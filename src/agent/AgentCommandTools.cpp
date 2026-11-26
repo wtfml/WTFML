@@ -38,7 +38,7 @@ QJsonObject objectSchema(const QStringList &required, const QJsonObject &propert
 QJsonObject autoEgress() {
     return QJsonObject{{QStringLiteral("kind"), QStringLiteral("command")},
                        {QStringLiteral("decision"), QStringLiteral("confirm")},
-                       {QStringLiteral("reason"), QStringLiteral("本机命令输出，按不可信内容处理")}};
+                       {QStringLiteral("reason"), QCoreApplication::translate("AgentCommandTools", "本机命令输出，按不可信内容处理。")}};
 }
 
 }  // namespace
@@ -50,23 +50,23 @@ QList<AgentCommandSpec> all() {
     list.append(AgentCommandSpec{QStringLiteral("java-version"), QStringLiteral("java -version"),
                                  QStringLiteral("java"), {QStringLiteral("-version")}, false,
                                  20000,
-                                 QStringLiteral("看本机默认 java 的版本与发行版。")});
+                                 QStringLiteral("Check default local java version and distribution.")});
     list.append(AgentCommandSpec{QStringLiteral("where-java"), QStringLiteral("where java"),
                                  QStringLiteral("where"), {QStringLiteral("java")}, false, 15000,
-                                 QStringLiteral("列出 PATH 上能找到的 java.exe。")});
-    list.append(AgentCommandSpec{QStringLiteral("ping"), QStringLiteral("ping 主机"),
+                                 QStringLiteral("List java.exe locations found on PATH.")});
+    list.append(AgentCommandSpec{QStringLiteral("ping"), QCoreApplication::translate("AgentCommandTools", "ping 主机"),
                                  QStringLiteral("ping"),
                                  {QStringLiteral("-n"), QStringLiteral("4"), QStringLiteral("%1")},
-                                 true, 30000, QStringLiteral("连发 4 个 ICMP 包。")});
-    list.append(AgentCommandSpec{QStringLiteral("nslookup"), QStringLiteral("nslookup 主机"),
+                                 true, 30000, QStringLiteral("Send 4 ICMP packets.")});
+    list.append(AgentCommandSpec{QStringLiteral("nslookup"), QCoreApplication::translate("AgentCommandTools", "nslookup 主机"),
                                  QStringLiteral("nslookup"), {QStringLiteral("%1")}, true, 30000,
-                                 QStringLiteral("查一次 DNS 解析。")});
+                                 QStringLiteral("Run one DNS lookup.")});
     list.append(AgentCommandSpec{QStringLiteral("netstat"), QStringLiteral("netstat -ano"),
                                  QStringLiteral("netstat"), {QStringLiteral("-ano")}, false,
-                                 30000, QStringLiteral("列出本机连接与 PID。")});
+                                 30000, QStringLiteral("List local connections and PIDs.")});
     list.append(AgentCommandSpec{QStringLiteral("ipconfig"), QStringLiteral("ipconfig /all"),
                                  QStringLiteral("ipconfig"), {QStringLiteral("/all")}, false,
-                                 30000, QStringLiteral("本机网络配置（含适配器与 DNS）。")});
+                                 30000, QStringLiteral("Show local network configuration (adapters and DNS).")});
     return list;
 }
 
@@ -148,26 +148,26 @@ AgentToolResult AgentCommandTools::invoke(const Agent::ToolCall &call) {
     }
     if (!AgentSettings::diagnoseCommandsEnabled()) {
         return errorResult(Agent::ErrorKind::ToolError,
-                           QStringLiteral("诊断命令默认关闭：先到 API 设置里打开「允许诊断命令」。"));
+                           QCoreApplication::translate("AgentCommandTools", "诊断命令默认关闭，需先在智能体设置中开启「允许诊断命令」。"));
     }
     const QString commandId = call.arguments.value(QStringLiteral("command")).toString();
     const AgentCommandSpec spec = AgentCommandSpecs::find(commandId);
     if (spec.id.isEmpty()) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("没有这条诊断命令。"));
+        return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentCommandTools", "不存在该诊断命令。"));
     }
     const QString host = call.arguments.value(QStringLiteral("host")).toString();
     if (spec.needsHost && !AgentCommandSpecs::validHostArgument(host)) {
         return errorResult(Agent::ErrorKind::ToolError,
-                           QStringLiteral("host 只接受域名或 IP 字面量。"));
+                           QCoreApplication::translate("AgentCommandTools", "host 只接受域名或 IP 地址。"));
     }
     if (m_process != nullptr) {
         return errorResult(Agent::ErrorKind::ToolError,
-                           QStringLiteral("已有一条诊断命令在跑，等它结束。"));
+                           QCoreApplication::translate("AgentCommandTools", "已有诊断命令正在运行，请等待其结束。"));
     }
     const QString programPath = QStandardPaths::findExecutable(spec.program);
     if (programPath.isEmpty()) {
         return errorResult(Agent::ErrorKind::ToolError,
-                           QStringLiteral("找不到 %1（不在 PATH 里）。").arg(spec.program));
+                           QCoreApplication::translate("AgentCommandTools", "找不到 %1（不在 PATH 中）。").arg(spec.program));
     }
     QStringList arguments;
     for (const QString &argument : spec.fixedArgs) {
@@ -191,10 +191,10 @@ AgentToolResult AgentCommandTools::invoke(const Agent::ToolCall &call) {
     const QString commandLine =
         QStringLiteral("%1 %2").arg(QDir::toNativeSeparators(programPath),
                                     arguments.join(QLatin1Char(' ')));
-    const QString summary = QStringLiteral("执行诊断命令：%1").arg(spec.displayName);
+    const QString summary = QCoreApplication::translate("AgentCommandTools", "执行诊断命令：%1").arg(spec.displayName);
     QJsonObject request = AgentApprovalPolicy::request(
-        call.name, QStringLiteral("诊断命令"), spec.id, summary, commandLine, QString(),
-        QStringLiteral("进程树随超时/取消清理；输出上限 256 KB，结果按不可信内容处理。"),
+        call.name, QCoreApplication::translate("AgentCommandTools", "诊断命令"), spec.id, summary, commandLine, QString(),
+        QCoreApplication::translate("AgentCommandTools", "超时或取消时会清理进程树；输出上限 256 KB，结果按不可信内容处理。"),
         autoEgress());
     request.insert(QStringLiteral("approvalId"), approvalId);
     AgentToolResult result;
@@ -206,12 +206,12 @@ AgentToolResult AgentCommandTools::invoke(const Agent::ToolCall &call) {
 
 AgentToolResult AgentCommandTools::resolveApproval(const QString &approvalId, bool approved) {
     if (!m_approvals.contains(approvalId)) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("审批请求已失效。"));
+        return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentCommandTools", "审批请求已失效。"));
     }
     const Approval approval = m_approvals.take(approvalId);
     if (!approved) {
         AgentToolResult result =
-            errorResult(Agent::ErrorKind::ApprovalDenied, QStringLiteral("用户拒绝了这次命令。"));
+            errorResult(Agent::ErrorKind::ApprovalDenied, QCoreApplication::translate("AgentCommandTools", "用户已拒绝执行此命令。"));
         result.data = QJsonObject{{QStringLiteral("denied"), true}};
         return result;
     }
@@ -275,7 +275,7 @@ AgentToolResult AgentCommandTools::resolveApproval(const QString &approvalId, bo
                 AgentToolResult result;
                 result.status = exitCode == 0 ? AgentToolResult::Status::Ok
                                               : AgentToolResult::Status::Error;
-                result.summary = QStringLiteral("诊断命令结束（退出码 %1）").arg(exitCode);
+                result.summary = QCoreApplication::translate("AgentCommandTools", "诊断命令已结束（退出码 %1）").arg(exitCode);
                 if (exitCode != 0) {
                     result.error.kind = Agent::ErrorKind::ToolError;
                     result.error.message = result.summary;
@@ -293,7 +293,7 @@ AgentToolResult AgentCommandTools::resolveApproval(const QString &approvalId, bo
         m_process->deleteLater();
         m_process = nullptr;
         finish(m_currentId,
-               errorResult(Agent::ErrorKind::ToolError, QStringLiteral("命令起不来。")));
+               errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentCommandTools", "命令无法启动。")));
     });
 
     m_timer = new QTimer(this);
@@ -308,14 +308,14 @@ AgentToolResult AgentCommandTools::resolveApproval(const QString &approvalId, bo
             m_process = nullptr;
         }
         finish(m_currentId,
-               errorResult(Agent::ErrorKind::Cancelled, QStringLiteral("命令超时，已清理进程树。")));
+               errorResult(Agent::ErrorKind::Cancelled, QCoreApplication::translate("AgentCommandTools", "命令超时，已清理进程树。")));
     });
     m_timer->start();
     m_process->start();
 
     AgentToolResult pending;
     pending.status = AgentToolResult::Status::Pending;
-    pending.summary = QStringLiteral("诊断命令执行中…");
+    pending.summary = QCoreApplication::translate("AgentCommandTools", "正在执行诊断命令…");
     return pending;
 }
 
@@ -354,7 +354,7 @@ void AgentCommandTools::cancelPending() {
     for (const QString &id : ids) {
         const Agent::ToolCall call = m_running.take(id);
         AgentToolResult result =
-            errorResult(Agent::ErrorKind::Cancelled, QStringLiteral("诊断命令已取消。"));
+            errorResult(Agent::ErrorKind::Cancelled, QCoreApplication::translate("AgentCommandTools", "诊断命令已取消。"));
         if (m_sink) m_sink(call, result);
     }
 }

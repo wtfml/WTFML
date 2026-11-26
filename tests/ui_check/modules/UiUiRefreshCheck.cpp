@@ -615,14 +615,15 @@ int UiUiRefreshCheck(QApplication &app) {
         const int normalHeight = launchCard ? launchCard->height() : 0;
         auto *launchButton = home->findChild<QPushButton *>(QStringLiteral("homeCurrentLaunch"));
         ui.setHomeLaunchRunning(true);
-        expect(launchButton && launchButton->property("wtfmlLaunchMode").toString() == QStringLiteral("stop") &&
-                   launchButton->text() == QStringLiteral("停止游戏") && launchButton->iconSize() == QSize(20, 20) &&
-                   launchButton->icon().pixmap(QSize(20, 20), 1.0).toImage() ==
-                       VersionIcons::power(20, Theme::tokens().onPrimary).toImage(),
-               "the running home instance uses the power icon without changing its stop action");
+        expect(launchButton && launchButton->property("wtfmlLaunchMode").toString() == QStringLiteral("launch") &&
+                   launchButton->text() == QStringLiteral("启动游戏") && launchButton->iconSize() == QSize(18, 18) &&
+                   launchButton->icon().pixmap(QSize(18, 18), 1.0).toImage() ==
+                       VersionIcons::line(QStringLiteral("play"), 18, Theme::tokens().onPrimary, 2.0).toImage(),
+               "even when the selected instance is running, the home primary button stays on launch for multi-launch");
         ui.setHomeLaunchRunning(false);
-        expect(launchButton && launchButton->property("wtfmlLaunchMode").toString() == QStringLiteral("launch"),
-               "the home button returns to the launch action when the game stops");
+        expect(launchButton && launchButton->property("wtfmlLaunchMode").toString() == QStringLiteral("launch") &&
+                   launchButton->text() == QStringLiteral("启动游戏"),
+               "the home button stays in launch action");
         // 实例切换是浮在页上的毛玻璃弹层：开着时启动区一像素都不动，也不起换页那层幕布。
         ui.openHomeInstancePicker({}, {instance}, {}, {});
         settle();

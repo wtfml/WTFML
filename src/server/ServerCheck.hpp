@@ -274,15 +274,15 @@ inline QList<Finding> inspect(const Facts &facts) {
             QCoreApplication::translate("ServerCheck", "世界目录将在首次启动时生成。"),
             Action::None});
     } else if (facts.installed && facts.worldExists) {
+        const QString detail =
+            facts.worldBytes > 0
+                ? QCoreApplication::translate("ServerCheck", "目录：%1/（%2 MB）。")
+                      .arg(facts.worldName,
+                           QString::number(double(facts.worldBytes) / (1024.0 * 1024.0), 'f', 1))
+                : QCoreApplication::translate("ServerCheck", "目录：%1/。").arg(facts.worldName);
         findings.append(Finding{
             Severity::Info, QCoreApplication::translate("ServerCheck", "世界「%1」已存在").arg(facts.worldName),
-            QCoreApplication::translate("ServerCheck", "目录：%1/%2。")
-                .arg(facts.worldName,
-                     facts.worldBytes > 0
-                         ? QCoreApplication::translate("ServerCheck", "，大小 %1 MB")
-                               .arg(QString::number(double(facts.worldBytes) / (1024.0 * 1024.0),
-                                                    'f', 1))
-                         : QString()),
+            detail,
             Action::None});
     }
     if (facts.modCount > 0) {

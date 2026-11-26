@@ -8,6 +8,7 @@
 #include "AgentRepairTransaction.hpp"
 
 
+#include <QCoreApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
 
@@ -87,36 +88,36 @@ bool AgentWorkflow::submitPlan(const QString &goal, const QList<AgentPlanStep> &
         if (problem != nullptr) *problem = message;
         return false;
     };
-    if (!active()) return fail(QStringLiteral("自由对话模式不需要提交计划。"));
-    if (!requiresPlan()) return fail(QStringLiteral("这个模式不需要计划，直接调用工具即可。"));
-    if (goal.trimmed().isEmpty()) return fail(QStringLiteral("计划缺少目标（goal）。"));
-    if (goal.size() > kMaxGoalLength) return fail(QStringLiteral("计划目标太长（上限 500 字）。"));
-    if (steps.isEmpty()) return fail(QStringLiteral("计划里没有任何步骤。"));
+    if (!active()) return fail(QCoreApplication::translate("AgentWorkflow", "自由对话模式无需提交计划。"));
+    if (!requiresPlan()) return fail(QCoreApplication::translate("AgentWorkflow", "当前模式无需提交计划，可直接调用工具。"));
+    if (goal.trimmed().isEmpty()) return fail(QCoreApplication::translate("AgentWorkflow", "计划缺少目标（goal）。"));
+    if (goal.size() > kMaxGoalLength) return fail(QCoreApplication::translate("AgentWorkflow", "计划目标过长（上限 500 字）。"));
+    if (steps.isEmpty()) return fail(QCoreApplication::translate("AgentWorkflow", "计划未包含任何步骤。"));
     if (steps.size() > m_skill.maxSteps) {
-        return fail(QStringLiteral("计划步数超过上限（%1）。").arg(m_skill.maxSteps));
+        return fail(QCoreApplication::translate("AgentWorkflow", "计划步数超过上限（%1）。").arg(m_skill.maxSteps));
     }
     bool hasVerify = false;
     bool hasRepair = false;
     for (int i = 0; i < steps.size(); ++i) {
         const AgentPlanStep &step = steps.at(i);
-        const QString label = QStringLiteral("第 %1 步").arg(i + 1);
+        const QString label = QCoreApplication::translate("AgentWorkflow", "第 %1 步").arg(i + 1);
         const AgentToolSpec toolSpec = AgentToolRegistry::find(step.tool);
-        if (toolSpec.name.isEmpty()) return fail(QStringLiteral("%1 的工具 %2 不存在。").arg(label, step.tool));
+        if (toolSpec.name.isEmpty()) return fail(QCoreApplication::translate("AgentWorkflow", "%1 的工具 %2 不存在。").arg(label, step.tool));
         if (step.tool.startsWith(QStringLiteral("workflow."))) {
-            return fail(QStringLiteral("%1 不能是工作流工具本身。").arg(label));
+            return fail(QCoreApplication::translate("AgentWorkflow", "%1 不能为工作流工具本身。").arg(label));
         }
         if (!m_skill.allows(step.tool)) {
-            return fail(QStringLiteral("%1 的工具 %2 不在当前模式白名单里。").arg(label, step.tool));
+            return fail(QCoreApplication::translate("AgentWorkflow", "%1 的工具 %2 不在当前模式白名单内。").arg(label, step.tool));
         }
         if (m_skill.readOnly && isWriteRisk(toolSpec.risk)) {
-            return fail(QStringLiteral("%1 是写操作，当前模式只读。").arg(label));
+            return fail(QCoreApplication::translate("AgentWorkflow", "%1 为写操作，当前模式仅限只读。").arg(label));
         }
         QString schemaProblem;
         if (!AgentToolRegistry::validateArguments(toolSpec.schema, step.arguments, &schemaProblem)) {
-            return fail(QStringLiteral("%1 的参数不合法：%2").arg(label, schemaProblem));
+            return fail(QCoreApplication::translate("AgentWorkflow", "%1 的参数无效：%2").arg(label, schemaProblem));
         }
         if (step.reason.size() > kMaxReasonLength) {
-            return fail(QStringLiteral("%1 的理由太长。").arg(label));
+            return fail(QCoreApplication::translate("AgentWorkflow", "%1 的说明过长。").arg(label));
         }
         if (isRepairStep(step)) hasRepair = true;
         if (step.verify) {
@@ -124,13 +125,13 @@ bool AgentWorkflow::submitPlan(const QString &goal, const QList<AgentPlanStep> &
             const bool executionVerify = step.tool == QStringLiteral("instance.testLaunch") ||
                                          step.tool == QStringLiteral("repair.verify");
             if (isWriteRisk(toolSpec.risk) && !executionVerify) {
-                return fail(QStringLiteral("%1 被标成验证步，但它是写操作。").arg(label));
+                return fail(QCoreApplication::translate("AgentWorkflow", "%1 被标记为验证步，但其为写操作。").arg(label));
             }
             hasVerify = true;
         }
     }
-    if (!hasRepair) return fail(QStringLiteral("计划里没有任何修复步骤，只能是纯只读。"));
-    if (!hasVerify) return fail(QStringLiteral("计划至少要有一个验证步（verify=true）。"));
+    if (!hasRepair) return fail(QCoreApplication::translate("AgentWorkflow", "计划未包含任何修复步骤，不能仅包含只读步骤。"));
+    if (!hasVerify) return fail(QCoreApplication::translate("AgentWorkflow", "计划须至少包含一个验证步（verify=true）。"));
 
     m_goal = goal.trimmed();
     m_steps = steps;
@@ -153,11 +154,11 @@ QJsonObject AgentWorkflow::planJson() const {
 }
 
 QString AgentWorkflow::planPreview() const {
-    QString text = QStringLiteral("目标：%1\n").arg(m_goal);
+    QString text = QCoreApplication::translate("AgentWorkflow", "目标：%1\n").arg(m_goal);
     int index = 1;
     for (const AgentPlanStep &step : m_steps) {
         text += QStringLiteral("%1. %2 — %3").arg(index).arg(step.tool, step.reason);
-        if (step.verify) text += QStringLiteral("（验证步）");
+        if (step.verify) text += QCoreApplication::translate("AgentWorkflow", "（验证步）");
         text += QLatin1Char('\n');
         if (!step.arguments.isEmpty()) {
             text += QString::fromUtf8(
@@ -166,7 +167,7 @@ QString AgentWorkflow::planPreview() const {
         }
         ++index;
     }
-    text += QStringLiteral("注意：批准计划不等于批准所有写入 —— 每个写步骤还会单独弹审批。");
+    text += QCoreApplication::translate("AgentWorkflow", "注意：批准计划不等于批准所有写入，每个写步骤仍需单独审批。");
     return text;
 }
 
@@ -174,7 +175,7 @@ void AgentWorkflow::approvePlan(bool approved) {
     if (m_stage != AgentWorkflowStage::AwaitPlanApproval) return;
     m_planApproved = approved;
     if (!approved) {
-        reset(QStringLiteral("用户拒绝了修复计划。"));
+        reset(QCoreApplication::translate("AgentWorkflow", "用户拒绝了修复计划。"));
         m_stage = AgentWorkflowStage::Collect;
         return;
     }
@@ -210,7 +211,7 @@ void AgentWorkflow::recordResult(const Agent::ToolCall &call, const AgentToolRes
         if (step.tool != call.name) return;
         if (result.status != AgentToolResult::Status::Ok) {
             ++m_failedSteps;
-            m_failureReason = QStringLiteral("第 %1 步（%2）失败：%3")
+            m_failureReason = QCoreApplication::translate("AgentWorkflow", "第 %1 步（%2）失败：%3")
                                   .arg(m_executedSteps + 1)
                                   .arg(step.tool, result.summary);
             m_stage = AgentWorkflowStage::Failed;
@@ -230,27 +231,27 @@ bool AgentWorkflow::canFinish(QString *problem) const {
         return false;
     };
     if (m_stage == AgentWorkflowStage::Failed) {
-        return fail(m_failureReason.isEmpty() ? QStringLiteral("工作流已经失败。") : m_failureReason);
+        return fail(m_failureReason.isEmpty() ? QCoreApplication::translate("AgentWorkflow", "工作流已失败。") : m_failureReason);
     }
     if (!active()) return true;  // 自由对话没有完成闸
     if (m_skill.requiresPlan) {
-        if (!m_planApproved) return fail(QStringLiteral("修复计划还没有通过审批。"));
+        if (!m_planApproved) return fail(QCoreApplication::translate("AgentWorkflow", "修复计划尚未通过审批。"));
         if (m_executedSteps < m_steps.size()) {
-            return fail(QStringLiteral("计划还有 %1 步没执行。").arg(m_steps.size() - m_executedSteps));
+            return fail(QCoreApplication::translate("AgentWorkflow", "计划仍有 %1 步未执行。").arg(m_steps.size() - m_executedSteps));
         }
-        if (!m_verified) return fail(QStringLiteral("没有执行验证步，不能报完成。"));
+        if (!m_verified) return fail(QCoreApplication::translate("AgentWorkflow", "未执行验证步，不能标记完成。"));
     }
     for (const QString &tool : m_skill.requiredTools) {
         if (!m_touchedTools.contains(tool)) {
-            return fail(QStringLiteral("缺少必需的工具调用：%1。").arg(tool));
+            return fail(QCoreApplication::translate("AgentWorkflow", "缺少必需的工具调用：%1。").arg(tool));
         }
     }
-    if (m_evidenceIds.isEmpty()) return fail(QStringLiteral("没有任何证据 id，不能报完成。"));
+    if (m_evidenceIds.isEmpty()) return fail(QCoreApplication::translate("AgentWorkflow", "缺少证据 id，不能标记完成。"));
     if (!m_instanceId.isEmpty()) {
         AgentRepairTransactionStore transactions;
         AgentRepairTransactionRecord active;
         if (transactions.activeForInstance(m_instanceId, &active, nullptr)) {
-            return fail(QStringLiteral("还有未收尾的修复事务（%1）；先用 repair.finish 提交或回滚。")  // i18n-ignore
+            return fail(QCoreApplication::translate("AgentWorkflow", "仍有未收尾的修复事务（%1）；需先通过 repair.finish 提交或回滚。")
                             .arg(active.id));
         }
     }
@@ -281,12 +282,12 @@ QJsonObject AgentWorkflow::statusJson() const {
 
 QString AgentWorkflow::statusLine() const {
     if (!active()) return QString();
-    QString line = QStringLiteral("模式：%1 · 阶段：%2").arg(m_skill.name, stageName());
+    QString line = QCoreApplication::translate("AgentWorkflow", "模式：%1 · 阶段：%2").arg(m_skill.name, stageName());
     if (!m_steps.isEmpty()) {
-        line += QStringLiteral(" · 计划 %1/%2 步").arg(m_executedSteps).arg(m_steps.size());
+        line += QCoreApplication::translate("AgentWorkflow", " · 计划 %1/%2 步").arg(m_executedSteps).arg(m_steps.size());
     }
     if (!m_evidenceIds.isEmpty()) {
-        line += QStringLiteral(" · 证据 %1 条").arg(m_evidenceIds.size());
+        line += QCoreApplication::translate("AgentWorkflow", " · 证据 %1 条").arg(m_evidenceIds.size());
     }
     return line;
 }

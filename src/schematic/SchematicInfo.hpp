@@ -123,10 +123,18 @@ QString compatibilityText(const Info &info, const QString &targetGameVersion);
 QString summaryText(const Info &info, const QString &targetGameVersion);
 
 /// 悬停提示里的方块排行（"最多的是哪几种"）。空串 = 没有统计。
-/// @p language 是 `loadChineseBlockNames()` 的结果；查不到中文名的方块显示 ID。
+/// @p language 是 `loadBlockNames()` 的结果；查不到当前语言名称的方块显示 ID。
 QString topBlocksText(const Info &info, const QJsonObject &language = {});
 
-/// 从现有游戏资源查中文语言文件；没有本地资源时返回空表，不下载。
+/// 从现有游戏资源查当前界面语言的语言文件；没有本地资源时返回空表，不下载。
+/// @p language 是资源里的语言代号（`zh_cn` / `en_us`），只接受小写字母、数字和下划线。
+QJsonObject loadBlockNames(const QString &assetsRoot, const QString &indexId,
+                           const QString &language);
+
+/// 解析一份语言 JSON（来自资源索引或版本 jar 的 `assets/minecraft/lang/*.json`）。
+QJsonObject blockNamesFromJson(const QByteArray &json);
+
+/// `loadBlockNames(..., "zh_cn")` 的旧入口。
 QJsonObject loadChineseBlockNames(const QString &assetsRoot, const QString &indexId);
 QString chineseBlockName(const QJsonObject &language, const QString &blockId);
 

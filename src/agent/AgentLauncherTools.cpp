@@ -93,7 +93,7 @@ void addEvidence(QList<AgentDiagnosticProjection::Evidence> *evidence, const QSt
 QJsonObject writeEgress(const QString &kindKey) {
     return QJsonObject{{QStringLiteral("kind"), kindKey},
                        {QStringLiteral("decision"), QStringLiteral("auto")},
-                       {QStringLiteral("reason"), QStringLiteral("写操作审批，不发送文件内容")},
+                       {QStringLiteral("reason"), QCoreApplication::translate("AgentLauncherTools", "写操作审批，不发送文件内容。")},
                        {QStringLiteral("redactionHits"), 0}};
 }
 
@@ -444,7 +444,7 @@ AgentToolResult AgentLauncherTools::deliverRead(const AgentToolContext &context,
     pending.summary = summary;
     pending.preview = preview;
     return approvalRequired(pending, displayName, summary, preview, QString(),
-                            QStringLiteral("不提供会话级放行；每次都要重新确认。"), egressObject);
+                            QCoreApplication::translate("AgentLauncherTools", "不提供本会话放行，每次均需重新确认。"), egressObject);
 }
 
 AgentToolResult AgentLauncherTools::approvalRequired(const Pending &pending,
@@ -477,7 +477,7 @@ AgentToolResult AgentLauncherTools::invoke(const Agent::ToolCall &call) {
     const QString internal = AgentToolRegistry::internalName(call.name);
     const AgentToolSpec toolSpec = AgentToolRegistry::find(internal);
     if (!isLauncherTool(internal)) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("未知工具。"));
+        return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentLauncherTools", "未知工具。"));
     }
     QString problem;
     if (!AgentToolRegistry::validateArguments(toolSpec.schema, call.arguments, &problem)) {
@@ -485,7 +485,7 @@ AgentToolResult AgentLauncherTools::invoke(const Agent::ToolCall &call) {
     }
     if (m_host == nullptr) {
         return errorResult(Agent::ErrorKind::ToolError,
-                           QStringLiteral("启动器工具宿主未接入。"));
+                           QCoreApplication::translate("AgentLauncherTools", "启动器工具宿主未接入。"));
     }
     QString contextProblem;
     const AgentToolContext context =
@@ -522,7 +522,7 @@ AgentToolResult AgentLauncherTools::invoke(const Agent::ToolCall &call) {
     if (internal == QStringLiteral("upgrade.inspect")) return handleUpgradeInspect(routed, context);
     if (internal == QStringLiteral("launcher.openPage")) return handleOpenPage(routed, context);
     return errorResult(Agent::ErrorKind::ToolError,
-                       QStringLiteral("工具未实现。"));
+                       QCoreApplication::translate("AgentLauncherTools", "工具未实现。"));
 }
 
 AgentToolResult AgentLauncherTools::handleInstanceList(const Agent::ToolCall &call,
@@ -535,8 +535,8 @@ AgentToolResult AgentLauncherTools::handleInstanceList(const Agent::ToolCall &ca
     if (!wantsFull(call)) {
         QJsonObject data{{QStringLiteral("count"), int(items.size())}};
         return deliverRead(context, call, AgentEgressPolicy::Kind::InstanceListSummary, QString(),
-                           QString(), QStringLiteral("实例总数"),
-                           QStringLiteral("当前游戏文件夹共有 %1 个实例。").arg(items.size()),
+                           QString(), QCoreApplication::translate("AgentLauncherTools", "实例总数"),
+                           QCoreApplication::translate("AgentLauncherTools", "当前游戏目录共有 %1 个实例。").arg(items.size()),
                            QString(), data);
     }
     QJsonArray array;
@@ -546,27 +546,30 @@ AgentToolResult AgentLauncherTools::handleInstanceList(const Agent::ToolCall &ca
     QList<AgentDiagnosticProjection::Evidence> evidence;
     QString preview;
     for (const AgentDiagnosticProjection::InstanceFacts &facts : items) {
-        preview += QStringLiteral("%1（%2 · %3）\n")
+        preview += QCoreApplication::translate("AgentLauncherTools", "%1（%2 · %3）")
                        .arg(facts.instanceName, facts.gameVersion,
-                            facts.loaderName.isEmpty() ? QStringLiteral("原版") : facts.loaderName);
+                            facts.loaderName.isEmpty()
+                                ? QCoreApplication::translate("AgentLauncherTools", "原版")
+                                : facts.loaderName) +
+                   QLatin1Char('\n');
     }
     addEvidence(&evidence, QStringLiteral("tool"), QStringLiteral("instance.list"),
-                QStringLiteral("实例清单 %1 项").arg(items.size()));
+                QStringLiteral("%1 instance(s)").arg(items.size()));
     const QJsonObject data{{QStringLiteral("count"), int(items.size())},
                            {QStringLiteral("instances"), array},
                            {QStringLiteral("evidence"), evidenceJson(evidence)}};
     const QString content = QString::fromUtf8(
         QJsonDocument(array).toJson(QJsonDocument::Compact));
     return deliverRead(context, call, AgentEgressPolicy::Kind::InstanceListFull, QString(), content,
-                       QStringLiteral("完整实例清单"),
-                       QStringLiteral("完整清单：%1 项").arg(items.size()), preview, data);
+                       QCoreApplication::translate("AgentLauncherTools", "完整实例清单"),
+                       QCoreApplication::translate("AgentLauncherTools", "完整清单：%1 项").arg(items.size()), preview, data);
 }
 
 AgentToolResult AgentLauncherTools::handleInstanceContext(const Agent::ToolCall &call,
                                                           const AgentToolContext &context) {
     if (context.instanceId.isEmpty()) {
         AgentToolResult result =
-            errorResult(Agent::ErrorKind::ToolError, QStringLiteral("会话还没有锁定实例。"));
+            errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentLauncherTools", "会话尚未锁定实例。"));
         result.data = QJsonObject{{QStringLiteral("needsInstanceLock"), true}};
         return result;
     }
@@ -578,23 +581,23 @@ AgentToolResult AgentLauncherTools::handleInstanceContext(const Agent::ToolCall 
     facts.instanceId = context.instanceId;
     QList<AgentDiagnosticProjection::Evidence> evidence;
     addEvidence(&evidence, QStringLiteral("tool"), QStringLiteral("instance.context"),
-                QStringLiteral("实例 %1").arg(facts.instanceName));
+                QStringLiteral("Instance %1").arg(facts.instanceName));
     QJsonObject data = facts.toJson();
     data.insert(QStringLiteral("evidence"), evidenceJson(evidence));
-    const QString summary = QStringLiteral("%1（%2 · %3），Xmx %4 MB")
+    const QString summary = QCoreApplication::translate("AgentLauncherTools", "%1（%2 · %3），Xmx %4 MB")
                                 .arg(facts.instanceName, facts.gameVersion,
-                                     facts.loaderName.isEmpty() ? QStringLiteral("原版")
+                                     facts.loaderName.isEmpty() ? QCoreApplication::translate("AgentLauncherTools", "原版")
                                                                 : facts.loaderName)
                                 .arg(facts.xmxMb);
     return deliverRead(context, call, AgentEgressPolicy::Kind::InstanceMetadata, QString(),
                        QString::fromUtf8(QJsonDocument(data).toJson(QJsonDocument::Compact)),
-                       QStringLiteral("锁定实例"), summary, summary, data);
+                       QCoreApplication::translate("AgentLauncherTools", "锁定实例"), summary, summary, data);
 }
 
 AgentToolResult AgentLauncherTools::handleStartupDiagnosis(const Agent::ToolCall &call,
                                                            const AgentToolContext &context) {
     if (context.instanceId.isEmpty()) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("会话还没有锁定实例。"));
+        return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentLauncherTools", "会话尚未锁定实例。"));
     }
     StartupDiagnosis::Report report;
     QString problem;
@@ -612,22 +615,22 @@ AgentToolResult AgentLauncherTools::handleStartupDiagnosis(const Agent::ToolCall
     if (!AgentDiagnosticProjection::hasContent(data) && evidence.isEmpty()) {
         // 空结果不许当成功（§9.4.1）：告诉模型“这次没拿到东西”。
         return errorResult(Agent::ErrorKind::ToolError,
-                           QStringLiteral("诊断没有拿到任何可用结论，请让用户打开实例设置自行排查。"));
+                           QCoreApplication::translate("AgentLauncherTools", "诊断未得出可用结论，建议打开实例设置自行排查。"));
     }
     data.insert(QStringLiteral("evidence"), evidenceJson(evidence));
-    const QString summary = QStringLiteral("启动诊断：%1 个问题、%2 条提醒")
+    const QString summary = QCoreApplication::translate("AgentLauncherTools", "启动诊断：%1 个问题、%2 条提醒")
                                 .arg(report.problems)
                                 .arg(report.warnings);
     const QString preview = report.toText();
     return deliverRead(context, call, AgentEgressPolicy::Kind::InstanceMetadata, QString(),
                        QString::fromUtf8(QJsonDocument(data).toJson(QJsonDocument::Compact)),
-                       QStringLiteral("启动诊断"), summary, summary, data);
+                       QCoreApplication::translate("AgentLauncherTools", "启动诊断"), summary, summary, data);
 }
 
 AgentToolResult AgentLauncherTools::handleCrashDiagnosis(const Agent::ToolCall &call,
                                                          const AgentToolContext &context) {
     if (context.instanceId.isEmpty()) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("会话还没有锁定实例。"));
+        return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentLauncherTools", "会话尚未锁定实例。"));
     }
     GameExitDiagnosis::Facts facts;
     QStringList hints;
@@ -644,20 +647,20 @@ AgentToolResult AgentLauncherTools::handleCrashDiagnosis(const Agent::ToolCall &
     QJsonObject data = AgentDiagnosticProjection::crash(facts, hints, instance, &evidence);
     if (!GameExitDiagnosis::isAbnormal(facts) && hints.isEmpty()) {
         return errorResult(Agent::ErrorKind::ToolError,
-                           QStringLiteral("最近一次启动是正常退出，没有可诊断的异常。"));
+                           QCoreApplication::translate("AgentLauncherTools", "最近一次启动正常退出，没有可诊断的异常。"));
     }
     data.insert(QStringLiteral("evidence"), evidenceJson(evidence));
     const QString summary = GameExitDiagnosis::summary(facts);
     QString preview = summary;
     for (const QString &hint : hints) preview += QLatin1Char('\n') + hint;
     return deliverRead(context, call, AgentEgressPolicy::Kind::CrashReport, QString(),
-                       preview, QStringLiteral("崩溃诊断"), summary, preview, data);
+                       preview, QCoreApplication::translate("AgentLauncherTools", "崩溃诊断"), summary, preview, data);
 }
 
 AgentToolResult AgentLauncherTools::handleLogsTail(const Agent::ToolCall &call,
                                                    const AgentToolContext &context) {
     if (context.instanceId.isEmpty()) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("会话还没有锁定实例。"));
+        return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentLauncherTools", "会话尚未锁定实例。"));
     }
     const int lines = call.arguments.value(QStringLiteral("lines")).toInt(kLogTailLinesDefault);
     const int bounded = qBound(1, lines, kLogTailLinesMax);
@@ -670,23 +673,23 @@ AgentToolResult AgentLauncherTools::handleLogsTail(const Agent::ToolCall &call,
     const AgentRedaction::Result redacted = AgentRedaction::redact(text);
     QList<AgentDiagnosticProjection::Evidence> evidence;
     addEvidence(&evidence, QStringLiteral("log"), source,
-                QStringLiteral("%1 末尾 %2 行").arg(source).arg(bounded),
+                QStringLiteral("Last %2 line(s) of %1").arg(source).arg(bounded),
                 contentDigest(redacted.text));
     const QJsonObject data{{QStringLiteral("source"), source},
                            {QStringLiteral("lines"), bounded},
                            {QStringLiteral("content"), redacted.text},
                            {QStringLiteral("redactionHits"), redacted.hits},
                            {QStringLiteral("evidence"), evidenceJson(evidence)}};
-    const QString summary = QStringLiteral("日志结尾：%1（%2 行）").arg(source).arg(bounded);
+    const QString summary = QCoreApplication::translate("AgentLauncherTools", "日志结尾：%1（%2 行）").arg(source).arg(bounded);
     return deliverRead(context, call, AgentEgressPolicy::Kind::Log, source, redacted.text,
-                       QStringLiteral("日志结尾"), summary,
+                       QCoreApplication::translate("AgentLauncherTools", "日志结尾"), summary,
                        AgentRedaction::preview(redacted.text, 4000), data);
 }
 
 AgentToolResult AgentLauncherTools::handleCrashList(const Agent::ToolCall &call,
                                                     const AgentToolContext &context) {
     if (context.instanceId.isEmpty()) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("会话还没有锁定实例。"));
+        return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentLauncherTools", "会话尚未锁定实例。"));
     }
     QList<AgentHostCrashReport> reports;
     QString problem;
@@ -705,22 +708,23 @@ AgentToolResult AgentLauncherTools::handleCrashList(const Agent::ToolCall &call,
         }
         QList<AgentDiagnosticProjection::Evidence> evidence;
         addEvidence(&evidence, QStringLiteral("file"), QStringLiteral("crash-reports"),
-                    QStringLiteral("崩溃报告 %1 份").arg(reports.size()));
+                    QStringLiteral("%1 crash report(s)").arg(reports.size()));
         const QJsonObject data{{QStringLiteral("count"), int(reports.size())},
                                {QStringLiteral("latest"), newest},
                                {QStringLiteral("evidence"), evidenceJson(evidence)}};
         return deliverRead(context, call, AgentEgressPolicy::Kind::CrashReport, QString(),
                            newest.value(QStringLiteral("head")).toString(),
-                           QStringLiteral("崩溃报告概况"),
-                           QStringLiteral("崩溃报告：%1 份").arg(reports.size()),
+                           QCoreApplication::translate("AgentLauncherTools", "崩溃报告概况"),
+                           QCoreApplication::translate("AgentLauncherTools", "崩溃报告：%1 份").arg(reports.size()),
                            QString(), data);
     }
     QString preview;
     for (const AgentHostCrashReport &report : reports) {
-        preview += QStringLiteral("%1 · %2 字节 · %3\n")
+        preview += QCoreApplication::translate("AgentLauncherTools", "%1 · %2 字节 · %3")
                        .arg(report.fileName)
                        .arg(report.bytes)
-                       .arg(report.modifiedAt.toString(QStringLiteral("yyyy-MM-dd HH:mm")));
+                       .arg(report.modifiedAt.toString(QStringLiteral("yyyy-MM-dd HH:mm"))) +
+                   QLatin1Char('\n');
     }
     QJsonArray names;
     for (const AgentHostCrashReport &report : reports) names.append(report.fileName);
@@ -728,8 +732,8 @@ AgentToolResult AgentLauncherTools::handleCrashList(const Agent::ToolCall &call,
                            {QStringLiteral("names"), names}};
     return deliverRead(context, call, AgentEgressPolicy::Kind::FileNameList,
                        QStringLiteral("crash-reports"), preview,
-                       QStringLiteral("崩溃报告清单"),
-                       QStringLiteral("崩溃报告清单：%1 份").arg(reports.size()), preview, data);
+                       QCoreApplication::translate("AgentLauncherTools", "崩溃报告清单"),
+                       QCoreApplication::translate("AgentLauncherTools", "崩溃报告清单：%1 份").arg(reports.size()), preview, data);
 }
 
 AgentToolResult AgentLauncherTools::handleLogsSearch(const Agent::ToolCall &call,
@@ -776,8 +780,7 @@ AgentToolResult AgentLauncherTools::handleLogsSearch(const Agent::ToolCall &call
     }
     QList<AgentDiagnosticProjection::Evidence> evidence;
     addEvidence(&evidence, QStringLiteral("log"), source->label,
-                QCoreApplication::translate("AgentLauncherTools", "搜索命中 %1 处")
-                    .arg(found.totalMatches),
+                QStringLiteral("%1 search match(es)").arg(found.totalMatches),
                 contentDigest(preview));
     const QJsonObject data{
         {QStringLiteral("source"), source->label},
@@ -840,7 +843,7 @@ AgentToolResult AgentLauncherTools::handleLogsReadRange(const Agent::ToolCall &c
     }
     QList<AgentDiagnosticProjection::Evidence> evidence;
     addEvidence(&evidence, QStringLiteral("log"), source->label,
-                QCoreApplication::translate("AgentLauncherTools", "第 %1–%2 行（共 %3 行）")
+                QStringLiteral("Lines %1-%2 (total %3)")
                     .arg(range.firstLine)
                     .arg(range.lastLine)
                     .arg(range.totalLines),
@@ -1066,7 +1069,7 @@ AgentToolResult AgentLauncherTools::handleCrashReadFull(const Agent::ToolCall &c
 AgentToolResult AgentLauncherTools::handleIntegrity(const Agent::ToolCall &call,
                                                     const AgentToolContext &context) {
     if (context.instanceId.isEmpty()) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("会话还没有锁定实例。"));
+        return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentLauncherTools", "会话尚未锁定实例。"));
     }
     VersionIntegrity::Report report;
     QString problem;
@@ -1084,13 +1087,13 @@ AgentToolResult AgentLauncherTools::handleIntegrity(const Agent::ToolCall &call,
     const QString summary = report.summary();
     return deliverRead(context, call, AgentEgressPolicy::Kind::InstanceMetadata, QString(),
                        QString::fromUtf8(QJsonDocument(data).toJson(QJsonDocument::Compact)),
-                       QStringLiteral("完整性体检"), summary, summary, data);
+                       QCoreApplication::translate("AgentLauncherTools", "完整性检查"), summary, summary, data);
 }
 
 AgentToolResult AgentLauncherTools::handleModsList(const Agent::ToolCall &call,
                                                    const AgentToolContext &context) {
     if (context.instanceId.isEmpty()) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("会话还没有锁定实例。"));
+        return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentLauncherTools", "会话尚未锁定实例。"));
     }
     QList<AgentHostModEntry> mods;
     QString problem;
@@ -1110,15 +1113,15 @@ AgentToolResult AgentLauncherTools::handleModsList(const Agent::ToolCall &call,
     if (!wantsFull(call)) {
         QList<AgentDiagnosticProjection::Evidence> evidence;
         addEvidence(&evidence, QStringLiteral("tool"), QStringLiteral("mods.list"),
-                    QStringLiteral("模组 %1 个（启用 %2、停用 %3）")
+                    QStringLiteral("%1 mod(s) (%2 enabled, %3 disabled)")
                         .arg(mods.size())
                         .arg(enabled)
                         .arg(disabled));
         QJsonObject data = modCounts(mods.size(), enabled, disabled, truncated);
         data.insert(QStringLiteral("evidence"), evidenceJson(evidence));
         return deliverRead(context, call, AgentEgressPolicy::Kind::DirectoryMetadata,
-                           QStringLiteral("mods"), QString(), QStringLiteral("模组概况"),
-                           QStringLiteral("模组 %1 个：启用 %2、停用 %3")
+                           QStringLiteral("mods"), QString(), QCoreApplication::translate("AgentLauncherTools", "模组概况"),
+                           QCoreApplication::translate("AgentLauncherTools", "模组 %1 个：已启用 %2 个，已禁用 %3 个")
                                .arg(mods.size())
                                .arg(enabled)
                                .arg(disabled),
@@ -1128,17 +1131,18 @@ AgentToolResult AgentLauncherTools::handleModsList(const Agent::ToolCall &call,
     int count = 0;
     for (const AgentHostModEntry &entry : mods) {
         if (count >= kModNameLimit) break;
-        preview += entry.fileName + (entry.enabled ? QString() : QStringLiteral("（已停用）"));
+        preview += entry.enabled ? entry.fileName
+                                 : QCoreApplication::translate("AgentLauncherTools", "%1（已禁用）").arg(entry.fileName);
         preview += QLatin1Char('\n');
         ++count;
     }
     QJsonObject data = modCounts(mods.size(), enabled, disabled, truncated);
     data.insert(QStringLiteral("names"), preview);
     return deliverRead(context, call, AgentEgressPolicy::Kind::FileNameList,
-                       QStringLiteral("mods"), preview, QStringLiteral("模组清单"),
-                       QStringLiteral("模组清单：%1 项%2")
-                           .arg(qMin(mods.size(), kModNameLimit))
-                           .arg(truncated ? QStringLiteral("（已截断）") : QString()),
+                       QStringLiteral("mods"), preview, QCoreApplication::translate("AgentLauncherTools", "模组清单"),
+                       (truncated ? QCoreApplication::translate("AgentLauncherTools", "模组清单：%1 项（已截断）")
+                                  : QCoreApplication::translate("AgentLauncherTools", "模组清单：%1 项"))
+                           .arg(qMin(mods.size(), kModNameLimit)),
                        preview, data);
 }
 
@@ -1156,7 +1160,7 @@ AgentToolResult AgentLauncherTools::handleSettingsGet(const Agent::ToolCall &cal
         if (it.key() == QStringLiteral("java.path")) continue;
         if (it.value().isString() &&
             AgentDiagnosticProjection::containsLocalPath(it.value().toString())) {
-            values.insert(it.key(), QStringLiteral("<本机路径已隐藏>"));
+            values.insert(it.key(), QStringLiteral("<local path hidden>"));
         } else {
             values.insert(it.key(), it.value());
         }
@@ -1165,14 +1169,15 @@ AgentToolResult AgentLauncherTools::handleSettingsGet(const Agent::ToolCall &cal
     }
     QList<AgentDiagnosticProjection::Evidence> evidence;
     addEvidence(&evidence, QStringLiteral("tool"), QStringLiteral("settings.get"),
-                QStringLiteral("启动器设置 %1 项").arg(values.size()));
+                QStringLiteral("%1 launcher setting(s)").arg(values.size()));
     const QJsonObject data{{QStringLiteral("values"), values},
                            {QStringLiteral("writableKeys"),
                             QJsonArray::fromStringList(settings.writableKeys)},
                            {QStringLiteral("evidence"), evidenceJson(evidence)}};
     return deliverRead(context, call, AgentEgressPolicy::Kind::InstanceMetadata, QString(),
                        QString::fromUtf8(QJsonDocument(values).toJson(QJsonDocument::Compact)),
-                       QStringLiteral("启动器设置"), QStringLiteral("启动器设置当前值"), preview,
+                       QCoreApplication::translate("AgentLauncherTools", "启动器设置"),
+                       QCoreApplication::translate("AgentLauncherTools", "启动器设置当前值"), preview,
                        data);
 }
 
@@ -1187,13 +1192,13 @@ AgentToolResult AgentLauncherTools::handleJavaList(const Agent::ToolCall &call,
     for (int major : majors) array.append(major);
     QList<AgentDiagnosticProjection::Evidence> evidence;
     addEvidence(&evidence, QStringLiteral("tool"), QStringLiteral("java.list"),
-                QStringLiteral("本机 Java 主版本 %1 个").arg(majors.size()));
+                QStringLiteral("%1 local Java major version(s)").arg(majors.size()));
     const QJsonObject data{{QStringLiteral("majors"), array},
                            {QStringLiteral("count"), int(majors.size())},
                            {QStringLiteral("evidence"), evidenceJson(evidence)}};
     return deliverRead(context, call, AgentEgressPolicy::Kind::InstanceMetadata, QString(), QString(),
-                       QStringLiteral("本机 Java"),
-                       QStringLiteral("本机 Java 主版本：%1 个").arg(majors.size()),
+                       QCoreApplication::translate("AgentLauncherTools", "本机 Java"),
+                       QCoreApplication::translate("AgentLauncherTools", "本机 Java 主版本：%1 个").arg(majors.size()),
                        QString(), data);
 }
 
@@ -1212,7 +1217,7 @@ AgentToolResult AgentLauncherTools::handleMemorySuggest(const Agent::ToolCall &c
     const int xms = GlobalJavaSettings::suggestXmsMb(xmx);
     QList<AgentDiagnosticProjection::Evidence> evidence;
     addEvidence(&evidence, QStringLiteral("tool"), QStringLiteral("memory.suggest"),
-                QStringLiteral("系统内存 %1 MB、可用 %2 MB，模组 %3 个")
+                QStringLiteral("System memory %1 MB total, %2 MB available, %3 mod(s)")
                     .arg(usage.totalMb)
                     .arg(usage.availableMb)
                     .arg(modCount));
@@ -1223,8 +1228,8 @@ AgentToolResult AgentLauncherTools::handleMemorySuggest(const Agent::ToolCall &c
                            {QStringLiteral("modCount"), modCount},
                            {QStringLiteral("evidence"), evidenceJson(evidence)}};
     return deliverRead(context, call, AgentEgressPolicy::Kind::InstanceMetadata, QString(), QString(),
-                       QStringLiteral("内存建议"),
-                       QStringLiteral("建议 Xmx %1 MB、Xms %2 MB").arg(xmx).arg(xms), QString(),
+                       QCoreApplication::translate("AgentLauncherTools", "内存建议"),
+                       QCoreApplication::translate("AgentLauncherTools", "建议 Xmx %1 MB、Xms %2 MB").arg(xmx).arg(xms), QString(),
                        data);
 }
 
@@ -1252,19 +1257,19 @@ AgentToolResult AgentLauncherTools::handleBackupList(const Agent::ToolCall &call
     }
     QList<AgentDiagnosticProjection::Evidence> evidence;
     addEvidence(&evidence, QStringLiteral("tool"), QStringLiteral("backup.list"),
-                QStringLiteral("备份 %1 份").arg(backups.size()));
+                QStringLiteral("%1 backup(s)").arg(backups.size()));
     const QJsonObject data{{QStringLiteral("count"), int(backups.size())},
                            {QStringLiteral("backups"), array},
                            {QStringLiteral("evidence"), evidenceJson(evidence)}};
     return deliverRead(context, call, AgentEgressPolicy::Kind::InstanceMetadata, QString(), QString(),
-                       QStringLiteral("备份列表"),
-                       QStringLiteral("维护备份：%1 份").arg(backups.size()), preview, data);
+                       QCoreApplication::translate("AgentLauncherTools", "备份列表"),
+                       QCoreApplication::translate("AgentLauncherTools", "维护备份：%1 份").arg(backups.size()), preview, data);
 }
 
 AgentToolResult AgentLauncherTools::handleUpgradeInspect(const Agent::ToolCall &call,
                                                          const AgentToolContext &context) {
     if (context.instanceId.isEmpty()) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("会话还没有锁定实例。"));
+        return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentLauncherTools", "会话尚未锁定实例。"));
     }
     QJsonObject data;
     QString problem;
@@ -1273,14 +1278,14 @@ AgentToolResult AgentLauncherTools::handleUpgradeInspect(const Agent::ToolCall &
     }
     QList<AgentDiagnosticProjection::Evidence> evidence;
     addEvidence(&evidence, QStringLiteral("tool"), QStringLiteral("upgrade.inspect"),
-                QStringLiteral("升级目标 %1 个")
+                QStringLiteral("%1 upgrade candidate target(s)")
                     .arg(data.value(QStringLiteral("targets")).toArray().size()));
     data.insert(QStringLiteral("evidence"), evidenceJson(evidence));
-    const QString summary = QStringLiteral("升级检查：%1 个候选目标")
+    const QString summary = QCoreApplication::translate("AgentLauncherTools", "升级检查：%1 个候选目标")
                                 .arg(data.value(QStringLiteral("targets")).toArray().size());
     return deliverRead(context, call, AgentEgressPolicy::Kind::InstanceMetadata, QString(),
                        QString::fromUtf8(QJsonDocument(data).toJson(QJsonDocument::Compact)),
-                       QStringLiteral("升级检查"), summary, summary, data);
+                       QCoreApplication::translate("AgentLauncherTools", "升级检查"), summary, summary, data);
 }
 
 AgentToolResult AgentLauncherTools::handleOpenPage(const Agent::ToolCall &call,
@@ -1291,7 +1296,7 @@ AgentToolResult AgentLauncherTools::handleOpenPage(const Agent::ToolCall &call,
         return errorResult(Agent::ErrorKind::ToolError, problem);
     }
     return autoResult(QJsonObject{{QStringLiteral("page"), page}},
-                      QStringLiteral("已打开：%1").arg(page), QJsonObject(), false);
+                      QCoreApplication::translate("AgentLauncherTools", "已打开：%1").arg(page), QJsonObject(), false);
 }
 
 // ---------------------------------------------------------------- 写工具
@@ -1301,7 +1306,7 @@ AgentToolResult AgentLauncherTools::handleSettingsSet(const Agent::ToolCall &cal
     const QString key = call.arguments.value(QStringLiteral("key")).toString();
     const QString raw = call.arguments.value(QStringLiteral("value")).toString();
     if (!settingsKeys().contains(key)) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("这个设置键不在白名单里。"));
+        return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentLauncherTools", "该设置键不在白名单中。"));
     }
     AgentHostSettings settings;
     QString problem;
@@ -1318,7 +1323,7 @@ AgentToolResult AgentLauncherTools::handleSettingsSet(const Agent::ToolCall &cal
         const QString lowered = raw.trimmed().toLower();
         if (lowered != QStringLiteral("true") && lowered != QStringLiteral("false")) {
             return errorResult(Agent::ErrorKind::ToolError,
-                               QStringLiteral("这个键只接受 true/false。"));
+                               QCoreApplication::translate("AgentLauncherTools", "该设置键只接受 true 或 false。"));
         }
         parsed = lowered == QStringLiteral("true");
     } else if (key == QStringLiteral("memory.xmx") || key == QStringLiteral("memory.xms")) {
@@ -1326,7 +1331,7 @@ AgentToolResult AgentLauncherTools::handleSettingsSet(const Agent::ToolCall &cal
         const int number = raw.toInt(&ok);
         if (!ok || number < (key == QStringLiteral("memory.xmx") ? 512 : 256) || number > 65536) {
             return errorResult(Agent::ErrorKind::ToolError,
-                               QStringLiteral("内存取值不合理（Xmx 512–65536 MB，Xms 256–65536 MB）。"));
+                               QCoreApplication::translate("AgentLauncherTools", "内存取值超出范围（Xmx 512–65536 MB，Xms 256–65536 MB）。"));
         }
         parsed = number;
     }
@@ -1338,7 +1343,7 @@ AgentToolResult AgentLauncherTools::handleSettingsSet(const Agent::ToolCall &cal
         if (!transactions.loadByWorkspace(workspaceId, &record, &problem) ||
             record.instanceId != context.instanceId) {
             return errorResult(Agent::ErrorKind::ToolError,
-                               problem.isEmpty() ? QStringLiteral("工作区没有对应事务。") : problem);  // i18n-ignore
+                               problem.isEmpty() ? QCoreApplication::translate("AgentLauncherTools", "该工作区没有对应的修复事务。") : problem);
         }
         transactionId = record.id;
     } else {
@@ -1346,7 +1351,7 @@ AgentToolResult AgentLauncherTools::handleSettingsSet(const Agent::ToolCall &cal
         AgentRepairTransactionRecord active;
         if (transactions.activeForInstance(context.instanceId, &active, &problem)) {
             return errorResult(Agent::ErrorKind::ToolError,
-                               QStringLiteral("事务活动期间不能直接改启动器设置；请带 workspaceId。"));  // i18n-ignore
+                               QCoreApplication::translate("AgentLauncherTools", "修复事务进行中，不能直接修改启动器设置。请带 workspaceId 调用。"));
         }
     }
     Pending pending;
@@ -1359,16 +1364,16 @@ AgentToolResult AgentLauncherTools::handleSettingsSet(const Agent::ToolCall &cal
     pending.workspaceId = workspaceId;
     pending.transactionId = transactionId;
     pending.egress = writeEgress(QStringLiteral("instance-metadata"));
-    const QString summary = QStringLiteral("修改设置 %1：%2 → %3")
+    const QString summary = QCoreApplication::translate("AgentLauncherTools", "修改设置 %1：%2 → %3")
                                 .arg(key, oldValue.toVariant().toString(), raw);
-    return approvalRequired(pending, QStringLiteral("修改启动器设置"), summary, summary, QString(),
-                            QStringLiteral("只改白名单键；失败不会推进“已保存”基线。"), pending.egress);
+    return approvalRequired(pending, QCoreApplication::translate("AgentLauncherTools", "修改启动器设置"), summary, summary, QString(),
+                            QCoreApplication::translate("AgentLauncherTools", "只修改白名单中的设置键；写入失败不会覆盖已保存的设置。"), pending.egress);
 }
 
 AgentToolResult AgentLauncherTools::handleModsSetEnabled(const Agent::ToolCall &call,
                                                          const AgentToolContext &context) {
     if (context.instanceId.isEmpty()) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("会话还没有锁定实例。"));
+        return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentLauncherTools", "会话尚未锁定实例。"));
     }
     const QString fileName = call.arguments.value(QStringLiteral("fileName")).toString();
     const bool enable = call.arguments.value(QStringLiteral("enabled")).toBool();
@@ -1379,7 +1384,7 @@ AgentToolResult AgentLauncherTools::handleModsSetEnabled(const Agent::ToolCall &
     if (!fileName.endsWith(QStringLiteral(".jar")) &&
         !fileName.endsWith(QStringLiteral(".jar.disabled"))) {
         return errorResult(Agent::ErrorKind::ToolError,
-                           QStringLiteral("只处理 .jar / .jar.disabled 文件。"));
+                           QCoreApplication::translate("AgentLauncherTools", "只能处理 .jar 和 .jar.disabled 文件。"));
     }
     const QString workspaceId = call.arguments.value(QStringLiteral("workspaceId")).toString();
     if (!workspaceId.isEmpty()) {
@@ -1388,24 +1393,24 @@ AgentToolResult AgentLauncherTools::handleModsSetEnabled(const Agent::ToolCall &
         if (!workspaces.load(workspaceId, &workspace, &problem) ||
             workspace.sourceInstanceId != context.instanceId) {
             return errorResult(Agent::ErrorKind::ToolError,
-                               problem.isEmpty() ? QStringLiteral("工作区与当前实例不匹配。") : problem);  // i18n-ignore
+                               problem.isEmpty() ? QCoreApplication::translate("AgentLauncherTools", "工作区与当前实例不匹配。") : problem);
         }
         const QString path = workspace.rootPath + QStringLiteral("/versions/") +
                              workspace.versionId + QStringLiteral("/mods/") + fileName;
         if (!QFileInfo(path).isFile()) {
-            return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("工作区 mods 里没有这个文件。"));  // i18n-ignore
+            return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentLauncherTools", "工作区的 mods 目录中没有该文件。"));
         }
         if (fileName.endsWith(QStringLiteral(".jar")) == enable) {
             return errorResult(Agent::ErrorKind::ToolError,
-                               enable ? QStringLiteral("这个模组已经是启用状态。")  // i18n-ignore
-                                      : QStringLiteral("这个模组已经是停用状态。"));  // i18n-ignore
+                               enable ? QCoreApplication::translate("AgentLauncherTools", "该模组已启用。")
+                                      : QCoreApplication::translate("AgentLauncherTools", "该模组已禁用。"));
         }
     } else {
         AgentRepairTransactionStore transactions;
         AgentRepairTransactionRecord active;
         if (transactions.activeForInstance(context.instanceId, &active, &problem)) {
             return errorResult(Agent::ErrorKind::ToolError,
-                               QStringLiteral("事务活动期间不能直接改原实例；请带 workspaceId。"));  // i18n-ignore
+                               QCoreApplication::translate("AgentLauncherTools", "修复事务进行中，不能直接修改原实例。请带 workspaceId 调用。"));
         }
         QList<AgentHostModEntry> mods;
         if (!m_host->mods(context.instanceId, &mods, &problem)) {
@@ -1417,13 +1422,13 @@ AgentToolResult AgentLauncherTools::handleModsSetEnabled(const Agent::ToolCall &
                 found = true;
                 if (entry.enabled == enable) {
                     return errorResult(Agent::ErrorKind::ToolError,
-                                       enable ? QStringLiteral("这个模组已经是启用状态。")  // i18n-ignore
-                                              : QStringLiteral("这个模组已经是停用状态。"));  // i18n-ignore
+                                       enable ? QCoreApplication::translate("AgentLauncherTools", "该模组已启用。")
+                                              : QCoreApplication::translate("AgentLauncherTools", "该模组已禁用。"));
                 }
             }
         }
         if (!found) {
-            return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("mods 里没有这个文件。"));  // i18n-ignore
+            return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentLauncherTools", "mods 目录中没有该文件。"));
         }
     }
     Pending pending;
@@ -1434,18 +1439,18 @@ AgentToolResult AgentLauncherTools::handleModsSetEnabled(const Agent::ToolCall &
     pending.enable = enable;
     pending.workspaceId = workspaceId;
     pending.egress = writeEgress(QStringLiteral("file-name-list"));
-    const QString summary = QStringLiteral("%1 模组：%2")
-                                .arg(enable ? QStringLiteral("启用") : QStringLiteral("停用"),
-                                     fileName);
-    return approvalRequired(pending, QStringLiteral("启停模组"), summary, summary, QString(),
-                            QStringLiteral("只改扩展名（.jar ↔ .jar.disabled），可原路改回。"),
+    const QString summary = (enable ? QCoreApplication::translate("AgentLauncherTools", "启用模组：%1")
+                                 : QCoreApplication::translate("AgentLauncherTools", "禁用模组：%1"))
+                                .arg(fileName);
+    return approvalRequired(pending, QCoreApplication::translate("AgentLauncherTools", "启停模组"), summary, summary, QString(),
+                            QCoreApplication::translate("AgentLauncherTools", "只修改扩展名（.jar ↔ .jar.disabled），可随时改回。"),
                             pending.egress);
 }
 
 AgentToolResult AgentLauncherTools::handleBackupCreate(const Agent::ToolCall &call,
                                                        const AgentToolContext &context) {
     if (context.instanceId.isEmpty()) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("会话还没有锁定实例。"));
+        return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentLauncherTools", "会话尚未锁定实例。"));
     }
     QStringList scopes;
     for (const QJsonValue &value : call.arguments.value(QStringLiteral("scopes")).toArray()) {
@@ -1464,7 +1469,7 @@ AgentToolResult AgentLauncherTools::handleBackupCreate(const Agent::ToolCall &ca
     }
     if (plan.relativePaths.isEmpty()) {
         return errorResult(Agent::ErrorKind::ToolError,
-                           QStringLiteral("所选范围里没有可备份的文件。"));
+                           QCoreApplication::translate("AgentLauncherTools", "所选范围内没有可备份的文件。"));
     }
     Pending pending;
     pending.kind = Pending::Kind::BackupCreate;
@@ -1473,18 +1478,17 @@ AgentToolResult AgentLauncherTools::handleBackupCreate(const Agent::ToolCall &ca
     pending.plan = plan;
     pending.reason = reason;
     pending.egress = writeEgress(QStringLiteral("instance-metadata"));
-    QString preview = QStringLiteral("范围：%1\n文件：%2 个\n大小：%3 字节\n保存：%4\n")
+    QString preview = QCoreApplication::translate("AgentLauncherTools", "范围：%1\n文件：%2 个\n大小：%3 字节\n保存位置：%4\n")
                           .arg(plan.scope)
                           .arg(plan.relativePaths.size())
                           .arg(plan.bytes)
                           .arg(plan.saveLocation);
     for (const QString &path : plan.relativePaths) preview += QStringLiteral("  %1\n").arg(path);
-    const QString summary = QStringLiteral("创建备份：%1（%2 个文件）")
+    const QString summary = QCoreApplication::translate("AgentLauncherTools", "创建备份：%1（%2 个文件）")
                                 .arg(plan.scope)
                                 .arg(plan.relativePaths.size());
-    return approvalRequired(pending, QStringLiteral("创建维护备份"), summary, preview, QString(),
-                            QStringLiteral("owner=agent，写入 repairs 的 maintenance 目录；"
-                                           "删除会话不会删掉它。"),
+    return approvalRequired(pending, QCoreApplication::translate("AgentLauncherTools", "创建维护备份"), summary, preview, QString(),
+                            QCoreApplication::translate("AgentLauncherTools", "备份保存在维护备份目录，删除会话不会删除它。"),
                             pending.egress);
 }
 
@@ -1496,7 +1500,7 @@ AgentToolResult AgentLauncherTools::handleBackupRestore(const Agent::ToolCall &c
         QString problem;
         if (transactions.activeForInstance(context.instanceId, &active, &problem)) {
             return errorResult(Agent::ErrorKind::ToolError,
-                               QStringLiteral("事务活动期间不能直接恢复备份；请先提交或回滚事务。"));  // i18n-ignore
+                               QCoreApplication::translate("AgentLauncherTools", "修复事务进行中，不能直接恢复备份。请先提交或回滚事务。"));
         }
     }
     const QString backupId = call.arguments.value(QStringLiteral("backupId")).toString();
@@ -1513,16 +1517,16 @@ AgentToolResult AgentLauncherTools::handleBackupRestore(const Agent::ToolCall &c
             target = backup;
         }
     }
-    if (!found) return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("找不到这份备份。"));
+    if (!found) return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentLauncherTools", "找不到该备份。"));
     Pending pending;
     pending.kind = Pending::Kind::BackupRestore;
     pending.call = call;
     pending.context = context;
     pending.backup = target;
     pending.egress = writeEgress(QStringLiteral("instance-metadata"));
-    const QString summary = QStringLiteral("恢复备份：%1（%2）").arg(target.label, target.backupId);
-    return approvalRequired(pending, QStringLiteral("恢复备份"), summary, summary, QString(),
-                            QStringLiteral("恢复前会先做一份快照；来源会话已删除也能恢复。"),
+    const QString summary = QCoreApplication::translate("AgentLauncherTools", "恢复备份：%1（%2）").arg(target.label, target.backupId);
+    return approvalRequired(pending, QCoreApplication::translate("AgentLauncherTools", "恢复备份"), summary, summary, QString(),
+                            QCoreApplication::translate("AgentLauncherTools", "恢复前会先创建快照；来源会话已删除时也能恢复。"),
                             pending.egress);
 }
 
@@ -1530,12 +1534,12 @@ AgentToolResult AgentLauncherTools::handleBackupRestore(const Agent::ToolCall &c
 
 AgentToolResult AgentLauncherTools::resolveApproval(const QString &approvalId, bool approved) {
     if (!m_pending.contains(approvalId)) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("审批请求已失效。"));
+        return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentLauncherTools", "审批请求已失效。"));
     }
     const Pending pending = m_pending.take(approvalId);
     if (!approved) {
         AgentToolResult result = errorResult(
-            Agent::ErrorKind::ApprovalDenied, QStringLiteral("用户拒绝了本次操作；未改动任何内容。"));
+            Agent::ErrorKind::ApprovalDenied, QCoreApplication::translate("AgentLauncherTools", "用户已拒绝本次操作，未修改任何内容。"));
         result.data = QJsonObject{{QStringLiteral("denied"), true}};
         return result;
     }
@@ -1561,7 +1565,7 @@ AgentToolResult AgentLauncherTools::resolveApproval(const QString &approvalId, b
                          {QStringLiteral("applied"), applied},
                          {QStringLiteral("egress"), pending.egress}};
         const QString summary =
-            QStringLiteral("已写入设置 %1（旧值 %2）。")
+            QCoreApplication::translate("AgentLauncherTools", "已写入设置 %1（旧值 %2）。")
                 .arg(pending.key, pending.oldValue.toVariant().toString());
         AgentToolResult result;
         result.status = AgentToolResult::Status::Ok;
@@ -1591,7 +1595,7 @@ AgentToolResult AgentLauncherTools::resolveApproval(const QString &approvalId, b
             const QString to = mods + QLatin1Char('/') + toName;
             if (QFileInfo::exists(to) || !QFile::rename(from, to)) {
                 return errorResult(Agent::ErrorKind::ToolError,
-                                   QStringLiteral("工作区模组改名失败。"));  // i18n-ignore
+                                   QCoreApplication::translate("AgentLauncherTools", "工作区中的模组重命名失败。"));
             }
         } else if (!m_host->setModEnabled(pending.context.instanceId, pending.fileName,
                                           pending.enable, &previous, &problem)) {
@@ -1599,10 +1603,10 @@ AgentToolResult AgentLauncherTools::resolveApproval(const QString &approvalId, b
         }
         AgentToolResult result;
         result.status = AgentToolResult::Status::Ok;
-        result.summary = QStringLiteral("%1：%2（原文件名 %3）")
-                             .arg(pending.enable ? QStringLiteral("已启用")
-                                                 : QStringLiteral("已停用"),
-                                  pending.fileName, previous);
+        result.summary = (pending.enable
+                              ? QCoreApplication::translate("AgentLauncherTools", "已启用：%1（原文件名 %2）")
+                              : QCoreApplication::translate("AgentLauncherTools", "已禁用：%1（原文件名 %2）"))
+                             .arg(pending.fileName, previous);
         result.data = QJsonObject{{QStringLiteral("fileName"), pending.fileName},
                                   {QStringLiteral("enabled"), pending.enable},
                                   {QStringLiteral("previous"), previous},
@@ -1618,7 +1622,7 @@ AgentToolResult AgentLauncherTools::resolveApproval(const QString &approvalId, b
         }
         AgentToolResult result;
         result.status = AgentToolResult::Status::Ok;
-        result.summary = QStringLiteral("备份完成：%1（%2 个文件）")
+        result.summary = QCoreApplication::translate("AgentLauncherTools", "备份完成：%1（%2 个文件）")
                              .arg(backupId)
                              .arg(pending.plan.relativePaths.size());
         result.data = QJsonObject{{QStringLiteral("backupId"), backupId},
@@ -1638,7 +1642,7 @@ AgentToolResult AgentLauncherTools::resolveApproval(const QString &approvalId, b
         }
         AgentToolResult result;
         result.status = AgentToolResult::Status::Ok;
-        result.summary = QStringLiteral("已恢复备份 %1（恢复前快照 %2）")
+        result.summary = QCoreApplication::translate("AgentLauncherTools", "已恢复备份 %1（恢复前快照 %2）")
                              .arg(pending.backup.backupId, snapshotId);
         result.data = QJsonObject{{QStringLiteral("backupId"), pending.backup.backupId},
                                   {QStringLiteral("preRestoreBackupId"), snapshotId},
@@ -1646,5 +1650,5 @@ AgentToolResult AgentLauncherTools::resolveApproval(const QString &approvalId, b
         return result;
     }
     }
-    return errorResult(Agent::ErrorKind::Internal, QStringLiteral("未知审批类型。"));
+    return errorResult(Agent::ErrorKind::Internal, QCoreApplication::translate("AgentLauncherTools", "未知审批类型。"));
 }

@@ -114,7 +114,7 @@ Agent::Error AgentLoop::configurationError() const {
     Agent::Error error;
     error.kind = Agent::ErrorKind::NoConfiguration;
     if (m_client == nullptr) {
-        error.message = QStringLiteral("模型客户端未就绪。");
+        error.message = tr("模型客户端未就绪。");
         return error;
     }
     QString problem;
@@ -123,7 +123,7 @@ Agent::Error AgentLoop::configurationError() const {
         return error;
     }
     if (m_config.apiKey.isEmpty() && m_config.profile.authMode != QLatin1String("none")) {
-        error.message = QStringLiteral("无可用的 API Key，请先在设置中配置。");
+        error.message = tr("无可用 API Key，需先在设置中配置。");
         return error;
     }
     return {};
@@ -134,7 +134,7 @@ void AgentLoop::start() {
     if (m_history.isEmpty() || m_history.constLast().role != Agent::Role::User) {
         Agent::Error error;
         error.kind = Agent::ErrorKind::NoConfiguration;
-        error.message = QStringLiteral("没有可发送的用户消息。");
+        error.message = tr("无可用用户消息。");
         emit turnFailed(error);
         return;
     }
@@ -158,7 +158,7 @@ void AgentLoop::retry() {
     if (m_history.isEmpty() || m_history.constLast().role != Agent::Role::User) {
         Agent::Error error;
         error.kind = Agent::ErrorKind::NoConfiguration;
-        error.message = QStringLiteral("没有可重试的用户消息。");
+        error.message = tr("无可用重发用户消息。");
         emit turnFailed(error);
         return;
     }
@@ -181,14 +181,15 @@ void AgentLoop::beginRequest(bool isRetry) {
         return;
     }
     setState(State::Preparing);
+    const QString systemPrompt = AgentContextBuilder::withRuntimeContext(m_config.systemPrompt);
     AgentContextReport report;
     const QList<Agent::Message> context = AgentContextBuilder::build(
-        m_history, m_config.systemPrompt, m_config.profile.contextWindow,
+        m_history, systemPrompt, m_config.profile.contextWindow,
         m_config.profile.maxOutput, &report);
     if (context.isEmpty() && m_history.constLast().role == Agent::Role::User) {
         Agent::Error error;
         error.kind = Agent::ErrorKind::ContextOverflow;
-        error.message = QStringLiteral("上下文预算不足以容纳当前消息。");
+        error.message = tr("上下文预算不足以容纳当前消息。");
         deliverFailure(error);
         return;
     }
@@ -206,7 +207,7 @@ void AgentLoop::beginRequest(bool isRetry) {
     request.model = m_config.profile.model;
     request.apiKey = m_config.apiKey;
     request.messages = context;
-    request.systemPrompt = m_config.systemPrompt;
+    request.systemPrompt = systemPrompt;
     request.contextWindow = m_config.profile.contextWindow;
     request.maxOutput = m_config.profile.maxOutput;
     request.temperature = m_config.profile.temperature;
@@ -335,7 +336,7 @@ void AgentLoop::processToolCalls() {
         if (m_toolEngine == nullptr) {
             AgentToolResult result;
             result.status = AgentToolResult::Status::Error;
-            result.summary = QStringLiteral("工具未注册。");
+            result.summary = tr("工具未注册。");
             result.error.kind = Agent::ErrorKind::ToolError;
             result.error.message = result.summary;
             handleToolOutcome(call, result);
@@ -366,7 +367,7 @@ void AgentLoop::processToolCalls() {
     if (m_toolSteps > m_config.maxToolSteps) {
         Agent::Error error;
         error.kind = Agent::ErrorKind::ToolError;
-        error.message = QStringLiteral("超过最大工具步数，已停止。");
+        error.message = tr("超过最大工具步数，已停止。");
         deliverFailure(error);
         return;
     }

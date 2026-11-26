@@ -5,6 +5,7 @@
 
 #include "AgentProviderAdapters.hpp"
 
+#include <QCoreApplication>
 #include <QJsonDocument>
 #include <QUrl>
 
@@ -34,20 +35,20 @@ bool validateBaseUrl(const QString &baseUrl, bool localHttpAllowed, bool *isLoop
         return false;
     };
     if (baseUrl.trimmed().isEmpty()) {
-        return reject(QStringLiteral("Base URL 不能为空。"));
+        return reject(QCoreApplication::translate("AgentProviderAdapters", "Base URL 不能为空。"));
     }
     QUrl url(baseUrl.trimmed(), QUrl::StrictMode);
     if (!url.isValid() || url.host().isEmpty()) {
-        return reject(QStringLiteral("Base URL 格式无效。"));
+        return reject(QCoreApplication::translate("AgentProviderAdapters", "Base URL 格式无效。"));
     }
     if (!url.userInfo().isEmpty()) {
-        return reject(QStringLiteral("Base URL 不能包含用户名/密码。"));
+        return reject(QCoreApplication::translate("AgentProviderAdapters", "Base URL 不能包含用户名或密码。"));
     }
     if (url.hasFragment()) {
-        return reject(QStringLiteral("Base URL 不能包含 # 片段。"));
+        return reject(QCoreApplication::translate("AgentProviderAdapters", "Base URL 不能包含 # 片段。"));
     }
     if (!url.query().isEmpty()) {
-        return reject(QStringLiteral("Base URL 不能包含查询串。"));
+        return reject(QCoreApplication::translate("AgentProviderAdapters", "Base URL 不能包含查询串。"));
     }
     const bool loopback = isLoopbackHost(url.host());
     if (isLoopback != nullptr) *isLoopback = loopback;
@@ -56,14 +57,14 @@ bool validateBaseUrl(const QString &baseUrl, bool localHttpAllowed, bool *isLoop
     }
     if (url.scheme() == QLatin1String("http")) {
         if (!loopback) {
-            return reject(QStringLiteral("远程服务必须使用 https://；http:// 只允许本机回环地址。"));
+            return reject(QCoreApplication::translate("AgentProviderAdapters", "远程服务必须使用 https://，http:// 仅允许本机回环地址。"));
         }
         if (!localHttpAllowed) {
-            return reject(QStringLiteral("本机 http:// 地址要先在「连接」里打开「允许本机 HTTP」。"));
+            return reject(QCoreApplication::translate("AgentProviderAdapters", "本机 http:// 地址需先在「连接」中启用「允许本机 HTTP」。"));
         }
         return true;
     }
-    return reject(QStringLiteral("Base URL 只接受 https://（本机回环可显式允许 http://）。"));
+    return reject(QCoreApplication::translate("AgentProviderAdapters", "Base URL 仅支持 https://（本机回环地址可显式启用 http://）。"));
 }
 
 bool validateProfile(const AgentProviderProfile &profile, QString *problem) {
@@ -76,18 +77,18 @@ bool validateProfile(const AgentProviderProfile &profile, QString *problem) {
     }
     if (profile.deployment == QLatin1String("local") && !loopback) {
         if (problem != nullptr) {
-            *problem = QStringLiteral("部署类型标成本地，但 Base URL 不是回环地址。");
+            *problem = QCoreApplication::translate("AgentProviderAdapters", "部署类型为本地，但 Base URL 不是回环地址。");
         }
         return false;
     }
     if (profile.authMode == QLatin1String("none") && !loopback) {
         if (problem != nullptr) {
-            *problem = QStringLiteral("无认证模式只允许用于本机回环服务。");
+            *problem = QCoreApplication::translate("AgentProviderAdapters", "无认证模式仅限本机回环服务。");
         }
         return false;
     }
     if (profile.model.trimmed().isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("模型 ID 不能为空。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentProviderAdapters", "模型 ID 不能为空。");
         return false;
     }
     return true;

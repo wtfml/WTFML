@@ -254,8 +254,9 @@ protected:
 
 }  // namespace
 
-GameLogWindow::GameLogWindow(const QString &instanceName, QWidget *parent)
-    : QDialog(parent), m_instanceName(instanceName) {
+GameLogWindow::GameLogWindow(const QString &instanceName, QWidget *parent, int instanceNumber)
+    : QDialog(parent), m_instanceName(instanceName),
+      m_instanceNumber(instanceNumber > 0 ? instanceNumber : 0) {
     m_logColors = QSettings().value(QStringLiteral("Look/LogColors"), true).toBool();
     const auto logTokens = Theme::tokens();
     QPalette logPalette = palette();
@@ -265,7 +266,7 @@ GameLogWindow::GameLogWindow(const QString &instanceName, QWidget *parent)
     logPalette.setColor(QPalette::Text, Theme::isDark() ? QColor("#D5DEE3") : QColor("#202020"));
     logPalette.setColor(QPalette::PlaceholderText, logTokens.logHint);
     setPalette(logPalette);
-    setWindowTitle(windowTitleText(instanceName));
+    setWindowTitle(windowTitleText(m_instanceName, m_instanceNumber));
     // 允许最大化/最小化（这个窗要能最大化、最小化）。QDialog 默认
     // 只给一个关闭钮：一个"想摊开看"的窗，拉到整屏看长崩栈是常态（一行几十个字符，
     // 820 宽要左右拖）。**必须在 show() 之前设** —— show 之后改 flags 会把窗藏起来。
@@ -297,13 +298,14 @@ GameLogWindow::GameLogWindow(const QString &instanceName, QWidget *parent)
         m_titleLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
         strip->addWidget(m_titleLabel, 0, Qt::AlignVCenter);
         // 实例名（文件查看器里是文件名）；没有名字时藏起来，`beginFile()` 再露出来。
+        const QString titleInstance = instanceLabelText(m_instanceName, m_instanceNumber);
         m_titleInstance = new ElidedLabel(m_titleStrip);
-        m_titleInstance->setText(instanceName);
+        m_titleInstance->setText(titleInstance);
         m_titleInstance->setMinimumWidth(1);  // 长名收省略号，不把窗口的最小宽撑开（全名在系统窗口标题里）
         m_titleInstance->setObjectName(QStringLiteral("gameLogTitleInstance"));
         m_titleInstance->setForegroundRole(QPalette::PlaceholderText);
         m_titleInstance->setAttribute(Qt::WA_TransparentForMouseEvents);
-        m_titleInstance->setVisible(!instanceName.isEmpty());
+        m_titleInstance->setVisible(!titleInstance.isEmpty());
         strip->addWidget(m_titleInstance, 0, Qt::AlignVCenter);
         m_stateBadge = new QLabel(m_titleStrip);
         m_stateBadge->setObjectName(QStringLiteral("gameLogStateBadge"));
@@ -1258,12 +1260,37 @@ QColor GameLogWindow::separatorColor(const QPalette &palette) {
 // 文案与名字
 // ---------------------------------------------------------------------------
 
-QString GameLogWindow::windowTitleText(const QString &instanceName) {
+void GameLogWindow::setInstanceNumber(int instanceNumber) {
+    const int normalized = instanceNumber > 0 ? instanceNumber : 0;
+    if (m_instanceNumber == normalized) {
+        return;
+    }
+    m_instanceNumber = normalized;
+    if (isFileViewer()) {
+        return;
+    }
+    const QString label = instanceLabelText(m_instanceName, m_instanceNumber);
+    setWindowTitle(windowTitleText(m_instanceName, m_instanceNumber));
+    if (m_titleInstance != nullptr) {
+        m_titleInstance->setText(label);
+        m_titleInstance->setVisible(!label.isEmpty());
+    }
+}
+
+QString GameLogWindow::instanceLabelText(const QString &instanceName, int instanceNumber) {
+    if (instanceName.isEmpty() || instanceNumber <= 0) {
+        return instanceName;
+    }
+    return QStringLiteral("%1 #%2").arg(instanceName).arg(instanceNumber);
+}
+
+QString GameLogWindow::windowTitleText(const QString &instanceName, int instanceNumber) {
     // 实例名是空的（会话快照没拿到）时不留一个光秃秃的破折号。
     if (instanceName.isEmpty()) {
         return QCoreApplication::translate("GameLogWindow", "游戏日志");
     }
-    return QCoreApplication::translate("GameLogWindow", "游戏日志 — %1").arg(instanceName);
+    return QCoreApplication::translate("GameLogWindow", "游戏日志 — %1")
+        .arg(instanceLabelText(instanceName, instanceNumber));
 }
 
 QString GameLogWindow::fileWindowTitleText(const QString &fileName) {
@@ -1322,7 +1349,7 @@ QString GameLogWindow::filteredOutPlaceholderText() {
 }
 
 QString GameLogWindow::searchPlaceholderText() {
-    return QCoreApplication::translate("GameLogWindow", "搜索日志（不区分大小写，与级别筛选同时生效）");
+    return QCoreApplication::translate("GameLogWindow", "搜索日志");
 }
 
 QString GameLogWindow::searchEmptyPlaceholderText() {
@@ -1330,7 +1357,10 @@ QString GameLogWindow::searchEmptyPlaceholderText() {
 }
 
 QString GameLogWindow::searchTooltip() {
-    return QCoreApplication::translate("GameLogWindow", "仅显示包含该字符串的行；导出仍为完整日志。");
+    // 占位文字只留「搜索日志」，原来的括号说明和这条悬停提示并成一条。
+    return QCoreApplication::translate("GameLogWindow",
+                                       "仅显示包含该字符串的行；导出仍为完整日志。"
+                                       "不区分大小写，与级别筛选同时生效。");
 }
 
 QString GameLogWindow::searchText() const {

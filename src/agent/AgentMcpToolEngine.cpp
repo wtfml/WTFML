@@ -9,6 +9,7 @@
 #include "AgentRedaction.hpp"
 #include "AgentTool.hpp"
 
+#include <QCoreApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QUuid>
@@ -22,7 +23,7 @@ QJsonObject mcpEgress(const QString &serverName) {
         {QStringLiteral("kind"), QStringLiteral("external-mcp")},
         {QStringLiteral("decision"), QStringLiteral("confirm")},
         {QStringLiteral("reason"),
-         QStringLiteral("结果来自外部 MCP 服务器「%1」，按不可信数据处理").arg(serverName)},
+         QCoreApplication::translate("AgentMcpToolEngine", "结果来自外部 MCP 服务器「%1」，按不可信数据处理").arg(serverName)},
         {QStringLiteral("redactionHits"), 0}};
 }
 
@@ -92,14 +93,14 @@ QJsonArray AgentMcpToolEngine::schemas() const {
 
 AgentToolResult AgentMcpToolEngine::invoke(const Agent::ToolCall &call) {
     if (m_manager == nullptr) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("MCP 未接入。"));
+        return errorResult(Agent::ErrorKind::ToolError, tr("MCP 未接入。"));
     }
     const QString conflict = m_manager->conflictReason(call.name);
     if (!conflict.isEmpty()) return errorResult(Agent::ErrorKind::ToolError, conflict);
     const McpToolDescriptor tool = m_manager->toolForWireName(call.name);
     if (tool.name.isEmpty()) {
         return errorResult(Agent::ErrorKind::ToolError,
-                           QStringLiteral("MCP 工具不存在或服务器未连接。"));
+                           tr("MCP 工具不存在或服务器未连接。"));
     }
     QString schemaProblem;
     const QJsonObject schema = tool.inputSchema.isEmpty()
@@ -122,12 +123,12 @@ AgentToolResult AgentMcpToolEngine::invoke(const Agent::ToolCall &call) {
 
     const QString argumentsText =
         QString::fromUtf8(QJsonDocument(call.arguments).toJson(QJsonDocument::Compact));
-    const QString summary = QStringLiteral("调用 MCP 工具：%1（服务器「%2」）")
+    const QString summary = tr("调用 MCP 工具：%1（服务器「%2」）")
                                 .arg(tool.name, tool.serverName);
     QJsonObject request = AgentApprovalPolicy::request(
-        call.name, QStringLiteral("外部 MCP 工具"), tool.serverName, summary,
+        call.name, tr("外部 MCP 工具"), tool.serverName, summary,
         AgentRedaction::preview(argumentsText, 2000), QString(),
-        QStringLiteral("服务器以当前 Windows 用户权限运行；结果按不可信数据处理。"),
+        tr("服务器以当前 Windows 用户权限运行，结果按不可信数据处理。"),
         mcpEgress(tool.serverName));
     request.insert(QStringLiteral("approvalId"), approvalId);
     AgentToolResult result;
@@ -139,12 +140,12 @@ AgentToolResult AgentMcpToolEngine::invoke(const Agent::ToolCall &call) {
 
 AgentToolResult AgentMcpToolEngine::resolveApproval(const QString &approvalId, bool approved) {
     if (!m_approvals.contains(approvalId)) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("审批请求已失效。"));
+        return errorResult(Agent::ErrorKind::ToolError, tr("审批请求已失效。"));
     }
     const ApprovalPending pending = m_approvals.take(approvalId);
     if (!approved) {
         AgentToolResult result = errorResult(
-            Agent::ErrorKind::ApprovalDenied, QStringLiteral("用户拒绝了这次 MCP 调用。"));
+            Agent::ErrorKind::ApprovalDenied, tr("用户拒绝了本次 MCP 调用。"));
         result.data = QJsonObject{{QStringLiteral("denied"), true}};
         return result;
     }
@@ -152,12 +153,12 @@ AgentToolResult AgentMcpToolEngine::resolveApproval(const QString &approvalId, b
         m_manager->callTool(pending.tool.serverId, pending.tool.name, pending.arguments);
     if (requestId.isEmpty()) {
         return errorResult(Agent::ErrorKind::ToolError,
-                           QStringLiteral("MCP 服务器现在不可调用（未连接或待处理请求已满）。"));
+                           tr("MCP 服务器当前不可调用（未连接或待处理请求已满）。"));
     }
     m_calls.insert(requestId, pending.call);
     AgentToolResult result;
     result.status = AgentToolResult::Status::Pending;
-    result.summary = QStringLiteral("已发送到 MCP 服务器，等结果…");
+    result.summary = tr("已发送至 MCP 服务器，等待结果…");
     return result;
 }
 
@@ -175,7 +176,7 @@ AgentToolResult AgentMcpToolEngine::resultFromContent(const Agent::ToolCall &cal
         } else if (type == QStringLiteral("image")) {
             images.append(item.value(QStringLiteral("mimeType")).toString());
         } else {
-            text += QStringLiteral("[%1 内容未内联]").arg(type);
+            text += QStringLiteral("[%1 content not inlined]").arg(type);
             text += QLatin1Char('\n');
         }
     }
@@ -198,15 +199,15 @@ AgentToolResult AgentMcpToolEngine::resultFromContent(const Agent::ToolCall &cal
     bool truncated = false;
     if (inlineText.toUtf8().size() > kInlineResultBytes) {
         inlineText = QString::fromUtf8(inlineText.toUtf8().left(kInlineResultBytes)) +
-                     QStringLiteral("\n…（MCP 结果已截断）");
+                     QStringLiteral("\n…(MCP result truncated)");
         truncated = true;
     }
     data.insert(QStringLiteral("content"), inlineText);
     data.insert(QStringLiteral("truncated"), truncated);
     AgentToolResult out;
     out.status = isError ? AgentToolResult::Status::Error : AgentToolResult::Status::Ok;
-    out.summary = isError ? QStringLiteral("MCP 工具返回错误（%1）").arg(serverName)
-                          : QStringLiteral("MCP 工具完成：%1").arg(call.name);
+    out.summary = isError ? tr("MCP 工具返回错误（%1）").arg(serverName)
+                          : tr("MCP 工具完成：%1").arg(call.name);
     if (isError) {
         out.error.kind = Agent::ErrorKind::ToolError;
         out.error.message = out.summary;
@@ -240,7 +241,7 @@ void AgentMcpToolEngine::cancelPending() {
     for (const QString &id : ids) {
         const Agent::ToolCall call = m_calls.take(id);
         AgentToolResult out = errorResult(Agent::ErrorKind::Cancelled,
-                                          QStringLiteral("这次 MCP 调用已取消。"));
+                                          tr("已取消本次 MCP 调用。"));
         if (m_sink) m_sink(call, out);
     }
 }

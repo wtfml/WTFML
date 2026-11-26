@@ -4,6 +4,7 @@
 #include "Support.hpp"
 #include "MainWindowPageLayout.hpp"
 #include "DownloadToolPanel.hpp"
+#include "FlowLayout.hpp"
 #include "GlassPopover.hpp"
 #include "ToolboxSamples.hpp"
 
@@ -68,6 +69,27 @@ bool textSideGaps(QWidget *widget, QWidget *root, int *leftGap, int *rightGap) {
     return true;
 }
 
+/// FlowLayout 的伸缩项与靠右：一行放得下时同带 stretch 的横排，放不下折行。
+void checkFlowLayout() {
+    QWidget host;
+    auto *flow = new FlowLayout(8, 8);
+    host.setLayout(flow);
+    auto *left = new QWidget(&host);
+    auto *right = new QWidget(&host);
+    left->setFixedSize(100, 30);
+    right->setFixedSize(100, 20);
+    flow->addWidget(left);
+    flow->addStretch();
+    flow->addWidget(right);
+    flow->setGeometry(QRect(0, 0, 400, 100));
+    check(left->pos() == QPoint(0, 0) && right->pos() == QPoint(300, 5), "折行布局：伸缩项把后面的顶到右边、行内居中");
+    flow->setGeometry(QRect(0, 0, 150, 100));
+    check(right->pos() == QPoint(0, 38) && flow->heightForWidth(150) == 58, "折行布局：放不下就折到下一行");
+    flow->alignRight();
+    flow->setGeometry(QRect(0, 0, 151, 100));
+    check(right->x() == 51, "折行布局：靠右时折下去的行仍靠右", QString::number(right->x()));
+}
+
 }  // namespace
 
 int UiToolboxLayoutCheck(QApplication &app) {
@@ -84,6 +106,7 @@ int UiToolboxLayoutCheck(QApplication &app) {
     const QStringList families = QFontDatabase::applicationFontFamilies(fontId);
     app.setFont(QFont(families.isEmpty() ? QStringLiteral("Microsoft YaHei UI") : families.first(), 9));
 
+    checkFlowLayout();
     const QString shotDir = qEnvironmentVariable("WTFML_TOOLBOX_SHOTS");
     if (!shotDir.isEmpty()) QDir().mkpath(shotDir);
     int saved = 0;

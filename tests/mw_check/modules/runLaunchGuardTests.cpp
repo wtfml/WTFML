@@ -147,8 +147,8 @@ void runLaunchGuardTests() {
         }
 
         // 点一下「启动游戏」，把这一发弹的每一条按脚本答掉；返回**依次**弹了哪几条。
-        const auto startWith = [&w](const QList<int> &script) {
-            PromptAnswerer answerer(script);
+        const auto startWith = [&w](const QList<int> &script, const QList<bool> &checkScript = {}) {
+            PromptAnswerer answerer(script, checkScript);
             answerer.start();
             QMetaObject::invokeMethod(&w, "onStartButtonClicked", Qt::DirectConnection);
             QApplication::processEvents();
@@ -190,6 +190,9 @@ void runLaunchGuardTests() {
                           first.note.contains(QStringLiteral("同一实例已运行时提醒")),
                       "AJ2 那行小字写着「可以在设置中关闭此提示」，并指明是哪一个开关",
                       first.note);
+                check(first.hasCheckBox && first.checkBoxText == QStringLiteral("不再提示"),
+                      "AJ2 ②「进度提醒」弹窗内带有「不再提示」勾选框",
+                      first.checkBoxText);
                 check(runningCount() == 1,
                       "AJ2 点了「取消」⇒ 一份新的游戏进程都没起来",
                       QString::number(runningCount()));
@@ -197,12 +200,27 @@ void runLaunchGuardTests() {
 
             // ---- AJ3 第二下：还是只问 ②（上一发点了取消，不算"他刚刚想启动过"）----
             {
-                const QList<PromptAnswerer::Answered> answered = startWith({1});
+                QPushButton *homeLaunch = w.findChild<QPushButton *>(QStringLiteral("homeCurrentLaunch"));
+                check(homeLaunch != nullptr &&
+                          homeLaunch->property("wtfmlLaunchMode").toString() == QStringLiteral("launch") &&
+                          homeLaunch->text() == QStringLiteral("启动游戏"),
+                      "AJ3 前提：即使当前实例已在运行，主页主按钮仍显示「启动游戏」支持多开",
+                      homeLaunch != nullptr ? homeLaunch->text() : QStringLiteral("<null>"));
+                PromptAnswerer answerer({1});
+                answerer.start();
+                if (homeLaunch != nullptr) {
+                    homeLaunch->click();
+                } else {
+                    QMetaObject::invokeMethod(&w, "onStartButtonClicked", Qt::DirectConnection);
+                }
+                QApplication::processEvents();
+                answerer.stop();
+                const QList<PromptAnswerer::Answered> answered = answerer.answered;
                 check(titlesOf(answered) == QStringList({worldLossTitle}),
-                      "AJ3 第二下还是只问 ②（AJ2 那一发点了「取消」，不该被当成「想启动过」）",
+                      "AJ3 点击主页「启动游戏」只问 ②（AJ2 那一发点了「取消」，不该被当成「想启动过」）",
                       titlesOf(answered).join(QStringLiteral(" | ")));
                 check(runningCount() == 2,
-                      "AJ3 点「仍要启动」⇒ 那一份真的起来了（假 java 真进程，不是只把框收掉）",
+                      "AJ3 点「仍要启动」⇒ 通过主页大按钮成功再开一份同一实例（不是停止）",
                       QString::number(runningCount()));
             }
 
@@ -220,6 +238,9 @@ void runLaunchGuardTests() {
                       "AJ4 同一套按钮 + 同一句小字（指的是 ① 那个开关）",
                       first.buttons.join(QStringLiteral(" | ")) + QStringLiteral(" / ") +
                           first.note);
+                check(first.hasCheckBox && first.checkBoxText == QStringLiteral("不再提示"),
+                      "AJ4 ①「重复启动」弹窗内带有「不再提示」勾选框",
+                      first.checkBoxText);
                 check(runningCount() == 2,
                       "AJ4 这一问点「取消」⇒ 还是没有新进程（那两份是 AJ1/AJ3 的）",
                       QString::number(runningCount()));
@@ -273,24 +294,44 @@ void runLaunchGuardTests() {
                       QString::number(runningCount()));
             }
 
-            // ---- AJ7 两个开关都关掉 ⇒ 一下就放行、什么都不问 ----
+            // ---- AJ7 弹窗里勾选「不再提示」并「仍要启动」⇒ 自动关闭对应开关；设置页仍保留开关可再打开 ----
             {
-                duplicateCheck->setChecked(false);
-                worldLossCheck->setChecked(false);
-                QApplication::processEvents();
-                const QList<PromptAnswerer::Answered> answered = startWith({0});
-                check(answered.isEmpty(),
-                      "AJ7 两个开关都关掉 ⇒ 一个框都不弹（「可以在设置中关闭此提示」真的管用）",
-                      titlesOf(answered).join(QStringLiteral(" | ")));
-                check(runningCount() == 4,
-                      "AJ7 而且直接放行、真起来了一份",
+                // 超过 10 秒窗口后再勾掉 ②「同一实例已运行时提醒」
+                const qint64 now = QDateTime::currentMSecsSinceEpoch();
+                w.seedLastLaunchAttemptForTest(auth->playerName(), id, now - 15000);
+                const QList<PromptAnswerer::Answered> mutedWorld = startWith({1}, {true});
+                check(titlesOf(mutedWorld) == QStringList({worldLossTitle}),
+                      "AJ7a 勾选「不再提示」前先完整看到 ② 提示");
+                {
+                    LauncherSettings probe;
+                    check(!probe.warnWorldLoss() && !worldLossCheck->isChecked() &&
+                              probe.warnDuplicateLaunch() && duplicateCheck->isChecked(),
+                          "AJ7a ② 勾选「不再提示」并「仍要启动」后自动关闭对应开关并同步设置页");
+                }
+                // 现在 ① 仍开启，立刻再点一次应只问 ① 并可勾选「不再提示」关闭 ①
+                const QList<PromptAnswerer::Answered> mutedDup = startWith({1}, {true});
+                check(titlesOf(mutedDup) == QStringList({duplicateTitle}),
+                      "AJ7b ② 已关闭后紧接着点只问 ①");
+                {
+                    LauncherSettings probe;
+                    check(!probe.warnDuplicateLaunch() && !duplicateCheck->isChecked(),
+                          "AJ7b ① 勾选「不再提示」并「仍要启动」后自动关闭对应开关并同步设置页");
+                }
+                // 两项均已关掉 ⇒ 一个框都不弹，直接放行
+                const QList<PromptAnswerer::Answered> silent = startWith({0});
+                check(silent.isEmpty(),
+                      "AJ7c 两个「不再提示」均生效后不再弹窗，直接放行多开",
+                      titlesOf(silent).join(QStringLiteral(" | ")));
+                check(runningCount() == 6,
+                      "AJ7c 多开放行后进程数同步增加（当前上限 8 以内均启动成功）",
                       QString::number(runningCount()));
+                // 在设置页仍能手动重新打开两个开关
                 duplicateCheck->setChecked(true);
                 worldLossCheck->setChecked(true);
                 QApplication::processEvents();
                 LauncherSettings probe;
                 check(probe.warnDuplicateLaunch() && probe.warnWorldLoss(),
-                      "AJ7 收尾：两个开关勾回默认（别把这一节的状态留给下一次跑）");
+                      "AJ7 收尾：设置页仍保留两个开关，可手动重新打开并落盘");
             }
 
             // ---- AJ8 收尾：会话全停（holder + 三份假 java）----

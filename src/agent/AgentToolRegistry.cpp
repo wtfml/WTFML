@@ -30,37 +30,37 @@ bool validateValue(const QJsonValue &schemaValue, const QJsonValue &value, const
     const QString type = schema.value(QStringLiteral("type")).toString();
     if (type == QStringLiteral("string")) {
         if (!value.isString()) {
-            if (problem != nullptr) *problem = QStringLiteral("%1 必须是字符串。").arg(path);
+            if (problem != nullptr) *problem = QStringLiteral("%1 must be a string.").arg(path);
             return false;
         }
         const int maxLength = schema.value(QStringLiteral("maxLength")).toInt(-1);
         if (maxLength >= 0 && value.toString().size() > maxLength) {
-            if (problem != nullptr) *problem = QStringLiteral("%1 超过最大长度。").arg(path);
+            if (problem != nullptr) *problem = QStringLiteral("%1 exceeds maxLength.").arg(path);
             return false;
         }
     } else if (type == QStringLiteral("integer") || type == QStringLiteral("number")) {
         if (!value.isDouble()) {
-            if (problem != nullptr) *problem = QStringLiteral("%1 必须是数字。").arg(path);
+            if (problem != nullptr) *problem = QStringLiteral("%1 must be a number.").arg(path);
             return false;
         }
         if (type == QStringLiteral("integer") && value.toDouble() != double(value.toInt())) {
-            if (problem != nullptr) *problem = QStringLiteral("%1 必须是整数。").arg(path);
+            if (problem != nullptr) *problem = QStringLiteral("%1 must be an integer.").arg(path);
             return false;
         }
         const int maximum = schema.value(QStringLiteral("maximum")).toInt(-1);
         if (maximum >= 0 && value.toDouble() > maximum) {
-            if (problem != nullptr) *problem = QStringLiteral("%1 超过最大值。").arg(path);
+            if (problem != nullptr) *problem = QStringLiteral("%1 exceeds maximum.").arg(path);
             return false;
         }
     } else if (type == QStringLiteral("array")) {
         if (!value.isArray()) {
-            if (problem != nullptr) *problem = QStringLiteral("%1 必须是数组。").arg(path);  // i18n-ignore
+            if (problem != nullptr) *problem = QStringLiteral("%1 must be an array.").arg(path);
             return false;
         }
         const QJsonArray array = value.toArray();
         const int maxItems = schema.value(QStringLiteral("maxItems")).toInt(-1);
         if (maxItems >= 0 && array.size() > maxItems) {
-            if (problem != nullptr) *problem = QStringLiteral("%1 超过最多条数。").arg(path);  // i18n-ignore
+            if (problem != nullptr) *problem = QStringLiteral("%1 exceeds maxItems.").arg(path);
             return false;
         }
         const QJsonObject items = schema.value(QStringLiteral("items")).toObject();
@@ -74,7 +74,7 @@ bool validateValue(const QJsonValue &schemaValue, const QJsonValue &value, const
         }
     } else if (type == QStringLiteral("object")) {
         if (!value.isObject()) {
-            if (problem != nullptr) *problem = QStringLiteral("%1 必须是对象。").arg(path);
+            if (problem != nullptr) *problem = QStringLiteral("%1 must be an object.").arg(path);
             return false;
         }
         const QJsonObject object = value.toObject();
@@ -82,7 +82,8 @@ bool validateValue(const QJsonValue &schemaValue, const QJsonValue &value, const
         for (const QJsonValue &required : schema.value(QStringLiteral("required")).toArray()) {
             if (!object.contains(required.toString())) {
                 if (problem != nullptr) {
-                    *problem = QStringLiteral("%1 缺少必填字段 %2。").arg(path, required.toString());
+                    *problem = QStringLiteral("%1 is missing required field %2.")
+                                   .arg(path, required.toString());
                 }
                 return false;
             }
@@ -92,7 +93,7 @@ bool validateValue(const QJsonValue &schemaValue, const QJsonValue &value, const
             if (!properties.contains(it.key())) {
                 if (!allowAdditional) {
                     if (problem != nullptr) {
-                        *problem = QStringLiteral("%1 含未知字段 %2。").arg(path, it.key());
+                        *problem = QStringLiteral("%1 contains unknown field %2.").arg(path, it.key());
                     }
                     return false;
                 }
@@ -111,7 +112,7 @@ bool validateValue(const QJsonValue &schemaValue, const QJsonValue &value, const
             if (candidate == value) found = true;
         }
         if (!found) {
-            if (problem != nullptr) *problem = QStringLiteral("%1 不在允许的枚举值里。").arg(path);
+            if (problem != nullptr) *problem = QStringLiteral("%1 is not in allowed enum values.").arg(path);
             return false;
         }
     }

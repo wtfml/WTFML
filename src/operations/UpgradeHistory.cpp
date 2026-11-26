@@ -128,7 +128,7 @@ bool append(const QString &instanceDir, const Entry &entry, QString *problem) {
         existing = read(instanceDir, &readProblem);
         if (!readProblem.isEmpty()) {
             if (problem != nullptr) {
-                *problem = readProblem + QCoreApplication::translate("UpgradeHistory", "，此条未写入。");
+                *problem = QCoreApplication::translate("UpgradeHistory", "此条升级历史未写入。原因：%1").arg(readProblem);
             }
             return false;
         }

@@ -22,7 +22,7 @@ QString McpManager::startResultName(StartResult result) {
 
 bool McpManager::reload(QString *problem) {
     if (m_store == nullptr) {
-        if (problem != nullptr) *problem = QStringLiteral("MCP 配置存储未接入。");
+        if (problem != nullptr) *problem = tr("MCP 配置存储未接入。");
         return false;
     }
     QList<McpServerConfig> servers;
@@ -58,7 +58,7 @@ McpClient::State McpManager::state(const QString &serverId) const {
 
 QString McpManager::stateDetail(const QString &serverId) const {
     const McpClient *client = m_clients.value(serverId, nullptr);
-    return client == nullptr ? QStringLiteral("未启动。") : client->stateDetail();
+    return client == nullptr ? tr("未启动。") : client->stateDetail();
 }
 
 bool McpManager::anyReady() const {
@@ -98,7 +98,7 @@ McpClient *McpManager::ensureClient(const QString &serverId) {
 McpManager::StartResult McpManager::start(const QString &serverId,
                                           McpTrustStore::GateResult *gate, QString *problem) {
     if (m_store == nullptr) {
-        if (problem != nullptr) *problem = QStringLiteral("MCP 配置存储未接入。");
+        if (problem != nullptr) *problem = tr("MCP 配置存储未接入。");
         return StartResult::Blocked;
     }
     const McpTrustStore::GateResult result = m_store->checkStart(serverId);
@@ -117,7 +117,7 @@ McpManager::StartResult McpManager::reconnect(const QString &serverId,
                                               McpTrustStore::GateResult *gate,
                                               QString *problem) {
     if (m_store == nullptr) {
-        if (problem != nullptr) *problem = QStringLiteral("MCP 配置存储未接入。");
+        if (problem != nullptr) *problem = tr("MCP 配置存储未接入。");
         return StartResult::Blocked;
     }
     stop(serverId);
@@ -130,7 +130,7 @@ McpManager::StartResult McpManager::reconnect(const QString &serverId,
     // 就算配置和身份都没变，手动重连也要再确认一次。
     McpTrustStore::GateResult pending = result;
     pending.gate = McpTrustStore::GateResult::Gate::NeedsConfirmation;
-    pending.reason = QStringLiteral("重新连接前需要确认。");
+    pending.reason = tr("重新连接前需确认。");
     if (gate != nullptr) *gate = pending;
     return StartResult::NeedsConfirmation;
 }
@@ -138,7 +138,7 @@ McpManager::StartResult McpManager::reconnect(const QString &serverId,
 McpManager::StartResult McpManager::startConfirmed(const QString &serverId, QString *problem) {
     const McpServerConfig config = server(serverId);
     if (!config.isValid()) {
-        if (problem != nullptr) *problem = QStringLiteral("服务器配置不存在。");
+        if (problem != nullptr) *problem = tr("服务器配置不存在。");
         return StartResult::Blocked;
     }
     const QString configProblem = McpTrustStore::validateConfig(config);
@@ -159,7 +159,7 @@ McpManager::StartResult McpManager::startConfirmed(const QString &serverId, QStr
         client->start(config, gate.identity);
         return StartResult::Started;
     }
-    if (problem != nullptr) *problem = QStringLiteral("MCP 配置存储未接入。");
+    if (problem != nullptr) *problem = tr("MCP 配置存储未接入。");
     return StartResult::Blocked;
 }
 
@@ -190,7 +190,7 @@ void McpManager::rebuildTools() {
             if (wire.isEmpty()) continue;
             if (owner.contains(wire)) {
                 m_toolConflict.insert(
-                    wire, QStringLiteral("「%1」与「%2」映射出了同一个工具名，已拒绝。")
+                    wire, tr("「%1」与「%2」映射出了同一工具名，已拒绝。")
                               .arg(owner.value(wire), server.name));
                 continue;
             }

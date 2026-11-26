@@ -111,7 +111,7 @@ void runAgentWebPolicyTests() {
 
     QString longText(AgentWebPolicy::kMaxTextChars + 10, QChar('a'));
     check(truncateText(&longText), "联网策略：超长文本被截断");
-    check(longText.contains(QStringLiteral("已截断")), "联网策略：截断处有标记");
+    check(longText.contains(QStringLiteral("truncated")), "联网策略：截断处有标记");
     QString shortText = QStringLiteral("ok");
     check(!truncateText(&shortText), "联网策略：短文本不截断");
 }

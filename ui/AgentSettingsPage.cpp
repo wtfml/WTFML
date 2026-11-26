@@ -215,17 +215,16 @@ AgentSettingsPage::AgentSettingsPage(QWidget *parent) : QDialog(parent) {
     m_advanced = new ExpandSection(QCoreApplication::translate("AgentSettingsPage", "高级"), content);
     m_advanced->setObjectName(QStringLiteral("agentAdvancedGroup"));
     // ---------- 联网与诊断（Stage 3）----------
-    SettingsGroup *tools = addGroup(QStringLiteral("联网与诊断"));
+    SettingsGroup *tools = addGroup(QCoreApplication::translate("AgentSettingsPage", "联网与诊断"));
     m_searxng = new QLineEdit(content);
     m_searxng->setObjectName(QStringLiteral("agentSearxngEdit"));
     m_searxng->setPlaceholderText(QStringLiteral("https://searx.example.com"));
-    InputSizing::longValue(m_searxng, "网址：路径长度不定");
-    row(tools, QStringLiteral("SearXNG 地址"), m_searxng, Placement::Wide, QString(),
-        QStringLiteral("填了你自己的 SearXNG 实例地址才能联网搜索；搜索词会发给这个实例。"));
+    InputSizing::longValue(m_searxng, "网址：路径长度不定");  // i18n-ignore
+    row(tools, QCoreApplication::translate("AgentSettingsPage", "SearXNG 地址"), m_searxng, Placement::Wide, QString(),
+        QCoreApplication::translate("AgentSettingsPage", "填写自建 SearXNG 实例地址后方可联网搜索，搜索词将发送至该实例。"));
     m_diagnoseToggle = toggle("agentDiagnoseCommandsToggle", false);
-    row(tools, QStringLiteral("允许诊断命令"), m_diagnoseToggle, Placement::Column,
-        QStringLiteral("默认关闭。打开后可以执行固定的诊断命令（java -version、ping、nslookup、"
-                       "netstat -ano 等），每次都要确认；任意命令始终不开放。"));
+    row(tools, QCoreApplication::translate("AgentSettingsPage", "允许诊断命令"), m_diagnoseToggle, Placement::Column,
+        QCoreApplication::translate("AgentSettingsPage", "默认关闭。开启后可执行固定诊断命令（java -version、ping、nslookup、netstat -ano 等），每次均须确认；不开放任意命令。"));
     m_repairCasesToggle = toggle("agentRepairCasesToggle", false);
     row(tools, QCoreApplication::translate("AgentSettingsPage", "记住修复病例"), m_repairCasesToggle,
         Placement::Column,
@@ -305,7 +304,7 @@ AgentSettingsPage::AgentSettingsPage(QWidget *parent) : QDialog(parent) {
     Theme::markButton(m_save, Theme::ButtonKind::Primary);
     m_save->setMinimumWidth(96);
     buttons->addWidget(m_test);
-    m_mcp = new QPushButton(QStringLiteral("MCP 服务器…"), this);
+    m_mcp = new QPushButton(QCoreApplication::translate("AgentSettingsPage", "MCP 服务器…"), this);
     m_mcp->setObjectName(QStringLiteral("agentSettingsMcpButton"));
     buttons->addWidget(m_mcp);
     buttons->addStretch(1);

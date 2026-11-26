@@ -112,9 +112,8 @@ void ServerMenuController::run(const QString &serverId, int action) {
             // 关掉 = 这一轮到此为止（再打开时从第 1 次算起）。
             m_owner.m_serverRun->forgetRestartAttempts(serverId);
         }
-        m_owner.appendLog(MainWindow::tr("服务端 %1：异常退出后自动重启%2。")
-                              .arg(serverId, on ? MainWindow::tr("已打开")
-                                                : MainWindow::tr("已关闭")));
+        m_owner.appendLog(on ? MainWindow::tr("服务端 %1：异常退出后已启用自动重启。").arg(serverId)
+                              : MainWindow::tr("服务端 %1：异常退出后已关闭自动重启。").arg(serverId));
         break;
     }
     case MainWindowUI::ServerMenuAction::Remove:

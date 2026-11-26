@@ -145,7 +145,7 @@ int MwAgentChecks(QApplication &app) {
     check(fake.starts == 1, "真窗口：只发一次请求");
     check(!fake.lastRequest.apiKey.isEmpty() && fake.lastRequest.apiKey == secret,
           "真窗口：请求构造时带上 key（只在内存里）");
-    check(fake.lastRequest.systemPrompt.contains(QStringLiteral("没有")),
+    check(fake.lastRequest.systemPrompt.contains(QStringLiteral("no repair transactions")),
           "真窗口：系统提示说明无工具权限");
 
     AgentSession loaded;
@@ -284,7 +284,7 @@ int MwAgentChecks(QApplication &app) {
               "真窗口：Stage 2 用例先建立一个会话");
         controller->chooseSkillForTest(QStringLiteral("inspection"));
         check(controller->workflow()->skill().id == QStringLiteral("inspection"),
-              "真窗口：切到实例体检模式");
+              "真窗口：切到实例诊断模式");
         check(page->findChild<QPushButton *>(QStringLiteral("agentSkill_inspection")) != nullptr,
               "真窗口：模式卡片跟着换");
         AgentSession skillSession;

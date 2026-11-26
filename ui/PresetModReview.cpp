@@ -53,7 +53,8 @@ PresetModReview::PresetModReview(const Presets::ModInstallPlan &plan, QWidget *p
     hint->setVisible(hasReplacementInput);
     m_rows->header()->setSectionResizeMode(QHeaderView::Interactive);
     m_rows->header()->setStretchLastSection(true);
-    m_rows->setColumnWidth(0, 160); m_rows->setColumnWidth(2, 200); m_rows->setColumnWidth(3, 160);
+    const int widths[] = {130, 165, 200, 170, 70};  // 末列（替代项目）吃剩下的
+    for (int column = 0; column < 5; ++column) m_rows->setColumnWidth(column, widths[column]);
     layout->addWidget(m_rows, 1);
     m_problem = new QLabel(this); m_problem->setWordWrap(true); layout->addWidget(m_problem);
     // 不用标准钮（QDialogButtonBox::Save/Cancel/…）：它的字在 LanguageChange 时会被 Qt 刷回自带的英文，
