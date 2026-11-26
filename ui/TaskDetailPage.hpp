@@ -61,6 +61,7 @@ public:
         RepairImport, ///< 打开未完成整合包的本地补齐报告。
         Recover,      ///< 「继续未完成操作」：接着做完那份报告里还没做完的文件操作。
         Pause,
+        OpenAgentSession, ///< 「查看会话」：切到智能体页，打开发起这一项的会话。
     };
 
     explicit TaskDetailPage(QWidget *parent = nullptr);
@@ -120,6 +121,7 @@ private:
     QPushButton *m_targetButton = nullptr;
     QPushButton *m_reportButton = nullptr;
     QPushButton *m_crashDirButton = nullptr;
+    QPushButton *m_sessionButton = nullptr;
     QPushButton *m_copyButton = nullptr;
     QPushButton *m_repairButton = nullptr;
     QPushButton *m_recoverButton = nullptr;

@@ -3027,6 +3027,8 @@ private:
     // 的说明）。判据（谁算"正在改它"、任务行该叫什么、哪些实例不能启动）全在
     // `InstallOccupancy`，这里只是持有它。
     InstallOccupancy m_installOccupancy;
+    /// 智能体 `instance.repairCore` 发起的那一趟补全：结束时不弹「检查完成 / 文件未补齐」框（工具卡已说明）。
+    QString m_agentRepairQuietId;
     // "有版本目录但 jar 名对不上"这件事是否已经写过日志。refreshInstalledVersions()
     // 一次会话会被调很多次，不记一笔就是同样的告警反复刷。
     bool m_reportedUnrecognizedVersions = false;

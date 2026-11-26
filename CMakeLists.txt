@@ -253,6 +253,7 @@ set(HEADER_FILES
     src/agent/AgentWebTools.hpp
     src/agent/AgentCommandTools.hpp
     src/controllers/AgentController.hpp
+    src/controllers/AgentTaskLedger.hpp
     src/controllers/AgentLauncherHostImpl.hpp
     src/controllers/AgentModPlatform.hpp
     src/controllers/AgentTestLaunchRunner.hpp
@@ -615,6 +616,7 @@ set(SOURCE_FILES
     src/agent/AgentWebTools.cpp
     src/agent/AgentCommandTools.cpp
     src/controllers/AgentController.cpp
+    src/controllers/AgentTaskLedger.cpp
     src/controllers/AgentLauncherHostImpl.cpp
     src/controllers/AgentModPlatform.cpp
     src/controllers/AgentTestLaunchRunner.cpp

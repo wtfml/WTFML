@@ -37,6 +37,7 @@ void runAgentApprovalTests();
 void runAgentArtifactTests();
 void runAgentInstanceLockTests();
 void runAgentBackupLifecycleTests();
+void runAgentTaskLedgerTests();
 void runAgentToolTests();
 void runAgentOpenAiClientTests();
 void runAgentDiagnosticProjectionTests();
@@ -226,6 +227,7 @@ int main(int argc, char **argv) {
     runAgentArtifactTests();
     runAgentInstanceLockTests();
     runAgentBackupLifecycleTests();
+    runAgentTaskLedgerTests();
     runAgentToolTests();
     runAgentOpenAiClientTests();
     runAgentDiagnosticProjectionTests();
