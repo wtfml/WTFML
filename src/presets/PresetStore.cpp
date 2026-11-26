@@ -1295,7 +1295,7 @@ PresetManifest duplicate(const QString &root, const QString &id, const QString &
     PresetManifest copy = source;
     copy.id = newPresetId();
     const QString cleaned = cleanDisplayName(newName);
-    copy.name = cleaned.isEmpty() ? cleanDisplayName(source.name + QCoreApplication::translate("PresetStore", " 副本")) : cleaned;
+    copy.name = cleaned.isEmpty() ? cleanDisplayName(QCoreApplication::translate("PresetStore", "%1 副本").arg(source.name)) : cleaned;
     if (copy.name.isEmpty()) {
         return PresetManifest();
     }

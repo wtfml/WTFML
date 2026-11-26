@@ -83,7 +83,7 @@ QString jsonTypeName(const QJsonValue &value) {
     case QJsonValue::Undefined:
         break;
     }
-    return QCoreApplication::translate("Presets", "无此项");
+    return QCoreApplication::translate("Presets", "缺少此项");
 }
 
 /// `"LEFT_ALT,Z"` → `{"LEFT_ALT", "Z"}`。空串、只有逗号/空白 ⇒ 空绑定。

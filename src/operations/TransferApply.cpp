@@ -54,11 +54,14 @@ ModTransferResult transferMods(const QString &sourceRoot, const QString &targetR
         if (stopped()) { result.cancelled = true; break; }
         const QFileInfo source(path);
         const auto report = [&](const QString &phase) {
-            if (progress) progress(completed, paths.size(), phase + QCoreApplication::translate("TransferApply", "：") + source.fileName());
+            if (progress) progress(completed, paths.size(),
+                                  QCoreApplication::translate("TransferApply", "%1：%2").arg(phase, source.fileName()));
         };
         const auto fail = [&](const QString &reason) {
             ++result.failed;
-            if (result.problems.size() < 8) result.problems.append(source.fileName() + QCoreApplication::translate("TransferApply", "：") + reason);
+            if (result.problems.size() < 8)
+                result.problems.append(QCoreApplication::translate("TransferApply", "%1：%2")
+                                           .arg(source.fileName(), reason));
         };
         if (!source.isFile() || source.isSymLink() || source.isJunction() ||
             source.absolutePath() != QDir(sourceMods).absolutePath()) {
@@ -286,7 +289,8 @@ QString Result::text() const {
     if (failedFiles > 0) {
         parts << QCoreApplication::translate("TransferApply", "失败 %1 个").arg(failedFiles);
     }
-    QString text = parts.join(QCoreApplication::translate("TransferApply", "，")) + QCoreApplication::translate("TransferApply", "。");
+    QString text = QCoreApplication::translate("TransferApply", "%1。")
+                       .arg(parts.join(QCoreApplication::translate("TransferApply", "，")));
     if (!failures.isEmpty()) {
         text += QCoreApplication::translate("TransferApply", "\n\n未迁移的文件：");
         for (const QString &failure : failures) {
@@ -370,12 +374,14 @@ Result apply(const QString &sourceDir, const QString &targetDir,
 
 QString VerifySummary::text() const {
     if (!ok) return problem;
-    QString head = QCoreApplication::translate("TransferApply", "校验：已检查 %1 个文件，缺少 %2 个").arg(checkedFiles).arg(missingFiles);
-    if (sizeMismatchFiles > 0) {
-        head += QCoreApplication::translate("TransferApply", "；另有 %1 个目标中原有的同名文件大小不同（按规则未覆盖）")
-                    .arg(sizeMismatchFiles);
-    }
-    head += QCoreApplication::translate("TransferApply", "。");
+    QString head = sizeMismatchFiles > 0
+        ? QCoreApplication::translate("TransferApply", "校验：已检查 %1 个文件，缺少 %2 个；另有 %3 个目标中原有的同名文件大小不同（按规则未覆盖）。")
+              .arg(checkedFiles)
+              .arg(missingFiles)
+              .arg(sizeMismatchFiles)
+        : QCoreApplication::translate("TransferApply", "校验：已检查 %1 个文件，缺少 %2 个。")
+              .arg(checkedFiles)
+              .arg(missingFiles);
     if (!missing.isEmpty()) {
         head += QCoreApplication::translate("TransferApply", "\n\n目标中未找到的文件：");
         for (const QString &path : missing) {

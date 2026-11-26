@@ -401,7 +401,7 @@ Scan scan(const QString &root, const QString &sourceId, const QString &cache, co
                     Declaration declaration;
                     ModDeclarations::parseEntry(entry, record.entries.value(entry), &declaration);
                     declaration.basis =
-                        QCoreApplication::translate("UpgradeAssessment", "嵌套 ") + declaration.basis;
+                        QCoreApplication::translate("UpgradeAssessment", "嵌套 %1").arg(declaration.basis);
                     parsed.declarations.append(declaration);
                 }
                 // 优先用 quilt / fabric 这种显式声明；没有就取第一条有 game 的。
@@ -649,7 +649,9 @@ void UpgradeAssessment::attach(InstanceSettingsDialog *dialog, VersionManager *v
             const QString platform = state->platform.value(mod.path, mod.identified ? QObject::tr("平台项目已识别，等待查询")
                 : mod.identityProblem.isEmpty() ? QObject::tr("未识别平台项目（无有效识别记录）") : mod.identityProblem);
             const QString filename = QFileInfo(mod.path).fileName();
-            const QString title = mod.name == filename ? mod.name : mod.name + QCoreApplication::translate("UpgradeAssessment", "（%1）").arg(filename);
+            const QString title = mod.name == filename
+                ? mod.name
+                : QCoreApplication::translate("UpgradeAssessment", "%1（%2）").arg(mod.name, filename);
             QString replacementLabel;
             QString replacementDefault;
             if (mod.replacementAvailable) {

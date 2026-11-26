@@ -521,8 +521,8 @@ bool scanFileGroup(const QString &root, FileGroup group, QList<GenericItem> *out
         }
         if (isLink(entry)) {
             if (refusedOut != nullptr) {
-                refusedOut->append(relative +
-                                   QCoreApplication::translate("Presets", "：为链接（符号链接 / junction），未跟随。"));
+                refusedOut->append(QCoreApplication::translate("Presets", "%1：为链接（符号链接 / junction），未跟随。")
+                                       .arg(relative));
             }
             continue;
         }
