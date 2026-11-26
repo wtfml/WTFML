@@ -424,67 +424,67 @@ Select "Sign out" to try again.</translation>
         <name>AgentAutoSafe::Authorizer</name>
         <message>
             <source>Auto-safe 没有开启</source>
-            <translation type="unfinished"></translation>
+            <translation>Auto-safe isn't enabled</translation>
         </message>
         <message>
             <source>Auto-safe 已过期（%1 分钟）</source>
-            <translation type="unfinished"></translation>
+            <translation>Auto-safe expired (%1 min)</translation>
         </message>
         <message>
             <source>这个设置键能改变游戏用哪段代码，Auto-safe 不放行：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Setting key can alter code execution; blocked by Auto-safe: %1</translation>
         </message>
         <message>
             <source>设置键 %1 不在已批准的计划里</source>
-            <translation type="unfinished"></translation>
+            <translation>Setting key %1 isn't in the approved plan</translation>
         </message>
         <message>
             <source>世界/存档不在事务授权范围</source>
-            <translation type="unfinished"></translation>
+            <translation>World/save paths aren't covered by transaction authorization</translation>
         </message>
         <message>
             <source>路径里带 .. 不在授权范围</source>
-            <translation type="unfinished"></translation>
+            <translation>Paths containing .. aren't covered by authorization</translation>
         </message>
         <message>
             <source>文件 %1 不在已批准的计划里</source>
-            <translation type="unfinished"></translation>
+            <translation>File %1 isn't in the approved plan</translation>
         </message>
         <message>
             <source>写入必须落在本事务的工作区里</source>
-            <translation type="unfinished"></translation>
+            <translation>Writes must stay within this transaction's workspace</translation>
         </message>
         <message>
             <source>模组 %1 不在已批准的计划里</source>
-            <translation type="unfinished"></translation>
+            <translation>Mod %1 isn't in the approved plan</translation>
         </message>
         <message>
             <source>模组启停必须落在本事务的工作区里</source>
-            <translation type="unfinished"></translation>
+            <translation>Mod enable/disable actions must target this transaction's workspace</translation>
         </message>
         <message>
             <source>模组修复必须落在本事务的工作区里</source>
-            <translation type="unfinished"></translation>
+            <translation>Mod repair must target this transaction's workspace</translation>
         </message>
         <message>
             <source>项目 %1 不在已批准的计划里</source>
-            <translation type="unfinished"></translation>
+            <translation>Project %1 isn't in the approved plan</translation>
         </message>
         <message>
             <source>备份不在已批准的计划里</source>
-            <translation type="unfinished"></translation>
+            <translation>Backup isn't in the approved plan</translation>
         </message>
         <message>
             <source>这个操作不在 Auto-safe 范围（会动原实例或共享库）</source>
-            <translation type="unfinished"></translation>
+            <translation>Action isn't covered by Auto-safe (modifies original instance or shared libraries)</translation>
         </message>
         <message>
             <source>启动次数超出事务授权（%1 次）</source>
-            <translation type="unfinished"></translation>
+            <translation>Launch count exceeds transaction authorization (%1 launches)</translation>
         </message>
         <message>
             <source>工具 %1 不在 Auto-safe 的授权类型里</source>
-            <translation type="unfinished"></translation>
+            <translation>Tool %1 isn't authorized for Auto-safe</translation>
         </message>
     </context>
     <context>
@@ -498,7 +498,7 @@ Select "Sign out" to try again.</translation>
         <name>AgentCompositeToolEngine</name>
         <message>
             <source>Auto-safe 拒绝：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Auto-safe denied: %1</translation>
         </message>
     </context>
     <context>
@@ -517,15 +517,15 @@ Select "Sign out" to try again.</translation>
         </message>
         <message>
             <source>Auto-safe 已绑定事务 %1：计划内的写入与启动不再逐步确认。</source>
-            <translation type="unfinished"></translation>
+            <translation>Auto-safe bound to transaction %1: planned writes and launches won't prompt step by step.</translation>
         </message>
         <message>
             <source>事务结束：Auto-safe 审计已写入 %1（%2 次启动）。</source>
-            <translation type="unfinished"></translation>
+            <translation>Transaction ended: Auto-safe audit written to %1 (%2 launches).</translation>
         </message>
         <message>
             <source>事务已结束，Auto-safe 关闭。</source>
-            <translation type="unfinished"></translation>
+            <translation>Transaction ended; Auto-safe turned off.</translation>
         </message>
         <message>
             <source>API 未配置</source>
@@ -565,7 +565,7 @@ Select "Sign out" to try again.</translation>
         </message>
         <message>
             <source>当前模式的提示词不可用：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Prompt for current mode isn't available: %1</translation>
         </message>
         <message>
             <source>检测到疑似凭据（%1），已在本机遮挡后再发送。</source>
@@ -617,7 +617,7 @@ Select "Sign out" to try again.</translation>
         </message>
         <message>
             <source>提示词为空。</source>
-            <translation type="unfinished"></translation>
+            <translation>Prompt is empty.</translation>
         </message>
         <message>
             <source>只会删除会话正文、恢复快照和本会话 artifacts；文件维护备份会保留。确认删除？</source>
@@ -697,31 +697,31 @@ Select "Sign out" to try again.</translation>
         </message>
         <message>
             <source>模式「%1」不可用：%2</source>
-            <translation type="unfinished"></translation>
+            <translation>Mode "%1" isn't available: %2</translation>
         </message>
         <message>
             <source>先停止当前回复再切换模式。</source>
-            <translation type="unfinished"></translation>
+            <translation>Stop the current response before switching modes.</translation>
         </message>
         <message>
             <source>Auto-safe 只在崩溃急救与模组维护里可用。</source>
-            <translation type="unfinished"></translation>
+            <translation>Auto-safe is only available in Crash rescue and Mod maintenance.</translation>
         </message>
         <message>
             <source>先锁定一个实例，再打开 Auto-safe。</source>
-            <translation type="unfinished"></translation>
+            <translation>Lock an instance before enabling Auto-safe.</translation>
         </message>
         <message>
             <source>Auto-safe 已打开：提交并批准计划后，计划内的写入/启动不再逐步确认；最长 60 分钟或 20 次启动，事务结束写审计。</source>
-            <translation type="unfinished"></translation>
+            <translation>Auto-safe enabled: once a plan is submitted and approved, planned writes and launches run without per-step prompts (up to 60 min or 20 launches); an audit log is written when the transaction ends.</translation>
         </message>
         <message>
             <source>Auto-safe：%1，剩余启动 %2 次</source>
-            <translation type="unfinished"></translation>
+            <translation>Auto-safe: %1, %2 launches left</translation>
         </message>
         <message>
             <source>等待事务</source>
-            <translation type="unfinished"></translation>
+            <translation>Waiting for transaction</translation>
         </message>
         <message>
             <source>无可用的 API Key；请填写或保存后再测试。</source>
@@ -764,39 +764,39 @@ Select "Sign out" to try again.</translation>
         <name>AgentCrashSnapshot</name>
         <message>
             <source>Mixin apply for mod 语句</source>
-            <translation type="unfinished"></translation>
+            <translation>Mixin apply for mod statement</translation>
         </message>
         <message>
             <source>mixin 配置 %1</source>
-            <translation type="unfinished"></translation>
+            <translation>mixin config %1</translation>
         </message>
         <message>
             <source>mixin 配置 %1 无归属声明</source>
-            <translation type="unfinished"></translation>
+            <translation>mixin config %1 has no owner declaration</translation>
         </message>
         <message>
             <source>栈帧含该模组</source>
-            <translation type="unfinished"></translation>
+            <translation>Stack frame includes this mod</translation>
         </message>
         <message>
             <source>失败区文本提及</source>
-            <translation type="unfinished"></translation>
+            <translation>Mentioned in failure section</translation>
         </message>
         <message>
             <source>报告头 Suspected Mods</source>
-            <translation type="unfinished"></translation>
+            <translation>Suspected Mods header in report</translation>
         </message>
         <message>
             <source>规则 %1 的线索</source>
-            <translation type="unfinished"></translation>
+            <translation>Clue from rule %1</translation>
         </message>
         <message>
             <source>（%1）</source>
-            <translation type="unfinished"></translation>
+            <translation> (%1)</translation>
         </message>
         <message>
             <source>%1 个 mixin 配置能由 JAR 声明归属到模组</source>
-            <translation type="unfinished"></translation>
+            <translation>%1 mixin configs matched to mods via JAR metadata</translation>
         </message>
     </context>
     <context>
@@ -810,59 +810,59 @@ Select "Sign out" to try again.</translation>
         <name>AgentKnowledge</name>
         <message>
             <source>崩溃规则不是有效 JSON：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Crash rules aren't valid JSON: %1</translation>
         </message>
         <message>
             <source>崩溃规则缺少 rules 数组</source>
-            <translation type="unfinished"></translation>
+            <translation>Crash rules are missing the rules array</translation>
         </message>
         <message>
             <source>规则不是对象，已跳过</source>
-            <translation type="unfinished"></translation>
+            <translation>Rule isn't an object; skipped</translation>
         </message>
         <message>
             <source>规则 id 不合法，已跳过：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Invalid rule ID; skipped: %1</translation>
         </message>
         <message>
             <source>规则 id 重复，已跳过：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Duplicate rule ID; skipped: %1</translation>
         </message>
         <message>
             <source>%1：缺少 priority</source>
-            <translation type="unfinished"></translation>
+            <translation>%1: missing priority</translation>
         </message>
         <message>
             <source>%1：priority 超出 1–100</source>
-            <translation type="unfinished"></translation>
+            <translation>%1: priority out of range (1–100)</translation>
         </message>
         <message>
             <source>%1：phase 不认识：%2</source>
-            <translation type="unfinished"></translation>
+            <translation>%1: unrecognized phase: %2</translation>
         </message>
         <message>
             <source>%1：match 不能为空</source>
-            <translation type="unfinished"></translation>
+            <translation>%1: match can't be empty</translation>
         </message>
         <message>
             <source>%1：confidence 必须在 0–1 之间</source>
-            <translation type="unfinished"></translation>
+            <translation>%1: confidence must be between 0 and 1</translation>
         </message>
         <message>
             <source>%1：confidenceBasis 为空或超长</source>
-            <translation type="unfinished"></translation>
+            <translation>%1: confidenceBasis is empty or too long</translation>
         </message>
         <message>
             <source>里程碑规则不是有效 JSON：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Milestone rules aren't valid JSON: %1</translation>
         </message>
         <message>
             <source>里程碑 %1 没有标记</source>
-            <translation type="unfinished"></translation>
+            <translation>Milestone %1 has no markers</translation>
         </message>
         <message>
             <source>里程碑缺少 main_menu/world_loaded/crash 之一</source>
-            <translation type="unfinished"></translation>
+            <translation>Milestones are missing one of main_menu/world_loaded/crash</translation>
         </message>
     </context>
     <context>
@@ -876,118 +876,118 @@ Select "Sign out" to try again.</translation>
         <name>AgentLauncherTools</name>
         <message>
             <source>崩溃快照</source>
-            <translation type="unfinished"></translation>
+            <translation>Crash snapshot</translation>
         </message>
         <message>
             <source>解析最新一份崩溃报告（或日志尾）：环境、阶段、异常链、模组嫌疑与命中规则；报告头部提到的模组只算线索。</source>
-            <translation type="unfinished"></translation>
+            <translation>Parse the latest crash report (or log tail): environment, phase, exception chain, mod suspects, and matched rules. Mods listed in the report header are treated as clues only.</translation>
         </message>
         <message>
             <source>搜索日志</source>
-            <translation type="unfinished"></translation>
+            <translation>Search logs</translation>
         </message>
         <message>
             <source>按字面量（大小写不敏感）搜日志，带行号与上下文；最多 200 条，路径已脱敏。</source>
-            <translation type="unfinished"></translation>
+            <translation>Case-insensitive literal search in logs with line numbers and context; up to 200 matches, paths redacted.</translation>
         </message>
         <message>
             <source>按行读日志</source>
-            <translation type="unfinished"></translation>
+            <translation>Read log lines</translation>
         </message>
         <message>
             <source>从第 startLine 行开始读一段日志，最多 500 行；已脱敏。</source>
-            <translation type="unfinished"></translation>
+            <translation>Read a segment of the log starting from startLine, up to 500 lines; paths redacted.</translation>
         </message>
         <message>
             <source>读崩溃报告全文</source>
-            <translation type="unfinished"></translation>
+            <translation>Read full crash report</translation>
         </message>
         <message>
             <source>把整份崩溃报告脱敏后存成 artifact，只返回分段目录与摘要；原文用 artifact.read 按偏移读。</source>
-            <translation type="unfinished"></translation>
+            <translation>Redact the full crash report, save it as an artifact, and return section offsets and summary; read raw text by offset with artifact.read.</translation>
         </message>
         <message>
             <source>会话还没有锁定实例。</source>
-            <translation type="unfinished"></translation>
+            <translation>No instance locked for this chat.</translation>
         </message>
         <message>
             <source>没有这份日志，或实例还没有日志文件。</source>
-            <translation type="unfinished"></translation>
+            <translation>Log not found, or instance has no log file.</translation>
         </message>
         <message>
             <source>搜索命中 %1 处</source>
-            <translation type="unfinished"></translation>
+            <translation>%1 search matches</translation>
         </message>
         <message>
             <source>日志搜索：命中 %1 处（返回 %2 处）</source>
-            <translation type="unfinished"></translation>
+            <translation>Log search: %1 matches (%2 returned)</translation>
         </message>
         <message>
             <source>startLine 从 1 开始。</source>
-            <translation type="unfinished"></translation>
+            <translation>startLine starts at 1.</translation>
         </message>
         <message>
             <source>第 %1–%2 行（共 %3 行）</source>
-            <translation type="unfinished"></translation>
+            <translation>Lines %1–%2 (of %3)</translation>
         </message>
         <message>
             <source>日志第 %1–%2 行（共 %3 行）</source>
-            <translation type="unfinished"></translation>
+            <translation>Log lines %1–%2 (of %3)</translation>
         </message>
         <message>
             <source>崩溃报告读不动。</source>
-            <translation type="unfinished"></translation>
+            <translation>Can't read crash report.</translation>
         </message>
         <message>
             <source>找不到这份崩溃报告；先用 crash.list 看有哪些。</source>
-            <translation type="unfinished"></translation>
+            <translation>Crash report not found; list available reports with crash.list first.</translation>
         </message>
         <message>
             <source>没有崩溃报告，也没有可读的游戏日志。</source>
-            <translation type="unfinished"></translation>
+            <translation>No crash reports or readable game logs found.</translation>
         </message>
         <message>
             <source>日志读不动。</source>
-            <translation type="unfinished"></translation>
+            <translation>Can't read log.</translation>
         </message>
         <message>
             <source>崩溃快照：%1，阶段 %2，命中 %3 条规则，嫌疑 %4 个</source>
-            <translation type="unfinished"></translation>
+            <translation>Crash snapshot: %1, phase %2, %3 rule hits, %4 suspects</translation>
         </message>
         <message>
             <source>未识别异常</source>
-            <translation type="unfinished"></translation>
+            <translation>Unrecognized exception</translation>
         </message>
         <message>
             <source>崩溃报告全文：%1 行、%2 段（原文已脱敏进 artifact）</source>
-            <translation type="unfinished"></translation>
+            <translation>Full crash report: %1 lines, %2 sections (redacted and saved as artifact)</translation>
         </message>
         <message>
             <source>崩溃报告全文</source>
-            <translation type="unfinished"></translation>
+            <translation>Full crash report</translation>
         </message>
     </context>
     <context>
         <name>AgentLogIndex</name>
         <message>
             <source>搜索词不能为空。</source>
-            <translation type="unfinished"></translation>
+            <translation>Search query can't be empty.</translation>
         </message>
         <message>
             <source>搜索词超过 %1 个字符。</source>
-            <translation type="unfinished"></translation>
+            <translation>Search query exceeds %1 characters.</translation>
         </message>
         <message>
             <source>日志读不动。</source>
-            <translation type="unfinished"></translation>
+            <translation>Can't read log.</translation>
         </message>
         <message>
             <source>startLine 从 1 开始。</source>
-            <translation type="unfinished"></translation>
+            <translation>startLine starts at 1.</translation>
         </message>
         <message>
             <source>日志定位失败。</source>
-            <translation type="unfinished"></translation>
+            <translation>Couldn't locate position in log.</translation>
         </message>
     </context>
     <context>
@@ -1040,515 +1040,515 @@ Select "Sign out" to try again.</translation>
         <name>AgentMixinOwnership</name>
         <message>
             <source>mods 目录不存在。</source>
-            <translation type="unfinished"></translation>
+            <translation>mods folder doesn't exist.</translation>
         </message>
         <message>
             <source>没有模组声明 mixin 配置。</source>
-            <translation type="unfinished"></translation>
+            <translation>No mods declare mixin configs.</translation>
         </message>
     </context>
     <context>
         <name>AgentModBisect::Bisect</name>
         <message>
             <source>没有可停用的候选模组：问题不来自模组集合</source>
-            <translation type="unfinished"></translation>
+            <translation>No candidate mods to disable: issue doesn't come from the mod set</translation>
         </message>
         <message>
             <source>停用全部候选模组后仍能复现：问题在加载器/前置或非模组</source>
-            <translation type="unfinished"></translation>
+            <translation>Still reproduces with all candidate mods disabled: issue is in loader, dependencies, or outside mods</translation>
         </message>
         <message>
             <source>达到启动次数上限（%1），返回当前最小集合</source>
-            <translation type="unfinished"></translation>
+            <translation>Launch limit reached (%1); returning current minimal set</translation>
         </message>
         <message>
             <source>超过 %1 分钟的时间预算</source>
-            <translation type="unfinished"></translation>
+            <translation>Exceeded %1 min time budget</translation>
         </message>
         <message>
             <source>一次启动没有跑起来</source>
-            <translation type="unfinished"></translation>
+            <translation>A launch didn't start</translation>
         </message>
         <message>
             <source>连续 3 次启动失败，停止二分</source>
-            <translation type="unfinished"></translation>
+            <translation>3 consecutive launch failures; bisect stopped</translation>
         </message>
         <message>
             <source>完整启用集启动后没有崩溃：这个问题不能靠二分定位</source>
-            <translation type="unfinished"></translation>
+            <translation>No crash with all mods enabled: issue can't be isolated by bisect</translation>
         </message>
         <message>
             <source>确认时有一次没有复现，加跑一轮</source>
-            <translation type="unfinished"></translation>
+            <translation>Didn't reproduce once during confirmation; running one more round</translation>
         </message>
         <message>
             <source>重复确认结果不一致（flaky），不给出责任模组</source>
-            <translation type="unfinished"></translation>
+            <translation>Inconsistent confirmation results (flaky); no culprit mod reported</translation>
         </message>
         <message>
             <source>只在 %1 个模组同时启用时复现，没有缩到单个或两个</source>
-            <translation type="unfinished"></translation>
+            <translation>Reproduces only with %1 mods enabled together; couldn't narrow to one or two</translation>
         </message>
         <message>
             <source>确认时没有复现，加跑一轮</source>
-            <translation type="unfinished"></translation>
+            <translation>Didn't reproduce during confirmation; running one more round</translation>
         </message>
     </context>
     <context>
         <name>AgentModCompat</name>
         <message>
             <source>文件大小为 0</source>
-            <translation type="unfinished"></translation>
+            <translation>File size is 0</translation>
         </message>
         <message>
             <source>JAR 里没有可识别的模组声明</source>
-            <translation type="unfinished"></translation>
+            <translation>No recognized mod metadata found in JAR</translation>
         </message>
         <message>
             <source>声明的加载器（%1）与实例（%2）不一致</source>
-            <translation type="unfinished"></translation>
+            <translation>Declared loader (%1) doesn't match instance (%2)</translation>
         </message>
         <message>
             <source>声明里没有 Minecraft 版本范围</source>
-            <translation type="unfinished"></translation>
+            <translation>No Minecraft version range in metadata</translation>
         </message>
         <message>
             <source>声明不支持 Minecraft %1（要求 %2）</source>
-            <translation type="unfinished"></translation>
+            <translation>Metadata doesn't support Minecraft %1 (requires %2)</translation>
         </message>
         <message>
             <source>Minecraft 版本范围无法解析：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Can't parse Minecraft version range: %1</translation>
         </message>
         <message>
             <source>需要加载器版本 %1（当前 %2）</source>
-            <translation type="unfinished"></translation>
+            <translation>Requires loader version %1 (current: %2)</translation>
         </message>
         <message>
             <source>加载器版本范围无法解析：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Can't parse loader version range: %1</translation>
         </message>
         <message>
             <source>需要 Java %1（当前 %2）</source>
-            <translation type="unfinished">Requires Java %1 (current %2)</translation>
+            <translation>Requires Java %1 (current: %2)</translation>
         </message>
         <message>
             <source>Java 范围无法解析：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Can't parse Java version range: %1</translation>
         </message>
         <message>
             <source>读不到 mod id，依赖图里对不上</source>
-            <translation type="unfinished"></translation>
+            <translation>Can't read mod ID; missing from dependency graph</translation>
         </message>
         <message>
             <source>同一个 mod id 出现在 %1 个文件里：%2</source>
-            <translation type="unfinished"></translation>
+            <translation>Same mod ID found in %1 files: %2</translation>
         </message>
         <message>
             <source>缺少前置 %1（未安装）</source>
-            <translation type="unfinished"></translation>
+            <translation>Missing dependency %1 (not installed)</translation>
         </message>
         <message>
             <source>缺少前置 %1（只有停用文件：%2）</source>
-            <translation type="unfinished"></translation>
+            <translation>Missing dependency %1 (disabled files only: %2)</translation>
         </message>
         <message>
             <source>平台没有这个哈希的记录（可能是自行构建的版本）</source>
-            <translation type="unfinished"></translation>
+            <translation>No platform record for this hash (may be a custom build)</translation>
         </message>
         <message>
             <source>平台记录的这一版（%1）只支持 Minecraft %2，实例是 %3</source>
-            <translation type="unfinished"></translation>
+            <translation>Platform record for this build (%1) supports Minecraft %2 only; instance is %3</translation>
         </message>
         <message>
             <source>平台记录的这一版（%1）的加载器是 %2，实例是 %3</source>
-            <translation type="unfinished"></translation>
+            <translation>Platform record for this build (%1) targets loader %2; instance is %3</translation>
         </message>
         <message>
             <source>平台要求的前置项目 %1 不在已装清单里</source>
-            <translation type="unfinished"></translation>
+            <translation>Platform-required dependency project %1 isn't in installed list</translation>
         </message>
     </context>
     <context>
         <name>AgentModPlatform</name>
         <message>
             <source>平台查询超过 %1 秒，已返回部分结果。</source>
-            <translation type="unfinished"></translation>
+            <translation>Platform query exceeded %1 s; partial results returned.</translation>
         </message>
         <message>
             <source>Modrinth 反查回了 HTTP %1。</source>
-            <translation type="unfinished"></translation>
+            <translation>Modrinth hash lookup returned HTTP %1.</translation>
         </message>
         <message>
             <source>Modrinth 反查没连上：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Couldn't reach Modrinth hash lookup: %1</translation>
         </message>
         <message>
             <source>Modrinth 没有这个哈希的项目号</source>
-            <translation type="unfinished"></translation>
+            <translation>Modrinth has no project ID for this hash</translation>
         </message>
         <message>
             <source>Modrinth 版本列表回了 HTTP %1。</source>
-            <translation type="unfinished"></translation>
+            <translation>Modrinth version list returned HTTP %1.</translation>
         </message>
         <message>
             <source>Modrinth 版本列表没连上：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Couldn't reach Modrinth version list: %1</translation>
         </message>
         <message>
             <source>这个项目没有可用的版本。</source>
-            <translation type="unfinished"></translation>
+            <translation>No available versions for this project.</translation>
         </message>
         <message>
             <source>版本列表里没有 %1。</source>
-            <translation type="unfinished"></translation>
+            <translation>%1 not found in version list.</translation>
         </message>
         <message>
             <source>这一版里没有哈希为 %1 的文件。</source>
-            <translation type="unfinished"></translation>
+            <translation>No file matching hash %1 in this version.</translation>
         </message>
         <message>
             <source>这一版没有可下载的文件。</source>
-            <translation type="unfinished"></translation>
+            <translation>No downloadable files in this version.</translation>
         </message>
     </context>
     <context>
         <name>AgentModToolEngine</name>
         <message>
             <source>依赖感知二分</source>
-            <translation type="unfinished"></translation>
+            <translation>Dependency-aware bisect</translation>
         </message>
         <message>
             <source>未知工具。</source>
-            <translation type="unfinished"></translation>
+            <translation>Unknown tool.</translation>
         </message>
         <message>
             <source>启动器工具宿主未接入。</source>
-            <translation type="unfinished"></translation>
+            <translation>Launcher tool host not connected.</translation>
         </message>
         <message>
             <source>会话还没有锁定实例。</source>
-            <translation type="unfinished"></translation>
+            <translation>No instance locked for this chat.</translation>
         </message>
         <message>
             <source>把 %1 个模组文件的 SHA-1 发给 Modrinth，不发文件名</source>
-            <translation type="unfinished"></translation>
+            <translation>Send SHA-1 hashes of %1 mod files to Modrinth (no filenames)</translation>
         </message>
         <message>
             <source>分析模组兼容性：%1 个文件（%2 %3）</source>
-            <translation type="unfinished"></translation>
+            <translation>Analyze mod compatibility: %1 files (%2 %3)</translation>
         </message>
         <message>
             <source>版本未知</source>
-            <translation type="unfinished">Can't recognize</translation>
+            <translation>unknown version</translation>
         </message>
         <message>
             <source>原版</source>
-            <translation type="unfinished"></translation>
+            <translation>Vanilla</translation>
         </message>
         <message>
             <source>本地先读每个 JAR 的声明（不联网）；平台查询只发 SHA-1，不发文件名，结果按哈希缓存。加 offline=true / platform=false 可只做本地分析。</source>
-            <translation type="unfinished"></translation>
+            <translation>Reads each JAR's metadata locally first (offline); platform lookup sends SHA-1 hashes only without filenames and caches results by hash. Pass offline=true or platform=false for local analysis only.</translation>
         </message>
         <message>
             <source>模组兼容性分析</source>
-            <translation type="unfinished"></translation>
+            <translation>Mod compatibility analysis</translation>
         </message>
         <message>
             <source>平台查询只发 SHA-1；本地分析不写盘。</source>
-            <translation type="unfinished"></translation>
+            <translation>Platform queries send SHA-1 hashes only; local analysis writes nothing to disk.</translation>
         </message>
         <message>
             <source>没有这个工作区。</source>
-            <translation type="unfinished"></translation>
+            <translation>Workspace doesn't exist.</translation>
         </message>
         <message>
             <source>工作区不属于当前锁定的实例。</source>
-            <translation type="unfinished"></translation>
+            <translation>Workspace doesn't belong to the locked instance.</translation>
         </message>
         <message>
             <source>工作区路径不在登记目录下，拒绝执行。</source>
-            <translation type="unfinished"></translation>
+            <translation>Workspace path is outside the registered folder; execution blocked.</translation>
         </message>
         <message>
             <source>二分只从事务工作区：先 repair.begin，再带 workspaceId 调这里。</source>
-            <translation type="unfinished"></translation>
+            <translation>Bisect runs only in a transaction workspace: call repair.begin first, then pass workspaceId.</translation>
         </message>
         <message>
             <source>测试启动宿主未接入。</source>
-            <translation type="unfinished"></translation>
+            <translation>Test launch host not connected.</translation>
         </message>
         <message>
             <source>在事务工作区 %1 里二分：最多 %2 次启动、每次最多 %3 秒。</source>
-            <translation type="unfinished"></translation>
+            <translation>Bisect in transaction workspace %1: up to %2 launches, %3 s max each.</translation>
         </message>
         <message>
             <source>反复启用/停用工作区 mods/ 并启动游戏，每轮把 config/ 与 options.txt 重置到二分开始时的快照；不写原实例、不下载、不改世界。结束后把 mods/、config/、options.txt 恢复成二分前的样子。</source>
-            <translation type="unfinished"></translation>
+            <translation>Toggles workspace mods/ and launches the game repeatedly, resetting config/ and options.txt to the initial snapshot each round. Never touches the original instance, downloads files, or modifies worlds; restores mods/, config/, and options.txt when finished.</translation>
         </message>
         <message>
             <source>只启动隔离工作区里的游戏；进程用 Job Object 清理。</source>
-            <translation type="unfinished"></translation>
+            <translation>Launches the game only in an isolated workspace; process cleaned up with a Job Object.</translation>
         </message>
         <message>
             <source>只在本机工作区启动</source>
-            <translation type="unfinished"></translation>
+            <translation>Launches in local workspace only</translation>
         </message>
         <message>
             <source>工作区路径不在登记目录下，拒绝写入。</source>
-            <translation type="unfinished"></translation>
+            <translation>Workspace path is outside the registered folder; write blocked.</translation>
         </message>
         <message>
             <source>模组修复只写事务工作区：先 repair.begin，再带 workspaceId 调这里。</source>
-            <translation type="unfinished"></translation>
+            <translation>Mod repair writes only to a transaction workspace: call repair.begin first, then pass workspaceId.</translation>
         </message>
         <message>
             <source>修复模组：%1%2 → 事务工作区 %3</source>
-            <translation type="unfinished"></translation>
+            <translation>Repair mod: %1%2 → transaction workspace %3</translation>
         </message>
         <message>
             <source>先把文件下载到暂存目录并校验大小与 SHA-1，全部通过后才复制进工作区 mods/；%1任何一步失败都不改工作区，也不碰原实例。</source>
-            <translation type="unfinished"></translation>
+            <translation>Downloads files to staging and verifies size and SHA-1 before copying to workspace mods/. %1No files in the workspace or original instance are modified if any step fails.</translation>
         </message>
         <message>
             <source>会补齐版本声明的必需前置；</source>
-            <translation type="unfinished"></translation>
+            <translation>Installs required dependencies from version metadata. </translation>
         </message>
         <message>
             <source>修复模组文件</source>
-            <translation type="unfinished"></translation>
+            <translation>Repair mod files</translation>
         </message>
         <message>
             <source>只写事务工作区；提交/回滚由 repair.finish 决定。</source>
-            <translation type="unfinished"></translation>
+            <translation>Writes to transaction workspace only; commit or rollback is decided via repair.finish.</translation>
         </message>
         <message>
             <source>下载与写盘都在本机</source>
-            <translation type="unfinished"></translation>
+            <translation>Download and disk writes stay local</translation>
         </message>
         <message>
             <source>事务活动期间不能改共享库/资源；先提交或回滚事务。</source>
-            <translation type="unfinished"></translation>
+            <translation>Can't modify shared libraries or assets during an active transaction; commit or roll back first.</translation>
         </message>
         <message>
             <source>模组宿主未接入。</source>
-            <translation type="unfinished"></translation>
+            <translation>Mod host not connected.</translation>
         </message>
         <message>
             <source>重下实例 %1 的客户端 jar、库和资源索引</source>
-            <translation type="unfinished"></translation>
+            <translation>Redownload client JAR, libraries, and asset index for instance %1</translation>
         </message>
         <message>
             <source>按实例声明的官方大小与 SHA-1 校验并重下；会动全体版本共用的 libraries/ 与 assets/。</source>
-            <translation type="unfinished"></translation>
+            <translation>Verifies and redownloads against official size and SHA-1 in instance metadata; updates shared libraries/ and assets/ used by all versions.</translation>
         </message>
         <message>
             <source>修复游戏核心文件</source>
-            <translation type="unfinished"></translation>
+            <translation>Repair game core files</translation>
         </message>
         <message>
             <source>共享库/资源不保留旧副本；失败时按官方哈希重下。</source>
-            <translation type="unfinished"></translation>
+            <translation>No old copies are kept for shared libraries or assets; on failure, redownload using official hashes.</translation>
         </message>
         <message>
             <source>只从官方源重下</source>
-            <translation type="unfinished"></translation>
+            <translation>Downloads from official sources only</translation>
         </message>
         <message>
             <source>文件不存在或读不动</source>
-            <translation type="unfinished"></translation>
+            <translation>File missing or unreadable</translation>
         </message>
         <message>
             <source>未检查：本轮未返回声明结果</source>
-            <translation type="unfinished">Unchecked: no declaration result returned</translation>
+            <translation>Unchecked: no metadata result returned this round</translation>
         </message>
         <message>
             <source>算不出 SHA-1（文件读不动）</source>
-            <translation type="unfinished"></translation>
+            <translation>Can't compute SHA-1 (file unreadable)</translation>
         </message>
         <message>
             <source>已有一个模组任务在运行。</source>
-            <translation type="unfinished"></translation>
+            <translation>Another mod task is already running.</translation>
         </message>
         <message>
             <source>正在读模组声明…</source>
-            <translation type="unfinished"></translation>
+            <translation>Reading mod metadata…</translation>
         </message>
         <message>
             <source>没有算成 SHA-1 的文件，跳过平台查询</source>
-            <translation type="unfinished"></translation>
+            <translation>No files with computed SHA-1; skipped platform lookup</translation>
         </message>
         <message>
             <source>模组兼容性：%1 个文件，%2 个问题、%3 个提醒、%4 个未知</source>
-            <translation type="unfinished"></translation>
+            <translation>Mod compatibility: %1 files (%2 problems, %3 warnings, %4 unknown)</translation>
         </message>
         <message>
             <source>文件大小为 0</source>
-            <translation type="unfinished"></translation>
+            <translation>File size is 0</translation>
         </message>
         <message>
             <source>JAR 里没有可识别的模组声明</source>
-            <translation type="unfinished"></translation>
+            <translation>No recognized mod metadata found in JAR</translation>
         </message>
         <message>
             <source>模组校验：%1 个文件，%2 个损坏、%3 个无法确认</source>
-            <translation type="unfinished"></translation>
+            <translation>Mod verification: %1 files (%2 damaged, %3 unconfirmed)</translation>
         </message>
         <message>
             <source>建不出暂存目录，未下载任何文件。</source>
-            <translation type="unfinished"></translation>
+            <translation>Can't create staging folder; no files downloaded.</translation>
         </message>
         <message>
             <source>解析下载地址失败，未下载任何文件。</source>
-            <translation type="unfinished"></translation>
+            <translation>Couldn't resolve download URL; no files downloaded.</translation>
         </message>
         <message>
             <source>解析下载地址失败：%1（未下载任何文件）</source>
-            <translation type="unfinished"></translation>
+            <translation>Couldn't resolve download URL: %1 (no files downloaded)</translation>
         </message>
         <message>
             <source>平台给的文件名不合法，拒绝写入。</source>
-            <translation type="unfinished"></translation>
+            <translation>Platform returned an invalid filename; write blocked.</translation>
         </message>
         <message>
             <source>平台记录的哈希与 expectedSha1 不一致，拒绝下载。</source>
-            <translation type="unfinished"></translation>
+            <translation>Platform hash doesn't match expectedSha1; download blocked.</translation>
         </message>
         <message>
             <source>文件超过 100 MB，不在自动修复范围内。</source>
-            <translation type="unfinished"></translation>
+            <translation>File exceeds 100 MB, outside auto-repair limit.</translation>
         </message>
         <message>
             <source>这一批超过 500 MB，整批拒绝，工作区未改动。</source>
-            <translation type="unfinished"></translation>
+            <translation>Batch exceeds 500 MB; rejected without modifying workspace.</translation>
         </message>
         <message>
             <source>下载失败：%1（整批停止，工作区未改动）</source>
-            <translation type="unfinished"></translation>
+            <translation>Download failed: %1 (batch stopped, workspace unchanged)</translation>
         </message>
         <message>
             <source>下载回来的哈希与平台记录不一致（%1），整批停止。</source>
-            <translation type="unfinished"></translation>
+            <translation>Downloaded hash doesn't match platform record (%1); batch stopped.</translation>
         </message>
         <message>
             <source>下载没有开始，未写任何文件。</source>
-            <translation type="unfinished"></translation>
+            <translation>Download didn't start; no files written.</translation>
         </message>
         <message>
             <source>建不出工作区 mods 目录。</source>
-            <translation type="unfinished"></translation>
+            <translation>Can't create workspace mods folder.</translation>
         </message>
         <message>
             <source>工作区里已经有 %1，拒绝覆盖（已撤销本次复制的文件）。</source>
-            <translation type="unfinished"></translation>
+            <translation>%1 already exists in workspace; overwrite blocked (reverted files copied in this batch).</translation>
         </message>
         <message>
             <source>复制 %1 失败（已撤销本次复制的文件）。</source>
-            <translation type="unfinished"></translation>
+            <translation>Couldn't copy %1 (reverted files copied in this batch).</translation>
         </message>
         <message>
             <source>复制后校验 %1 失败（已撤销本次复制的文件）。</source>
-            <translation type="unfinished"></translation>
+            <translation>Post-copy check failed for %1 (reverted files copied in this batch).</translation>
         </message>
         <message>
             <source>落盘 %1 失败（已撤销本次复制的文件）。</source>
-            <translation type="unfinished"></translation>
+            <translation>Couldn't write %1 to disk (reverted files copied in this batch).</translation>
         </message>
         <message>
             <source>只改了事务工作区；用 repair.diff 看改动，repair.verify 验证，repair.finish 提交或回滚。</source>
-            <translation type="unfinished"></translation>
+            <translation>Modified transaction workspace only; use repair.diff to inspect changes, repair.verify to check, and repair.finish to commit or roll back.</translation>
         </message>
         <message>
             <source>模组修复：%1 个文件已写进工作区（事务 %2）</source>
-            <translation type="unfinished"></translation>
+            <translation>Mod repair: %1 files written to workspace (transaction %2)</translation>
         </message>
         <message>
             <source>核心文件修复失败。</source>
-            <translation type="unfinished"></translation>
+            <translation>Couldn't repair game core files.</translation>
         </message>
         <message>
             <source>已把缺文件/哈希不符的文件排进下载并等它收尾；再跑 instance.integrity 复核分组计数。</source>
-            <translation type="unfinished"></translation>
+            <translation>Queued missing and mismatched files for download and waited for completion; run instance.integrity again to recheck group counts.</translation>
         </message>
         <message>
             <source>核心文件已按官方大小与 SHA-1 修复完成。</source>
-            <translation type="unfinished"></translation>
+            <translation>Game core files repaired against official sizes and SHA-1 hashes.</translation>
         </message>
         <message>
             <source>核心文件修复没有开始。</source>
-            <translation type="unfinished"></translation>
+            <translation>Game core file repair didn't start.</translation>
         </message>
         <message>
             <source>建不出快照目录。</source>
-            <translation type="unfinished"></translation>
+            <translation>Can't create snapshot folder.</translation>
         </message>
         <message>
             <source>config/ 超过快照上限（5000 个文件 / 200 MB）。</source>
-            <translation type="unfinished"></translation>
+            <translation>config/ exceeds snapshot limit (5000 files / 200 MB).</translation>
         </message>
         <message>
             <source>复制 config/ 失败。</source>
-            <translation type="unfinished"></translation>
+            <translation>Couldn't copy config/.</translation>
         </message>
         <message>
             <source>复制 options.txt 快照失败，未开始二分。</source>
-            <translation type="unfinished"></translation>
+            <translation>Couldn't snapshot options.txt; bisect not started.</translation>
         </message>
         <message>
             <source>准备快照目录失败，未开始二分。</source>
-            <translation type="unfinished"></translation>
+            <translation>Couldn't prepare snapshot folder; bisect not started.</translation>
         </message>
         <message>
             <source>工作区里有重名文件：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Duplicate filename in workspace: %1</translation>
         </message>
         <message>
             <source>改不了模组文件名：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Can't rename mod file: %1</translation>
         </message>
         <message>
             <source>工作区里找不到模组：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Mod not found in workspace: %1</translation>
         </message>
         <message>
             <source>恢复 options.txt 失败。</source>
-            <translation type="unfinished"></translation>
+            <translation>Couldn't restore options.txt.</translation>
         </message>
         <message>
             <source>测试启动没有开始</source>
-            <translation type="unfinished"></translation>
+            <translation>Test launch didn't start</translation>
         </message>
         <message>
             <source>进程没有起来</source>
-            <translation type="unfinished"></translation>
+            <translation>Process didn't start</translation>
         </message>
         <message>
             <source>二分结果：%1（%2 次启动）</source>
-            <translation type="unfinished"></translation>
+            <translation>Bisect result: %1 (%2 launches)</translation>
         </message>
         <message>
             <source>审批请求已失效。</source>
-            <translation type="unfinished"></translation>
+            <translation>Approval request expired.</translation>
         </message>
         <message>
             <source>用户拒绝了这次操作；没有发平台请求，也没有读写任何文件。</source>
-            <translation type="unfinished"></translation>
+            <translation>Action denied by user; no platform requests sent and no files read or written.</translation>
         </message>
         <message>
             <source>正在准备二分…</source>
-            <translation type="unfinished"></translation>
+            <translation>Preparing bisect…</translation>
         </message>
         <message>
             <source>正在解析下载地址…</source>
-            <translation type="unfinished"></translation>
+            <translation>Resolving download URLs…</translation>
         </message>
         <message>
             <source>正在修复核心文件…</source>
-            <translation type="unfinished"></translation>
+            <translation>Repairing game core files…</translation>
         </message>
         <message>
             <source>这次模组任务已取消。</source>
-            <translation type="unfinished"></translation>
+            <translation>Mod task canceled.</translation>
         </message>
     </context>
     <context>
@@ -1631,15 +1631,15 @@ Select "Sign out" to try again.</translation>
         </message>
         <message>
             <source>显示更早的消息</source>
-            <translation type="unfinished"></translation>
+            <translation>Show earlier messages</translation>
         </message>
         <message>
             <source>Ctrl+End 回到最新消息</source>
-            <translation type="unfinished"></translation>
+            <translation>Ctrl+End jumps to latest message</translation>
         </message>
         <message>
             <source>一次批准一个事务：按已批准计划执行，不再逐步确认；最长 60 分钟或 20 次启动，结束写审计。</source>
-            <translation type="unfinished"></translation>
+            <translation>Approve one transaction at a time: planned actions run without per-step prompts (up to 60 min or 20 launches); an audit log is written on completion.</translation>
         </message>
         <message>
             <source>Enter 发送 · Shift+Enter 换行</source>
@@ -1734,42 +1734,42 @@ Select "Sign out" to try again.</translation>
         <name>AgentPromptLibrary</name>
         <message>
             <source>提示词 id 不合法：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Invalid prompt ID: %1</translation>
         </message>
         <message>
             <source>未找到技能提示词资源：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Skill prompt resource not found: %1</translation>
         </message>
         <message>
             <source>提示词超过预算（%1 字节）：%2</source>
-            <translation type="unfinished"></translation>
+            <translation>Prompt exceeds budget (%1 bytes): %2</translation>
         </message>
         <message>
             <source>技能提示词不是有效 UTF-8：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Skill prompt isn't valid UTF-8: %1</translation>
         </message>
         <message>
             <source>技能提示词为空：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Skill prompt is empty: %1</translation>
         </message>
         <message>
             <source>技能提示词 id 不合法：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Invalid skill prompt ID: %1</translation>
         </message>
         <message>
             <source>技能提示词不可用（%1）：%2</source>
-            <translation type="unfinished"></translation>
+            <translation>Skill prompt unavailable (%1): %2</translation>
         </message>
         <message>
             <source>技能提示词组合后超过预算（%1 字节）</source>
-            <translation type="unfinished"></translation>
+            <translation>Combined skill prompt exceeds budget (%1 bytes)</translation>
         </message>
     </context>
     <context>
         <name>AgentRepairToolEngine</name>
         <message>
             <source>自动回滚没有开始：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Auto-rollback didn't start: %1</translation>
         </message>
     </context>
     <context>
@@ -1803,7 +1803,7 @@ Select "Sign out" to try again.</translation>
         </message>
         <message>
             <source>默认关闭。打开后把「症状、改动、验证结果」记在本机，下次遇到同类崩溃时按成功率排序提示；只记结构化字段，不保存日志原文，也不额外外发。</source>
-            <translation>Off by default. When on, each symptom, change and verification result is stored locally and ranked by success rate the next time a similar crash appears. Only structured fields are stored; no raw logs, and nothing extra leaves the machine.</translation>
+            <translation>Off by default. When on, symptoms, changes, and verification results are saved locally and ranked by success rate for similar crashes. Only structured fields are stored; no raw logs or extra data leave the device.</translation>
         </message>
         <message>
             <source>API 与模型设置</source>
@@ -2986,63 +2986,63 @@ Confirm you have the right to use these game assets and have read the Minecraft 
         <name>AssetDirectorKnownSet</name>
         <message>
             <source>%1 不是对象。</source>
-            <translation>%1 is not an object.</translation>
+            <translation>%1 isn't an object.</translation>
         </message>
         <message>
             <source>%1 的地址不是 Mojang 官方 HTTPS 地址。</source>
-            <translation>The address for %1 is not an official Mojang HTTPS address.</translation>
+            <translation>URL for %1 isn't an official Mojang HTTPS URL.</translation>
         </message>
         <message>
             <source>%1 的 SHA-1 不是 40 位十六进制。</source>
-            <translation>SHA-1 for %1 is not 40-digit hexadecimal.</translation>
+            <translation>SHA-1 for %1 isn't 40 hex characters.</translation>
         </message>
         <message>
             <source>%1 的字节数不合法。</source>
-            <translation>The number of bytes in %1 is illegal.</translation>
+            <translation>Invalid byte count for %1.</translation>
         </message>
         <message>
             <source>已知集合清单为空或过大。</source>
-            <translation>The collection list is known to be empty or too large.</translation>
+            <translation>Known set manifest is empty or too large.</translation>
         </message>
         <message>
             <source>已知集合清单不是 JSON 对象（%1）。</source>
-            <translation>The collection list is known to not be a JSON object (%1).</translation>
+            <translation>Known set manifest isn't a JSON object (%1).</translation>
         </message>
         <message>
             <source>不支持此已知资源清单的格式版本。</source>
-            <translation>Unrecognized version of known collection manifest format.</translation>
+            <translation>Unsupported known asset manifest format version.</translation>
         </message>
         <message>
             <source>已知集合条目不是对象。</source>
-            <translation>It is known that the collection entry is not an object.</translation>
+            <translation>Known set entry isn't an object.</translation>
         </message>
         <message>
             <source>已知集合的 id 不合法或重复：%1</source>
-            <translation>The id of the known collection is invalid or duplicated: %1</translation>
+            <translation>Invalid or duplicate known set ID: %1</translation>
         </message>
         <message>
             <source>%1 的 MC 版本不合法。</source>
-            <translation>The MC version of %1 is illegal.</translation>
+            <translation>Invalid MC version for %1.</translation>
         </message>
         <message>
             <source>%1 的消费者匹配规则不合法。</source>
-            <translation>The consumer matching rule for %1 is illegal.</translation>
+            <translation>Invalid consumer matching rule for %1.</translation>
         </message>
         <message>
             <source>%1 的消费者匹配规则无效。</source>
-            <translation>The consumer matching rule for %1 is invalid.</translation>
+            <translation>Invalid consumer matching rule for %1.</translation>
         </message>
         <message>
             <source>%1 的版本 JSON</source>
-            <translation>Version JSON of %1</translation>
+            <translation>Version JSON for %1</translation>
         </message>
         <message>
             <source>%1 中存在不合法的对象名。</source>
-            <translation>There is an illegal object name in %1.</translation>
+            <translation>%1 contains an invalid object name.</translation>
         </message>
         <message>
             <source>%1 中的 %2 哈希不是 40 位十六进制。</source>
-            <translation>The hash of %2 in %1 is not 40-digit hexadecimal.</translation>
+            <translation>Hash of %2 in %1 isn't 40 hex characters.</translation>
         </message>
         <message>
             <source>%1 中的 %2 字节数不合法。</source>
@@ -3050,47 +3050,47 @@ Confirm you have the right to use these game assets and have read the Minecraft 
         </message>
         <message>
             <source>%1 中同一哈希出现两次。</source>
-            <translation>The same hash appears twice in %1.</translation>
+            <translation>Duplicate hash in %1.</translation>
         </message>
         <message>
             <source>此已知集合为 %1 MiB，超过允许自动下载的上限 %2 MiB。</source>
-            <translation>This known collection is %1 MiB in size, exceeding the limit of %2 MiB allowed for automatic downloads.</translation>
+            <translation>This known set is %1 MiB, exceeding the %2 MiB auto-download limit.</translation>
         </message>
         <message>
             <source>未提供清单结果。</source>
-            <translation>No listing results were given.</translation>
+            <translation>No manifest results provided.</translation>
         </message>
         <message>
             <source>已知集合清单中无可用条目。</source>
-            <translation>There are no available entries in the known collection list.</translation>
+            <translation>No usable entries in the known set manifest.</translation>
         </message>
         <message>
             <source>%1 无可用消费者匹配规则。</source>
-            <translation>%1 No consumer matching rules available.</translation>
+            <translation>%1 has no usable consumer matching rules.</translation>
         </message>
         <message>
             <source>%1 无资源索引。</source>
-            <translation>%1 has no resource index.</translation>
+            <translation>%1 has no asset index.</translation>
         </message>
         <message>
             <source>%1 的资源索引 id 不合法。</source>
-            <translation>The resource index id of %1 is illegal.</translation>
+            <translation>Invalid asset index ID for %1.</translation>
         </message>
         <message>
             <source>%1 的资源索引</source>
-            <translation>Resource index for %1</translation>
+            <translation>Asset index for %1</translation>
         </message>
         <message>
             <source>%1 的对象列表为空或过大。</source>
-            <translation>The object list for %1 is empty or too large.</translation>
+            <translation>Object list for %1 is empty or too large.</translation>
         </message>
         <message>
             <source>%1 的对象条目不是对象。</source>
-            <translation>The object entry for %1 is not an object.</translation>
+            <translation>Object entry for %1 isn't an object.</translation>
         </message>
         <message>
             <source>%1 的总大小与对象列表不一致。</source>
-            <translation>The total number of bytes in %1 does not match the object list.</translation>
+            <translation>Total size for %1 doesn't match the object list.</translation>
         </message>
     </context>
     <context>
@@ -3256,35 +3256,35 @@ Sign in with an account that owns the game and has a profile.</translation>
         </message>
         <message>
             <source> / 来自「%1」</source>
-            <translation>/ from "%1"</translation>
+            <translation> / from "%1"</translation>
         </message>
         <message>
             <source>浏览游戏目录（人工检查未登记残留）</source>
-            <translation>Browse the game directory (manually check for unregistered residue)</translation>
+            <translation>Browse game directory (check for unregistered remnants manually)</translation>
         </message>
         <message>
             <source>浏览暂存登记（不自动删除）</source>
-            <translation>Browse temporary registration (not automatically deleted)</translation>
+            <translation>Browse staging records (won't delete automatically)</translation>
         </message>
         <message>
             <source>（日志异常）</source>
-            <translation>(Log exception)</translation>
+            <translation> (log error)</translation>
         </message>
         <message>
             <source>中断恢复检查</source>
-            <translation>Interrupt recovery check</translation>
+            <translation>Interrupted restore check</translation>
         </message>
         <message>
             <source>待检查还原事务：%1。历史未登记或标记异常目录需人工核对，不按名称自动删除。</source>
-            <translation>Restore transactions to be checked: %1. Directories that have not been registered in history or are marked as abnormal need to be manually checked and will not be automatically deleted by name.</translation>
+            <translation>Pending restore transactions: %1. Unregistered or flagged folders must be reviewed manually and won't be deleted automatically.</translation>
         </message>
         <message>
             <source>无法打开检查目录</source>
-            <translation>Unable to open inspection directory</translation>
+            <translation>Can't open check folder</translation>
         </message>
         <message>
             <source>目录不可访问或含链接，未打开。</source>
-            <translation>The directory is inaccessible or contains a link that has not been opened.</translation>
+            <translation>Folder is inaccessible or contains symlinks; not opened.</translation>
         </message>
         <message>
             <source>当前目录：
@@ -3294,72 +3294,73 @@ Sign in with an account that owns the game and has a profile.</translation>
 %2
 
 「标记已检查」将归档此记录并保留两个目录。「用旧目录替换」将恢复还原前的目录，另存当前目录，并记录恢复操作。</source>
-            <translation>Current directory: 
+            <translation>Current folder:
 %1
 
- Directory before restoration: 
+Pre-restore folder:
 %2
 
- Mark checked only archive log, both data are retained, neither will be deleted. 
- Clicking "Replace with old directory" will replace it with the directory before restoration. The replaced current directory will remain next to it, and a revertable recovery record will be registered.</translation>
+"Keep both, mark checked" archives this record and keeps both folders. "Replace with old folder" restores the pre-restore folder, keeps the current folder aside, and logs the recovery.</translation>
         </message>
         <message>
             <source>
 
 日志：%1</source>
-            <translation>Log: %1</translation>
+            <translation>
+
+Log: %1</translation>
         </message>
         <message>
             <source>打开所在目录</source>
-            <translation>Open the directory</translation>
+            <translation>Open folder</translation>
         </message>
         <message>
             <source>用旧目录替换（两份都保留）</source>
-            <translation>Replace with old directory (keep both copies)</translation>
+            <translation>Replace with old folder (keep both)</translation>
         </message>
         <message>
             <source>保留两份，标记已检查</source>
-            <translation>Keep two copies, mark checked</translation>
+            <translation>Keep both, mark checked</translation>
         </message>
         <message>
             <source>关闭</source>
-            <translation>Closure</translation>
+            <translation>Close</translation>
         </message>
         <message>
             <source>检查还原事务</source>
-            <translation>Check the restore transaction</translation>
+            <translation>Check restore transaction</translation>
         </message>
         <message>
             <source>打开目录失败</source>
-            <translation>Failed to open directory</translation>
+            <translation>Couldn't open folder</translation>
         </message>
         <message>
             <source>暂时无法操作</source>
-            <translation>Temporarily inoperable</translation>
+            <translation>Unavailable right now</translation>
         </message>
         <message>
             <source>整个实例目录（含可重新下载的资源文件与游戏库）</source>
-            <translation>The entire instance directory (including resource files and game libraries that can be downloaded again)</translation>
+            <translation>Entire instance folder (including redownloadable assets and libraries)</translation>
         </message>
         <message>
             <source>未打包：assets、libraries（可重新下载）</source>
-            <translation>Not packaged: assets, libraries (can be downloaded again)</translation>
+            <translation>Excluded: assets, libraries (redownloadable)</translation>
         </message>
         <message>
             <source>快照创建失败</source>
-            <translation>Snapshot not taken</translation>
+            <translation>Couldn't create snapshot</translation>
         </message>
         <message>
             <source>此实例</source>
-            <translation>This instance</translation>
+            <translation>this instance</translation>
         </message>
         <message>
             <source>未完成</source>
-            <translation>Not completed</translation>
+            <translation>Incomplete</translation>
         </message>
         <message>
             <source>用旧目录替换</source>
-            <translation>Replace with old directory</translation>
+            <translation>Replace with old folder</translation>
         </message>
         <message>
             <source>将使用旧目录替换当前目录。
@@ -3371,15 +3372,15 @@ Sign in with an account that owns the game and has a profile.</translation>
 %2
 
 当前目录将另存于同级目录。启动器会记录本次替换，以便恢复。</source>
-            <translation>The current directory will be replaced with this old directory: 
+            <translation>Replace current folder with the old folder?
 
-Old directory: 
+Old folder:
 %1
 
-Current directory: 
+Current folder:
 %2
 
-The replaced current directory will be kept aside as it is, and neither copy will be deleted; this step will first register a returnable recovery record.</translation>
+The current folder will be kept alongside it, and this replacement will be logged for recovery.</translation>
         </message>
         <message>
             <source>替换</source>
@@ -3391,29 +3392,29 @@ The replaced current directory will be kept aside as it is, and neither copy wil
         </message>
         <message>
             <source>人工恢复失败：%1</source>
-            <translation>Manual recovery failed: %1</translation>
+            <translation>Couldn't complete manual recovery: %1</translation>
         </message>
         <message>
             <source>替换失败</source>
-            <translation>Replacement failed</translation>
+            <translation>Couldn't replace</translation>
         </message>
         <message>
             <source>替换完成。</source>
-            <translation>Replacement completed.</translation>
+            <translation>Replacement complete.</translation>
         </message>
         <message>
             <source>
 
 已保留替换前的目录：
 %1</source>
-            <translation>The current directory that was replaced by 
+            <translation>
 
- remains as it is: 
+Previous folder kept at:
 %1</translation>
         </message>
         <message>
             <source>替换完成</source>
-            <translation>Replacement completed</translation>
+            <translation>Replacement complete</translation>
         </message>
         <message>
             <source>未标记已检查</source>
@@ -3421,32 +3422,31 @@ The replaced current directory will be kept aside as it is, and neither copy wil
         </message>
         <message>
             <source>已标记检查</source>
-            <translation>Flagged for inspection</translation>
+            <translation>Marked checked</translation>
         </message>
         <message>
             <source>两份目录均未改动，日志已保存在 cache/restore-reviewed。</source>
-            <translation>Both directories have not been changed, and the logs have been saved in cache/restore-reviewed.</translation>
+            <translation>Neither folder was modified; logs saved in cache/restore-reviewed.</translation>
         </message>
         <message>
             <source>正在后台检查备份清单……</source>
-            <translation>Checking backup list in the background...</translation>
+            <translation>Checking backup list in the background…</translation>
         </message>
         <message>
             <source>备份检查超时</source>
-            <translation>Backup check timeout</translation>
+            <translation>Backup check timed out</translation>
         </message>
         <message>
             <source>检查已停止，未还原任何文件。请检查备份所在磁盘，或减少目录中的归档后重试。</source>
-            <translation>Checking stopped and no files restored. Please check the disk where the backup is located, or reduce the archives in the directory and try again.</translation>
+            <translation>Check stopped; no files were restored. Check the backup drive or remove excess archives from the folder and try again.</translation>
         </message>
         <message>
             <source>%1 暂无备份。请先在此页面创建备份。
 
 备份目录：%2</source>
-            <translation>%1 has not been backed up yet, so there is nothing to restore. 
+            <translation>No backups for %1. Create a backup on this page first.
 
-The backup is placed here: %2
- (Make a backup of this page first, and then restore it.)</translation>
+Backup folder: %2</translation>
         </message>
         <message>
             <source>选择备份</source>
@@ -3454,48 +3454,48 @@ The backup is placed here: %2
         </message>
         <message>
             <source>选择要还原的备份。列表按时间从新到旧排列。</source>
-            <translation>Which copy do you want to restore? (The higher up, the newer it is)</translation>
+            <translation>Select a backup to restore (newest first).</translation>
         </message>
         <message>
             <source>已有备份或还原任务正在进行，请结束后再试。</source>
-            <translation>There is already a backup or restore task in progress, please finish it and try again.</translation>
+            <translation>A backup or restore is already in progress. Wait for it to finish and try again.</translation>
         </message>
         <message>
             <source>备份世界</source>
-            <translation>Backup world</translation>
+            <translation>Back up world</translation>
         </message>
         <message>
             <source>游戏正在运行。为防止存档损坏，请退出游戏后再备份。</source>
-            <translation>The game is running. To prevent world save damage, please exit the game before backing up.</translation>
+            <translation>Game is running. Close the game before backing up to avoid world save corruption.</translation>
         </message>
         <message>
             <source>备份世界「%1」</source>
-            <translation>Backup world "%1"</translation>
+            <translation>Back up world "%1"</translation>
         </message>
         <message>
             <source>备份完成</source>
-            <translation>Backup completed</translation>
+            <translation>Backup complete</translation>
         </message>
         <message>
             <source>备份未完成</source>
-            <translation>Backup not completed</translation>
+            <translation>Backup incomplete</translation>
         </message>
         <message>
             <source>此世界</source>
-            <translation>This world</translation>
+            <translation>this world</translation>
         </message>
         <message>
             <source>还原未完成</source>
-            <translation>Restore not completed</translation>
+            <translation>Restore incomplete</translation>
         </message>
         <message>
             <source>另一项操作已开始（复制、备份、还原、安装或游戏启动）。请等待其完成后再创建快照。</source>
-            <translation>Another operation just started (copy/backup/restore/install/game launch). Wait for it to complete before taking the snapshot.</translation>
+            <translation>Another operation started (copy, backup, restore, install, or launch). Wait for it to finish before creating a snapshot.</translation>
         </message>
         <message>
             <source>未找到此实例的目录：
 %1</source>
-            <translation>The directory for this instance cannot be found: 
+            <translation>Folder for this instance not found:
 %1</translation>
         </message>
         <message>
@@ -3504,7 +3504,7 @@ The backup is placed here: %2
         </message>
         <message>
             <source>此实例正在运行，或正被复制、备份、还原或安装占用。请等待其结束后再替换。</source>
-            <translation>This copy is running, or is being used by copy/backup/restore/install. Please wait until it is over before replacing.</translation>
+            <translation>This instance is running or busy with a copy, backup, restore, or install. Wait for it to finish before replacing.</translation>
         </message>
         <message>
             <source>手动恢复：已将 %2 替换为 %1</source>
@@ -3514,67 +3514,65 @@ The backup is placed here: %2
             <source>
 
 恢复记录将保留（%1），可在「中断恢复检查」中查看；核对完成后标记已检查。</source>
-            <translation>The recovery record is also retained (%1), which can be seen in the "Interruption Recovery Check". After checking, mark it as checked.</translation>
+            <translation>
+
+The recovery record is kept (%1) under "Interrupted restore check"; mark it checked after reviewing.</translation>
         </message>
         <message>
             <source>暂无可还原的备份</source>
-            <translation type="unfinished"></translation>
+            <translation>No restorable backups</translation>
         </message>
         <message>
             <source>检测到 %1 个文件名匹配的备份，但其中元数据与%2不匹配、无效或来自其他工具。以下文件未列入可还原备份：
 %3
 
 备份目录：%4</source>
-            <translation>There are %1 compressed packages with matching names in the backup directory, but the list in the package does not say %2 that the backup metadata is invalid or was not generated by this launcher. 
-
-In order not to add irrelevant stuff to your directory, none of them are listed: 
+            <translation>Found %1 backups with matching filenames, but their metadata doesn't match %2, is invalid, or came from another tool. Skipped:
 %3
 
-The backup is here: %4</translation>
+Backup folder: %4</translation>
         </message>
         <message>
             <source>「%1」正在复制、备份、还原或安装，请完成后再备份此世界。</source>
-            <translation>"%1" is copying, backing up, restoring or installing. Please complete the process before backing up this world.</translation>
+            <translation>"%1" is busy with a copy, backup, restore, or install. Wait for it to finish before backing up this world.</translation>
         </message>
         <message>
             <source>此存档的整个目录</source>
-            <translation>The entire folder of this world save</translation>
+            <translation>Entire folder of this world save</translation>
         </message>
         <message>
             <source>游戏正在运行，请退出游戏后再还原存档，避免数据覆盖。</source>
-            <translation>The game is running, please exit the game before restoring the world save to avoid data overwriting.</translation>
+            <translation>Game is running. Close the game before restoring the world save to avoid overwriting data.</translation>
         </message>
         <message>
             <source>还原将替换「%1」的文件。启动器会先创建安全快照，以便撤销还原。
 
 待还原备份：
 %2</source>
-            <translation>"%1" The current file will be completely replaced by the one in the backup. 
+            <translation>Restoring will replace files in "%1". A safety snapshot will be created first so you can roll back.
 
- Before restoring, a safe snapshot will be automatically left for the current copy, so this step can be rolled back. 
-
-What you want to restore is this one: 
+Backup to restore:
 %2</translation>
         </message>
         <message>
             <source>还原</source>
-            <translation>Reduction</translation>
+            <translation>Restore</translation>
         </message>
         <message>
             <source>还原世界「%1」</source>
-            <translation>Restore the world "%1"</translation>
+            <translation>Restore world "%1"</translation>
         </message>
         <message>
             <source>还原完成</source>
-            <translation>Restore completed</translation>
+            <translation>Restore complete</translation>
         </message>
         <message>
             <source>「%1」的文件正在修改。请等待安装、导入或检查完成后再创建快照。</source>
-            <translation>"%1" is being installed, imported or checked. Please take a snapshot after completion - the files being modified are being packaged.</translation>
+            <translation>Files in "%1" are being modified. Wait for the install, import, or check to finish before creating a snapshot.</translation>
         </message>
         <message>
             <source>「%1」正在运行。请退出游戏后再创建快照，避免备份尚未写完的存档和日志。</source>
-            <translation>"%1" is running. Close the game first and then take a snapshot - world saves and log files are constantly changing while the game is open.</translation>
+            <translation>"%1" is running. Close the game before creating a snapshot to avoid backing up incomplete saves and logs.</translation>
         </message>
         <message>
             <source>创建快照</source>
@@ -3584,29 +3582,29 @@ What you want to restore is this one:
             <source>快照将「%1」的实例目录打包，以便整体还原。
 
 默认跳过可重新下载的 assets 和 libraries。</source>
-            <translation>The snapshot will compress the entire directory "%1" into a compressed package, which can be restored as a whole if necessary. 
+            <translation>Snapshots package the instance folder of "%1" for full restoration.
 
-Assets and libraries are not packaged by default: these two parts can be re-downloaded, usually several hundred MB to several GB.</translation>
+Redownloadable assets and libraries are skipped by default.</translation>
         </message>
         <message>
             <source>完整快照（含可重新下载的部分）</source>
-            <translation>Full snapshot (with re-downloadable parts)</translation>
+            <translation>Full snapshot (includes redownloadable files)</translation>
         </message>
         <message>
             <source>实例目录（模组、配置、存档、日志…）</source>
-            <translation>Instance directory (mods, configurations, world saves, logs...)</translation>
+            <translation>Instance folder (mods, configs, world saves, logs…)</translation>
         </message>
         <message>
             <source>创建「%1」的快照</source>
-            <translation>Create a snapshot of "%1"</translation>
+            <translation>Create snapshot of "%1"</translation>
         </message>
         <message>
             <source>快照创建完成</source>
-            <translation>Snapshot creation completed</translation>
+            <translation>Snapshot created</translation>
         </message>
         <message>
             <source>「%1」正在安装或运行。还原将替换实例目录，请先停止相关操作。</source>
-            <translation>"%1" is being installed or running, please stop and then restore - this step will replace the entire instance directory.</translation>
+            <translation>"%1" is installing or running. Stop it before restoring the instance folder.</translation>
         </message>
         <message>
             <source>从快照恢复</source>
@@ -3617,11 +3615,9 @@ Assets and libraries are not packaged by default: these two parts can be re-down
 
 待还原快照：
 %2</source>
-            <translation>"%1" The current file will be completely replaced by the one in the snapshot - mods, configurations, and saves are all included. 
+            <translation>Restoring this snapshot will replace mods, configs, and world saves in "%1". A safety backup will be created first so you can roll back.
 
- Before restoring, a safe snapshot will be automatically left for the current copy, so this step can be rolled back. 
-
-What you want to restore is this one: 
+Snapshot to restore:
 %2</translation>
         </message>
         <message>
@@ -3630,11 +3626,11 @@ What you want to restore is this one:
         </message>
         <message>
             <source>统计并核对文件</source>
-            <translation>Statistics and checking documents</translation>
+            <translation>Scan and verify files</translation>
         </message>
         <message>
             <source>打包</source>
-            <translation>Pack</translation>
+            <translation>Package files</translation>
         </message>
         <message>
             <source>%1：%2 → %3</source>
@@ -3642,76 +3638,78 @@ What you want to restore is this one:
         </message>
         <message>
             <source>读清单</source>
-            <translation>Reading list</translation>
+            <translation>Read manifest</translation>
         </message>
         <message>
             <source>备份当前实例</source>
-            <translation>Put this one away</translation>
+            <translation>Back up current instance</translation>
         </message>
         <message>
             <source>解出备份里的文件</source>
-            <translation>Extract files from backup</translation>
+            <translation>Extract backup files</translation>
         </message>
         <message>
             <source>核对并替换目录</source>
-            <translation>Check and replace directories</translation>
+            <translation>Verify and replace folder</translation>
         </message>
         <message>
             <source>共 %1 个文件，%2</source>
-            <translation>Total %1 files, %2</translation>
+            <translation>%1 files, %2</translation>
         </message>
         <message>
             <source>%1：%2</source>
-            <translation>%1:%2</translation>
+            <translation>%1: %2</translation>
         </message>
         <message>
             <source>已经打好一份了：
 %1
 
 共 %2 个文件，%3。</source>
-            <translation>One copy has been typed: 
+            <translation>Backup created:
 %1
 
- A total of %2 files, %3.</translation>
+%2 files, %3.</translation>
         </message>
         <message>
             <source>%1：已取消，未保留不完整的文件。</source>
-            <translation>%1: Canceled, no semi-finished product left.</translation>
+            <translation>%1: canceled; no incomplete files kept.</translation>
         </message>
         <message>
             <source>已校验 %1 个文件，全部通过。</source>
-            <translation>%1 files checked, all match</translation>
+            <translation>Verified %1 files; all matched.</translation>
         </message>
         <message>
             <source>还原完成。已校验 %1 个文件，全部通过。</source>
-            <translation>It has been restored. %1 files checked and all match.</translation>
+            <translation>Restore complete. Verified %1 files; all matched.</translation>
         </message>
         <message>
             <source>旧目录未能清理，已保留在：%1</source>
-            <translation>The old directory could not be cleaned and has been retained at: %1</translation>
+            <translation>Couldn't remove old folder; kept at: %1</translation>
         </message>
         <message>
             <source>
 
 还原前的快照已保存在：
 %1</source>
-            <translation>The "current copy" before restoration is also kept, here: 
+            <translation>
+
+Pre-restore snapshot saved at:
 %1</translation>
         </message>
         <message>
             <source>已校验 %1 个文件</source>
-            <translation>%1 files checked</translation>
+            <translation>Verified %1 files</translation>
         </message>
         <message>
             <source>%1：已取消。</source>
-            <translation>%1: Canceled.</translation>
+            <translation>%1: canceled.</translation>
         </message>
     </context>
     <context>
         <name>BackupFiles</name>
         <message>
             <source>恢复前-</source>
-            <translation>Before recovery -</translation>
+            <translation>before-restore-</translation>
         </message>
     </context>
     <context>
@@ -3830,19 +3828,19 @@ What you want to restore is this one:
         </message>
         <message>
             <source>苦力怕盾徽旗帜图案</source>
-            <translation>Banner Pattern</translation>
+            <translation>Creeper Charge Banner Pattern</translation>
         </message>
         <message>
             <source>涡流旗帜图案</source>
-            <translation>Banner Pattern</translation>
+            <translation>Flow Banner Pattern</translation>
         </message>
         <message>
             <source>花朵盾徽旗帜图案</source>
-            <translation>Banner Pattern</translation>
+            <translation>Flower Charge Banner Pattern</translation>
         </message>
         <message>
             <source>地球旗帜图案</source>
-            <translation>Banner Pattern</translation>
+            <translation>Globe Banner Pattern</translation>
         </message>
         <message>
             <source>自下渐淡</source>
@@ -3850,7 +3848,7 @@ What you want to restore is this one:
         </message>
         <message>
             <source>旋风旗帜图案</source>
-            <translation>Banner Pattern</translation>
+            <translation>Guster Banner Pattern</translation>
         </message>
         <message>
             <source>上半方形</source>
@@ -3870,15 +3868,15 @@ What you want to restore is this one:
         </message>
         <message>
             <source>Mojang徽标旗帜图案</source>
-            <translation>Banner Pattern</translation>
+            <translation>Thing Banner Pattern</translation>
         </message>
         <message>
             <source>猪鼻旗帜图案</source>
-            <translation>Banner Pattern</translation>
+            <translation>Snout Banner Pattern</translation>
         </message>
         <message>
             <source>头颅盾徽旗帜图案</source>
-            <translation>Banner Pattern</translation>
+            <translation>Skull Charge Banner Pattern</translation>
         </message>
         <message>
             <source>竖条纹</source>
@@ -4026,11 +4024,11 @@ What you want to restore is this one:
         </message>
         <message>
             <source>第 %1 层：将%2与%3放入织布机，选择图案「%4」</source>
-            <translation type="unfinished"></translation>
+            <translation>Layer %1: Place %2 and %3 in a loom, select pattern "%4"</translation>
         </message>
         <message>
             <source>第 %1 层：将%2、%3与%4放入织布机，选择图案「%5」</source>
-            <translation type="unfinished"></translation>
+            <translation>Layer %1: Place %2, %3, and %4 in a loom, select pattern "%5"</translation>
         </message>
         <message>
             <source>第 %1 层和第 %2 层图案及颜色相同，显示效果与单层相同。</source>
@@ -4038,7 +4036,7 @@ What you want to restore is this one:
         </message>
         <message>
             <source>图案「%1」没有 1.20.4 及更早版本的指令写法。</source>
-            <translation type="unfinished"></translation>
+            <translation>Pattern "%1" has no command syntax for 1.20.4 and earlier.</translation>
         </message>
         <message>
             <source>底色 %1 · %2/%3 层</source>
@@ -4783,39 +4781,39 @@ What you want to restore is this one:
         </message>
         <message>
             <source>未知维度</source>
-            <translation>Unknown dimensions</translation>
+            <translation>Unknown dimension</translation>
         </message>
         <message>
             <source>请粘贴在游戏中按 F3+C 复制的坐标命令。</source>
-            <translation>This space is empty: paste in the one copied by F3+C in the game.</translation>
+            <translation>Paste the coordinate command copied with F3+C in-game.</translation>
         </message>
         <message>
             <source>仅支持格式为 `execute in &lt;维度&gt; run &lt;命令&gt;` 的 `execute` 命令。</source>
-            <translation>This `execute` cannot be understood: only `execute in &lt;dimension&gt; run &lt;command&gt;` is recognized.</translation>
+            <translation>Only `execute` commands in the format `execute in &lt;dimension&gt; run &lt;command&gt;` are supported.</translation>
         </message>
         <message>
             <source>无法识别维度：`%1`。</source>
-            <translation>Dimension not recognized: `%1`.</translation>
+            <translation>Unrecognized dimension: `%1`.</translation>
         </message>
         <message>
             <source>`execute in &lt;维度&gt;` 后缺少 `run`。</source>
-            <translation>`execute in &lt;dimension&gt;` is missing a `run` after it.</translation>
+            <translation>Missing `run` after `execute in &lt;dimension&gt;`.</translation>
         </message>
         <message>
             <source>此命令不含 `tp`。仅支持传送命令，F3+C 复制的内容即为传送命令。</source>
-            <translation>There is no `tp` in this command: only the transfer command is recognized (the one copied by F3+C).</translation>
+            <translation>Command doesn't contain `tp`. Only teleport commands (copied with F3+C) are supported.</translation>
         </message>
         <message>
             <source>坐标不足 3 个：仅读取到 %1 个数。</source>
-            <translation>Three coordinates are incomplete: only %1 numbers are read.</translation>
+            <translation>Expected 3 coordinates; found %1.</translation>
         </message>
         <message>
             <source>`%1` 不是有效数字。</source>
-            <translation>`%1` is not a number.</translation>
+            <translation>`%1` isn't a valid number.</translation>
         </message>
         <message>
             <source>输入包含 `~` 或 `^` 相对坐标。请站到目标位置后复制绝对坐标。</source>
-            <translation>Among these three numbers are `~` / `^` (relative coordinates): it says "a few squares ahead from here". You must first know where you are standing before you can calculate it - first stand at your point and then copy it again.</translation>
+            <translation>Input contains relative coordinates (`~` or `^`). Stand at the target location and copy absolute coordinates.</translation>
         </message>
     </context>
     <context>
@@ -5293,75 +5291,75 @@ Lock file: %2</translation>
         <name>DownloadBatchController</name>
         <message>
             <source>部分暂存文件未补齐，等待明确继续以重新查询平台地址和兼容性；未自动部署。</source>
-            <translation>Some temporary files have not been completed, waiting for explicit continuation to re-query the platform address and compatibility; automatic deployment is not available.</translation>
+            <translation>Some staged files are incomplete; waiting to continue to re-fetch URLs and compatibility. Not deployed automatically.</translation>
         </message>
         <message>
             <source>文件已补齐，等待明确点击继续安装；执行前仍会检查目标和预设变化。</source>
-            <translation>The files have been completed and are waiting for a clear click to continue the installation; target and preset changes will still be checked before execution.</translation>
+            <translation>Files are complete; click Continue to install. Target and preset changes will be checked before running.</translation>
         </message>
         <message>
             <source>上次文件下载中断。补齐文件后不会自动执行安装器。</source>
-            <translation>The last file download was interrupted. Complete the files first, the installer will not be automatically executed.</translation>
+            <translation>Last file download was interrupted. Completing files won't run the installer automatically.</translation>
         </message>
         <message>
             <source>补齐文件 %1 / %2；尚未执行安装器。</source>
-            <translation>Completing files %1 / %2; installer has not been executed yet.</translation>
+            <translation>Completed files %1 / %2; installer hasn't run.</translation>
         </message>
         <message>
             <source>已暂停文件下载。已保存完整分段；继续前会检查目标变化，安装器和提交阶段不可暂停。</source>
-            <translation>File download has been paused. Complete staging saved; target changes are checked before continuing, installer and commit phases cannot be paused.</translation>
+            <translation>File download paused. Completed chunks are saved; target changes will be checked before resuming. Installer and commit phases can't be paused.</translation>
         </message>
         <message>
             <source>有游戏、启动或文件操作正在进行，请结束后再继续文件恢复。</source>
-            <translation>There is a game, startup or file operation in progress, please finish it before continuing file recovery.</translation>
+            <translation>A game, launch, or file operation is in progress. Wait for it to finish before resuming file recovery.</translation>
         </message>
         <message>
             <source>正在校验恢复文件；完成后才继续安装。</source>
-            <translation>Verifying recovery files; installation will not continue until complete.</translation>
+            <translation>Verifying recovery files before continuing installation.</translation>
         </message>
         <message>
             <source>文件已变化或恢复条件已改变，请重新预览安装；未执行安装器。</source>
-            <translation>The file has changed or the recovery conditions have changed. Please preview the installation again; the installer has not been executed.</translation>
+            <translation>Files or recovery conditions changed. Preview installation again; installer wasn't run.</translation>
         </message>
         <message>
             <source>请重新预览安装。</source>
-            <translation>Please preview the installation again.</translation>
+            <translation>Preview the installation again.</translation>
         </message>
         <message>
             <source>目标、安装环境或原配置已变化，请重新预览安装。</source>
-            <translation>The target, installation environment or original configuration has changed, please preview the installation again.</translation>
+            <translation>Target, environment, or original config changed. Preview installation again.</translation>
         </message>
         <message>
             <source>正在后台校验下载目标；完成后才恢复文件下载。</source>
-            <translation>The download target is being verified in the background; file downloading will be resumed only after completion.</translation>
+            <translation>Verifying download target in the background before resuming download.</translation>
         </message>
         <message>
             <source>文件已变化或恢复条件已改变，请重新预览；未恢复下载。</source>
-            <translation>The file has changed or the recovery conditions have changed, please preview again; the download is not resumed.</translation>
+            <translation>Files or recovery conditions changed. Preview again; download wasn't resumed.</translation>
         </message>
         <message>
             <source>文件已保留，但安装接续记录未能保存；未执行安装器，请再次继续或重新预览。</source>
-            <translation>The file has been retained, but the installation connection record could not be saved; the installer was not executed, please continue again or preview again.</translation>
+            <translation>Files kept, but couldn't save install continuation record. Installer wasn't run; click Continue or preview again.</translation>
         </message>
         <message>
             <source>部分暂存文件未补齐。再次点击继续将重新查询平台地址和兼容性，必要文件校验通过后才应用；未自动部署。</source>
-            <translation>Some temporary files have not been completed. Clicking Continue again will re-query the platform address and compatibility, and the necessary files will be applied after passing the verification; it will not be automatically deployed.</translation>
+            <translation>Some staged files are incomplete. Click Continue again to re-fetch URLs and compatibility; files are applied only after verification, without auto-deploy.</translation>
         </message>
         <message>
             <source>文件已补齐。再次点击继续，才会按原选择继续安装并应用预设；安装器未自动执行。</source>
-            <translation>The file has been completed. Click Continue again to continue the installation and apply the default according to the original selection; the installer does not execute automatically.</translation>
+            <translation>Files are complete. Click Continue again to resume installation and apply the preset; installer doesn't run automatically.</translation>
         </message>
         <message>
             <source>已补齐并校验记录中的文件。请回原安装流程继续；安装器未自动执行。</source>
-            <translation>The files in the record have been completed and verified. Please go back to the original installation process to continue; the installer did not execute automatically.</translation>
+            <translation>Recorded files completed and verified. Return to the installation flow to continue; installer didn't run automatically.</translation>
         </message>
         <message>
             <source>仍有文件未完成，已保留记录，可再次继续。</source>
-            <translation>There are still unfinished files, the record has been retained and you can continue again.</translation>
+            <translation>Some files are still incomplete; progress saved so you can continue again.</translation>
         </message>
         <message>
             <source>文件下载未完成。</source>
-            <translation>The file download is not completed.</translation>
+            <translation>File download incomplete.</translation>
         </message>
     </context>
     <context>
@@ -5372,47 +5370,47 @@ Lock file: %2</translation>
         </message>
         <message>
             <source>整合包导入已由用户取消。</source>
-            <translation>Modpack import has been canceled by the user.</translation>
+            <translation>Modpack import canceled by user.</translation>
         </message>
         <message>
             <source>安装「%1」已由用户取消。</source>
-            <translation>The installation of '%1' was canceled by the user.</translation>
+            <translation>Installation of "%1" canceled by user.</translation>
         </message>
         <message>
             <source>实例「%1」的文件校验完成：%2</source>
-            <translation>File verification of instance "%1" completed: %2</translation>
+            <translation>File verification for instance "%1" complete: %2</translation>
         </message>
         <message>
             <source>实例「%1」的文件校验已由用户取消。</source>
-            <translation>File verification for instance '%1' has been canceled by the user.</translation>
+            <translation>File verification for instance "%1" canceled by user.</translation>
         </message>
         <message>
             <source>整合包未导入：%1</source>
-            <translation>The integration package is not imported: %1</translation>
+            <translation>Modpack not imported: %1</translation>
         </message>
         <message>
             <source>实例「%1」的文件未补齐：%2</source>
-            <translation>The file of instance "%1" is not completed: %2</translation>
+            <translation>Files for instance "%1" are incomplete: %2</translation>
         </message>
         <message>
             <source>「%1」的首次启动资源已预取：%2</source>
-            <translation>The first boot resource for "%1" has been prefetched: %2</translation>
+            <translation>First-launch assets for "%1" prefetched: %2</translation>
         </message>
         <message>
             <source>已取消「%1」的首次启动资源预取。已下载的文件会保留。</source>
-            <translation>The initial resource prefetch for "%1" has been canceled by the user (the downloaded file remains where it is).</translation>
+            <translation>Canceled first-launch asset prefetch for "%1". Downloaded files are kept.</translation>
         </message>
         <message>
             <source>「%1」的首次启动资源下载不完整：%2</source>
-            <translation>The first resource of "%1" has not been prefetched: %2</translation>
+            <translation>First-launch assets for "%1" incomplete: %2</translation>
         </message>
         <message>
             <source>版本 %1 下载完成：%2</source>
-            <translation>Version %1 Download completed: %2</translation>
+            <translation>Version %1 download complete: %2</translation>
         </message>
         <message>
             <source>版本 %1 的下载已由用户取消。</source>
-            <translation>The download of version %1 has been canceled by the user.</translation>
+            <translation>Download of version %1 canceled by user.</translation>
         </message>
         <message>
             <source>版本 %1 下载失败：%2</source>
@@ -5425,7 +5423,7 @@ Lock file: %2</translation>
 %2</source>
             <translation>%1
 
-The instance is ready, but some presets could not be applied:
+Instance is ready; preset partially applied:
 %2</translation>
         </message>
     </context>
@@ -5437,26 +5435,26 @@ The instance is ready, but some presets could not be applied:
         </message>
         <message>
             <source>正在重新获取游戏版本列表…</source>
-            <translation>Retrieving game version list...</translation>
+            <translation>Refreshing game version list…</translation>
         </message>
         <message>
             <source>已清空%1页面的搜索条件。</source>
-            <translation>The search criteria for the %1 page have been cleared.</translation>
+            <translation>Cleared filters on %1 page.</translation>
         </message>
     </context>
     <context>
         <name>DownloadManager</name>
         <message>
             <source>无法保存下载恢复记录，未开始写入。</source>
-            <translation>Unable to save download recovery record, writing has not started.</translation>
+            <translation>Can't save download recovery record; write didn't start.</translation>
         </message>
         <message>
             <source>version.json 中的资源索引名称无效，已跳过资源下载。</source>
-            <translation>The resource index number in this version.json cannot be used as a file name, and no resources are downloaded.</translation>
+            <translation>Invalid asset index name in version.json; skipped asset download.</translation>
         </message>
         <message>
             <source>SHA-1 校验失败（预期 %1，实际 %2）</source>
-            <translation>Sha1 does not match (expected %1, actual %2)</translation>
+            <translation>SHA-1 mismatch (expected %1, got %2)</translation>
         </message>
         <message>
             <source>不是合法的 JSON：%1</source>
@@ -5464,11 +5462,11 @@ The instance is ready, but some presets could not be applied:
         </message>
         <message>
             <source>其中记录的版本号是「%1」，取的是「%2」</source>
-            <translation>The version number written inside is "%1", and the version number is "%2"</translation>
+            <translation>Recorded version is "%1", fetched "%2"</translation>
         </message>
         <message>
             <source>（无此字段）</source>
-            <translation>(There is no such field)</translation>
+            <translation>(missing field)</translation>
         </message>
         <message>
             <source>下载已取消或任务已失效</source>
@@ -5476,37 +5474,37 @@ The instance is ready, but some presets could not be applied:
         </message>
         <message>
             <source>下载尚未结束，请稍后继续。</source>
-            <translation>The download is still being completed, please continue later.</translation>
+            <translation>Download isn't finished; continue later.</translation>
         </message>
         <message>
             <source>目标文件已被外部修改，未覆盖：%1。请重新预览。</source>
-            <translation>The target file has been externally modified and not overwritten: %1. Please preview again.</translation>
+            <translation>Target file was modified externally and wasn't overwritten: %1. Preview again.</translation>
         </message>
         <message>
             <source>已有下载正在进行，请稍后继续。</source>
-            <translation>The download is already in progress, please continue later.</translation>
+            <translation>A download is already in progress; continue later.</translation>
         </message>
         <message>
             <source>恢复记录不可读或被占用，原件已保留。</source>
-            <translation>The recovery record is unreadable or occupied, the original has been retained.</translation>
+            <translation>Recovery record is unreadable or in use; original kept.</translation>
         </message>
     </context>
     <context>
         <name>DownloadManagerRecovery</name>
         <message>
             <source>下载期间目标已变化，未覆盖，请重新预览：%1</source>
-            <translation>The target has changed during downloading and is not covered. Please preview again: %1</translation>
+            <translation>Target changed during download and wasn't overwritten; preview again: %1</translation>
         </message>
         <message>
             <source>目标已被外部修改，未覆盖：%1</source>
-            <translation>Target has been externally modified and not overwritten: %1</translation>
+            <translation>Target was modified externally and wasn't overwritten: %1</translation>
         </message>
     </context>
     <context>
         <name>DownloadManagerSegmented</name>
         <message>
             <source>分段下载失败</source>
-            <translation>Partial download failed</translation>
+            <translation>Segmented download failed</translation>
         </message>
     </context>
     <context>
@@ -5556,11 +5554,11 @@ The instance is ready, but some presets could not be applied:
         <name>DownloadRetryPolicy</name>
         <message>
             <source>网络请求已中止（可能由超时、换源或取消操作触发）。</source>
-            <translation>The network request was aborted (could be triggered by timeout, source change, or cancellation).</translation>
+            <translation>Network request aborted (timeout, source switch, or cancellation).</translation>
         </message>
         <message>
             <source>网络请求超时，请检查网络后重试。</source>
-            <translation>The network request timed out, please check the network and try again.</translation>
+            <translation>Network request timed out. Check your connection and try again.</translation>
         </message>
     </context>
     <context>
@@ -5579,7 +5577,7 @@ The instance is ready, but some presets could not be applied:
         </message>
         <message>
             <source>留空使用链接中的文件名</source>
-            <translation>Leave blank to use the filename from the URL</translation>
+            <translation>Leave blank to use filename from URL</translation>
         </message>
         <message>
             <source>文件名</source>
@@ -5607,7 +5605,7 @@ The instance is ready, but some presets could not be applied:
         </message>
         <message>
             <source>按最旧优先整理闲置缓存。</source>
-            <translation>Removes the oldest unused entries first to meet the cache limit.</translation>
+            <translation>Removes oldest idle cache entries first to stay under the limit.</translation>
         </message>
         <message>
             <source>清理过期</source>
@@ -5615,7 +5613,7 @@ The instance is ready, but some presets could not be applied:
         </message>
         <message>
             <source>清理 30 天未更新的缓存。</source>
-            <translation>Removes cache entries that have not been updated in 30 days.</translation>
+            <translation>Removes cache entries not updated in 30 days.</translation>
         </message>
         <message>
             <source>清空闲置缓存…</source>
@@ -5623,11 +5621,11 @@ The instance is ready, but some presets could not be applied:
         </message>
         <message>
             <source>只删未被任务使用的分段和续传记录。</source>
-            <translation>Removes only chunks and resume data that no download task is using.</translation>
+            <translation>Removes only chunks and resume data unused by active tasks.</translation>
         </message>
         <message>
             <source>过期 = 30 天未更新；不影响进行中的下载。</source>
-            <translation>Entries expire after 30 days without updates. Active downloads are unaffected.</translation>
+            <translation>Expires after 30 days without updates; active downloads aren't affected.</translation>
         </message>
         <message>
             <source>加入队列</source>
@@ -5638,63 +5636,63 @@ The instance is ready, but some presets could not be applied:
         <name>DroppedResource</name>
         <message>
             <source>该路径为文件夹，不是文件</source>
-            <translation>That's a folder, not a file</translation>
+            <translation>Path is a folder, not a file</translation>
         </message>
         <message>
             <source>未找到文件</source>
-            <translation>This document cannot be found</translation>
+            <translation>File not found</translation>
         </message>
         <message>
             <source>后缀是 .jar</source>
-            <translation>The suffix is ​​.jar</translation>
+            <translation>Extension is .jar</translation>
         </message>
         <message>
             <source>需要 7-Zip 解压后导入</source>
-            <translation>Requires 7-Zip to unzip and import</translation>
+            <translation>Requires 7-Zip to extract before importing</translation>
         </message>
         <message>
             <source>需要 7-Zip 解压，本机未找到 7z.exe</source>
-            <translation>7-Zip is required to decompress, 7z.exe is not found on this machine.</translation>
+            <translation>Requires 7-Zip to extract, but 7z.exe wasn't found</translation>
         </message>
         <message>
             <source>`.%1` 不是可安装的内容</source>
-            <translation>`.%1` is not something that can be put in</translation>
+            <translation>`.%1` isn't an installable file type</translation>
         </message>
         <message>
             <source>读取压缩包</source>
-            <translation>Read this zip file</translation>
+            <translation>Read archive</translation>
         </message>
         <message>
             <source>无法打开：不是 zip 压缩包或文件已损坏</source>
-            <translation>Unable to open: Not a zip archive, or the file is corrupted</translation>
+            <translation>Can't open: not a ZIP archive or file is corrupted</translation>
         </message>
         <message>
             <source>包含 pack.mcmeta 与 assets/</source>
-            <translation>There are pack.mcmeta and assets/</translation>
+            <translation>Contains pack.mcmeta and assets/</translation>
         </message>
         <message>
             <source>包含 pack.mcmeta 与 data/</source>
-            <translation>There are pack.mcmeta and data/</translation>
+            <translation>Contains pack.mcmeta and data/</translation>
         </message>
         <message>
             <source>包含 shaders/</source>
-            <translation>There are shaders/</translation>
+            <translation>Contains shaders/</translation>
         </message>
         <message>
             <source>压缩包为空</source>
-            <translation>This compressed package is empty</translation>
+            <translation>Archive is empty</translation>
         </message>
         <message>
             <source>文件缺少扩展名，无法识别类型</source>
-            <translation>It has no suffix, so I can’t tell which category it is.</translation>
+            <translation>File has no extension; can't identify type</translation>
         </message>
         <message>
             <source>无法读取文件</source>
-            <translation>It can't be read</translation>
+            <translation>Can't read file</translation>
         </message>
         <message>
             <source>未找到整合包清单、pack.mcmeta 或 shaders/，无法识别压缩包类型</source>
-            <translation>There is no integration package list, pack.mcmeta or shaders/, and I can’t identify which category it is.</translation>
+            <translation>Missing modpack manifest, pack.mcmeta, or shaders/; can't identify archive</translation>
         </message>
     </context>
     <context>
@@ -5804,7 +5802,7 @@ The instance is ready, but some presets could not be applied:
         <name>FileHash</name>
         <message>
             <source>无法打开文件：%1</source>
-            <translation>Unable to open this file: %1</translation>
+            <translation>Can't open file: %1</translation>
         </message>
         <message>
             <source>已取消</source>
@@ -5812,154 +5810,156 @@ The instance is ready, but some presets could not be applied:
         </message>
         <message>
             <source>读取文件失败：%1</source>
-            <translation>Failed to read this file: %1</translation>
+            <translation>Couldn't read file: %1</translation>
         </message>
         <message>
             <source>请输入十六进制摘要。</source>
-            <translation>There are no hexadecimal characters in this field.</translation>
+            <translation>Enter a hexadecimal hash.</translation>
         </message>
         <message>
             <source>`%1` 不是十六进制的字符。</source>
-            <translation>`%1` is not a hexadecimal character.</translation>
+            <translation>`%1` isn't a hexadecimal character.</translation>
         </message>
         <message>
             <source>摘要有 %1 个字符。SHA-256、SHA-1 和 MD5 分别要求 64、40 和 32 个十六进制字符。</source>
-            <translation>The lengths don’t match: this string has %1 bits, SHA-256 is 64 bits, SHA-1 is 40 bits, and MD5 is 32 bits.</translation>
+            <translation>Hash is %1 characters. SHA-256, SHA-1, and MD5 require 64, 40, and 32 hex characters.</translation>
         </message>
         <message>
             <source>摘要长度与所选算法不匹配。%1 要求 %2 个字符，实际为 %3 个。</source>
-            <translation>The written algorithm and the length do not match: the mark is %1 (%2 bits), but the actual number is %3 bits.</translation>
+            <translation>Hash length doesn't match selected algorithm: %1 requires %2 characters, got %3.</translation>
         </message>
         <message>
             <source>无已知值可比。</source>
-            <translation>There is no known value to compare with.</translation>
+            <translation>No expected hash to compare against.</translation>
         </message>
         <message>
             <source>不一致：实际值为 %1。</source>
-            <translation>Inconsistency: calculated as %1.</translation>
+            <translation>Mismatch: actual hash is %1.</translation>
         </message>
         <message>
             <source>（未计算）</source>
-            <translation>(didn’t calculate it)</translation>
+            <translation>(not computed)</translation>
         </message>
         <message>
             <source>一致。</source>
-            <translation>Consistent.</translation>
+            <translation>Match.</translation>
         </message>
     </context>
     <context>
         <name>FileOperationRecoveryController</name>
         <message>
             <source>无法创建目录 %1</source>
-            <translation>Unable to create directory %1</translation>
+            <translation>Can't create folder %1</translation>
         </message>
         <message>
             <source>无法写入 %1（%2）</source>
-            <translation>Unable to write %1 (%2)</translation>
+            <translation>Can't write %1 (%2)</translation>
         </message>
         <message>
             <source>无法读取 %1（%2）</source>
-            <translation>Unable to read %1 (%2)</translation>
+            <translation>Can't read %1 (%2)</translation>
         </message>
         <message>
             <source>无法发布 %1（%2）</source>
-            <translation>Unable to publish %1 (%2)</translation>
+            <translation>Can't publish %1 (%2)</translation>
         </message>
         <message>
             <source>已登记可续的文件操作：%1（%2）</source>
-            <translation>Registered and renewable file operations: %1 (%2)</translation>
+            <translation>Registered resumable file operation: %1 (%2)</translation>
         </message>
         <message>
             <source>未能完成全部文件操作，原因报告：%1</source>
-            <translation>Unable to complete all file operations, reason reported: %1</translation>
+            <translation>Couldn't complete all file operations; report: %1</translation>
         </message>
         <message>
             <source>继续未完成操作</source>
-            <translation>Continue unfinished operations</translation>
+            <translation>Resume unfinished operation</translation>
         </message>
         <message>
             <source>原操作的恢复记录已清除。请重新发起操作。</source>
-            <translation>The site of this item is no longer there (the launcher is restarted or the report is cleared), please restart that operation.</translation>
+            <translation>Recovery record for this operation was cleared. Restart the operation.</translation>
         </message>
         <message>
             <source>报告缺少编号或无任何条目，未登记。</source>
-            <translation>The report has no number or any entries and is not registered.</translation>
+            <translation>Report is missing an ID or entries; not registered.</translation>
         </message>
         <message>
             <source>此项正在继续，请等待完成后查看结果。</source>
-            <translation>This project is ongoing, wait until it is completed to see the results.</translation>
+            <translation>Operation is already resuming; wait for it to finish to see results.</translation>
         </message>
         <message>
             <source>「%1」已无未完成项。</source>
-            <translation>"%1" has no outstanding items.</translation>
+            <translation>"%1" has no unfinished items.</translation>
         </message>
         <message>
             <source>「%1」正在运行或正被另一项文件操作占用，请等待其结束后再选择「继续未完成操作」。</source>
-            <translation>"%1" is running or occupied by another file operation. Wait for it to end and then click "Continue Unfinished Operation".</translation>
+            <translation>"%1" is running or busy with another file operation. Wait for it to finish before choosing "Resume unfinished operation".</translation>
         </message>
         <message>
             <source>
 
 原因报告：
 %1</source>
-            <translation>Cause report: 
+            <translation>
+
+Report:
 %1</translation>
         </message>
         <message>
             <source>继续：%1</source>
-            <translation>Continue: %1</translation>
+            <translation>Resume: %1</translation>
         </message>
         <message>
             <source>继续未完成的文件操作</source>
-            <translation>Continue unfinished file operations</translation>
+            <translation>Resume unfinished file operations</translation>
         </message>
         <message>
             <source>正在继续未完成的文件操作…</source>
-            <translation>Continuing unfinished file operation...</translation>
+            <translation>Resuming unfinished file operations…</translation>
         </message>
         <message>
             <source>模组适配替换不能单独续做；请重新打开实例更新向导，重新检查后执行。</source>
-            <translation>Mod adaptation and replacement cannot be continued separately; please reopen the instance update wizard and recheck before executing.</translation>
+            <translation>Adapted mod replacements can't be resumed separately. Reopen the instance update wizard and check again.</translation>
         </message>
         <message>
             <source>报告中缺少重新导入此世界所需信息（源、目标或名称缺失）。</source>
-            <translation>There is not enough information in the report to import into this world (source/destination/name is missing).</translation>
+            <translation>Report is missing info needed to re-import this world (source, target, or name).</translation>
         </message>
         <message>
             <source>报告中缺少继续迁移所需信息（源、目标或勾选项缺失）。</source>
-            <translation>There is not enough information in the report to proceed with the migration (source/destination/check boxes are missing).</translation>
+            <translation>Report is missing info needed to continue transfer (source, target, or checked items).</translation>
         </message>
         <message>
             <source>报告中缺少重新复制此文件所需信息（源或目标缺失）。</source>
-            <translation>There is not enough information in the report to re-copy this file (source/destination missing).</translation>
+            <translation>Report is missing info needed to recopy this file (source or target).</translation>
         </message>
         <message>
             <source>目标已存在；按当时选择的「取消」，未覆盖。</source>
-            <translation>The target already exists, and pressing "Cancel" selected at the time will not overwrite it.</translation>
+            <translation>Target already exists; kept untouched per previous "Cancel" choice.</translation>
         </message>
         <message>
             <source>已完成剩余文件操作：%1</source>
-            <translation>Completed unfinished file operations: %1</translation>
+            <translation>Completed remaining file operations: %1</translation>
         </message>
         <message>
             <source>已取消，未完成项将保留。</source>
-            <translation>Canceled, unfinished items remain.</translation>
+            <translation>Canceled; unfinished items are kept.</translation>
         </message>
         <message>
             <source>：</source>
-            <translation>:</translation>
+            <translation>: </translation>
         </message>
         <message>
             <source>无法将继续执行的结果写入报告：%1</source>
-            <translation>Failed to write back the report as a result of the continuation: %1</translation>
+            <translation>Couldn't write recovery results to report: %1</translation>
         </message>
         <message>
             <source>已取消，未发布的暂存保留着。</source>
-            <translation>Canceled, unpublished staging remains.</translation>
+            <translation>Canceled; unpublished staging files are kept.</translation>
         </message>
         <message>
             <source>仍未完成全部文件操作：%1%2</source>
-            <translation>Not all file operations have been completed: %1%2</translation>
+            <translation>Not all file operations completed: %1%2</translation>
         </message>
     </context>
     <context>
@@ -6254,7 +6254,7 @@ Files already moved can be restored from the Recycle Bin.</translation>
         </message>
         <message>
             <source>内存分页失败</source>
-            <translation>Memory paging failed</translation>
+            <translation>Memory paging error</translation>
         </message>
         <message>
             <source>非法指令</source>
@@ -6262,7 +6262,7 @@ Files already moved can be restored from the Recycle Bin.</translation>
         </message>
         <message>
             <source>整数除以零</source>
-            <translation>Divide an integer by zero</translation>
+            <translation>Integer divide by zero</translation>
         </message>
         <message>
             <source>栈溢出</source>
@@ -6278,7 +6278,7 @@ Files already moved can be restored from the Recycle Bin.</translation>
         </message>
         <message>
             <source>栈上的缓冲区写越界</source>
-            <translation>Buffer write out of bounds on stack</translation>
+            <translation>Stack buffer overrun</translation>
         </message>
         <message>
             <source>断点</source>
@@ -6290,75 +6290,75 @@ Files already moved can be restored from the Recycle Bin.</translation>
         </message>
         <message>
             <source>游戏崩溃退出（%1）。</source>
-            <translation>The game crashed and exited (%1).</translation>
+            <translation>Game crashed (%1).</translation>
         </message>
         <message>
             <source>「%1」崩溃退出（%2）。</source>
-            <translation>"%1" crashes and exits (%2).</translation>
+            <translation>"%1" crashed (%2).</translation>
         </message>
         <message>
             <source>游戏以非 0 退出码结束（%1）。</source>
-            <translation>The game ended with a non-0 exit code (%1).</translation>
+            <translation>Game exited with non-zero code (%1).</translation>
         </message>
         <message>
             <source>「%1」以非 0 退出码结束（%2）。</source>
-            <translation>"%1" ends with a non-zero exit code (%2).</translation>
+            <translation>"%1" exited with non-zero code (%2).</translation>
         </message>
         <message>
             <source>缺少系统 DLL</source>
-            <translation>Missing a system DLL</translation>
+            <translation>Missing system DLL</translation>
         </message>
         <message>
             <source>DLL 中的入口点未找到</source>
-            <translation>The entry point in the DLL cannot be found</translation>
+            <translation>DLL entry point not found</translation>
         </message>
         <message>
             <source>日志显示这是手动触发的调试崩溃（F3+C）。如果仅用于测试，松开 F3+C 后无需等待倒计时，崩溃就不会发生；这次退出不代表游戏或模组有问题。</source>
-            <translation type="unfinished"></translation>
+            <translation>Log shows a manually triggered debug crash (F3+C). If testing, release F3+C before the countdown ends to cancel; this exit doesn't indicate a game or mod issue.</translation>
         </message>
         <message>
             <source>「%1」要求 Java %2，本次实际使用的是 Java %3。</source>
-            <translation>"%1" requires Java %2. This time, Java %3 is actually used.</translation>
+            <translation>"%1" requires Java %2, but launched with Java %3.</translation>
         </message>
         <message>
             <source>（%1）</source>
-            <translation>(%1)</translation>
+            <translation> (%1)</translation>
         </message>
         <message>
             <source>分配给游戏的堆内存为 %1 MB，设备总内存为 %2 MB。游戏可能无法启动或在运行中退出。请在「设置 → 启动」中调低内存分配。</source>
-            <translation>The game is allocated %1 MB of heap memory, but this machine only has a total of %2 MB - the JVM will not be able to start because it cannot allocate memory, or it will be killed by the system in the middle of the run. You can turn it down in "Settings → Startup".</translation>
+            <translation>Game is allocated %1 MB heap memory, while system memory is %2 MB. The game may fail to launch or exit unexpectedly. Lower memory allocation in "Settings → Launch".</translation>
         </message>
         <message>
             <source>游戏分配了 %1 MB 堆内存，超过设备总内存 %2 MB 的四分之三。请为系统和其他程序预留内存。</source>
-            <translation>%1 MB of heap memory is allocated to the game, accounting for more than three-quarters of %2 MB of this machine - it is easy to run out when the system and other programs compete for it.</translation>
+            <translation>Game is allocated %1 MB heap memory, over three-quarters of system memory (%2 MB). Leave enough memory for the system and other apps.</translation>
         </message>
         <message>
             <source>日志记录了 OutOfMemoryError，游戏可用内存不足。</source>
-            <translation>There is an OutOfMemoryError in the log - this time it actually ran out of memory allocated to it.</translation>
+            <translation>OutOfMemoryError found in log; the game ran out of allocated memory.</translation>
         </message>
         <message>
             <source>日志显示缺少模组依赖。请在「文件」页选择「检查更新」，查看所需依赖。</source>
-            <translation>The log states that the mod's prerequisite is not installed - click "Check for Updates" on the "File" page to see which one is missing.</translation>
+            <translation>Log shows missing mod dependencies. Click "Check for updates" on the Files tab to see what's missing.</translation>
         </message>
         <message>
             <source>游戏出现内存访问错误（%1）。请检查设备驱动和安全软件是否影响游戏进程。</source>
-            <translation>Crash in the "bad memory" category (%1) - In the original environment, this is probably because the local driver or security software interferes with the game process.</translation>
+            <translation>Memory access error (%1). Check if device drivers or security software are interfering with the game.</translation>
         </message>
         <message>
             <source>游戏出现内存访问错误（%1）。请检查模组及其依赖是否与游戏版本兼容。</source>
-            <translation>Crashes in the "Bad Memory" category (%1) - This is the most common symptom when a mod (or its missing prerequisite) does not match the version of the game.</translation>
+            <translation>Memory access error (%1). Check if mods and their dependencies match the game version.</translation>
         </message>
         <message>
             <source>游戏在加载阶段退出（%1）。请检查系统运行库及加载器文件是否完整。</source>
-            <translation>The process dies during the loading phase (%1) - Commonly caused by the system missing a runtime library (such as the VC++ runtime library), or the security software blocking a file requested by the loader.</translation>
+            <translation>Game exited during loading (%1). Check system runtimes and mod loader files.</translation>
         </message>
         <message>
             <source>日志中未记录 ERROR 或 Fatal。请确认游戏是否正常退出，或存档是否在其他进程中打开。</source>
-            <translation>There is no ERROR/Fatal in the log - this is probably not a crash, but the game itself exited (such as clicking exit, or the save file is already open elsewhere).</translation>
+            <translation>No ERROR or Fatal found in log. Confirm whether the game exited normally or the world save is open elsewhere.</translation>
         </message>
         <message>
             <source>游戏进程退出前未生成日志。请在「设置 → 启动」中确认 Java 路径及内存分配。</source>
-            <translation>No output from the game was received this time: there was no output after the process started. Most likely, the JVM exited before it was initialized. Please first confirm whether the Java in "Settings → Startup" is correct and whether the memory setting is too high.</translation>
+            <translation>Game exited before generating logs. Check Java path and memory settings under "Settings → Launch".</translation>
         </message>
     </context>
     <context>
@@ -6771,7 +6771,7 @@ Files already moved can be restored from the Recycle Bin.</translation>
         </message>
         <message>
             <source>无法打开文件：%1</source>
-            <translation>Could not open the file: %1</translation>
+            <translation>Can't open file: %1</translation>
         </message>
         <message>
             <source>导出日志</source>
@@ -6783,29 +6783,29 @@ Files already moved can be restored from the Recycle Bin.</translation>
         </message>
         <message>
             <source>导出失败</source>
-            <translation>Export failed</translation>
+            <translation>Couldn't export</translation>
         </message>
         <message>
             <source>文件写入失败（%1）：
 %2</source>
-            <translation>Could not write the file (%1):
+            <translation>Couldn't write file (%1):
 %2</translation>
         </message>
         <message>
             <source>[游戏输出] %1%2</source>
-            <translation>[Game Output] %1%2</translation>
+            <translation>[Game output] %1%2</translation>
         </message>
         <message>
             <source>[游戏错误] %1%2</source>
-            <translation>[Game Error] %1%2</translation>
+            <translation>[Game error] %1%2</translation>
         </message>
         <message>
             <source>游戏已退出，日志窗口已关闭。</source>
-            <translation>The game is over, and its log window is gone.</translation>
+            <translation>Game exited; log window closed.</translation>
         </message>
         <message>
             <source>%1游戏已由用户停止。</source>
-            <translation>%1The game has been stopped by the user.</translation>
+            <translation>%1Game stopped by user.</translation>
         </message>
         <message>
             <source>%1游戏崩溃，退出码：%2</source>
@@ -6813,35 +6813,39 @@ Files already moved can be restored from the Recycle Bin.</translation>
         </message>
         <message>
             <source>%1游戏进程已结束，退出码：%2</source>
-            <translation>%1The game process has ended, exit code: %2</translation>
+            <translation>%1Game exited, exit code: %2</translation>
         </message>
         <message>
             <source>
 [游戏已崩溃退出，退出码：%1]
 </source>
-            <translation>[The game has crashed and exited, exit code: %1]</translation>
+            <translation>
+[Game crashed, exit code: %1]
+</translation>
         </message>
         <message>
             <source>
 [游戏已退出，退出码：%1]
 </source>
-            <translation>[The game has exited, exit code: %1]</translation>
+            <translation>
+[Game exited, exit code: %1]
+</translation>
         </message>
         <message>
             <source>游戏窗口出现前进程就结束了，退出码 %1。</source>
-            <translation>The process ended before the game window appeared, exit code %1.</translation>
+            <translation>Process ended before the game window appeared (exit code %1).</translation>
         </message>
         <message>
             <source>游戏进程在生成日志前结束，退出码 %1。</source>
-            <translation>The game process ended before logging could be logged. The exit code was %1.</translation>
+            <translation>Process ended before generating logs (exit code %1).</translation>
         </message>
         <message>
             <source>此实例已结束。</source>
-            <translation>This instance has just ended.</translation>
+            <translation>Instance stopped.</translation>
         </message>
         <message>
             <source>「%1」已结束。</source>
-            <translation>"%1" It just ended.</translation>
+            <translation>"%1" stopped.</translation>
         </message>
         <message>
             <source>%1 个实例</source>
@@ -6851,19 +6855,17 @@ Files already moved can be restored from the Recycle Bin.</translation>
             <source>「%1」正在运行，将强制结束全部 %2 个游戏进程。
 
 未保存的进度会丢失。确认停止？</source>
-            <translation>"%1" is running (a total of %2 game processes, all stopped now). 
+            <translation>"%1" is running; all %2 game processes will be force-stopped.
 
- Stopping will directly end the game process - the game will not be archived, and unsaved progress will be lost. 
-Want to stop it?</translation>
+Unsaved progress will be lost. Stop anyway?</translation>
         </message>
         <message>
             <source>「%1」正在运行。强制结束游戏会丢失未保存的进度。
 
 确认停止？</source>
-            <translation>"%1" is running. 
+            <translation>"%1" is running. Force-stopping will lose unsaved progress.
 
- Stopping will directly end the game process - the game will not be archived, and unsaved progress will be lost. 
-Want to stop it?</translation>
+Stop anyway?</translation>
         </message>
         <message>
             <source>停止游戏</source>
@@ -6875,7 +6877,7 @@ Want to stop it?</translation>
         </message>
         <message>
             <source>已停止「%1」。</source>
-            <translation>Stopped '%1'.</translation>
+            <translation>Stopped "%1".</translation>
         </message>
     </context>
     <context>
@@ -6923,45 +6925,45 @@ Want to stop it?</translation>
             <source>此版本需要 Java %1，当前使用 Java %2，检测到的最高版本为 Java %3。
 
 请安装 Java %1，或在设置中指定 Java 路径。</source>
-            <translation>This version requires Java %1, and the one selected in "Settings" is Java %2, and there is no more suitable one for this machine (the highest one scanned is Java %3). 
+            <translation>This version requires Java %1 (configured: %2, highest detected: %3).
 
-First install a Java %1, or go to "Settings" and point the path there.</translation>
+Install Java %1, or set a Java path in Settings.</translation>
         </message>
         <message>
             <source>版本未知</source>
-            <translation>Can't recognize</translation>
+            <translation>unknown</translation>
         </message>
         <message>
             <source>无</source>
-            <translation>No</translation>
+            <translation>none</translation>
         </message>
         <message>
             <source>本机无 Java %1，且当前不允许下载运行时。</source>
-            <translation>Java %1 is not available on this machine and downloading the runtime is not currently allowed.</translation>
+            <translation>Java %1 isn't installed, and runtime downloads are disabled.</translation>
         </message>
         <message>
             <source>未找到 Java %1，且无法下载。</source>
-            <translation>Java %1 cannot be found or downloaded.</translation>
+            <translation>Java %1 not found and couldn't be downloaded.</translation>
         </message>
         <message>
             <source>当前设置为手动指定 Java，</source>
-            <translation>Java chooses "manual specification", and</translation>
+            <translation>Java is set to manual; </translation>
         </message>
         <message>
             <source>未指定路径</source>
-            <translation>No path specified yet</translation>
+            <translation>no path specified</translation>
         </message>
         <message>
             <source> 的主版本不是 </source>
-            <translation>The main version of is not</translation>
+            <translation> isn't major version </translation>
         </message>
         <message>
             <source>，未找到兼容版本时取消启动。</source>
-            <translation>—— Without automatic replacement, it will directly fail.</translation>
+            <translation>; launch canceled (no compatible version found).</translation>
         </message>
         <message>
             <source>已取消准备 Java 运行时。</source>
-            <translation>Preparing the Java runtime was canceled.</translation>
+            <translation>Java runtime preparation canceled.</translation>
         </message>
     </context>
     <context>
@@ -11141,7 +11143,7 @@ Disabling existing mods is recommended (files will be kept with a .disabled suff
         </message>
         <message>
             <source>相关实例正在运行、安装或处理文件，请完成后再试。</source>
-            <translation>Instance is running, installing, or processing files. Wait for it to finish and try again.</translation>
+            <translation>An involved instance is running, installing, or processing files. Wait for it to finish and try again.</translation>
         </message>
         <message>
             <source>将「%1」的游戏核心替换为 %2 / %3。
@@ -11161,7 +11163,7 @@ Save settings before upgrading. Continue?</translation>
         </message>
         <message>
             <source>源实例正在运行、安装或处理文件，请完成后再试。</source>
-            <translation>Source instance is running, installing, or processing files. Try again after it finishes.</translation>
+            <translation>Source instance is running, installing, or processing files. Wait for it to finish and try again.</translation>
         </message>
         <message>
             <source>实例或游戏目录状态已变化，未开始创建副本。</source>
@@ -12299,11 +12301,11 @@ Select a working java.exe from a Java installation's bin folder.</translation>
         <name>KeyCapture</name>
         <message>
             <source>点击后按下键盘或鼠标按键；Esc 取消，退格清除</source>
-            <translation>Press the keyboard or mouse button after clicking; Esc to cancel, backspace to clear</translation>
+            <translation>Click, then press a key or mouse button (Esc to cancel, Backspace to clear)</translation>
         </message>
         <message>
             <source>请按键…</source>
-            <translation>Please press the button...</translation>
+            <translation>Press a key…</translation>
         </message>
     </context>
     <context>
@@ -12826,11 +12828,11 @@ Change its Java path in Instance settings or switch to Global.</translation>
         <name>MainWindow</name>
         <message>
             <source>请先保存或放弃存档修改。</source>
-            <translation>Save or discard the world changes first.</translation>
+            <translation>Save or discard world changes first.</translation>
         </message>
         <message>
             <source>放弃存档修改？</source>
-            <translation>Discard World Changes?</translation>
+            <translation>Discard world changes?</translation>
         </message>
         <message>
             <source>切换世界会放弃当前存档中未保存的修改。</source>
@@ -12838,51 +12840,51 @@ Change its Java path in Instance settings or switch to Global.</translation>
         </message>
         <message>
             <source>修改存档文件</source>
-            <translation>Edit World Files</translation>
+            <translation>Edit save file</translation>
         </message>
         <message>
             <source>保存前会备份 level.dat。服务端启动后会按服务端配置应用相应的规则。</source>
-            <translation>The launcher backs up level.dat before saving. Server settings may override some rules when the server starts.</translation>
+            <translation>level.dat is backed up before saving. Server settings may override some rules on startup.</translation>
         </message>
         <message>
             <source>未设置</source>
-            <translation>Not Set</translation>
+            <translation>Not set</translation>
         </message>
         <message>
             <source>服务端类型</source>
-            <translation>Server Type</translation>
+            <translation>Server type</translation>
         </message>
         <message>
             <source>Minecraft 版本</source>
-            <translation>Minecraft Version</translation>
+            <translation>Minecraft version</translation>
         </message>
         <message>
             <source>连接地址</source>
-            <translation>Connection Address</translation>
+            <translation>Connection address</translation>
         </message>
         <message>
             <source>启动世界</source>
-            <translation>Startup World</translation>
+            <translation>Startup world</translation>
         </message>
         <message>
             <source>最大玩家数</source>
-            <translation>Player Limit</translation>
+            <translation>Max players</translation>
         </message>
         <message>
             <source>服务器简介</source>
-            <translation>Server Description</translation>
+            <translation>Server MOTD</translation>
         </message>
         <message>
             <source>服务端目录</source>
-            <translation>Server Folder</translation>
+            <translation>Server folder</translation>
         </message>
         <message>
             <source>加载器版本</source>
-            <translation>Loader Version</translation>
+            <translation>Loader version</translation>
         </message>
         <message>
             <source>构建号</source>
-            <translation>Build Number</translation>
+            <translation>Build number</translation>
         </message>
         <message>
             <source>请选择可访问的世界存档。</source>
@@ -12890,15 +12892,15 @@ Change its Java path in Instance settings or switch to Global.</translation>
         </message>
         <message>
             <source>无法保存存档</source>
-            <translation>Could Not Save World</translation>
+            <translation>Can't save world</translation>
         </message>
         <message>
             <source>存档路径已变更，请重新打开存档。</source>
-            <translation>The world path has changed. Reopen the world and try again.</translation>
+            <translation>World path changed. Reopen the world and try again.</translation>
         </message>
         <message>
             <source>level.dat 在打开后已被修改。请重新打开存档后再编辑。</source>
-            <translation>level.dat changed after it was opened. Reopen the world before editing it.</translation>
+            <translation>level.dat changed after it was opened. Reopen the world before editing.</translation>
         </message>
         <message>
             <source>无法访问内容目录。请检查所选世界和目录位置。</source>
@@ -12918,7 +12920,7 @@ Change its Java path in Instance settings or switch to Global.</translation>
         </message>
         <message>
             <source>继续</source>
-            <translation type="unfinished">Continue</translation>
+            <translation>Continue</translation>
         </message>
         <message>
             <source>正在处理服务端文件。</source>
@@ -12926,7 +12928,7 @@ Change its Java path in Instance settings or switch to Global.</translation>
         </message>
         <message>
             <source>此世界的整个文件夹</source>
-            <translation>The entire folder of this world</translation>
+            <translation>Entire world folder</translation>
         </message>
         <message>
             <source>没有可选的世界存档。</source>
@@ -12934,7 +12936,7 @@ Change its Java path in Instance settings or switch to Global.</translation>
         </message>
         <message>
             <source>部分设置项无法修改</source>
-            <translation>There are a few things that cannot be changed</translation>
+            <translation>Some settings can't be changed</translation>
         </message>
         <message>
             <source>无法保存</source>
@@ -12942,7 +12944,7 @@ Change its Java path in Instance settings or switch to Global.</translation>
         </message>
         <message>
             <source>服务端 %1 的 server.properties 已保存（已修改 %2 项）。</source>
-            <translation>Saved server.properties for server %1 (%2 entries changed).</translation>
+            <translation>Saved server.properties for server %1 (%2 changed).</translation>
         </message>
         <message>
             <source>暂无服务端日志。</source>
@@ -13042,47 +13044,47 @@ Change its Java path in Instance settings or switch to Global.</translation>
         </message>
         <message>
             <source>WTFML · 首次使用测试</source>
-            <translation>WTFML · First-run Test</translation>
+            <translation>WTFML · First-run test</translation>
         </message>
         <message>
             <source>清除缓存</source>
-            <translation>Clear Cache</translation>
+            <translation>Clear cache</translation>
         </message>
         <message>
             <source>清除以下游戏目录中的外观、图标和服务器状态缓存？账号、存档、备份和手动导入的皮肤会保留。
 
 %1</source>
-            <translation>Clear cached appearances, icons, and server status for this game folder? Accounts, worlds, backups, and manually imported skins will be kept.
+            <translation>Clear cached skins, icons, and server status for this game directory? Accounts, worlds, backups, and manually imported skins will be kept.
 
 %1</translation>
         </message>
         <message>
             <source>部分缓存未清除</source>
-            <translation>Some Cache Files Could Not Be Cleared</translation>
+            <translation>Some cache files couldn't be cleared</translation>
         </message>
         <message>
             <source>以下缓存目录无法清理。请检查目录权限和链接后重试。
 
 %1</source>
-            <translation>These cache folders could not be cleared. Check their permissions and links, then try again.
+            <translation>These cache folders couldn't be cleared. Check permissions and links, then try again.
 
 %1</translation>
         </message>
         <message>
             <source>缓存已清除</source>
-            <translation>Cache Cleared</translation>
+            <translation>Cache cleared</translation>
         </message>
         <message>
             <source>磁盘缓存已清除。重启后会重新加载外观、图标和服务器状态。</source>
-            <translation>The disk cache was cleared. Appearances, icons, and server status will reload after you restart.</translation>
+            <translation>Disk cache cleared. Skins, icons, and server status will reload after restart.</translation>
         </message>
         <message>
             <source>无法打开测试窗口</source>
-            <translation>Could Not Open the Test Window</translation>
+            <translation>Can't open test window</translation>
         </message>
         <message>
             <source>请检查系统临时目录是否允许写入，并确认启动器可以再次运行。</source>
-            <translation>Check that the system temporary folder is writable and that another copy of the launcher can run.</translation>
+            <translation>Check that the system temp folder is writable and the launcher can start again.</translation>
         </message>
         <message>
             <source>首次使用测试目录：%1</source>
@@ -13102,27 +13104,27 @@ Change its Java path in Instance settings or switch to Global.</translation>
         </message>
         <message>
             <source>应用实例预设</source>
-            <translation>Application instance defaults</translation>
+            <translation>Apply instance preset</translation>
         </message>
         <message>
             <source>检查模组、前置与配置</source>
-            <translation>Check mods, prerequisites and configurations</translation>
+            <translation>Checking mods, dependencies, and configs</translation>
         </message>
         <message>
             <source>正在检查并应用实例预设…</source>
-            <translation>Checking and applying instance presets...</translation>
+            <translation>Checking and applying instance preset…</translation>
         </message>
         <message>
             <source>预设在确认后发生变化或已损坏，未继续下载模组；请重新预览并确认。</source>
-            <translation>The default has changed or been damaged after confirmation, and the mod download has not continued; please preview and confirm again.</translation>
+            <translation>The preset changed or was corrupted after confirmation; mod download canceled. Preview and confirm again.</translation>
         </message>
         <message>
             <source>正在应用实例预设：检查模组及必要前置…</source>
-            <translation>Applying instance presets: Checking mods and necessary prerequisites...</translation>
+            <translation>Applying instance preset: checking mods and required dependencies…</translation>
         </message>
         <message>
             <source>预设在确认后发生变化或已损坏，未使用旧确认覆盖新内容，请重新预览。</source>
-            <translation>The preset has changed or been damaged after confirmation. The new content was not overwritten with the old confirmation. Please preview again.</translation>
+            <translation>The preset changed or was corrupted after confirmation; new content wasn't overwritten. Preview again.</translation>
         </message>
         <message>
             <source>查看实例</source>
@@ -13134,11 +13136,11 @@ Change its Java path in Instance settings or switch to Global.</translation>
         </message>
         <message>
             <source>导入失败</source>
-            <translation>Import failed</translation>
+            <translation>Couldn't import</translation>
         </message>
         <message>
             <source>安装完成</source>
-            <translation>Installation completed</translation>
+            <translation>Installation complete</translation>
         </message>
         <message>
             <source>安装失败</source>
@@ -13146,7 +13148,7 @@ Change its Java path in Instance settings or switch to Global.</translation>
         </message>
         <message>
             <source>检查完成</source>
-            <translation>Check completed</translation>
+            <translation>Check complete</translation>
         </message>
         <message>
             <source>已安装</source>
@@ -13158,51 +13160,51 @@ Change its Java path in Instance settings or switch to Global.</translation>
         </message>
         <message>
             <source>确定</source>
-            <translation>Knew</translation>
+            <translation>OK</translation>
         </message>
         <message>
             <source>安装完成，但预设应用失败</source>
-            <translation>Installation completed, but presets are not applied</translation>
+            <translation>Installed, but couldn't apply preset</translation>
         </message>
         <message>
             <source>实例「%1」的文件已齐全。
 
 %2</source>
-            <translation>The files for the instance "%1" are all available. 
+            <translation>All files for instance "%1" are present.
 
 %2</translation>
         </message>
         <message>
             <source>文件未补齐</source>
-            <translation>The files are not completed</translation>
+            <translation>Files incomplete</translation>
         </message>
         <message>
             <source>未能获取实例「%1」的部分文件。
 
 %2</source>
-            <translation>Instance "%1" has files that cannot be obtained. 
+            <translation>Couldn't get some files for instance "%1".
 
 %2</translation>
         </message>
         <message>
             <source>「%1」的首次启动资源已齐全，本次无需下载。</source>
-            <translation>The first launch resources of "%1" are complete and there is no need to download this time.</translation>
+            <translation>First-launch assets for "%1" are complete; nothing to download.</translation>
         </message>
         <message>
             <source>首次启动资源已预取</source>
-            <translation>First boot resources have been prefetched</translation>
+            <translation>First-launch assets prefetched</translation>
         </message>
         <message>
             <source>「%1」的首次启动资源已就绪。
 
 %2</source>
-            <translation>The first startup resources of "%1" are ready, and the first startup will no longer be stuck on download. 
+            <translation>First-launch assets for "%1" are ready.
 
 %2</translation>
         </message>
         <message>
             <source>首次启动资源下载不完整</source>
-            <translation>The first startup resources have not been prefetched.</translation>
+            <translation>First-launch assets incomplete</translation>
         </message>
         <message>
             <source>「%1」的 GTNH 首次启动资源下载不完整。
@@ -13210,11 +13212,11 @@ Change its Java path in Instance settings or switch to Global.</translation>
 %2
 
 游戏仍可启动，并会在首次运行时下载缺失资源。重试下载？</source>
-            <translation>"%1" failed to obtain all the GTNH first-start resources. 
+            <translation>Some GTNH first-launch assets for "%1" didn't finish downloading.
 
 %2
 
- does not affect startup. The required resources will be automatically downloaded when the game is run for the first time. Do you want to try again?</translation>
+The game can still launch and will download missing assets on first run. Retry download?</translation>
         </message>
         <message>
             <source>重试</source>
@@ -13222,17 +13224,17 @@ Change its Java path in Instance settings or switch to Global.</translation>
         </message>
         <message>
             <source>完成</source>
-            <translation>Finish</translation>
+            <translation>Done</translation>
         </message>
         <message>
             <source>下载完成</source>
-            <translation>Download completed</translation>
+            <translation>Download complete</translation>
         </message>
         <message>
             <source>版本 %1 的文件已全部就绪。
 
 %2</source>
-            <translation>All files for version %1 are ready. 
+            <translation>All files for version %1 are ready.
 
 %2</translation>
         </message>
@@ -13244,13 +13246,13 @@ Change its Java path in Instance settings or switch to Global.</translation>
             <source>版本 %1 有文件未能下载完成。
 
 %2</source>
-            <translation>Version %1 has files that could not be downloaded. 
+            <translation>Some files for version %1 didn't finish downloading.
 
 %2</translation>
         </message>
         <message>
             <source>导入整合包 %1</source>
-            <translation>Import integration package %1</translation>
+            <translation>Import modpack %1</translation>
         </message>
         <message>
             <source>安装 %1</source>
@@ -13258,11 +13260,11 @@ Change its Java path in Instance settings or switch to Global.</translation>
         </message>
         <message>
             <source>校验并补全 %1</source>
-            <translation>Check and complete %1</translation>
+            <translation>Verify and repair %1</translation>
         </message>
         <message>
             <source>预取「%1」的首次启动资源</source>
-            <translation>Prefetch the first resource of %1</translation>
+            <translation>Prefetch first-launch assets for "%1"</translation>
         </message>
         <message>
             <source>下载游戏文件</source>
@@ -13270,7 +13272,7 @@ Change its Java path in Instance settings or switch to Global.</translation>
         </message>
         <message>
             <source>安装原版与加载器</source>
-            <translation>Install vanilla Minecraft and the loader</translation>
+            <translation>Install vanilla and loader</translation>
         </message>
         <message>
             <source>下载整合包文件</source>
@@ -13286,19 +13288,19 @@ Change its Java path in Instance settings or switch to Global.</translation>
         </message>
         <message>
             <source>准备安装，基于原版 %1。</source>
-            <translation>Ready to install, based on the original %1.</translation>
+            <translation>Ready to install, based on vanilla %1.</translation>
         </message>
         <message>
             <source>%1 暂无支持 %2 的版本。</source>
-            <translation>%1 There is no version that supports %2 yet.</translation>
+            <translation>No %1 version supports %2.</translation>
         </message>
         <message>
             <source>预设不可用</source>
-            <translation>Default is not available</translation>
+            <translation>Preset unavailable</translation>
         </message>
         <message>
             <source>预设功能尚未初始化，无法选择预设。</source>
-            <translation>The default layer in this launcher has not been initialized, so you cannot select the default.</translation>
+            <translation>Presets aren't initialized; can't select a preset.</translation>
         </message>
         <message>
             <source>应用 %1 项</source>
@@ -13306,19 +13308,19 @@ Change its Java path in Instance settings or switch to Global.</translation>
         </message>
         <message>
             <source>，跳过 %1 项</source>
-            <translation>, skip %1 items</translation>
+            <translation>, skip %1</translation>
         </message>
         <message>
             <source>，%1 部分不可用</source>
-            <translation>, the %1 part is not available</translation>
+            <translation>, %1 unavailable</translation>
         </message>
         <message>
             <source>，需确认覆盖</source>
-            <translation>, need to confirm coverage</translation>
+            <translation>, confirm overwrite</translation>
         </message>
         <message>
             <source>正在检查模组兼容性…</source>
-            <translation>Checking mod compatibility...</translation>
+            <translation>Checking mod compatibility…</translation>
         </message>
         <message>
             <source>缺失</source>
@@ -13326,27 +13328,27 @@ Change its Java path in Instance settings or switch to Global.</translation>
         </message>
         <message>
             <source>暂无法确认</source>
-            <translation>Unable to confirm yet</translation>
+            <translation>Unconfirmed</translation>
         </message>
         <message>
             <source>引用无法识别</source>
-            <translation>Reference not recognized</translation>
+            <translation>Invalid reference</translation>
         </message>
         <message>
             <source>检查中</source>
-            <translation>Under inspection</translation>
+            <translation>Checking</translation>
         </message>
         <message>
             <source>【必要项】</source>
-            <translation>[Required items]</translation>
+            <translation> [Required]</translation>
         </message>
         <message>
             <source>【可选项】</source>
-            <translation>【Optional】</translation>
+            <translation> [Optional]</translation>
         </message>
         <message>
             <source>未指定原版依赖，请返回版本列表重新选择。</source>
-            <translation>The original dependency is not specified, please return to the version list and select again.</translation>
+            <translation>Base vanilla version not specified. Return to the version list and select again.</translation>
         </message>
         <message>
             <source>版本已存在</source>
@@ -13358,35 +13360,35 @@ Change its Java path in Instance settings or switch to Global.</translation>
         </message>
         <message>
             <source>未获取到 %1 在 %2 上的版本列表：%3</source>
-            <translation>%1 What versions are not available on %2: %3</translation>
+            <translation>Couldn't fetch %1 version list for %2: %3</translation>
         </message>
         <message>
             <source>请先在上方填写版本名称。</source>
-            <translation>First fill in the version name above.</translation>
+            <translation>Enter a version name above first.</translation>
         </message>
         <message>
             <source>无法计算此计划。</source>
-            <translation>This one doesn't count as a plan.</translation>
+            <translation>Can't calculate this plan.</translation>
         </message>
         <message>
             <source>已有下载任务正在进行，请待其结束后再试。</source>
-            <translation>There is a download task in progress, please wait for it to end.</translation>
+            <translation>A download is already in progress. Wait for it to finish and try again.</translation>
         </message>
         <message>
             <source>名称不可用</source>
-            <translation>Name cannot be used</translation>
+            <translation>Name unavailable</translation>
         </message>
         <message>
             <source>版本 %1 已下载。
 是否校验并修复缺失或损坏的文件？</source>
-            <translation>Version %1 has been downloaded. 
-Verify and repair missing or damaged files?</translation>
+            <translation>Version %1 is already downloaded.
+Verify and repair missing or corrupted files?</translation>
         </message>
         <message>
             <source>实例「%1」已安装。
 是否校验并修复缺失或损坏的文件？</source>
-            <translation>The instance "%1" has already been installed. 
-Verify and repair missing or damaged files?</translation>
+            <translation>Instance "%1" is already installed.
+Verify and repair missing or corrupted files?</translation>
         </message>
         <message>
             <source>是</source>
@@ -13398,31 +13400,31 @@ Verify and repair missing or damaged files?</translation>
         </message>
         <message>
             <source>已取消对 %1 的校验。</source>
-            <translation>%1 has been dechecked.</translation>
+            <translation>Verification canceled for %1.</translation>
         </message>
         <message>
             <source>正在校验 %1 的文件，跳过已存在的文件…</source>
-            <translation>Start verifying %1 files (existing ones will be skipped)...</translation>
+            <translation>Verifying %1 (skipping existing files)…</translation>
         </message>
         <message>
             <source>需要模组加载器</source>
-            <translation>Requires mod loader</translation>
+            <translation>Mod loader required</translation>
         </message>
         <message>
             <source>请选择模组加载器，或取消预设。</source>
-            <translation>Please select a mod loader, or cancel the default.</translation>
+            <translation>Select a mod loader, or clear the preset.</translation>
         </message>
         <message>
             <source>预设功能尚未初始化，无法应用预设。</source>
-            <translation>The default layer in this launcher has not been initialized and the default cannot be applied.</translation>
+            <translation>Presets aren't initialized; can't apply preset.</translation>
         </message>
         <message>
             <source>无法应用此预设</source>
-            <translation>This preset cannot be applied now</translation>
+            <translation>Can't apply this preset</translation>
         </message>
         <message>
             <source>%1「%2」：%3</source>
-            <translation>%1The copy "%2": %3</translation>
+            <translation>%1 "%2": %3</translation>
         </message>
         <message>
             <source>• %1：%2</source>
@@ -13430,13 +13432,13 @@ Verify and repair missing or damaged files?</translation>
         </message>
         <message>
             <source>安装完成后应用预设</source>
-            <translation>Apply preset after installation is complete</translation>
+            <translation>Apply preset after installation</translation>
         </message>
         <message>
             <source>安装「%1」后将应用以下预设：
 
 %2</source>
-            <translation>After installing "%1", these defaults will be applied: 
+            <translation>After installing "%1", these presets will be applied:
 
 %2</translation>
         </message>
@@ -13450,31 +13452,31 @@ Verify and repair missing or damaged files?</translation>
         </message>
         <message>
             <source>应用前会将受影响的文件备份到预设目录的 backups/ 子目录。</source>
-            <translation>Before application, the files to be rewritten will be backed up to backups/ in the default directory.</translation>
+            <translation>Affected files will be backed up to backups/ in the preset folder before applying.</translation>
         </message>
         <message>
             <source>已取消带预设的安装。</source>
-            <translation>This installation with defaults has been cancelled.</translation>
+            <translation>Installation with preset canceled.</translation>
         </message>
         <message>
             <source>无法获取此版本所需的 Java：%1</source>
-            <translation>The Java required for this version is not available: %1</translation>
+            <translation>Required Java for this version isn't available: %1</translation>
         </message>
         <message>
             <source>Java 版本过低</source>
-            <translation>Insufficient Java version</translation>
+            <translation>Java version too old</translation>
         </message>
         <message>
             <source>此版本需要 Java %1，安装时将改用 %2</source>
-            <translation>This version requires Java %1, use %2 instead when installing.</translation>
+            <translation>This version requires Java %1; using %2 for installation.</translation>
         </message>
         <message>
             <source>正在检查「%1」的资源更新（%2 个文件）…</source>
-            <translation>Checking whether the resources in "%1" have new versions (%2 files)...</translation>
+            <translation>Checking updates for "%1" (%2 files)…</translation>
         </message>
         <message>
             <source>无法读取 %1 个文件，相关资源未完成检查。</source>
-            <translation>Could not read %1 files. The related resources were not checked.</translation>
+            <translation>Couldn't read %1 files; those resources weren't checked.</translation>
         </message>
         <message>
             <source>资源更新检查 / %1</source>
@@ -13482,11 +13484,11 @@ Verify and repair missing or damaged files?</translation>
         </message>
         <message>
             <source>更新检查结果可能不完整</source>
-            <translation>Update check results may be incomplete</translation>
+            <translation>Update check may be incomplete</translation>
         </message>
         <message>
             <source>更新检测（%1）：%2</source>
-            <translation>Update detection (%1): %2</translation>
+            <translation>Update check (%1): %2</translation>
         </message>
         <message>
             <source>下载可用前置</source>
@@ -13494,48 +13496,47 @@ Verify and repair missing or damaged files?</translation>
         </message>
         <message>
             <source>目标实例已不可用</source>
-            <translation>Target instance is unavailable</translation>
+            <translation>Target instance unavailable</translation>
         </message>
         <message>
             <source>游戏目录已切换或该实例已移除，请重新选择下载目标。</source>
-            <translation>The game directory changed or the instance was removed. Select a download target again.</translation>
+            <translation>Game directory changed or instance removed. Select a download target again.</translation>
         </message>
         <message>
             <source>目标文件夹</source>
-            <translation>Which folder to download to</translation>
+            <translation>Target folder</translation>
         </message>
         <message>
             <source>未获取到前置模组的名称：%1</source>
-            <translation>The name of the pre-mod was not found: %1</translation>
+            <translation>Couldn't get dependency name: %1</translation>
         </message>
         <message>
             <source>未获取到前置版本列表：%1</source>
-            <translation>Could not retrieve dependency versions: %1</translation>
+            <translation>Couldn't get dependency versions: %1</translation>
         </message>
         <message>
             <source>此版本无可下载的文件。</source>
-            <translation>There are no downloadable files for this version.</translation>
+            <translation>No downloadable files for this version.</translation>
         </message>
         <message>
             <source>版本文件名无效，已取消下载（%1）：%2</source>
-            <translation>The file name of this version cannot be used (%1): %2
- has not been downloaded.</translation>
+            <translation>Invalid filename for this version; download canceled (%1): %2</translation>
         </message>
         <message>
             <source>加载器不匹配</source>
-            <translation>The loader cannot match</translation>
+            <translation>Loader mismatch</translation>
         </message>
         <message>
             <source>当前实例为 %1 %2，所选文件适用于 %3。
 
 安装不兼容的文件可能导致游戏无法启动。确认安装？</source>
-            <translation>This instance is %1 %2, and this version is for %3. The 
+            <translation>This instance uses %1 %2, but this file is for %3.
 
- version is incompatible and the game may not start after installation. Do you want to continue the installation?</translation>
+Incompatible files may prevent the game from launching. Install anyway?</translation>
         </message>
         <message>
             <source>（含 %1 个前置）</source>
-            <translation>(Contains %1 prefixes)</translation>
+            <translation> (includes %1 dependencies)</translation>
         </message>
         <message>
             <source>正在下载 %1（%2）。</source>
@@ -13543,27 +13544,27 @@ Verify and repair missing or damaged files?</translation>
         </message>
         <message>
             <source>%1 个前置将作为模组安装到 %2。</source>
-            <translation>%1 front button mods are loaded into %2.</translation>
+            <translation>%1 dependencies will be installed as mods to %2.</translation>
         </message>
         <message>
             <source>更换名称</source>
-            <translation>Choose a different name</translation>
+            <translation>Choose another name</translation>
         </message>
         <message>
             <source>暂时无法操作</source>
-            <translation>Temporarily inoperable</translation>
+            <translation>Unavailable right now</translation>
         </message>
         <message>
             <source>已有下载或安装任务正在进行，请等待其结束后再下载此项。</source>
-            <translation>There is already a download or installation task in progress, please wait until it is completed before downloading this one.</translation>
+            <translation>A download or installation is already in progress. Wait for it to finish before downloading this.</translation>
         </message>
         <message>
             <source>「%1」上次未安装完成，将继续安装，已下载的文件不再重复下载。</source>
-            <translation>The previous installation of “%1” was incomplete. The installation will resume using files already downloaded.</translation>
+            <translation>Resuming incomplete installation of "%1". Already-downloaded files won't be re-downloaded.</translation>
         </message>
         <message>
             <source>整合包「%1」将安装到当前游戏目录，请确认实例名称。</source>
-            <translation>“%1” will be installed in the current game directory. Confirm the instance name.</translation>
+            <translation>Modpack "%1" will be installed to the current game directory. Confirm instance name.</translation>
         </message>
         <message>
             <source>安装整合包</source>
@@ -13575,11 +13576,11 @@ Verify and repair missing or damaged files?</translation>
         </message>
         <message>
             <source>无法开始下载。</source>
-            <translation>Could not start the download.</translation>
+            <translation>Couldn't start download.</translation>
         </message>
         <message>
             <source>正在获取最热门的%1…</source>
-            <translation>Getting the hottest %1…</translation>
+            <translation>Loading popular %1…</translation>
         </message>
         <message>
             <source>正在搜索「%1」…</source>
@@ -13587,68 +13588,69 @@ Verify and repair missing or damaged files?</translation>
         </message>
         <message>
             <source>正在搜索%1「%2」…</source>
-            <translation>Searching for %1「%2」…</translation>
+            <translation>Searching %1 for "%2"…</translation>
         </message>
         <message>
             <source>来源 %1</source>
-            <translation>Source %1</translation>
+            <translation>Source: %1</translation>
         </message>
         <message>
             <source>版本 %1</source>
-            <translation>Version %1</translation>
+            <translation>Version: %1</translation>
         </message>
         <message>
             <source>模组加载器 %1</source>
-            <translation>Modloader %1</translation>
+            <translation>Mod loader: %1</translation>
         </message>
         <message>
             <source>类型 %1</source>
-            <translation>Type %1</translation>
+            <translation>Type: %1</translation>
         </message>
         <message>
             <source>搜索条件：%1</source>
-            <translation>Search criteria: %1</translation>
+            <translation>Filters: %1</translation>
         </message>
         <message>
             <source>此%1未列出支持的游戏版本。</source>
-            <translation>This %1 does not list supported game versions.</translation>
+            <translation>%1: no supported game versions listed.</translation>
         </message>
         <message>
             <source>%1 无搜索结果（%2）。</source>
-            <translation>%1 None were found (%2).</translation>
+            <translation>%1: no results (%2).</translation>
         </message>
         <message>
             <source>此类别暂无内容。</source>
-            <translation>There is nothing in this category.</translation>
+            <translation>No items in this category.</translation>
         </message>
         <message>
             <source>未搜索到「%1」。</source>
-            <translation>"%1" was not found.</translation>
+            <translation>No results for "%1".</translation>
         </message>
         <message>
             <source>此游戏版本暂无可下载的版本。</source>
-            <translation>There is no downloadable version of this game.</translation>
+            <translation>No downloads available for this game version.</translation>
         </message>
         <message>
             <source>正在读取版本列表…</source>
-            <translation>Reading version list…</translation>
+            <translation>Loading version list…</translation>
         </message>
         <message>
             <source>尚未获取此版本的下载信息。请折叠后重新展开上方的游戏版本，然后重试。</source>
-            <translation>The download information for this version has not yet been obtained. Put away the game version above, click on it again, and try again.</translation>
+            <translation>Download info for this version isn't loaded. Collapse and re-expand the game version above, then try again.</translation>
         </message>
         <message>
             <source>空搜索词</source>
-            <translation>Empty search term</translation>
+            <translation>empty query</translation>
         </message>
         <message>
             <source>正在获取…</source>
-            <translation>Getting…</translation>
+            <translation>Fetching…</translation>
         </message>
         <message>
             <source>
 暂无记录。</source>
-            <translation>No record yet.</translation>
+            <translation>
+No entries.</translation>
         </message>
         <message>
             <source>等级 %1</source>
@@ -13658,13 +13660,13 @@ Verify and repair missing or damaged files?</translation>
             <source>输入玩家名称。
 
 离线服务端根据名称计算 UUID。在线服务端请在控制台使用 whitelist add 或 op，以查询玩家的 Mojang UUID。</source>
-            <translation>What is the player name? 
+            <translation>Enter a player name.
 
- The server in offline mode (online-mode=false) calculates the UUID by name; the list of genuine servers must be added in the console using whitelist add / op, and then it will be resolved into Mojang's UUID.</translation>
+Offline servers compute UUIDs from names. For online-mode servers, use whitelist add or op in the console to look up the player's Mojang UUID.</translation>
         </message>
         <message>
             <source>「%1」已在名单中。</source>
-            <translation>"%1" is already in the list.</translation>
+            <translation>"%1" is already on the list.</translation>
         </message>
         <message>
             <source>从%1中移除</source>
@@ -13672,27 +13674,27 @@ Verify and repair missing or damaged files?</translation>
         </message>
         <message>
             <source>将解除对地址「%1」的封禁。</source>
-            <translation>"%1" will be removed from the banned list (equivalent to unblocking this address).</translation>
+            <translation>Unban IP address "%1"?</translation>
         </message>
         <message>
             <source>将解除对玩家「%1」的封禁。</source>
-            <translation>"%1" will be removed from the banned list (equivalent to unblocking).</translation>
+            <translation>Unban player "%1"?</translation>
         </message>
         <message>
             <source>将从服务器列表中移除「%1」。</source>
-            <translation>"%1" will be removed from this list.</translation>
+            <translation>Remove "%1" from this list?</translation>
         </message>
         <message>
             <source>移除条目</source>
-            <translation>Take away</translation>
+            <translation>Remove</translation>
         </message>
         <message>
             <source>已从服务端 %1 的%2中移除「%3」。</source>
-            <translation>"%3" was removed from %2 on the server %1.</translation>
+            <translation>Removed "%3" from %2 on server %1.</translation>
         </message>
         <message>
             <source>资源包 (*.zip *.jar);;所有文件 (*.*)</source>
-            <translation>Resource package (*.zip *.jar);;All files (*.*)</translation>
+            <translation>Resource packs (*.zip *.jar);;All files (*.*)</translation>
         </message>
         <message>
             <source>已将「%1」的 SHA-1 填入「资源包 SHA-1」字段：
@@ -13700,53 +13702,51 @@ Verify and repair missing or damaged files?</translation>
 %2
 
 请在「资源包地址」中填写其他玩家可访问的 HTTP(S) 链接。更换 ZIP 文件后需重新计算 SHA-1。设置将在服务端重启后生效。</source>
-            <translation>The SHA-1 of the local "%1" has been filled in the "Resource Pack SHA-1": 
+            <translation>Filled "Resource pack SHA-1" with the SHA-1 of "%1":
 
 %2
 
- You have to fill in the "Resource Pack Address" box yourself - you need an http(s) link that other players can connect to (your own website/network disk direct link/object storage will do). The local file path cannot be opened by others, and the launcher will not fill it in. 
-
-If you change the zip, you need to recalculate SHA-1; the new value will be used the next time the server starts.</translation>
+Enter a public HTTP/HTTPS URL in "Resource pack URL" so players can download it. Recalculate SHA-1 if you replace the ZIP. Changes apply after restarting the server.</translation>
         </message>
         <message>
             <source>无法根据服务端的 level-name 确定世界存档目录。</source>
-            <translation>The level-name of this server is not recognized, and I don’t know where the world is.</translation>
+            <translation>Can't determine the world folder from the server's level-name.</translation>
         </message>
         <message>
             <source>数据包 (*.zip);;所有文件 (*.*)</source>
-            <translation>Data package (*.zip);;All files (*.*)</translation>
+            <translation>Data packs (*.zip);;All files (*.*)</translation>
         </message>
         <message>
             <source>无法创建文件夹：%1</source>
-            <translation>This folder cannot be created: %1</translation>
+            <translation>Can't create folder: %1</translation>
         </message>
         <message>
             <source>%1（后缀不是 %2）</source>
-            <translation>%1 (suffix not %2)</translation>
+            <translation>%1 (extension isn't %2)</translation>
         </message>
         <message>
             <source>目标名称「%1」已存在，请选择其他名称。</source>
-            <translation>The target name "%1" already exists. Please choose a different name.</translation>
+            <translation>"%1" already exists. Choose another name.</translation>
         </message>
         <message>
             <source>启用</source>
-            <translation>Enable</translation>
+            <translation>enabled</translation>
         </message>
         <message>
             <source>禁用</source>
-            <translation>Disable</translation>
+            <translation>disabled</translation>
         </message>
         <message>
             <source>游戏目录尚未创建</source>
-            <translation>This folder has not been created yet</translation>
+            <translation>Folder not created</translation>
         </message>
         <message>
             <source>服务端已停止，无法踢出玩家。启动服务端后再试。</source>
-            <translation>"Kick out" is to send a kick command to the running server - it is not running now, so it cannot kick people.</translation>
+            <translation>Server is stopped; start it before kicking players.</translation>
         </message>
         <message>
             <source>服务端命令输入已关闭。</source>
-            <translation>The server's input channel is no longer there (it may just be exiting).</translation>
+            <translation>Server command input is closed.</translation>
         </message>
         <message>
             <source>已发送：%1</source>
@@ -13758,19 +13758,19 @@ If you change the zip, you need to recalculate SHA-1; the new value will be used
         </message>
         <message>
             <source>已向服务端发送「%1」。可在控制台查看执行结果。</source>
-            <translation>"%1" has been sent to the server console. The line it answered will appear in the console - go to the "Console" and take a look at the results (that's what really matters).</translation>
+            <translation>Sent "%1" to the server. Check the console for output.</translation>
         </message>
         <message>
             <source>•「%1」：%2 → %3</source>
-            <translation>•「%1」：%2 → %3</translation>
+            <translation>• "%1": %2 → %3</translation>
         </message>
         <message>
             <source>可绕过人数上限</source>
-            <translation>Can bypass the maximum number of people</translation>
+            <translation>Bypass player limit</translation>
         </message>
         <message>
             <source>当前无法修改</source>
-            <translation>Can't change it now</translation>
+            <translation>Can't edit right now</translation>
         </message>
         <message>
             <source>添加到%1</source>
@@ -13780,33 +13780,33 @@ If you change the zip, you need to recalculate SHA-1; the new value will be used
             <source>封禁地址
 
 仅填写一个 IPv4 / IPv6 地址（不含端口）。</source>
-            <translation>Which address should be blocked? 
+            <translation>IP address to ban
 
-Write only an IPv4/IPv6 address (without port).</translation>
+Enter a single IPv4 or IPv6 address (without a port).</translation>
         </message>
         <message>
             <source>地址不能包含空格或斜杠。</source>
-            <translation>There should be no spaces or slashes in the address.</translation>
+            <translation>Address can't contain spaces or slashes.</translation>
         </message>
         <message>
             <source>无法添加到%1</source>
-            <translation>Cannot add %1</translation>
+            <translation>Can't add to %1</translation>
         </message>
         <message>
             <source>已将「%3」添加到服务端 %1 的%2。</source>
-            <translation>"%3" was added to %2 on the server side %1.</translation>
+            <translation>Added "%3" to %2 on server %1.</translation>
         </message>
         <message>
             <source>选择资源包 zip</source>
-            <translation>Choose a resource pack zip</translation>
+            <translation>Select resource pack ZIP</translation>
         </message>
         <message>
             <source>此压缩包不能用作资源包</source>
-            <translation>This compressed package cannot be used as a resource package</translation>
+            <translation>Invalid resource pack archive</translation>
         </message>
         <message>
             <source>已计算本地资源包的 SHA-1：%1（%2，%3 字节）</source>
-            <translation>SHA-1 calculated from local resource bundle: %1 (%2, %3 bytes)</translation>
+            <translation>Calculated local resource pack SHA-1: %1 (%2, %3 bytes)</translation>
         </message>
         <message>
             <source>已计算 SHA-1</source>
@@ -13818,19 +13818,19 @@ Write only an IPv4/IPv6 address (without port).</translation>
         </message>
         <message>
             <source>%1（文件夹中已存在）</source>
-            <translation>%1 (there is already a copy in the folder)</translation>
+            <translation>%1 (already in folder)</translation>
         </message>
         <message>
             <source>%1（无法复制）</source>
-            <translation>%1 (Cannot copy)</translation>
+            <translation>%1 (couldn't copy)</translation>
         </message>
         <message>
             <source>已添加 %3 份到服务端 %1 的%2：%4</source>
-            <translation>The server %1 added %3 copies to %2: %4</translation>
+            <translation>Added %3 files to %2 on server %1: %4</translation>
         </message>
         <message>
             <source>部分文件未添加</source>
-            <translation>There are a few copies that have not been added.</translation>
+            <translation>Some files weren't added</translation>
         </message>
         <message>
             <source>
@@ -13838,7 +13838,7 @@ Write only an IPv4/IPv6 address (without port).</translation>
 同名文件已保留。如需替换，请选择「打开文件夹」并移除旧文件。</source>
             <translation>
 
-Existing files with the same name were kept. To replace them, choose "Open folder" and move the old ones away.</translation>
+Existing files with the same name were kept. To replace them, click "Open folder" and remove the old files.</translation>
         </message>
         <message>
             <source>已添加</source>
@@ -13846,28 +13846,28 @@ Existing files with the same name were kept. To replace them, choose "Open folde
         </message>
         <message>
             <source>已放入 %1 份。服务端将在下次启动时加载。</source>
-            <translation>%1 copies were put in. They will be loaded the next time the server starts.</translation>
+            <translation>Added %1 files. The server will load them on next start.</translation>
         </message>
         <message>
             <source>无法修改</source>
-            <translation>Can't change</translation>
+            <translation>Can't edit</translation>
         </message>
         <message>
             <source>无法将「%1」改为「%2」：%3</source>
-            <translation>"%1" cannot be changed to "%2": %3</translation>
+            <translation>Couldn't rename "%1" to "%2": %3</translation>
         </message>
         <message>
             <source>服务端 %1 的「%2」已%3（当前为「%4」）。</source>
-            <translation>The server %1's "%2" has %3 (now "%4").</translation>
+            <translation>"%2" on server %1 was %3 (now "%4").</translation>
         </message>
         <message>
             <source>未找到此文件夹</source>
-            <translation>This folder cannot be found</translation>
+            <translation>Folder not found</translation>
         </message>
         <message>
             <source>请先通过「添加…」放入文件，或手动创建该目录：
 %1</source>
-            <translation>Put a file in it first ("Add..."), or create one yourself: 
+            <translation>Add files via "Add…" first, or create this folder manually:
 %1</translation>
         </message>
         <message>
@@ -13876,19 +13876,19 @@ Existing files with the same name were kept. To replace them, choose "Open folde
         </message>
         <message>
             <source>系统无法处理此文件夹：%1</source>
-            <translation>The system did not accept this folder: %1</translation>
+            <translation>System couldn't open folder: %1</translation>
         </message>
         <message>
             <source>无运行中的服务端</source>
-            <translation>There is no running server</translation>
+            <translation>No running server</translation>
         </message>
         <message>
             <source>命令未发送</source>
-            <translation>The order was not sent</translation>
+            <translation>Command not sent</translation>
         </message>
         <message>
             <source>命令已发送</source>
-            <translation>The order was sent out</translation>
+            <translation>Command sent</translation>
         </message>
         <message>
             <source>（空）</source>
@@ -13896,59 +13896,59 @@ Existing files with the same name were kept. To replace them, choose "Open folde
         </message>
         <message>
             <source>恢复默认值</source>
-            <translation>Change back to default</translation>
+            <translation>Restore defaults</translation>
         </message>
         <message>
             <source>以下设置将恢复默认值，其余设置保留：
 %1
 
 确认恢复？</source>
-            <translation>These items will be changed back to the default values ​​in this table (not a single byte in other rows will be changed): 
+            <translation>These settings will be reset to defaults (other settings won't change):
 %1
 
- Do you want to change it?</translation>
+Restore defaults?</translation>
         </message>
         <message>
             <source>服务端 %1 的 server.properties 已恢复 %2 项默认值。</source>
-            <translation>The %2 items in server.properties of the server %1 have been changed back to their default values.</translation>
+            <translation>Restored %2 default settings in server.properties for server %1.</translation>
         </message>
         <message>
             <source>已有备份或还原任务正在进行，请结束后再试。</source>
-            <translation>There is already a backup or restore task in progress, please finish it and try again.</translation>
+            <translation>A backup or restore is already in progress. Wait for it to finish and try again.</translation>
         </message>
         <message>
             <source>备份世界</source>
-            <translation>Backup world</translation>
+            <translation>Back up world</translation>
         </message>
         <message>
             <source>请先停止服务端再备份，以避免读取正在写入的存档数据。</source>
-            <translation>Please stop the server first before backing up to avoid reading the world save data being written.</translation>
+            <translation>Stop the server before backing up to avoid reading a world that's being written.</translation>
         </message>
         <message>
             <source>无法备份</source>
-            <translation>Unable to back up</translation>
+            <translation>Can't back up</translation>
         </message>
         <message>
             <source>level-name 无效，无法确定世界目录。
 请在「常用设置」中填写有效的世界目录名。</source>
-            <translation>Invalid level-name, unable to determine world directory. where. 
-Please fill in a valid world directory name in "Common Settings".</translation>
+            <translation>Invalid level-name; can't determine world folder.
+Enter a valid world folder name in General.</translation>
         </message>
         <message>
             <source>此服务端的整个世界文件夹</source>
-            <translation>The entire world folder on this server</translation>
+            <translation>Entire world folder of this server</translation>
         </message>
         <message>
             <source>备份未完成</source>
-            <translation>Backup not completed</translation>
+            <translation>Backup incomplete</translation>
         </message>
         <message>
             <source>（未填写）</source>
-            <translation>(didn’t write)</translation>
+            <translation>(not set)</translation>
         </message>
         <message>
             <source>还原未完成</source>
-            <translation>Restore not completed</translation>
+            <translation>Restore incomplete</translation>
         </message>
         <message>
             <source>无法删除</source>
@@ -13956,19 +13956,19 @@ Please fill in a valid world directory name in "Common Settings".</translation>
         </message>
         <message>
             <source>世界尚未生成</source>
-            <translation>The world has not been created yet</translation>
+            <translation>World not generated</translation>
         </message>
         <message>
             <source>「%1」尚未生成。首次启动服务端后再创建备份。</source>
-            <translation>The directory "%1" does not exist yet - it will not be created until the server is started for the first time, so there is nothing to back up now.</translation>
+            <translation>"%1" hasn't been generated. Start the server once before creating a backup.</translation>
         </message>
         <message>
             <source>备份世界「%1」</source>
-            <translation>Backup world "%1"</translation>
+            <translation>Back up world "%1"</translation>
         </message>
         <message>
             <source>备份完成</source>
-            <translation>Backup completed</translation>
+            <translation>Backup complete</translation>
         </message>
         <message>
             <source>恢复备份</source>
@@ -13976,21 +13976,21 @@ Please fill in a valid world directory name in "Common Settings".</translation>
         </message>
         <message>
             <source>服务端仍在运行。停止服务端后再还原，以免服务端保存时覆盖还原的存档。</source>
-            <translation>The server is running. Let it stop first and then restore it - otherwise when it exits, it will rewrite the old save in the memory and overwrite the one that was just restored.</translation>
+            <translation>Server is still running. Stop it before restoring so it won't overwrite the restored world on exit.</translation>
         </message>
         <message>
             <source>备份与当前世界不匹配</source>
-            <translation>The backup does not match the current world</translation>
+            <translation>Backup doesn't match current world</translation>
         </message>
         <message>
             <source>备份世界为「%1」，当前世界为「%2」。为避免覆盖其他世界，已取消恢复。</source>
-            <translation>The backup world is "%1" and the current world is "%2". Restoration has been canceled to avoid overwriting other worlds.</translation>
+            <translation>This backup is for world "%1", but the current world is "%2". Restore canceled to avoid overwriting another world.</translation>
         </message>
         <message>
             <source>无法读取备份清单，已取消恢复。
 
 %1</source>
-            <translation>Unable to read backup list, restore canceled. 
+            <translation>Couldn't read backup manifest; restore canceled.
 
 %1</translation>
         </message>
@@ -14001,29 +14001,29 @@ Please fill in a valid world directory name in "Common Settings".</translation>
 
 备份文件：
 %2</source>
-            <translation>The current files for world "%1" will be replaced with the backup. 
+            <translation>Replace current files of world "%1" with this backup?
 
-A safety snapshot will be automatically created before recovery to facilitate rollback. 
+A safety snapshot will be created automatically before restoring.
 
-Backup file: 
+Backup file:
 %2</translation>
         </message>
         <message>
             <source>还原</source>
-            <translation>Reduction</translation>
+            <translation>Restore</translation>
         </message>
         <message>
             <source>还原世界「%1」</source>
-            <translation>Restore the world "%1"</translation>
+            <translation>Restore world "%1"</translation>
         </message>
         <message>
             <source>还原完成</source>
-            <translation>Restore completed</translation>
+            <translation>Restore complete</translation>
         </message>
         <message>
             <source>备份文件已不存在：
 %1</source>
-            <translation>The backup file no longer exists: 
+            <translation>Backup file no longer exists:
 %1</translation>
         </message>
         <message>
@@ -14035,10 +14035,10 @@ Backup file:
 %1
 
 确认删除？</source>
-            <translation>Move the following backups to the Recycle Bin: 
+            <translation>This backup will be moved to the Recycle Bin:
 %1
 
-Confirm deletion?</translation>
+Delete it?</translation>
         </message>
         <message>
             <source>删除</source>
@@ -14047,44 +14047,44 @@ Confirm deletion?</translation>
         <message>
             <source>无法将备份移至回收站：%1
 %2</source>
-            <translation>Unable to move backup to Recycle Bin: %1
+            <translation>Couldn't move backup to the Recycle Bin: %1
 %2</translation>
         </message>
         <message>
             <source>已删除一份备份：%1</source>
-            <translation>One backup has been deleted: %1</translation>
+            <translation>Deleted backup: %1</translation>
         </message>
         <message>
             <source>设置未保存</source>
-            <translation>Didn't remember</translation>
+            <translation>Settings not saved</translation>
         </message>
         <message>
             <source>服务端 %1：异常退出后自动重启%2。</source>
-            <translation>Server %1: Automatically restart after abnormal exit %2.</translation>
+            <translation>Server %1: auto-restart on crash %2.</translation>
         </message>
         <message>
             <source>已打开</source>
-            <translation>Opened</translation>
+            <translation>enabled</translation>
         </message>
         <message>
             <source>已关闭</source>
-            <translation>Closed</translation>
+            <translation>disabled</translation>
         </message>
         <message>
             <source>世界存档正在备份或还原。请等待操作完成后再启动。</source>
-            <translation>Its world is being backed up or restored, please wait until it is complete before starting it - otherwise it will read and write to a half new and half old save.</translation>
+            <translation>World is being backed up or restored. Wait for it to finish before starting.</translation>
         </message>
         <message>
             <source>服务端暂时无法启动</source>
-            <translation>This server cannot be started yet</translation>
+            <translation>Can't start server right now</translation>
         </message>
         <message>
             <source>%1：无法发送停止命令，将强制结束服务端。</source>
-            <translation>%1: The sentence that made it stop could not be written, so it could only be forced to end.</translation>
+            <translation>%1: couldn't send stop command; forcing stop.</translation>
         </message>
         <message>
             <source>未完成启动（进程退出码 0）</source>
-            <translation>Incomplete startup (process exit code 0)</translation>
+            <translation>Startup incomplete (exit code 0)</translation>
         </message>
         <message>
             <source>启动服务端 %1</source>
@@ -14092,11 +14092,11 @@ Confirm deletion?</translation>
         </message>
         <message>
             <source>%1 的世界正在备份或还原，本次未自动重启。</source>
-            <translation>The world of %1 is being backed up or restored, and this time there is no automatic restart.</translation>
+            <translation>%1's world is being backed up or restored; auto-restart skipped.</translation>
         </message>
         <message>
             <source>暂时无法启动</source>
-            <translation>Temporarily unable to start</translation>
+            <translation>Can't start right now</translation>
         </message>
         <message>
             <source>%1 已在运行。</source>
@@ -14104,7 +14104,7 @@ Confirm deletion?</translation>
         </message>
         <message>
             <source>正在准备服务端启动参数…</source>
-            <translation>Preparing server launch options…</translation>
+            <translation>Preparing server launch arguments…</translation>
         </message>
         <message>
             <source>无法启动此服务端</source>
@@ -14112,91 +14112,91 @@ Confirm deletion?</translation>
         </message>
         <message>
             <source>无法获取启动此服务端所需的 Java：%1</source>
-            <translation>The Java required by this server cannot be obtained: %1</translation>
+            <translation>Required Java for this server isn't available: %1</translation>
         </message>
         <message>
             <source>此服务端需要 Java %1，启动时将使用 %2</source>
-            <translation>This server requires Java %1, use %2 when starting it.</translation>
+            <translation>This server requires Java %1; using %2 on launch.</translation>
         </message>
         <message>
             <source>启动服务端 %1：%2 个模组、存档 %3 MB，停止时最多等待 %4 秒。</source>
-            <translation>Start server %1: %2 mods, world save %3 MB, stop and wait up to %4 seconds.</translation>
+            <translation>Starting server %1: %2 mods, world %3 MB, stop timeout %4 s.</translation>
         </message>
         <message>
             <source>正在等待服务端就绪…</source>
-            <translation>Waiting for the server to be ready…</translation>
+            <translation>Waiting for server to be ready…</translation>
         </message>
         <message>
             <source>服务端尚未就绪，进程已退出（退出码 %1）。</source>
-            <translation>The server exited before it was ready (exit code %1).</translation>
+            <translation>Server exited before ready (exit code %1).</translation>
         </message>
         <message>
             <source>%1 已退出。</source>
-            <translation>%1 has exited.</translation>
+            <translation>%1 exited.</translation>
         </message>
         <message>
             <source>%1 已被强制结束。</source>
-            <translation>%1 has been forced to end.</translation>
+            <translation>%1 was force-stopped.</translation>
         </message>
         <message>
             <source>异常退出（退出码 %1）</source>
-            <translation>Abnormal exit (exit code %1)</translation>
+            <translation>Crashed (exit code %1)</translation>
         </message>
         <message>
             <source>%1：%2。</source>
-            <translation>%1:%2.</translation>
+            <translation>%1: %2.</translation>
         </message>
         <message>
             <source>%1：%2</source>
-            <translation>%1:%2</translation>
+            <translation>%1: %2</translation>
         </message>
         <message>
             <source>%1：正在自动重启。</source>
-            <translation>%1: Automatic restart is coming.</translation>
+            <translation>%1: restarting automatically.</translation>
         </message>
         <message>
             <source>此服务端已退出</source>
-            <translation>The server has exited</translation>
+            <translation>Server exited</translation>
         </message>
         <message>
             <source>「%1」%2。
 
 右键该服务端并选择「打开控制台」，可查看退出前的日志。</source>
-            <translation>「%1」%2. 
+            <translation>"%1": %2.
 
-The last few lines in the console write what it was saying before exiting - you can see it by right-clicking on this line and clicking "Open Console".</translation>
+Right-click the server and choose "Open console" to view the log before exit.</translation>
         </message>
         <message>
             <source>无法打开服务器设置页：界面已被另一页占用。</source>
-            <translation>Unable to open server settings page: The interface is already occupied by another page.</translation>
+            <translation>Can't open server settings while another page is open.</translation>
         </message>
         <message>
             <source>还原前的自动快照</source>
-            <translation>Restore the one that was automatically made before</translation>
+            <translation>Auto-snapshot before restore</translation>
         </message>
         <message>
             <source>世界目录：%1
 备份目录：%2</source>
-            <translation>World directory: %1
-Backup directory: %2</translation>
+            <translation>World folder: %1
+Backup folder: %2</translation>
         </message>
         <message>
             <source>以下设置值无效，未保存：
 %1
 
 请在表单或「原始文本」中更正后重新保存。</source>
-            <translation>Some of these values are invalid, so nothing was written this time:
+            <translation>Invalid setting values; changes weren't saved:
 %1
 
-Correct these values (in the form fields or the matching line in “Raw text”), then save again.</translation>
+Fix them in the form or in "Raw text", then save again.</translation>
         </message>
         <message>
             <source>无法打开更新中心：界面已被另一页占用。</source>
-            <translation>Cannot open Update Center: the view is already used by another page.</translation>
+            <translation>Can't open Update center while another page is open.</translation>
         </message>
         <message>
             <source>此实例尚未检查更新。</source>
-            <translation>This instance has not been checked for updates.</translation>
+            <translation>This instance hasn't been checked for updates.</translation>
         </message>
         <message>
             <source>撤销上一次更新（%1 个文件）</source>
@@ -14204,55 +14204,55 @@ Correct these values (in the form fields or the matching line in “Raw text”)
         </message>
         <message>
             <source>无法保存更新中心的记录：%1</source>
-            <translation>Could not write the Update Center record to disk: %1</translation>
+            <translation>Couldn't save Update center record: %1</translation>
         </message>
         <message>
             <source>无法忽略此项</source>
-            <translation>Can't ignore this one</translation>
+            <translation>Can't ignore this item</translation>
         </message>
         <message>
             <source>「更新中心」：%1 的此版本将不再提示更新。</source>
-            <translation>Update Center: this version of %1 will no longer prompt for updates.</translation>
+            <translation>Update center: no update notifications for this version of %1.</translation>
         </message>
         <message>
             <source>「更新中心」：%1 已恢复更新提示。</source>
-            <translation>Update Center: %1 will be included in update prompts again.</translation>
+            <translation>Update center: update notifications resumed for %1.</translation>
         </message>
         <message>
             <source>无法固定此项</source>
-            <translation>Can't fix this one</translation>
+            <translation>Can't pin this item</translation>
         </message>
         <message>
             <source>「更新中心」：%1 已固定在此版本，将不再提示更新。</source>
-            <translation>Update Center: %1 is pinned to this version and will no longer prompt for updates.</translation>
+            <translation>Update center: %1 pinned to this version; no update notifications.</translation>
         </message>
         <message>
             <source>「更新中心」：%1 已取消固定。</source>
-            <translation>"Update Center": %1 is no longer fixed.</translation>
+            <translation>Update center: %1 unpinned.</translation>
         </message>
         <message>
             <source>无可撤销的更新</source>
-            <translation>There are no undoable updates</translation>
+            <translation>No updates to undo</translation>
         </message>
         <message>
             <source>此实例无回滚点。</source>
-            <translation>This instance has no rollback points.</translation>
+            <translation>This instance has no rollback point.</translation>
         </message>
         <message>
             <source>撤销「%1」上一次更新：恢复 %2 个、删除 %3 个、失败 %4 个。</source>
-            <translation>Undo the last update of "%1": replace %2 items, delete %3 items, fail %4 items.</translation>
+            <translation>Undid last update for "%1": %2 restored, %3 deleted, %4 failed.</translation>
         </message>
         <message>
             <source>「%1」已恢复到更新前的状态。</source>
-            <translation>"%1" has returned to the way it was before the update.</translation>
+            <translation>"%1" restored to its pre-update state.</translation>
         </message>
         <message>
             <source>未找到可固定的版本。请重新检查更新。</source>
-            <translation>No recordable version was found (mostly because the test results have expired). Please click "Check for Updates" again and try again.</translation>
+            <translation>No pinnable version found. Check for updates again.</translation>
         </message>
         <message>
             <source>无法读取文件或计算其 SHA-1，因此无法固定此版本。</source>
-            <translation>Cannot read this file (or its SHA-1 was not calculated last time), so this version cannot be pinned.</translation>
+            <translation>Can't read file or compute SHA-1; can't pin this version.</translation>
         </message>
         <message>
             <source>将撤销「%1」的上次更新。
@@ -14261,12 +14261,12 @@ Correct these values (in the form fields or the matching line in “Raw text”)
 • 移除更新新增的 %3 个文件
 
 更新后对这些文件所做的修改将被覆盖。</source>
-            <translation>Roll “%1” back to before the last update:
+            <translation>Undo the last update for "%1"?
 
 • Restore %2 files
-• Delete %3 files added by that update
+• Remove %3 files added by the update
 
-Anything you changed after that update will also be reverted.</translation>
+Changes made to these files after the update will be overwritten.</translation>
         </message>
         <message>
             <source>撤销上一次更新</source>
@@ -14274,11 +14274,11 @@ Anything you changed after that update will also be reverted.</translation>
         </message>
         <message>
             <source>撤销</source>
-            <translation>Cancel</translation>
+            <translation>Undo</translation>
         </message>
         <message>
             <source>部分文件回滚失败</source>
-            <translation>Can't go back all</translation>
+            <translation>Some files couldn't be rolled back</translation>
         </message>
         <message>
             <source>已恢复 %1 个文件，移除 %2 个文件，%3 个文件操作失败。
@@ -14286,27 +14286,27 @@ Anything you changed after that update will also be reverted.</translation>
 %4
 
 回滚点已保留，可重试。</source>
-            <translation>Replace %1 pieces, delete %2 pieces, and %3 pieces cannot be moved. 
+            <translation>Restored %1 files, removed %2 files, %3 failed.
 
 %4
 
- The rollback point remains and can be pressed again.</translation>
+The rollback point is kept so you can retry.</translation>
         </message>
         <message>
             <source>「%1」正在运行。请退出游戏后再修改此文件。</source>
-            <translation>"%1" is running. Please exit the game before modifying this file.</translation>
+            <translation>"%1" is running. Close the game before editing this file.</translation>
         </message>
         <message>
             <source>「%1」正在被另一项文件操作占用（复制 / 备份 / 还原 / 安装），请等待任务完成后再修改此文件。</source>
-            <translation>"%1" is being occupied by another file operation (copy/backup/restore/install). Please wait for the task to complete before modifying this file.</translation>
+            <translation>"%1" is busy with another file operation (copy, backup, restore, or install). Wait for it to finish before editing this file.</translation>
         </message>
         <message>
             <source>无法读取「更新中心」的记录：%1</source>
-            <translation>Unable to read Update Center records: %1</translation>
+            <translation>Couldn't read Update center records: %1</translation>
         </message>
         <message>
             <source>登录</source>
-            <translation>Log in</translation>
+            <translation>Sign in</translation>
         </message>
         <message>
             <source>本次 %1 · 累计 %2</source>
@@ -14314,43 +14314,43 @@ Anything you changed after that update will also be reverted.</translation>
         </message>
         <message>
             <source>获取版本 %1 的信息失败。</source>
-            <translation>Failed to obtain information for version %1.</translation>
+            <translation>Couldn't get version info for %1.</translation>
         </message>
         <message>
             <source>无法获取版本 %1 的信息。</source>
-            <translation>Unable to retrieve version information %1.</translation>
+            <translation>Can't get version info for %1.</translation>
         </message>
         <message>
             <source>无法获取版本 %1 的信息，请检查网络后重试。</source>
-            <translation>Unable to obtain version %1 information, please check the network and try again.</translation>
+            <translation>Couldn't get version info for %1. Check your network connection and try again.</translation>
         </message>
         <message>
             <source>已获取版本信息，正在下载游戏文件…</source>
-            <translation>The version information was obtained successfully and the download of game files started...</translation>
+            <translation>Version info fetched; downloading game files…</translation>
         </message>
         <message>
             <source>登录凭据已过期，披风列表未更新。</source>
-            <translation>Sign-in credentials have expired; the cape list was not updated.</translation>
+            <translation>Sign-in credentials expired; cape list wasn't updated.</translation>
         </message>
         <message>
             <source>正在获取披风列表…</source>
-            <translation>Getting list of cloaks...</translation>
+            <translation>Fetching cape list…</translation>
         </message>
         <message>
             <source>添加离线账号失败</source>
-            <translation>Failed to add offline account</translation>
+            <translation>Couldn't add offline account</translation>
         </message>
         <message>
             <source>退出登录失败</source>
-            <translation>Logout failed</translation>
+            <translation>Couldn't sign out</translation>
         </message>
         <message>
             <source>无法清除本地登录状态。请重试；若持续失败请检查启动器目录写权限。</source>
-            <translation>Unable to clear local login status. Please try again; if it continues to fail, please check the write permissions of the launcher directory.</translation>
+            <translation>Couldn't clear local sign-in state. Try again, or check write permissions for the launcher folder.</translation>
         </message>
         <message>
             <source>切换账号失败</source>
-            <translation>Failed to switch accounts</translation>
+            <translation>Couldn't switch accounts</translation>
         </message>
         <message>
             <source>已切换到账号「%1」。</source>
@@ -14358,11 +14358,11 @@ Anything you changed after that update will also be reverted.</translation>
         </message>
         <message>
             <source>确定删除当前账号「%1」？本地登录凭证将一并清除。</source>
-            <translation>Are you sure you want to delete the current account "%1"? Local login credentials will also be cleared.</translation>
+            <translation>Delete current account "%1"? Local sign-in credentials will also be cleared.</translation>
         </message>
         <message>
             <source>确定删除账号「%1」？本地登录凭证将一并清除。</source>
-            <translation>Are you sure you want to delete the account "%1"? Local login credentials will also be cleared.</translation>
+            <translation>Delete account "%1"? Local sign-in credentials will also be cleared.</translation>
         </message>
         <message>
             <source>删除账号</source>
@@ -14370,19 +14370,19 @@ Anything you changed after that update will also be reverted.</translation>
         </message>
         <message>
             <source>删除账号失败</source>
-            <translation>Failed to delete account</translation>
+            <translation>Couldn't delete account</translation>
         </message>
         <message>
             <source>已删除账号「%1」。</source>
-            <translation>Account "%1" has been deleted.</translation>
+            <translation>Deleted account "%1".</translation>
         </message>
         <message>
             <source>上传皮肤失败</source>
-            <translation>Failed to upload skin</translation>
+            <translation>Couldn't upload skin</translation>
         </message>
         <message>
             <source>无法读取文件「%1」，或图片尺寸超出限制。</source>
-            <translation>The file "%1" cannot be read, or the image size exceeds the limit.</translation>
+            <translation>Can't read "%1", or the image dimensions exceed the limit.</translation>
         </message>
         <message>
             <source>皮肤已上传（模型 %1）。</source>
@@ -14418,19 +14418,19 @@ Anything you changed after that update will also be reverted.</translation>
         </message>
         <message>
             <source>无法打开账号与皮肤页：界面已被另一页占用。</source>
-            <translation>Unable to open the account and appearance page: the interface is already occupied by another page.</translation>
+            <translation>Can't open Accounts and skins while another page is open.</translation>
         </message>
         <message>
             <source>获取披风列表失败：%1</source>
-            <translation>Failed to pull cloak list: %1</translation>
+            <translation>Couldn't fetch cape list: %1</translation>
         </message>
         <message>
             <source>已添加离线账号「%1」并切换到该账号。</source>
-            <translation>Offline account "%1" has been added and switched to it.</translation>
+            <translation>Added and switched to offline account "%1".</translation>
         </message>
         <message>
             <source>此服务端已停止。</source>
-            <translation>This server has already stopped.</translation>
+            <translation>Server is already stopped.</translation>
         </message>
         <message>
             <source>%1：正在停止服务并等待存档保存，宽限期内暂不强制结束。</source>
@@ -14438,23 +14438,23 @@ Anything you changed after that update will also be reverted.</translation>
         </message>
         <message>
             <source>未找到此服务端的目录。</source>
-            <translation>Could not find this server’s directory.</translation>
+            <translation>Server folder not found.</translation>
         </message>
         <message>
             <source>此实例已结束。</source>
-            <translation>This instance has just ended.</translation>
+            <translation>Instance stopped.</translation>
         </message>
         <message>
             <source>已退出账号「%1」（账号仍保留在列表中，单击该行的「选择」或「登录」可重新登录）。</source>
-            <translation>The account "%1" has been logged out (the account remains in the list, click "Select" or "Login" in the row to log in again).</translation>
+            <translation>Signed out of "%1" (the account stays in the list; click "Select" or "Sign in" on that row to sign in again).</translation>
         </message>
         <message>
             <source>此账号不在已保存的列表中。</source>
-            <translation>This account is not in the saved list.</translation>
+            <translation>This account isn't in the saved list.</translation>
         </message>
         <message>
             <source>「%1」不是可读取的图片。</source>
-            <translation>"%1" is not a readable picture.</translation>
+            <translation>"%1" isn't a readable image.</translation>
         </message>
         <message>
             <source>皮肤图片须为 64×64（新格式）或 64×32（旧格式），当前图片为 %1×%2。</source>
@@ -15624,7 +15624,7 @@ You can undo the last update in "Update center".</translation>
         </message>
         <message>
             <source>请切换回原游戏目录后重试本次安装。</source>
-            <translation>Switch back to the original game folder and retry the installation.</translation>
+            <translation>Switch back to the original game directory and retry this installation.</translation>
         </message>
     </context>
     <context>
@@ -17476,31 +17476,31 @@ You can still remove online players with "Kick…"; output appears in the consol
         <name>ModDeclarations</name>
         <message>
             <source>Fabric 声明不是有效 JSON 对象</source>
-            <translation type="unfinished">Fabric declaration isn't a valid JSON object</translation>
+            <translation>Fabric metadata isn't a valid JSON object</translation>
         </message>
         <message>
             <source>Quilt 声明不是有效 JSON 对象</source>
-            <translation type="unfinished">Quilt declaration isn't a valid JSON object</translation>
+            <translation>Quilt metadata isn't a valid JSON object</translation>
         </message>
         <message>
             <source>mcmod.info 无法解析（%1）</source>
-            <translation type="unfinished">Can't parse mcmod.info (%1)</translation>
+            <translation>Can't parse mcmod.info (%1)</translation>
         </message>
         <message>
             <source>mcmod.info 中多个 mod 的 acceptedMinecraftVersions 不一致</source>
-            <translation type="unfinished">Multiple mods in mcmod.info have mismatched acceptedMinecraftVersions</translation>
+            <translation>Multiple mods in mcmod.info have mismatched acceptedMinecraftVersions</translation>
         </message>
         <message>
             <source>mcmod.info 缺少 acceptedMinecraftVersions</source>
-            <translation type="unfinished">mcmod.info is missing acceptedMinecraftVersions</translation>
+            <translation>mcmod.info is missing acceptedMinecraftVersions</translation>
         </message>
         <message>
             <source>不认识的声明文件：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Unrecognized metadata file: %1</translation>
         </message>
         <message>
             <source>JAR 里没有可识别的模组声明</source>
-            <translation type="unfinished"></translation>
+            <translation>No recognized mod metadata found in JAR</translation>
         </message>
     </context>
     <context>
@@ -18090,87 +18090,85 @@ Continuing includes files with unknown sources in the archive. Recipients won't 
             <source>此整合包需要加载器「%1」%2。导入整合包仅支持 fabric-loader、forge、neoforge 和 quilt-loader，导入已取消。
 
 如需单独安装 Fabric、Forge、NeoForge 或 OptiFine，请使用「安装」页。整合包的依赖清单无法指定 OptiFine。</source>
-            <translation>This integration package requires "%1" %2, and the integration package import path only recognizes four loader keys: fabric-loader / forge / neoforge / quilt-loader. 
+            <translation>This modpack requires loader "%1" %2. Modpack import only supports fabric-loader, forge, neoforge, and quilt-loader; import canceled.
 
-So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed directly in the installation page, but that is another way; OptiFine does not have a corresponding key in the dependency table of the integration package.)</translation>
+To install Fabric, Forge, NeoForge, or OptiFine separately, use the Install page. Modpack manifests can't specify OptiFine.</translation>
         </message>
         <message>
             <source>无法识别整合包格式，因为压缩包缺少有效清单。
 
 支持 Modrinth（modrinth.index.json）、CurseForge（manifest.json）、MultiMC / Prism（mmc-pack.json），以及含 mods/、config/ 或 options.txt 的 .minecraft 压缩包。</source>
-            <translation>There is no integrated package list in this compressed package, and I cannot recognize its format. 
+            <translation>Unrecognized modpack format; the archive is missing a valid manifest.
 
- recognizes these types: Modrinth format (there is a copy of modrinth.index.json in the root directory), CurseForge format (there is a copy of manifest.json), MultiMC / Prism exported examples (there is a copy of mmc-pack.json), and lazy packages that directly compress the .minecraft folder (with mods/, config/ or options.txt in it). If 
-
- doesn't match, it's probably just an ordinary compressed package - such as a resource package, a shaderpack, or a collection of just a few description files.</translation>
+Supported formats: Modrinth (modrinth.index.json), CurseForge (manifest.json), MultiMC / Prism (mmc-pack.json), and .minecraft archives containing mods/, config/, or options.txt.</translation>
         </message>
         <message>
             <source>mmc-pack.json 缺少 components，无法确定 MultiMC / Prism 实例的 Minecraft 版本。</source>
-            <translation>There are no components in the mmc-pack.json of this MultiMC / Prism instance, so I can't identify which version of Minecraft it requires.</translation>
+            <translation>mmc-pack.json is missing components; can't determine the Minecraft version for this MultiMC / Prism instance.</translation>
         </message>
         <message>
             <source>这是一个 MultiMC / Prism 的实例导出（含 mmc-pack.json），但其中未注明所基于的 Minecraft 版本（components 中没有 net.minecraft），无法安装。</source>
-            <translation>This is an instance export of MultiMC / Prism (with mmc-pack.json), but it does not say which version of Minecraft it is based on (there is no net.minecraft in the components), so it cannot be installed.</translation>
+            <translation>This is a MultiMC / Prism instance export (mmc-pack.json), but it doesn't specify a Minecraft version (net.minecraft is missing in components); can't install.</translation>
         </message>
         <message>
             <source>此 MultiMC / Prism 整合包依赖自定义启动组件：%1。
 
 目前无法转换其中的 patches、专用库和 JVM 参数，因此未导入，以避免生成无法启动的实例。GTNH Java 17+ 的 lwjgl3ify 整合包请暂用 Prism 导入；普通标准格式整合包不受影响。</source>
-            <translation>This MultiMC / Prism package relies on a custom startup component: %1. 
+            <translation>This MultiMC / Prism modpack relies on custom launch components: %1.
 
- Currently its patches, private libraries and JVM parameters cannot be converted and therefore are not imported to avoid generating unstartable instances. Please temporarily use Prism to import the lwjgl3ify package of GTNH Java 17+; this does not affect the normal standard format integration package.</translation>
+Its patches, private libraries, and JVM arguments can't be converted right now, so it wasn't imported to avoid creating an unlaunchable instance. Use Prism for GTNH Java 17+ lwjgl3ify packs for now; standard modpacks aren't affected.</translation>
         </message>
         <message>
             <source>、</source>
-            <translation>,</translation>
+            <translation>, </translation>
         </message>
         <message>
             <source>此整合包来自 MultiMC 或 Prism。将导入 .minecraft 中的模组、配置及资源包等内容。原启动器的 patches/、libraries/ 和启动设置不会导入。</source>
-            <translation>This package is an instance exported from MultiMC/Prism. What is imported is the content in its .minecraft (mods, config, resource packs, etc.); MultiMC's own patches/, libraries/ and startup settings are not imported together.</translation>
+            <translation>This modpack is from MultiMC or Prism. Mods, configs, and resource packs in .minecraft will be imported; patches/, libraries/, and launch settings from the original launcher won't be imported.</translation>
         </message>
         <message>
             <source>找到 %1 个版本，但缺少可确定目标版本的 JSON 清单。导入已取消。
 
 请将目标版本目录及其 JSON 清单一起打包，或改用 Modrinth / CurseForge 格式。</source>
-            <translation>There are %1 versions in this .minecraft, but there is no version json to indicate which one to import (the one with the loader cannot be seen in the directory name). 
+            <translation>Found %1 versions, but no JSON manifest to identify the target version. Import canceled.
 
- is not imported - guess if you pretend it, you will probably not be able to enter the game. Package the version directory with the loader (with the json inside) separately, or change it to Modrinth / CurseForge format.</translation>
+Package the target version folder together with its JSON manifest, or use Modrinth / CurseForge format.</translation>
         </message>
         <message>
             <source>压缩包中有 .minecraft 目录，但 versions/ 中缺少版本 JSON。无法确定所需的 Minecraft 版本，导入已取消。
 
 请补入版本 JSON 后重试，或使用 Modrinth / CurseForge 格式。</source>
-            <translation>I can recognize that this is a .minecraft directory (there are mods/ or config/ in it), but I can’t tell which Minecraft version it is based on: there is no version json in versions/, and it can’t be seen in the directory name. 
+            <translation>Found a .minecraft folder in the archive, but version JSON is missing in versions/. Can't determine the required Minecraft version; import canceled.
 
- is not imported - guess if you install a version, you will probably not be able to enter the game. You can package the json in versions/ and import it together, or change it to Modrinth / CurseForge format.</translation>
+Include the version JSON and try again, or use Modrinth / CurseForge format.</translation>
         </message>
         <message>
             <source>已按清单重新安装原版游戏和加载器，跳过包内的 versions/。mods 和 config 等内容会解压到实例目录。</source>
-            <translation>This package comes with versions/, which is not used when importing - the launcher will reinstall the original version and loader according to the version information in the package, and then extract the mods and config into the instance.</translation>
+            <translation>Reinstalled vanilla and loader from the manifest and skipped the bundled versions/. Mods and configs will be extracted to the instance folder.</translation>
         </message>
         <message>
             <source>%1 缺少 formatVersion 或 files，无法作为整合包清单读取。</source>
-            <translation>The %1 in the compressed package is not a package manifest (missing formatVersion or files).</translation>
+            <translation>%1 is missing formatVersion or files; can't read as a modpack manifest.</translation>
         </message>
         <message>
             <source>整合包清单缺少 dependencies.minecraft，无法确定要安装的 Minecraft 版本。</source>
-            <translation>The dependency list of this integration package does not indicate which Minecraft version it is based on (dependencies.minecraft), so it cannot be installed.</translation>
+            <translation>Modpack manifest is missing dependencies.minecraft; can't determine which Minecraft version to install.</translation>
         </message>
         <message>
             <source>整合包清单未列出待下载文件，导入已取消。</source>
-            <translation>The file list of this integration package is empty (there is no file to be downloaded) and it is not imported.</translation>
+            <translation>Modpack manifest lists no files to download; import canceled.</translation>
         </message>
         <message>
             <source>%1 缺少 manifestVersion 或 files，无法作为整合包清单读取。</source>
-            <translation>The %1 in the compressed package is not a package manifest (missing manifestVersion or files).</translation>
+            <translation>%1 is missing manifestVersion or files; can't read as a modpack manifest.</translation>
         </message>
         <message>
             <source>整合包清单缺少 minecraft.version，无法确定要安装的 Minecraft 版本。</source>
-            <translation>The list of this modpack does not state which version of Minecraft (minecraft.version) it is based on, so it cannot be installed.</translation>
+            <translation>Modpack manifest is missing minecraft.version; can't determine which Minecraft version to install.</translation>
         </message>
         <message>
             <source>整合包清单有 %1 条文件记录，但均缺少有效的 projectID 或 fileID。导入已取消。</source>
-            <translation>There are %1 items in the file list of this integration package, but none of them contain usable projectID / fileID. The manifest may have been corrupted and not imported.</translation>
+            <translation>Modpack manifest has %1 file entries, but none have a valid projectID or fileID. Import canceled.</translation>
         </message>
     </context>
     <context>
@@ -18181,34 +18179,38 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
 %5
 补齐位置：%6
 补齐方式：打开上述项目页，在 Files 中查找对应游戏版本和加载器的文件；下载后放入上述位置。补齐后返回导入报告选择「完成安装」，或用同一个包和实例名重新导入，由本程序校验。</source>
-            <translation type="unfinished"></translation>
+            <translation>%1
+Project %2 / File %3 / %4
+%5
+Target path: %6
+How to complete: Open the project page above, find the file matching the game version and loader under Files, download it, and place it at the target path. Then return to the import report and click "Complete installation", or re-import the same modpack with the same instance name to verify.</translation>
         </message>
     </context>
     <context>
         <name>ModrinthCompatibility</name>
         <message>
             <source>平台请求受限（约需等待 %1 秒），暂时无法确认。</source>
-            <translation>The platform is currently throttling (about %1 seconds away) and cannot be confirmed at the moment.</translation>
+            <translation>Platform rate-limited (wait ~%1 s); can't confirm right now.</translation>
         </message>
         <message>
             <source>版本信息不完整，暂时无法确认；未判定为缺失。</source>
-            <translation>The version information is incomplete and cannot be confirmed at the moment; it is not judged as missing.</translation>
+            <translation>Incomplete version info; can't confirm right now (not marked missing).</translation>
         </message>
         <message>
             <source>平台无兼容当前游戏、加载器与发布筛选的发行版。</source>
-            <translation>The platform does not have a release that is compatible with the current game, loader, and release filters.</translation>
+            <translation>No compatible release on this platform for the current game version, loader, and release filters.</translation>
         </message>
         <message>
             <source>无法识别资源平台。</source>
-            <translation>The platform is not recognized.</translation>
+            <translation>Unrecognized resource platform.</translation>
         </message>
         <message>
             <source>查询中断，暂时无法确认。</source>
-            <translation>The query is interrupted and cannot be confirmed at the moment.</translation>
+            <translation>Query interrupted; can't confirm right now.</translation>
         </message>
         <message>
             <source>查询超时，暂时无法确认。</source>
-            <translation>The query has timed out and cannot be confirmed at the moment.</translation>
+            <translation>Query timed out; can't confirm right now.</translation>
         </message>
         <message>
             <source>查询失败：%1</source>
@@ -18216,47 +18218,47 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         </message>
         <message>
             <source>Modrinth 无此项目。</source>
-            <translation>This item is not available on Modrinth.</translation>
+            <translation>Project not found on Modrinth.</translation>
         </message>
         <message>
             <source>Modrinth 请求受限，暂时无法确认，请稍后重试。</source>
-            <translation>Modrinth has limited the current flow and cannot confirm it at the moment. Please try again later.</translation>
+            <translation>Modrinth rate-limited; can't confirm right now. Try again later.</translation>
         </message>
         <message>
             <source>Modrinth 无兼容 %1%2 的发行版。</source>
-            <translation>There is no distribution compatible with %1%2 on Modrinth.</translation>
+            <translation>No Modrinth release compatible with %1%2.</translation>
         </message>
         <message>
             <source>当前版本</source>
-            <translation>This version</translation>
+            <translation>current version</translation>
         </message>
         <message>
             <source>未配置 CurseForge 接口，暂时无法确认。</source>
-            <translation>The CurseForge interface is not configured and cannot be confirmed at the moment.</translation>
+            <translation>CurseForge API key not configured; can't confirm right now.</translation>
         </message>
         <message>
             <source>CurseForge 无此项目。</source>
-            <translation>This project is not available on CurseForge.</translation>
+            <translation>Project not found on CurseForge.</translation>
         </message>
         <message>
             <source>CurseForge 请求受限，暂时无法确认，请稍后重试。</source>
-            <translation>CurseForge has limited traffic and cannot confirm it at the moment. Please try again later.</translation>
+            <translation>CurseForge rate-limited; can't confirm right now. Try again later.</translation>
         </message>
         <message>
             <source>接口未返回文件清单，暂无法确认。</source>
-            <translation>The interface did not return the file list and cannot be confirmed at the moment.</translation>
+            <translation>API didn't return a file list; can't confirm right now.</translation>
         </message>
         <message>
             <source>CurseForge 无兼容 %1%2 的发行版。</source>
-            <translation>There is no distribution compatible with %1%2 on CurseForge.</translation>
+            <translation>No CurseForge release compatible with %1%2.</translation>
         </message>
         <message>
             <source>接口返回 HTTP %1，暂时无法确认。</source>
-            <translation>The interface returns HTTP %1, which cannot be confirmed at the moment.</translation>
+            <translation>API returned HTTP %1; can't confirm right now.</translation>
         </message>
         <message>
             <source>平台返回格式异常，暂时无法确认兼容性。</source>
-            <translation>The content returned by the interface is incomprehensible and cannot be confirmed at the moment.</translation>
+            <translation>Invalid response format from platform; can't confirm compatibility.</translation>
         </message>
     </context>
     <context>
@@ -18267,23 +18269,23 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         </message>
         <message>
             <source>组件数量不合法。</source>
-            <translation>The number of components is illegal.</translation>
+            <translation>Invalid component count.</translation>
         </message>
         <message>
             <source>组件不是对象。</source>
-            <translation>Components are not objects.</translation>
+            <translation>Component isn't an object.</translation>
         </message>
         <message>
             <source>组件重复或缺少本地启动补丁：%1</source>
-            <translation>Duplicate component or missing local startup patch: %1</translation>
+            <translation>Duplicate component or missing local launch patch: %1</translation>
         </message>
         <message>
             <source>补丁 JSON 损坏：%1</source>
-            <translation>Patch JSON corruption: %1</translation>
+            <translation>Corrupted patch JSON: %1</translation>
         </message>
         <message>
             <source>补丁身份或版本与清单不一致：%1</source>
-            <translation>Patch identity or version inconsistent with manifest: %1</translation>
+            <translation>Patch ID or version doesn't match manifest: %1</translation>
         </message>
         <message>
             <source>补丁顺序无效。</source>
@@ -18291,19 +18293,19 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         </message>
         <message>
             <source>尚不支持补丁字段 %1，未忽略它。</source>
-            <translation>The patch field %1 is not supported yet and is not ignored.</translation>
+            <translation>Patch field %1 isn't supported and wasn't ignored.</translation>
         </message>
         <message>
             <source>%1（字段 %2，未忽略它。）</source>
-            <translation>%1 (Field %2, it is not ignored.)</translation>
+            <translation>%1 (field %2; not ignored)</translation>
         </message>
         <message>
             <source>不能同时导入多个加载器。</source>
-            <translation>Multiple loaders cannot be imported at the same time.</translation>
+            <translation>Can't import multiple loaders at once.</translation>
         </message>
         <message>
             <source>组件依赖字段不是数组。</source>
-            <translation>Component dependency fields are not arrays.</translation>
+            <translation>Component requires field isn't an array.</translation>
         </message>
         <message>
             <source>补丁组件依赖冲突：%1</source>
@@ -18311,15 +18313,15 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         </message>
         <message>
             <source>客户端来源缺少 HTTPS 或 SHA-1。</source>
-            <translation>Client origin is missing HTTPS or SHA-1.</translation>
+            <translation>Client source is missing HTTPS or SHA-1.</translation>
         </message>
         <message>
             <source>客户端必须来自 Mojang 官方文件源。</source>
-            <translation>The client must come from the official Mojang documentation source.</translation>
+            <translation>Client must come from Mojang's official download source.</translation>
         </message>
         <message>
             <source>Java 版本声明无效。</source>
-            <translation>The Java version declaration is invalid.</translation>
+            <translation>Invalid Java version requirement.</translation>
         </message>
         <message>
             <source>Java 版本列表为空。</source>
@@ -18327,19 +18329,19 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         </message>
         <message>
             <source>Tweaker 字段无效。</source>
-            <translation>Tweaker field is invalid.</translation>
+            <translation>Invalid tweaker field.</translation>
         </message>
         <message>
             <source>Tweaker 类名无效。</source>
-            <translation>Tweaker class name is invalid.</translation>
+            <translation>Invalid tweaker class name.</translation>
         </message>
         <message>
             <source>库清单无效。</source>
-            <translation>The library list is invalid.</translation>
+            <translation>Invalid library list.</translation>
         </message>
         <message>
             <source>库清单过大或损坏。</source>
-            <translation>The library list is too large or corrupt.</translation>
+            <translation>Library list is too large or corrupted.</translation>
         </message>
         <message>
             <source>无效 Maven 坐标：%1</source>
@@ -18351,71 +18353,71 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         </message>
         <message>
             <source>包内专用库缺失或超过大小限制：%1</source>
-            <translation>The special library in the package is missing or exceeds the size limit: %1</translation>
+            <translation>Bundled library is missing or exceeds size limit: %1</translation>
         </message>
         <message>
             <source>专用库缺少安全地址或 SHA-1：%1</source>
-            <translation>Private library is missing security address or SHA-1: %1</translation>
+            <translation>Private library is missing secure URL or SHA-1: %1</translation>
         </message>
         <message>
             <source>无 Minecraft 组件。</source>
-            <translation>No Minecraft components.</translation>
+            <translation>No Minecraft component found.</translation>
         </message>
         <message>
             <source>各补丁的 Java 要求无交集。</source>
-            <translation>There is no overlap in Java requirements between patches.</translation>
+            <translation>Patches have no overlapping Java version requirements.</translation>
         </message>
         <message>
             <source>补丁包含暂不支持或不安全的 JVM 参数，未执行。</source>
-            <translation>The patch contains unsupported or unsafe JVM parameters and is not implemented.</translation>
+            <translation>Patch contains unsupported or unsafe JVM arguments; not applied.</translation>
         </message>
         <message>
             <source>Native 库无可校验的 classifier 清单。</source>
-            <translation>The Native library does not have a verifiable list of classifiers.</translation>
+            <translation>Native library has no verifiable classifier list.</translation>
         </message>
         <message>
             <source>Native 库校验信息缺失。</source>
-            <translation>Native library verification information is missing.</translation>
+            <translation>Native library verification info is missing.</translation>
         </message>
         <message>
             <source>Native 库路径无效。</source>
-            <translation>Native library path is invalid.</translation>
+            <translation>Invalid native library path.</translation>
         </message>
         <message>
             <source>Maven 仓库地址不安全。</source>
-            <translation>The Maven repository address is not secure.</translation>
+            <translation>Maven repository URL isn't secure.</translation>
         </message>
         <message>
             <source>补丁缺少完整主类、官方客户端或资源索引。</source>
-            <translation>The patch is missing the full main class, official client, or resource index.</translation>
+            <translation>Patch is missing main class, official client, or asset index.</translation>
         </message>
         <message>
             <source>资源索引缺少安全来源或校验。</source>
-            <translation>The resource index is missing security origin or validation.</translation>
+            <translation>Asset index is missing secure source or checksum.</translation>
         </message>
         <message>
             <source>已转换包内声明式启动补丁、专用库、Java 要求和 JVM 参数；不执行来源启动器或前后置命令。</source>
-            <translation>Converted in-package declarative launch patches, private libraries, Java requirements, and JVM parameters; no source launcher or pre- and post-commands are executed.</translation>
+            <translation>Converted declarative launch patches, private libraries, Java requirements, and JVM arguments; source launcher and pre/post-launch commands aren't executed.</translation>
         </message>
         <message>
             <source>包内库路径或校验不安全。</source>
-            <translation>The library path or verification in the package is unsafe.</translation>
+            <translation>Bundled library path or checksum is unsafe.</translation>
         </message>
         <message>
             <source>已有同名专用库内容不同，未覆盖：%1</source>
-            <translation>There is already a special library with the same name that has different contents and is not covered: %1</translation>
+            <translation>Private library with same name has different contents and wasn't overwritten: %1</translation>
         </message>
         <message>
             <source>无法安全创建专用库目录。</source>
-            <translation>Unable to safely create a private library directory.</translation>
+            <translation>Can't safely create private library folder.</translation>
         </message>
         <message>
             <source>专用库保存失败：%1</source>
-            <translation>Special library failed to save: %1</translation>
+            <translation>Couldn't save private library: %1</translation>
         </message>
         <message>
             <source>保存包身份</source>
-            <translation>Save package identity</translation>
+            <translation>Save pack identity</translation>
         </message>
     </context>
     <context>
@@ -18438,15 +18440,15 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         </message>
         <message>
             <source>文件过大（%1 字节）</source>
-            <translation type="unfinished"></translation>
+            <translation>File too large (%1 bytes)</translation>
         </message>
         <message>
             <source>文件末尾多出 %1 个字节</source>
-            <translation type="unfinished"></translation>
+            <translation>%1 extra bytes at end of file</translation>
         </message>
         <message>
             <source>开关</source>
-            <translation>Switch</translation>
+            <translation>Boolean</translation>
         </message>
         <message>
             <source>整数</source>
@@ -18454,139 +18456,139 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         </message>
         <message>
             <source>长度值为负数</source>
-            <translation type="unfinished"></translation>
+            <translation>Negative length</translation>
         </message>
         <message>
             <source>文件在此处中断：需要 %1 个字节，剩余 %2 个</source>
-            <translation type="unfinished"></translation>
+            <translation>Unexpected end of file: needed %1 bytes, %2 remaining</translation>
         </message>
         <message>
             <source>元素数量超过上限 %1</source>
-            <translation type="unfinished"></translation>
+            <translation>Element count exceeds limit (%1)</translation>
         </message>
         <message>
             <source>未知的标签类型 %1</source>
-            <translation type="unfinished">Unrecognized tag type %1</translation>
+            <translation>Unrecognized tag type %1</translation>
         </message>
         <message>
             <source>嵌套层级超过上限 %1</source>
-            <translation type="unfinished"></translation>
+            <translation>Nesting depth exceeds limit (%1)</translation>
         </message>
         <message>
             <source>此处不应出现结束标签</source>
-            <translation type="unfinished"></translation>
+            <translation>Unexpected End tag</translation>
         </message>
         <message>
             <source>列表包含未知的元素类型 %1</source>
-            <translation type="unfinished"></translation>
+            <translation>List contains unknown element type %1</translation>
         </message>
         <message>
             <source>列表的项数为负数</source>
-            <translation type="unfinished"></translation>
+            <translation>Negative list length</translation>
         </message>
         <message>
             <source>列表的元素类型为空，但项数为 %1</source>
-            <translation type="unfinished"></translation>
+            <translation>List has End element type with %1 items</translation>
         </message>
         <message>
             <source>列表项数 %1 超过文件剩余字节数</source>
-            <translation type="unfinished"></translation>
+            <translation>List count %1 exceeds remaining bytes</translation>
         </message>
         <message>
             <source>复合标签缺少结束标记</source>
-            <translation type="unfinished"></translation>
+            <translation>Compound tag missing End tag</translation>
         </message>
         <message>
             <source>整数数组的长度为负数</source>
-            <translation type="unfinished"></translation>
+            <translation>Negative Int Array length</translation>
         </message>
         <message>
             <source>长整数数组的长度为负数</source>
-            <translation type="unfinished"></translation>
+            <translation>Negative Long Array length</translation>
         </message>
         <message>
             <source>结束</source>
-            <translation type="unfinished"></translation>
+            <translation>End</translation>
         </message>
         <message>
             <source>字节</source>
-            <translation type="unfinished"></translation>
+            <translation>Byte</translation>
         </message>
         <message>
             <source>短整数</source>
-            <translation type="unfinished"></translation>
+            <translation>Short</translation>
         </message>
         <message>
             <source>长整数</source>
-            <translation type="unfinished"></translation>
+            <translation>Long</translation>
         </message>
         <message>
             <source>单精度小数</source>
-            <translation type="unfinished"></translation>
+            <translation>Float</translation>
         </message>
         <message>
             <source>双精度小数</source>
-            <translation type="unfinished"></translation>
+            <translation>Double</translation>
         </message>
         <message>
             <source>字节数组</source>
-            <translation type="unfinished"></translation>
+            <translation>Byte Array</translation>
         </message>
         <message>
             <source>字符串</source>
-            <translation>Word</translation>
+            <translation>String</translation>
         </message>
         <message>
             <source>未知</source>
-            <translation type="unfinished"></translation>
+            <translation>Unknown</translation>
         </message>
         <message>
             <source>文本</source>
-            <translation>Word</translation>
+            <translation>Text</translation>
         </message>
         <message>
             <source>规则「%1」的值不是字符串，已跳过。</source>
-            <translation>The rule "%1" is not text on the board, so don't touch it.</translation>
+            <translation>Rule "%1" isn't a string; skipped.</translation>
         </message>
         <message>
             <source>此存档中无规则「%1」。仅可编辑已有规则。</source>
-            <translation>There are no rules called "%1" in this world - this page only changes the ones that already exist in the world.</translation>
+            <translation>Rule "%1" doesn't exist in this world. Only existing rules can be edited.</translation>
         </message>
         <message>
             <source>列表</source>
-            <translation type="unfinished"></translation>
+            <translation>List</translation>
         </message>
         <message>
             <source>复合</source>
-            <translation type="unfinished"></translation>
+            <translation>Compound</translation>
         </message>
         <message>
             <source>整数数组</source>
-            <translation type="unfinished"></translation>
+            <translation>Int Array</translation>
         </message>
         <message>
             <source>长整数数组</source>
-            <translation type="unfinished"></translation>
+            <translation>Long Array</translation>
         </message>
         <message>
             <source>level.dat 缺少游戏规则数据。存档可能尚未初始化或来自旧版本。</source>
-            <translation>There is no "Game Rules" field in this level.dat (old save, or the game has not been saved yet).</translation>
+            <translation>level.dat is missing GameRules data. The world may be uninitialized or from an older version.</translation>
         </message>
         <message>
             <source>游戏规则数据类型无效（%1），无法读取。</source>
-            <translation>The "Game Rules" box is not a table (it is %1).</translation>
+            <translation>Invalid GameRules type (%1); can't read.</translation>
         </message>
         <message>
             <source>level.dat 缺少游戏规则数据，无法修改。</source>
-            <translation>There is no "Game Rules" section in this level.dat, so it cannot be changed.</translation>
+            <translation>level.dat is missing GameRules data; can't modify.</translation>
         </message>
         <message>
             <source>规则「%1」的值过长，无法保存。</source>
-            <translation>The value for rule "%1" is too long.</translation>
+            <translation>Value for rule "%1" is too long to save.</translation>
         </message>
         <message>
             <source>游戏规则名称过长，无法保存。</source>
-            <translation>The rule name is too long and cannot be entered.</translation>
+            <translation>Game rule name is too long to save.</translation>
         </message>
     </context>
     <context>
@@ -18597,75 +18599,75 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         </message>
         <message>
             <source>文件中的长度值为负数</source>
-            <translation>There is a length in the file that is a negative number</translation>
+            <translation>Negative length in file</translation>
         </message>
         <message>
             <source>文件在第 %1 个字节处中断</source>
-            <translation>The file is broken after reading the %1 byte</translation>
+            <translation>Unexpected end of file at byte %1</translation>
         </message>
         <message>
             <source>NBT 嵌套层级超过 %1</source>
-            <translation>NBT nested beyond %1 levels</translation>
+            <translation>NBT nesting depth exceeds %1</translation>
         </message>
         <message>
             <source>列表声明包含 %1 个元素，实际数据不足</source>
-            <translation>The list says there are %1 elements, and the remaining bytes cannot fit in it.</translation>
+            <translation>List declares %1 elements, but data is truncated</translation>
         </message>
         <message>
             <source>servers 列表的元素类型为 %1，应为 TAG_Compound</source>
-            <translation>The servers list is not filled with TAG_Compound (the element type is %1)</translation>
+            <translation>servers list element type is %1, expected TAG_Compound</translation>
         </message>
         <message>
             <source>servers 声明包含 %1 条记录，实际数据不足</source>
-            <translation>The servers say there are %1 items and the remaining bytes cannot be loaded.</translation>
+            <translation>servers list declares %1 entries, but data is truncated</translation>
         </message>
         <message>
             <source>文件为空，不含任何标签</source>
-            <translation>The file is empty, not even a tag</translation>
+            <translation>File is empty (no tags)</translation>
         </message>
         <message>
             <source>根标签应为 TAG_Compound，实际类型为 %1</source>
-            <translation>The root tag is of type %1, not TAG_Compound (this does not appear to be an NBT)</translation>
+            <translation>Root tag type is %1, expected TAG_Compound</translation>
         </message>
         <message>
             <source>servers 字段应为 TAG_List，实际类型为 %1。</source>
-            <translation>The type of servers is %1, not TAG_List</translation>
+            <translation>servers field type is %1, expected TAG_List.</translation>
         </message>
         <message>
             <source>无法打开 %1（%2）</source>
-            <translation>Unable to open %1 (%2)</translation>
+            <translation>Can't open %1 (%2)</translation>
         </message>
         <message>
             <source>%1 为 %2 MB，超过 %3 MB 上限，未读取</source>
-            <translation>%1 has %2 MB, exceeds %3 MB limit, no reads</translation>
+            <translation>%1 is %2 MB, exceeding the %3 MB limit; not read</translation>
         </message>
         <message>
             <source>读取 %1 时中途出错（%2）</source>
-            <translation>Could not finish reading %1 (%2)</translation>
+            <translation>Error reading %1 (%2)</translation>
         </message>
         <message>
             <source>servers.dat 为 %1 MB，超过 %2 MB 上限，未读取</source>
-            <translation>Servers.dat has %1 MB, exceeds %2 MB limit, no reads</translation>
+            <translation>servers.dat is %1 MB, exceeding the %2 MB limit; not read</translation>
         </message>
         <message>
             <source>servers.dat 解压后为 %1 MB，超过 %2 MB 上限</source>
-            <translation>Servers.dat is decompressed and contains %1 MB, which exceeds the upper limit of %2 MB.</translation>
+            <translation>Decompressed servers.dat is %1 MB, exceeding the %2 MB limit</translation>
         </message>
         <message>
             <source>servers.dat 解压后无数据，请确认文件是否完整</source>
-            <translation>Servers.dat is empty when decompressed (this gzip is probably broken or not downloaded completely)</translation>
+            <translation>Decompressed servers.dat is empty; verify the file isn't corrupted</translation>
         </message>
         <message>
             <source>无法创建临时目录（%1）</source>
-            <translation>Unable to create temporary directory (%1)</translation>
+            <translation>Can't create temp folder (%1)</translation>
         </message>
         <message>
             <source>无法解压 servers.dat 中的 gzip 数据</source>
-            <translation>Servers.dat cannot be read: gzip cannot be decoded</translation>
+            <translation>Can't decompress gzip data in servers.dat</translation>
         </message>
         <message>
             <source>无法读取 servers.dat：%1</source>
-            <translation>Servers.dat cannot be read: %1</translation>
+            <translation>Can't read servers.dat: %1</translation>
         </message>
     </context>
     <context>
@@ -18897,7 +18899,7 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         </message>
         <message>
             <source>%1个区块</source>
-            <translation>%1 chunks</translation>
+            <translation>%1 Chunks</translation>
         </message>
         <message>
             <source>*哈欠*</source>
@@ -19021,11 +19023,11 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         <name>PresetCompatibility</name>
         <message>
             <source>原版</source>
-            <translation>Original</translation>
+            <translation>Vanilla</translation>
         </message>
         <message>
             <source>无待检查的模组引用。</source>
-            <translation>There are no mod references to check.</translation>
+            <translation>No mod references to check.</translation>
         </message>
         <message>
             <source>检查中 %1/%2</source>
@@ -19037,15 +19039,15 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         </message>
         <message>
             <source>暂无法确认 %1</source>
-            <translation>Unable to confirm %1</translation>
+            <translation>Unconfirmed %1</translation>
         </message>
         <message>
             <source>引用无法识别 %1</source>
-            <translation>Unrecognized reference %1</translation>
+            <translation>Invalid reference %1</translation>
         </message>
         <message>
             <source>全部匹配（%1）</source>
-            <translation>Match all (%1)</translation>
+            <translation>All matched (%1)</translation>
         </message>
         <message>
             <source>缺失 %1</source>
@@ -19053,11 +19055,11 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         </message>
         <message>
             <source>必要项缺失 %1</source>
-            <translation>Required items are missing %1</translation>
+            <translation>Required missing %1</translation>
         </message>
         <message>
             <source>，</source>
-            <translation>,</translation>
+            <translation>, </translation>
         </message>
         <message>
             <source>。</source>
@@ -19065,19 +19067,19 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         </message>
         <message>
             <source>仅支持 Modrinth 或 CurseForge 平台。</source>
-            <translation>The platform is not recognized (can only be Modrinth or CurseForge).</translation>
+            <translation>Only Modrinth and CurseForge are supported.</translation>
         </message>
         <message>
             <source>此条缺少项目 id。</source>
-            <translation>This item has no project id.</translation>
+            <translation>Entry is missing a project ID.</translation>
         </message>
         <message>
             <source>本次检查已到截止时间，暂无法确认；请重试未完成项。</source>
-            <translation>This round of inspection has reached the deadline and cannot be confirmed yet; please try again for unfinished items.</translation>
+            <translation>Check timed out; unconfirmed. Retry unfinished items.</translation>
         </message>
         <message>
             <source>预设要求 %1，本次安装的是 %2。</source>
-            <translation>This item is nailed to %1, and this time it is installed to %2.</translation>
+            <translation>Preset requires %1, but installing %2.</translation>
         </message>
         <message>
             <source>（未指定）</source>
@@ -19085,27 +19087,27 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         </message>
         <message>
             <source>引用不完整。</source>
-            <translation>The citation is incomplete.</translation>
+            <translation>Incomplete reference.</translation>
         </message>
         <message>
             <source>缓存结论。</source>
-            <translation>Caching conclusions.</translation>
+            <translation>Cached result.</translation>
         </message>
         <message>
             <source>（缓存结论）</source>
-            <translation>(cached conclusion)</translation>
+            <translation> (cached)</translation>
         </message>
         <message>
             <source>资源平台查询不可用，暂时无法确认兼容性。</source>
-            <translation>There is no available platform query this time and cannot be confirmed at the moment.</translation>
+            <translation>Platform query unavailable; can't confirm compatibility.</translation>
         </message>
         <message>
             <source>未指定游戏版本，暂时无法确认兼容性。</source>
-            <translation>I don’t know which game version to install this time, so I can’t confirm it yet.</translation>
+            <translation>Game version not specified; can't confirm compatibility.</translation>
         </message>
         <message>
             <source>查询超时（%1 秒），暂时无法确认。</source>
-            <translation>The query timed out (%1 seconds) and cannot be confirmed at the moment.</translation>
+            <translation>Query timed out (%1 s); can't confirm right now.</translation>
         </message>
     </context>
     <context>
@@ -19120,15 +19122,15 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         </message>
         <message>
             <source>已取消预览，实例未修改。</source>
-            <translation>The preview has been canceled and the instance has not been modified.</translation>
+            <translation>Preview canceled; instance wasn't modified.</translation>
         </message>
         <message>
             <source>旧版</source>
-            <translation>Old version</translation>
+            <translation>Legacy</translation>
         </message>
         <message>
             <source>综合预设</source>
-            <translation>Comprehensive presets</translation>
+            <translation>Composite presets</translation>
         </message>
         <message>
             <source>草稿</source>
@@ -19136,27 +19138,27 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         </message>
         <message>
             <source>旧版预设未记录类别，九类均可收集。</source>
-            <translation>Uncategorized legacy presets can capture all nine content types.</translation>
+            <translation>Legacy presets have no category and can capture all nine sections.</translation>
         </message>
         <message>
             <source>「游戏设置」预设不收录资源包与光影包。</source>
-            <translation>Game settings presets do not include resource packs or shaderpacks.</translation>
+            <translation>Game settings presets don't include resource packs or shader packs.</translation>
         </message>
         <message>
             <source>数据包按存档应用；目标中无同名存档时标记为「待应用」。</source>
-            <translation>Datapacks are applied per world. If the target has no world with the same name, the pack is marked pending.</translation>
+            <translation>Data packs are applied per world; if no matching world exists, they're marked pending.</translation>
         </message>
         <message>
             <source>（草稿）</source>
-            <translation>(draft)</translation>
+            <translation> (draft)</translation>
         </message>
         <message>
             <source>仅提取游戏设置、按键和资源清单。</source>
-            <translation>Only game settings, keys, and resource lists are extracted.</translation>
+            <translation>Captures game settings, key binds, and resource lists only.</translation>
         </message>
         <message>
             <source>平台模组清单</source>
-            <translation>Platform Mod List</translation>
+            <translation>Platform mod list</translation>
         </message>
         <message>
             <source>模组</source>
@@ -19164,15 +19166,15 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         </message>
         <message>
             <source>按目标版本解析</source>
-            <translation>Parse by target version</translation>
+            <translation>Resolve by target version</translation>
         </message>
         <message>
             <source>已创建。请在右侧修改名称和说明，然后从实例提取内容。</source>
-            <translation>Preset created. Edit its name and description on the right, then capture content from an instance.</translation>
+            <translation>Created. Edit name and description on the right, then extract content from an instance.</translation>
         </message>
         <message>
             <source>名称不能为空。</source>
-            <translation>Enter a name.</translation>
+            <translation>Name can't be empty.</translation>
         </message>
         <message>
             <source>无可保存的改动。</source>
@@ -19184,19 +19186,19 @@ So there is no import. (Fabric / Forge / NeoForge / OptiFine can be installed di
         </message>
         <message>
             <source>已删除「%1」。</source>
-            <translation>Removed "%1".</translation>
+            <translation>Deleted "%1".</translation>
         </message>
         <message>
             <source>未收到任何内容。</source>
-            <translation>No content was captured.</translation>
+            <translation>No content captured.</translation>
         </message>
         <message>
             <source>已收到 %1 条平台模组引用</source>
-            <translation>Mod project references captured: %1</translation>
+            <translation>Captured %1 platform mod references</translation>
         </message>
         <message>
             <source>此类预设不收录：%1。</source>
-            <translation>This preset category does not support: %1.</translation>
+            <translation>Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>
@@ -19206,63 +19208,63 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>无法确认此实例模组的来源平台。其安装记录可能缺失，或文件已被替换。预设未创建。</source>
-            <translation>No mods in this instance could be matched to a platform project. Install records may be missing or the files may have been replaced. No preset was created.</translation>
+            <translation>Couldn't identify the source platform for mods in this instance; install records may be missing or files replaced. Preset wasn't created.</translation>
         </message>
         <message>
             <source>未选择任何项，未创建新预设。</source>
-            <translation>Nothing was selected. No preset was created.</translation>
+            <translation>Nothing selected; no preset created.</translation>
         </message>
         <message>
             <source>此类预设不收录：%1；未创建新预设。</source>
-            <translation>This preset category does not support %1. No preset was created.</translation>
+            <translation>Not supported by this preset category: %1; no preset created.</translation>
         </message>
         <message>
             <source>未收到任何内容，未创建新预设。</source>
-            <translation>No content was captured. No preset was created.</translation>
+            <translation>No content captured; no preset created.</translation>
         </message>
         <message>
             <source>草稿需保存为预设后才能应用。</source>
-            <translation>The draft needs to be saved as a preset before it can be applied.</translation>
+            <translation>Save the draft as a preset before applying.</translation>
         </message>
         <message>
             <source>此实例正在处理文件，请完成后再重新预览。</source>
-            <translation>This instance is processing the file, please preview again when finished.</translation>
+            <translation>Instance is processing files; preview again when finished.</translation>
         </message>
         <message>
             <source>无法读取预设文件夹：%1</source>
-            <translation>The default folder cannot be read: %1</translation>
+            <translation>Can't read preset folder: %1</translation>
         </message>
         <message>
             <source>未选择有效预设。</source>
-            <translation>No valid preset is selected.</translation>
+            <translation>No valid preset selected.</translation>
         </message>
         <message>
             <source>此实例正在被其他操作写入（复制、还原或导入），请完成后再应用模组预设。</source>
-            <translation>This instance is being written to by other operations in the background (copy, restore, or import) before the mod preset is applied.</translation>
+            <translation>Instance is being written to by another operation (copy, restore, or import). Wait for it to finish before applying the mod preset.</translation>
         </message>
         <message>
             <source>实例运行或文件操作状态已改变，请重新预览。</source>
-            <translation>The instance running or file operation status has changed, please preview again.</translation>
+            <translation>Instance running or file operation state changed; preview again.</translation>
         </message>
         <message>
             <source>平台模组 %1 项；应用时联网检查发行版本、依赖和冲突，必要项无法确认则不安装。</source>
-            <translation>Platform mod %1 item; check the release version, dependencies and conflicts online when applying. If necessary items cannot be confirmed, they will not be installed.</translation>
+            <translation>%1 platform mods; releases, dependencies, and conflicts are checked online when applying. Unconfirmed required items won't be installed.</translation>
         </message>
         <message>
             <source>%1 段，将改动 %2 项</source>
-            <translation>Sections: %1; affected items: %2</translation>
+            <translation>%1 sections, %2 changes</translation>
         </message>
         <message>
             <source>，%1 段无法完成</source>
-            <translation>; blocked sections: %1</translation>
+            <translation>, %1 blocked</translation>
         </message>
         <message>
             <source>，%1 段需留意</source>
-            <translation>; sections needing attention: %1</translation>
+            <translation>, %1 need review</translation>
         </message>
         <message>
             <source>；平台模组 %1 项（发行文件及前置待执行时确认）</source>
-            <translation>;Platform mod %1 item (issued documents and prerequisites to be confirmed when executed)</translation>
+            <translation>; %1 platform mods (files and dependencies checked on apply)</translation>
         </message>
         <message>
             <source>无法完成%1</source>
@@ -19270,7 +19272,7 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>未完成%1</source>
-            <translation>Failed%1</translation>
+            <translation>Incomplete%1</translation>
         </message>
         <message>
             <source>无变化</source>
@@ -19282,11 +19284,11 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>预设不可读，无法核对执行报告。</source>
-            <translation>The default is not readable and the execution report cannot be checked.</translation>
+            <translation>Preset unreadable; can't check execution report.</translation>
         </message>
         <message>
             <source>计划中 / 尚未完成</source>
-            <translation>Planned / Not yet completed</translation>
+            <translation>Planned / incomplete</translation>
         </message>
         <message>
             <source>已下载，未部署</source>
@@ -19302,7 +19304,7 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>失败</source>
-            <translation>Fail</translation>
+            <translation>Failed</translation>
         </message>
         <message>
             <source>未解决</source>
@@ -19314,87 +19316,87 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>待应用：等待目标世界</source>
-            <translation>Awaiting application: waiting for the target world</translation>
+            <translation>Pending: waiting for target world</translation>
         </message>
         <message>
             <source>状态无法确认</source>
-            <translation>Status cannot be confirmed</translation>
+            <translation>Unknown status</translation>
         </message>
         <message>
             <source>模组未全部应用，其余部分尚未应用。</source>
-            <translation>Not all mods have been applied and the rest have not yet been applied.</translation>
+            <translation>Not all mods were applied; remaining items haven't been applied.</translation>
         </message>
         <message>
             <source>报告格式不支持，未自动继续。</source>
-            <translation>The report format is not supported and did not continue automatically.</translation>
+            <translation>Unsupported report format; didn't resume automatically.</translation>
         </message>
         <message>
             <source>预设已变化或缺失，请重新预览；未沿用旧报告写入。</source>
-            <translation>The default has changed or is missing, please preview again; the old report writing is not inherited.</translation>
+            <translation>Preset changed or missing; preview again instead of using the old report.</translation>
         </message>
         <message>
             <source>报告不属于当前所选预设，未继续。</source>
-            <translation>Report does not belong to the currently selected preset and is not continuing.</translation>
+            <translation>Report doesn't match the selected preset; canceled.</translation>
         </message>
         <message>
             <source>正在检查并安装模组预设，必要前置将一并解析…</source>
-            <translation>Checking and installing mod presets, necessary prerequisites will be parsed...</translation>
+            <translation>Checking and installing mod preset (resolving required dependencies)…</translation>
         </message>
         <message>
             <source>模组预设未全部应用，请查看逐项原因。</source>
-            <translation>Mod defaults are not all applied, please check the reasons one by one.</translation>
+            <translation>Mod preset wasn't fully applied; check each item's reason.</translation>
         </message>
         <message>
             <source>平台模组 %1 项：按目标版本解析发行文件与必要前置，缺失或查询失败会如实报告。</source>
-            <translation>Platform mod %1 item: Parse release files and necessary prerequisites according to the target version. Missing or failed queries will be reported truthfully.</translation>
+            <translation>%1 platform mods: resolving releases and required dependencies for the target version; missing or failed lookups will be reported.</translation>
         </message>
         <message>
             <source>、删除 %1 项</source>
-            <translation>; removed: %1</translation>
+            <translation>, %1 removed</translation>
         </message>
         <message>
             <source>，%1 段未完成（可在管理页查看详情）</source>
-            <translation>; failed sections: %1 (see the preset manager for details)</translation>
+            <translation>, %1 sections incomplete (see Manage presets for details)</translation>
         </message>
         <message>
             <source>另一项模组预设仍在应用，请等待或取消。</source>
-            <translation>Another mod preset is still being applied, please wait or cancel.</translation>
+            <translation>Another mod preset is still applying; wait or cancel.</translation>
         </message>
         <message>
             <source>目标实例不可用。</source>
-            <translation>The target instance is unavailable.</translation>
+            <translation>Target instance is unavailable.</translation>
         </message>
         <message>
             <source>预设已删除或损坏，无法继续应用。</source>
-            <translation>The preset has been deleted or corrupted and cannot be applied further.</translation>
+            <translation>Preset was deleted or corrupted; can't continue.</translation>
         </message>
         <message>
             <source>同一模组存在不同版本/加载器约束，未自动选择其中一项。</source>
-            <translation>There are different version/loader constraints for the same mod, and one of them is not automatically selected.</translation>
+            <translation>Multiple version/loader constraints for the same mod; none auto-selected.</translation>
         </message>
         <message>
             <source>应用模组预设需要先安装模组加载器。</source>
-            <translation>Applying mod presets requires installing the mod loader first.</translation>
+            <translation>Install a mod loader before applying a mod preset.</translation>
         </message>
         <message>
             <source>应用模组预设：%1</source>
-            <translation>Apply mod default: %1</translation>
+            <translation>Apply mod preset: %1</translation>
         </message>
         <message>
             <source>无法读取预设，原文件保留。</source>
-            <translation>Unable to read preset, original file retained.</translation>
+            <translation>Can't read preset; original file kept.</translation>
         </message>
         <message>
             <source>此旧预设含多段同类内容，暂不能在统一编辑器中合并编辑。原内容保留，可从实例重新提取草稿。</source>
-            <translation>This old preset contains multiple pieces of similar content and cannot be merged and edited in the unified editor. The original content is retained and a draft can be re-extracted from the instance.</translation>
+            <translation>This legacy preset has multiple sections of the same type and can't be merged in the unified editor. Original content is kept; re-extract a draft from an instance.</translation>
         </message>
         <message>
             <source>当前界面不能打开预设编辑器。</source>
-            <translation>The preset editor cannot be opened in the current interface.</translation>
+            <translation>Can't open the preset editor from this view.</translation>
         </message>
         <message>
             <source>放弃修改</source>
-            <translation>Abandon changes</translation>
+            <translation>Discard changes</translation>
         </message>
         <message>
             <source>确认</source>
@@ -19426,11 +19428,11 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>当前修改的处理方式</source>
-            <translation>How to deal with current modifications?</translation>
+            <translation>How to handle current changes</translation>
         </message>
         <message>
             <source>Modrinth 和 CurseForge 均未识别 %1 个模组。可在模组页筛选来源未知的项目，补充或移除这些项目，也可在概览中停用模组部分。</source>
-            <translation>%1 mods are not recognized on Modrinth and CurseForge (maybe they have been modified manually or not uploaded to any platform). Please add them on the mod page - on that page, you can check "See only unrecognized ones" to select them first, or click "Remove unrecognized ones" to delete them in batches; you can also temporarily disable the mod part in the overview.</translation>
+            <translation>%1 mods weren't recognized on Modrinth or CurseForge. Filter by Unknown source on the Mods page to add or remove them, or disable the Mods section in Overview.</translation>
         </message>
         <message>
             <source>保存为草稿</source>
@@ -19446,23 +19448,23 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>请先停止实例及其文件操作。</source>
-            <translation>Please stop the instance and its file operations first.</translation>
+            <translation>Stop the instance and its file operations first.</translation>
         </message>
         <message>
             <source>查询 Modrinth 失败：%1</source>
-            <translation>Modrinth didn’t ask on the other side: %1</translation>
+            <translation>Couldn't query Modrinth: %1</translation>
         </message>
         <message>
             <source>查询 CurseForge 失败：%1</source>
-            <translation>CurseForge did not ask on that side: %1</translation>
+            <translation>Couldn't query CurseForge: %1</translation>
         </message>
         <message>
             <source>正在提取实例内容并识别模组来源…</source>
-            <translation>Extracting instance content and identifying mod sources...</translation>
+            <translation>Extracting instance content and identifying mod sources…</translation>
         </message>
         <message>
             <source>无法保存提取的草稿。</source>
-            <translation>Unable to save extracted draft.</translation>
+            <translation>Couldn't save extracted draft.</translation>
         </message>
         <message>
             <source>游戏设置</source>
@@ -19470,7 +19472,7 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>原版按键</source>
-            <translation>Vanilla key bindings</translation>
+            <translation>Vanilla key binds</translation>
         </message>
         <message>
             <source>服务器列表</source>
@@ -19490,11 +19492,11 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>数据包</source>
-            <translation>Datapacks</translation>
+            <translation>Data packs</translation>
         </message>
         <message>
             <source>配置文件 config/</source>
-            <translation>Configuration files (config/)</translation>
+            <translation>Config files (config/)</translation>
         </message>
         <message>
             <source>默认配置 defaultconfigs/</source>
@@ -19506,7 +19508,7 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>光影包</source>
-            <translation>Shaderpacks</translation>
+            <translation>Shader packs</translation>
         </message>
         <message>
             <source>旧版（未分类）</source>
@@ -19518,15 +19520,15 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>仅提取资源包。</source>
-            <translation>Capture resource packs only.</translation>
+            <translation>Captures resource packs only.</translation>
         </message>
         <message>
             <source>仅提取光影包。</source>
-            <translation>Capture shaderpacks only.</translation>
+            <translation>Captures shader packs only.</translation>
         </message>
         <message>
             <source>模组预设请使用“编辑模组清单”添加平台项目，当前不从实例提取本地 JAR。</source>
-            <translation>Use Edit mod list to add projects to a mod preset. Local JAR files are not captured.</translation>
+            <translation>Use "Edit mod list" to add platform mods to a mod preset; local JARs aren't captured.</translation>
         </message>
         <message>
             <source>基础设置</source>
@@ -19534,7 +19536,7 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>标准按键</source>
-            <translation>Standard key bindings</translation>
+            <translation>Standard key binds</translation>
         </message>
         <message>
             <source>MaLiLib 值</source>
@@ -19542,7 +19544,7 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>%1（%2 份预设）</source>
-            <translation>%1 (presets: %2)</translation>
+            <translation>%1 (%2 presets)</translation>
         </message>
         <message>
             <source>最后修改：%1</source>
@@ -19554,31 +19556,31 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>预设目录不可写，无法创建预设。</source>
-            <translation>Could not create the preset: the preset folder is not writable.</translation>
+            <translation>Couldn't create preset: preset folder isn't writable.</translation>
         </message>
         <message>
             <source>复制预设失败。请检查原预设可读且目标目录可写。</source>
-            <translation>Could not copy the preset: the source could not be read or the destination folder could not be created.</translation>
+            <translation>Couldn't duplicate preset. Check that the source is readable and the destination is writable.</translation>
         </message>
         <message>
             <source>无法读取源预设：%1</source>
-            <translation>Could not read this preset: %1</translation>
+            <translation>Can't read source preset: %1</translation>
         </message>
         <message>
             <source>保存失败：无法写入预设文件。</source>
-            <translation>Could not save: the preset file could not be written.</translation>
+            <translation>Couldn't save: can't write preset file.</translation>
         </message>
         <message>
             <source>删除失败：无法删除预设目录。</source>
-            <translation>Could not delete the preset folder.</translation>
+            <translation>Couldn't delete preset folder.</translation>
         </message>
         <message>
             <source>综合预设和旧版混合预设不设默认：默认只对四类预设生效。</source>
-            <translation>Composite and mixed legacy presets cannot be set as defaults. Defaults only apply to the four preset categories.</translation>
+            <translation>Composite and mixed legacy presets can't be set as defaults; defaults only apply to the four preset categories.</translation>
         </message>
         <message>
             <source>设置默认预设失败：该预设已不存在。</source>
-            <translation>Could not set the default: the preset no longer exists.</translation>
+            <translation>Couldn't set default preset: preset no longer exists.</translation>
         </message>
         <message>
             <source>游戏设置 %1 项</source>
@@ -19586,7 +19588,7 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>按键 %1 项</source>
-            <translation>Key bindings: %1</translation>
+            <translation>Key binds: %1</translation>
         </message>
         <message>
             <source>服务器 %1 个</source>
@@ -19594,11 +19596,11 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>config %1 个</source>
-            <translation>config files: %1</translation>
+            <translation>config: %1</translation>
         </message>
         <message>
             <source>defaultconfigs %1 个</source>
-            <translation>defaultconfigs files: %1</translation>
+            <translation>defaultconfigs: %1</translation>
         </message>
         <message>
             <source>资源包 %1 个</source>
@@ -19606,7 +19608,7 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>光影包 %1 个</source>
-            <translation>Shaderpacks: %1</translation>
+            <translation>Shader packs: %1</translation>
         </message>
         <message>
             <source>MaLiLib 热键 %1 格</source>
@@ -19618,7 +19620,7 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>数据包 %1 个（%2 个存档）</source>
-            <translation>Datapacks: %1 (worlds: %2)</translation>
+            <translation>Data packs: %1 (%2 worlds)</translation>
         </message>
         <message>
             <source>已提取：%1。</source>
@@ -19640,15 +19642,15 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>提取失败：%1</source>
-            <translation>Capture failed: %1</translation>
+            <translation>Couldn't capture: %1</translation>
         </message>
         <message>
             <source>未找到带有效平台安装记录的模组，未提取模组预设内容。</source>
-            <translation>No mods in this instance could be matched to a platform project. Install records may be missing or the files may have been replaced. No mods were captured.</translation>
+            <translation>No mods with valid platform install records found; no mod preset captured.</translation>
         </message>
         <message>
             <source>内容已提取，但无法保存预设。</source>
-            <translation>Content was captured, but the preset could not be saved.</translation>
+            <translation>Content captured, but couldn't save preset.</translation>
         </message>
         <message>
             <source>（新增 %1 条）</source>
@@ -19656,7 +19658,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>；另有 %1 个模组的来源未知。可在「预设编辑器 → 从本地模组导入」中重新识别，或在模组页手动补充。</source>
-            <translation>; unrecognized mods: %1. Import local mods in the preset editor to try fingerprint matching again, or add them manually on the Mods page.</translation>
+            <translation>; %1 mods from unknown sources. Re-identify via "Preset editor → Import from local mods" or add them manually on the Mods page.</translation>
         </message>
         <message>
             <source>。</source>
@@ -19664,7 +19666,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>未选择任何项。</source>
-            <translation>Nothing was selected.</translation>
+            <translation>Nothing selected.</translation>
         </message>
         <message>
             <source>、</source>
@@ -19672,7 +19674,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>预设目录不可写，未创建新预设。</source>
-            <translation>The preset folder is not writable. No preset was created.</translation>
+            <translation>Preset folder isn't writable; no preset created.</translation>
         </message>
         <message>
             <source>（%1）</source>
@@ -19700,55 +19702,55 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>无可读取的执行报告。</source>
-            <translation>There is no readable execution report.</translation>
+            <translation>No readable execution report.</translation>
         </message>
         <message>
             <source>%1：%2；写入 %3 项 %4</source>
-            <translation>%1: %2; items written: %3 %4</translation>
+            <translation>%1: %2; %3 written %4</translation>
         </message>
         <message>
             <source>已完成项保留；继续时重新核对预设和实际文件，只重试未完成部分。不会声明整个流程回滚。</source>
-            <translation>Completed items are retained; recheck presets and actual files when continuing, and only retry unfinished items. Will not declare the entire trip to be rolled back.</translation>
+            <translation>Completed items are kept; resuming rechecks the preset against actual files and retries only unfinished items without rolling back.</translation>
         </message>
         <message>
             <source>此实例正在安装、补全文件或后台迁移文件（复制、还原、导入），请等待完成后再应用预设。</source>
-            <translation>This instance is installing, completing files, or moving files in the background (copying, restoring, importing) and waiting for it to finish before applying the preset.</translation>
+            <translation>Instance is installing, completing files, or transferring files (copy, restore, or import). Wait for it to finish before applying the preset.</translation>
         </message>
         <message>
             <source>无可读取的模组执行报告，请重新预览。</source>
-            <translation>There is no readable mod execution report, please preview again.</translation>
+            <translation>No readable mod execution report; preview again.</translation>
         </message>
         <message>
             <source>键位冲突：%1 ← %2</source>
-            <translation>Key binding conflict: %1 ← %2</translation>
+            <translation>Key conflict: %1 ← %2</translation>
         </message>
         <message>
             <source>无法读取待导入的预设：%1</source>
-            <translation>Could not read this preset: %1.</translation>
+            <translation>Can't read preset to import: %1</translation>
         </message>
         <message>
             <source>预设读取失败：%1</source>
-            <translation>Could not read the preset: %1</translation>
+            <translation>Couldn't read preset: %1</translation>
         </message>
         <message>
             <source>此预设包含覆盖操作。请在实例的「预设」页查看并确认应用计划。</source>
-            <translation>This preset contains a Replace section. Review and confirm the plan on the instance's Presets tab before applying it.</translation>
+            <translation>This preset contains overwrite actions. Review and confirm the plan on the instance's Presets tab.</translation>
         </message>
         <message>
             <source>本次操作未完成。</source>
-            <translation>The operation did not complete.</translation>
+            <translation>Operation didn't finish.</translation>
         </message>
         <message>
             <source>本次操作未完成：%1</source>
-            <translation>The operation did not complete: %1</translation>
+            <translation>Operation didn't finish: %1</translation>
         </message>
         <message>
             <source>实例预设「%1」已应用：写入 %2 项</source>
-            <translation>Applied instance preset "%1". Items written: %2</translation>
+            <translation>Applied instance preset "%1": %2 written</translation>
         </message>
         <message>
             <source>；备份在 %1</source>
-            <translation>; backup: %1</translation>
+            <translation>; backup at %1</translation>
         </message>
     </context>
     <context>
@@ -19763,7 +19765,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>按键绑定</source>
-            <translation>Key Binds</translation>
+            <translation>Key binds</translation>
         </message>
         <message>
             <source>模组</source>
@@ -19771,11 +19773,11 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>资源包</source>
-            <translation>Resource pack</translation>
+            <translation>Resource packs</translation>
         </message>
         <message>
             <source>数据包</source>
-            <translation>Datapacks</translation>
+            <translation>Data packs</translation>
         </message>
         <message>
             <source>保存为草稿</source>
@@ -19787,7 +19789,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>恢复到上次</source>
-            <translation>Revert to last time</translation>
+            <translation>Revert to saved</translation>
         </message>
         <message>
             <source>全部清空</source>
@@ -19803,15 +19805,15 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>选择图片</source>
-            <translation>Select picture</translation>
+            <translation>Choose image</translation>
         </message>
         <message>
             <source>选择图标</source>
-            <translation>Select icon</translation>
+            <translation>Choose icon</translation>
         </message>
         <message>
             <source>图片 (*.png *.jpg *.webp)</source>
-            <translation>Picture (*.png *.jpg *.webp)</translation>
+            <translation>Images (*.png *.jpg *.webp)</translation>
         </message>
         <message>
             <source>启用部分</source>
@@ -19819,7 +19821,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>文件</source>
-            <translation>Document</translation>
+            <translation>File</translation>
         </message>
         <message>
             <source>启用</source>
@@ -19827,11 +19829,11 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>资源包列表上方优先。</source>
-            <translation>Top of the resource pack list takes priority.</translation>
+            <translation>Top items in the resource pack list take priority.</translation>
         </message>
         <message>
             <source>添加</source>
-            <translation>Add to</translation>
+            <translation>Add</translation>
         </message>
         <message>
             <source>移除</source>
@@ -19859,7 +19861,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>压缩包 (*.zip)</source>
-            <translation>Compressed package (*.zip)</translation>
+            <translation>Archives (*.zip)</translation>
         </message>
         <message>
             <source>游戏设置</source>
@@ -19867,38 +19869,38 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>放弃未保存的修改</source>
-            <translation>Discard unsaved changes?</translation>
+            <translation>Discard unsaved changes</translation>
         </message>
         <message>
             <source>清空各部分内容（名称和图标保留）</source>
-            <translation>Clear the contents of each section? Name and icon retained.</translation>
+            <translation>Clear all section contents (keeps name and icon)</translation>
         </message>
         <message>
             <source>光影包</source>
-            <translation>Shaderpacks</translation>
+            <translation>Shader packs</translation>
         </message>
     </context>
     <context>
         <name>PresetExecutionReport</name>
         <message>
             <source>无可读取的预设执行报告，或报告过大；请重新预览。</source>
-            <translation>There is no readable default execution report, or the report is too large; please preview again.</translation>
+            <translation>No readable preset execution report, or report is too large; preview again.</translation>
         </message>
         <message>
             <source>执行报告与当前预设 / 实例不符，或报告已损坏；请重新预览，未自动继续。</source>
-            <translation>The execution report does not match the current preset/instance, or the report is corrupted; please preview again, it does not continue automatically.</translation>
+            <translation>Execution report doesn't match the current preset or instance, or is corrupted; preview again instead of resuming.</translation>
         </message>
         <message>
             <source>执行报告的逐项状态无效，未自动继续。</source>
-            <translation>The itemized status of the execution report is invalid and did not continue automatically.</translation>
+            <translation>Item status in execution report is invalid; didn't resume automatically.</translation>
         </message>
         <message>
             <source>执行报告缺少预设段状态，未自动继续。</source>
-            <translation>The execution report is missing the preset segment status and does not continue automatically.</translation>
+            <translation>Execution report is missing section status; didn't resume automatically.</translation>
         </message>
         <message>
             <source>无法保存预设执行报告；已写入内容保留，请检查磁盘与权限。</source>
-            <translation>Unable to save the default execution report; the written content is retained, please check the disk and permissions.</translation>
+            <translation>Couldn't save preset execution report; written changes are kept. Check disk space and permissions.</translation>
         </message>
     </context>
     <context>
@@ -19917,11 +19919,11 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>原版</source>
-            <translation>Original</translation>
+            <translation>Vanilla</translation>
         </message>
         <message>
             <source>需要模组加载器</source>
-            <translation>Requires mod loader</translation>
+            <translation>Mod loader required</translation>
         </message>
         <message>
             <source>未检查</source>
@@ -19929,7 +19931,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>暂无可用的%1预设</source>
-            <translation>There are no presets available for %1</translation>
+            <translation>No %1 presets available</translation>
         </message>
         <message>
             <source>正在读取预设…</source>
@@ -19937,51 +19939,51 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>已选：</source>
-            <translation>Selected:</translation>
+            <translation>Selected: </translation>
         </message>
         <message>
             <source>：</source>
-            <translation>:</translation>
+            <translation>: </translation>
         </message>
         <message>
             <source>本次应用 &lt;span style="color:%1; font-weight:500"&gt;%2&lt;/span&gt; 类</source>
-            <translation>This application is of the &lt;span style="color:%1; font-weight:500"&gt;%2&lt;/span&gt; category</translation>
+            <translation>Applying &lt;span style="color:%1; font-weight:500"&gt;%2&lt;/span&gt; categories</translation>
         </message>
         <message>
             <source>本次不应用预设</source>
-            <translation>Do not apply default this time</translation>
+            <translation>Don't apply presets</translation>
         </message>
         <message>
             <source>缺失 %1 项</source>
-            <translation>Missing %1 items</translation>
+            <translation>%1 missing</translation>
         </message>
         <message>
             <source>待确认 %1 项</source>
-            <translation>%1 items to be confirmed</translation>
+            <translation>%1 unconfirmed</translation>
         </message>
         <message>
             <source>综合预设将多类预设合并，一次安装完成。可在「预设管理」中新建，或从实例提取。</source>
-            <translation>Comprehensive presets combine several types of presets into one copy and install them all at once. Create a new one in "Default Management" or extract it from an instance.</translation>
+            <translation>Composite presets bundle multiple preset categories into one install. Create one in Manage presets or extract from an instance.</translation>
         </message>
         <message>
             <source>综合预设</source>
-            <translation>Comprehensive presets</translation>
+            <translation>Composite presets</translation>
         </message>
         <message>
             <source>预设</source>
-            <translation>Default</translation>
+            <translation>Presets</translation>
         </message>
         <message>
             <source>读取失败</source>
-            <translation>Read failed</translation>
+            <translation>Couldn't read</translation>
         </message>
         <message>
             <source>显示综合预设</source>
-            <translation>Show comprehensive presets</translation>
+            <translation>Show composite presets</translation>
         </message>
         <message>
             <source>未选择</source>
-            <translation>Not selected</translation>
+            <translation>None selected</translation>
         </message>
         <message>
             <source>替换%1：%2 → %3</source>
@@ -19989,19 +19991,19 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>关闭</source>
-            <translation>Closure</translation>
+            <translation>Close</translation>
         </message>
         <message>
             <source>暂无可用的综合预设</source>
-            <translation>No comprehensive presets available yet</translation>
+            <translation>No composite presets available</translation>
         </message>
         <message>
             <source>应用其中：</source>
-            <translation>Where to apply:</translation>
+            <translation>Apply sections:</translation>
         </message>
         <message>
             <source>替换%1，使用「%2」</source>
-            <translation>Instead of %1, use "%2"</translation>
+            <translation>Replace %1 with "%2"?</translation>
         </message>
         <message>
             <source>、</source>
@@ -20024,7 +20026,7 @@ Not captured: %1</translation>
         <name>PresetManagePage</name>
         <message>
             <source>搜索名称或说明</source>
-            <translation>Search name or description</translation>
+            <translation>Search name or description…</translation>
         </message>
         <message>
             <source>新建预设…</source>
@@ -20032,19 +20034,19 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>创建空预设；创建后可在编辑页填写内容。</source>
-            <translation>Create an empty preset; fill in the content on the edit page after creating it.</translation>
+            <translation>Create an empty preset and fill in its contents in the editor.</translation>
         </message>
         <message>
             <source>预设内容</source>
-            <translation>Default content</translation>
+            <translation>Preset contents</translation>
         </message>
         <message>
             <source>安装实例时优先选择此项。</source>
-            <translation>When installing an instance, select this one first.</translation>
+            <translation>Select this preset by default when installing an instance.</translation>
         </message>
         <message>
             <source>同时删除此预设的目录；删除的内容将移至回收站，可从回收站还原。</source>
-            <translation>If you delete this directory as well, the deleted items will go to the Recycle Bin and can be restored from there.</translation>
+            <translation>Also deletes this preset's folder; deleted items move to the Recycle Bin.</translation>
         </message>
         <message>
             <source>编辑模组清单</source>
@@ -20052,7 +20054,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>编辑游戏设置与按键</source>
-            <translation>Edit game settings and buttons</translation>
+            <translation>Edit game settings and key binds</translation>
         </message>
         <message>
             <source>从实例提取</source>
@@ -20068,7 +20070,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>实例预设</source>
-            <translation>Instance preset</translation>
+            <translation>Instance presets</translation>
         </message>
         <message>
             <source>保存</source>
@@ -20080,15 +20082,15 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>应用</source>
-            <translation>Application</translation>
+            <translation>Apply</translation>
         </message>
         <message>
             <source>预设名称</source>
-            <translation>Default name</translation>
+            <translation>Preset name</translation>
         </message>
         <message>
             <source>预设详情</source>
-            <translation>Preset Details</translation>
+            <translation>Preset details</translation>
         </message>
         <message>
             <source>说明（可选）</source>
@@ -20096,11 +20098,11 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>复制</source>
-            <translation>Copy</translation>
+            <translation>Duplicate</translation>
         </message>
         <message>
             <source>复制预设及其文件。</source>
-            <translation>Make one copy, keeping the contents and files intact.</translation>
+            <translation>Duplicate this preset and its files.</translation>
         </message>
         <message>
             <source>设为默认</source>
@@ -20120,7 +20122,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>选择要收集的项</source>
-            <translation>Check the items you want to collect</translation>
+            <translation>Select items to capture</translation>
         </message>
         <message>
             <source>游戏设置</source>
@@ -20132,15 +20134,15 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>FOV、界面缩放、语言、音量、渲染距离等。</source>
-            <translation>FOV, interface zoom, language, volume, rendering distance, etc.</translation>
+            <translation>FOV, GUI scale, language, volume, render distance, etc.</translation>
         </message>
         <message>
             <source>标准按键</source>
-            <translation>Standard buttons</translation>
+            <translation>Standard key binds</translation>
         </message>
         <message>
             <source>服务器</source>
-            <translation>Server</translation>
+            <translation>Servers</translation>
         </message>
         <message>
             <source>服务器列表</source>
@@ -20148,47 +20150,47 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>servers.dat；追加到目标实例，已有地址不重复。</source>
-            <translation>Servers.dat; append to the target instance, existing addresses will not be repeated.</translation>
+            <translation>servers.dat; appends to the target instance without duplicating existing addresses.</translation>
         </message>
         <message>
             <source>配置文件</source>
-            <translation>Configuration file</translation>
+            <translation>Config files</translation>
         </message>
         <message>
             <source>资源包 / 光影</source>
-            <translation>Resource packs / Shaderpacks</translation>
+            <translation>Resource packs / Shaders</translation>
         </message>
         <message>
             <source>资源包</source>
-            <translation>Resource pack</translation>
+            <translation>Resource packs</translation>
         </message>
         <message>
             <source>resourcepacks/。文件通常较大，默认排除。</source>
-            <translation>Resourcepacks/; This file can easily be tens or hundreds of MB, and is not included by default.</translation>
+            <translation>resourcepacks/; usually large, excluded by default.</translation>
         </message>
         <message>
             <source>光影包</source>
-            <translation>Shaderpacks</translation>
+            <translation>Shader packs</translation>
         </message>
         <message>
             <source>shaderpacks/。文件通常较大，默认排除。</source>
-            <translation>Shaderpacks/; Same as above, not included by default.</translation>
+            <translation>shaderpacks/; usually large, excluded by default.</translation>
         </message>
         <message>
             <source>热键</source>
-            <translation>Hotkey</translation>
+            <translation>Hotkeys</translation>
         </message>
         <message>
             <source>包含开关和其他设置。</source>
-            <translation>Include switches and other values ​​as well.</translation>
+            <translation>Includes toggles and other settings.</translation>
         </message>
         <message>
             <source>数据包</source>
-            <translation>Datapacks</translation>
+            <translation>Data packs</translation>
         </message>
         <message>
             <source>存档数据包</source>
-            <translation>Archived datapacks</translation>
+            <translation>World data packs</translation>
         </message>
         <message>
             <source>来源实例</source>
@@ -20200,7 +20202,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>提取的内容会替换现有预设中的同名部分，其他部分保留。</source>
-            <translation>The paragraphs that are included replace the paragraphs with the same name in this copy; the other paragraphs in this copy are left intact.</translation>
+            <translation>Extracted sections replace matching sections in this preset; other sections are kept.</translation>
         </message>
         <message>
             <source>新预设名称（可选）</source>
@@ -20216,7 +20218,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>查看更改和冲突，不写入实例。</source>
-            <translation>View changes and conflicts without writing to the instance.</translation>
+            <translation>Preview changes and conflicts without modifying the instance.</translation>
         </message>
         <message>
             <source>执行报告</source>
@@ -20224,15 +20226,15 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>继续未完成</source>
-            <translation>Continue unfinished</translation>
+            <translation>Resume unfinished</translation>
         </message>
         <message>
             <source>再次选择以继续未完成的操作</source>
-            <translation>Click again to continue unfinished</translation>
+            <translation>Click again to resume</translation>
         </message>
         <message>
             <source>（默认）</source>
-            <translation>(default)</translation>
+            <translation> (default)</translation>
         </message>
         <message>
             <source>类别：%1</source>
@@ -20241,39 +20243,40 @@ Not captured: %1</translation>
         <message>
             <source>
 %1 段</source>
-            <translation>%1 segment</translation>
+            <translation>
+%1 sections</translation>
         </message>
         <message>
             <source>无法读取</source>
-            <translation>Can't read</translation>
+            <translation>Unreadable</translation>
         </message>
         <message>
             <source>读取失败：%1</source>
-            <translation>Unable to read: %1</translation>
+            <translation>Couldn't read: %1</translation>
         </message>
         <message>
             <source>预览将改动的段落与条目；此步骤不写入文件。</source>
-            <translation>Preview the paragraphs and items that will be changed. No files are written in this step.</translation>
+            <translation>Preview sections and items to change; no files are written in this step.</translation>
         </message>
         <message>
             <source>本次无可应用的内容。</source>
-            <translation>There is nothing to apply at this time.</translation>
+            <translation>Nothing to apply.</translation>
         </message>
         <message>
             <source>还原时将此预设中的文件按原路径复制回实例目录。</source>
-            <translation>When restoring, copy the files in this copy back to the instance directory according to the original path.</translation>
+            <translation>Copies files from this preset back to their original paths in the instance folder on restore.</translation>
         </message>
         <message>
             <source>应用未全部完成，请查看上方未完成的段。</source>
-            <translation>The application is not fully completed, so it depends on which section above is not completed.</translation>
+            <translation>Preset wasn't fully applied; check the unfinished sections above.</translation>
         </message>
         <message>
             <source>尚无预设</source>
-            <translation>No preset yet</translation>
+            <translation>No presets</translation>
         </message>
         <message>
             <source>未找到匹配的预设</source>
-            <translation>No matching preset found</translation>
+            <translation>No matching presets</translation>
         </message>
         <message>
             <source>全部</source>
@@ -20281,11 +20284,11 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>%1 段</source>
-            <translation>%1 segment</translation>
+            <translation>%1 sections</translation>
         </message>
         <message>
             <source>暂无内容</source>
-            <translation>No content yet</translation>
+            <translation>No content</translation>
         </message>
         <message>
             <source>%1 / %2 / %3 项</source>
@@ -20293,15 +20296,15 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>（%1）</source>
-            <translation>(%1)</translation>
+            <translation> (%1)</translation>
         </message>
         <message>
             <source>%1（%2）</source>
-            <translation>%1(%2)</translation>
+            <translation>%1 (%2)</translation>
         </message>
         <message>
             <source>（正在运行）</source>
-            <translation>(running)</translation>
+            <translation> (running)</translation>
         </message>
         <message>
             <source>取消预览</source>
@@ -20313,47 +20316,47 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>options.txt 中的 key_*。</source>
-            <translation>Key_* in options.txt.</translation>
+            <translation>key_* in options.txt.</translation>
         </message>
         <message>
             <source>按「仅在缺失时复制」部署，不覆盖目标已有同名项。</source>
-            <translation>If you click "Copy if missing" to drop the entire copy, it will not overwrite the items with the same name that already exist on the target.</translation>
+            <translation>Deploys with "Copy only if missing"; existing files at the target won't be overwritten.</translation>
         </message>
         <message>
             <source>新实例首次启动时，模组会据此生成配置。</source>
-            <translation>The mod will generate the configuration according to the new instance when it is started for the first time.</translation>
+            <translation>Mods use these to generate configs on first launch of a new instance.</translation>
         </message>
         <message>
             <source>按结构识别此类配置，每个模组一段；默认仅收集已绑定的热键。</source>
-            <translation>This family is identified according to the structure, one mod and one section; by default, only the bound hotkeys are included.</translation>
+            <translation>Detected by structure, one section per mod; only bound hotkeys are captured by default.</translation>
         </message>
         <message>
             <source>同时收集值</source>
-            <translation>Receive together with value</translation>
+            <translation>Also capture values</translation>
         </message>
         <message>
             <source>saves/&lt;世界&gt;/datapacks/；目标实例无该存档时先记为「待应用」。</source>
-            <translation>Saves/&lt;world&gt;/datapacks/; if the target instance does not have the world save, it will be recorded as "to be applied".</translation>
+            <translation>saves/&lt;world&gt;/datapacks/; marked "pending" if the target instance lacks that world.</translation>
         </message>
         <message>
             <source>暂无预设</source>
-            <translation>No preset yet</translation>
+            <translation>No presets</translation>
         </message>
         <message>
             <source>无符合筛选条件的预设</source>
-            <translation>No presets matching filter criteria</translation>
+            <translation>No presets match filters</translation>
         </message>
         <message>
             <source>取消本次预览，不会修改实例。</source>
-            <translation>Canceling this preview will not modify the instance.</translation>
+            <translation>Cancels this preview without modifying the instance.</translation>
         </message>
         <message>
             <source>正在读取实例并生成计划…</source>
-            <translation>Reading instance and generating plan...</translation>
+            <translation>Reading instance and building plan…</translation>
         </message>
         <message>
             <source>无法计算本次要执行的步骤。</source>
-            <translation>Unable to calculate the steps to be performed this time.</translation>
+            <translation>Can't calculate steps for this plan.</translation>
         </message>
         <message>
             <source>键位冲突：%1</source>
@@ -20361,19 +20364,19 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>预设包含覆盖操作。选择「应用」后需要再次确认。</source>
-            <translation>There is an "Override" section: After clicking "Apply", you have to click again to confirm.</translation>
+            <translation>This preset includes overwrite actions; clicking "Apply" requires confirmation.</translation>
         </message>
         <message>
             <source>尚未确认覆盖。再次选择「应用」将执行覆盖。</source>
-            <translation>There is an "Overwrite" section that has not yet been confirmed; click "Apply" again to press overwrite execution.</translation>
+            <translation>Overwrite not confirmed; click "Apply" again to overwrite.</translation>
         </message>
         <message>
             <source>选择「应用」确认覆盖。覆盖前会创建备份。</source>
-            <translation>Click "Apply" to confirm overwriting (it will be backed up first).</translation>
+            <translation>Click "Apply" to confirm overwrite (a backup is created first).</translation>
         </message>
         <message>
             <source>%1：%2</source>
-            <translation>%1:%2</translation>
+            <translation>%1: %2</translation>
         </message>
         <message>
             <source>备份：%1</source>
@@ -20381,7 +20384,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>应用完成。</source>
-            <translation>The application is completed.</translation>
+            <translation>Applied.</translation>
         </message>
         <message>
             <source>正在读取预设…</source>
@@ -20389,19 +20392,19 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>无法读取预设内容</source>
-            <translation>Unable to read default content</translation>
+            <translation>Can't read preset contents</translation>
         </message>
         <message>
             <source>无法读取此预设：%1</source>
-            <translation>This one cannot be read: %1</translation>
+            <translation>Can't read this preset: %1</translation>
         </message>
         <message>
             <source>综合预设和旧版混合预设不设默认：默认只对四类预设生效。</source>
-            <translation>There are no defaults for comprehensive presets and legacy hybrid presets: the default only takes effect for four types of presets.</translation>
+            <translation>Composite and mixed legacy presets can't be set as defaults; defaults only apply to the four preset categories.</translation>
         </message>
         <message>
             <source>取消默认</source>
-            <translation>Cancel default</translation>
+            <translation>Unset default</translation>
         </message>
         <message>
             <source>再次选择以确认删除</source>
@@ -20409,7 +20412,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>再次选择以确认覆盖</source>
-            <translation>Click again to confirm coverage</translation>
+            <translation>Click again to confirm overwrite</translation>
         </message>
         <message>
             <source>未选择预设</source>
@@ -20420,19 +20423,19 @@ Not captured: %1</translation>
         <name>PresetModEditor</name>
         <message>
             <source>编辑模组预设</source>
-            <translation>Edit mod presets</translation>
+            <translation>Edit mod preset</translation>
         </message>
         <message>
             <source>版本和加载器留空时跟随实例；标为必要的模组失败会中止安装。</source>
-            <translation>Follow the instance when version and loader are left empty; failure of a mod marked as necessary will abort the installation.</translation>
+            <translation>Leave game version and loader blank to follow the instance; if a required mod fails, installation stops.</translation>
         </message>
         <message>
             <source>Modrinth 链接或项目 ID，例如 https://modrinth.com/mod/sodium</source>
-            <translation>Modrinth link or project ID, such as https://modrinth.com/mod/sodium</translation>
+            <translation>Modrinth URL or project ID, e.g. https://modrinth.com/mod/sodium</translation>
         </message>
         <message>
             <source>添加</source>
-            <translation>Add to</translation>
+            <translation>Add</translation>
         </message>
         <message>
             <source>平台</source>
@@ -20448,15 +20451,15 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>必要</source>
-            <translation>Necessary</translation>
+            <translation>Required</translation>
         </message>
         <message>
             <source>限定游戏版本</source>
-            <translation>Limited game version</translation>
+            <translation>Target game version</translation>
         </message>
         <message>
             <source>限定加载器</source>
-            <translation>Qualified loader</translation>
+            <translation>Target loader</translation>
         </message>
         <message>
             <source>添加模组</source>
@@ -20464,39 +20467,39 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>移除选中</source>
-            <translation>Remove selection</translation>
+            <translation>Remove selected</translation>
         </message>
         <message>
             <source>仅显示未识别项</source>
-            <translation>I just saw it but didn’t recognize it</translation>
+            <translation>Unrecognized only</translation>
         </message>
         <message>
             <source>仅显示平台为「未知来源（请选择）」的条目。取消筛选可显示全部条目。</source>
-            <translation>Only leave the row for the platform or "Unknown source (please select)"; hiding it does not mean deleting it, unchecking it will bring it back.</translation>
+            <translation>Show only entries set to "Unknown source (select one)". Uncheck to show all entries.</translation>
         </message>
         <message>
             <source>移除未识别项</source>
-            <translation>Remove unrecognized ones</translation>
+            <translation>Remove unrecognized</translation>
         </message>
         <message>
             <source>移除平台为「未知来源（请选择）」的所有条目。选择「取消」可撤回本次编辑。</source>
-            <translation>Delete the row in the platform box or "Unknown Source (Please Select)" at once; the entire edit can still be undone by clicking "Cancel".</translation>
+            <translation>Remove all entries set to "Unknown source (select one)". Click "Cancel" to undo.</translation>
         </message>
         <message>
             <source>已移除 %1 条来源未知的记录。选择「取消」可撤回本次编辑。</source>
-            <translation>Removed %1 lines for unrecognized platforms (the entire edit can still be undone by clicking "Cancel").</translation>
+            <translation>Removed %1 entries with unknown source. Click "Cancel" to undo.</translation>
         </message>
         <message>
             <source>无未识别的模组。</source>
-            <translation>There is no line that is not recognized.</translation>
+            <translation>No unrecognized mods.</translation>
         </message>
         <message>
             <source>此模组已在清单中，已定位到该行。</source>
-            <translation>This mod is already in the manifest and is located in this row.</translation>
+            <translation>This mod is already in the list and has been selected.</translation>
         </message>
         <message>
             <source>请输入 Modrinth 链接或项目 ID；CurseForge 只能填数字 ID。</source>
-            <translation>Please enter a Modrinth link or project ID; CurseForge can only fill in numeric IDs.</translation>
+            <translation>Enter a Modrinth URL or project ID; CurseForge accepts numeric IDs only.</translation>
         </message>
         <message>
             <source>保存</source>
@@ -20508,26 +20511,26 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>第 %1 行：项目 ID 为空、格式错误或重复。</source>
-            <translation>Line %1: Project ID is empty, malformed, or duplicate.</translation>
+            <translation>Row %1: Project ID is empty, invalid, or duplicate.</translation>
         </message>
         <message>
             <source>未知来源（请选择）</source>
-            <translation>Unknown source (please select)</translation>
+            <translation>Unknown source (select one)</translation>
         </message>
     </context>
     <context>
         <name>PresetModInstaller</name>
         <message>
             <source>已安装模组的识别缓存与安装记录冲突，未允许安装。</source>
-            <translation>The identification cache of the installed mod conflicts with the installation record, and the installation is not allowed.</translation>
+            <translation>Installed mod cache conflicts with installation records; installation stopped.</translation>
         </message>
         <message>
             <source>：</source>
-            <translation>:</translation>
+            <translation>: </translation>
         </message>
         <message>
             <source>、</source>
-            <translation>,</translation>
+            <translation>, </translation>
         </message>
     </context>
     <context>
@@ -20538,7 +20541,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>替代项目仅本次有效，需重新检查必要前置。</source>
-            <translation>Replacements apply to this installation. Required dependencies will be checked again.</translation>
+            <translation>Replacements apply only to this run; required dependencies will be rechecked.</translation>
         </message>
         <message>
             <source>可选前置（不会自动加入）：%1</source>
@@ -20566,7 +20569,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>替代项目</source>
-            <translation>Replacement project</translation>
+            <translation>Replacement</translation>
         </message>
         <message>
             <source>（必要前置）</source>
@@ -20594,11 +20597,11 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>替代项目格式无效，或与原项目相同。</source>
-            <translation>Enter a valid replacement project ID different from the original.</translation>
+            <translation>Invalid replacement format, or same as the original project.</translation>
         </message>
         <message>
             <source>必要项尚未解决，请提供替代项目，或取消后修正预设 / 重试查询。</source>
-            <translation>Some required projects are still missing. Provide replacements, or cancel to edit the preset or retry the lookup.</translation>
+            <translation>Required items aren't resolved. Provide replacements, or cancel to edit the preset or retry lookup.</translation>
         </message>
         <message>
             <source>、</source>
@@ -20733,11 +20736,11 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>敌对生物</source>
-            <translation>Hostile Creatures</translation>
+            <translation>Hostile Mobs</translation>
         </message>
         <message>
             <source>友好生物</source>
-            <translation>Friendly Creatures</translation>
+            <translation>Friendly Mobs</translation>
         </message>
         <message>
             <source>玩家</source>
@@ -20825,7 +20828,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>隐藏式字幕</source>
-            <translation>Show Subtitles</translation>
+            <translation>Closed Captions</translation>
         </message>
         <message>
             <source>辅助功能设置</source>
@@ -20833,7 +20836,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>隐藏天空闪烁效果</source>
-            <translation>Hide Lightning Flashes</translation>
+            <translation>Hide Sky Flashes</translation>
         </message>
         <message>
             <source>视场角效果</source>
@@ -20881,7 +20884,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>复述功能/语音</source>
-            <translation>Voice/Speech</translation>
+            <translation>Narrator/Voice</translation>
         </message>
         <message>
             <source>按键绑定</source>
@@ -20889,11 +20892,11 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>向前移动</source>
-            <translation>Walk Forwards</translation>
+            <translation>Walk Forward</translation>
         </message>
         <message>
             <source>向后移动</source>
-            <translation>Walk Backwards</translation>
+            <translation>Walk Backward</translation>
         </message>
         <message>
             <source>向左移动</source>
@@ -20944,23 +20947,23 @@ Not captured: %1</translation>
         <name>PresetOptionsEditor</name>
         <message>
             <source>编辑游戏设置预设</source>
-            <translation>Edit game settings presets</translation>
+            <translation>Edit game settings preset</translation>
         </message>
         <message>
             <source>搜索操作或按键</source>
-            <translation>Search action or keystroke</translation>
+            <translation>Search actions or keys…</translation>
         </message>
         <message>
             <source>搜索设置</source>
-            <translation>Search settings</translation>
+            <translation>Search settings…</translation>
         </message>
         <message>
             <source>纳入预设</source>
-            <translation>Include default</translation>
+            <translation>Include in preset</translation>
         </message>
         <message>
             <source>设置值</source>
-            <translation>Set value</translation>
+            <translation>Value</translation>
         </message>
         <message>
             <source>保存</source>
@@ -20972,7 +20975,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>设置键不能为空或重复，键和值不能含换行，键不能含冒号。</source>
-            <translation>The setting key cannot be empty or repeated, the key and value cannot contain newlines, and the key cannot contain colon.</translation>
+            <translation>Keys can't be empty, repeated, or contain colons; keys and values can't contain line breaks.</translation>
         </message>
         <message>
             <source>空格</source>
@@ -21098,86 +21101,86 @@ Not captured: %1</translation>
         <name>PresetStore</name>
         <message>
             <source>：</source>
-            <translation>:</translation>
+            <translation>: </translation>
         </message>
         <message>
             <source>类别与内容不匹配。模组引用应归入「模组」类别</source>
-            <translation>The category and content of this one do not match (mod references only belong to the "mod" category)</translation>
+            <translation>Category doesn't match content; mod references belong to the Mods category.</translation>
         </message>
         <message>
             <source>预设包含不属于所选类别的内容</source>
-            <translation>The category and content of this one do not match (there is a paragraph that does not fall into this category)</translation>
+            <translation>Preset contains content outside the selected category.</translation>
         </message>
         <message>
             <source>此 id 不是预设（预设目录名只能为 UUID）</source>
-            <translation>This id is not a default (the default directory name can only be UUID)</translation>
+            <translation>This ID isn't a preset (preset folder names must be UUIDs).</translation>
         </message>
         <message>
             <source>生成的路径超出预设目录</source>
-            <translation>The spelled out path went outside the default directory.</translation>
+            <translation>Resolved path falls outside the presets folder.</translation>
         </message>
         <message>
             <source>已不存在</source>
-            <translation>No longer here</translation>
+            <translation>No longer exists</translation>
         </message>
         <message>
             <source>不存在（该目录中无此预设）</source>
-            <translation>Does not exist (this copy does not exist in that directory)</translation>
+            <translation>Missing (preset not found in this folder)</translation>
         </message>
         <message>
             <source>JSON 字节位置 %1：%2</source>
-            <translation>JSON byte position %1: %2</translation>
+            <translation>JSON byte offset %1: %2</translation>
         </message>
         <message>
             <source>无法打开预设文件</source>
-            <translation>Can't open</translation>
+            <translation>Can't open preset file</translation>
         </message>
         <message>
             <source>清单超过 16 MiB，未读取</source>
-            <translation>Manifest exceeds 16 MiB and has not been read</translation>
+            <translation>Manifest exceeds 16 MiB; not read</translation>
         </message>
         <message>
             <source>读取清单失败或清单过大</source>
-            <translation>Failed to read the list or the list is too large</translation>
+            <translation>Couldn't read manifest, or manifest is too large</translation>
         </message>
         <message>
             <source>预设有误。请检查 JSON 格式、版本、ID 和名称</source>
-            <translation>Cannot be read back (not legal JSON, not the format we wrote, the version is newer than this launcher, or the id/name is missing)</translation>
+            <translation>Invalid preset. Check JSON syntax, format version, ID, and name.</translation>
         </message>
         <message>
             <source>预设 ID「%1」与目录名不一致</source>
-            <translation>The recorded id is "%1", which does not match the directory name.</translation>
+            <translation>Preset ID "%1" doesn't match folder name.</translation>
         </message>
         <message>
             <source> 副本</source>
-            <translation>Copy</translation>
+            <translation> copy</translation>
         </message>
     </context>
     <context>
         <name>PresetWorkspace</name>
         <message>
             <source>无法读取文件：%1</source>
-            <translation>Unable to read file: %1</translation>
+            <translation>Can't read file: %1</translation>
         </message>
         <message>
             <source>资源目标路径不安全。</source>
-            <translation>The resource target path is unsafe.</translation>
+            <translation>Unsafe resource target path.</translation>
         </message>
         <message>
             <source>已有资源文件与待保存内容不一致，原文件保留。</source>
-            <translation>The existing resource file is inconsistent with the content to be saved, and the original file is retained.</translation>
+            <translation>Existing resource file differs from content to save; original file kept.</translation>
         </message>
         <message>
             <source>无法创建预设文件目录。</source>
-            <translation>Unable to create preset file directory.</translation>
+            <translation>Can't create preset files folder.</translation>
         </message>
         <message>
             <source>预设标识无效。</source>
-            <translation>The default ID is invalid.</translation>
+            <translation>Invalid preset ID.</translation>
         </message>
         <message>
             <source>请填写预设名称。</source>
-            <translation>Please fill in the default name.</translation>
+            <translation>Enter a preset name.</translation>
         </message>
         <message>
             <source>未命名预设</source>
@@ -21185,31 +21188,31 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>预设目录包含不安全的路径。</source>
-            <translation>The default directory contains unsafe paths.</translation>
+            <translation>Preset folder contains unsafe paths.</translation>
         </message>
         <message>
             <source>预设内容无效。</source>
-            <translation>The default content is invalid.</translation>
+            <translation>Invalid preset content.</translation>
         </message>
         <message>
             <source>预设条目格式无效。</source>
-            <translation>The default entry format is invalid.</translation>
+            <translation>Invalid preset entry format.</translation>
         </message>
         <message>
             <source>设置键不能为空或重复；按键请放在按键页，数值中不能含换行。</source>
-            <translation>The setting keys cannot be empty or repeated; please place the keys on the key page, and the values ​​cannot contain line breaks.</translation>
+            <translation>Setting keys can't be empty or duplicate; put key binds in the Key binds section, and values can't contain line breaks.</translation>
         </message>
         <message>
             <source>请选择模组来源并填写唯一的项目 ID。</source>
-            <translation>Please select a mod source and fill in a unique project ID.</translation>
+            <translation>Select a mod source and enter a unique project ID.</translation>
         </message>
         <message>
             <source>至少添加并启用一项内容后才能保存为预设。</source>
-            <translation>You must add and enable at least one item before saving as a preset.</translation>
+            <translation>Add and enable at least one item before saving the preset.</translation>
         </message>
         <message>
             <source>无法读取资源文件：%1</source>
-            <translation>Unable to read resource file: %1</translation>
+            <translation>Can't read resource file: %1</translation>
         </message>
         <message>
             <source>资源文件校验失败。</source>
@@ -21217,27 +21220,27 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>资源文件路径无效。</source>
-            <translation>The resource file path is invalid.</translation>
+            <translation>Invalid resource file path.</translation>
         </message>
         <message>
             <source>预设资源来源目录无效。</source>
-            <translation>The default resource source directory is invalid.</translation>
+            <translation>Invalid preset resource source folder.</translation>
         </message>
         <message>
             <source>无法读取图标。</source>
-            <translation>Unable to read icon.</translation>
+            <translation>Can't read icon.</translation>
         </message>
         <message>
             <source>综合预设保存失败，原预设保留。</source>
-            <translation>The comprehensive preset failed to save, and the original preset is retained.</translation>
+            <translation>Couldn't save composite preset; original preset kept.</translation>
         </message>
         <message>
             <source>保存失败，原预设保留。</source>
-            <translation>Failed to save, original preset retained.</translation>
+            <translation>Couldn't save preset; original preset kept.</translation>
         </message>
         <message>
             <source>预设已保存，但列表顺序未能写入。</source>
-            <translation>The preset was saved, but the list order could not be written.</translation>
+            <translation>Preset saved, but list order couldn't be written.</translation>
         </message>
     </context>
     <context>
@@ -21251,707 +21254,707 @@ Not captured: %1</translation>
         <name>Presets</name>
         <message>
             <source>预设中的服务器地址为空，服务器列表未修改。</source>
-            <translation>By default, there is a line of server with no address, and the entire step remains unchanged (the line without address is a line of motionless air in the game).</translation>
+            <translation>Server address in preset is empty; server list unchanged.</translation>
         </message>
         <message>
             <source>覆盖将使用预设列表替换目标服务器列表，并移除只存在于目标中的条目。需要确认。</source>
-            <translation>"Overwrite" will replace the server list on the target with the default ones (the entries that do not match will be removed). This step needs to be confirmed first.</translation>
+            <translation>Overwrite replaces the target server list with the preset and removes entries only on the target. Confirmation required.</translation>
         </message>
         <message>
             <source>servers.dat 中「%1」的 ip 或 name 字段不是字符串，已保留原条目。</source>
-            <translation>The IP or name of the "%1" entry in servers.dat is not a string, so it is not touched.</translation>
+            <translation>In servers.dat, ip or name for "%1" isn't a string; original entry kept.</translation>
         </message>
         <message>
             <source>未指定要写入的 servers.dat。</source>
-            <translation>There is no specification of which servers.dat to write to.</translation>
+            <translation>Target servers.dat file not specified.</translation>
         </message>
         <message>
             <source>此段不属于服务器列表层管理范围。</source>
-            <translation>This section is not managed by the server list layer.</translation>
+            <translation>This section isn't handled by the server list layer.</translation>
         </message>
         <message>
             <source>服务器列表的第 %1 项应为对象。</source>
-            <translation>The %1 item in the server list section is not an object.</translation>
+            <translation>Server list item %1 must be an object.</translation>
         </message>
         <message>
             <source>服务器列表第 %1 项缺少有效的 name 或 address 字段。</source>
-            <translation>The %1 item in the server list section is missing name or address (or the two spaces are not strings).</translation>
+            <translation>Server list item %1 is missing a valid name or address field.</translation>
         </message>
         <message>
             <source>服务器列表第 %1 项的地址为空。</source>
-            <translation>The address of item %1 in the server list section is empty.</translation>
+            <translation>Server list item %1 has an empty address.</translation>
         </message>
         <message>
             <source>此段不属于原版设置层管理范围。</source>
-            <translation>This section does not belong to the original setting of this layer of pipe.</translation>
+            <translation>This section isn't handled by the vanilla settings layer.</translation>
         </message>
         <message>
             <source>覆盖将用预设替换目标中的同类配置。确认后执行。</source>
-            <translation>"Overwrite" will replace all settings of this type on the target with those in the default, and you need to confirm them before proceeding.</translation>
+            <translation>Overwrite replaces matching settings on the target with the preset. Applies after confirmation.</translation>
         </message>
         <message>
             <source>「%1」不是普通文件，无法读取待应用清单。</source>
-            <translation>"%1" is not an ordinary file and cannot be read in the pending application list.</translation>
+            <translation>"%1" isn't a regular file; can't read pending apply list.</translation>
         </message>
         <message>
             <source>无法读取待应用清单「%1」：%2</source>
-            <translation>Unable to read pending application list "%1": %2</translation>
+            <translation>Can't read pending apply list "%1": %2</translation>
         </message>
         <message>
             <source>待应用清单「%1」不是有效的 JSON，文件已保留。</source>
-            <translation>The pending application list "%1" is not a readable JSON, so it was not touched this time.</translation>
+            <translation>Pending apply list "%1" isn't valid JSON; file kept.</translation>
         </message>
         <message>
             <source>待应用清单「%1」的格式不受此版本支持，文件已保留。</source>
-            <translation>The format of the pending application list "%1" is not what this version recognizes, so it was not touched this time.</translation>
+            <translation>Pending apply list "%1" format isn't supported in this version; file kept.</translation>
         </message>
         <message>
             <source>待应用清单「%1」的 `worlds` 字段应为数组，文件已保留。</source>
-            <translation>The `worlds` in the pending application list "%1" is not an array, so it is not touched this time.</translation>
+            <translation>Pending apply list "%1" must have an array for `worlds`; file kept.</translation>
         </message>
         <message>
             <source>无法写入待应用清单「%1」：%2</source>
-            <translation>Unable to write pending application list "%1": %2</translation>
+            <translation>Can't write pending apply list "%1": %2</translation>
         </message>
         <message>
             <source>待应用清单「%1」替换失败：%2</source>
-            <translation>To-be-applied list "%1" replacement failed: %2</translation>
+            <translation>Couldn't replace pending apply list "%1": %2</translation>
         </message>
         <message>
             <source>已跳过链接「%1」。</source>
-            <translation>"%1" is a link and has not been touched.</translation>
+            <translation>Skipped link "%1".</translation>
         </message>
         <message>
             <source>换包登记「%1」替换失败：%2</source>
-            <translation>Package replacement registration "%1" replacement failed: %2</translation>
+            <translation>Couldn't replace swap record "%1": %2</translation>
         </message>
         <message>
             <source>无法读取登记文件</source>
-            <translation>Registration file cannot be read</translation>
+            <translation>Can't read record file</translation>
         </message>
         <message>
             <source>登记文件不是能读的 JSON</source>
-            <translation>Registration file is not readable JSON</translation>
+            <translation>Record file isn't valid JSON</translation>
         </message>
         <message>
             <source>此版本不支持记录中的文件格式。</source>
-            <translation>The registration format is not recognized by this edition.</translation>
+            <translation>Record file format isn't supported in this version.</translation>
         </message>
         <message>
             <source>登记记录引用的项目是链接</source>
-            <translation>The item for registering the roll call is a link</translation>
+            <translation>Item referenced in record is a link</translation>
         </message>
         <message>
             <source>登记文件中的名称或状态不一致</source>
-            <translation>The name or status in the registration does not match</translation>
+            <translation>Name or status mismatch in record file</translation>
         </message>
         <message>
             <source>目标和旧内容同时都在或同时都不在</source>
-            <translation>Both the target and the old content are present at the same time or neither is present at the same time</translation>
+            <translation>Both target and previous content exist, or neither exists</translation>
         </message>
         <message>
             <source>目标和旧内容的实际状态与登记不符</source>
-            <translation>The actual status of the target and old content does not match the registration</translation>
+            <translation>Actual state of target and previous content doesn't match record</translation>
         </message>
         <message>
             <source>目标和暂存的实际状态与登记不符</source>
-            <translation>The actual status of the target and staging does not match the registration</translation>
+            <translation>Actual state of target and staging doesn't match record</translation>
         </message>
         <message>
             <source>登记文件名与目标名称不一致</source>
-            <translation>The registered file name does not match its purported target.</translation>
+            <translation>Recorded filename doesn't match target name</translation>
         </message>
         <message>
             <source>无法创建目录「%1」。</source>
-            <translation>The directory "%1" cannot be created.</translation>
+            <translation>Can't create folder "%1".</translation>
         </message>
         <message>
             <source>读取待应用清单「%1」中断：%2</source>
-            <translation>An error occurred while reading the pending application list "%1": %2</translation>
+            <translation>Reading pending apply list "%1" interrupted: %2</translation>
         </message>
         <message>
             <source>写入待应用清单「%1」中断：%2</source>
-            <translation>An error occurred while writing the list of pending applications "%1": %2</translation>
+            <translation>Writing pending apply list "%1" interrupted: %2</translation>
         </message>
         <message>
             <source>无法删除「%1」。</source>
-            <translation>"%1" cannot be deleted.</translation>
+            <translation>Can't delete "%1".</translation>
         </message>
         <message>
             <source>无法删除目录「%1」。</source>
-            <translation>The directory "%1" cannot be deleted.</translation>
+            <translation>Can't delete folder "%1".</translation>
         </message>
         <message>
             <source>登记文件本身为链接</source>
-            <translation>The registration document itself is a link</translation>
+            <translation>Record file itself is a link</translation>
         </message>
         <message>
             <source>无法写入换包登记「%1」：%2</source>
-            <translation>Unable to write package replacement registration "%1": %2</translation>
+            <translation>Can't write swap record "%1": %2</translation>
         </message>
         <message>
             <source>写入换包登记「%1」中断：%2</source>
-            <translation>When writing the package replacement registration "%1", an error occurred halfway through writing: %2</translation>
+            <translation>Writing swap record "%1" interrupted: %2</translation>
         </message>
         <message>
             <source>读取登记文件中断</source>
-            <translation>An error occurred while reading the registration file halfway.</translation>
+            <translation>Reading record file interrupted</translation>
         </message>
         <message>
             <source>原件无法放回原位</source>
-            <translation>The original cannot be put back to its original place</translation>
+            <translation>Can't restore original item to its original path</translation>
         </message>
         <message>
             <source>登记中的目标名不能作为目录名</source>
-            <translation>The target name in the registration cannot be used as the directory name</translation>
+            <translation>Target name in record can't be used as a folder name</translation>
         </message>
         <message>
             <source>无法复制「%1」：%2</source>
-            <translation>Unable to copy "%1": %2</translation>
+            <translation>Can't copy "%1": %2</translation>
         </message>
         <message>
             <source>无法替换目标中的「%1」。请检查文件是否被占用。</source>
-            <translation>The existing "%1" on the target cannot be replaced (it may be occupied).</translation>
+            <translation>Can't replace "%1" on target. Check if the file is in use.</translation>
         </message>
         <message>
             <source>无法写入替换记录，已取消替换「%1」：%2</source>
-            <translation>I can’t write the package replacement registration. There is no replacement “%1” this time: %2</translation>
+            <translation>Can't write replacement record; replacement of "%1" canceled: %2</translation>
         </message>
         <message>
             <source>发布失败，原内容未能归位，仍完整保留在：%1</source>
-            <translation>Publishing failed, the original content could not be returned and is still intact at: %1</translation>
+            <translation>Publish failed and original content couldn't be restored; kept intact at: %1</translation>
         </message>
         <message>
             <source>发布失败，新内容仍完整保留在暂存里：%1</source>
-            <translation>Publish failed, new content is still intact in the temporary cache: %1</translation>
+            <translation>Publish failed; new content kept intact in staging: %1</translation>
         </message>
         <message>
             <source>此部分不是数据包配置。</source>
-            <translation>This section is not the section of the data datapack.</translation>
+            <translation>This section isn't a data pack configuration.</translation>
         </message>
         <message>
             <source>数据包段中存在非对象项。</source>
-            <translation>There is an item in this section of the data datapack that is not an object.</translation>
+            <translation>Data pack section contains a non-object entry.</translation>
         </message>
         <message>
             <source>「%1」不是 saves/&lt;世界&gt;/datapacks/&lt;包&gt; 形式的路径。</source>
-            <translation>"%1" is not a path like saves/&lt;world&gt;/datapacks/&lt;package&gt;.</translation>
+            <translation>"%1" isn't a saves/&lt;world&gt;/datapacks/&lt;pack&gt; path.</translation>
         </message>
         <message>
             <source>未找到实例目录，无法提取数据包。</source>
-            <translation>The directory of this instance is not there and the data datapack cannot be received.</translation>
+            <translation>Instance folder not found; can't capture data packs.</translation>
         </message>
         <message>
             <source>「%1」为链接，未跟随。</source>
-            <translation>"%1" is a link and is not followed.</translation>
+            <translation>"%1" is a link; not followed.</translation>
         </message>
         <message>
             <source>「%1」不是目录，未扫描。</source>
-            <translation>"%1" is not a directory and has not been scanned.</translation>
+            <translation>"%1" isn't a folder; not scanned.</translation>
         </message>
         <message>
             <source>存档「%1」为链接，未跟随。</source>
-            <translation>The world save "%1" is a link and is not followed.</translation>
+            <translation>World save "%1" is a link; not followed.</translation>
         </message>
         <message>
             <source>「%1」中的「%2」为链接，未收集。</source>
-            <translation>The "%2" in "%1" is a link and has not been closed.</translation>
+            <translation>"%2" in "%1" is a link; not captured.</translation>
         </message>
         <message>
             <source>「%1」中一项名称不能作为文件名（%2），未收集。</source>
-            <translation>There is a name in "%1" that cannot be used as a file name (%2), so it is not accepted.</translation>
+            <translation>Entry name in "%1" can't be used as a filename (%2); not captured.</translation>
         </message>
         <message>
             <source>存档中的 datapacks/ 均为空。</source>
-            <translation>Datapacks/ in the world save are all empty.</translation>
+            <translation>All datapacks/ folders in world saves are empty.</translation>
         </message>
         <message>
             <source>已收集 %1 个存档中的 %2 个数据包。</source>
-            <translation>Received %2 datapacks from %1 world saves.</translation>
+            <translation>Captured %2 data packs from %1 world saves.</translation>
         </message>
         <message>
             <source>预设中的数据包项「%1」格式无效。</source>
-            <translation>The preset contains an invalid datapack entry: "%1".</translation>
+            <translation>Data pack entry "%1" in preset is invalid.</translation>
         </message>
         <message>
             <source>目标存档「%1」为链接（或 `saves/` 为链接），未写入。</source>
-            <translation>The world save "%1" on the target is a link (or `saves/` at this level) and is not written into it.</translation>
+            <translation>Target world save "%1" (or `saves/`) is a link; not written.</translation>
         </message>
         <message>
             <source>目标「saves/%1」不是目录，未写入。</source>
-            <translation>"saves/%1" on the target is not a directory, and nothing is written into it.</translation>
+            <translation>Target "saves/%1" isn't a folder; not written.</translation>
         </message>
         <message>
             <source>未找到目标实例目录，无法应用数据包。</source>
-            <translation>The directory of the target instance is not there and the data datapack cannot be dropped.</translation>
+            <translation>Target instance folder not found; can't apply data packs.</translation>
         </message>
         <message>
             <source>预设的 files/ 目录中未找到「%1」。</source>
-            <translation>The default copy "%1" is not there (cannot be found under files/).</translation>
+            <translation>"%1" not found in preset's files/ folder.</translation>
         </message>
         <message>
             <source>预设中「%1」路径包含链接，未跟随。</source>
-            <translation>By default, there is a link on the road to "%1", so I don't follow it.</translation>
+            <translation>Path to "%1" in preset contains a link; not followed.</translation>
         </message>
         <message>
             <source>目标「%1」为链接（或其上级目录为链接），未写入。</source>
-            <translation>The "%1" on the target is a link (or one layer above it) and is not written inside.</translation>
+            <translation>Target "%1" (or a parent folder) is a link; not written.</translation>
         </message>
         <message>
             <source>世界「%1」的名称与路径不一致。</source>
-            <translation>The world name of "%1" does not match its own path.</translation>
+            <translation>World "%1" name doesn't match its path.</translation>
         </message>
         <message>
             <source>数据包</source>
-            <translation>Datapacks</translation>
+            <translation>Data packs</translation>
         </message>
         <message>
             <source>未指定预设的 files 目录。</source>
-            <translation>No default files directory was specified.</translation>
+            <translation>Preset files folder not specified.</translation>
         </message>
         <message>
             <source>实例缺少 saves/ 目录，无法提取数据包。</source>
-            <translation>This instance has not been archived (saves/), and there are no data datapacks to receive this time.</translation>
+            <translation>Instance is missing saves/ folder; can't capture data packs.</translation>
         </message>
         <message>
             <source>存档名称「%1」无法用作目录名，已跳过。</source>
-            <translation>The world save name "%1" cannot be used as a directory name, so I didn't touch it this time.</translation>
+            <translation>World save name "%1" can't be used as a folder name; skipped.</translation>
         </message>
         <message>
             <source>存档「%1」的 datapacks/ 是链接，已跳过。</source>
-            <translation>The datapacks/ of the world save "%1" is a link and has not been touched.</translation>
+            <translation>datapacks/ in world save "%1" is a link; skipped.</translation>
         </message>
         <message>
             <source>存档「%1」的 datapacks 不是目录，已跳过。</source>
-            <translation>The datapacks of the world save "%1" are not a directory and have not been touched.</translation>
+            <translation>datapacks in world save "%1" isn't a folder; skipped.</translation>
         </message>
         <message>
             <source>无法提取「%1」：%2</source>
-            <translation>"%1" was confiscated: %2</translation>
+            <translation>Can't capture "%1": %2</translation>
         </message>
         <message>
             <source>未找到包含 datapacks/ 的世界存档。</source>
-            <translation>There are no world saves under saves/ with datapacks/.</translation>
+            <translation>No world saves with datapacks/ found.</translation>
         </message>
         <message>
             <source>未指定目标实例，无法制定数据包操作计划。</source>
-            <translation>Select a target instance to preview datapack changes.</translation>
+            <translation>Target instance not specified; can't plan data pack changes.</translation>
         </message>
         <message>
             <source>预设缺少 files/ 根目录，无法复制数据包。</source>
-            <translation>The file root (files/) on the default side is not given, and the data package cannot be copied.</translation>
+            <translation>Preset is missing files/ root folder; can't copy data packs.</translation>
         </message>
         <message>
             <source>覆盖操作尚未确认，数据包未修改。</source>
-            <translation>The "coverage" has not been confirmed yet, and no data datapacks have been touched this time.</translation>
+            <translation>Overwrite not confirmed; data packs unchanged.</translation>
         </message>
         <message>
             <source>预设中的「%1」是链接，已跳过。</source>
-            <translation>By default, the "%1" is a link and is not followed.</translation>
+            <translation>"%1" in preset is a link; skipped.</translation>
         </message>
         <message>
             <source>目标「%1」是链接，已跳过。</source>
-            <translation>The "%1" on the target is a link and has not been touched.</translation>
+            <translation>Target "%1" is a link; skipped.</translation>
         </message>
         <message>
             <source>已保留目标中的 %1 个同名数据包。</source>
-            <translation>There are already %1 datapacks with the same name on the target, and they are not touched by this file.</translation>
+            <translation>Kept %1 existing data packs with matching names on target.</translation>
         </message>
         <message>
             <source>无法写入「%1」：%2</source>
-            <translation>Unable to write "%1": %2</translation>
+            <translation>Can't write "%1": %2</translation>
         </message>
         <message>
             <source>「%1」指向允许范围以外的位置，已跳过。</source>
-            <translation>"%1" fell outside this group of directories (link?) and was not touched.</translation>
+            <translation>"%1" points outside the allowed scope; skipped.</translation>
         </message>
         <message>
             <source>目标路径「%1」超出允许范围，已跳过。</source>
-            <translation>The "%1" to be written is outside this group of directories and has not been touched.</translation>
+            <translation>Target path "%1" is outside the allowed scope; skipped.</translation>
         </message>
         <message>
             <source>无法创建目录「%1」，复制已停止。</source>
-            <translation>The directory "%1" cannot be created and the copy is not continued.</translation>
+            <translation>Can't create folder "%1"; copy stopped.</translation>
         </message>
         <message>
             <source>无法创建上级目录「%1」，复制已停止。</source>
-            <translation>The directory level "%1" cannot be created, and the copy is not continued.</translation>
+            <translation>Can't create parent folder "%1"; copy stopped.</translation>
         </message>
         <message>
             <source>「%1」中的「%2」名称无效：%3</source>
-            <translation>The paragraph "%2" in "%1" cannot be called this: %3</translation>
+            <translation>Invalid name "%2" in "%1": %3</translation>
         </message>
         <message>
             <source>覆盖</source>
-            <translation>Cover</translation>
+            <translation>Overwrite</translation>
         </message>
         <message>
             <source>读取「%1」中断：%2</source>
-            <translation>An error occurred while reading "%1": %2</translation>
+            <translation>Reading "%1" interrupted: %2</translation>
         </message>
         <message>
             <source>写入「%1」中断：%2</source>
-            <translation>I made an error halfway through writing "%1": %2</translation>
+            <translation>Writing "%1" interrupted: %2</translation>
         </message>
         <message>
             <source>替换「%1」失败：%2</source>
-            <translation>Failed to replace "%1": %2</translation>
+            <translation>Couldn't replace "%1": %2</translation>
         </message>
         <message>
             <source>「%1」中包含链接（%2），未跟随。</source>
-            <translation>There is a link (%2) in "%1", but I didn't follow it.</translation>
+            <translation>"%1" contains a link (%2); not followed.</translation>
         </message>
         <message>
             <source>「%1」为链接（符号链接 / junction），未跟随。</source>
-            <translation>"%1" is a link (symbolic link/junction) and is not followed.</translation>
+            <translation>"%1" is a link (symlink / junction); not followed.</translation>
         </message>
         <message>
             <source>目标「%1」为链接，未写入。</source>
-            <translation>The "%1" on the target is a link and is not written into it.</translation>
+            <translation>Target "%1" is a link; not written.</translation>
         </message>
         <message>
             <source>「%1」不存在（预设中记录有此文件）。</source>
-            <translation>"%1" is no longer available (it is said to be present by default).</translation>
+            <translation>"%1" doesn't exist (listed in preset).</translation>
         </message>
         <message>
             <source>此项路径为空。</source>
-            <translation>The path for this item is empty.</translation>
+            <translation>Path for this item is empty.</translation>
         </message>
         <message>
             <source>「%1」不是相对路径。</source>
-            <translation>"%1" is not a relative path.</translation>
+            <translation>"%1" isn't a relative path.</translation>
         </message>
         <message>
             <source>未指定要扫描的目录。</source>
-            <translation>There is no specified directory to scan.</translation>
+            <translation>Folder to scan not specified.</translation>
         </message>
         <message>
             <source>「%1」为链接（符号链接 / junction），未扫描。</source>
-            <translation>"%1" is a link (symbolic link/junction), and it was not scanned.</translation>
+            <translation>"%1" is a link (symlink / junction); not scanned.</translation>
         </message>
         <message>
             <source>「%1」所在位置不是目录，未扫描。</source>
-            <translation>"%1" is not a directory, so I didn't scan it.</translation>
+            <translation>"%1" isn't a folder; not scanned.</translation>
         </message>
         <message>
             <source>：为链接（符号链接 / junction），未跟随。</source>
-            <translation>: It is a link (symbolic link/junction) and is not followed.</translation>
+            <translation>: is a link (symlink / junction); not followed.</translation>
         </message>
         <message>
             <source>仅在缺失时复制</source>
-            <translation>Only copy if missing</translation>
+            <translation>Copy if missing</translation>
         </message>
         <message>
             <source>跳过</source>
-            <translation>Jump over</translation>
+            <translation>Skip</translation>
         </message>
         <message>
             <source>需要选择处理方式</source>
-            <translation>I want you to choose</translation>
+            <translation>Action needed</translation>
         </message>
         <message>
             <source>此部分包含无效路径（%1），未应用任何项目。</source>
-            <translation>One path in this section cannot be used (%1), and the entire section is not moved.</translation>
+            <translation>This section contains an invalid path (%1); no items applied.</translation>
         </message>
         <message>
             <source>以预设文件替换同名文件，保留目标中的其他文件。</source>
-            <translation>The copy with the same name is replaced with the one in the default (extra files on the target remain unchanged).</translation>
+            <translation>Replaces matching files with the preset and keeps extra files on target.</translation>
         </message>
         <message>
             <source>「%1」不在允许的目录内，此部分未应用。</source>
-            <translation>"%1" does not belong to any directory in this layer of management, and the entire section has not been moved.</translation>
+            <translation>"%1" is outside the allowed folders; section not applied.</translation>
         </message>
         <message>
             <source>目标中已有此预设。</source>
-            <translation>The target already has this share.</translation>
+            <translation>Preset already exists on target.</translation>
         </message>
         <message>
             <source>将目标缺失的项复制到目标中（已有项不变）。</source>
-            <translation>Copy in the missing copies of the target (don't touch any of the existing ones).</translation>
+            <translation>Copies missing items to target (existing items unchanged).</translation>
         </message>
         <message>
             <source>未指定目标实例。</source>
-            <translation type="unfinished"></translation>
+            <translation>Target instance not specified.</translation>
         </message>
         <message>
             <source>未指定此组的收集目标。</source>
-            <translation>It was not specified where this group would be received.</translation>
+            <translation>Capture target for this group not specified.</translation>
         </message>
         <message>
             <source>「%1」不属于此组（%2）。</source>
-            <translation>"%1" does not belong to this group (%2).</translation>
+            <translation>"%1" doesn't belong to this group (%2).</translation>
         </message>
         <message>
             <source>此段不属于通用文件层管理范围。</source>
-            <translation>This section is not managed by the general file group.</translation>
+            <translation>This section isn't handled by the generic files layer.</translation>
         </message>
         <message>
             <source>未修改此部分。</source>
-            <translation>Not moving this time.</translation>
+            <translation>Section unchanged.</translation>
         </message>
         <message>
             <source>无法解析此项结构，仅支持复制或覆盖。</source>
-            <translation>There are only two ways to copy and overwrite this item (we don't recognize its structure).</translation>
+            <translation>Can't parse item structure; only copy or overwrite is supported.</translation>
         </message>
         <message>
             <source>通用文件组的第 %1 项应为对象。</source>
-            <translation>Item %1 in the general file group section is not an object.</translation>
+            <translation>Generic file group item %1 must be an object.</translation>
         </message>
         <message>
             <source>通用文件组的第 %1 项路径无效：%2</source>
-            <translation>The path of item %1 in the general file group section cannot be used: %2</translation>
+            <translation>Generic file group item %1 has an invalid path: %2</translation>
         </message>
         <message>
             <source>空值</source>
-            <translation>Null value</translation>
+            <translation>null</translation>
         </message>
         <message>
             <source>开关</source>
-            <translation>Switch</translation>
+            <translation>boolean</translation>
         </message>
         <message>
             <source>数字</source>
-            <translation>Number</translation>
+            <translation>number</translation>
         </message>
         <message>
             <source>字符串</source>
-            <translation>String</translation>
+            <translation>string</translation>
         </message>
         <message>
             <source>数组</source>
-            <translation>Array</translation>
+            <translation>array</translation>
         </message>
         <message>
             <source>对象</source>
-            <translation>Object</translation>
+            <translation>object</translation>
         </message>
         <message>
             <source>无此项</source>
-            <translation>There is no such item</translation>
+            <translation>missing</translation>
         </message>
         <message>
             <source>「%1」：此项载荷无值，已跳过。</source>
-            <translation>"%1": There is no value in the payload of this item, so skip it.</translation>
+            <translation>"%1": item payload has no value; skipped.</translation>
         </message>
         <message>
             <source>模组名称为空。</source>
-            <translation>The mod name is empty.</translation>
+            <translation>Mod name is empty.</translation>
         </message>
         <message>
             <source>此模组名称不能作为文件名：%1</source>
-            <translation>This mod name cannot be used as a file name: %1</translation>
+            <translation>Mod name can't be used as a filename: %1</translation>
         </message>
         <message>
             <source>此段（%1）不属于 MaLiLib 层管理范围。</source>
-            <translation>This section (%1) is not managed by MaLiLib.</translation>
+            <translation>This section (%1) isn't handled by the MaLiLib layer.</translation>
         </message>
         <message>
             <source>「%1」路径包含链接目录（junction / 符号链接），未处理。</source>
-            <translation>There is a link directory (junction / symbolic link) on the path "%1", so don't touch it.</translation>
+            <translation>Path "%1" contains a link folder (junction / symlink); unchanged.</translation>
         </message>
         <message>
             <source>有一条缺少模组名称，整段已跳过。</source>
-            <translation>There is a section without a mod name, so the entire section is skipped.</translation>
+            <translation>An entry is missing a mod name; whole section skipped.</translation>
         </message>
         <message>
             <source>「%1」不在当前实例中。</source>
-            <translation>"%1" is not included in this instance.</translation>
+            <translation>"%1" isn't in the current instance.</translation>
         </message>
         <message>
             <source>「%1」中无内容可收集，已跳过。</source>
-            <translation>"%1" There is nothing to collect in this portion, so I skipped it.</translation>
+            <translation>Nothing to capture in "%1"; skipped.</translation>
         </message>
         <message>
             <source>「%1」中，目标「%2」的类型为%3，已保留原值。</source>
-            <translation>"%1": The big square on the target "%2" is %3, not a big square, and this square is not moved.</translation>
+            <translation>In "%1", target "%2" is %3; original value kept.</translation>
         </message>
         <message>
             <source>目标中缺少「%1」，已跳过。请检查模组版本是否一致。</source>
-            <translation>"%1": This item does not exist on the target (the mod version is different?), skip it.</translation>
+            <translation>Missing "%1" on target; skipped. Check that mod versions match.</translation>
         </message>
         <message>
             <source>「%1」的类型不匹配。目标为%2，预设为%3，已跳过。</source>
-            <translation>"%1": The target is %2, and the default is %3 - the type does not match, so this item is not moved.</translation>
+            <translation>Type mismatch for "%1". Target is %2, preset is %3; skipped.</translation>
         </message>
         <message>
             <source>JSON 格式无效（%1，字节偏移 %2）。</source>
-            <translation>This one is not valid JSON (%1, byte %2 there).</translation>
+            <translation>Invalid JSON (%1, byte offset %2).</translation>
         </message>
         <message>
             <source>MaLiLib 配置的顶层必须是 JSON 对象。</source>
-            <translation>The top level of this one is not an object - not in the MaLiLib family.</translation>
+            <translation>Top level of a MaLiLib config must be a JSON object.</translation>
         </message>
         <message>
             <source>未找到快捷键字段，无法识别为 MaLiLib 配置。</source>
-            <translation>This one is not like the MaLiLib family (it doesn’t have a hotkey), so I don’t recognize it.</translation>
+            <translation>No hotkey fields found; not recognized as a MaLiLib config.</translation>
         </message>
         <message>
             <source>「%1」：%2</source>
-            <translation>「%1」：%2</translation>
+            <translation>"%1": %2</translation>
         </message>
         <message>
             <source>%1 的配置</source>
-            <translation>Configuration of %1</translation>
+            <translation>%1 config</translation>
         </message>
         <message>
             <source>%1 的热键</source>
-            <translation>Hotkeys for %1</translation>
+            <translation>%1 hotkeys</translation>
         </message>
         <message>
             <source>MaLiLib 配置的第 %1 项应为对象。</source>
-            <translation>Item %1 in that section of MaLiLib is not an object.</translation>
+            <translation>MaLiLib config item %1 must be an object.</translation>
         </message>
         <message>
             <source>MaLiLib 配置第 %1 项的模组名称无效：%2</source>
-            <translation>The mod name of item %1 in the section of MaLiLib cannot be used: %2</translation>
+            <translation>MaLiLib config item %1 has an invalid mod name: %2</translation>
         </message>
         <message>
             <source>MaLiLib 配置第 %1 项的 type 无法识别（%2）。</source>
-            <translation>The type (%2) of item %1 in the section of MaLiLib cannot be recognized.</translation>
+            <translation>MaLiLib config item %1 has an unrecognized type (%2).</translation>
         </message>
         <message>
             <source>MaLiLib 配置第 %1 项的 keys 字段类型无效。</source>
-            <translation>The keys of item %1 in that section of MaLiLib are not a table.</translation>
+            <translation>MaLiLib config item %1 has an invalid keys field type.</translation>
         </message>
         <message>
             <source>MaLiLib 配置第 %1 项的 extra 字段应为对象。</source>
-            <translation>The extra item %1 in that section of MaLiLib is not a grid object.</translation>
+            <translation>MaLiLib config item %1 must have an object for extra.</translation>
         </message>
         <message>
             <source>未指定实例目录，无法读取目标配置。</source>
-            <translation>If the instance directory is not given, the configuration on the target cannot be read.</translation>
+            <translation>Instance folder not specified; can't read target config.</translation>
         </message>
         <message>
             <source>覆盖会解除目标配置中其余快捷键的绑定，需要确认。</source>
-            <translation>"Overwrite" will completely unbind the rest of the hotkeys on the target and needs to be confirmed before proceeding.</translation>
+            <translation>Overwrite unbinds remaining hotkeys in the target config. Confirmation required.</translation>
         </message>
         <message>
             <source>已跳过「%1」：%2</source>
-            <translation>"%1" The portion remains untouched: %2</translation>
+            <translation>Skipped "%1": %2</translation>
         </message>
         <message>
             <source>「%1」未匹配到配置项，已保留原值。</source>
-            <translation>"%1": This square is not numbered this time, so it is not moved.</translation>
+            <translation>"%1" didn't match any config entry; original value kept.</translation>
         </message>
         <message>
             <source>「%1」的路径包含目录联接或符号链接，已跳过写入。</source>
-            <translation>There is a link directory (junction / symbolic link) on the path "%1", but it is not written there.</translation>
+            <translation>Path for "%1" contains a junction or symlink; write skipped.</translation>
         </message>
         <message>
             <source>无法创建目录「%1」，写入已停止。</source>
-            <translation>The directory "%1" cannot be created and stops writing at this point.</translation>
+            <translation>Can't create folder "%1"; write stopped.</translation>
         </message>
         <message>
             <source>未指定实例目录，无法提取 MaLiLib 配置。</source>
-            <translation>Without an instance directory, the MaLiLib family cannot be included.</translation>
+            <translation>Instance folder not specified; can't capture MaLiLib config.</translation>
         </message>
         <message>
             <source>此版本无可下载的文件。</source>
-            <translation>There are no downloadable files for this version.</translation>
+            <translation>No downloadable files for this version.</translation>
         </message>
         <message>
             <source>模组引用缺少平台或项目 ID。</source>
-            <translation>This reference is not recognized (the platform or project number is empty).</translation>
+            <translation>Mod reference is missing platform or project ID.</translation>
         </message>
         <message>
             <source>已安装发行版不兼容目标游戏版本或加载器，未自动替换。</source>
-            <translation>The installed distribution is incompatible with the target game version or loader and was not automatically replaced.</translation>
+            <translation>Installed release is incompatible with target game version or loader; not replaced automatically.</translation>
         </message>
         <message>
             <source>尚未取得此必需依赖的版本列表。</source>
-            <translation>I haven't asked about the list of necessary pre-installed versions yet.</translation>
+            <translation>Haven't fetched version list for this required dependency.</translation>
         </message>
         <message>
             <source>尚未从平台取得下载信息，暂时无法下载。</source>
-            <translation>Haven't asked about the platform yet: This item cannot be downloaded now.</translation>
+            <translation>Download info hasn't been fetched from platform; can't download now.</translation>
         </message>
         <message>
             <source>等待查询平台。</source>
-            <translation>It’s not my turn to ask about the platform yet.</translation>
+            <translation>Waiting to query platform.</translation>
         </message>
         <message>
             <source>本次替代：%1 → %2。</source>
-            <translation>This substitution: %1 → %2.</translation>
+            <translation>Replacement: %1 → %2.</translation>
         </message>
         <message>
             <source>已按确认结果替换为「%1」。</source>
-            <translation>Press Confirm to change it to "%1" and see the row it is on the table.</translation>
+            <translation>Replaced with "%1" as confirmed.</translation>
         </message>
         <message>
             <source>此版本与「%1」不兼容，未加入安装计划。</source>
-            <translation>This version states that it is incompatible with "%1" and has not been included in this trip.</translation>
+            <translation>This version is incompatible with "%1"; not added to install plan.</translation>
         </message>
         <message>
             <source>平台未提供可用版本。</source>
-            <translation>The platform does not give any available versions.</translation>
+            <translation>No available versions provided by platform.</translation>
         </message>
         <message>
             <source>此版本的文件无下载地址。</source>
-            <translation>There is no download link for this version of the file.</translation>
+            <translation>No download URL for this version's file.</translation>
         </message>
         <message>
             <source>版本列表中无兼容此实例的发行版。</source>
-            <translation>There is no distribution in the version list that can fit this instance.</translation>
+            <translation>No release in version list is compatible with this instance.</translation>
         </message>
         <message>
             <source>版本列表中无匹配「%1」的发行版。</source>
-            <translation>There is no release matching "%1" in the version list.</translation>
+            <translation>No release matching "%1" found in version list.</translation>
         </message>
         <message>
             <source>前置链超过 %1 层，未继续展开。</source>
-            <translation>The preceding chain exceeds the %1 level and does not continue to expand.</translation>
+            <translation>Dependency chain exceeds %1 levels; stopped resolving.</translation>
         </message>
         <message>
             <source>平台查询失败（网络或接口无响应）。</source>
-            <translation>Asking the platform failed (the network or interface did not answer).</translation>
+            <translation>Couldn't query platform (network or API error).</translation>
         </message>
         <message>
             <source>「%1」与「%2」不能同时安装。</source>
-            <translation>"%1" and "%2" cannot be installed together.</translation>
+            <translation>"%1" and "%2" can't be installed together.</translation>
         </message>
         <message>
             <source>必要前置缺少有效的项目 / 发行版身份，未允许安装。</source>
-            <translation>Required prerequisite is missing a valid project/release identity and is not allowed to be installed.</translation>
+            <translation>Required dependency lacks a valid project or release ID; installation blocked.</translation>
         </message>
         <message>
             <source>必要前置只提供发行版 ID（%1），尚无法确认所属项目，未允许安装。</source>
-            <translation>The necessary prerequisite only provides the release ID (%1). The project cannot be confirmed yet and the installation is not allowed.</translation>
+            <translation>Required dependency only provides release ID (%1); project can't be verified, installation blocked.</translation>
         </message>
         <message>
             <source>「%1」存在互不相容的精确前置版本要求：%2。</source>
-            <translation>'%1' has incompatible exact pre-version requirements: %2.</translation>
+            <translation>"%1" has conflicting exact dependency version requirements: %2.</translation>
         </message>
         <message>
             <source>已安装「%1」，但发行版身份未知，无法确认所需版本 %2。</source>
-            <translation>'%1' is installed, but the distribution identity is unknown and the required version %2 cannot be confirmed.</translation>
+            <translation>"%1" is installed with an unknown release ID; can't verify required version %2.</translation>
         </message>
         <message>
             <source>已安装「%1」的版本 %2，不满足所需版本 %3；需确认替换。</source>
-            <translation>Version %2 of "%1" has been installed, which does not meet the required version %3; confirmation of replacement is required.</translation>
+            <translation>"%1" is installed at version %2, which doesn't meet required version %3; confirm replacement.</translation>
         </message>
         <message>
             <source>必要前置「%1」未解决：%2</source>
-            <translation>Required prefix "%1" is not resolved: %2</translation>
+            <translation>Required dependency "%1" unresolved: %2</translation>
         </message>
         <message>
             <source>精确前置约束循环变化，无法生成稳定计划；未允许安装。</source>
-            <translation>The precise forward constraints change cyclically and a stable plan cannot be generated; installation is not allowed.</translation>
+            <translation>Exact dependency constraints cycle without converging; installation blocked.</translation>
         </message>
         <message>
             <source>无法读取刚下载的文件「%1」：%2</source>
-            <translation>The file "%1" just downloaded cannot be read: %2</translation>
+            <translation>Can't read newly downloaded file "%1": %2</translation>
         </message>
         <message>
             <source>文件大小不符。预期 %1 字节，实际 %2 字节。</source>
-            <translation>Size mismatch: expected %1 bytes, actual %2 bytes.</translation>
+            <translation>File size mismatch: expected %1 bytes, got %2 bytes.</translation>
         </message>
         <message>
             <source>SHA-1 校验失败。预期 %1，实际 %2。</source>
-            <translation>Sha1 does not match: expected %1, actual %2.</translation>
+            <translation>SHA-1 mismatch: expected %1, got %2.</translation>
         </message>
         <message>
             <source>平台未提供此文件的 SHA-1，仅核对了文件大小。</source>
-            <translation>The platform does not give the sha1 of this file, only the size.</translation>
+            <translation>Platform provided no SHA-1 for this file; only size was verified.</translation>
         </message>
         <message>
             <source>下载</source>
@@ -21959,23 +21962,23 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>已在实例中</source>
-            <translation>Already in the instance</translation>
+            <translation>Already in instance</translation>
         </message>
         <message>
             <source>无法完成</source>
-            <translation>Can't do it</translation>
+            <translation>Can't apply</translation>
         </message>
         <message>
             <source>已在实例中 %1 个</source>
-            <translation>Already %1 in the instance</translation>
+            <translation>%1 already in instance</translation>
         </message>
         <message>
             <source>无法完成 %1 个</source>
-            <translation>Can't do %1</translation>
+            <translation>%1 blocked</translation>
         </message>
         <message>
             <source>无待处理内容。</source>
-            <translation>Nothing to move.</translation>
+            <translation>Nothing to process.</translation>
         </message>
         <message>
             <source>缺失</source>
@@ -21983,19 +21986,19 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>暂无法确认</source>
-            <translation>Unable to confirm yet</translation>
+            <translation>Unconfirmed</translation>
         </message>
         <message>
             <source>不兼容</source>
-            <translation>Not compatible</translation>
+            <translation>Incompatible</translation>
         </message>
         <message>
             <source>待确认的替代项目</source>
-            <translation>Waiting for your confirmation of alternative items</translation>
+            <translation>Replacement pending</translation>
         </message>
         <message>
             <source>下载 %1 个</source>
-            <translation>Download %1</translation>
+            <translation>%1 to download</translation>
         </message>
         <message>
             <source>缺失 %1 个</source>
@@ -22003,23 +22006,23 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>暂无法确认 %1 个</source>
-            <translation>Unable to confirm %1</translation>
+            <translation>%1 unconfirmed</translation>
         </message>
         <message>
             <source>不兼容 %1 个</source>
-            <translation>Not compatible with %1</translation>
+            <translation>%1 incompatible</translation>
         </message>
         <message>
             <source>有 %1 个替代项目待确认</source>
-            <translation>Waiting for your confirmation of %1 replacement items</translation>
+            <translation>%1 replacements to confirm</translation>
         </message>
         <message>
             <source>其中必要项失败 %1 个</source>
-            <translation>%1 of required items failed</translation>
+            <translation>%1 required failed</translation>
         </message>
         <message>
             <source>，</source>
-            <translation>,</translation>
+            <translation>, </translation>
         </message>
         <message>
             <source>。</source>
@@ -22027,35 +22030,35 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>已确认并替换为「%1」。</source>
-            <translation>Press your confirmation button to change it to "%1".</translation>
+            <translation>Confirmed and replaced with "%1".</translation>
         </message>
         <message>
             <source>以下替代项目需要确认：%1。</source>
-            <translation>There are alternative projects for these, please nod whether to change them: %1.</translation>
+            <translation>Replacements need confirmation: %1.</translation>
         </message>
         <message>
             <source>、</source>
-            <translation>,</translation>
+            <translation>, </translation>
         </message>
         <message>
             <source>实例可用，预设部分应用。</source>
-            <translation>Instances available, presets partially applied.</translation>
+            <translation>Instance ready; preset partially applied.</translation>
         </message>
         <message>
             <source>无法读取「%1」：%2</source>
-            <translation>Unable to read "%1": %2</translation>
+            <translation>Can't read "%1": %2</translation>
         </message>
         <message>
             <source>「%1」替换失败：%2</source>
-            <translation>"%1" replacement failed: %2</translation>
+            <translation>Couldn't replace "%1": %2</translation>
         </message>
         <message>
             <source>无法创建备份目录「%1」。</source>
-            <translation>The backup directory "%1" cannot be created.</translation>
+            <translation>Can't create backup folder "%1".</translation>
         </message>
         <message>
             <source>备份「%1」失败，本次未写入任何内容：%2</source>
-            <translation>Backup "%1" failed, no content was written this time: %2</translation>
+            <translation>Couldn't back up "%1"; nothing written: %2</translation>
         </message>
         <message>
             <source>游戏设置</source>
@@ -22063,7 +22066,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>原版按键</source>
-            <translation>Original buttons</translation>
+            <translation>Vanilla key binds</translation>
         </message>
         <message>
             <source>服务器列表</source>
@@ -22075,7 +22078,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>配置文件</source>
-            <translation>Configuration file</translation>
+            <translation>Config files</translation>
         </message>
         <message>
             <source>未知内容</source>
@@ -22083,63 +22086,63 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>未找到目标实例目录，无法应用预设。</source>
-            <translation>The directory for this instance is not there, so I can't drop the preset onto it.</translation>
+            <translation>Target instance folder not found; can't apply preset.</translation>
         </message>
         <message>
             <source>无未完成的预设段；待应用数据包仍等待目标世界。</source>
-            <translation>There are no outstanding preset segments; pending application datapacks are still waiting for the target world.</translation>
+            <translation>No pending preset sections; queued data packs are still waiting for a target world.</translation>
         </message>
         <message>
             <source>按键「%1」被 %2 个动作占用。</source>
-            <translation>The key "%1" is occupied by %2 actions.</translation>
+            <translation>Key "%1" is bound to %2 actions.</translation>
         </message>
         <message>
             <source>以下服务器已在列表中：%1</source>
-            <translation>These units are already in the list: %1</translation>
+            <translation>Servers already in list: %1</translation>
         </message>
         <message>
             <source>资源包启用顺序未写入。</source>
-            <translation>The activation sequence of resource packages is not written.</translation>
+            <translation>Resource pack enable order wasn't written.</translation>
         </message>
         <message>
             <source>「%1」不是普通文件，已跳过应用预设。</source>
-            <translation>"%1" is not an ordinary document, and you don't dare to change it with the default.</translation>
+            <translation>"%1" isn't a regular file; skipped applying preset.</translation>
         </message>
         <message>
             <source>预设 ID 无效，无法应用。</source>
-            <translation>This default id is illegal and cannot be applied.</translation>
+            <translation>Invalid preset ID; can't apply.</translation>
         </message>
         <message>
             <source>预设内容格式无效，已跳过此部分。</source>
-            <translation>This section cannot be read back (the payload is not what this layer recognizes), and it cannot be moved this time.</translation>
+            <translation>Invalid preset content format; section skipped.</translation>
         </message>
         <message>
             <source>无法识别此部分所属的文件组，已跳过。</source>
-            <translation>I don’t recognize which group of files this section belongs to, so I won’t touch it this time.</translation>
+            <translation>Unrecognized file group for this section; skipped.</translation>
         </message>
         <message>
             <source>此部分包含文件组范围以外的路径，已跳过。</source>
-            <translation>The path in this section does not belong to those four file groups, so it will not be touched this time.</translation>
+            <translation>Section contains paths outside the file group scope; skipped.</translation>
         </message>
         <message>
             <source>当前模式无法处理此组中的 %1 项，已跳过。</source>
-            <translation>At this level, there are %1 items in this group that cannot be decided and are not moved.</translation>
+            <translation>Current mode can't handle %1 items in this group; skipped.</translation>
         </message>
         <message>
             <source>有 %1 个值的类型不匹配，已跳过转换。</source>
-            <translation>There are %1 cells that are rejected for conversion because their types do not match.</translation>
+            <translation>%1 values have mismatched types; conversion skipped.</translation>
         </message>
         <message>
             <source>此部分的格式不受支持，已跳过。</source>
-            <translation>There is no adapter taking over this section, so this trip won't move it.</translation>
+            <translation>Section format isn't supported; skipped.</translation>
         </message>
         <message>
             <source>配置文件（config/）</source>
-            <translation>Configuration file (config/)</translation>
+            <translation>Config files (config/)</translation>
         </message>
         <message>
             <source>默认配置（defaultconfigs/）</source>
-            <translation>Default configuration (defaultconfigs/)</translation>
+            <translation>Default configs (defaultconfigs/)</translation>
         </message>
         <message>
             <source>资源包（resourcepacks/）</source>
@@ -22147,15 +22150,15 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>光影包（shaderpacks/）</source>
-            <translation>Shaderpacks/</translation>
+            <translation>Shader packs (shaderpacks/)</translation>
         </message>
         <message>
             <source>%1 无法读取：%2</source>
-            <translation>%1 Unable to read: %2</translation>
+            <translation>Can't read %1: %2</translation>
         </message>
         <message>
             <source>%1 中有内容未收集：%2</source>
-            <translation>There is something confiscated in %1: %2</translation>
+            <translation>Some items in %1 weren't captured: %2</translation>
         </message>
         <message>
             <source>%1 为空。</source>
@@ -22163,99 +22166,99 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>%1 收集失败：%2</source>
-            <translation>%1 Forfeited income: %2</translation>
+            <translation>Couldn't capture %1: %2</translation>
         </message>
         <message>
             <source>未找到实例目录，无法提取预设。</source>
-            <translation>The directory for this instance is not there and the presets cannot be collected from it.</translation>
+            <translation>Instance folder not found; can't capture preset.</translation>
         </message>
         <message>
             <source>options.txt 中无可收集的游戏设置。</source>
-            <translation>There are no game settings to collect in options.txt.</translation>
+            <translation>No game settings to capture in options.txt.</translation>
         </message>
         <message>
             <source>options.txt 中无可收集的按键。</source>
-            <translation>There are no retractable buttons in options.txt.</translation>
+            <translation>No key binds to capture in options.txt.</translation>
         </message>
         <message>
             <source>实例中无服务器列表文件（servers.dat）。</source>
-            <translation>There is no server list (servers.dat) in the instance yet.</translation>
+            <translation>No server list file (servers.dat) in this instance.</translation>
         </message>
         <message>
             <source>服务器列表为空。</source>
-            <translation>There is nothing in the server list.</translation>
+            <translation>Server list is empty.</translation>
         </message>
         <message>
             <source>资源包启用顺序读取失败：%1</source>
-            <translation>The activation sequence of resource packages has not been read: %1</translation>
+            <translation>Couldn't read resource pack enable order: %1</translation>
         </message>
         <message>
             <source>数据包收集失败：%1</source>
-            <translation>Data datapack not received: %1</translation>
+            <translation>Couldn't capture data packs: %1</translation>
         </message>
         <message>
             <source>所选类别无可提取内容，预设未保存。</source>
-            <translation>I haven't received anything from the items I checked, so there is nothing to save this time.</translation>
+            <translation>Nothing to capture in selected categories; preset not saved.</translation>
         </message>
         <message>
             <source>无法创建预设文件目录：%1</source>
-            <translation>Unable to create default file directory: %1</translation>
+            <translation>Can't create preset files folder: %1</translation>
         </message>
         <message>
             <source>未选择要提取的内容。</source>
-            <translation>Nothing ticked off this trip.</translation>
+            <translation>No content selected to capture.</translation>
         </message>
         <message>
             <source>「%1」不是普通文件，未提取游戏设置。</source>
-            <translation>"%1" is not an ordinary file, and the game settings are confiscated this time.</translation>
+            <translation>"%1" isn't a regular file; game settings not captured.</translation>
         </message>
         <message>
             <source>无法读取服务器列表：%1</source>
-            <translation>The server list cannot be read: %1</translation>
+            <translation>Can't read server list: %1</translation>
         </message>
         <message>
             <source>已保存资源包启用顺序，共 %1 个已启用。</source>
-            <translation>The activation order of resource packs is also included (%1 are open).</translation>
+            <translation>Saved resource pack enable order (%1 enabled).</translation>
         </message>
         <message>
             <source>提取 MaLiLib 配置失败：%1</source>
-            <translation>MaLiLib That family has no income: %1</translation>
+            <translation>Couldn't capture MaLiLib config: %1</translation>
         </message>
         <message>
             <source>config/ 中未找到 MaLiLib 配置。</source>
-            <translation>The MaLiLib family configuration is not recognized under config/.</translation>
+            <translation>No MaLiLib config found in config/.</translation>
         </message>
         <message>
             <source>覆盖会用预设替换目标中的同类设置，需要确认。</source>
-            <translation>"Overwrite" will replace all settings of this type on the target with those in the default, which needs to be confirmed first.</translation>
+            <translation>Overwrite replaces matching settings on target with the preset. Confirmation required.</translation>
         </message>
         <message>
             <source>覆盖会移除只存在于目标中的服务器条目，需要确认。</source>
-            <translation>"Overwrite" will remove server entries that do not match the target and need to be confirmed first.</translation>
+            <translation>Overwrite removes server entries only on the target. Confirmation required.</translation>
         </message>
         <message>
             <source>「覆盖」会修改目标已有内容，需先确认。</source>
-            <translation>"Overwrite" will change the existing things on the target and needs to be confirmed first.</translation>
+            <translation>"Overwrite" modifies existing items on the target. Confirmation required.</translation>
         </message>
         <message>
             <source>当前版本不支持类别 %1，已跳过此部分。</source>
-            <translation>The type of this section (%1) is not recognized by this version of the launcher, and this section does not move this time.</translation>
+            <translation>Category %1 isn't supported in this version; section skipped.</translation>
         </message>
         <message>
             <source>文件组 ID 无法识别且内容为空，已跳过此部分。</source>
-            <translation>This section cannot tell which file group it is (the id is not recognized, and the payload is empty), so it cannot be moved this time.</translation>
+            <translation>File group ID unrecognized and content empty; section skipped.</translation>
         </message>
         <message>
             <source>此部分的标识（%1）与内容（%2）不匹配，已跳过。</source>
-            <translation>The identity of this paragraph (%1) does not match its content (%2), so it will not be touched this time.</translation>
+            <translation>Section ID (%1) doesn't match content (%2); skipped.</translation>
         </message>
         <message>
             <source>未指定预设的 files/ 根目录，无法核对缺失文件。</source>
-            <translation>The file root (files/) on the default side is not given, and it is impossible to count the missing copies of this group.</translation>
+            <translation>Preset files/ root folder not specified; can't check missing files.</translation>
         </message>
         <message>
             <source>未指定预设的 files/ 根目录，无法定位数据包。</source>
-            <translation>The file root (files/) on the default side is not given, so I don’t know where these data datapacks are copied from.</translation>
+            <translation>Preset files/ root folder not specified; can't locate data packs.</translation>
         </message>
         <message>
             <source>合并</source>
@@ -22267,198 +22270,198 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>项</source>
-            <translation>Item</translation>
+            <translation>entries</translation>
         </message>
         <message>
             <source>个</source>
-            <translation>Indivual</translation>
+            <translation>items</translation>
         </message>
         <message>
             <source>待选择 %1 %2</source>
-            <translation>I want you to choose %1 %2</translation>
+            <translation>%1 %2 to choose</translation>
         </message>
         <message>
             <source>删除 %1 %2</source>
-            <translation>Delete %1 %2</translation>
+            <translation>delete %1 %2</translation>
         </message>
         <message>
             <source>无变化</source>
-            <translation>Not moving</translation>
+            <translation>No changes</translation>
         </message>
         <message>
             <source>待应用 %1 %2</source>
-            <translation>To be applied %1 %2</translation>
+            <translation>%1 %2 pending</translation>
         </message>
         <message>
             <source>冲突 %1 项</source>
-            <translation>Conflicting %1 items</translation>
+            <translation>%1 conflicts</translation>
         </message>
         <message>
             <source>跳过 %1 %2</source>
-            <translation>Skip %1 %2</translation>
+            <translation>%1 %2 skipped</translation>
         </message>
         <message>
             <source>未指定目标实例，无法制定应用计划。</source>
-            <translation>Without specifying a target instance, there is no way to figure out what to do on this trip.</translation>
+            <translation>Target instance not specified; can't build apply plan.</translation>
         </message>
         <message>
             <source>未指定实例目录。</source>
-            <translation>No instance directory specified.</translation>
+            <translation>Instance folder not specified.</translation>
         </message>
         <message>
             <source>未指定实例目录，无法保存资源包启用顺序。</source>
-            <translation>Without specifying the instance directory, the activation sequence of resource packages cannot be written back.</translation>
+            <translation>Instance folder not specified; can't save resource pack enable order.</translation>
         </message>
         <message>
             <source>此预设的资源包项无启用信息，仅部署、不启用。</source>
-            <translation>There is no activation information on this default resource package item. It is only deployed but not activated.</translation>
+            <translation>Resource pack entries in this preset have no enable order; files deployed without enabling.</translation>
         </message>
         <message>
             <source>「%1」未出现在目标的 resourcepacks/ 中，未启用。</source>
-            <translation>"%1" does not appear in the target's resourcepacks/ and is not enabled.</translation>
+            <translation>"%1" isn't in target's resourcepacks/; not enabled.</translation>
         </message>
         <message>
             <source>资源包启用顺序已与预设一致，未改写 options.txt。</source>
-            <translation>The activation order of resource packages has been consistent with the default, and options.txt has not been rewritten.</translation>
+            <translation>Resource pack enable order already matches preset; options.txt unchanged.</translation>
         </message>
         <message>
             <source>按预设禁用了 %1 个资源包。</source>
-            <translation>%1 resource packs are turned off by default.</translation>
+            <translation>Disabled %1 resource packs per preset.</translation>
         </message>
         <message>
             <source>已按预设中保存的顺序启用 %1 个资源包。</source>
-            <translation>%1 resource packs have been enabled by default (in order of which one was extracted).</translation>
+            <translation>Enabled %1 resource packs in preset order.</translation>
         </message>
     </context>
     <context>
         <name>Presets::PresetModInstaller</name>
         <message>
             <source>实例或所选预设状态已变化，已停止后续部署；已写入项保留。</source>
-            <translation>The status of the instance or selected preset has changed and subsequent deployment has been stopped; written items are retained.</translation>
+            <translation>Instance or preset state changed; remaining deployment stopped, written items kept.</translation>
         </message>
         <message>
             <source>模组预设：安装 %1 项，可选项失败/跳过 %2 项。</source>
-            <translation>Mod default: install %1 items, optionally fail/skip %2 items.</translation>
+            <translation>Mod preset: %1 installed, %2 optional failed/skipped.</translation>
         </message>
         <message>
             <source>实例或模组目录已变化，未重新创建或继续写入。</source>
-            <translation>The instance or mod directory has changed and has not been re-created or written to.</translation>
+            <translation>Instance or mods folder changed; didn't recreate or keep writing.</translation>
         </message>
         <message>
             <source>必要模组暂存内容已变化，已停止部署。</source>
-            <translation>The temporary content of necessary mods has changed and deployment has been stopped.</translation>
+            <translation>Staged files for required mods changed; deployment stopped.</translation>
         </message>
         <message>
             <source>目标模组路径已变为链接，未继续写入。</source>
-            <translation>The target mod path has become a link and is not being written further.</translation>
+            <translation>Target mod path became a link; stopped writing.</translation>
         </message>
         <message>
             <source>同名模组已存在且内容不同，未覆盖：%1</source>
-            <translation>The mod with the same name already exists and the content is different, not covered: %1</translation>
+            <translation>Mod with same name already exists with different content; not overwritten: %1</translation>
         </message>
         <message>
             <source>无法写入模组：%1</source>
-            <translation>Unable to write to mod: %1</translation>
+            <translation>Can't write mod: %1</translation>
         </message>
         <message>
             <source>模组写入失败：%1</source>
-            <translation>Mod writing failed: %1</translation>
+            <translation>Couldn't write mod: %1</translation>
         </message>
         <message>
             <source>无法提交完整模组文件：%1</source>
-            <translation>Unable to submit complete mod file: %1</translation>
+            <translation>Can't commit complete mod file: %1</translation>
         </message>
         <message>
             <source>发布前预设或目标目录已变化，未发布新模组。</source>
-            <translation>The pre-release default or target directory has changed and no new mod has been released.</translation>
+            <translation>Preset or target folder changed before publish; new mod not published.</translation>
         </message>
         <message>
             <source>发布模组失败或目标已被其他程序创建，未覆盖：%1</source>
-            <translation>Failed to publish the mod or the target has been created by other programs and not covered: %1</translation>
+            <translation>Couldn't publish mod, or target already created externally; not overwritten: %1</translation>
         </message>
         <message>
             <source>文件已写入，但报告更新失败，已停止后续部署。</source>
-            <translation>The file was written, but the report failed to update and subsequent deployments have been stopped.</translation>
+            <translation>File written, but report update failed; remaining deployment stopped.</translation>
         </message>
         <message>
             <source>正在后台检查模组目录，完成后恢复文件下载。</source>
-            <translation>Checking the mod directory in the background and resuming file download after completion.</translation>
+            <translation>Checking mods folder in background; file download will resume afterward.</translation>
         </message>
         <message>
             <source>正在检查模组目录。</source>
-            <translation>Checking mod directory.</translation>
+            <translation>Checking mods folder.</translation>
         </message>
         <message>
             <source>模组目录或实例状态已被外部修改，请取消并重新预览。</source>
-            <translation>The mod directory or instance status has been modified externally, please cancel and preview again.</translation>
+            <translation>Mods folder or instance state changed externally; cancel and preview again.</translation>
         </message>
         <message>
             <source>请取消并重新预览。</source>
-            <translation>Please cancel and preview again.</translation>
+            <translation>Cancel and preview again.</translation>
         </message>
         <message>
             <source>目标实例目录不可用，未开始应用。</source>
-            <translation>The target instance directory is unavailable and the application has not started.</translation>
+            <translation>Target instance folder unavailable; apply not started.</translation>
         </message>
         <message>
             <source>预设限定的游戏版本或加载器与目标实例不符，未查询其他版本替代。</source>
-            <translation>The preset limited game version or loader does not match the target instance, and other version replacements are not queried.</translation>
+            <translation>Preset's game version or loader doesn't match target instance; didn't look up other versions.</translation>
         </message>
         <message>
             <source>无可确认的游戏版本或模组加载器，未下载模组。</source>
-            <translation>No confirmed game version or mod loader, no mods downloaded.</translation>
+            <translation>No confirmed game version or mod loader; no mods downloaded.</translation>
         </message>
         <message>
             <source>部分已安装模组身份未确认：%1</source>
-            <translation>The identity of some installed mods has not been confirmed: %1</translation>
+            <translation>Some installed mods have unconfirmed identities: %1</translation>
         </message>
         <message>
             <source>文件身份反查与已有记录不一致，未自动改写：%1</source>
-            <translation>The file identity reverse check is inconsistent with the existing records and is not automatically rewritten: %1</translation>
+            <translation>File lookup conflicts with existing records; not rewritten automatically: %1</translation>
         </message>
         <message>
             <source>无法确认前置发行版 %1：%2</source>
-            <translation>Unable to confirm prerelease version %1: %2</translation>
+            <translation>Can't confirm dependency release %1: %2</translation>
         </message>
         <message>
             <source>模组依赖超过本次安全检查上限（256 项）。</source>
-            <translation>Mod dependencies exceed the upper limit of this security check (256 items).</translation>
+            <translation>Mod dependencies exceed safety check limit (256 items).</translation>
         </message>
         <message>
             <source>正在后台建立模组目录快照…</source>
-            <translation>Creating mod directory snapshot in the background...</translation>
+            <translation>Creating mods folder snapshot in background…</translation>
         </message>
         <message>
             <source>无法确认模组目录或预设状态，请重新预览；未继续下载或部署。</source>
-            <translation>Unable to confirm mod directory or preset status, please preview again; downloading or deployment will not continue.</translation>
+            <translation>Can't confirm mods folder or preset state; preview again. Download and deployment stopped.</translation>
         </message>
         <message>
             <source>正在检查已安装模组与预设依赖…</source>
-            <translation>Checking installed mods and default dependencies...</translation>
+            <translation>Checking installed mods and preset dependencies…</translation>
         </message>
         <message>
             <source>已安装模组在检查期间发生变化，未写入；请刷新后重试。</source>
-            <translation>The installed mod changed during the check and was not written; please refresh and try again.</translation>
+            <translation>Installed mods changed during check; nothing written. Refresh and retry.</translation>
         </message>
         <message>
             <source>所选预设内容已变化，请重新预览和确认；未继续应用。</source>
-            <translation>The selected preset content has changed, please preview and confirm again; the application is not continued.</translation>
+            <translation>Selected preset changed; preview and confirm again. Apply stopped.</translation>
         </message>
         <message>
             <source>游戏正在运行，已停止应用模组预设。</source>
-            <translation>The game is running and has stopped applying mod presets.</translation>
+            <translation>Game is running; stopped applying mod preset.</translation>
         </message>
         <message>
             <source>精确前置身份查询超过安全上限（256 项），未安装模组。</source>
-            <translation>The precise front-end identity query exceeds the safe limit (256 items) and the mod is not installed.</translation>
+            <translation>Exact dependency lookup exceeds safety limit (256 items); mods not installed.</translation>
         </message>
         <message>
             <source>多个模组要求不同的精确前置版本，未安装：%1</source>
-            <translation>Multiple mods require different exact prerequisites, not installed: %1</translation>
+            <translation>Mods require conflicting exact dependency versions; not installed: %1</translation>
         </message>
         <message>
             <source>精确前置约束未收敛，未安装模组。</source>
-            <translation>The exact forward constraints are not converged and the mod is not installed.</translation>
+            <translation>Exact dependency constraints didn't converge; mods not installed.</translation>
         </message>
         <message>
             <source>无法识别的模组平台。</source>
@@ -22466,103 +22469,103 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>已有文件的项目 / 发行版身份存在歧义或重复，未自动覆盖。</source>
-            <translation>The project/release identity of an existing file is ambiguous or duplicated and is not automatically overwritten.</translation>
+            <translation>Existing file has ambiguous or duplicate project/release ID; not overwritten automatically.</translation>
         </message>
         <message>
             <source>已安装发行版的依赖身份尚未确认，不能当作前置已满足。</source>
-            <translation>The dependencies of the installed distribution have not yet been confirmed and cannot be considered as prerequisites being satisfied.</translation>
+            <translation>Installed release's dependency identity isn't confirmed; can't treat dependency as satisfied.</translation>
         </message>
         <message>
             <source>必要前置未解决：%1；%2</source>
-            <translation>Required prefixes are not resolved: %1; %2</translation>
+            <translation>Required dependency unresolved: %1; %2</translation>
         </message>
         <message>
             <source>替代项目无效或原项状态不允许替代，未继续应用。</source>
-            <translation>The replacement item is invalid or the status of the original item does not allow substitution and the application is not continued.</translation>
+            <translation>Replacement project invalid or original item state disallows replacement; apply stopped.</translation>
         </message>
         <message>
             <source>必要模组或前置尚未解决，未允许下载。</source>
-            <translation>The necessary mods or prerequisites have not been resolved and are not allowed to be downloaded.</translation>
+            <translation>Required mods or dependencies unresolved; download blocked.</translation>
         </message>
         <message>
             <source>%1 个启用模组的项目身份尚未确认，未将其视为前置已满足。</source>
-            <translation>%1 mod-enabled projects have not yet been identified and are not considered prerequisites met.</translation>
+            <translation>%1 enabled mods have unconfirmed project IDs; not counted as satisfied dependencies.</translation>
         </message>
         <message>
             <source>可选文件下载失败，跳过对应模组及依赖它的父项：%1；其他独立项继续。</source>
-            <translation>Optional file download failed, skipping the corresponding mod and its dependent parent items: %1; continue with other independent items.</translation>
+            <translation>Optional file download failed; skipped mod and dependents: %1. Other independent items continue.</translation>
         </message>
         <message>
             <source>必要模组或前置缺失、未知或冲突；未写入模组文件。</source>
-            <translation>Necessary mods or prerequisites are missing, unknown or conflicting; the mod file is not written.</translation>
+            <translation>Required mods or dependencies are missing, unknown, or conflicting; no mod files written.</translation>
         </message>
         <message>
             <source>已有模组文件可能对应「%1」的多个项目或发行版，无法确认是否重复，未写入。</source>
-            <translation>Existing mod files may correspond to multiple projects or releases of "%1". It is impossible to confirm whether they are duplicates and have not been written.</translation>
+            <translation>Existing mod files may match multiple projects or releases of "%1"; can't confirm duplicates, not written.</translation>
         </message>
         <message>
             <source>已安装「%1」有重复文件或发行版依赖身份尚未确认，未自动覆盖。</source>
-            <translation>The installed "%1" has duplicate files or the distribution dependency identity has not been confirmed and is not automatically overwritten.</translation>
+            <translation>Installed "%1" has duplicate files or unconfirmed release dependency identity; not overwritten automatically.</translation>
         </message>
         <message>
             <source>必要前置的已有文件身份不安全，未允许安装。</source>
-            <translation>The required pre-existing files are not secure and are not allowed to be installed.</translation>
+            <translation>Existing file for required dependency has an unsafe identity; installation blocked.</translation>
         </message>
         <message>
             <source>模组「%1」要求精确前置版本，当前解析结果不满足，未写入模组。</source>
-            <translation>Mod "%1" requires an accurate pre-version. The current analysis result is not satisfactory and has not been written into the mod.</translation>
+            <translation>Mod "%1" requires an exact dependency version not met by the resolved plan; mod not written.</translation>
         </message>
         <message>
             <source>无法保存下载前执行报告，未开始下载。</source>
-            <translation>Unable to save pre-download execution report, download did not start.</translation>
+            <translation>Can't save pre-download execution report; download not started.</translation>
         </message>
         <message>
             <source>实例或模组目录不安全，未写入文件。</source>
-            <translation>The instance or mod directory is not secure and no files were written.</translation>
+            <translation>Instance or mods folder is unsafe; no files written.</translation>
         </message>
         <message>
             <source>无法创建安全的模组下载暂存目录。</source>
-            <translation>Unable to create secure staging directory for mod downloads.</translation>
+            <translation>Can't create safe staging folder for mod downloads.</translation>
         </message>
         <message>
             <source>暂存文件路径已变为链接，未下载或部署。</source>
-            <translation>The staging file path has become a link and is not downloaded or deployed.</translation>
+            <translation>Staged file path became a link; download and deployment stopped.</translation>
         </message>
         <message>
             <source>所选预设内容已变化，未部署下载文件。</source>
-            <translation>The selected preset content has changed and the download file has not been deployed.</translation>
+            <translation>Selected preset changed; downloaded files not deployed.</translation>
         </message>
         <message>
             <source>必要模组「%1」未通过下载校验，未写入模组文件。保存文件名或校验信息也可能无效。</source>
-            <translation>The necessary mod "%1" failed the download verification and the mod file was not written. The saved file name or checksum information may also be invalid.</translation>
+            <translation>Required mod "%1" failed download verification; file not written. Filename or checksum may also be invalid.</translation>
         </message>
         <message>
             <source>实例状态已变化，未写入模组。</source>
-            <translation>The instance status has changed and the mod has not been written.</translation>
+            <translation>Instance state changed; mod not written.</translation>
         </message>
         <message>
             <source>无法创建模组目录。</source>
-            <translation>Unable to create mod directory.</translation>
+            <translation>Can't create mods folder.</translation>
         </message>
         <message>
             <source>多个模组使用相同文件名但内容不同，未写入：%1</source>
-            <translation>Multiple mods use the same file name but different content, not written: %1</translation>
+            <translation>Multiple mods share the same filename with different content; not written: %1</translation>
         </message>
         <message>
             <source>无法保存部署阶段报告，未写入模组。</source>
-            <translation>Unable to save deployment phase report, mod not written.</translation>
+            <translation>Can't save deployment report; mod not written.</translation>
         </message>
         <message>
             <source>模组预设应用已取消或超时；基础实例保留。</source>
-            <translation>Mod default application has been canceled or timed out; the base instance remains.</translation>
+            <translation>Mod preset apply canceled or timed out; base instance kept.</translation>
         </message>
         <message>
             <source>预设执行记录保存失败；请保留本次任务报告。</source>
-            <translation>Failed to save the default execution record; please keep this task report.</translation>
+            <translation>Couldn't save preset execution record; keep this task report.</translation>
         </message>
         <message>
             <source>失败前已写入 %1 个模组；基础实例和已写入文件保留。</source>
-            <translation>%1 mods were written before failure; base instance and written files retained.</translation>
+            <translation>%1 mods written before failure; base instance and written files kept.</translation>
         </message>
     </context>
     <context>
@@ -23454,7 +23457,7 @@ Report:
         </message>
         <message>
             <source>未检查：本次未返回声明结果</source>
-            <translation>Unchecked: no declaration result returned</translation>
+            <translation>Unchecked: no metadata result returned this round</translation>
         </message>
         <message>
             <source>旧 Forge 注解未完整扫描（候选 %1 个，仅检查 %2 个）</source>
@@ -24737,11 +24740,11 @@ Wait a minute or two and retry.</translation>
         <name>ReplayInfo</name>
         <message>
             <source>无法打开录像压缩包。请确认文件是有效的 Replay 录像。</source>
-            <translation>Could not open the archive. It is not a valid ReplayMod recording.</translation>
+            <translation>Can't open archive. Make sure it's a valid ReplayMod recording.</translation>
         </message>
         <message>
             <source>metaData.json 无法解析（%1）</source>
-            <translation>Could not parse metaData.json (%1)</translation>
+            <translation>Couldn't parse metaData.json (%1)</translation>
         </message>
         <message>
             <source>未找到文件</source>
@@ -24749,31 +24752,31 @@ Wait a minute or two and retry.</translation>
         </message>
         <message>
             <source>文件为空</source>
-            <translation>The file is empty</translation>
+            <translation>File is empty</translation>
         </message>
         <message>
             <source>文件过大，不是有效的 Replay 录像</source>
-            <translation>The file is too large to be a ReplayMod recording</translation>
+            <translation>File too large to be a valid ReplayMod recording</translation>
         </message>
         <message>
             <source>读取 Replay 元数据</source>
-            <translation>Read replay metadata</translation>
+            <translation>Read Replay metadata</translation>
         </message>
         <message>
             <source>压缩包中无 metaData.json，不是 Replay 录像</source>
-            <translation>The archive is missing metaData.json and is not a ReplayMod recording</translation>
+            <translation>Archive is missing metaData.json; not a ReplayMod recording</translation>
         </message>
         <message>
             <source>读取压缩包失败</source>
-            <translation>Could not read the archive</translation>
+            <translation>Couldn't read archive</translation>
         </message>
         <message>
             <source>metaData.json 无 Replay 版本信息</source>
-            <translation>metaData.json does not contain replay version information</translation>
+            <translation>metaData.json is missing replay version info</translation>
         </message>
         <message>
             <source>不足 1 秒</source>
-            <translation>Less than 1 second</translation>
+            <translation>&lt; 1 s</translation>
         </message>
         <message>
             <source>%1 秒</source>
@@ -24789,11 +24792,11 @@ Wait a minute or two and retry.</translation>
         </message>
         <message>
             <source>%1 小时</source>
-            <translation>%1 hr</translation>
+            <translation>%1 h</translation>
         </message>
         <message>
             <source>%1 小时 %2 分</source>
-            <translation>%1 hr %2 min</translation>
+            <translation>%1 h %2 min</translation>
         </message>
         <message>
             <source>单人</source>
@@ -24824,7 +24827,7 @@ Wait a minute or two and retry.</translation>
         <name>RequestBudget::ControlGet</name>
         <message>
             <source>等待网络请求超时。</source>
-            <translation>Timeout waiting for network request.</translation>
+            <translation>Network request timed out.</translation>
         </message>
         <message>
             <source>网络请求已取消。</source>
@@ -25218,7 +25221,7 @@ Wait a minute or two and retry.</translation>
         </message>
         <message>
             <source>在 MC 百科搜索</source>
-            <translation>Search on MCMod</translation>
+            <translation>Search on MCMOD</translation>
         </message>
         <message>
             <source>复制名称</source>
@@ -25226,19 +25229,19 @@ Wait a minute or two and retry.</translation>
         </message>
         <message>
             <source>显示快照版</source>
-            <translation>Show snapshot version</translation>
+            <translation>Show snapshots</translation>
         </message>
         <message>
             <source>按 Alt 键也能切换</source>
-            <translation>You can also switch by pressing the Alt key</translation>
+            <translation>Press Alt to toggle</translation>
         </message>
         <message>
             <source>此资源未发布任何版本</source>
-            <translation>Not a single version of this resource has been released.</translation>
+            <translation>No versions published for this resource.</translation>
         </message>
         <message>
             <source>打开配置文件管理；共享配置需自行选择。</source>
-            <translation>Open configuration file management; shared configuration needs to be selected by yourself.</translation>
+            <translation>Open config file manager; select shared configs manually.</translation>
         </message>
         <message>
             <source>转到 %1</source>
@@ -25253,66 +25256,66 @@ Wait a minute or two and retry.</translation>
         <name>ResourcePackOptions</name>
         <message>
             <source>options.txt 超过 1 MiB，未开放编辑。</source>
-            <translation>Options.txt exceeds 1 MiB and is not open for editing.</translation>
+            <translation>options.txt exceeds 1 MiB; editing disabled.</translation>
         </message>
         <message>
             <source>resourcePacks 不是有效的 JSON 数组，未改写原文件。</source>
-            <translation>ResourcePacks is not a valid JSON array, the original file was not overwritten.</translation>
+            <translation>resourcePacks isn't a valid JSON array; file wasn't modified.</translation>
         </message>
         <message>
             <source>资源包列表包含空值、重复项或非文本项，未开放编辑。</source>
-            <translation>The resource pack list contains empty values, duplicates, or non-text items and is not open for editing.</translation>
+            <translation>Resource pack list contains empty, duplicate, or non-string entries; editing disabled.</translation>
         </message>
         <message>
             <source>资源包标识包含不支持的路径，未开放编辑。</source>
-            <translation>The resource package identifier contains an unsupported path and is not open for editing.</translation>
+            <translation>Resource pack ID contains an unsupported path; editing disabled.</translation>
         </message>
         <message>
             <source>内置或模组注入资源包必须保留，且不能改变它们彼此的顺序。</source>
-            <translation>Built-in or mod-injected resource packs must be preserved, and their order relative to each other cannot be changed.</translation>
+            <translation>Built-in and mod-provided resource packs must stay enabled in their original relative order.</translation>
         </message>
         <message>
             <source>资源包名单包含无效标识或重复项。</source>
-            <translation>Resource pack manifest contains invalid identifiers or duplicates.</translation>
+            <translation>Resource pack list contains invalid IDs or duplicates.</translation>
         </message>
         <message>
             <source>options.txt 不是普通文件，未开放编辑。</source>
-            <translation>Options.txt is not an ordinary file and is not open for editing.</translation>
+            <translation>options.txt isn't a regular file; editing disabled.</translation>
         </message>
         <message>
             <source>无法锁定 options.txt：可能有其他操作正在使用，或目录不可写。</source>
-            <translation>Unable to lock options.txt: There may be other operations in use, or the directory is not writable.</translation>
+            <translation>Can't lock options.txt: it may be in use, or the folder isn't writable.</translation>
         </message>
         <message>
             <source>options.txt 已被外部修改；本次未覆盖，请刷新后重新操作。</source>
-            <translation>Options.txt has been modified externally; it is not overwritten this time, please refresh and try again.</translation>
+            <translation>options.txt was modified externally; not overwritten. Refresh and try again.</translation>
         </message>
         <message>
             <source>待启用的资源包已不存在，请刷新后重试。</source>
-            <translation>The resource package to be activated no longer exists, please refresh and try again.</translation>
+            <translation>Selected resource pack no longer exists. Refresh and try again.</translation>
         </message>
         <message>
             <source>无法创建资源包设置备份目录，未保存。</source>
-            <translation>Unable to create resource package settings backup directory, not saved.</translation>
+            <translation>Couldn't create resource pack settings backup folder; changes not saved.</translation>
         </message>
         <message>
             <source>无法完整保存原 options.txt 的备份，未修改原文件。</source>
-            <translation>The backup of the original options.txt cannot be saved completely, and the original file has not been modified.</translation>
+            <translation>Couldn't back up the original options.txt; file wasn't modified.</translation>
         </message>
         <message>
             <source>保存期间 options.txt 发生变化，未覆盖原文件。</source>
-            <translation>Options.txt changed during saving and the original file was not overwritten.</translation>
+            <translation>options.txt changed while saving; original file wasn't overwritten.</translation>
         </message>
         <message>
             <source>资源包设置保存失败，原文件未被完整替换。</source>
-            <translation>The resource package settings failed to be saved and the original file was not completely replaced.</translation>
+            <translation>Couldn't save resource pack settings; original file wasn't replaced.</translation>
         </message>
     </context>
     <context>
         <name>ResourcePackPage</name>
         <message>
             <source>搜索可用资源包名称或描述</source>
-            <translation>Search for available resource pack names or descriptions</translation>
+            <translation>Search resource packs…</translation>
         </message>
         <message>
             <source>刷新</source>
@@ -25324,7 +25327,7 @@ Wait a minute or two and retry.</translation>
         </message>
         <message>
             <source>已启用（上方优先覆盖）</source>
-            <translation>Enabled (top packs take priority)</translation>
+            <translation>Enabled (top takes priority)</translation>
         </message>
         <message>
             <source>启用 →</source>
@@ -25332,7 +25335,7 @@ Wait a minute or two and retry.</translation>
         </message>
         <message>
             <source>← 停用</source>
-            <translation>← Deactivate</translation>
+            <translation>← Disable</translation>
         </message>
         <message>
             <source>提高优先级</source>
@@ -25340,23 +25343,23 @@ Wait a minute or two and retry.</translation>
         </message>
         <message>
             <source>降低优先级</source>
-            <translation>Lower priority</translation>
+            <translation>Decrease priority</translation>
         </message>
         <message>
             <source>（文件缺失）</source>
-            <translation>(File missing)</translation>
+            <translation> (file missing)</translation>
         </message>
         <message>
             <source>（内置 / 模组提供）</source>
-            <translation>(built-in / provided by mod)</translation>
+            <translation> (built-in / mod-provided)</translation>
         </message>
         <message>
             <source>自动保存生效，不修改源文件。内置项不可移除。</source>
-            <translation>Automatic saving takes effect without modifying the source file. Built-in items cannot be removed.</translation>
+            <translation>Changes save automatically without modifying pack files. Built-in packs can't be removed.</translation>
         </message>
         <message>
             <source>只读：%1</source>
-            <translation>Read only: %1</translation>
+            <translation>Read-only: %1</translation>
         </message>
     </context>
     <context>
@@ -25367,12 +25370,12 @@ Wait a minute or two and retry.</translation>
         </message>
         <message>
             <source>无法打开默认浏览器</source>
-            <translation>Can't open browser</translation>
+            <translation>Can't open default browser</translation>
         </message>
         <message>
             <source>无法打开网址：
 %1</source>
-            <translation>Unable to open this URL: 
+            <translation>Can't open URL:
 %1</translation>
         </message>
         <message>
@@ -25389,39 +25392,39 @@ Wait a minute or two and retry.</translation>
         </message>
         <message>
             <source>正在读取版本列表…</source>
-            <translation>Reading version list…</translation>
+            <translation>Loading version list…</translation>
         </message>
         <message>
             <source>此游戏版本暂无可下载的版本。</source>
-            <translation>There is no downloadable version of this game.</translation>
+            <translation>No downloads available for this game version.</translation>
         </message>
         <message>
             <source>未获取到前置模组的名称：%1</source>
-            <translation>The name of the pre-mod was not found: %1</translation>
+            <translation>Couldn't get dependency name: %1</translation>
         </message>
         <message>
             <source>整合包文件已下载，正在解析清单…</source>
-            <translation>Modpack downloaded. Reading the manifest…</translation>
+            <translation>Modpack downloaded; reading manifest…</translation>
         </message>
         <message>
             <source>正在解析整合包清单…</source>
-            <translation>Reading the modpack manifest…</translation>
+            <translation>Reading modpack manifest…</translation>
         </message>
         <message>
             <source>%1 已安装到此实例。
 
 %2</source>
-            <translation>%1 has been loaded into the instance. 
+            <translation>%1 installed to this instance.
 
 %2</translation>
         </message>
         <message>
             <source>%1 已由用户取消下载。</source>
-            <translation>%1 Download canceled by user.</translation>
+            <translation>%1 download canceled by user.</translation>
         </message>
         <message>
             <source>%1 下载失败：%2</source>
-            <translation>%1 Download failed: %2</translation>
+            <translation>%1 download failed: %2</translation>
         </message>
         <message>
             <source>下载失败</source>
@@ -25431,24 +25434,24 @@ Wait a minute or two and retry.</translation>
             <source>%1 有文件下载失败。
 
 %2</source>
-            <translation>%1 File download failed. 
+            <translation>Some files for %1 didn't finish downloading.
 
 %2</translation>
         </message>
         <message>
             <source>%1 下载完成：%2</source>
-            <translation>%1 Downloaded: %2</translation>
+            <translation>%1 downloaded: %2</translation>
         </message>
         <message>
             <source>下载完成</source>
-            <translation>Download completed</translation>
+            <translation>Download complete</translation>
         </message>
     </context>
     <context>
         <name>ResourceSearchController</name>
         <message>
             <source>搜索%1失败：%2</source>
-            <translation>Search for %1 failed: %2</translation>
+            <translation>Couldn't search %1: %2</translation>
         </message>
     </context>
     <context>
@@ -25463,19 +25466,23 @@ Wait a minute or two and retry.</translation>
         </message>
         <message>
             <source>版本列表无法解析（接口返回的内容不是版本清单）</source>
-            <translation>The version list cannot be parsed (the interface returns not a version list)</translation>
+            <translation>Can't parse version list (response isn't a version manifest)</translation>
         </message>
         <message>
             <source>
 
 公共接口连接受限。可在设置页「下载」中配置个人 CurseForge API Key。</source>
-            <translation>Public interface connection is restricted. A personal CurseForge API Key can be configured in the "Download" settings page.</translation>
+            <translation>
+
+Public API is rate-limited. Set a personal CurseForge API key under Download settings.</translation>
         </message>
         <message>
             <source>
 
 CurseForge API Key 无效或已过期，请重新配置。</source>
-            <translation>CurseForge API Key is invalid or expired, please reconfigure it.</translation>
+            <translation>
+
+CurseForge API key is invalid or expired. Update it in settings.</translation>
         </message>
         <message>
             <source>%1失败（HTTP %2）：%3%4</source>
@@ -25483,7 +25490,7 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         </message>
         <message>
             <source>%1失败（HTTP %2）%3</source>
-            <translation>%1 failed (HTTP %2) %3</translation>
+            <translation>%1 failed (HTTP %2)%3</translation>
         </message>
         <message>
             <source>%1失败：%2%3</source>
@@ -25499,7 +25506,7 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         </message>
         <message>
             <source>单批文件身份查询超过 100 项。</source>
-            <translation>There are more than 100 document identity queries in a single batch.</translation>
+            <translation>Single file identity query batch exceeds 100 items.</translation>
         </message>
         <message>
             <source>识别已安装模组</source>
@@ -25507,130 +25514,130 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         </message>
         <message>
             <source>模组哈希查询响应不是有效对象。</source>
-            <translation>The mod hash query response is not a valid object.</translation>
+            <translation>Mod hash lookup response isn't a valid object.</translation>
         </message>
         <message>
             <source>部分模组身份响应缺少项目/发行版，或文件哈希不符；未采信这些条目。</source>
-            <translation>Some mod identity responses were missing projects/releases, or had mismatched file hashes; these entries were not honored.</translation>
+            <translation>Some mod identity responses lacked project/release IDs or had hash mismatches; skipped.</translation>
         </message>
         <message>
             <source>同一文件哈希返回了相互冲突的项目或发行版，未采信。</source>
-            <translation>The same file hash returned conflicting projects or releases and was not accepted.</translation>
+            <translation>Same file hash returned conflicting projects or releases; ignored.</translation>
         </message>
         <message>
             <source>读取精确前置版本</source>
-            <translation>Read exact forward version</translation>
+            <translation>Read exact dependency version</translation>
         </message>
         <message>
             <source>精确前置版本响应缺少项目身份或发行版 ID 不匹配。</source>
-            <translation>Exact build response is missing project identity or release ID mismatch.</translation>
+            <translation>Exact dependency version response lacks project ID or release ID mismatches.</translation>
         </message>
         <message>
             <source>CurseForge 文件 ID 无效。</source>
-            <translation>CurseForge file ID is invalid.</translation>
+            <translation>Invalid CurseForge file ID.</translation>
         </message>
         <message>
             <source>读取精确前置文件</source>
-            <translation>Read exact prefix file</translation>
+            <translation>Read exact dependency file</translation>
         </message>
         <message>
             <source>精确前置文件响应缺少项目身份或文件 ID 不匹配。</source>
-            <translation>Exact prefile response is missing project identity or file ID mismatch.</translation>
+            <translation>Exact dependency file response lacks project ID or file ID mismatches.</translation>
         </message>
         <message>
             <source>读取资源信息</source>
-            <translation>Read resource information</translation>
+            <translation>Read resource info</translation>
         </message>
     </context>
     <context>
         <name>ResumableDownload</name>
         <message>
             <source>正在提交完整文件，请等待保存结束。</source>
-            <translation>Submitting the complete file, please wait for the save to complete.</translation>
+            <translation>Committing complete file; wait for save to finish.</translation>
         </message>
         <message>
             <source>下载地址或保存路径无效。</source>
-            <translation>The download address or save path is invalid.</translation>
+            <translation>Invalid download URL or save path.</translation>
         </message>
         <message>
             <source>续传缓存目录不可用。</source>
-            <translation>The resumable cache directory is unavailable.</translation>
+            <translation>Resume cache folder unavailable.</translation>
         </message>
         <message>
             <source>同一下载的缓存正被其他任务使用，请稍后重试。</source>
-            <translation>The cache for the same download is being used by other tasks, please try again later.</translation>
+            <translation>Cache for this download is used by another task; retry later.</translation>
         </message>
         <message>
             <source>分段编号无效。</source>
-            <translation>The segment number is invalid.</translation>
+            <translation>Invalid segment index.</translation>
         </message>
         <message>
             <source>无法校验已下载的分段。</source>
-            <translation>Unable to verify downloaded segments.</translation>
+            <translation>Can't verify downloaded segments.</translation>
         </message>
         <message>
             <source>正在检查分段与续传支持…</source>
-            <translation>Checking staging and resuming support...</translation>
+            <translation>Checking segments and resume support…</translation>
         </message>
         <message>
             <source>探测源站超时。</source>
-            <translation>Detection of source station timed out.</translation>
+            <translation>Server probe timed out.</translation>
         </message>
         <message>
             <source>源站文件大小与预期不一致。</source>
-            <translation>The origin file size is not as expected.</translation>
+            <translation>Server file size doesn't match expected.</translation>
         </message>
         <message>
             <source>正在后台校验续传缓存…</source>
-            <translation>Verifying resumption cache in the background...</translation>
+            <translation>Verifying resume cache in background…</translation>
         </message>
         <message>
             <source>正在并行下载分段…</source>
-            <translation>Downloading segments in parallel...</translation>
+            <translation>Downloading segments in parallel…</translation>
         </message>
         <message>
             <source>已恢复 %1 个完整分段，继续下载剩余部分…</source>
-            <translation>Restored %1 complete segments, continue downloading remaining...</translation>
+            <translation>Restored %1 complete segments; downloading remaining parts…</translation>
         </message>
         <message>
             <source>无法保存续传记录：%1</source>
-            <translation>Unable to save resume record: %1</translation>
+            <translation>Can't save resume record: %1</translation>
         </message>
         <message>
             <source>源站未满足安全分段条件，使用普通下载与有限重试。</source>
-            <translation>The origin site does not meet the security segmentation conditions, so use normal download and limited retries.</translation>
+            <translation>Server doesn't support safe segmented download; using standard download with limited retries.</translation>
         </message>
         <message>
             <source>所有分段已就绪，正在后台合并、校验并保存…</source>
-            <translation>All segments are ready and are being merged, verified and saved in the background...</translation>
+            <translation>All segments ready; merging, verifying, and saving in background…</translation>
         </message>
         <message>
             <source>续传分段不可读。</source>
-            <translation>The resume segment is unreadable.</translation>
+            <translation>Resume segment isn't readable.</translation>
         </message>
         <message>
             <source>无法合并分段。</source>
-            <translation>Unable to merge segments.</translation>
+            <translation>Can't merge segments.</translation>
         </message>
         <message>
             <source>续传缓存已经改变，请重试以重新下载损坏分段。</source>
-            <translation>The resuming cache has changed, please try again to re-download the damaged segment.</translation>
+            <translation>Resume cache changed; retry to redownload damaged segments.</translation>
         </message>
         <message>
             <source>合并后的大小或 SHA-1 校验失败。</source>
-            <translation>Merged size or SHA-1 check failed.</translation>
+            <translation>Merged size or SHA-1 verification failed.</translation>
         </message>
         <message>
             <source>下载内容不是有效的 ZIP/JAR 文件。</source>
-            <translation>The download is not a valid ZIP/JAR file.</translation>
+            <translation>Downloaded file isn't a valid ZIP/JAR archive.</translation>
         </message>
         <message>
             <source>目标文件已出现，未覆盖。</source>
-            <translation>The target file appears and is not overwritten.</translation>
+            <translation>Target file already exists; not overwritten.</translation>
         </message>
         <message>
             <source>下载长时间无进展，已停止。请检查网络后重试。</source>
-            <translation>The download has stopped without any progress for a long time. Please check the network and try again.</translation>
+            <translation>Download stalled for too long and stopped. Check your connection and try again.</translation>
         </message>
     </context>
     <context>
@@ -25648,55 +25655,55 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         <name>SchematicInfo</name>
         <message>
             <source>投影文件缺少 Regions 字段，无法读取方块数据。</source>
-            <translation>There is no Regions box in this projection, so the content cannot be read.</translation>
+            <translation>Schematic is missing Regions; can't read block data.</translation>
         </message>
         <message>
             <source>原理图缺少 Palette 字段，无法读取方块数据。</source>
-            <translation>There is no Palette box in this schematic, so the content cannot be read.</translation>
+            <translation>Schematic is missing Palette; can't read block data.</translation>
         </message>
         <message>
             <source>结构文件缺少 palette 字段，无法读取方块数据。</source>
-            <translation>There is no palette in this structure file, so the content cannot be read.</translation>
+            <translation>Structure file is missing palette; can't read block data.</translation>
         </message>
         <message>
             <source>文件大小为 %1 MB，超出预览上限。</source>
-            <translation>This file is too large (%1 MB) and this page cannot be read.</translation>
+            <translation>File is too large (%1 MB) to preview.</translation>
         </message>
         <message>
             <source>无法打开结构文件：%1</source>
-            <translation>Unable to open this file: %1</translation>
+            <translation>Can't open structure file: %1</translation>
         </message>
         <message>
             <source>gzip 解压失败：%1</source>
-            <translation>This file is gzip wrapped but cannot be unpacked: %1</translation>
+            <translation>Couldn't decompress gzip: %1</translation>
         </message>
         <message>
             <source>解压内容为空，文件可能损坏或下载未完成。</source>
-            <translation>The decompressed content is empty, the file may be damaged or the download is incomplete.</translation>
+            <translation>Decompressed content is empty; the file may be corrupted or incomplete.</translation>
         </message>
         <message>
             <source>未找到文件。</source>
-            <translation>The file cannot be found.</translation>
+            <translation>File not found.</translation>
         </message>
         <message>
             <source>文件为空。</source>
-            <translation>This file is empty.</translation>
+            <translation>File is empty.</translation>
         </message>
         <message>
             <source>无法创建临时目录。</source>
-            <translation>This step of decompression does not free up the temporary directory.</translation>
+            <translation>Can't create temp folder.</translation>
         </message>
         <message>
             <source>解压后大小超过 %1 MB，不展开读取。</source>
-            <translation>After decompression, it is too large (more than %1 MB) and this page will not be expanded for reading.</translation>
+            <translation>Decompressed size exceeds %1 MB; skipped reading.</translation>
         </message>
         <message>
             <source>无法打开解压后的临时文件。</source>
-            <translation>The decompressed temporary file cannot be opened.</translation>
+            <translation>Can't open decompressed temp file.</translation>
         </message>
         <message>
             <source>Litematica 投影</source>
-            <translation>Litematica projection</translation>
+            <translation>Litematica schematic</translation>
         </message>
         <message>
             <source>Sponge 原理图</source>
@@ -25704,23 +25711,23 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         </message>
         <message>
             <source>原版结构</source>
-            <translation>Original structure</translation>
+            <translation>Vanilla structure</translation>
         </message>
         <message>
             <source>无法识别</source>
-            <translation>Don't know</translation>
+            <translation>Unrecognized</translation>
         </message>
         <message>
             <source>无法解析 NBT 文件：%1</source>
-            <translation>This document cannot be read NBT: %1</translation>
+            <translation>Couldn't parse NBT file: %1</translation>
         </message>
         <message>
             <source>根标签不是复合标签，无法作为结构或原理图读取。</source>
-            <translation>The root of this document is not a composite tag, not a structure/schematic.</translation>
+            <translation>Root tag isn't a compound tag; not a valid structure or schematic.</translation>
         </message>
         <message>
             <source>缺少 Regions、Palette 或 palette 字段，无法识别结构文件格式。</source>
-            <translation>I don’t recognize what kind of structure/schematic this is (there are no Regions, Palette, and Palette boxes).</translation>
+            <translation>Unrecognized format (missing Regions, Palette, and palette fields).</translation>
         </message>
         <message>
             <source>数据版本 %1</source>
@@ -25728,7 +25735,7 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         </message>
         <message>
             <source>文件版本为 %1，当前实例版本为 %2。版本差异可能导致部分方块无法识别。</source>
-            <translation>This file comes from %1, this example is %2 - the versions are different, there may be block compatibility issues (it may be fine, enter the game and check again).</translation>
+            <translation>File is for %1, while this instance is %2. Some blocks may not be recognized due to version differences.</translation>
         </message>
         <message>
             <source>「%1」</source>
@@ -25736,11 +25743,11 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         </message>
         <message>
             <source>作者 %1</source>
-            <translation>Author %1</translation>
+            <translation>Author: %1</translation>
         </message>
         <message>
             <source>%1 种方块</source>
-            <translation>%1 types of blocks</translation>
+            <translation>%1 block types</translation>
         </message>
         <message>
             <source>%1 个方块</source>
@@ -25753,22 +25760,23 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         <message>
             <source>
 （方块数据读取失败，仅显示元数据）</source>
-            <translation>(The block table of this file has not been solved, only the metadata has been read)</translation>
+            <translation>
+(Couldn't read block data; showing metadata only)</translation>
         </message>
         <message>
             <source>数量最多的方块：</source>
-            <translation>Most blocks:</translation>
+            <translation>Top blocks:</translation>
         </message>
         <message>
             <source>  %1：%2</source>
-            <translation>%1:%2</translation>
+            <translation>  %1: %2</translation>
         </message>
     </context>
     <context>
         <name>SchematicInfoDialog</name>
         <message>
             <source>原理图信息</source>
-            <translation>Schematic information</translation>
+            <translation>Schematic info</translation>
         </message>
         <message>
             <source>大小：%1 MB</source>
@@ -25791,83 +25799,85 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         <name>ServerCheck</name>
         <message>
             <source>要处理</source>
-            <translation>To be processed</translation>
+            <translation>Action needed</translation>
         </message>
         <message>
             <source>提醒</source>
-            <translation>Remind</translation>
+            <translation>Warning</translation>
         </message>
         <message>
             <source>说明</source>
-            <translation>Illustrate</translation>
+            <translation>Info</translation>
         </message>
         <message>
             <source>启动入口、配置和端口检查均通过。</source>
-            <translation>No problems were found - the entry files were all in order, the values ​​in the configuration files were correct, and no one occupied the port.</translation>
+            <translation>All checks passed (launch entry, settings, and port).</translation>
         </message>
         <message>
             <source>%1 项要处理</source>
-            <translation>%1 items to process</translation>
+            <translation>Action needed: %1</translation>
         </message>
         <message>
             <source>%1 项提醒</source>
-            <translation>%1 reminders</translation>
+            <translation>Warnings: %1</translation>
         </message>
         <message>
             <source>%1 项说明</source>
-            <translation>%1 description</translation>
+            <translation>Info: %1</translation>
         </message>
         <message>
             <source>服务端安装记录缺失</source>
-            <translation>Server installation record is missing</translation>
+            <translation>Server install record missing</translation>
         </message>
         <message>
             <source>无法确定安装类型与重装参数。请检查启动文件，或通过启动器重新创建服务端。</source>
-            <translation>Unable to determine installation type and reinstallation parameters. Please check the startup file or recreate the server through the launcher.</translation>
+            <translation>Can't determine install type or repair options. Check the startup file or recreate the server in the launcher.</translation>
         </message>
         <message>
             <source>无法根据安装记录生成启动命令</source>
-            <translation>Unable to generate startup command based on installation record</translation>
+            <translation>Can't build launch command from install record</translation>
         </message>
         <message>
             <source>安装记录缺少启动所需的版本信息。</source>
-            <translation>The installation record is missing version information required for startup.</translation>
+            <translation>Install record is missing required version info for launch.</translation>
         </message>
         <message>
             <source>尚未接受 Minecraft 最终用户许可协议</source>
-            <translation>The Minecraft End User License Agreement has not been accepted</translation>
+            <translation>Minecraft EULA not accepted</translation>
         </message>
         <message>
             <source>首次启动前需阅读并接受协议，确认后将更新 eula.txt。</source>
-            <translation>You need to read and accept the agreement before starting it for the first time, and eula.txt will be updated after confirmation.</translation>
+            <translation>Read and accept the EULA before first start; confirming updates eula.txt.</translation>
         </message>
         <message>
             <source>「%1」的值无效</source>
-            <translation>The value of '%1' is invalid</translation>
+            <translation>Invalid value for "%1"</translation>
         </message>
         <message>
             <source>当前值：%1。%2
 可恢复默认值，或在「常用设置」中修改。</source>
             <translation>Current value: %1. %2
- can restore the default value or modify it in "Common Settings".</translation>
+Restore defaults or edit it in General.</translation>
         </message>
         <message>
             <source>入口文件不在当前目录中。</source>
-            <translation>The entry file is not in this directory.</translation>
+            <translation>Entry file isn't in this folder.</translation>
         </message>
         <message>
             <source>
 点击「修复（重新安装）」下载缺失文件。</source>
-            <translation>Click "Repair (Reinstall)" to download the missing files.</translation>
+            <translation>
+Click "Repair (reinstall)" to download missing files.</translation>
         </message>
         <message>
             <source>此服务端尚未安装完成</source>
-            <translation>This server has not been installed yet</translation>
+            <translation>Server installation incomplete</translation>
         </message>
         <message>
             <source>
 点击「修复（重新安装）」按记录的来源完整重装。</source>
-            <translation>Click "Repair (Reinstall)" to completely reinstall from the recorded source.</translation>
+            <translation>
+Click "Repair (reinstall)" to reinstall from the recorded source.</translation>
         </message>
         <message>
             <source>（空）</source>
@@ -25875,53 +25885,53 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         </message>
         <message>
             <source>端口 %1 已被占用</source>
-            <translation>Port %1 is already occupied</translation>
+            <translation>Port %1 is already in use</translation>
         </message>
         <message>
             <source>端口冲突将导致服务端启动失败。
 请关闭占用端口的程序，或在「常用设置」中更换端口。</source>
-            <translation>Port conflicts will cause the server to fail to start. 
-Please close the program occupying the port, or change the port in "Common Settings".</translation>
+            <translation>Port conflicts prevent the server from starting.
+Close the app using the port, or change the port in General.</translation>
         </message>
         <message>
             <source>配置包含重复键：%1</source>
-            <translation>Configuration contains duplicate keys: %1</translation>
+            <translation>Config contains duplicate keys: %1</translation>
         </message>
         <message>
             <source>、</source>
-            <translation>,</translation>
+            <translation>, </translation>
         </message>
         <message>
             <source>重复键以最后一项为准。可在「原始文本」中移除重复项。</source>
-            <translation>Duplicate keys are subject to the last item. Duplicates can be removed in the Original Text.</translation>
+            <translation>Only the last value takes effect for duplicate keys. Remove duplicates in "Raw text".</translation>
         </message>
         <message>
             <source>世界尚无备份</source>
-            <translation>The world has no backup yet</translation>
+            <translation>No world backups</translation>
         </message>
         <message>
             <source>世界数据无法通过重新下载恢复。建议在「世界备份」中选择「立即备份」。</source>
-            <translation>World data cannot be restored by re-downloading. It is recommended to select "Backup Now" in "World Backup".</translation>
+            <translation>World data can't be redownloaded if lost. Click "Back up now" under "World backups".</translation>
         </message>
         <message>
             <source>世界「%1」尚未生成</source>
-            <translation>The world "%1" has not been generated yet</translation>
+            <translation>World "%1" not generated</translation>
         </message>
         <message>
             <source>世界目录将在首次启动时生成。</source>
-            <translation>The world catalog will be generated on first launch.</translation>
+            <translation>The world folder is created on first launch.</translation>
         </message>
         <message>
             <source>世界「%1」已存在</source>
-            <translation>The world "%1" already exists</translation>
+            <translation>World "%1" exists</translation>
         </message>
         <message>
             <source>目录：%1/%2。</source>
-            <translation>Directory: %1/%2.</translation>
+            <translation>Folder: %1/%2.</translation>
         </message>
         <message>
             <source>，大小 %1 MB</source>
-            <translation>, size %1 MB</translation>
+            <translation>, %1 MB</translation>
         </message>
         <message>
             <source>已安装 %1 个模组或插件</source>
@@ -25929,15 +25939,15 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>新增或更改模组后需重启服务端。</source>
-            <translation>After adding or changing a mod, you need to restart the server.</translation>
+            <translation>Restart the server after adding or changing mods.</translation>
         </message>
         <message>
             <source>配置包含 %1 项无法通过表单编辑的设置</source>
-            <translation>Configuration contains %1 settings that do not provide form editing</translation>
+            <translation>Config contains %1 settings not editable in the form</translation>
         </message>
         <message>
             <source>以下设置（%1）可在「原始文本」中编辑。保存表单时将保留其原值。</source>
-            <translation>The following settings (%1) can be edited in Original Text. The original values ​​will be retained when the form is saved.</translation>
+            <translation>These settings (%1) can be edited in "Raw text". Their values are preserved when saving the form.</translation>
         </message>
     </context>
     <context>
@@ -26759,7 +26769,7 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>该 zip 的 SHA-1；可选择本地 zip 计算</source>
-            <translation>SHA-1 hash of the pack ZIP; use the button on the right to compute from a local ZIP</translation>
+            <translation>SHA-1 hash of the pack ZIP; select a local ZIP to compute it</translation>
         </message>
         <message>
             <source>正版验证</source>
@@ -27102,7 +27112,7 @@ Please close the program occupying the port, or change the port in "Common Setti
         <name>ServerSettingsPage</name>
         <message>
             <source>编辑存档</source>
-            <translation>Edit World</translation>
+            <translation>Edit world</translation>
         </message>
         <message>
             <source>备份</source>
@@ -27110,7 +27120,7 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>其他属性</source>
-            <translation>Other Properties</translation>
+            <translation>Other properties</translation>
         </message>
         <message>
             <source>打开目录</source>
@@ -27466,15 +27476,15 @@ Please close the program occupying the port, or change the port in "Common Setti
         <name>StartupDiagnosis</name>
         <message>
             <source>问题</source>
-            <translation>Question</translation>
+            <translation>Problem</translation>
         </message>
         <message>
             <source>提醒</source>
-            <translation>Remind</translation>
+            <translation>Warning</translation>
         </message>
         <message>
             <source>信息</source>
-            <translation>Information</translation>
+            <translation>Info</translation>
         </message>
         <message>
             <source>正常</source>
@@ -27482,39 +27492,39 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>%1 个问题</source>
-            <translation>%1 questions</translation>
+            <translation>%1 problems</translation>
         </message>
         <message>
             <source>%1 条提醒</source>
-            <translation>%1 reminders</translation>
+            <translation>%1 warnings</translation>
         </message>
         <message>
             <source>启动诊断：发现 %1</source>
-            <translation>Start Diagnostics: Found %1</translation>
+            <translation>Startup diagnostics: %1</translation>
         </message>
         <message>
             <source>、</source>
-            <translation>,</translation>
+            <translation>, </translation>
         </message>
         <message>
             <source>【%1】%2</source>
-            <translation>[%1]%2</translation>
+            <translation>[%1] %2</translation>
         </message>
         <message>
             <source>实例：%1（%2）</source>
-            <translation>Example: %1 (%2)</translation>
+            <translation>Instance: %1 (%2)</translation>
         </message>
         <message>
             <source>实例：%1</source>
-            <translation>Example: %1</translation>
+            <translation>Instance: %1</translation>
         </message>
         <message>
             <source>无法识别实例的实际游戏版本</source>
-            <translation>Can't read the real game version of this instance</translation>
+            <translation>Can't detect instance's actual game version</translation>
         </message>
         <message>
             <source>请在「完整性检查」中检查版本 JSON 是否完整。</source>
-            <translation>Check whether the version json is complete (you can scan the "Integrity Check" page).</translation>
+            <translation>Check version JSON completeness under Integrity check.</translation>
         </message>
         <message>
             <source>加载器：%1%2</source>
@@ -27526,7 +27536,7 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>已指定 Java</source>
-            <translation>Java specified</translation>
+            <translation>Custom Java set</translation>
         </message>
         <message>
             <source>自动</source>
@@ -27534,7 +27544,7 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>请将 Xmx 调低至物理内存容量以内，并为系统保留内存。</source>
-            <translation>Reduce the size of Xmx to within the machine memory; if the allocation is larger than the physical memory, the JVM is likely to fail when allocating the heap after it is started.</translation>
+            <translation>Lower Xmx below physical RAM and leave memory for the system.</translation>
         </message>
         <message>
             <source>内存分配</source>
@@ -27542,11 +27552,11 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>模组整合包通常需要更多内存。原版 1.20 及以上建议至少分配 1024 MB。</source>
-            <translation>Mod packs are prone to OutOfMemoryError; vanilla 1.20 onwards also recommends at least 1024 MB.</translation>
+            <translation>Modpacks usually need more memory. Vanilla 1.20+ recommends at least 1024 MB.</translation>
         </message>
         <message>
             <source>仅获得配置的内存值，无法与设备容量比较。</source>
-            <translation>The memory column only reports the configuration value, and the relative size cannot be determined.</translation>
+            <translation>Got configured memory value only; can't compare with system RAM.</translation>
         </message>
         <message>
             <source>已启用 %1 个模组</source>
@@ -27558,11 +27568,11 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>有 %1 个模组处于禁用状态</source>
-            <translation>%1 mods are disabled</translation>
+            <translation>%1 mods disabled</translation>
         </message>
         <message>
             <source>这些模组以 `*.jar.disabled` 保存，游戏会跳过它们。</source>
-            <translation>They are called `*.jar.disabled` on the disk and the game will not load.</translation>
+            <translation>Saved as `*.jar.disabled`; the game skips these files.</translation>
         </message>
         <message>
             <source>文件：%1</source>
@@ -27570,55 +27580,55 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>完整信息见「崩溃报告」页。</source>
-            <translation>The complete content is on the "Crash Report" page.</translation>
+            <translation>See the Crash reports page for full details.</translation>
         </message>
         <message>
             <source>请检查日志中对应类所属的模组，确认依赖已安装且与当前游戏版本兼容。</source>
-            <translation>Most likely, the mod dependencies are not installed properly, or a mod compiled for another game version is installed; see which mod the class name in the report belongs to.</translation>
+            <translation>Check the mod owning the class in the log; verify its dependencies and game version compatibility.</translation>
         </message>
         <message>
             <source>最近一份崩溃报告发生在模组注入阶段（Mixin）</source>
-            <translation>The most recent crash report occurred during the mod injection phase (Mixin)</translation>
+            <translation>Latest crash report occurred during mod injection (Mixin)</translation>
         </message>
         <message>
             <source>启动诊断：未发现明显问题</source>
-            <translation>Startup diagnostics: No obvious problems found</translation>
+            <translation>Startup diagnostics: no obvious issues found</translation>
         </message>
         <message>
             <source>此实例未指向任何游戏版本</source>
-            <translation>This instance does not point to any game version</translation>
+            <translation>Instance has no game version configured</translation>
         </message>
         <message>
             <source>实例目录中无法读取可启动的版本信息。</source>
-            <translation>The version information that can be started cannot be read in the instance directory.</translation>
+            <translation>Can't read launchable version info in the instance folder.</translation>
         </message>
         <message>
             <source>请在实例设置中重新确认版本，或重新安装此实例。</source>
-            <translation>Reconfirm the version in the instance settings, or reinstall the instance.</translation>
+            <translation>Reconfirm the version in instance settings, or reinstall this instance.</translation>
         </message>
         <message>
             <source>版本记录中无 realVersion，界面只能显示目录名。</source>
-            <translation>There is no realVersion in the version record, and only the directory name can be displayed on the interface.</translation>
+            <translation>No realVersion in version record; UI can only show the folder name.</translation>
         </message>
         <message>
             <source>未安装模组加载器，但启用了 %1 个模组</source>
-            <translation>No mod loader, but %1 enabled mods</translation>
+            <translation>No mod loader installed, but %1 mods enabled</translation>
         </message>
         <message>
             <source>mods/ 中有 %1 个 .jar，但此实例为原版（未安装 Fabric / Forge / NeoForge / Quilt），游戏不会加载这些文件。</source>
-            <translation>There are %1 .jars lying around in mods/, but this instance is vanilla (no Fabric / Forge / NeoForge / Quilt) and the game won't read them.</translation>
+            <translation>%1 .jar files in mods/, but instance is Vanilla (no Fabric / Forge / NeoForge / Quilt); the game won't load them.</translation>
         </message>
         <message>
             <source>请安装模组加载器，或移除 mods/ 中的 jar 文件。</source>
-            <translation>Install a mod loader on this version, or move the jars in mods/.</translation>
+            <translation>Install a mod loader or remove the .jar files in mods/.</translation>
         </message>
         <message>
             <source>原版实例（未安装模组加载器）</source>
-            <translation>Vanilla instance (without mod loader)</translation>
+            <translation>Vanilla instance (no mod loader)</translation>
         </message>
         <message>
             <source>未预先指定 Java，启动时自动选择</source>
-            <translation>Java is not specified in advance and is automatically selected at startup.</translation>
+            <translation>Java not specified; selected automatically on launch</translation>
         </message>
         <message>
             <source>此版本需要 Java %1。</source>
@@ -27626,163 +27636,163 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>版本 json 未指定 Java 版本，启动时按游戏版本推断。</source>
-            <translation>The version json does not say which Java is required, it is inferred according to the game version at startup.</translation>
+            <translation>Version JSON doesn't specify Java version; inferred from game version on launch.</translation>
         </message>
         <message>
             <source>本机无匹配 Java 时，首次启动将先下载运行时。</source>
-            <translation>If the machine does not have matching Java, a runtime will be downloaded for the first time.</translation>
+            <translation>If no matching Java is found locally, a runtime downloads on first launch.</translation>
         </message>
         <message>
             <source>Java 已设为「手动指定」，但路径为空</source>
-            <translation>Java selected "Manually Specify", but the path is empty</translation>
+            <translation>Java set to "Manual", but path is empty</translation>
         </message>
         <message>
             <source>手动模式下启动器不会自动选择 Java。</source>
-            <translation>In manual mode, the launcher will not select Java by itself.</translation>
+            <translation>In manual mode, the launcher won't auto-select Java.</translation>
         </message>
         <message>
             <source>请在「启动设置」中指定 java.exe，或切换回「自动」。</source>
-            <translation>Fill in a java.exe in "Startup Settings", or switch back to "Automatic".</translation>
+            <translation>Specify java.exe in Launch settings, or switch back to Automatic.</translation>
         </message>
         <message>
             <source>指定的 Java 不可用</source>
-            <translation>The specified Java cannot be used</translation>
+            <translation>Configured Java is unavailable</translation>
         </message>
         <message>
             <source>请将路径改为存在的 java.exe（或 JDK/JRE 目录），或切换回自动。</source>
-            <translation>Change the path to a real java.exe (or JDK/JRE directory), or switch back to automatic.</translation>
+            <translation>Set the path to a valid java.exe (or JDK/JRE folder), or switch back to Automatic.</translation>
         </message>
         <message>
             <source>此版本需要 Java %1；诊断不启动 JVM，具体主版本以启动日志为准。</source>
-            <translation>This version requires Java %1; the diagnosis does not start the JVM. The specific main version is subject to the startup log.</translation>
+            <translation>This version requires Java %1; diagnostics don't launch the JVM, check the launch log for the exact major version.</translation>
         </message>
         <message>
             <source>设备总内存 %1 MB</source>
-            <translation>Machine total %1 MB</translation>
+            <translation>Total system RAM: %1 MB</translation>
         </message>
         <message>
             <source>分配给游戏的内存超过设备总内存</source>
-            <translation>The memory allocated to the game exceeds the total memory of the machine</translation>
+            <translation>Allocated memory exceeds total system RAM</translation>
         </message>
         <message>
             <source>分配给游戏的内存过多</source>
-            <translation>Too much memory allocated to games</translation>
+            <translation>Too much memory allocated to the game</translation>
         </message>
         <message>
             <source>请为系统和其他程序保留内存；模组整合包还需加载资源。</source>
-            <translation>Leave some space for the system and other programs, especially mod integration packages to load resources.</translation>
+            <translation>Leave RAM for the system and other apps; modpacks also need extra memory for assets.</translation>
         </message>
         <message>
             <source>分配给游戏的内存过小（%1 MB）</source>
-            <translation>The memory allocated to the game is too small (%1 MB)</translation>
+            <translation>Allocated memory is too low (%1 MB)</translation>
         </message>
         <message>
             <source>无法读取设备物理内存</source>
-            <translation>Unable to read the physical memory of this machine</translation>
+            <translation>Can't read physical system RAM</translation>
         </message>
         <message>
             <source>此实例无 mods 目录</source>
-            <translation>This instance does not have a mods directory</translation>
+            <translation>Instance has no mods folder</translation>
         </message>
         <message>
             <source>首次添加模组时自动创建该目录。</source>
-            <translation>The directory will be created automatically the first time you put a mod into it.</translation>
+            <translation>Created automatically when the first mod is added.</translation>
         </message>
         <message>
             <source>mods/ 中无已启用的模组</source>
-            <translation>There are no enabled mods in mods/</translation>
+            <translation>No enabled mods in mods/</translation>
         </message>
         <message>
             <source>暂无崩溃报告</source>
-            <translation>No crash report</translation>
+            <translation>No crash reports</translation>
         </message>
         <message>
             <source>最近一份崩溃报告为内存不足（OutOfMemoryError）</source>
-            <translation>The most recent crash report was out of memory (OutOfMemoryError)</translation>
+            <translation>Latest crash report shows out of memory (OutOfMemoryError)</translation>
         </message>
         <message>
             <source>请调大 Xmx（确认设备有空闲内存），或减少同时加载的模组。</source>
-            <translation>Increase Xmx (make sure the machine really has free memory first), or reduce the number of mods loaded at the same time.</translation>
+            <translation>Increase Xmx (if system RAM allows) or reduce enabled mods.</translation>
         </message>
         <message>
             <source>最近一份崩溃报告为 Java 版本不匹配（UnsupportedClassVersionError）</source>
-            <translation>The most recent crash report was an incorrect Java version (UnsupportedClassVersionError)</translation>
+            <translation>Latest crash report shows Java version mismatch (UnsupportedClassVersionError)</translation>
         </message>
         <message>
             <source>此崩溃表明有内容使用比当前 Java 更新的版本编译。请更换更新的 Java 后重试。</source>
-            <translation>This crash indicates that something was compiled with a newer version of Java than your current version; try again with a newer version of Java.</translation>
+            <translation>Something was compiled for a newer Java version. Switch to a newer Java and retry.</translation>
         </message>
         <message>
             <source>最近一份崩溃报告为缺类异常</source>
-            <translation>The most recent crash report contained a missing class exception.</translation>
+            <translation>Latest crash report shows a missing class exception</translation>
         </message>
         <message>
             <source>报告通常会指明一个模组。请先单独移除该模组再启动，以确认原因。</source>
-            <translation>A mod is usually named in the report; remove it individually and then enable it to see if it is the cause.</translation>
+            <translation>Reports usually name a mod. Remove that mod and launch again to confirm.</translation>
         </message>
         <message>
             <source>最近一份崩溃报告：%1</source>
-            <translation>Last crash report: %1</translation>
+            <translation>Latest crash report: %1</translation>
         </message>
         <message>
             <source>暂无启动日志</source>
-            <translation>No startup log yet</translation>
+            <translation>No launch log</translation>
         </message>
         <message>
             <source>此数据目录下无使用该启动器运行游戏的记录。</source>
-            <translation>This launcher has not yet launched a game in this data directory.</translation>
+            <translation>No game launches recorded by this launcher in this data directory.</translation>
         </message>
         <message>
             <source>启动日志中出现 UnsupportedClassVersionError（Java 太旧）</source>
-            <translation>UnsupportedClassVersionError (Java is too old) appears in the startup log</translation>
+            <translation>UnsupportedClassVersionError (Java too old) found in launch log</translation>
         </message>
         <message>
             <source>请更换更新的 Java；具体版本请查阅版本 json 或模组说明。</source>
-            <translation>Change to a newer Java; check the version json or mod description for the specific version.</translation>
+            <translation>Switch to a newer Java; check the version JSON or mod docs for the required version.</translation>
         </message>
         <message>
             <source>启动日志中有错误，但未看到退出码</source>
-            <translation>There are errors in the startup log, but I don’t see the exit code.</translation>
+            <translation>Errors found in launch log, but no exit code recorded</translation>
         </message>
         <message>
             <source>启动日志中未看到游戏退出记录</source>
-            <translation>There is no game exit record in the startup log.</translation>
+            <translation>No game exit recorded in launch log</translation>
         </message>
         <message>
             <source>当前会话无游戏启动记录。</source>
-            <translation>It may be that the game has not been launched since the launcher was launched this time.</translation>
+            <translation>No game launches in the current session.</translation>
         </message>
         <message>
             <source>启动日志中出现 OutOfMemoryError</source>
-            <translation>OutOfMemoryError appears in startup log</translation>
+            <translation>OutOfMemoryError found in launch log</translation>
         </message>
         <message>
             <source>日志末尾未找到 [Game Error] 标记。</source>
-            <translation>There is no [Game Error] line at the end of the log.</translation>
+            <translation>No [Game Error] marker found at the end of the log.</translation>
         </message>
         <message>
             <source>上一次游戏以退出码 %1 结束</source>
-            <translation>The last game ended with exit code %1</translation>
+            <translation>Last game exited with code %1</translation>
         </message>
         <message>
             <source>「日志」页提供完整输出。若有同一时间的崩溃报告，可在「崩溃报告」页查看。</source>
-            <translation>The "Log" page has complete output; if the crash report can match the same time, the "Crash Report" page has the scene.</translation>
+            <translation>See the Logs page for full output. Matching crash reports appear on the Crash reports page.</translation>
         </message>
         <message>
             <source>上一次游戏正常退出（退出码 0）</source>
-            <translation>The last time the game exited normally (exit code 0)</translation>
+            <translation>Last game exited normally (exit code 0)</translation>
         </message>
         <message>
             <source>尚未获取完整的启动结果。可在「日志」页查看最新记录。</source>
-            <translation>It may be that the startup has not finished yet; look at the last few lines on the "Log" page.</translation>
+            <translation>Full launch result isn't available. Check the latest lines on the Logs page.</translation>
         </message>
         <message>
             <source>游戏运行期间内存不足（可能未生成崩溃报告）。</source>
-            <translation>The game runs out of memory while running (not necessarily leaving a crash report).</translation>
+            <translation>Game ran out of memory during runtime (may not leave a crash report).</translation>
         </message>
         <message>
             <source>请调大 Xmx，或减少部分模组后重试。</source>
-            <translation>Turn up the Xmx, or turn off some mods and try again.</translation>
+            <translation>Increase Xmx or disable some mods and retry.</translation>
         </message>
     </context>
     <context>
@@ -29193,7 +29203,7 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>复制 /give 指令（写法随目标版本变化）</source>
-            <translation>Copy the /give command (syntax depends on the target version)</translation>
+            <translation>Copy /give command (syntax depends on the target version)</translation>
         </message>
         <message>
             <source>步骤：</source>
@@ -29294,19 +29304,19 @@ Please close the program occupying the port, or change the port in "Common Setti
         <name>TransferApply</name>
         <message>
             <source>源或目标目录不可用、包含链接，或互相嵌套。</source>
-            <translation>The source or target directory is unavailable, contains links, or is nested within each other.</translation>
+            <translation>Source or target folder is unavailable, contains links, or overlaps.</translation>
         </message>
         <message>
             <source>：</source>
-            <translation>:</translation>
+            <translation>: </translation>
         </message>
         <message>
             <source>不是源实例 mods 中的普通文件</source>
-            <translation>Not an ordinary file in source instance mods</translation>
+            <translation>Not a regular file in source instance mods</translation>
         </message>
         <message>
             <source>跳过同名文件</source>
-            <translation>Skip files with the same name</translation>
+            <translation>Skip existing file</translation>
         </message>
         <message>
             <source>复制</source>
@@ -29314,7 +29324,7 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>无法打开文件或创建临时文件</source>
-            <translation>Unable to open file or create temporary file</translation>
+            <translation>Can't open file or create temp file</translation>
         </message>
         <message>
             <source>读取或写入失败</source>
@@ -29322,15 +29332,15 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>校验</source>
-            <translation>Check</translation>
+            <translation>Verify</translation>
         </message>
         <message>
             <source>校验失败或来源在处理期间发生变化</source>
-            <translation>Verification failed or the source changed during processing</translation>
+            <translation>Verification failed or source changed during processing</translation>
         </message>
         <message>
             <source>目标已变化或无法提交文件（未覆盖）</source>
-            <translation>Target has changed or file cannot be submitted (not covered)</translation>
+            <translation>Target changed or file couldn't be committed (not overwritten)</translation>
         </message>
         <message>
             <source>已复制</source>
@@ -29338,70 +29348,77 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>副本已验证，但未能删除来源；已保留两份</source>
-            <translation>Copy verified, but source failed to be removed; two copies retained</translation>
+            <translation>Copy verified, but couldn't remove source; both copies kept</translation>
         </message>
         <message>
             <source>完成</source>
-            <translation>Finish</translation>
+            <translation>Done</translation>
         </message>
         <message>
             <source>已达到 600 秒截止时间。</source>
-            <translation>The 600 second cutoff has been reached.</translation>
+            <translation>600-second deadline reached.</translation>
         </message>
         <message>
             <source>复制了 %1 个文件（%2）</source>
-            <translation>%1 files copied (%2)</translation>
+            <translation>Copied %1 files (%2)</translation>
         </message>
         <message>
             <source>跳过 %1 个（目标中已有同名文件，未覆盖）</source>
-            <translation>Skip %1 items (the target already has the same name and is not overwritten)</translation>
+            <translation>skipped %1 (matching filename on target; not overwritten)</translation>
         </message>
         <message>
             <source>
 
 未迁移的文件：</source>
-            <translation>Not moved:</translation>
+            <translation>
+
+Files not migrated:</translation>
         </message>
         <message>
             <source>
 • …另有 %1 个</source>
-            <translation>• …and %1 more</translation>
+            <translation>
+• …and %1 more</translation>
         </message>
         <message>
             <source>未提供完整的源实例和目标实例目录。</source>
-            <translation>There is no directory for the full source instance and target instance.</translation>
+            <translation>Source and target instance folders aren't both provided.</translation>
         </message>
         <message>
             <source>未找到源实例目录：%1</source>
-            <translation>Source instance directory not found: %1</translation>
+            <translation>Source instance folder not found: %1</translation>
         </message>
         <message>
             <source>未找到目标实例目录：%1</source>
-            <translation>Target instance directory not found: %1</translation>
+            <translation>Target instance folder not found: %1</translation>
         </message>
         <message>
             <source>源实例与目标实例相同或互相嵌套，本次未迁移任何文件。</source>
-            <translation>The source instance and the target instance are the same (or nested in each other), and no files have been moved this time.</translation>
+            <translation>Source and target instances are the same or nested; no files migrated.</translation>
         </message>
         <message>
             <source>校验：已检查 %1 个文件，缺少 %2 个</source>
-            <translation>Verification: Viewed %1 files, missing %2 files</translation>
+            <translation>Verification: %1 files checked, %2 missing</translation>
         </message>
         <message>
             <source>；另有 %1 个目标中原有的同名文件大小不同（按规则未覆盖）</source>
-            <translation>;There are also %1 original files with the same name in different targets (not overwritten according to the rules)</translation>
+            <translation>; %1 existing files on target differ in size (not overwritten)</translation>
         </message>
         <message>
             <source>
 
 目标中未找到的文件：</source>
-            <translation>Was not found in the target:</translation>
+            <translation>
+
+Files not found on target:</translation>
         </message>
         <message>
             <source>
 
 大小不同（目标原有）：</source>
-            <translation>With different sizes (originally included in the target):</translation>
+            <translation>
+
+Size mismatches (already on target):</translation>
         </message>
         <message>
             <source>失败 %1 个</source>
@@ -29409,7 +29426,7 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>，</source>
-            <translation>,</translation>
+            <translation>, </translation>
         </message>
         <message>
             <source>。</source>
@@ -29424,7 +29441,7 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>一致</source>
-            <translation>Consistent</translation>
+            <translation>Match</translation>
         </message>
         <message>
             <source>游戏版本不同</source>
@@ -29432,39 +29449,39 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>加载器不同</source>
-            <translation>Loaders are different</translation>
+            <translation>Different loaders</translation>
         </message>
         <message>
             <source>版本与加载器都不同</source>
-            <translation>Versions and loaders are different</translation>
+            <translation>Different versions and loaders</translation>
         </message>
         <message>
             <source>未知</source>
-            <translation>Can't recognize</translation>
+            <translation>Unknown</translation>
         </message>
         <message>
             <source>原版</source>
-            <translation>Original</translation>
+            <translation>Vanilla</translation>
         </message>
         <message>
             <source>目标游戏版本为 %1，源版本为 %2。模组和部分配置可能不兼容，默认不迁移模组。</source>
-            <translation>The target version is %1, the source is %2 - the mod may be incompatible with some configurations, so "Mod" is not checked by default.</translation>
+            <translation>Target game version is %1, source is %2. Mods and some configs may be incompatible; mods aren't migrated by default.</translation>
         </message>
         <message>
             <source>源加载器为 %2，目标加载器为 %1，游戏版本均为 %3。模组和相关配置可能不兼容，默认不迁移模组。</source>
-            <translation>The target loader is %1 and the source is %2 (the game versions are all %3) - the mod and loader related configurations may be incompatible, so "Mod" is not checked by default.</translation>
+            <translation>Source loader is %2, target loader is %1 (game version %3). Mods and related configs may be incompatible; mods aren't migrated by default.</translation>
         </message>
         <message>
             <source>目标版本和加载器为 %1 / %2，源配置为 %3 / %4。模组和部分配置可能不兼容，默认不迁移模组。</source>
-            <translation>The target version is %1 / %2, the source is %3 / %4 - the mod may be incompatible with some configurations, so "Mod" is not checked by default.</translation>
+            <translation>Target is %1 / %2, source is %3 / %4. Mods and some configs may be incompatible; mods aren't migrated by default.</translation>
         </message>
         <message>
             <source>无法识别源或目标的游戏版本或加载器。默认不迁移模组，可确认兼容性后手动勾选。</source>
-            <translation>There is a game version or loader that cannot be read - no guesswork: "Mods" is not checked by default, please make your own judgment whether to move it over as is.</translation>
+            <translation>Can't detect source or target game version or loader. Mods aren't migrated by default; check compatibility before selecting.</translation>
         </message>
         <message>
             <source>升级副本计划：%1</source>
-            <translation>Upgrade copy plan: %1</translation>
+            <translation>Upgraded copy plan: %1</translation>
         </message>
         <message>
             <source>迁移计划：%1</source>
@@ -29472,11 +29489,11 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>将复制以下内容到升级副本：</source>
-            <translation>The following is the content that will be moved in this upgraded copy:</translation>
+            <translation>Copying to upgraded copy:</translation>
         </message>
         <message>
             <source>本次迁移包括：</source>
-            <translation>The following is what will be moved in this migration:</translation>
+            <translation>Included in migration:</translation>
         </message>
         <message>
             <source>%1 %2（%3）</source>
@@ -29484,55 +29501,59 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>日志、截图和崩溃报告默认不迁移，可手动选择。</source>
-            <translation>Logs, screenshots, and crash reports are only recorded and are not moved by default (check them manually if you want to move them).</translation>
+            <translation>Logs, screenshots, and crash reports aren't migrated by default; select manually if needed.</translation>
         </message>
         <message>
             <source>
 
 兼容性结论：%1</source>
-            <translation>Compatibility conclusion: %1</translation>
+            <translation>
+
+Compatibility: %1</translation>
         </message>
         <message>
             <source>目标版本（%1 / %2）与源一致：模组与配置可以原样迁移。</source>
-            <translation>The target version (%1 / %2) is consistent with the source: mods and configurations can be moved over unchanged.</translation>
+            <translation>Target (%1 / %2) matches source: mods and configs can migrate as-is.</translation>
         </message>
         <message>
             <source>%1 / 默认迁移 %2 项（%3）</source>
-            <translation>%1 / Move %2 items by default (%3)</translation>
+            <translation>%1 / migrating %2 categories by default (%3)</translation>
         </message>
         <message>
             <source>• %1：当前实例无此项</source>
-            <translation>• %1: None in this instance</translation>
+            <translation>• %1: not in source instance</translation>
         </message>
         <message>
             <source>迁移只增加文件、不删除、不覆盖目标中已有的同名文件；两边的游戏都必须先关闭。</source>
-            <translation>Migration only adds files, does not delete or overwrite existing files with the same name in the target; both games must be closed first.</translation>
+            <translation>Migration only adds files, without deleting or overwriting matching files on target; close the game on both instances first.</translation>
         </message>
         <message>
             <source>将创建升级副本，并将选中的 %1 项（%2）迁移进去。</source>
-            <translation>An upgraded copy will be created and the selected %1 items (%2) will be moved into it.</translation>
+            <translation>Creating an upgraded copy and migrating %1 selected categories (%2).</translation>
         </message>
         <message>
             <source>将把选中的 %1 项（%2）迁移到目标实例。</source>
-            <translation>The selected %1 items (%2) will be moved into the target instance.</translation>
+            <translation>Migrating %1 selected categories (%2) to the target instance.</translation>
         </message>
         <message>
             <source>
 
 只增加文件，不删除、不覆盖目标中已有的同名文件。</source>
-            <translation>Only adds files, does not delete or overwrite existing files with the same name in the target.</translation>
+            <translation>
+
+Only adds files; doesn't delete or overwrite existing files on target.</translation>
         </message>
         <message>
             <source>未找到源实例目录：%1</source>
-            <translation>Source instance directory not found: %1</translation>
+            <translation>Source instance folder not found: %1</translation>
         </message>
         <message>
             <source>（未提供）</source>
-            <translation>(not given)</translation>
+            <translation>(not provided)</translation>
         </message>
         <message>
             <source>加载器小版本不同（源 %1 / 目标 %2），通常不影响启动；若启动失败，请先检查此项。</source>
-            <translation>The loader minor version is different (source %1 / target %2), generally no problem, just look at it first if you can't get it up.</translation>
+            <translation>Loader minor version differs (source %1 / target %2); usually fine, check this first if launch fails.</translation>
         </message>
         <message>
             <source>存档</source>
@@ -29544,19 +29565,19 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>模组配置</source>
-            <translation>Mod configuration</translation>
+            <translation>Mod configs</translation>
         </message>
         <message>
             <source>默认配置</source>
-            <translation>Default configuration</translation>
+            <translation>Default configs</translation>
         </message>
         <message>
             <source>资源包</source>
-            <translation>Resource pack</translation>
+            <translation>Resource packs</translation>
         </message>
         <message>
             <source>光影包</source>
-            <translation>Shaderpacks</translation>
+            <translation>Shader packs</translation>
         </message>
         <message>
             <source>游戏设置</source>
@@ -29568,11 +29589,11 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>结构文件</source>
-            <translation>Structure file</translation>
+            <translation>Structures</translation>
         </message>
         <message>
             <source>截图</source>
-            <translation>Screenshot</translation>
+            <translation>Screenshots</translation>
         </message>
         <message>
             <source>日志</source>
@@ -29584,15 +29605,15 @@ Please close the program occupying the port, or change the port in "Common Setti
         </message>
         <message>
             <source>目标版本 / 加载器与源不一致，模组可能无法启动；确认需要原样迁移后再勾选。</source>
-            <translation>The target version/loader is inconsistent with the source, and the mod may not be launched; make sure to move it as it is and then hook it up yourself.</translation>
+            <translation>Target version or loader differs from source; mods may fail to launch. Select only if you want to migrate them as-is.</translation>
         </message>
         <message>
             <source>这些文件用于记录，默认不迁移。</source>
-            <translation>It is just recorded and not moved by default.</translation>
+            <translation>Record files only; not migrated by default.</translation>
         </message>
         <message>
             <source>无法识别目标版本。确认兼容性后再选择是否迁移。</source>
-            <translation>The target version cannot be recognized: I am not sure whether this item is compatible. Please make your own judgment whether you want to move it or not.</translation>
+            <translation>Can't detect target version. Verify compatibility before migrating.</translation>
         </message>
     </context>
     <context>
@@ -29640,19 +29661,19 @@ Back up the instance first. Continue anyway?</translation>
         <name>UpgradeAssessment</name>
         <message>
             <source>旧 Forge 注解</source>
-            <translation>Old Forge annotations</translation>
+            <translation>Legacy Forge annotation</translation>
         </message>
         <message>
             <source>旧 Forge @Mod 注解 / acceptedMinecraftVersions</source>
-            <translation>Old Forge @Mod annotations / acceptedMinecraftVersions</translation>
+            <translation>Legacy Forge @Mod / acceptedMinecraftVersions</translation>
         </message>
         <message>
             <source>嵌套 </source>
-            <translation>Nested</translation>
+            <translation>Nested </translation>
         </message>
         <message>
             <source>（%1）</source>
-            <translation>(%1)</translation>
+            <translation> (%1)</translation>
         </message>
         <message>
             <source>%1：%2（%3）</source>
@@ -29663,30 +29684,30 @@ Back up the instance first. Continue anyway?</translation>
         <name>UpgradeHistory</name>
         <message>
             <source>无法读取升级历史：%1</source>
-            <translation>Unable to read upgrade history: %1</translation>
+            <translation>Can't read upgrade history: %1</translation>
         </message>
         <message>
             <source>升级历史文件过大，无法作为记录解析。</source>
-            <translation>The upgrade history is too large to be a record and is treated as incomprehensible.</translation>
+            <translation>Upgrade history file is too large to parse as records.</translation>
         </message>
         <message>
             <source>升级历史无法解析（不是 JSON 对象）。</source>
-            <translation>The upgrade history cannot be read (it is not a JSON object).</translation>
+            <translation>Can't parse upgrade history (not a JSON object).</translation>
         </message>
         <message>
             <source>，此条未写入。</source>
-            <translation>. This item was not included.</translation>
+            <translation> (entry not written)</translation>
         </message>
         <message>
             <source>无法保存升级历史：%1</source>
-            <translation>Upgrade history cannot be written: %1</translation>
+            <translation>Can't save upgrade history: %1</translation>
         </message>
     </context>
     <context>
         <name>UpgradeHistoryDialog</name>
         <message>
             <source>更新记录</source>
-            <translation>Update record</translation>
+            <translation>Update history</translation>
         </message>
         <message>
             <source>时间</source>
@@ -29702,66 +29723,73 @@ Back up the instance first. Continue anyway?</translation>
         </message>
         <message>
             <source>此实例暂无升级记录。</source>
-            <translation>This instance has no upgrade records yet.</translation>
+            <translation>No upgrade history for this instance.</translation>
         </message>
         <message>
             <source>回滚上次原地升级…</source>
-            <translation>Rolling back the last in-place upgrade...</translation>
+            <translation>Roll back last in-place upgrade…</translation>
         </message>
         <message>
             <source>关闭</source>
-            <translation>Closure</translation>
+            <translation>Close</translation>
         </message>
         <message>
             <source>事务：%1
 </source>
-            <translation>Transaction: %1</translation>
+            <translation>Transaction: %1
+</translation>
         </message>
         <message>
             <source>来源：%1（%2）
 </source>
-            <translation>Source: %1 (%2)</translation>
+            <translation>Source: %1 (%2)
+</translation>
         </message>
         <message>
             <source>目标：%1（%2）
 </source>
-            <translation>Target: %1 (%2)</translation>
+            <translation>Target: %1 (%2)
+</translation>
         </message>
         <message>
             <source>类别：%1
 </source>
-            <translation>Category: %1</translation>
+            <translation>Categories: %1
+</translation>
         </message>
         <message>
             <source>（原地升级）</source>
-            <translation>(In-place upgrade)</translation>
+            <translation>(in-place upgrade)</translation>
         </message>
         <message>
             <source>、</source>
-            <translation>,</translation>
+            <translation>, </translation>
         </message>
         <message>
             <source>文件：复制 %1 / 跳过 %2 / 失败 %3
 </source>
-            <translation>File: Copy %1 / Skip %2 / Fail %3</translation>
+            <translation>Files: %1 copied / %2 skipped / %3 failed
+</translation>
         </message>
         <message>
             <source>快照：无（副本模式以源实例为回滚材料）
 </source>
-            <translation>Snapshot: None (copy mode uses the source instance as rollback material)</translation>
+            <translation>Snapshot: None (copy mode uses source instance for rollback)
+</translation>
         </message>
         <message>
             <source>快照：%1%2
 </source>
-            <translation>Snapshot: %1%2</translation>
+            <translation>Snapshot: %1%2
+</translation>
         </message>
         <message>
             <source>（可恢复）</source>
-            <translation>(recoverable)</translation>
+            <translation> (recoverable)</translation>
         </message>
         <message>
             <source>说明：%1</source>
-            <translation>Description: %1</translation>
+            <translation>Details: %1</translation>
         </message>
         <message>
             <source>成功</source>
@@ -29773,57 +29801,57 @@ Back up the instance first. Continue anyway?</translation>
         </message>
         <message>
             <source>失败</source>
-            <translation>Fail</translation>
+            <translation>Failed</translation>
         </message>
         <message>
             <source>：%1</source>
-            <translation>:%1</translation>
+            <translation>: %1</translation>
         </message>
     </context>
     <context>
         <name>UpgradePageState</name>
         <message>
             <source>请选择目标游戏版本和加载器。</source>
-            <translation>First select the target version and loader.</translation>
+            <translation>Select target game version and loader.</translation>
         </message>
         <message>
             <source>此实例正在运行或被其他操作占用，请等待其结束后再升级。</source>
-            <translation>This instance is running or occupied by other operations. Wait until it stops before upgrading.</translation>
+            <translation>Instance is running or busy; wait for it to finish before upgrading.</translation>
         </message>
         <message>
             <source>新实例名称不能为空。</source>
-            <translation>The name of the new instance cannot be left empty.</translation>
+            <translation>New instance name can't be empty.</translation>
         </message>
         <message>
             <source>此名称已被其他实例使用，请更换。</source>
-            <translation>There is already an instance of this name in use, change it.</translation>
+            <translation>An instance with this name already exists; choose another name.</translation>
         </message>
         <message>
             <source>至少选择一类要迁移的内容。</source>
-            <translation>Select at least one category of content to migrate.</translation>
+            <translation>Select at least one category to migrate.</translation>
         </message>
         <message>
             <source>请执行兼容性检查后确认迁移。</source>
-            <translation>Do a compatibility check first and then confirm the migration.</translation>
+            <translation>Run compatibility check before confirming migration.</translation>
         </message>
         <message>
             <source>目标或选择已更改，需要重新检查。</source>
-            <translation>The target or choice has been changed and needs to be rechecked.</translation>
+            <translation>Target or selection changed; recheck required.</translation>
         </message>
         <message>
             <source>已选中模组配置，未选中模组文件。请同时迁移模组，或取消迁移相关配置。</source>
-            <translation>Mod configuration is checked but Mod file is not checked - the configuration ownership cannot be guessed based on the file name: either move the Mod together, or do not move the configuration.</translation>
+            <translation>Mod configs selected without mod files. Either migrate mods too or uncheck mod configs.</translation>
         </message>
     </context>
     <context>
         <name>UpgradeReport</name>
         <message>
             <source>正常兼容</source>
-            <translation>Normally compatible</translation>
+            <translation>Compatible</translation>
         </message>
         <message>
             <source>无法确认</source>
-            <translation>Unable to confirm</translation>
+            <translation>Unconfirmed</translation>
         </message>
         <message>
             <source>检查失败</source>
@@ -29831,47 +29859,47 @@ Back up the instance first. Continue anyway?</translation>
         </message>
         <message>
             <source>不兼容</source>
-            <translation>Not compatible</translation>
+            <translation>Incompatible</translation>
         </message>
         <message>
             <source>缺前置</source>
-            <translation>Missing prefix</translation>
+            <translation>Missing dependencies</translation>
         </message>
         <message>
             <source>尚不支持</source>
-            <translation>Not supported yet</translation>
+            <translation>Unsupported</translation>
         </message>
         <message>
             <source>无法解析</source>
-            <translation>Unable to parse</translation>
+            <translation>Can't parse</translation>
         </message>
         <message>
             <source>无法确定</source>
-            <translation>Unable to determine</translation>
+            <translation>Can't determine</translation>
         </message>
         <message>
             <source>不支持</source>
-            <translation>Not supported</translation>
+            <translation>Unsupported</translation>
         </message>
         <message>
             <source>明确排除</source>
-            <translation>Expressly excluded</translation>
+            <translation>Excluded</translation>
         </message>
         <message>
             <source>不满足</source>
-            <translation>Dissatisfied</translation>
+            <translation>Not met</translation>
         </message>
         <message>
             <source>缺少必要</source>
-            <translation>Lack of necessity</translation>
+            <translation>Missing required</translation>
         </message>
         <message>
             <source>缺少目标加载器声明</source>
-            <translation>Missing target loader declaration</translation>
+            <translation>Missing target loader</translation>
         </message>
         <message>
             <source>失败</source>
-            <translation>Fail</translation>
+            <translation>Failed</translation>
         </message>
         <message>
             <source>读取失败</source>
@@ -29883,11 +29911,11 @@ Back up the instance first. Continue anyway?</translation>
         </message>
         <message>
             <source>已确认兼容</source>
-            <translation>Confirmed to be compatible</translation>
+            <translation>Confirmed compatible</translation>
         </message>
         <message>
             <source>一致</source>
-            <translation>Consistent</translation>
+            <translation>Match</translation>
         </message>
     </context>
     <context>
@@ -29898,7 +29926,7 @@ Back up the instance first. Continue anyway?</translation>
         </message>
         <message>
             <source>搜索模组名或依据</source>
-            <translation>Search mod names or reasons</translation>
+            <translation>Search mod name or reason…</translation>
         </message>
         <message>
             <source>全部</source>
@@ -29926,22 +29954,22 @@ Back up the instance first. Continue anyway?</translation>
         </message>
         <message>
             <source>必要内容均已明确处理。</source>
-            <translation>All required items have been addressed.</translation>
+            <translation>All required items resolved.</translation>
         </message>
     </context>
     <context>
         <name>UpgradeSelection</name>
         <message>
             <source>游戏存档</source>
-            <translation>Game save</translation>
+            <translation>World saves</translation>
         </message>
         <message>
             <source>模组文件</source>
-            <translation>Mod file</translation>
+            <translation>Mod files</translation>
         </message>
         <message>
             <source>模组配置</source>
-            <translation>Mod configuration</translation>
+            <translation>Mod configs</translation>
         </message>
         <message>
             <source>游戏设置</source>
@@ -29949,15 +29977,15 @@ Back up the instance first. Continue anyway?</translation>
         </message>
         <message>
             <source>资源包</source>
-            <translation>Resource pack</translation>
+            <translation>Resource packs</translation>
         </message>
         <message>
             <source>光影包</source>
-            <translation>Shaderpacks</translation>
+            <translation>Shader packs</translation>
         </message>
         <message>
             <source>截图</source>
-            <translation>Screenshot</translation>
+            <translation>Screenshots</translation>
         </message>
         <message>
             <source>原理图</source>
@@ -29969,19 +29997,19 @@ Back up the instance first. Continue anyway?</translation>
         </message>
         <message>
             <source>此实例无可迁移的内容。</source>
-            <translation>There is nothing transferable in this one.</translation>
+            <translation>No content to migrate in this instance.</translation>
         </message>
         <message>
             <source>光影包仅在安装对应渲染器后生效；新实例不会自动安装渲染器。</source>
-            <translation>The shaderpack will only take effect when the corresponding renderer is installed; new instances will not install the renderer for you.</translation>
+            <translation>Shader packs require a compatible shader mod; new instances don't install one automatically.</translation>
         </message>
         <message>
             <source>已选中模组配置，未选中模组文件。部分配置可能在新实例中无效。</source>
-            <translation>The Mod file is not checked, but the Mod configuration needs to be moved - these configurations may not match any mod in the new instance.</translation>
+            <translation>Mod configs selected without mod files; some configs may not apply in the new instance.</translation>
         </message>
         <message>
             <source>已选中游戏设置，未选中资源包。新实例的设置可能引用缺失的资源包。</source>
-            <translation>The game settings are moved but the resource packages are not moved - the resource package enablement list in the settings may point to packages that do not exist in the new instance.</translation>
+            <translation>Game settings selected without resource packs; the new instance may reference missing packs.</translation>
         </message>
     </context>
     <context>
@@ -30015,11 +30043,11 @@ Back up the instance first. Continue anyway?</translation>
         </message>
         <message>
             <source>资源索引</source>
-            <translation>Resource index</translation>
+            <translation>Asset index</translation>
         </message>
         <message>
             <source>资源对象</source>
-            <translation>Resource object</translation>
+            <translation>Asset object</translation>
         </message>
         <message>
             <source>其它</source>
@@ -30035,19 +30063,19 @@ Back up the instance first. Continue anyway?</translation>
         </message>
         <message>
             <source>0 字节（下载中断留下的）</source>
-            <translation>0 bytes (half written after downloading)</translation>
+            <translation>0 bytes (incomplete download)</translation>
         </message>
         <message>
             <source>大小 %1 字节，应为 %2</source>
-            <translation>Size %1 bytes, should be %2</translation>
+            <translation>Size %1 bytes, expected %2</translation>
         </message>
         <message>
             <source>SHA-1 校验失败</source>
-            <translation>The verification fails (the content does not match sha1)</translation>
+            <translation>SHA-1 mismatch</translation>
         </message>
         <message>
             <source>文件无法打开或读取失败</source>
-            <translation>Unable to read (cannot open or read error)</translation>
+            <translation>Can't open or read file</translation>
         </message>
         <message>
             <source>未知</source>
@@ -30055,7 +30083,7 @@ Back up the instance first. Continue anyway?</translation>
         </message>
         <message>
             <source>%1 个文件都完好</source>
-            <translation>%1 files are intact</translation>
+            <translation>All %1 files intact</translation>
         </message>
         <message>
             <source>%1 个文件里 %2 个要修：缺 %3 个、坏 %4 个</source>
@@ -30063,15 +30091,15 @@ Back up the instance first. Continue anyway?</translation>
         </message>
         <message>
             <source>资源对象 %1</source>
-            <translation>Resource Object %1</translation>
+            <translation>Asset object %1</translation>
         </message>
         <message>
             <source>客户端 jar</source>
-            <translation>Client jar</translation>
+            <translation>Client JAR</translation>
         </message>
         <message>
             <source>资源索引 %1</source>
-            <translation>Resource Index %1</translation>
+            <translation>Asset index %1</translation>
         </message>
         <message>
             <source>实例「%1」完整性检查</source>
@@ -30079,11 +30107,11 @@ Back up the instance first. Continue anyway?</translation>
         </message>
         <message>
             <source>%1（%2 个要修）</source>
-            <translation>%1 (%2 need to be repaired)</translation>
+            <translation>%1 (%2 need repair)</translation>
         </message>
         <message>
             <source>  %1：%2</source>
-            <translation>%1:%2</translation>
+            <translation>  %1: %2</translation>
         </message>
     </context>
     <context>
