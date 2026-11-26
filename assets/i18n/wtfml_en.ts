@@ -6468,12 +6468,16 @@ Files already moved can be restored from the Recycle Bin.</translation>
             <translation>Save a shareable report with the launcher version, system info, instance, exit code, error lines, and full log.</translation>
         </message>
         <message>
+            <source>搜索日志</source>
+            <translation>Search logs</translation>
+        </message>
+        <message>
             <source>无匹配的日志。请更换关键词，或清空搜索框。</source>
             <translation>No matching logs. Try another keyword or clear the search box.</translation>
         </message>
         <message>
-            <source>仅显示包含该字符串的行；导出仍为完整日志。</source>
-            <translation>Only show lines containing this text; exports still include the full log.</translation>
+            <source>仅显示包含该字符串的行；导出仍为完整日志。不区分大小写，与级别筛选同时生效。</source>
+            <translation>Only show lines containing this text; exports still include the full log. Case-insensitive. Applies together with the level filter.</translation>
         </message>
         <message>
             <source>单击后隐藏该级别。数字为日志记录数（崩栈续行不重复计算）。窗口最多保留 %1 行文本。</source>
@@ -6490,10 +6494,6 @@ Files already moved can be restored from the Recycle Bin.</translation>
         <message>
             <source>当前筛选无日志。勾选要查看的日志级别。</source>
             <translation>No logs match the current filter. Enable log levels above to show them.</translation>
-        </message>
-        <message>
-            <source>搜索日志（不区分大小写，与级别筛选同时生效）</source>
-            <translation>Search logs (case-insensitive, uses level filter)…</translation>
         </message>
     </context>
     <context>
@@ -19999,7 +19999,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>应用其中：</source>
-            <translation>Apply sections:</translation>
+            <translation>Apply:</translation>
         </message>
         <message>
             <source>替换%1，使用「%2」</source>
@@ -28973,9 +28973,12 @@ Close the app using the port, or change the port in General.</translation>
             <source>未搭建</source>
             <translation>None</translation>
         </message>
-        <message>
+        <message numerus="yes">
             <source> 颗</source>
-            <translation> beacons</translation>
+            <translation>
+                <numerusform> beacon</numerusform>
+                <numerusform> beacons</numerusform>
+            </translation>
         </message>
         <message>
             <source>可共用底座，最多 9 颗。</source>
@@ -29025,9 +29028,12 @@ Close the app using the port, or change the port in General.</translation>
             <source>形态</source>
             <translation>Form</translation>
         </message>
-        <message>
+        <message numerus="yes">
             <source> 瓶</source>
-            <translation> bottles</translation>
+            <translation>
+                <numerusform> bottle</numerusform>
+                <numerusform> bottles</numerusform>
+            </translation>
         </message>
         <message>
             <source>瓶数</source>

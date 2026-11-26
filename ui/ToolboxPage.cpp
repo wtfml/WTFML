@@ -2570,10 +2570,17 @@ QWidget *ToolboxPage::buildBeaconPanel() {
     m_beaconCount->setObjectName(beaconCountSpinName());
     m_beaconCount->setRange(1, 9);
     m_beaconCount->setValue(1);
-    m_beaconCount->setSuffix(QCoreApplication::translate("ToolboxPage", " 颗"));
+    // 后缀分单复数：先按最大值摆上复数形式，下面 makeNumberField 量宽才量得到「9 beacons」。
+    const auto setBeaconSuffix = [this](int n) {
+        m_beaconCount->setSuffix(QCoreApplication::translate("ToolboxPage", " 颗", nullptr, n));
+    };
+    setBeaconSuffix(m_beaconCount->maximum());
+    QObject::connect(m_beaconCount, &QSpinBox::valueChanged, m_beaconCount, setBeaconSuffix);
     m_beaconCount->setToolTip(QCoreApplication::translate("ToolboxPage", "可共用底座，最多 9 颗。"));
+    QWidget *beaconCountField = makeNumberField(panel, m_beaconCount, true, 64);
+    setBeaconSuffix(m_beaconCount->value());
     form.add(QCoreApplication::translate("ToolboxPage", "底座方块"), m_beaconMaterial,
-             QCoreApplication::translate("ToolboxPage", "信标颗数"), makeNumberField(panel, m_beaconCount, true, 64));
+             QCoreApplication::translate("ToolboxPage", "信标颗数"), beaconCountField);
     layout->addLayout(form.grid);
 
     // 下半：左边结果，右边光柱配色（玻璃清单 + 光柱示意），整页在 900×620 下不出纵向滚动条。
@@ -2788,10 +2795,17 @@ QWidget *ToolboxPage::buildBrewingPanel() {
     m_brewingBottles->setObjectName(brewingBottlesSpinName());
     m_brewingBottles->setRange(1, 64);
     m_brewingBottles->setValue(1);
-    m_brewingBottles->setSuffix(QCoreApplication::translate("ToolboxPage", " 瓶"));
+    // 同上：量宽按复数（64 bottles），显示按当前值。
+    const auto setBottlesSuffix = [this](int n) {
+        m_brewingBottles->setSuffix(QCoreApplication::translate("ToolboxPage", " 瓶", nullptr, n));
+    };
+    setBottlesSuffix(m_brewingBottles->maximum());
+    QObject::connect(m_brewingBottles, &QSpinBox::valueChanged, m_brewingBottles, setBottlesSuffix);
     auto *version = new QComboBox(panel);
     version->setObjectName(brewingVersionComboName());
-    form.add(QCoreApplication::translate("ToolboxPage", "瓶数"), makeNumberField(panel, m_brewingBottles, true, 72),
+    QWidget *brewingBottlesField = makeNumberField(panel, m_brewingBottles, true, 72);
+    setBottlesSuffix(m_brewingBottles->value());
+    form.add(QCoreApplication::translate("ToolboxPage", "瓶数"), brewingBottlesField,
              QCoreApplication::translate("ToolboxPage", "目标版本"), version);
 
     m_brewingExtended = new QCheckBox(QCoreApplication::translate("ToolboxPage", "延时（红石）"), panel);
