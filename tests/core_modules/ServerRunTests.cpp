@@ -516,5 +516,56 @@ void runServerRunTests() {
         check(sameMs.at(0).sessionId == 8 && sameMs.at(1).sessionId == 5,
               "ZZ6 同毫秒启动的两个客户端按后发起的 sessionId 排在上面");
     }
+
+    // ---------- ZZ7. 同实例多开序号分配与单开/退场保持规则 ----------
+    {
+        QList<RunningProcesses::InstanceSlot> slotsList;
+        const auto firstA =
+            RunningProcesses::assignNextInstanceNumber(slotsList, QStringLiteral("packA"));
+        check(firstA.instanceNumber == 1 && !firstA.instanceNumbered
+                  && RunningProcesses::displayedInstanceNumber(firstA.instanceNumber,
+                                                               firstA.instanceNumbered) == 0
+                  && RunningProcesses::numberedName(QStringLiteral("整合包A"), 0)
+                         == QStringLiteral("整合包A"),
+              "ZZ7 同一实例只开一份时不加序号");
+        slotsList.append({QStringLiteral("packA"), firstA.instanceNumber, firstA.instanceNumbered});
+
+        const auto secondA =
+            RunningProcesses::assignNextInstanceNumber(slotsList, QStringLiteral("packA"));
+        check(secondA.instanceNumber == 2 && secondA.instanceNumbered
+                  && slotsList.at(0).instanceNumber == 1 && slotsList.at(0).instanceNumbered
+                  && RunningProcesses::numberedName(QStringLiteral("整合包A"), 1)
+                         == QStringLiteral("整合包A #1")
+                  && RunningProcesses::numberedName(QStringLiteral("整合包A"), 2)
+                         == QStringLiteral("整合包A #2"),
+              "ZZ7 同实例开启第二份时两份均获得 #1 / #2 序号");
+        slotsList.append(
+            {QStringLiteral("packA"), secondA.instanceNumber, secondA.instanceNumbered});
+
+        const auto firstB =
+            RunningProcesses::assignNextInstanceNumber(slotsList, QStringLiteral("packB"));
+        check(firstB.instanceNumber == 1 && !firstB.instanceNumbered,
+              "ZZ7 另一实例只开一份时仍不带序号");
+        slotsList.append({QStringLiteral("packB"), firstB.instanceNumber, firstB.instanceNumbered});
+
+        // 结束 packA #1 后，packA #2 仍保持 #2；此时再启动第三份应为 #3
+        slotsList.removeAt(0);
+        check(RunningProcesses::displayedInstanceNumber(slotsList.at(0).instanceNumber,
+                                                        slotsList.at(0).instanceNumbered) == 2
+                  && RunningProcesses::numberedName(QStringLiteral("整合包A"), 2)
+                         == QStringLiteral("整合包A #2"),
+              "ZZ7 结束 #1 后，#2 仍保留 #2 序号");
+        const auto thirdA =
+            RunningProcesses::assignNextInstanceNumber(slotsList, QStringLiteral("packA"));
+        check(thirdA.instanceNumber == 3 && thirdA.instanceNumbered,
+              "ZZ7 #2 仍在跑时再开一份获得 #3");
+
+        // packA 全部退出后再重开：回到单开不带序号
+        slotsList.removeAt(0);
+        const auto restartA =
+            RunningProcesses::assignNextInstanceNumber(slotsList, QStringLiteral("packA"));
+        check(restartA.instanceNumber == 1 && !restartA.instanceNumbered,
+              "ZZ7 同实例全部退出后再次单开恢复无序号");
+    }
 }
 

@@ -224,6 +224,8 @@ private:
     void launchOutputSeen(int sessionId);
     void pollGameWindows();
     void finishLaunchSucceeded(int sessionId);
+    /// 多开第二份同实例启动时，把已开着的同实例日志窗标题同步加上 `#N` 序号。
+    void syncOpenGameLogTitles(int startedSessionId);
     /// 会话号 → 那一份的实例显示名。**启动那一刻记一次**，退出时用掉、删掉。
     ///
     /// 唯一用途是 onGameFinished() 里那行日志的 `[实例名] ` 前缀 —— 那时会话已经从

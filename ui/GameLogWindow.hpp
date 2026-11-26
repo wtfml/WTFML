@@ -154,9 +154,13 @@ public:
      * 不要父窗口换来三件事：能点到后面去、能自己最小化、任务栏上有自己一格。代价是
      * "跟着启动器一起关掉"要自己接（见 MainWindow 析构里那一段）。
      */
-    explicit GameLogWindow(const QString &instanceName, QWidget *parent = nullptr);
+    explicit GameLogWindow(const QString &instanceName, QWidget *parent = nullptr,
+                           int instanceNumber = 0);
 
     QString instanceName() const { return m_instanceName; }
+    int instanceNumber() const { return m_instanceNumber; }
+    /// 更新多开序号（> 0 时在窗口标题与标题条里追加 `#N`；0 = 不加序号）。
+    void setInstanceNumber(int instanceNumber);
 
     // ---------- 打开一个文件（已结束的日志：不追加、不显示运行状态） ----------
     //
@@ -330,8 +334,10 @@ public:
 
     // ---------- 文案与名字（唯一出处） ----------
 
-    /// 窗口标题。带实例名：同时开着好几份时，靠它认哪个是哪个。
-    static QString windowTitleText(const QString &instanceName);
+    /// 标题条里的实例标签（`instanceNumber > 0` 且实例名非空时带 `#N`）。
+    static QString instanceLabelText(const QString &instanceName, int instanceNumber = 0);
+    /// 窗口标题。带实例名与多开序号：同时开着好几份时，靠它认哪个是哪个。
+    static QString windowTitleText(const QString &instanceName, int instanceNumber = 0);
     /// 顶上那行灰字。
     static QString hintText();
     /// 挤掉过行时补在 `hintText()` 后面那一句；没挤掉回空串（两段之间由调用方补空格）。
@@ -532,6 +538,7 @@ private:
     /// 造这个窗时给的那个实例名（见 instanceName()）。只存不用 —— 标题那一下用完就没别处
     /// 需要它了，导出报告那一条得能取回来（那时候会话多半已经从 LauncherManager 里摘掉了）。
     QString m_instanceName;
+    int m_instanceNumber = 0;
     // 在窗口打开时确定，切换设置不触发已有海量日志重绘。
     bool m_logColors = true;
 

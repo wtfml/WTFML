@@ -2501,15 +2501,14 @@ void MainWindowUI::setHomeQuickRows(const QList<HomeQuickItem> &current,
             Theme::follow(launch, applyGlow);
             Theme::follow(launch, [this]() { syncHomeLaunchButton(); });
             QObject::connect(launch, &QPushButton::clicked, launch, [this, launch, key = item.key]() {
-                // 动作看按钮此刻是哪一档（syncHomeLaunchButton 写在属性里）：启动 / 停止 / 下载 / 看进度。
+                // 动作看按钮此刻是哪一档（syncHomeLaunchButton 写在属性里）：启动 / 下载 / 看进度。
                 const QString mode = launch->property("wtfmlLaunchMode").toString();
                 if (mode == QStringLiteral("download")) {
                     if (tabWidget != nullptr) tabWidget->setCurrentIndex(downloadTabIndex());
                 } else if (mode == QStringLiteral("installing")) {
                     toggleActivityPopover();
                 } else if (m_homeQuickActionHandler) {
-                    m_homeQuickActionHandler(key, mode == QStringLiteral("stop") ? HomeQuickAction::Stop
-                                                                               : HomeQuickAction::Launch);
+                    m_homeQuickActionHandler(key, HomeQuickAction::Launch);
                 }
             });
             actions->addWidget(launch);
@@ -2808,16 +2807,16 @@ void MainWindowUI::syncHomeLaunchButton() {
                               ? nullptr
                               : homeQuickCurrentSection->findChild<QPushButton *>(QStringLiteral("homeCurrentLaunch"));
     if (launch == nullptr) return;
-    // 主按钮只做动作：有实例 = 启动 / 停止；没实例 = 下载游戏，正在装 = 安装中（点开看进度）。
+    // 主按钮只做动作：有实例 = 始终启动（多开也点它，停止走底栏运行面板）；没实例 = 下载游戏，正在装 = 安装中（点开看进度）。
     const bool empty = launch->property("wtfmlHomeEmpty").toBool();
     const BottomBarTaskSummary &task = m_lastTaskSummary;
     const bool installing = empty && task.hasTask
                             && (task.state == TaskCenter::State::Running || task.state == TaskCenter::State::Queued);
     QString mode, text, icon;
     if (!empty) {
-        mode = m_homeLaunchRunning ? QStringLiteral("stop") : QStringLiteral("launch");
-        text = m_homeLaunchRunning ? QCoreApplication::translate("MainWindowUI", "停止游戏") : QCoreApplication::translate("MainWindowUI", "启动游戏");
-        icon = m_homeLaunchRunning ? QStringLiteral("power") : QStringLiteral("play");
+        mode = QStringLiteral("launch");
+        text = QCoreApplication::translate("MainWindowUI", "启动游戏");
+        icon = QStringLiteral("play");
     } else if (installing) {
         mode = QStringLiteral("installing");
         text = task.percent >= 0 ? QCoreApplication::translate("MainWindowUI", "安装中 %1%").arg(task.percent) : QCoreApplication::translate("MainWindowUI", "安装中");

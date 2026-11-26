@@ -387,11 +387,14 @@ int colorSwatchCount();
  * @param note 正文下面那行**小字**（`InlineMessageBox::setNote()`）。**空串 = 不补**。
  * 放在最后是因为它和上面那几格不是一类：上面几格决定"这个框是什么"，这一格只是
  * 附注一下 —— 两处用到它的调用点（启动前那两条确认）写的也都是"提醒本身 + 去哪儿关"。
+ * @param checkBoxText 可选勾选框文字（如「不再提示」）。**空串 = 不插勾选框**。
+ * @param checkBoxChecked 可选输出参数：对话框收掉时勾选框是否被勾上。
  * @return 被点中的下标；关掉 / Esc / 点外面 = **-1**。
  */
 int ask(OverlayHost *host, MessageKind kind, const QString &title, const QString &text,
         const QStringList &buttons, int defaultIndex = -1, int destructiveIndex = -1,
-        bool dismissOnOutsideClick = false, const QString &note = QString());
+        bool dismissOnOutsideClick = false, const QString &note = QString(),
+        const QString &checkBoxText = QString(), bool *checkBoxChecked = nullptr);
 
 }  // namespace InlineMessage
 

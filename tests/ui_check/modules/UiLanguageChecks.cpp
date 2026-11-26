@@ -133,7 +133,8 @@ int UiLanguageChecks(MainWindowUI &ui, QTabWidget *tabs) {
         auto *launch = englishWindow.findChild<QPushButton *>(QStringLiteral("homeCurrentLaunch"));
         check(launch != nullptr && launch->text() == QStringLiteral("Play"), "英文主页启动按钮显示 Play");
         englishUi.setHomeLaunchRunning(true);
-        check(launch != nullptr && launch->text() == QStringLiteral("Stop"), "英文主页运行时显示 Stop");
+        check(launch != nullptr && launch->text() == QStringLiteral("Play"),
+              "英文主页运行时主按钮仍显示 Play（支持多开）");
 
         check(OverlayHost::backButtonText() == QStringLiteral("Back"), "英文内嵌页面显示 Back");
         check(Theme::presetName(QStringLiteral("dark")) == QStringLiteral("Alpine Dusk"),

@@ -85,6 +85,10 @@ public:
         qint64 startedAtMs = 0;
         /// 这次启动用的堆上限（MB）。低内存提醒要把"已开着的"也合计进去。
         int xmxMb = 0;
+        /// 同实例并发序号（1 起：#1, #2…；未启动完成前为 0）。
+        int instanceNumber = 0;
+        /// 同实例是否已进入需要展示 `#N` 序号的多开状态（先退出的不会抹掉余下进程的序号）。
+        bool instanceNumbered = false;
     };
 
     /**

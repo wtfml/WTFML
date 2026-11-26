@@ -7,6 +7,7 @@
  */
 
 #include "LauncherManager.hpp"
+#include "launcher/RunningProcesses.hpp"
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -1319,6 +1320,30 @@ int LauncherManager::startGame(const QStringList &arguments, const EffectiveJava
     // 所以下面这两笔只可能落在**活着**的会话上。
     m_sessions[sessionId].info.processId = static_cast<qint64>(process->processId());
     m_sessions[sessionId].info.startedAtMs = QDateTime::currentMSecsSinceEpoch();
+    {
+        QList<int> activeIds;
+        QList<RunningProcesses::InstanceSlot> activeSlots;
+        for (auto it = m_sessions.constBegin(); it != m_sessions.constEnd(); ++it) {
+            if (it.key() == sessionId) {
+                continue;
+            }
+            const Entry &other = it.value();
+            if (other.process != nullptr && other.process->state() != QProcess::NotRunning) {
+                activeIds.append(it.key());
+                activeSlots.append({other.info.versionId, other.info.instanceNumber,
+                                    other.info.instanceNumbered});
+            }
+        }
+        const RunningProcesses::InstanceNumberAssignment assignment =
+            RunningProcesses::assignNextInstanceNumber(activeSlots, versionId);
+        for (int i = 0; i < activeIds.size(); ++i) {
+            Entry &target = m_sessions[activeIds.at(i)];
+            target.info.instanceNumber = activeSlots.at(i).instanceNumber;
+            target.info.instanceNumbered = activeSlots.at(i).instanceNumbered;
+        }
+        m_sessions[sessionId].info.instanceNumber = assignment.instanceNumber;
+        m_sessions[sessionId].info.instanceNumbered = assignment.instanceNumbered;
+    }
     emit gameStarted(sessionId);
     emit processOutput(sessionId, tr("游戏已启动（进程 ID：%1）").arg(process->processId()));
     return sessionId;

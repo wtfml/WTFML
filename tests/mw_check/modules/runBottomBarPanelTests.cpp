@@ -504,9 +504,9 @@ void runBottomBarPanelTests() {
         check(panel != nullptr && panel->isVisible(), "AH2 点底栏左边那颗按钮弹出了左面板");
         if (panel != nullptr) {
             check(rowTitle(panel, 0) == QStringLiteral("a1.2.6") &&
-                      rowTitle(panel, 1) == QStringLiteral("1.20.1") &&
-                      rowTitle(panel, 2) == QStringLiteral("1.20.1"),
-                  "AH2 三份会话按最新启动排最上（a1.2.6 在第 0 行，两个 1.20.1 在后）",
+                      rowTitle(panel, 1) == QStringLiteral("1.20.1 #2") &&
+                      rowTitle(panel, 2) == QStringLiteral("1.20.1 #1"),
+                  "AH2 三份会话按最新启动排最上（a1.2.6 单开无序号；两份 1.20.1 带 #2 / #1）",
                   QStringLiteral("[%1] [%2] [%3]")
                       .arg(rowTitle(panel, 0), rowTitle(panel, 1), rowTitle(panel, 2)));
             check(panel->findChild<QLabel *>(MainWindowUI::bottomBarPanelRowTitleName(3)) ==
@@ -905,6 +905,113 @@ void runBottomBarPanelTests() {
         pumpUntil([manager] { return manager->runningGames().isEmpty(); }, 5000);
         repaintBottomBar(&w);
         checkRunEntryIdle(QStringLiteral("AH6e 全部结束后"));
+    }
+
+    // ---- AH6f 同实例多开日志窗标题、运行面板序号与结束 #1 后 #2 保留序号 ----
+    {
+        const auto collectLogWindows = []() {
+            QList<GameLogWindow *> found;
+            for (QWidget *top : QApplication::topLevelWidgets()) {
+                if (auto *log = qobject_cast<GameLogWindow *>(top)) {
+                    found.append(log);
+                }
+            }
+            return found;
+        };
+        const auto dropLogs = [&collectLogWindows]() {
+            for (GameLogWindow *left : collectLogWindows()) {
+                left->close();
+            }
+            QApplication::processEvents();
+            QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+            QApplication::processEvents();
+        };
+        dropLogs();
+
+        const int sFirst =
+            manager->startGame(holderArgs, holderSettings, releaseId, QStringLiteral("1.20.1"));
+        repaintBottomBar(&w);
+        if (QWidget *panel = openPanel(instancesButton)) {
+            check(rowTitle(panel, 0) == QStringLiteral("1.20.1"),
+                  "AH6f 只开一份时运行面板不带序号", rowTitle(panel, 0));
+            if (QPushButton *logBtn = rowAction(panel, 0, 2)) {
+                logBtn->click();
+                QApplication::processEvents();
+            }
+        }
+        const QList<GameLogWindow *> firstLogs = collectLogWindows();
+        GameLogWindow *logFirst = firstLogs.value(0, nullptr);
+        check(firstLogs.size() == 1 && logFirst != nullptr &&
+                  logFirst->windowTitle() == QStringLiteral("游戏日志 — 1.20.1"),
+              "AH6f 只开一份时日志窗标题不带序号",
+              logFirst != nullptr ? logFirst->windowTitle() : QStringLiteral("<null>"));
+
+        QThread::msleep(20);
+        const int sSecond =
+            manager->startGame(holderArgs, holderSettings, releaseId, QStringLiteral("1.20.1"));
+        QApplication::processEvents();
+        repaintBottomBar(&w);
+        check(logFirst != nullptr &&
+                  logFirst->windowTitle() == QStringLiteral("游戏日志 — 1.20.1 #1"),
+              "AH6f 开出第二份后，已打开的第 1 份日志窗标题同步补上 #1",
+              logFirst != nullptr ? logFirst->windowTitle() : QStringLiteral("<null>"));
+
+        if (QWidget *panel = openPanel(instancesButton)) {
+            check(rowTitle(panel, 0) == QStringLiteral("1.20.1 #2") &&
+                      rowTitle(panel, 1) == QStringLiteral("1.20.1 #1"),
+                  "AH6f 两份同时运行时面板行标题分别为 #2 与 #1",
+                  QStringLiteral("[%1] [%2]").arg(rowTitle(panel, 0), rowTitle(panel, 1)));
+            if (QPushButton *logBtn2 = rowAction(panel, 0, 2)) {
+                logBtn2->click();
+                QApplication::processEvents();
+            }
+        }
+        const QList<GameLogWindow *> bothLogs = collectLogWindows();
+        GameLogWindow *logSecond = nullptr;
+        for (GameLogWindow *win : bothLogs) {
+            if (win != logFirst) {
+                logSecond = win;
+            }
+        }
+        check(bothLogs.size() == 2 && logSecond != nullptr &&
+                  logSecond->windowTitle() == QStringLiteral("游戏日志 — 1.20.1 #2"),
+              "AH6f 第 2 份日志窗标题带 #2",
+              logSecond != nullptr ? logSecond->windowTitle() : QStringLiteral("<null>"));
+
+        // 通过运行面板停止 #1（第 1 行）
+        if (QWidget *panel = openPanel(instancesButton)) {
+            if (QPushButton *stopFirst = rowAction(panel, 1, 0)) {
+                answerStopGamePrompt();
+                stopFirst->click();
+                QApplication::processEvents();
+            }
+        }
+        const bool firstGone =
+            pumpUntil([&manager, sFirst] { return manager->session(sFirst).sessionId == 0; }, 5000);
+        repaintBottomBar(&w);
+        check(firstGone && manager->runningGames().size() == 1,
+              "AH6f 从运行面板可独立结束 #1，#2 继续运行");
+        if (QWidget *panel = openPanel(instancesButton)) {
+            check(rowTitle(panel, 0) == QStringLiteral("1.20.1 #2") &&
+                      rowTitle(panel, 1).isEmpty(),
+                  "AH6f 结束 #1 后，运行面板里的 #2 仍显示为 #2",
+                  rowTitle(panel, 0));
+            if (panel->isVisible()) {
+                panel->close();
+                QApplication::processEvents();
+                QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+            }
+        }
+        check(logSecond != nullptr &&
+                  logSecond->windowTitle() == QStringLiteral("游戏日志 — 1.20.1 #2"),
+              "AH6f 结束 #1 后，#2 的日志窗标题仍保留 #2",
+              logSecond != nullptr ? logSecond->windowTitle() : QStringLiteral("<null>"));
+
+        w.markGameStopRequestedForTest(sSecond);
+        manager->stopGame(sSecond);
+        pumpUntil([manager] { return manager->runningGames().isEmpty(); }, 5000);
+        dropLogs();
+        repaintBottomBar(&w);
     }
 
     {

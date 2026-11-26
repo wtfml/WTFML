@@ -17,6 +17,7 @@
 #include "util/AppPaths.hpp"
 #include "util/StorageAvailability.hpp"
 #include "util/MemoryBudget.hpp"
+#include <QCheckBox>
 #include <QComboBox>
 #include <QDateTime>
 #include <QEventLoop>
@@ -26,6 +27,7 @@
 #include <QScreen>
 #include <QScopeGuard>
 #include <QScopedValueRollback>
+#include <QSignalBlocker>
 #include <QThread>
 
 #include <atomic>
@@ -135,6 +137,24 @@ bool LaunchController::confirmLaunchWhileRunning(const QString &versionId) {
     }
 
     const QString displayName = m_owner->instanceDisplayName(versionId);
+    const auto askGuardPrompt = [this](MessageKind kind, const QString &title, const QString &text,
+                                       const QString &note, auto disableSetting, QCheckBox *settingCheck) {
+        bool dontAskAgain = false;
+        const int choice = InlineMessage::ask(
+            m_owner->m_ui->overlay(), kind, title, text, QStringList{tr("取消"), tr("仍要启动")},
+            -1, 1, false, note, tr("不再提示"), &dontAskAgain);
+        if (choice != 1) {
+            return false;
+        }
+        if (dontAskAgain) {
+            disableSetting();
+            if (settingCheck != nullptr) {
+                const QSignalBlocker block(settingCheck);
+                settingCheck->setChecked(false);
+            }
+        }
+        return true;
+    };
 
     // ① 「重复启动」：同一个身份、同一个实例，而且**我上一次点启动就在十秒之内**。
     //
@@ -150,14 +170,13 @@ bool LaunchController::confirmLaunchWhileRunning(const QString &versionId) {
         const bool withinWindow =
             last > 0 && now >= last && now - last <= m_owner->duplicateLaunchWindowMs();
         if (withinWindow) {
-            const int choice = InlineMessage::ask(
-                m_owner->m_ui->overlay(), MessageKind::Question,
-                tr("已有相同的游戏进程正在运行"),
-                tr("「%1」仍在运行。再次启动会使用同一账号和实例，两个进程可能同时访问同一存档。")
-                    .arg(displayName),
-                QStringList{tr("取消"), tr("仍要启动")}, -1, 1, false,
-                tr("可以在设置中关闭此提示（设置 → 提示 →「重复启动时确认」）。"));
-            if (choice != 1) {
+            if (!askGuardPrompt(
+                    MessageKind::Question, tr("已有相同的游戏进程正在运行"),
+                    tr("「%1」仍在运行。再次启动会使用同一账号和实例，两个进程可能同时访问同一存档。")
+                        .arg(displayName),
+                    tr("可以在设置中关闭此提示（设置 → 提示 →「重复启动时确认」）。"),
+                    [this] { m_owner->m_settings->setWarnDuplicateLaunch(false); },
+                    m_owner->m_ui->getWarnDuplicateLaunchCheck())) {
                 return false;
             }
         }
@@ -168,13 +187,13 @@ bool LaunchController::confirmLaunchWhileRunning(const QString &versionId) {
     // （「在前面选择仍要启动的情况下/不同账户」），所以这不是"二选一"：连点两下、两个
     // 开关都开着时，框是前后两个。
     if (m_owner->m_settings->warnWorldLoss() && sameInstanceRunning) {
-        const int choice = InlineMessage::ask(
-            m_owner->m_ui->overlay(), MessageKind::Warning, tr("进入单人世界可能会丢失进度"),
-            tr("「%1」仍在运行。\n\n同时打开同一存档会使后保存的进度覆盖先前的修改，并可能损坏存档。")
-                .arg(displayName),
-            QStringList{tr("取消"), tr("仍要启动")}, -1, 1, false,
-            tr("可以在设置中关闭此提示（设置 → 提示 →「同一实例已运行时提醒」）。"));
-        if (choice != 1) {
+        if (!askGuardPrompt(
+                MessageKind::Warning, tr("进入单人世界可能会丢失进度"),
+                tr("「%1」仍在运行。\n\n同时打开同一存档会使后保存的进度覆盖先前的修改，并可能损坏存档。")
+                    .arg(displayName),
+                tr("可以在设置中关闭此提示（设置 → 提示 →「同一实例已运行时提醒」）。"),
+                [this] { m_owner->m_settings->setWarnWorldLoss(false); },
+                m_owner->m_ui->getWarnWorldLossCheck())) {
             return false;
         }
     }

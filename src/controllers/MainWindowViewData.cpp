@@ -928,7 +928,7 @@ QList<MainWindowUI::PanelRow> runningGamePanelRows(QList<RunningProcesses::Entry
         // 图标走**和实例树同一个函数**（instanceRowMark）：用户挑过就画他挑的那张，没挑过
         // 才按版本分类 / 加载器给。
         row.icon = instanceRowMark(versions->displayParts(proc.versionId), versions, iconSize);
-        row.title = proc.displayName;
+        row.title = RunningProcesses::numberedName(proc.displayName, proc.instanceNumber);
         row.subtitle = playTimeText(proc.sessionId);
         if (row.subtitle.isEmpty()) {
             row.subtitle = MainWindowUI::runningDurationText(proc.startedAtMs, nowMs);
