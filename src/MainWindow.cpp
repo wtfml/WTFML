@@ -497,7 +497,9 @@ MainWindow::MainWindow(QWidget *parent)
         m_activityCenter, m_ui->overlay(), this,
         CrashReportController::Host{
             [this](const QString &text) { appendLog(text); },
-            [this](const QString &context) { askAgentAboutCrash(context); }},
+            [this](const QString &context, const QString &instanceId) {
+                askAgentAboutCrash(context, instanceId);
+            }},
         this);
     // 工具箱那九件小工具：页面、算术、线程全在那个 controller 里，这儿只有
     // "建它"和"把导航轨底部那颗『工具箱』接到它身上"两句话。

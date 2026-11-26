@@ -733,16 +733,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>游戏刚刚异常退出，请结合下面的信息帮我判断可能的原因，并给出按顺序可执行的排查步骤。
-
-%1</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>当前模式的提示词不可用：%1</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>检测到疑似凭据（%1），已在本机遮挡后再发送。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -791,10 +781,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>提示词为空。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>MCP 配置读取失败：%1</source>
             <translation type="unfinished"></translation>
         </message>
@@ -812,6 +798,44 @@
         </message>
         <message>
             <source>保存实例锁定设置失败：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>崩溃急救模式的提示词不可用，请重启启动器后再试。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」刚刚异常退出。按崩溃急救流程直接开工：先取崩溃快照和日志证据，再提交修复计划，批准后在工作区里改、隔离启动验证、提交或回滚；能自己做的不要只给我人工步骤。全部做完再汇报结论、回退方式和未解决项。
+
+%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>锁定的实例</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>要不要打开 Auto-safe</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>打开后，计划一旦批准就按计划执行到事务结束：计划内的写盘和测试启动不再逐步弹审批。
+
+最长 60 分钟或 20 次启动；验证失败自动回滚；事务结束写审计。java.path、args.extraJvm、saves/ 和跨工作区写入无论如何都会被拒绝。
+
+不打开也可以修，只是每一步写盘都要你点一次「允许」。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>打开 Auto-safe</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>逐步确认</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>当前模式的提示词不可用，请重启启动器后再试。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -954,10 +978,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>模式「%1」不可用：%2</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>先停止当前回复再切换模式。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -999,6 +1019,10 @@
         </message>
         <message>
             <source>会话已导出：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模式「%1」不可用，请重启启动器后再试。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -1116,7 +1140,11 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>写入前会先备份到维护备份目录。</source>
+            <source>写入前会先备份，可在实例设置「备份与操作」页的「从快照恢复…」中还原。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写入修复工作区，不另行备份。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -1137,6 +1165,14 @@
         </message>
         <message>
             <source>文件内容未变化，未写入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已写入工作区：%1 → %2 字节，已校验。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写入成功：%1 → %2 字节，已校验。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -1354,7 +1390,15 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>维护备份</source>
+            <source>找不到该备份。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份元数据缺少实例 ID，已拒绝还原。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>实例正在运行或正被其他操作占用，已拒绝还原。请等待结束后再试。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -1370,27 +1414,11 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>备份元数据缺少实例 ID，已拒绝恢复。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>实例目录已不存在。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>恢复备份前的快照</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>无法创建恢复前快照，已中止恢复。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>备份中的路径无效：%1</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>无法写回：%1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -1478,6 +1506,10 @@
         </message>
         <message>
             <source>列模组</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>完整性体检</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -1805,7 +1837,7 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>备份保存在维护备份目录，删除会话不会删除它。</source>
+            <source>备份保存在启动器备份目录，删除会话不影响备份。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -1814,6 +1846,14 @@
         </message>
         <message>
             <source>找不到该备份。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>该备份由启动器管理，请在实例设置「备份与操作」页的「从快照恢复…」中还原。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>该备份不属于当前锁定的实例，已拒绝还原。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2407,6 +2447,14 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>先把文件下载到暂存目录并校验大小与 SHA-1，全部通过后才复制进工作区 mods/。会补齐版本声明的必需前置，任何一步失败都不改工作区，也不碰原实例。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>先把文件下载到暂存目录并校验大小与 SHA-1，全部通过后才复制进工作区 mods/。任何一步失败都不改工作区，也不碰原实例。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>只写事务工作区；提交/回滚由 repair.finish 决定。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -2436,14 +2484,6 @@
         </message>
         <message>
             <source>校验模组文件</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>先把文件下载到暂存目录并校验大小与 SHA-1，全部通过后才复制进工作区 mods/；会补齐版本声明的必需前置；任何一步失败都不改工作区，也不碰原实例。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>先把文件下载到暂存目录并校验大小与 SHA-1，全部通过后才复制进工作区 mods/；任何一步失败都不改工作区，也不碰原实例。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -5347,6 +5387,34 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>%1 等 %2 个文件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智能体写入前备份：%1（%2，%3）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 个文件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智能体写入前备份：「%1」%2（%3）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智能体还原前备份：%1（%2，%3）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>、</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智能体备份：%1（%2 个文件，%3，%4）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>%1（日志异常）</source>
             <translation type="unfinished"></translation>
         </message>
@@ -5445,6 +5513,28 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>将撤销该会话对「%1」中 %2 个文件的修改，还原为会话首次写入前的内容。其他文件不变。还原前会先备份这些文件的当前内容。
+
+待还原备份：
+%3</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>将用备份覆盖「%1」中的 %2 个文件。其他文件不变，备份后新增的文件也将保留。还原前会先备份这些文件的当前内容。
+
+待还原备份：
+%3</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>还原智能体备份</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>还原「%1」的智能体备份</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>从快照恢复</source>
             <translation type="unfinished"></translation>
         </message>
@@ -5485,6 +5575,22 @@
         </message>
         <message>
             <source>核对并替换目录</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>读取备份</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份当前文件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写回文件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>核对文件</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -25621,6 +25727,10 @@ Minecraft %2 / %3
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>未找到备份元数据（%1）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>读取备份清单</source>
             <translation type="unfinished"></translation>
         </message>
@@ -25729,6 +25839,74 @@ Minecraft %2 / %3
         </message>
         <message>
             <source>%1（%2 个文件）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份中的路径无效：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>没有可备份的文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份目录已存在，未覆盖：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法写入备份目录：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>不是文件备份。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份内容已损坏或被修改：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份中没有文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>实例目录不存在或为链接，已拒绝还原：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份中的路径无效或目标含链接，已拒绝还原：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>磁盘空间不足，未还原任何文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>还原已取消，未改动任何文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法读取当前文件，已中止还原：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法备份当前文件，已中止还原：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已回滚到还原前的内容。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>部分文件未能回滚，请从还原前的备份手动还原：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法写回 %1。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写回后有 %1 个文件校验未通过。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>

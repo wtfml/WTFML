@@ -86,9 +86,18 @@ public:
 
     /// 测试专用：换掉真实网络客户端（不转移所有权；调用方负责活得比控制器久）。
     void setModelClientForTest(AgentModelClient *client);
-    /// 崩溃卡片上的「使用智能体询问」：把崩溃摘要填进输入框并发出去。
+    /// 崩溃卡片上的「使用智能体询问」：另起一条会话、切到崩溃急救、锁住崩的那个实例，
+    /// 把崩溃摘要带进去直接开工，最后问一句要不要打开 Auto-safe。
     /// 没配置模型时走正常的设置页提示，不在这里偷偷替用户配一个。
-    void askAboutCrash(const QString &context);
+    /// @param instanceId 崩的那个实例（可为空：空则按主页当前实例、第一次实例工具调用时锁定）。
+    bool askAboutCrash(const QString &context, const QString &instanceId = QString());
+
+    /// 测试专用：走 askAboutCrash 的会话/模式/实例那一段，但不弹 Auto-safe 问话。
+    void askAboutCrashForTest(const QString &context, const QString &instanceId) {
+        m_suppressAutoSafeOffer = true;
+        askAboutCrash(context, instanceId);
+        m_suppressAutoSafeOffer = false;
+    }
 
     /// 测试专用：不经过设置页直接摆一份可用的 profile/key。
     void applyProfileForTest(const AgentProviderProfile &profile, const QString &apiKey);
@@ -124,6 +133,15 @@ private:
     void onSettingsTest();
     void onSettingsDeleteProfile();
     void onNewSession();
+    /// 切到一条没内容的会话（当前这条空着就继续用它）；在飞请求先停、内容保留。
+    bool ensureBlankSession();
+    /// 这次崩的实例：锁成会话实例（不在当前游戏目录就不锁，留给首次实例工具调用）。
+    void lockCrashInstance(const QString &instanceId);
+    QString crashInstanceLabel(const QString &instanceId) const;
+    /// 崩溃转发发出去之后，问一句要不要打开 Auto-safe（默认落在「逐步确认」）。
+    void offerAutoSafeForCrash();
+    /// 按当前模式/已锁实例打开 Auto-safe；不具备条件时复位开关并提示。
+    bool enableAutoSafeForCurrentSession();
     void onSend(const QString &text);
     void onStop();
     void onRetry(const QString &messageId);
@@ -203,4 +221,6 @@ private:
     bool m_settingsOpenQueued = false;  // 让位后排了下一轮重开 API 设置页
     bool m_shuttingDown = false;
     QString m_autoNoticeShownFor;
+    /// 测试专用：askAboutCrash 不弹 Auto-safe 问话（mw_check 在模态框里会卡住）。
+    bool m_suppressAutoSafeOffer = false;
 };

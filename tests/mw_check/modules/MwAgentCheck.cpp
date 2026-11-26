@@ -712,6 +712,53 @@ int MwAgentChecks(QApplication &app) {
         QDir(root).removeRecursively();
     }
 
+    // 崩溃卡片「使用智能体询问」：另起一条会话、切崩溃急救、锁崩的那个实例、要求直接开工。
+    {
+        const QString root = AppPaths::versionDir(QStringLiteral("mw-crash-forward"));
+        QDir().mkpath(root + QStringLiteral("/mods"));
+        AgentInstanceInfo info;
+        info.id = QStringLiteral("mw-crash-forward");
+        info.name = QStringLiteral("崩溃实例");
+        info.gameRootId = AgentInstanceLocks::gameRootId(root);
+        controller->setInstanceContextForTest(root, info);
+
+        // 先备一条聊过两句的自由对话：转发必须另起一条，不往这条里续。
+        fake.toolCallNext = false;
+        fake.toolRounds = 0;
+        controller->chooseSkillForTest(QStringLiteral("general"));
+        controller->sendForTest(QStringLiteral("随便聊一句"));
+        check(waitFor([&] { return controller->loop()->state() == AgentLoop::State::Completed; }),
+              "崩溃转发：先备一条自由对话会话");
+        const QString chatted = controller->currentSessionId();
+
+        const int startsBefore = fake.starts;
+        controller->askAboutCrashForTest(
+            QStringLiteral("实例：崩溃实例\n退出码：0xC0000005（内存访问冲突）"), info.id);
+        check(waitFor([&] { return controller->loop()->state() == AgentLoop::State::Completed; }),
+              "崩溃转发：假模型答完");
+        const QString forwarded = controller->currentSessionId();
+        check(fake.starts == startsBefore + 1, "崩溃转发：自动发出一次请求");
+        check(!forwarded.isEmpty() && forwarded != chatted, "崩溃转发：另起一条会话", forwarded);
+        check(controller->workflow()->skill().id == QStringLiteral("crash-rescue"),
+              "崩溃转发：自动切到崩溃急救");
+        AgentSession crashSession;
+        QString crashProblem;
+        check(controller->sessionStore()->load(forwarded, &crashSession, &crashProblem),
+              "崩溃转发：会话在盘上", crashProblem);
+        check(crashSession.meta.skill == QStringLiteral("crash-rescue"),
+              "崩溃转发：模式写进会话元数据");
+        check(crashSession.meta.instanceLock.id == info.id,
+              "崩溃转发：锁住崩的那个实例", crashSession.meta.instanceLock.id);
+        const QString asked =
+            crashSession.messages.isEmpty() ? QString() : crashSession.messages.constFirst().content;
+        check(asked.contains(QStringLiteral("直接开工")), "崩溃转发：提问要求直接开工、做完再汇报");
+        check(asked.contains(QStringLiteral("0xC0000005")), "崩溃转发：崩溃摘要带进提问", asked.left(80));
+        check(fake.lastRequest.systemPrompt.contains(QStringLiteral("Crash Rescue")),
+              "崩溃转发：这一轮的系统提示就是崩溃急救");
+        controller->chooseSkillForTest(QStringLiteral("general"));
+        QDir(root).removeRecursively();
+    }
+
     controller->shutdown();
     check(controller->loop()->state() == AgentLoop::State::Cancelled ||
               !controller->loop()->busy(),

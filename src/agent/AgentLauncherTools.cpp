@@ -255,7 +255,7 @@ QList<AgentToolSpec> AgentLauncherTools::specs() {
                                   {{QStringLiteral("reportId"),
                                     stringField(QStringLiteral("string"), 128)}})));
     list.append(spec(QStringLiteral("instance.integrity"),
-                     QCoreApplication::translate("AgentLauncherTools", "完整性体检"),
+                     QCoreApplication::translate("AgentLauncherTools", "完整性检查"),
                      QStringLiteral("按现有完整性判据扫一遍；只给分组计数，不给路径；可能耗时数秒。"),
                      AgentRisk::ReadOnly, objectSchema({}, {})));
     list.append(spec(QStringLiteral("mods.list"),

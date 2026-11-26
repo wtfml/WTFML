@@ -705,7 +705,7 @@ AgentPage::AgentPage(QWidget *parent)
     chatLayout->addWidget(m_scroll, 1);
 
     // ---------- 模式卡片（Stage 2）----------
-    // 一行胶囊按钮：自由对话 / 实例体检 / 崩溃急救 / 版本升级 / 模组维护。点一下切技能；
+    // 一行胶囊按钮：自由对话 / 实例诊断 / 崩溃急救 / 版本升级 / 模组维护。点一下切技能；
     // 工具箱与提示词跟着换（控制器负责），这里只画和发信号。
     m_skillBar = new QWidget(chat);
     m_skillBar->setObjectName(QStringLiteral("agentSkillBar"));

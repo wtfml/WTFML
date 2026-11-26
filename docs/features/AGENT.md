@@ -40,7 +40,7 @@
 
 - 智能体页双栏：左侧会话栏（新建/搜索/分组/重命名/固定/删除），右侧聊天区。
 - 顶行：标题、API 状态胶囊、实例胶囊、`⋯`（重命名/固定/加密存储/导出/删除）、API 设置。
-- 输入岛上方一行**模式胶囊**：自由对话 / 实例体检 / 崩溃急救 / 版本升级 / 模组维护（`agentSkill_<id>`）；下面一行工作流状态（模式/阶段/计划步数/证据数），空串收起。
+- 输入岛上方一行**模式胶囊**：自由对话 / 实例诊断 / 崩溃急救 / 版本升级 / 模组维护（`agentSkill_<id>`）；下面一行工作流状态（模式/阶段/计划步数/证据数），空串收起。
 - 消息区：用户气泡、助手 Markdown、推理折叠、错误/中断、工具卡、审批卡（计划卡复用审批卡）。滚动跟随只在用户本来就贴着底部时生效：上翻阅读后，流式正文/工具卡/提示的更新不再把画面拽回最下方，折叠或展开思考过程同理；`Ctrl+End`（对话视图有焦点时）或滚轮回到最底部恢复跟随。
 - API 设置页另有「MCP 服务器…」入口与「联网与诊断」组（SearXNG 地址、允许诊断命令开关，默认关）。
 - 主题、尺寸、无障碍沿用现有 Theme 令牌与 `objectName`。
@@ -358,7 +358,7 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 
 | 项 | 行为 |
 | --- | --- |
-| 打开 | 只在崩溃急救/模组维护显示开关；需要先锁定实例；默认关闭，不随会话记忆 |
+| 打开 | 只在崩溃急救/模组维护显示开关；需要先锁定实例；默认关闭，不随会话记忆。崩溃卡片转发进崩溃急救后会问一次要不要打开（默认落在「逐步确认」） |
 | 范围 | 已批准计划里的写工具、`fs.write` 路径、`settings.set` 键、`mods.setEnabled` 文件名、`mods.installFix` 项目号，加 `repair.begin/verify/finish/diff/status` 与启动测试/二分 |
 | 时效 | 60 分钟；启动次数 20（`instance.testLaunch`/`repair.verify` 按 `repeat` 计，`mods.bisect` 按 `maxLaunches` 计）；到期或用满退回逐次确认 |
 | 硬禁止 | `settings.set` 的 `java.path` / `args.extraJvm`；`fs.write` 的 `saves/` 与带 `..` 的路径；`backup.restore`；`instance.repairCore`；不在本事务工作区的写入 |
@@ -415,7 +415,7 @@ JSON-RPC 2.0、stdio、换行分隔。`initialize`（提议 `2024-11-05`，以�
 | 技能 | 模式 | 只读 | 要求计划 | 必须碰过 |
 | --- | --- | --- | --- | --- |
 | `general` | 自由对话 | 否 | 否 | — |
-| `inspection` | 实例体检 | 是 | 否 | `diagnostics.startup` |
+| `inspection` | 实例诊断 | 是 | 否 | `diagnostics.startup` |
 | `crash-rescue` | 崩溃急救 | 否 | 是 | `diagnostics.crash` |
 | `upgrade` | 版本升级 / 移植 | 否 | 是 | `upgrade.inspect` |
 | `mods` | 模组维护 | 否 | 是 | `mods.list` |
@@ -425,7 +425,7 @@ JSON-RPC 2.0、stdio、换行分隔。`initialize`（提议 `2024-11-05`，以�
 | 模式 | 白名单大致范围 | 不含 |
 | --- | --- | --- |
 | 自由对话 | 文件工具、只读诊断、设置/模组启停/备份、联网与诊断命令、`mcp__*` | 事务（`repair.*`）、`instance.testLaunch`、`mods.installFix`、`mods.bisect`、`instance.repairCore`、`workflow.*` |
-| 实例体检 | 只读诊断 + 分析/校验 | 一切写工具、启动测试、事务 |
+| 实例诊断 | 只读诊断 + 分析/校验 | 一切写工具、启动测试、事务 |
 | 崩溃急救 / 模组维护 | 只读诊断 + 分析与校验 + 写工具 + 事务/启动测试/修复/二分 + `workflow.*` | — |
 | 版本升级 / 移植 | 只读诊断 + `backup.create` + 升级入口 | 设置写、事务、启动测试 |
 
@@ -433,8 +433,9 @@ JSON-RPC 2.0、stdio、换行分隔。`initialize`（提议 `2024-11-05`，以�
 
 ### 11.2 工作流
 
-- **实例体检**：锁定实例 → 启动诊断 → 日志/模组/完整性 → 分级结论 + 证据 + 下一步选项；不写盘。
+- **实例诊断**：锁定实例 → 启动诊断 → 日志/模组/完整性 → 分级结论 + 证据 + 下一步选项；不写盘。
 - **崩溃急救**：`diagnostics.crashSnapshot` 拿环境、阶段、异常链与命中规则（需要行号时再 `logs.search`，原文走 `crash.readFull`）→ 按 `matchedRules`、嫌疑的 role/置信度与证据决定下一步（类型清单在知识库，不写进提示词，也不猜具体模组）→ 计划 → `repair.begin` 建事务 → 逐步执行（事务内写工作区、每步单独审批、失败即停）→ `repair.verify` 在隔离工作区验证 → `repair.finish(commit/rollback)` → 报告写回退方式与未解决项。开了 Auto-safe 时计划批准后的写步骤不再逐个确认，验证失败自动回滚；世界问题只在副本世界验证，不打开源存档。
+- **崩溃卡片转发**：游戏异常退出那张卡片上的「使用智能体询问」另起一条会话、切到崩溃急救、锁住这次崩的实例（不在当前游戏目录就不锁，留给首次实例工具调用按主页锁定），发出去的第一句要求先取证据再修、做完再汇报；发完弹一次问话要不要打开 Auto-safe，默认落在「逐步确认」。
 - **版本升级 / 移植**：`upgrade.inspect` 只读检查 + 解释风险；执行一律打开现有升级向导。
 - **模组维护**：列清单 → `mods.analyzeCompatibility` 读声明查加载器/版本/缺前置/重复 → 需要逐文件哈希时 `mods.verifyFiles` → `repair.begin` → 在工作区启停/备份，或用 `mods.installFix` 按平台记录换掉损坏/不兼容的文件 → `repair.diff`/`repair.verify` → 提交或回滚。核心文件损坏走 `instance.repairCore`；说不清是哪几个模组时用 `mods.bisect` 在工作区二分（嫌疑来自 `diagnostics.crashSnapshot`）。
 

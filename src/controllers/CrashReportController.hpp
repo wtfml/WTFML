@@ -34,8 +34,8 @@ public:
 
     struct Host {
         std::function<void(const QString &)> log;
-        /// 「使用智能体询问」：把这次崩溃的摘要交给智能体页。空 = 没接。
-        std::function<void(const QString &)> askAgent;
+        /// 「使用智能体询问」：把这次崩溃的摘要和实例 id 交给智能体页。空 = 没接。
+        std::function<void(const QString &context, const QString &instanceId)> askAgent;
     };
 
     CrashReportController(ActivityCenterController *activity, OverlayHost *overlay,

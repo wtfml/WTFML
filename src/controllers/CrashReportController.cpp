@@ -225,7 +225,7 @@ void CrashReportController::showCrashDialog(Tasks::TaskId id, int overlayRetry) 
             continue;
         }
         if (clicked == 3) {
-            if (m_host.askAgent) m_host.askAgent(context);
+            if (m_host.askAgent) m_host.askAgent(context, record.facts.instanceId);
             return;
         }
     }

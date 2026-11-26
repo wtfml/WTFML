@@ -652,7 +652,7 @@ QString AgentController::configurationProblem() const {
     return {};
 }
 
-void AgentController::onNewSession() {
+bool AgentController::ensureBlankSession() {
     if (m_loop->busy()) {
         m_loop->cancel();
         flushSave(true);
@@ -673,35 +673,121 @@ void AgentController::onNewSession() {
         }
         if (!reuseId.isEmpty()) {
             selectSession(reuseId);
-            if (m_session.meta.id == reuseId) {
-                refreshSessions();
-                refreshApiState();
-                return;
-            }
+            if (m_session.meta.id == reuseId) return true;
         }
         AgentSession created;
         QString problem;
         if (!m_store.create(&created, &problem)) {
             if (m_page != nullptr) m_page->showNotice(problem);
-            return;
+            return false;
         }
         m_session = created;
     }
+    return true;
+}
+
+void AgentController::onNewSession() {
+    if (!ensureBlankSession()) return;
     refreshSessions();
     updateHeader();
     refreshApiState();
 }
 
-void AgentController::askAboutCrash(const QString &context) {
-    if (m_page == nullptr || m_page->composer() == nullptr) {
-        return;
+bool AgentController::askAboutCrash(const QString &context, const QString &instanceId) {
+    if (m_page == nullptr || m_page->composer() == nullptr) return false;
+    // 没配模型时先把设置页摆出来，别先切走用户的会话再报错。
+    const QString problem = configurationProblem();
+    if (!problem.isEmpty()) {
+        m_page->showNotice(problem);
+        openSettings();
+        return false;
     }
+    // 崩溃转发一律另起一条会话：旧对话里的证据、计划和实例锁都属于另一次事故。
+    if (!ensureBlankSession()) return false;
+    const AgentSkill crash = AgentSkillRegistry::find(QStringLiteral("crash-rescue"));
+    if (crash.id.isEmpty() || !crash.promptAvailable()) {
+        logPromptProblem(crash);
+        m_page->showNotice(QCoreApplication::translate(
+            "AgentController", "崩溃急救模式的提示词不可用，请重启启动器后再试。"));
+        return false;
+    }
+    if (m_workflow.skill().id != crash.id) {
+        disableAutoSafe(QStringLiteral("切换模式"));  // i18n-ignore
+        m_workflow.setSkill(crash);
+    }
+    m_session.meta.skill = crash.id;
+    // 这次崩的是哪个实例，就锁哪个：用户点的是这张卡片，算他认了这个实例。
+    lockCrashInstance(instanceId);
+    flushSave(true);
+    refreshSessions();
+    refreshSkillUi();
+    updateHeader();
+
     const QString prompt =
-        tr("游戏刚刚异常退出，请结合下面的信息帮我判断可能的原因，并给出按顺序可执行的排查步骤。\n\n%1")
-            .arg(context.left(6000));
+        tr("「%1」刚刚异常退出。按崩溃急救流程直接开工：先取崩溃快照和日志证据，再提交修复计划，"
+           "批准后在工作区里改、隔离启动验证、提交或回滚；能自己做的不要只给我人工步骤。"
+           "全部做完再汇报结论、回退方式和未解决项。\n\n%2")
+            .arg(crashInstanceLabel(instanceId), context.left(6000));
     m_page->composer()->setPlainText(prompt);
     m_page->composer()->setFocus(Qt::OtherFocusReason);
     onSend(prompt);
+    if (!m_suppressAutoSafeOffer) offerAutoSafeForCrash();
+    return true;
+}
+
+QString AgentController::crashInstanceLabel(const QString &instanceId) const {
+    for (const AgentInstanceInfo &info : instances()) {
+        if (info.id == instanceId && !info.name.isEmpty()) return info.name;
+    }
+    return instanceId.isEmpty() ? m_session.meta.instanceLock.name
+                                : QCoreApplication::translate("AgentController", "锁定的实例");
+}
+
+void AgentController::lockCrashInstance(const QString &instanceId) {
+    if (instanceId.isEmpty() || m_session.meta.id.isEmpty()) return;
+    if (m_session.meta.instanceLock.id == instanceId) return;
+    AgentInstanceInfo target;
+    for (const AgentInstanceInfo &info : instances()) {
+        if (info.id == instanceId) target = info;
+    }
+    if (!target.isValid() || !target.exists) {
+        // 不在当前游戏目录（换个目录打开的启动器、或者实例已经删了）：不锁，留给第一次
+        // 实例工具调用按主页当前实例锁定，与原来那条路径一致。
+        return;
+    }
+    QString problem;
+    if (!AgentInstanceLocks::switchTo(&m_session, target, &problem)) {
+        m_page->showNotice(problem);
+        return;
+    }
+    QString saveProblem;
+    if (!m_store.save(m_session, true, &saveProblem)) {
+        m_session.meta.instanceLock = {};
+        m_page->showNotice(QCoreApplication::translate("AgentController",
+                                                       "保存实例锁定设置失败：%1")
+                               .arg(saveProblem));
+    }
+}
+
+void AgentController::offerAutoSafeForCrash() {
+    if (m_page == nullptr || m_overlay == nullptr) return;
+    const QString skill = m_workflow.skill().id;
+    if (skill != QStringLiteral("crash-rescue") && skill != QStringLiteral("mods")) return;
+    if (m_autoSafe.enabled() || m_session.meta.instanceLock.id.isEmpty()) return;
+    const int choice = InlineMessage::ask(
+        m_overlay, MessageKind::Question,
+        QCoreApplication::translate("AgentController", "要不要打开 Auto-safe"),
+        QCoreApplication::translate(
+            "AgentController",
+            "打开后，计划一旦批准就按计划执行到事务结束：计划内的写盘和测试启动不再逐步弹审批。\n\n"
+            "最长 60 分钟或 20 次启动；验证失败自动回滚；事务结束写审计。"
+            "java.path、args.extraJvm、saves/ 和跨工作区写入无论如何都会被拒绝。\n\n"
+            "不打开也可以修，只是每一步写盘都要你点一次「允许」。"),
+        QStringList{QCoreApplication::translate("AgentController", "打开 Auto-safe"),
+                    QCoreApplication::translate("AgentController", "逐步确认")},
+        1 /* 默认落在「逐步确认」：这是 D12 的默认关 */, -1);
+    if (choice != 0) return;
+    enableAutoSafeForCurrentSession();
 }
 
 void AgentController::onSend(const QString &text) {
@@ -1420,12 +1506,17 @@ void AgentController::onAutoSafeToggled(bool enabled) {
         disableAutoSafe(QStringLiteral("用户关闭"));  // i18n-ignore
         return;
     }
+    enableAutoSafeForCurrentSession();
+}
+
+bool AgentController::enableAutoSafeForCurrentSession() {
+    if (m_page == nullptr) return false;
     const QString skill = m_workflow.skill().id;
     if (skill != QStringLiteral("crash-rescue") && skill != QStringLiteral("mods")) {
         m_page->setAutoSafeEnabled(false);
         m_page->showNotice(QCoreApplication::translate(
             "AgentController", "Auto-safe 只在崩溃急救与模组维护里可用。"));  // i18n-ignore
-        return;
+        return false;
     }
     // 只读会话已锁定的实例；打开开关不替用户锁实例（那是第一次实例工具调用的事）。
     const QString instanceId = m_session.meta.instanceLock.id;
@@ -1433,16 +1524,18 @@ void AgentController::onAutoSafeToggled(bool enabled) {
         m_page->setAutoSafeEnabled(false);
         m_page->showNotice(QCoreApplication::translate(
             "AgentController", "先锁定一个实例，再打开 Auto-safe。"));  // i18n-ignore
-        return;
+        return false;
     }
     m_autoSafe.enable(instanceId, m_session.meta.id, QDateTime::currentDateTimeUtc());
     m_autoSafeUserOn = true;
     m_repairTools->setAutoSafe(true);
+    m_page->setAutoSafeEnabled(true);
     refreshAutoSafeUi();
     m_page->showNotice(
         QCoreApplication::translate("AgentController",
                                     "Auto-safe 已打开：提交并批准计划后，计划内的写入/启动不再逐步确认；"  // i18n-ignore
                                     "最长 60 分钟或 20 次启动，事务结束写审计。"));  // i18n-ignore
+    return true;
 }
 
 void AgentController::disableAutoSafe(const QString &reason) {

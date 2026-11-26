@@ -745,18 +745,6 @@ Select "Sign out" to try again.</translation>
             <translation>Previous pending approval expired; request and confirm it again.</translation>
         </message>
         <message>
-            <source>游戏刚刚异常退出，请结合下面的信息帮我判断可能的原因，并给出按顺序可执行的排查步骤。
-
-%1</source>
-            <translation>The game just exited abnormally. Based on the information below, help me identify the likely cause and provide step-by-step troubleshooting instructions.
-
-%1</translation>
-        </message>
-        <message>
-            <source>当前模式的提示词不可用：%1</source>
-            <translation>Prompt for current mode isn't available: %1</translation>
-        </message>
-        <message>
             <source>检测到疑似凭据（%1），已在本机遮挡后再发送。</source>
             <translation>Suspected credentials (%1) detected and masked locally before sending.</translation>
         </message>
@@ -805,10 +793,6 @@ Select "Sign out" to try again.</translation>
             <translation>No API key available. Configure one in Settings first.</translation>
         </message>
         <message>
-            <source>提示词为空。</source>
-            <translation>Prompt is empty.</translation>
-        </message>
-        <message>
             <source>MCP 配置读取失败：%1</source>
             <translation>Couldn't read MCP config: %1</translation>
         </message>
@@ -827,6 +811,50 @@ Select "Sign out" to try again.</translation>
         <message>
             <source>保存实例锁定设置失败：%1</source>
             <translation>Couldn't save instance lock setting: %1</translation>
+        </message>
+        <message>
+            <source>崩溃急救模式的提示词不可用，请重启启动器后再试。</source>
+            <translation>The Crash rescue prompt isn't available; restart the launcher and try again.</translation>
+        </message>
+        <message>
+            <source>「%1」刚刚异常退出。按崩溃急救流程直接开工：先取崩溃快照和日志证据，再提交修复计划，批准后在工作区里改、隔离启动验证、提交或回滚；能自己做的不要只给我人工步骤。全部做完再汇报结论、回退方式和未解决项。
+
+%2</source>
+            <translation>%1 just exited abnormally. Start working through Crash rescue right away: pull the crash snapshot and log evidence first, then submit a repair plan; after approval, edit in the workspace, verify with an isolated launch, then commit or roll back. Do whatever you can yourself instead of handing me manual steps. When everything is done, report the conclusion, how to roll back, and what's still unresolved.
+
+%2</translation>
+        </message>
+        <message>
+            <source>锁定的实例</source>
+            <translation>Locked instance</translation>
+        </message>
+        <message>
+            <source>要不要打开 Auto-safe</source>
+            <translation>Turn on Auto-safe?</translation>
+        </message>
+        <message>
+            <source>打开后，计划一旦批准就按计划执行到事务结束：计划内的写盘和测试启动不再逐步弹审批。
+
+最长 60 分钟或 20 次启动；验证失败自动回滚；事务结束写审计。java.path、args.extraJvm、saves/ 和跨工作区写入无论如何都会被拒绝。
+
+不打开也可以修，只是每一步写盘都要你点一次「允许」。</source>
+            <translation>Once it's on, an approved plan runs to the end of the transaction: planned writes and test launches stop asking for approval step by step.
+
+Up to 60 minutes or 20 launches; failed verification rolls back automatically; an audit is written when the transaction ends. java.path, args.extraJvm, saves/, and writes outside the workspace are always refused.
+
+You can repair without it too; every write then needs a separate Allow click.</translation>
+        </message>
+        <message>
+            <source>打开 Auto-safe</source>
+            <translation>Turn on Auto-safe</translation>
+        </message>
+        <message>
+            <source>逐步确认</source>
+            <translation>Confirm each step</translation>
+        </message>
+        <message>
+            <source>当前模式的提示词不可用，请重启启动器后再试。</source>
+            <translation>The prompt for the current mode isn't available; restart the launcher and try again.</translation>
         </message>
         <message>
             <source>本会话已锁定实例：%1</source>
@@ -975,10 +1003,6 @@ This server runs with your Windows user privileges and can access local files an
             <translation>MCP servers</translation>
         </message>
         <message>
-            <source>模式「%1」不可用：%2</source>
-            <translation>Mode "%1" isn't available: %2</translation>
-        </message>
-        <message>
             <source>先停止当前回复再切换模式。</source>
             <translation>Stop the current response before switching modes.</translation>
         </message>
@@ -1021,6 +1045,10 @@ This server runs with your Windows user privileges and can access local files an
         <message>
             <source>会话已导出：%1</source>
             <translation>Chat exported: %1</translation>
+        </message>
+        <message>
+            <source>模式「%1」不可用，请重启启动器后再试。</source>
+            <translation>Mode "%1" isn't available; restart the launcher and try again.</translation>
         </message>
         <message>
             <source>API 与模型设置</source>
@@ -1137,8 +1165,12 @@ This server runs with your Windows user privileges and can access local files an
             <translation>Write %1 (%2 → %3 bytes)</translation>
         </message>
         <message>
-            <source>写入前会先备份到维护备份目录。</source>
-            <translation>Creates a backup in the maintenance backup folder before writing.</translation>
+            <source>写入前会先备份，可在实例设置「备份与操作」页的「从快照恢复…」中还原。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写入修复工作区，不另行备份。</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>artifact 不存在或不可读。</source>
@@ -1159,6 +1191,14 @@ This server runs with your Windows user privileges and can access local files an
         <message>
             <source>文件内容未变化，未写入。</source>
             <translation>File contents unchanged; not written.</translation>
+        </message>
+        <message>
+            <source>已写入工作区：%1 → %2 字节，已校验。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写入成功：%1 → %2 字节，已校验。</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>写入成功：%1 → %2 字节，已备份并校验。</source>
@@ -1376,8 +1416,16 @@ This server runs with your Windows user privileges and can access local files an
             <translation>Setting key isn't in the allowlist.</translation>
         </message>
         <message>
-            <source>维护备份</source>
-            <translation>Maintenance backup</translation>
+            <source>找不到该备份。</source>
+            <translation type="unfinished">Backup not found.</translation>
+        </message>
+        <message>
+            <source>备份元数据缺少实例 ID，已拒绝还原。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>实例正在运行或正被其他操作占用，已拒绝还原。请等待结束后再试。</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>实例目录不存在。</source>
@@ -1392,28 +1440,12 @@ This server runs with your Windows user privileges and can access local files an
             <translation>Agent backup: %1</translation>
         </message>
         <message>
-            <source>备份元数据缺少实例 ID，已拒绝恢复。</source>
-            <translation>Backup metadata is missing instance ID; restore blocked.</translation>
-        </message>
-        <message>
             <source>实例目录已不存在。</source>
             <translation>Instance folder no longer exists.</translation>
         </message>
         <message>
             <source>恢复备份前的快照</source>
             <translation>Pre-restore snapshot</translation>
-        </message>
-        <message>
-            <source>无法创建恢复前快照，已中止恢复。</source>
-            <translation>Couldn't create pre-restore snapshot; restore canceled.</translation>
-        </message>
-        <message>
-            <source>备份中的路径无效：%1</source>
-            <translation>Invalid path in backup: %1</translation>
-        </message>
-        <message>
-            <source>无法写回：%1</source>
-            <translation>Can't write file: %1</translation>
         </message>
         <message>
             <source>未知页面。</source>
@@ -1501,6 +1533,10 @@ This server runs with your Windows user privileges and can access local files an
         <message>
             <source>列模组</source>
             <translation>List mods</translation>
+        </message>
+        <message>
+            <source>完整性体检</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>启停模组</source>
@@ -1831,8 +1867,8 @@ Location: %4
             <translation>Create maintenance backup</translation>
         </message>
         <message>
-            <source>备份保存在维护备份目录，删除会话不会删除它。</source>
-            <translation>Saved in the maintenance backup folder; deleting the chat won't remove it.</translation>
+            <source>备份保存在启动器备份目录，删除会话不影响备份。</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>修复事务进行中，不能直接恢复备份。请先提交或回滚事务。</source>
@@ -1841,6 +1877,14 @@ Location: %4
         <message>
             <source>找不到该备份。</source>
             <translation>Backup not found.</translation>
+        </message>
+        <message>
+            <source>该备份由启动器管理，请在实例设置「备份与操作」页的「从快照恢复…」中还原。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>该备份不属于当前锁定的实例，已拒绝还原。</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>恢复备份：%1（%2）</source>
@@ -2433,6 +2477,14 @@ Location: %4
             <translation>Repair mod files</translation>
         </message>
         <message>
+            <source>先把文件下载到暂存目录并校验大小与 SHA-1，全部通过后才复制进工作区 mods/。会补齐版本声明的必需前置，任何一步失败都不改工作区，也不碰原实例。</source>
+            <translation>Files are downloaded to a staging folder and verified for size and SHA-1; only after everything passes are they copied into the workspace mods/. Mandatory dependencies declared by the version are fetched too. If any step fails, the workspace stays untouched and the original instance is never modified.</translation>
+        </message>
+        <message>
+            <source>先把文件下载到暂存目录并校验大小与 SHA-1，全部通过后才复制进工作区 mods/。任何一步失败都不改工作区，也不碰原实例。</source>
+            <translation>Files are downloaded to a staging folder and verified for size and SHA-1; only after everything passes are they copied into the workspace mods/. If any step fails, the workspace stays untouched and the original instance is never modified.</translation>
+        </message>
+        <message>
             <source>只写事务工作区；提交/回滚由 repair.finish 决定。</source>
             <translation>Writes to transaction workspace only; commit or rollback is decided via repair.finish.</translation>
         </message>
@@ -2463,14 +2515,6 @@ Location: %4
         <message>
             <source>校验模组文件</source>
             <translation>Verify mod files</translation>
-        </message>
-        <message>
-            <source>先把文件下载到暂存目录并校验大小与 SHA-1，全部通过后才复制进工作区 mods/；会补齐版本声明的必需前置；任何一步失败都不改工作区，也不碰原实例。</source>
-            <translation>Downloads files to a staging folder and verifies size and SHA-1 before copying to workspace mods/; installs required dependencies declared by the version; any error leaves the workspace and original instance untouched.</translation>
-        </message>
-        <message>
-            <source>先把文件下载到暂存目录并校验大小与 SHA-1，全部通过后才复制进工作区 mods/；任何一步失败都不改工作区，也不碰原实例。</source>
-            <translation>Downloads files to a staging folder and verifies size and SHA-1 before copying to workspace mods/; any error leaves the workspace and original instance untouched.</translation>
         </message>
         <message>
             <source>共享库/资源不保留旧副本；失败时按官方哈希重下。</source>
@@ -5407,6 +5451,34 @@ Backup folder: %2</translation>
             <translation>Restore backup</translation>
         </message>
         <message>
+            <source>%1 等 %2 个文件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智能体写入前备份：%1（%2，%3）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 个文件</source>
+            <translation type="unfinished">%1 files</translation>
+        </message>
+        <message>
+            <source>智能体写入前备份：「%1」%2（%3）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智能体还原前备份：%1（%2，%3）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>、</source>
+            <translation type="unfinished">, </translation>
+        </message>
+        <message>
+            <source>智能体备份：%1（%2 个文件，%3，%4）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>%1（日志异常）</source>
             <translation>%1 (log error)</translation>
         </message>
@@ -5515,6 +5587,28 @@ Redownloadable assets and libraries are skipped by default.</translation>
             <translation>"%1" is installing or running. Stop it before restoring the instance folder.</translation>
         </message>
         <message>
+            <source>将撤销该会话对「%1」中 %2 个文件的修改，还原为会话首次写入前的内容。其他文件不变。还原前会先备份这些文件的当前内容。
+
+待还原备份：
+%3</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>将用备份覆盖「%1」中的 %2 个文件。其他文件不变，备份后新增的文件也将保留。还原前会先备份这些文件的当前内容。
+
+待还原备份：
+%3</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>还原智能体备份</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>还原「%1」的智能体备份</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>从快照恢复</source>
             <translation>Restore from snapshot</translation>
         </message>
@@ -5559,6 +5653,22 @@ Snapshot to restore:
         <message>
             <source>核对并替换目录</source>
             <translation>Verify and replace folder</translation>
+        </message>
+        <message>
+            <source>读取备份</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份当前文件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写回文件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>核对文件</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>共 %1 个文件，%2</source>
@@ -26154,6 +26264,10 @@ Previous folder before restore is at: %1</translation>
             <translation>Backup canceled or couldn't save archive (target in use, already exists, or disk write failed); existing backup wasn't overwritten.</translation>
         </message>
         <message>
+            <source>未找到备份元数据（%1）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>读取备份清单</source>
             <translation>Read backup manifest</translation>
         </message>
@@ -26266,6 +26380,74 @@ Restore canceled; existing files were kept.</translation>
         <message>
             <source>%1（%2 个文件）</source>
             <translation>%1 (%2 files)</translation>
+        </message>
+        <message>
+            <source>备份中的路径无效：%1</source>
+            <translation type="unfinished">Invalid path in backup: %1</translation>
+        </message>
+        <message>
+            <source>没有可备份的文件。</source>
+            <translation type="unfinished">No files to back up.</translation>
+        </message>
+        <message>
+            <source>备份目录已存在，未覆盖：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法写入备份目录：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>不是文件备份。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份内容已损坏或被修改：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份中没有文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>实例目录不存在或为链接，已拒绝还原：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份中的路径无效或目标含链接，已拒绝还原：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>磁盘空间不足，未还原任何文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>还原已取消，未改动任何文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法读取当前文件，已中止还原：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法备份当前文件，已中止还原：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已回滚到还原前的内容。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>部分文件未能回滚，请从还原前的备份手动还原：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法写回 %1。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写回后有 %1 个文件校验未通过。</source>
+            <translation type="unfinished"></translation>
         </message>
         <message>
             <source>无法识别游戏目录，未替换任何文件。</source>

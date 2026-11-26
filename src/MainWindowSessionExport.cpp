@@ -145,12 +145,12 @@ void MainWindow::reportGameCrash(int sessionId, int exitCode, bool crashed) {
     m_crashReports->report(sessionId, exitCode, crashed, facts, errors, all);
 }
 
-void MainWindow::askAgentAboutCrash(const QString &context) {
+void MainWindow::askAgentAboutCrash(const QString &context, const QString &instanceId) {
     if (m_agentController == nullptr || m_ui->getTabWidget() == nullptr) {
         return;
     }
     m_ui->getTabWidget()->setCurrentIndex(MainWindowUI::agentTabIndex());
-    m_agentController->askAboutCrash(context);
+    m_agentController->askAboutCrash(context, instanceId);
 }
 
 void MainWindow::exportCrashReport(const QString &key) {
