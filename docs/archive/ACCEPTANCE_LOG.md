@@ -308,3 +308,5 @@ python tools/acceptance_directory_boundary.py --exe <WTFMinecraftLauncher.exe> -
 2026-11-25｜收窄预设选项名称列，按键绑定直接编辑并采用原版中英文案｜`install-layout`、`design-defaults`、`preset-install`、双语离屏预览、Windows x64 构建与隔离启动通过｜启用「游戏设置」后，未改动的按键绑定默认值也写入实例。
 
 2026-11-25｜智能体 P2 修复病例库与四项未覆盖上限（会话工具总数、artifact 配额、联网本会话放行、日志字段投影）｜`verify_agent` 1496/1496、`ui_check_agent` 97/97、`mw_check_agent` 101/101，产品目标严格编译通过，`check-agent-release.ps1`/`check-i18n.ps1`/`check-test-modules.ps1`/`check-doc-links.ps1`/`check-repo-layout.ps1`/`check-surface-registry.ps1` PASS｜智能体页 2000 条消息从 3820 ms 降到 56 ms（只摆末尾 200 条）；病例库只在本机存结构化字段，`priorCases` 里不含相对路径明细；日志投影保留显卡/驱动型号作证据。
+
+2026-11-26｜智能体工具名/技能名走翻译、模型侧说明与内嵌资源校验报错不翻译（#112）｜`verify_agent` 1502/1502、`ui_check_agent` 97/97、`mw_check_agent`（compact 入口）102/102，affected 59/59（738.32 s），`check-i18n`（基线 1047 → 1007）/`check-test-modules`/`check-surface-registry`/`check-agent-release`/`check-doc-links`/`check-repo-layout` PASS｜工具卡原来显示线上名 `fs.read`，现在显示注册表里的显示名；`confidenceBasis` 改为不翻译的 `规则 + 分档: 细节`；提示词坏掉时界面只剩一句兜底，细节进日志。

@@ -43,6 +43,7 @@
 | 11-10 | Agent Stage 1A | `verify_agent` 145、`ui_check_agent` 28、`mw_check_agent` 22 | `wtfml.ui`、`main-window`、`token-protection-fault`、核心基线、`test-modules/test-runner/ci-partitions` 同轮通过；细节见 [AGENT](../features/AGENT.md) |
 | 11-10 | Agent Stage 1B | `verify_agent` 306、`ui_check_agent` 39、`mw_check_agent` 31 | junction 夹具建不出来时输出 `SKIP`，不计通过；见 [AGENT](../features/AGENT.md) |
 | 11-25 | 智能体 P2 病例库 + 四项未覆盖上限（`-BaseRef origin/dev`） | affected 59/59（659.45 s）；`verify_agent` 1496、`ui_check_agent` 97、`mw_check_agent` 101 | `20261125-153144-6981a10c`；智能体页 2000 条消息 3820 → 56 ms（窗口化只摆末尾 200 条） |
+| 11-26 | 智能体工具名/技能名翻译（`-BaseRef origin/dev`） | affected 59/59（738.32 s）；`verify_agent` 1502、`ui_check_agent` 97、`mw_check_agent` 102 | `20261126-142707-26350aa6`；i18n 基线从 1047 降到 1007 |
 
 ## 真机与实网验收
 

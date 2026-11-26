@@ -176,6 +176,8 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 
 每个工具声明名称、风险等级、JSON Schema、超时与幂等性；未声明风险按 `ExternalMcp` 逐次审批；参数校验失败不执行；实例由会话锁定提供，参数里没有实例 id；`additionalProperties=false`。
 
+`AgentToolSpec` 的 `displayName` 是用户可见的（工具卡标题、审批卡标题、命令摘要），一律按界面语言翻译；`description` 只发给模型（`tools[].function.description`），统一用源语言中文、不跟随界面语言 —— 同一份工具列表只有一个语言，不会半中半英。工具卡标题用 `displayName`（`AgentController::toolCardTitle()` 查注册表），MCP 等未登记的外部工具保留原名。
+
 ### 9.2 风险与审批矩阵
 
 只读自动；完整实例清单、完整模组文件名、配置读取、设置写、模组启停、备份创建与恢复逐次审批；命令与外部 MCP 逐次审批。联网工具（`web.search` / `web.fetch`）额外提供“本会话允许此来源”：点过之后同一个 host 在这个会话里不再逐次弹审批，换 host、换会话、重启后都要重新确认。唯一另一处例外是 D12 Auto-safe：用户显式打开且计划已批准后，计划范围内的写/启动/提交不再逐次确认，范围外与硬禁止项照旧。
@@ -287,6 +289,8 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 | 崩溃文本点名的 mixin 配置能由 JAR 声明归属到某个模组 | `candidate` | 规则基础值 + 0.05 |
 | 只在报告头 `Suspected Mods`、模组清单或规则 `suspects` 里出现 | `related` | ≤0.4 |
 | mixin 配置读不到归属 | `related`（`modId=unknown`） | ≤0.4 |
+
+`confidenceBasis` 是给模型的结构化字符串，整条不走翻译：`<命中规则或 no-rule> + <分档：stack frame / mixin config / mention only>`，有具体细节时用 `: ` 接在后面（例如 `MIXIN_APPLY_FAILED + mixin config: mixin 配置 examplemod.mixins.json`）。
 
 上限：置信度封顶 0.95，不返回 1.0；`matchedRules` ≤8、嫌疑 ≤8、`causeChain` ≤8、建议验证 ≤8；证据 `id`/`kind`/`source`/`capturedAt`/`sha256`/`excerpt`，摘录 ≤400 字符且已脱敏。mixin 配置归属只读 JAR 里的声明（`fabric.mod.json`、`quilt.mod.json`、`META-INF/mods.toml`、`META-INF/neoforge.mods.toml`、`META-INF/MANIFEST.MF`），读不到就标 `unknown`，不按文件名猜。
 
@@ -441,7 +445,7 @@ Collect → AwaitPlanApproval → Execute*（每步审批）→ Verify → Repor
 
 提示词分三层（S5.6 Prompt V2）：技能提示词（角色、阶段、工具使用顺序、审批/验证/回滚要求）在 `assets/agent/prompts/`；诊断知识（崩溃签名、规则 id、置信度、建议验证）在 `assets/agent/knowledge/*.json`；工具在 `src/agent/`。提示词不背崩溃类型表，只引用当期白名单里存在的工具。
 
-`AgentPromptLibrary` 从 Qt 资源 `:/agent/prompts/` 加载；`AgentSkill.cpp` 只留技能 id、显示名、工具白名单、只读/计划标记和提示词 id。组合顺序为 `common.md` + 技能文件 +（崩溃急救/模组维护）`repair_protocol.md`，用空行连接。每个技能带 `promptId`、`promptHash`、`promptVersion`；资源缺失、为空、不是 UTF-8 或超过预算时技能不可用，发送前报错，不回退成空提示。
+`AgentPromptLibrary` 从 Qt 资源 `:/agent/prompts/` 加载；`AgentSkill.cpp` 只留技能 id、显示名、工具白名单、只读/计划标记和提示词 id。组合顺序为 `common.md` + 技能文件 +（崩溃急救/模组维护）`repair_protocol.md`，用空行连接。每个技能带 `promptId`、`promptHash`、`promptVersion`；资源缺失、为空、不是 UTF-8 或超过预算时技能不可用，发送前报错，不回退成空提示。这些校验发生在编译进程序的资源上，只有开发和测试会看到，所以 `AgentKnowledgeRules`、`AgentPromptLibrary` 的报错原文不翻译（行尾 `// i18n-ignore`）；界面上由控制器给一句兜底文案（「当前模式的提示词不可用，请重启启动器后再试。」），细节写进启动器日志。
 
 | 预算 | 上限 |
 | --- | --- |
