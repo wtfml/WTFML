@@ -725,7 +725,7 @@ int shootR151(QApplication &app, QMainWindow &window, MainWindowUI &ui, const Sh
 }
 
 /// `--r155`：默认窗口主页收起 / 展开（各带 W 的悬停提示）；最小窗口主页（带「窗口加宽后才能展开」提示）、
-/// 工具箱目录与每件工具、设置四个页签顶上；设置·外观「窗口大小」一行可点 / 置灰各一张。
+/// 工具箱目录与每件工具、设置四个页签顶上；设置·外观「启动器窗口大小」一行可点 / 置灰各一张。
 /// 屏幕要比默认窗口大（offscreen 默认屏 800×600 会把「默认大小」夹小）：配 offscreen 的 configfile 给块大屏。
 bool savePopupShot(QApplication &app, QMainWindow &window, const QString &outDir, const QString &name, int *saved);
 

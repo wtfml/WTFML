@@ -423,7 +423,7 @@ void MainWindowUI::setupSettingsLaunchPanel(QStackedWidget *stack) {
         gameWindowHeightSpin->setFixedWidth(kWindowSizeSpinWidth + 22);
         WheelGuard::install(gameWindowHeightSpin);
         // 「恢复默认」（UI 问题 #11）：回到出厂的那一对 854×480。风格、尺寸照 155 那颗
-        // （设置·个性化·外观里的「窗口大小 · 恢复默认」），摆在这一行最右边。
+        // （设置·个性化·外观里的「启动器窗口大小 · 恢复默认」），摆在这一行最右边。
         gameWindowSizeResetButton = new QPushButton(QCoreApplication::translate("MainWindowSettingsPage", "恢复默认"), form);
         gameWindowSizeResetButton->setObjectName(gameWindowSizeResetButtonName());
         Theme::markButton(gameWindowSizeResetButton, Theme::ButtonKind::Neutral);
@@ -703,7 +703,7 @@ void MainWindowUI::setupSettingsLookPanel(QStackedWidget *stack) {
     windowSizeResetButton = new QPushButton(QCoreApplication::translate("MainWindowSettingsPage", "恢复默认"), form);
     windowSizeResetButton->setObjectName(windowSizeResetButtonName());
     Theme::markButton(windowSizeResetButton, Theme::ButtonKind::Neutral);
-    addRow(look, QCoreApplication::translate("MainWindowSettingsPage", "窗口大小"), windowSizeResetButton, Placement::Natural,
+    addRow(look, QCoreApplication::translate("MainWindowSettingsPage", "启动器窗口大小"), windowSizeResetButton, Placement::Natural,
            QCoreApplication::translate("MainWindowSettingsPage", "启动时按上次关闭时的大小打开。"),
            QCoreApplication::translate("MainWindowSettingsPage", "默认 %1×%2，最小 %3×%4。")
                .arg(kMainWindowDefaultWidth).arg(kMainWindowDefaultHeight).arg(kMainWindowMinWidth).arg(kMainWindowMinHeight));

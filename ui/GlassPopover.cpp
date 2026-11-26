@@ -10,11 +10,37 @@
 
 #include <QApplication>
 #include <QGraphicsDropShadowEffect>
-#include <QGraphicsOpacityEffect>
 #include <QKeyEvent>
 #include <QPainter>
 #include <QPainterPath>
 #include <QVariantAnimation>
+
+namespace {
+
+/// 阴影 + 整体透明度合在一个效果里（一个控件只能挂一个 QGraphicsEffect）。淡入只调透明度，
+/// 阴影从第一帧起就在、跟着卡片一起淡入。以前淡入挂透明度、淡完再换成阴影：换的那一帧阴影
+/// 突然冒出来、内容还横移 1px，就是点开时那一下「闪」（#131）。
+class FadingShadow final : public QGraphicsDropShadowEffect {
+public:
+    using QGraphicsDropShadowEffect::QGraphicsDropShadowEffect;
+    void setFade(qreal fade) {
+        m_fade = fade;
+        update();
+    }
+
+protected:
+    void draw(QPainter *painter) override {
+        painter->save();
+        painter->setOpacity(painter->opacity() * m_fade);
+        QGraphicsDropShadowEffect::draw(painter);
+        painter->restore();
+    }
+
+private:
+    qreal m_fade = 1.0;
+};
+
+}  // namespace
 
 GlassPopover::GlassPopover(QWidget *anchor)
     : QFrame(anchor != nullptr ? anchor->window() : nullptr), m_anchor(anchor) {
@@ -31,7 +57,7 @@ GlassPopover::~GlassPopover() {
 
 void GlassPopover::applyShadow() {
     // 柔和大阴影（设计原则 5：浮层不描硬边，只靠阴影和底色差离开下面那一层）。
-    auto *shadow = new QGraphicsDropShadowEffect(this);
+    auto *shadow = new FadingShadow(this);
     shadow->setBlurRadius(36);
     shadow->setOffset(0, 10);
     shadow->setColor(QColor(0, 0, 0, Theme::isDark() ? 120 : 60));
@@ -43,19 +69,16 @@ void GlassPopover::popUp() {
     place();
     raise();
     setFocus(Qt::PopupFocusReason);
-    if (!Anim::enabled()) return;
-    // 一个控件只能挂一个 QGraphicsEffect：淡入期间换成透明度，淡完把阴影挂回来。
-    auto *fade = new QGraphicsOpacityEffect(this);
-    fade->setOpacity(0.0);
-    setGraphicsEffect(fade);
+    auto *fade = dynamic_cast<FadingShadow *>(graphicsEffect());
+    if (!Anim::enabled() || fade == nullptr) return;
+    fade->setFade(0.0);
     auto *animation = new QVariantAnimation(this);
     animation->setStartValue(0.0);
     animation->setEndValue(1.0);
     animation->setDuration(kFadeMs);
     animation->setEasingCurve(QEasingCurve::OutCubic);
     connect(animation, &QVariantAnimation::valueChanged, fade,
-            [fade](const QVariant &value) { fade->setOpacity(value.toReal()); });
-    connect(animation, &QVariantAnimation::finished, this, [this] { applyShadow(); });
+            [fade](const QVariant &value) { fade->setFade(value.toReal()); });
     animation->start(QAbstractAnimation::DeleteWhenStopped);
 }
 
