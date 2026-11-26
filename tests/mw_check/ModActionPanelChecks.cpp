@@ -570,8 +570,9 @@ int runModActionPanelChecks() {
           "preview detects dependency type and exact-version changes");
     check(diff.contains(QStringLiteral("版本不符")) && diff.contains(QStringLiteral("冲突提示")),
           "preview warns about known version mismatch and installed incompatible project");
-    check(diff.contains(QStringLiteral("不代表确定未安装")) && diff.contains(QStringLiteral("不删除现有模组")),
-          "incomplete inventory never claims missing dependency or deletes removed declaration");
+    check(diff.contains(QStringLiteral("不代表确定未安装")) &&
+              !diff.contains(QStringLiteral("此预览不是完整依赖求解")),
+          "incomplete inventory never claims missing dependency and does not repeat disclaimer per item");
     const QString plannedDiff = ModDependencies::updateDifferenceText(oldVersion, newVersion,
         {{QStringLiteral("changed"), QStringLiteral("v2")}});
     check(!plannedDiff.contains(QStringLiteral("版本不符")), "planned dependency version can satisfy exact pin");
@@ -701,5 +702,87 @@ int runModActionPanelChecks() {
     const auto staleReadOnly = InstanceIconLookup::lookup({cachedFile.absoluteFilePath()}, cacheOptions);
     check(staleReadOnly.found.isEmpty() && staleReadOnly.hashed == 0 && readFile(cacheFile) == oldCache,
           "read-only inspection rejects stale file metadata without rewriting cache");
+
+    // #135: newly declared missing required dependencies after batch mod update
+    {
+        ModDependencies::Target depTarget;
+        depTarget.instanceId = QStringLiteral("fabric-1.21.11");
+        depTarget.gameVersion = QStringLiteral("1.21.11");
+        depTarget.loader = QStringLiteral("fabric");
+        depTarget.source = ResourceCatalog::Source::Modrinth;
+
+        ResourceCatalog::VersionEntry prevA, nextA;
+        prevA.id = QStringLiteral("a1"); prevA.dependencyMetadataKnown = true;
+        prevA.dependencies = {
+            {QStringLiteral("alreadyReq"), {}, QStringLiteral("required")},
+            {QStringLiteral("promotedDep"), {}, QStringLiteral("optional")},
+            {QStringLiteral("removedDep"), {}, QStringLiteral("required")},
+        };
+        nextA.id = QStringLiteral("a2"); nextA.dependencyMetadataKnown = true;
+        nextA.dependencies = {
+            {QStringLiteral("alreadyReq"), {}, QStringLiteral("required")},
+            {QStringLiteral("promotedDep"), {}, QStringLiteral("required")},
+            {QStringLiteral("newMissing"), {}, QStringLiteral("required")},
+            {QStringLiteral("newAlreadyInstalled"), {}, QStringLiteral("required")},
+            {QStringLiteral("newOptional"), {}, QStringLiteral("optional")},
+            {QStringLiteral("newConflict"), {}, QStringLiteral("incompatible")},
+            {QStringLiteral("newEmbedded"), {}, QStringLiteral("embedded")},
+        };
+
+        // Second mod also newly requires "newMissing" (must deduplicate) and has unknown previous metadata.
+        ResourceCatalog::VersionEntry prevB, nextB;
+        prevB.dependencyMetadataKnown = false;
+        nextB.id = QStringLiteral("b2"); nextB.dependencyMetadataKnown = true;
+        nextB.dependencies = {
+            {QStringLiteral("newMissing"), {}, QStringLiteral("required")},
+            {QStringLiteral("fromUnknownPrev"), QStringLiteral("pin-v1"), QStringLiteral("required")},
+            {QStringLiteral("otherSourceInstalled"), {}, QStringLiteral("required")},
+        };
+
+        QSet<QString> installedKeys{
+            depTarget.installedKey(QStringLiteral("newAlreadyInstalled")),
+            ResourceCatalog::Hit{.projectId = QStringLiteral("otherSourceInstalled"),
+                                 .source = ResourceCatalog::Source::CurseForge}
+                .iconCacheId(),
+        };
+        const QList<ModDependencies::Lookup> missingNew = ModDependencies::missingNewRequiredDependencies(
+            {{prevA, nextA}, {prevB, nextB}}, installedKeys, depTarget);
+        QStringList ids;
+        for (const auto &l : missingNew) ids.append(l.dependency.projectId);
+        check(ids == QStringList({QStringLiteral("promotedDep"), QStringLiteral("newMissing"),
+                                  QStringLiteral("fromUnknownPrev"), QStringLiteral("otherSourceInstalled")}),
+              "missingNewRequiredDependencies finds newly required / promoted / unknown-prev missing deps, deduplicates, and ignores existing/optional/cross-source");
+        check(missingNew.size() == 4 && missingNew.at(2).dependency.versionId == QStringLiteral("pin-v1"),
+              "missingNewRequiredDependencies preserves pinned versionId");
+
+        // Compatibility line summary
+        ResourceCatalog::VersionEntry manyVersions;
+        manyVersions.loaders = {QStringLiteral("fabric"), QStringLiteral("quilt")};
+        for (int i = 0; i < 20; ++i) manyVersions.gameVersions.append(QStringLiteral("1.21.%1").arg(i));
+        const QString compatOk = ModDependencies::updateCompatibilityLine(
+            manyVersions, QStringLiteral("Fabric"), QStringLiteral("1.21.11"));
+        check(compatOk == QStringLiteral("兼容本实例（Fabric · 1.21.11）"),
+              "updateCompatibilityLine collapses matched loader and game version into one concise phrase");
+
+        const QString compatLoaderOnlyMismatch = ModDependencies::updateCompatibilityLine(
+            manyVersions, QStringLiteral("Forge"), QStringLiteral("1.21.11"));
+        check(compatLoaderOnlyMismatch.contains(QStringLiteral("未注明支持 Forge")) &&
+                  compatLoaderOnlyMismatch.endsWith(QStringLiteral("游戏版本：支持 1.21.11")) &&
+                  !compatLoaderOnlyMismatch.contains(QStringLiteral("共 20")),
+              "updateCompatibilityLine omits total version count when game version matches");
+
+        const QString compatMismatch = ModDependencies::updateCompatibilityLine(
+            manyVersions, QStringLiteral("Forge"), QStringLiteral("1.20.1"));
+        check(compatMismatch.contains(QStringLiteral("未注明支持 Forge")) &&
+                  compatMismatch.contains(QStringLiteral("未列出 1.20.1")) &&
+                  compatMismatch.contains(QStringLiteral("等 20 项")),
+              "updateCompatibilityLine highlights mismatched loader/version with truncated declarations");
+
+        const QString compatUnknown = ModDependencies::updateCompatibilityLine(
+            manyVersions, QString(), QString());
+        check(compatUnknown.contains(QStringLiteral("fabric / quilt")) &&
+                  compatUnknown.contains(QStringLiteral("等 20 项")),
+              "updateCompatibilityLine truncates raw lists when instance metadata is unknown");
+    }
     return failed ? 1 : 0;
 }
