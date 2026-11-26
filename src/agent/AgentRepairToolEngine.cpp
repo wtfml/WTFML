@@ -12,6 +12,7 @@
 
 #include "../util/AppPaths.hpp"
 
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QFile>
 #include <QDir>
@@ -161,19 +162,19 @@ QList<AgentToolSpec> AgentRepairToolEngine::specs() {
          {QStringLiteral("action"),
           enumField({QStringLiteral("commit"), QStringLiteral("rollback")})}});
     return {
-        spec(QStringLiteral("repair.begin"), QStringLiteral("开始修复事务"),  // i18n-ignore
+        spec(QStringLiteral("repair.begin"), QCoreApplication::translate("AgentRepairToolEngine", "开始修复事务"),
              QStringLiteral("复制隔离工作区并记录基线；后续写工具用 workspaceId 落到工作区。"),  // i18n-ignore
              AgentRisk::Write, beginSchema),
-        spec(QStringLiteral("repair.diff"), QStringLiteral("查看事务差异"),  // i18n-ignore
+        spec(QStringLiteral("repair.diff"), QCoreApplication::translate("AgentRepairToolEngine", "查看事务差异"),
              QStringLiteral("列出工作区相对基线的改动文件、哈希和配置预览。"),  // i18n-ignore
              AgentRisk::ReadOnly, txSchema),
-        spec(QStringLiteral("repair.verify"), QStringLiteral("验证修复事务"),  // i18n-ignore
+        spec(QStringLiteral("repair.verify"), QCoreApplication::translate("AgentRepairToolEngine", "验证修复事务"),
              QStringLiteral("在事务工作区跑测试启动，记录里程碑/崩溃/超时到事务日志。"),  // i18n-ignore
              AgentRisk::Command, verifySchema),
-        spec(QStringLiteral("repair.finish"), QStringLiteral("提交或回滚事务"),  // i18n-ignore
+        spec(QStringLiteral("repair.finish"), QCoreApplication::translate("AgentRepairToolEngine", "提交或回滚事务"),
              QStringLiteral("commit 先备份再重放差异；rollback 丢弃工作区。"),  // i18n-ignore
              AgentRisk::Write, finishSchema),
-        spec(QStringLiteral("repair.status"), QStringLiteral("查看修复事务"),  // i18n-ignore
+        spec(QStringLiteral("repair.status"), QCoreApplication::translate("AgentRepairToolEngine", "查看修复事务"),
              QStringLiteral("列出活动/中断事务、状态和验证结果；不返回本机路径。"),  // i18n-ignore
              AgentRisk::ReadOnly, objectSchema(QString(), {})),
     };
@@ -281,7 +282,7 @@ AgentToolResult AgentRepairToolEngine::handleBegin(const Agent::ToolCall &call,
     pending.context = context;
     pending.scopes = scopes;
     pending.symptomKey = symptomKey;
-    pending.displayName = QStringLiteral("创建修复事务");  // i18n-ignore
+    pending.displayName = QCoreApplication::translate("AgentRepairToolEngine", "创建修复事务");
     pending.summary = QStringLiteral("为「%1」创建隔离工作区，范围：%2。")  // i18n-ignore
                           .arg(context.instanceName.isEmpty() ? context.instanceId : context.instanceName,
                                scopes.join(QStringLiteral("、")));  // i18n-ignore
@@ -508,7 +509,7 @@ AgentToolResult AgentRepairToolEngine::handleFinish(const Agent::ToolCall &call,
         pending.call = call;
         pending.context = context;
         pending.transactionId = record.id;
-        pending.displayName = QStringLiteral("提交修复事务");  // i18n-ignore
+        pending.displayName = QCoreApplication::translate("AgentRepairToolEngine", "提交修复事务");
         pending.summary = QStringLiteral("把事务 %1 的差异提交到原实例；提交前逐个核对基线哈希。")  // i18n-ignore
                               .arg(record.id);
         pending.preview = QStringLiteral("先备份原文件，再原子替换；失败自动回滚。");  // i18n-ignore

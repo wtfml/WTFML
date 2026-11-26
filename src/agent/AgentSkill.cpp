@@ -7,6 +7,8 @@
 
 #include "AgentPromptLibrary.hpp"
 
+#include <QCoreApplication>
+
 namespace {
 
 /// 只读诊断类工具：体检和崩溃急救共用的那一批。
@@ -128,19 +130,19 @@ QList<AgentSkill> AgentSkillRegistry::builtins() {
     QList<AgentSkill> list;
 
     list.append(make(
-        QStringLiteral("general"), QStringLiteral("自由对话"),
+        QStringLiteral("general"), QCoreApplication::translate("AgentSkill", "自由对话"),
         QStringLiteral("对话 + 锁定实例内的受控文件工具与诊断工具；不含事务/启动测试/二分。"),
         QStringLiteral("general"), false, generalTools(), false, false, {}, {}, 2));
 
     list.append(make(
-        QStringLiteral("inspection"), QStringLiteral("实例体检"),
+        QStringLiteral("inspection"), QCoreApplication::translate("AgentSkill", "实例体检"),
         QStringLiteral("只读：跑启动诊断/完整性/模组统计，列出问题与下一步。"),
         QStringLiteral("inspection"), false, readOnlyTools(), true, false,
         {QStringLiteral("diagnostics.startup")},
         QStringLiteral("至少一条证据；给出问题分级与下一步选项；全程没有写操作。"), 2));
 
     list.append(make(
-        QStringLiteral("crash-rescue"), QStringLiteral("崩溃急救"),
+        QStringLiteral("crash-rescue"), QCoreApplication::translate("AgentSkill", "崩溃急救"),
         QStringLiteral("诊断 + 计划 + 逐步审批修复 + 验证；每步可拒绝、可回退。"),
         QStringLiteral("crash_rescue"), true, QStringList(readOnlyTools() + repairTools()), false,
         true, {QStringLiteral("diagnostics.crash")},
@@ -149,7 +151,7 @@ QList<AgentSkill> AgentSkillRegistry::builtins() {
         4));
 
     list.append(make(
-        QStringLiteral("upgrade"), QStringLiteral("版本升级 / 移植"),
+        QStringLiteral("upgrade"), QCoreApplication::translate("AgentSkill", "版本升级 / 移植"),
         QStringLiteral("只读检查升级目标，执行时打开现有升级向导。"),
         QStringLiteral("upgrade"), false,
         QStringList(readOnlyTools() + QStringList{QStringLiteral("backup.create")}), false, true,
@@ -157,7 +159,7 @@ QList<AgentSkill> AgentSkillRegistry::builtins() {
         QStringLiteral("给出兼容性结论与风险；执行交给现有向导；有证据。"), 2));
 
     list.append(make(
-        QStringLiteral("mods"), QStringLiteral("模组维护"),
+        QStringLiteral("mods"), QCoreApplication::translate("AgentSkill", "模组维护"),
         QStringLiteral("列模组、读声明查兼容/缺前置、启停或备份、按平台记录修复文件；不猜文件名兼容性。"),
         QStringLiteral("mods"), true, QStringList(readOnlyTools() + repairTools()), false, true,
         {QStringLiteral("mods.list")},
