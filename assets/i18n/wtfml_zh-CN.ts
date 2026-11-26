@@ -409,9 +409,83 @@
         </message>
     </context>
     <context>
+        <name>AgentAutoSafe::Authorizer</name>
+        <message>
+            <source>Auto-safe 没有开启</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Auto-safe 已过期（%1 分钟）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>这个设置键能改变游戏用哪段代码，Auto-safe 不放行：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>设置键 %1 不在已批准的计划里</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>世界/存档不在事务授权范围</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>路径里带 .. 不在授权范围</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>文件 %1 不在已批准的计划里</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写入必须落在本事务的工作区里</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模组 %1 不在已批准的计划里</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模组启停必须落在本事务的工作区里</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模组修复必须落在本事务的工作区里</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>项目 %1 不在已批准的计划里</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份不在已批准的计划里</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>这个操作不在 Auto-safe 范围（会动原实例或共享库）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启动次数超出事务授权（%1 次）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工具 %1 不在 Auto-safe 的授权类型里</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>AgentComposer</name>
         <message>
             <source>描述遇到的问题…</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentCompositeToolEngine</name>
+        <message>
+            <source>Auto-safe 拒绝：%1</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -427,6 +501,18 @@
         </message>
         <message>
             <source>自动读取的以下日志或元数据可能发送给当前模型服务：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Auto-safe 已绑定事务 %1：计划内的写入与启动不再逐步确认。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>事务结束：Auto-safe 审计已写入 %1（%2 次启动）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>事务已结束，Auto-safe 关闭。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -600,6 +686,30 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>先停止当前回复再切换模式。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Auto-safe 只在崩溃急救与模组维护里可用。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>先锁定一个实例，再打开 Auto-safe。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Auto-safe 已打开：提交并批准计划后，计划内的写入/启动不再逐步确认；最长 60 分钟或 20 次启动，事务结束写审计。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Auto-safe：%1，剩余启动 %2 次</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>等待事务</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>无可用的 API Key；请填写或保存后再测试。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -637,6 +747,45 @@
         </message>
     </context>
     <context>
+        <name>AgentCrashSnapshot</name>
+        <message>
+            <source>Mixin apply for mod 语句</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>mixin 配置 %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>mixin 配置 %1 无归属声明</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>栈帧含该模组</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>失败区文本提及</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>报告头 Suspected Mods</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>规则 %1 的线索</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>（%1）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 个 mixin 配置能由 JAR 声明归属到模组</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>AgentFileToolEngine</name>
         <message>
             <source>不提供「本会话允许此目录」，每次均需重新确认。</source>
@@ -644,9 +793,186 @@
         </message>
     </context>
     <context>
+        <name>AgentKnowledge</name>
+        <message>
+            <source>崩溃规则不是有效 JSON：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>崩溃规则缺少 rules 数组</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>规则不是对象，已跳过</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>规则 id 不合法，已跳过：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>规则 id 重复，已跳过：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1：缺少 priority</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1：priority 超出 1–100</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1：phase 不认识：%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1：match 不能为空</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1：confidence 必须在 0–1 之间</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1：confidenceBasis 为空或超长</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>里程碑规则不是有效 JSON：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>里程碑 %1 没有标记</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>里程碑缺少 main_menu/world_loaded/crash 之一</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>AgentLauncherHostImpl</name>
         <message>
             <source>未找到日志文件（实例目录的 logs/latest.log 或数据根的 logs/latest.log、logs/wtfml.log）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentLauncherTools</name>
+        <message>
+            <source>崩溃快照</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>解析最新一份崩溃报告（或日志尾）：环境、阶段、异常链、模组嫌疑与命中规则；报告头部提到的模组只算线索。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>搜索日志</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>按字面量（大小写不敏感）搜日志，带行号与上下文；最多 200 条，路径已脱敏。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>按行读日志</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>从第 startLine 行开始读一段日志，最多 500 行；已脱敏。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>读崩溃报告全文</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>把整份崩溃报告脱敏后存成 artifact，只返回分段目录与摘要；原文用 artifact.read 按偏移读。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>会话还没有锁定实例。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>没有这份日志，或实例还没有日志文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>搜索命中 %1 处</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>日志搜索：命中 %1 处（返回 %2 处）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>startLine 从 1 开始。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>第 %1–%2 行（共 %3 行）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>日志第 %1–%2 行（共 %3 行）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>崩溃报告读不动。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>找不到这份崩溃报告；先用 crash.list 看有哪些。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>没有崩溃报告，也没有可读的游戏日志。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>日志读不动。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>崩溃快照：%1，阶段 %2，命中 %3 条规则，嫌疑 %4 个</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未识别异常</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>崩溃报告全文：%1 行、%2 段（原文已脱敏进 artifact）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>崩溃报告全文</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentLogIndex</name>
+        <message>
+            <source>搜索词不能为空。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>搜索词超过 %1 个字符。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>日志读不动。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>startLine 从 1 开始。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>日志定位失败。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -693,6 +1019,521 @@
         </message>
         <message>
             <source>等待确认…</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentMixinOwnership</name>
+        <message>
+            <source>mods 目录不存在。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>没有模组声明 mixin 配置。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentModBisect::Bisect</name>
+        <message>
+            <source>没有可停用的候选模组：问题不来自模组集合</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>停用全部候选模组后仍能复现：问题在加载器/前置或非模组</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>达到启动次数上限（%1），返回当前最小集合</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>超过 %1 分钟的时间预算</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>一次启动没有跑起来</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>连续 3 次启动失败，停止二分</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>完整启用集启动后没有崩溃：这个问题不能靠二分定位</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>确认时有一次没有复现，加跑一轮</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>重复确认结果不一致（flaky），不给出责任模组</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>只在 %1 个模组同时启用时复现，没有缩到单个或两个</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>确认时没有复现，加跑一轮</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentModCompat</name>
+        <message>
+            <source>文件大小为 0</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>JAR 里没有可识别的模组声明</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>声明的加载器（%1）与实例（%2）不一致</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>声明里没有 Minecraft 版本范围</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>声明不支持 Minecraft %1（要求 %2）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Minecraft 版本范围无法解析：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>需要加载器版本 %1（当前 %2）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>加载器版本范围无法解析：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>需要 Java %1（当前 %2）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Java 范围无法解析：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>读不到 mod id，依赖图里对不上</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>同一个 mod id 出现在 %1 个文件里：%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>缺少前置 %1（未安装）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>缺少前置 %1（只有停用文件：%2）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>平台没有这个哈希的记录（可能是自行构建的版本）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>平台记录的这一版（%1）只支持 Minecraft %2，实例是 %3</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>平台记录的这一版（%1）的加载器是 %2，实例是 %3</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>平台要求的前置项目 %1 不在已装清单里</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentModPlatform</name>
+        <message>
+            <source>平台查询超过 %1 秒，已返回部分结果。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Modrinth 反查回了 HTTP %1。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Modrinth 反查没连上：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Modrinth 没有这个哈希的项目号</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Modrinth 版本列表回了 HTTP %1。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Modrinth 版本列表没连上：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>这个项目没有可用的版本。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>版本列表里没有 %1。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>这一版里没有哈希为 %1 的文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>这一版没有可下载的文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentModToolEngine</name>
+        <message>
+            <source>依赖感知二分</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未知工具。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启动器工具宿主未接入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>会话还没有锁定实例。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>把 %1 个模组文件的 SHA-1 发给 Modrinth，不发文件名</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>分析模组兼容性：%1 个文件（%2 %3）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>版本未知</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>原版</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>本地先读每个 JAR 的声明（不联网）；平台查询只发 SHA-1，不发文件名，结果按哈希缓存。加 offline=true / platform=false 可只做本地分析。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模组兼容性分析</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>平台查询只发 SHA-1；本地分析不写盘。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>没有这个工作区。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工作区不属于当前锁定的实例。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工作区路径不在登记目录下，拒绝执行。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>二分只从事务工作区：先 repair.begin，再带 workspaceId 调这里。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>测试启动宿主未接入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>在事务工作区 %1 里二分：最多 %2 次启动、每次最多 %3 秒。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>反复启用/停用工作区 mods/ 并启动游戏，每轮把 config/ 与 options.txt 重置到二分开始时的快照；不写原实例、不下载、不改世界。结束后把 mods/、config/、options.txt 恢复成二分前的样子。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>只启动隔离工作区里的游戏；进程用 Job Object 清理。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>只在本机工作区启动</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工作区路径不在登记目录下，拒绝写入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模组修复只写事务工作区：先 repair.begin，再带 workspaceId 调这里。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>修复模组：%1%2 → 事务工作区 %3</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>先把文件下载到暂存目录并校验大小与 SHA-1，全部通过后才复制进工作区 mods/；%1任何一步失败都不改工作区，也不碰原实例。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>会补齐版本声明的必需前置；</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>修复模组文件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>只写事务工作区；提交/回滚由 repair.finish 决定。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>下载与写盘都在本机</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>事务活动期间不能改共享库/资源；先提交或回滚事务。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模组宿主未接入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>重下实例 %1 的客户端 jar、库和资源索引</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>按实例声明的官方大小与 SHA-1 校验并重下；会动全体版本共用的 libraries/ 与 assets/。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>修复游戏核心文件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>共享库/资源不保留旧副本；失败时按官方哈希重下。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>只从官方源重下</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>文件不存在或读不动</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未检查：本轮未返回声明结果</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>算不出 SHA-1（文件读不动）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已有一个模组任务在运行。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>正在读模组声明…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>没有算成 SHA-1 的文件，跳过平台查询</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模组兼容性：%1 个文件，%2 个问题、%3 个提醒、%4 个未知</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>文件大小为 0</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>JAR 里没有可识别的模组声明</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模组校验：%1 个文件，%2 个损坏、%3 个无法确认</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>建不出暂存目录，未下载任何文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>解析下载地址失败，未下载任何文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>解析下载地址失败：%1（未下载任何文件）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>平台给的文件名不合法，拒绝写入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>平台记录的哈希与 expectedSha1 不一致，拒绝下载。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>文件超过 100 MB，不在自动修复范围内。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>这一批超过 500 MB，整批拒绝，工作区未改动。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>下载失败：%1（整批停止，工作区未改动）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>下载回来的哈希与平台记录不一致（%1），整批停止。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>下载没有开始，未写任何文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>建不出工作区 mods 目录。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工作区里已经有 %1，拒绝覆盖（已撤销本次复制的文件）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>复制 %1 失败（已撤销本次复制的文件）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>复制后校验 %1 失败（已撤销本次复制的文件）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>落盘 %1 失败（已撤销本次复制的文件）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>只改了事务工作区；用 repair.diff 看改动，repair.verify 验证，repair.finish 提交或回滚。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模组修复：%1 个文件已写进工作区（事务 %2）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>核心文件修复失败。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已把缺文件/哈希不符的文件排进下载并等它收尾；再跑 instance.integrity 复核分组计数。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>核心文件已按官方大小与 SHA-1 修复完成。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>核心文件修复没有开始。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>建不出快照目录。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>config/ 超过快照上限（5000 个文件 / 200 MB）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>复制 config/ 失败。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>复制 options.txt 快照失败，未开始二分。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>准备快照目录失败，未开始二分。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工作区里有重名文件：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>改不了模组文件名：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工作区里找不到模组：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>恢复 options.txt 失败。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>测试启动没有开始</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>进程没有起来</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>二分结果：%1（%2 次启动）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>审批请求已失效。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>用户拒绝了这次操作；没有发平台请求，也没有读写任何文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>正在准备二分…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>正在解析下载地址…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>正在修复核心文件…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>这次模组任务已取消。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -772,6 +1613,18 @@
         </message>
         <message>
             <source>配置 API</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>显示更早的消息</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Ctrl+End 回到最新消息</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>一次批准一个事务：按已批准计划执行，不再逐步确认；最长 60 分钟或 20 次启动，结束写审计。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -874,7 +1727,7 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>技能提示词超过 %1 字节：%2</source>
+            <source>提示词超过预算（%1 字节）：%2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -894,7 +1747,14 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>技能提示词组合后超过 %1 字节</source>
+            <source>技能提示词组合后超过预算（%1 字节）</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentRepairToolEngine</name>
+        <message>
+            <source>自动回滚没有开始：%1</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -1221,13 +2081,6 @@
         </message>
     </context>
     <context>
-        <name>AgentWebTools</name>
-        <message>
-            <source>本会话已放行 %1，正在联网获取…</source>
-            <translation type="unfinished"></translation>
-        </message>
-    </context>
-    <context>
         <name>AgentToolCard</name>
         <message>
             <source>详情</source>
@@ -1247,6 +2100,13 @@
         </message>
         <message>
             <source>失败</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentWebTools</name>
+        <message>
+            <source>本会话已放行 %1，正在联网获取…</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -2159,6 +3019,26 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>%1 中存在不合法的对象名。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 中的 %2 哈希不是 40 位十六进制。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 中的 %2 字节数不合法。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 中同一哈希出现两次。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>此已知集合为 %1 MiB，超过允许自动下载的上限 %2 MiB。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>未提供清单结果。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -2191,27 +3071,7 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>%1 里有不合法的对象名。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>%1 里 %2 的哈希不是 40 位十六进制。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>%1 里 %2 的字节数不合法。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>%1 里同一个哈希出现了两次。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>%1 的总大小与对象列表不一致。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>这套已知集合有 %1 MiB，超过了允许自动下载的上限 %2 MiB。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -2447,7 +3307,23 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>这一份正在运行，或者正被复制 / 备份 / 还原 / 安装占用。请等它结束后再替换。</source>
+            <source>整个实例目录（含可重新下载的资源文件与游戏库）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未打包：assets、libraries（可重新下载）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>快照创建失败</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>此实例</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未完成</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2483,10 +3359,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>人工恢复：用 %1 换掉了 %2</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>替换完成。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -2495,12 +3367,6 @@
 
 已保留替换前的目录：
 %1</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>
-
-恢复记录也留着（%1），在「中断恢复检查」里能看到，核对完再标记已检查。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2532,21 +3398,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>没有能还原的备份</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>找到 %1 个文件名匹配的备份，但其中的元数据与%2不匹配、无效或来自其他工具。以下文件未列入可还原备份：
-%3
-
-备份目录：%4</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>没有可还原的备份</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>%1 暂无备份。请先在此页面创建备份。
 
 备份目录：%2</source>
@@ -2565,19 +3416,11 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>「%1」正在复制、备份、还原或安装，请完成后再备份这个世界。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>备份世界</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>游戏正在运行。为防止存档损坏，请退出游戏后再备份。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>这个存档的整个文件夹</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2593,7 +3436,15 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>此世界</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>还原未完成</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>另一项操作已开始（复制、备份、还原、安装或游戏启动）。请等待其完成后再创建快照。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2606,11 +3457,40 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>游戏正在运行，请退出游戏后再还原存档，避免数据覆盖。</source>
+            <source>此实例正在运行，或正被复制、备份、还原或安装占用。请等待其结束后再替换。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>这个世界</source>
+            <source>手动恢复：已将 %2 替换为 %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>
+
+恢复记录将保留（%1），可在「中断恢复检查」中查看；核对完成后标记已检查。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>暂无可还原的备份</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>检测到 %1 个文件名匹配的备份，但其中元数据与%2不匹配、无效或来自其他工具。以下文件未列入可还原备份：
+%3
+
+备份目录：%4</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」正在复制、备份、还原或安装，请完成后再备份此世界。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>此存档的整个目录</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>游戏正在运行，请退出游戏后再还原存档，避免数据覆盖。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2655,19 +3535,7 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>刚才有另一项操作开始了（复制 / 备份 / 还原 / 安装 / 游戏启动）。等它完成后再做快照。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>整个实例目录（包含能重新下回来的资源文件和游戏库）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>实例目录（模组、配置、存档、日志…）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>没打包：assets、libraries（能重新下回来）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2679,15 +3547,7 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>快照没有做成</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>「%1」正在安装或运行。还原将替换实例目录，请先停止相关操作。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>这个实例</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2753,10 +3613,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>没有完成</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>已校验 %1 个文件，全部通过。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -2799,10 +3655,6 @@
         </message>
         <message>
             <source>圆形</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>旗帜图案</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2910,7 +3762,27 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>苦力怕盾徽旗帜图案</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>涡流旗帜图案</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>花朵盾徽旗帜图案</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>地球旗帜图案</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>自下渐淡</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>旋风旗帜图案</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2927,6 +3799,18 @@
         </message>
         <message>
             <source>左半方形</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Mojang徽标旗帜图案</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>猪鼻旗帜图案</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>头颅盾徽旗帜图案</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -3066,18 +3950,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>第 %1 层：织布机里放%2 + %3</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source> + %1</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source> → 叠出「%1」</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>指令（写法随目标版本变化）：</source>
             <translation type="unfinished"></translation>
         </message>
@@ -3086,7 +3958,19 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>第 %1 层：将%2与%3放入织布机，选择图案「%4」</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>第 %1 层：将%2、%3与%4放入织布机，选择图案「%5」</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>第 %1 层和第 %2 层图案及颜色相同，显示效果与单层相同。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>图案「%1」没有 1.20.4 及更早版本的指令写法。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -4329,7 +5213,7 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>上次文件下载中断。先补齐文件，不会自动执行安装器。</source>
+            <source>上次文件下载中断。补齐文件后不会自动执行安装器。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -4404,10 +5288,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>整合包没有导入：%1</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>安装「%1」已由用户取消。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -4420,7 +5300,11 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>实例「%1」的文件没补齐：%2</source>
+            <source>整合包未导入：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>实例「%1」的文件未补齐：%2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -4489,7 +5373,7 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>里面写的版本号是「%1」，取的是「%2」</source>
+            <source>其中记录的版本号是「%1」，取的是「%2」</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -4501,7 +5385,7 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>下载仍在收尾，请稍后继续。</source>
+            <source>下载尚未结束，请稍后继续。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -4509,7 +5393,7 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>已有下载在进行，稍后再继续。</source>
+            <source>已有下载正在进行，请稍后继续。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -4574,7 +5458,7 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>端口须为 1~65535 之间的整数。</source>
+            <source>端口须为 1–65535 之间的整数。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -4663,11 +5547,11 @@
     <context>
         <name>DroppedResource</name>
         <message>
-            <source>那是一个文件夹，不是文件</source>
+            <source>该路径为文件夹，不是文件</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>找不到文件</source>
+            <source>未找到文件</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -4679,7 +5563,35 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>需要 7-Zip 才能解压，本机没找到 7z.exe</source>
+            <source>需要 7-Zip 解压，本机未找到 7z.exe</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>`.%1` 不是可安装的内容</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>读取压缩包</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法打开：不是 zip 压缩包或文件已损坏</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>包含 pack.mcmeta 与 assets/</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>包含 pack.mcmeta 与 data/</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>包含 shaders/</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>压缩包为空</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -4687,35 +5599,7 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>`.%1` 不是能装进来的东西</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>读这个压缩包</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>无法打开：不是 zip 压缩包，或文件已损坏</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>无法读取文件</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>里面有 pack.mcmeta 和 assets/</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>里面有 pack.mcmeta 和 data/</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>里面有 shaders/</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>这个压缩包是空的</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -4892,10 +5776,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>报告没有编号或没有任何条目，未登记。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>已登记可续的文件操作：%1（%2）</source>
             <translation type="unfinished"></translation>
         </message>
@@ -4912,15 +5792,19 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>这一项正在继续，等它做完再看结果。</source>
+            <source>报告缺少编号或无任何条目，未登记。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>「%1」已经没有未完成的项了。</source>
+            <source>此项正在继续，请等待完成后查看结果。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>「%1」正在运行或正被另一项文件操作占用，等它结束后再按「继续未完成操作」。</source>
+            <source>「%1」已无未完成项。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」正在运行或正被另一项文件操作占用，请等待其结束后再选择「继续未完成操作」。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -4947,7 +5831,27 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>报告里没有足够信息再导入这个世界（源 / 目标 / 名字缺失）。</source>
+            <source>报告中缺少重新导入此世界所需信息（源、目标或名称缺失）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>报告中缺少继续迁移所需信息（源、目标或勾选项缺失）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>报告中缺少重新复制此文件所需信息（源或目标缺失）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标已存在；按当时选择的「取消」，未覆盖。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已完成剩余文件操作：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已取消，未完成项将保留。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -4955,31 +5859,11 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>报告里没有足够信息继续迁移（源 / 目标 / 勾选项缺失）。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>报告里没有足够信息重新复制这个文件（源 / 目标缺失）。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>目标已经存在，按当时选择的「取消」没有覆盖。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>无法将继续执行的结果写入报告：%1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>已补完未完成的文件操作：%1</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>已取消，未发布的暂存保留着。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>已取消，未完成的项保留着。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -5279,14 +6163,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>缺一个系统 DLL</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>DLL 里的入口点找不到</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>DLL 初始化失败</source>
             <translation type="unfinished"></translation>
         </message>
@@ -5323,7 +6199,15 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>日志显示这是手动触发的调试崩溃（F3+C）。如果只是在测试，松开 F3+C 后不要在倒计时里等，崩溃就不会发生；这次退出不代表游戏或模组有问题。</source>
+            <source>缺少系统 DLL</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>DLL 中的入口点未找到</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>日志显示这是手动触发的调试崩溃（F3+C）。如果仅用于测试，松开 F3+C 后无需等待倒计时，崩溃就不会发生；这次退出不代表游戏或模组有问题。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -9935,10 +10819,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>相关实例正在运行、安装或处理文件，完成后再试。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>目标核心不完整，请先安装或修复目标版本。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -9989,10 +10869,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>源实例正在运行、安装或处理文件，完成后再试。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>回滚原地升级</source>
             <translation type="unfinished"></translation>
         </message>
@@ -10005,6 +10881,10 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>相关实例正在运行、安装或处理文件，请完成后再试。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>将「%1」的游戏核心替换为 %2 / %3。
 
 本次升级保留当前实例的存档、截图、配置和其他用户文件。替换前将创建并校验快照，原目录可通过「回滚最近一次更新…」恢复。
@@ -10014,6 +10894,10 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>实例或游戏目录状态已变化，未开始升级。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>源实例正在运行、安装或处理文件，请完成后再试。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -10249,10 +11133,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>实例 %1 的 %2 引用了此核心。请改用升级副本，避免影响其它实例。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>文件不存在或是链接：%1</source>
             <translation type="unfinished"></translation>
         </message>
@@ -10431,15 +11311,15 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>副本已发布，但事务记录未能更新；没有删除任何文件。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>更新副本发布后校验失败，已保留在被拒绝目录：%1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>升级副本校验失败，自动撤回也未完成。请检查以下内容：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>原实例已恢复，但回滚记录未能更新；未删除恢复材料。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -10456,6 +11336,10 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>副本事务正在使用，未修改实例。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>实例 %1 的 %2 引用了此核心。请改用升级副本，避免影响其他实例。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -10499,6 +11383,10 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>副本已发布，但事务记录未能更新；未删除任何文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>已取消，当前实例未移动。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -10532,10 +11420,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>当前版本也保留在 replaced 目录中。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>原实例已恢复，但回滚记录未能更新；没有删除恢复材料。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -10715,10 +11599,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>servers.dat 里的条目</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>来源实例</source>
             <translation type="unfinished"></translation>
         </message>
@@ -10728,6 +11608,10 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>需渲染器支持后生效</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>servers.dat 中的条目</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -11641,6 +12525,82 @@ Minecraft %2 / %3 %4</source>
     <context>
         <name>MainWindow</name>
         <message>
+            <source>请先保存或放弃存档修改。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>放弃存档修改？</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>切换世界会放弃当前存档中未保存的修改。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>修改存档文件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>保存前会备份 level.dat。服务端启动后会按服务端配置应用相应的规则。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未设置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务端类型</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Minecraft 版本</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>连接地址</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启动世界</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>最大玩家数</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务器简介</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务端目录</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>加载器版本</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>构建号</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>请选择可访问的世界存档。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法保存存档</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>存档路径已变更，请重新打开存档。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>level.dat 在打开后已被修改。请重新打开存档后再编辑。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>无法访问内容目录。请检查所选世界和目录位置。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -11654,6 +12614,10 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>请先保存或放弃修改。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>继续</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -12257,15 +13221,15 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>已有下载或安装任务正在进行，请待其结束后再下载此项。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>更换名称</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>暂时无法操作</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已有下载或安装任务正在进行，请等待其结束后再下载此项。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -12345,7 +13309,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>尚未获取此版本的下载信息。请折叠后重新展开上方的游戏版本，再重试。</source>
+            <source>尚未获取此版本的下载信息。请折叠后重新展开上方的游戏版本，然后重试。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -16075,6 +17039,37 @@ Minecraft %2 / %3 %4</source>
         </message>
     </context>
     <context>
+        <name>ModDeclarations</name>
+        <message>
+            <source>Fabric 声明不是有效 JSON 对象</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Quilt 声明不是有效 JSON 对象</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>mcmod.info 无法解析（%1）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>mcmod.info 中多个 mod 的 acceptedMinecraftVersions 不一致</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>mcmod.info 缺少 acceptedMinecraftVersions</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>不认识的声明文件：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>JAR 里没有可识别的模组声明</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>ModDependencies</name>
         <message>
             <source>未提供项目号</source>
@@ -16102,10 +17097,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>，固定版本 %1</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>需确认：%1 未在%2中找到，不等于确定未安装。此步骤不会自动补装依赖。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -16189,10 +17180,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>当前版本或依赖资料未知。可先检查更新，再回来查看；未知不等于没有依赖。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>当前版本：%1</source>
             <translation type="unfinished"></translation>
         </message>
@@ -16219,10 +17206,6 @@ Minecraft %2 / %3 %4</source>
         <message>
             <source>
 仅根据有效缓存和已识别资料判断；未识别项目仍需自行确认。不是完整求解器，不保证可启动，也不会修改文件。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>所选实例的游戏版本和加载器没有兼容的前置版本。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -16291,6 +17274,18 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>%1：%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>需确认：%1 未在%2中找到，不代表确定未安装。此步骤不会自动补装依赖。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>当前版本或依赖资料未知。可先检查更新，再回来查看；未知不代表没有依赖。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>所选实例的游戏版本和加载器无兼容的前置版本。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -16434,7 +17429,15 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>已有整合包正在打包，请等待其完成后再开始下一个。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>暂时无法操作</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」的文件正在变动。请等待安装、导入或检查完成后再导出。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -16595,14 +17598,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>已有整合包正在打包，请待其完成后再开始下一个。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>「%1」的文件正在变动。请待安装、导入或检查完成后再导出。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>导出失败：未找到实例目录 %1</source>
             <translation type="unfinished"></translation>
         </message>
@@ -16656,13 +17651,13 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>这是一个 MultiMC / Prism 的实例导出（有 mmc-pack.json），但里面没写它基于哪个 Minecraft 版本（components 里没有 net.minecraft），无法安装。</source>
+            <source>这是一个 MultiMC / Prism 的实例导出（含 mmc-pack.json），但其中未注明所基于的 Minecraft 版本（components 中没有 net.minecraft），无法安装。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>这个 MultiMC / Prism 包依赖自定义启动组件：%1。
+            <source>此 MultiMC / Prism 整合包依赖自定义启动组件：%1。
 
-目前不能转换它的 patches、专用库和 JVM 参数，因此没有导入，避免生成无法启动的实例。GTNH Java 17+ 的 lwjgl3ify 包请暂用 Prism 导入；这不影响普通标准格式整合包。</source>
+目前无法转换其中的 patches、专用库和 JVM 参数，因此未导入，以避免生成无法启动的实例。GTNH Java 17+ 的 lwjgl3ify 整合包请暂用 Prism 导入；普通标准格式整合包不受影响。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -16721,22 +17716,22 @@ Minecraft %2 / %3 %4</source>
 项目 %2 / 文件 %3 / %4
 %5
 补齐位置：%6
-补法：打开上面的项目页，在 Files 里找对应游戏版本和加载器的文件；下载后放到上面的位置。补齐后回到导入报告选择「完成安装」，或用同一个包和实例名重新导入让本程序校验。</source>
+补齐方式：打开上述项目页，在 Files 中查找对应游戏版本和加载器的文件；下载后放入上述位置。补齐后返回导入报告选择「完成安装」，或用同一个包和实例名重新导入，由本程序校验。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
     <context>
         <name>ModrinthCompatibility</name>
         <message>
-            <source>平台正在限流（大约还要 %1 秒），暂时无法确认。</source>
+            <source>平台请求受限（约需等待 %1 秒），暂时无法确认。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>版本信息不完整，暂时无法确认；没有将其判断为缺失。</source>
+            <source>版本信息不完整，暂时无法确认；未判定为缺失。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>平台没有兼容当前游戏、加载器和发布筛选的发行版。</source>
+            <source>平台无兼容当前游戏、加载器与发布筛选的发行版。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -16756,11 +17751,39 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>Modrinth 上没有这个项目。</source>
+            <source>Modrinth 无此项目。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>Modrinth 限流了，暂时无法确认，稍后再试。</source>
+            <source>Modrinth 请求受限，暂时无法确认，请稍后重试。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Modrinth 无兼容 %1%2 的发行版。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>当前版本</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未配置 CurseForge 接口，暂时无法确认。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>CurseForge 无此项目。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>CurseForge 请求受限，暂时无法确认，请稍后重试。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>接口未返回文件清单，暂无法确认。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>CurseForge 无兼容 %1%2 的发行版。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -16769,34 +17792,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>平台返回格式异常，暂时无法确认兼容性。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>Modrinth 上没有兼容 %1%2 的发行版。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>这个版本</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>没有配置 CurseForge 接口，暂时无法确认。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>CurseForge 上没有这个项目。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>CurseForge 限流了，暂时无法确认，稍后再试。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>接口没有返回文件清单，暂时无法确认。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>CurseForge 上没有兼容 %1%2 的发行版。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -16843,10 +17838,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>没有 Minecraft 组件。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>组件依赖字段不是数组。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -16868,14 +17859,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>Java 版本列表为空。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>补丁之间的 Java 要求没有交集。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>补丁包含暂不支持或不安全的 JVM 参数，没有执行。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -16911,7 +17894,19 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>Native 库没有可校验的 classifier 清单。</source>
+            <source>无 Minecraft 组件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>各补丁的 Java 要求无交集。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>补丁包含暂不支持或不安全的 JVM 参数，未执行。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Native 库无可校验的 classifier 清单。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -17565,7 +18560,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>没有模组引用要检查。</source>
+            <source>无待检查的模组引用。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -17609,7 +18604,11 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>这一条没有项目 id。</source>
+            <source>此条缺少项目 id。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>本次检查已到截止时间，暂无法确认；请重试未完成项。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -17618,10 +18617,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>（未指定）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>本轮检查已到截止时间，暂时无法确认；请重试未完成项。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -17676,6 +18671,18 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>旧版预设未记录类别，九类均可收集。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「游戏设置」预设不收录资源包与光影包。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>数据包按存档应用；目标中无同名存档时标记为「待应用」。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>（草稿）</source>
             <translation type="unfinished"></translation>
         </message>
@@ -17696,11 +18703,76 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>已创建。请在右侧修改名称和说明，然后从实例提取内容。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>名称不能为空。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无可保存的改动。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已保存。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已删除「%1」。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未收到任何内容。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已收到 %1 条平台模组引用</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>此类预设不收录：%1。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>
+此类预设不收录：%1。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法确认此实例模组的来源平台。其安装记录可能缺失，或文件已被替换。预设未创建。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未选择任何项，未创建新预设。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>此类预设不收录：%1；未创建新预设。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未收到任何内容，未创建新预设。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>草稿需保存为预设后才能应用。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>这个实例正在处理文件，请完成后再重新预览。</source>
+            <source>此实例正在处理文件，请完成后再重新预览。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法读取预设文件夹：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未选择有效预设。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>此实例正在被其他操作写入（复制、还原或导入），请完成后再应用模组预设。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -17712,15 +18784,39 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>%1 段，将改动 %2 项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>，%1 段无法完成</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>，%1 段需留意</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>；平台模组 %1 项（发行文件及前置待执行时确认）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>预设不可读，无法核对执行报告。</source>
+            <source>无法完成%1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>没有可读的执行报告。</source>
+            <source>未完成%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无变化</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>删除 %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>预设不可读，无法核对执行报告。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -17760,19 +18856,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>已完成项保留；继续时重新核对预设和实际文件，只重试未完成部分。不会宣称整趟回滚。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>这个实例正在安装、补全文件或后台搬文件（复制、还原、导入），等它收尾之后再应用预设。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>模组未全部应用，其余部分尚未应用。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>没有可读的模组执行报告，请重新预览。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -17796,11 +18880,15 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>预设文件夹读不了：%1</source>
+            <source>平台模组 %1 项：按目标版本解析发行文件与必要前置，缺失或查询失败会如实报告。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>平台模组 %1 项：按目标版本解析发行文件与必要前置，缺失或查询失败会如实报告。</source>
+            <source>、删除 %1 项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>，%1 段未完成（可在管理页查看详情）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -17809,10 +18897,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>目标实例不可用。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>这个实例正在后台被其它操作写入（复制、还原或导入），完成后再应用模组预设。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -17836,7 +18920,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>此旧预设含多段同类内容，暂不能在统一编辑器中合并编辑。原内容保留，可从实例重新提取一份草稿。</source>
+            <source>此旧预设含多段同类内容，暂不能在统一编辑器中合并编辑。原内容保留，可从实例重新提取草稿。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -17876,7 +18960,11 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>如何处理当前修改？</source>
+            <source>当前修改的处理方式</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Modrinth 和 CurseForge 均未识别 %1 个模组。可在模组页筛选来源未知的项目，补充或移除这些项目，也可在概览中停用模组部分。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -17909,10 +18997,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>无法保存提取的草稿。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>Modrinth 和 CurseForge 均未识别 %1 个模组。可在模组页筛选来源未知的项目，补充或移除它们，也可在概览中停用模组部分。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -17968,14 +19052,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>旧版预设没写类别，九样都能收。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>「游戏设置」预设不收资源包 / 光影包。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>仅提取资源包。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -17985,10 +19061,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>模组预设请使用“编辑模组清单”添加平台项目，当前不从实例提取本地 JAR。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>数据包按存档应用；目标中没有同名存档时标记为「待应用」。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -18020,10 +19092,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>建好了。在右边改名字和说明，然后从实例提取内容。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>复制预设失败。请检查原预设可读且目标目录可写。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -18032,27 +19100,11 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>名字不能空着。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>没有要保存的改动。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>保存失败：无法写入预设文件。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>保存了。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>删除失败：无法删除预设目录。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>删掉了「%1」。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -18104,10 +19156,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>没有收到任何内容。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>已提取：%1。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -18137,10 +19185,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>收到 %1 条平台模组引用</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>（新增 %1 条）</source>
             <translation type="unfinished"></translation>
         </message>
@@ -18157,20 +19201,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>这类预设不收录：%1。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>、</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>
-这一类预设不收：%1。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>无法确认此实例中的模组来自哪个平台。其安装记录可能缺失，或文件已被替换。预设未创建。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -18178,47 +19209,11 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>未选择任何项，新预设没有创建。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>这类预设不收录：%1；新预设没有创建。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>没有收到任何内容，新预设没有创建。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>（%1）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>%1 段，会动 %2 项</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>，%1 段做不了</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>，%1 段要留意</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>做不了%1</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>跳过</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>没做成%1</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>没有变化</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -18230,10 +19225,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>删掉 %1</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>待应用 %1</source>
             <translation type="unfinished"></translation>
         </message>
@@ -18242,15 +19233,27 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>无可读取的执行报告。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>%1：%2；写入 %3 项 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>键位冲突：%1 ← %2</source>
+            <source>已完成项保留；继续时重新核对预设和实际文件，只重试未完成部分。不会声明整个流程回滚。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>没有选中有效的预设。</source>
+            <source>此实例正在安装、补全文件或后台迁移文件（复制、还原、导入），请等待完成后再应用预设。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无可读取的模组执行报告，请重新预览。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>键位冲突：%1 ← %2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -18275,14 +19278,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>实例预设「%1」已应用：写入 %2 项</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>、删掉 %1 项</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>，%1 段没做成（管理页里可以看详情）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -18330,14 +19325,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>全部清空</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>丢弃未保存的修改？</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>清空各部分内容？名称和图标保留。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -18413,6 +19400,14 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>放弃未保存的修改</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>清空各部分内容（名称和图标保留）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>光影包</source>
             <translation type="unfinished"></translation>
         </message>
@@ -18420,7 +19415,7 @@ Minecraft %2 / %3 %4</source>
     <context>
         <name>PresetExecutionReport</name>
         <message>
-            <source>没有可读的预设执行报告，或报告过大；请重新预览。</source>
+            <source>无可读取的预设执行报告，或报告过大；请重新预览。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -18499,6 +19494,10 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>综合预设将多类预设合并，一次安装完成。可在「预设管理」中新建，或从实例提取。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>综合预设</source>
             <translation type="unfinished"></translation>
         </message>
@@ -18528,10 +19527,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>暂无可用的综合预设</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>综合预设把几类预设打成一份，一次装好。在「预设管理」里新建，或从实例提取。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -18570,7 +19565,19 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>创建空预设；创建后可在编辑页填写内容。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>预设内容</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>安装实例时优先选择此项。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>同时删除此预设的目录；删除的内容将移至回收站，可从回收站还原。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -18590,19 +19597,11 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>勾选要收的几样</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>应用到实例</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>实例预设</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>建一份空预设；建好之后在编辑页里填内容。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -18642,15 +19641,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>安装实例时优先选中这一份。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>删除</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>连这一份的目录一起删掉，删掉的东西会进回收站，可以从那里还原。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -18659,6 +19650,10 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>下移</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>选择要收集的项</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -18678,10 +19673,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>options.txt 里的 key_*。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>服务器</source>
             <translation type="unfinished"></translation>
         </message>
@@ -18695,14 +19686,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>配置文件</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>整份按「缺了才拷」落下去，不会盖掉目标上已经有的同名项。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>新实例第一次启动时模组会照它生成配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -18730,14 +19713,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>按结构认这一族，一个模组一段；默认只收绑好的热键。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>连值一起收</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>包含开关和其他设置。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -18747,10 +19722,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>存档数据包</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>saves/&lt;世界&gt;/datapacks/；目标实例没有该存档时先记为「待应用」。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -18815,11 +19786,19 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>还没有预设</source>
+            <source>预览将改动的段落与条目；此步骤不写入文件。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>没有符合筛选条件的预设</source>
+            <source>本次无可应用的内容。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>还原时将此预设中的文件按原路径复制回实例目录。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>应用未全部完成，请查看上方未完成的段。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -18867,11 +19846,39 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>取消本次预览，不会修改实例。</source>
+            <source>options.txt 中的 key_*。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>预览会改动的段落与条目，这一步不写文件。</source>
+            <source>按「仅在缺失时复制」部署，不覆盖目标已有同名项。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>新实例首次启动时，模组会据此生成配置。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>按结构识别此类配置，每个模组一段；默认仅收集已绑定的热键。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>同时收集值</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>saves/&lt;世界&gt;/datapacks/；目标实例无该存档时先记为「待应用」。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>暂无预设</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无符合筛选条件的预设</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>取消本次预览，不会修改实例。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -18891,10 +19898,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>本次没有可应用的内容。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>尚未确认覆盖。再次选择「应用」将执行覆盖。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -18911,15 +19914,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>还原时把这一份里的文件按原路径拷回实例目录。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>应用完成。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>应用没有全部完成，看上面哪一段没做成。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19026,15 +20021,15 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>没有未识别的模组。</source>
+            <source>无未识别的模组。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>此模组已在清单中，已定位到该行。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>请输入 Modrinth 链接或项目 ID；CurseForge 只能填数字 ID。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>这个模组已经在清单中，已定位到该行。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19648,19 +20643,23 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>这个 id 不是一份预设（预设目录名只能是 UUID）</source>
+            <source>此 id 不是预设（预设目录名只能为 UUID）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>拼出来的路径跑到预设目录外面去了</source>
+            <source>生成的路径超出预设目录</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>已经不在了</source>
+            <source>已不存在</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>不存在（那个目录里没有这一份）</source>
+            <source>不存在（该目录中无此预设）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>JSON 字节位置 %1：%2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19673,10 +20672,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>读取清单失败或清单过大</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>JSON字节位置 %1：%2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19797,15 +20792,15 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>没有指定要写到哪个 servers.dat。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>servers.dat 中「%1」的 ip 或 name 字段不是字符串，已保留原条目。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>这一段不归服务器列表这一层管。</source>
+            <source>未指定要写入的 servers.dat。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>此段不属于服务器列表层管理范围。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19821,7 +20816,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>这一段不归原版设置这一层管。</source>
+            <source>此段不属于原版设置层管理范围。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19834,10 +20829,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>无法读取待应用清单「%1」：%2</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>读待应用清单「%1」读到一半出错了：%2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19857,10 +20848,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>写待应用清单「%1」写到一半出错了：%2</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>待应用清单「%1」替换失败：%2</source>
             <translation type="unfinished"></translation>
         </message>
@@ -19869,35 +20856,11 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>删不掉「%1」。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>删不掉目录「%1」。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>登记文件本身是一根链接</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>写不下换包登记「%1」：%2</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>写换包登记「%1」写到一半出错了：%2</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>换包登记「%1」替换失败：%2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>无法读取登记文件</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>登记文件读到一半出错</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19917,10 +20880,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>原件放不回原位</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>目标和旧内容同时都在或同时都不在</source>
             <translation type="unfinished"></translation>
         </message>
@@ -19933,10 +20892,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>登记里的目标名不能当目录名</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>登记文件名与目标名称不一致</source>
             <translation type="unfinished"></translation>
         </message>
@@ -19945,7 +20900,47 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>拷不进去「%1」：%2</source>
+            <source>读取待应用清单「%1」中断：%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写入待应用清单「%1」中断：%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法删除「%1」。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法删除目录「%1」。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>登记文件本身为链接</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法写入换包登记「%1」：%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写入换包登记「%1」中断：%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>读取登记文件中断</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>原件无法放回原位</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>登记中的目标名不能作为目录名</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法复制「%1」：%2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19969,11 +20964,71 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>数据包这一段里有不是对象的一项。</source>
+            <source>数据包段中存在非对象项。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>「%1」不是 saves/&lt;世界&gt;/datapacks/&lt;包&gt; 这种路径。</source>
+            <source>「%1」不是 saves/&lt;世界&gt;/datapacks/&lt;包&gt; 形式的路径。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未找到实例目录，无法提取数据包。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」为链接，未跟随。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」不是目录，未扫描。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>存档「%1」为链接，未跟随。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」中的「%2」为链接，未收集。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」中一项名称不能作为文件名（%2），未收集。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>存档中的 datapacks/ 均为空。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已收集 %1 个存档中的 %2 个数据包。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>预设中的数据包项「%1」格式无效。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标存档「%1」为链接（或 `saves/` 为链接），未写入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标「saves/%1」不是目录，未写入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未找到目标实例目录，无法应用数据包。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>预设的 files/ 目录中未找到「%1」。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>预设中「%1」路径包含链接，未跟随。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标「%1」为链接（或其上级目录为链接），未写入。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19985,27 +21040,11 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>找不到实例目录，无法提取数据包。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>未指定预设的 files 目录。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>实例缺少 saves/ 目录，无法提取数据包。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>「%1」是一根链接，没有跟着它走。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>「%1」不是一个目录，没有扫它。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>存档「%1」是一根链接，没有跟着它走。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20021,19 +21060,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>「%1」里的「%2」是一根链接，没有收它。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>「%1」里有一项名字不能当文件名（%2），没有收它。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>无法提取「%1」：%2</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>存档里的 datapacks/ 都是空的。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20041,27 +21068,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>收了 %1 个存档里的 %2 个数据包。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>未指定目标实例，无法制定数据包操作计划。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>预设里的数据包项「%1」形状不对。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>目标上的存档「%1」是一根链接（或者 `saves/` 这一层是），没有往里写。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>目标上的「saves/%1」不是个目录，没有往里写。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>找不到目标实例目录，无法应用数据包。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20073,23 +21080,11 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>预设的 files/ 目录中找不到「%1」。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>预设中的「%1」是链接，已跳过。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>预设里「%1」的路上有一层是链接，没有跟着它走。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>目标「%1」是链接，已跳过。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>目标上的「%1」是一根链接（或者它上面一层是），没有往里写。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20098,22 +21093,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>无法写入「%1」：%2</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>读「%1」读到一半出错了：%2</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>写「%1」写到一半出错了：%2</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>换掉「%1」失败了：%2</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>「%1」里夹着一根链接（%2），没有跟着它走。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20129,27 +21108,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>「%1」是一根链接（符号链接 / junction），没有跟着它走。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>目标上的「%1」是一根链接，没有往它里面写。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>「%1」不在了（预设里说有这一项）。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>无法创建上级目录「%1」，复制已停止。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>这一项的路径是空的。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>「%1」不是一条相对路径。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20157,27 +21116,63 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>没有指定要扫哪个目录。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>「%1」是一根链接（符号链接 / junction），没有扫它。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>「%1」那个位置上不是个目录，没有扫它。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>：是一根链接（符号链接 / junction），没有跟着它走。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>覆盖</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>缺了才拷</source>
+            <source>读取「%1」中断：%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写入「%1」中断：%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>替换「%1」失败：%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」中包含链接（%2），未跟随。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」为链接（符号链接 / junction），未跟随。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标「%1」为链接，未写入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」不存在（预设中记录有此文件）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>此项路径为空。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」不是相对路径。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未指定要扫描的目录。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」为链接（符号链接 / junction），未扫描。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」所在位置不是目录，未扫描。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>：为链接（符号链接 / junction），未跟随。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>仅在缺失时复制</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20201,11 +21196,27 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>目标上已经有这一份了。</source>
+            <source>目标中已有此预设。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>目标上缺的那几份拷进去（已经有的一个都不动）。</source>
+            <source>将目标缺失的项复制到目标中（已有项不变）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未指定目标实例。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未指定此组的收集目标。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」不属于此组（%2）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>此段不属于通用文件层管理范围。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20214,22 +21225,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>无法解析此项结构，仅支持复制或覆盖。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>没有指定要落到哪个实例上。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>没有指定要把这一组收到哪儿去。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>「%1」不属于这一组（%2）。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>这一段不归通用文件组这一层管。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20265,15 +21260,43 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>没有这一项</source>
+            <source>无此项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」：此项载荷无值，已跳过。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模组名称为空。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>此模组名称不能作为文件名：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>此段（%1）不属于 MaLiLib 层管理范围。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」路径包含链接目录（junction / 符号链接），未处理。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>有一条缺少模组名称，整段已跳过。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」不在当前实例中。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」中无内容可收集，已跳过。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>「%1」中，目标「%2」的类型为%3，已保留原值。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>「%1」：这一项的载荷里没有值，跳过。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20297,14 +21320,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>模组名是空的。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>这个模组名当不了文件名：%1</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>「%1」：%2</source>
             <translation type="unfinished"></translation>
         </message>
@@ -20314,10 +21329,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>%1 的热键</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>这一段（%1）不归 MaLiLib 这一层管。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20345,15 +21356,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>「%1」这一条路上有链接目录（junction / 符号链接），不动它。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>覆盖会解除目标配置中其余快捷键的绑定，需要确认。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>有一条没有模组名，整段跳过。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20377,35 +21380,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>「%1」不在这一份实例里。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>「%1」这一份里没有可收的东西，跳过了。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>平台没有给出任何可用的版本。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>此版本无可下载的文件。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>这一版的文件没有下载地址。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>版本列表里没有能装进这个实例的发行版。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>版本列表里没有匹配「%1」的发行版。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>前置链超过 %1 层，没有继续往下展开。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20429,10 +21404,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>问平台没成（网络或接口没有回答）。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>本次替代：%1 → %2。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -20445,7 +21416,31 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>「%1」和「%2」不能一起装。</source>
+            <source>平台未提供可用版本。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>此版本的文件无下载地址。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>版本列表中无兼容此实例的发行版。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>版本列表中无匹配「%1」的发行版。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>前置链超过 %1 层，未继续展开。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>平台查询失败（网络或接口无响应）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」与「%2」不能同时安装。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20497,7 +21492,23 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>已经在实例里</source>
+            <source>已在实例中</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法完成</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已在实例中 %1 个</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法完成 %1 个</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无待处理内容。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20517,15 +21528,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>做不了</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>下载 %1 个</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>已经在实例里 %1 个</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20545,15 +21548,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>做不了 %1 个</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>其中必要项失败 %1 个</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>没有要动的东西。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20621,7 +21616,23 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>没有指定目标实例。</source>
+            <source>未找到目标实例目录，无法应用预设。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无未完成的预设段；待应用数据包仍等待目标世界。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>按键「%1」被 %2 个动作占用。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>以下服务器已在列表中：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>资源包启用顺序未写入。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20633,23 +21644,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>找不到目标实例目录，无法应用预设。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>没有未完成的预设段；待应用数据包仍等待目标世界。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>预设内容格式无效，已跳过此部分。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>按键「%1」被 %2 个动作抢着用。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>这几台已经在列表里了：%1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20673,10 +21668,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>资源包的启用顺序没有写进去。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>配置文件（config/）</source>
             <translation type="unfinished"></translation>
         </message>
@@ -20697,19 +21688,47 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>%1 里有东西没收：%2</source>
+            <source>%1 中有内容未收集：%2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>%1 里是空的。</source>
+            <source>%1 为空。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>%1 没收成：%2</source>
+            <source>%1 收集失败：%2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>找不到实例目录，无法提取预设。</source>
+            <source>未找到实例目录，无法提取预设。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>options.txt 中无可收集的游戏设置。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>options.txt 中无可收集的按键。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>实例中无服务器列表文件（servers.dat）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务器列表为空。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>资源包启用顺序读取失败：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>数据包收集失败：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>所选类别无可提取内容，预设未保存。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20725,27 +21744,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>options.txt 里没有可收的游戏设置。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>options.txt 里没有可收的按键。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>实例中没有服务器列表文件（servers.dat）。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>无法读取服务器列表：%1</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>服务器列表里一条都没有。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>资源包的启用顺序没读到：%1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20761,14 +21760,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>数据包没收成：%1</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>选中的类别没有可提取的内容，预设未保存。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>覆盖会用预设替换目标中的同类设置，需要确认。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -20777,7 +21768,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>「覆盖」会改动目标上已有的东西，需要先确认。</source>
+            <source>「覆盖」会修改目标已有内容，需先确认。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20817,15 +21808,19 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>要你选 %1 %2</source>
+            <source>待选择 %1 %2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>删除 %1 %2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无变化</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>待应用 %1 %2</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>删掉 %1 %2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20837,15 +21832,11 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>不动</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>未指定目标实例，无法制定应用计划。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>没有指定实例目录。</source>
+            <source>未指定实例目录。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20853,23 +21844,23 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>这一份预设的资源包项上没有启用信息，只部署、不启用。</source>
+            <source>此预设的资源包项无启用信息，仅部署、不启用。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>「%1」没有出现在目标的 resourcepacks/ 里，没有启用它。</source>
+            <source>「%1」未出现在目标的 resourcepacks/ 中，未启用。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>资源包的启用顺序已经和预设一致，没有改写 options.txt。</source>
+            <source>资源包启用顺序已与预设一致，未改写 options.txt。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>按预设禁用了 %1 个资源包。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>已按预设中保存的顺序启用 %1 个资源包。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>按预设关掉了 %1 个资源包。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -20916,7 +21907,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>发布模组失败或目标已被其它程序创建，未覆盖：%1</source>
+            <source>发布模组失败或目标已被其他程序创建，未覆盖：%1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20944,11 +21935,11 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>预设限定的游戏版本或加载器与目标实例不符，未查询其它版本替代。</source>
+            <source>预设限定的游戏版本或加载器与目标实例不符，未查询其他版本替代。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>没有可确认的游戏版本或模组加载器，未下载模组。</source>
+            <source>无可确认的游戏版本或模组加载器，未下载模组。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -21028,7 +22019,11 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>%1 个启用模组的项目身份尚未确认，未将它们当作前置已满足。</source>
+            <source>%1 个启用模组的项目身份尚未确认，未将其视为前置已满足。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>可选文件下载失败，跳过对应模组及依赖它的父项：%1；其他独立项继续。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -21073,10 +22068,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>必要模组「%1」未通过下载校验，未写入模组文件。保存文件名或校验信息也可能无效。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>可选文件下载失败，跳过对应模组及依赖它的父项：%1；其它独立项继续。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -21765,38 +22756,6 @@ Minecraft %2 / %3
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>依赖块缺少 versionRange</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>%1 的版本范围语法无效：%2</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>%1 有多个不同的版本范围</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>Quilt 的 %1 依赖版本不是字符串或数组</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>Quilt 的 %1 有多个不同的版本范围</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>Fabric 声明不是有效 JSON 对象</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>Quilt 声明不是有效 JSON 对象</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>mcmod.info 无法解析（%1）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>不是有效的 class 文件</source>
             <translation type="unfinished"></translation>
         </message>
@@ -21833,10 +22792,6 @@ Minecraft %2 / %3
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>未检查：本轮未返回声明结果</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>平台身份待校验：文件哈希检查超时</source>
             <translation type="unfinished"></translation>
         </message>
@@ -21857,10 +22812,6 @@ Minecraft %2 / %3
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>嵌套 JAR 超过本轮检查上限，未检查</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>读取嵌套 JAR</source>
             <translation type="unfinished"></translation>
         </message>
@@ -21873,14 +22824,6 @@ Minecraft %2 / %3
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>mcmod.info 中多个 mod 的 acceptedMinecraftVersions 不一致</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>mcmod.info 缺少 acceptedMinecraftVersions</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>旧 Forge @Mod 缺少 acceptedMinecraftVersions</source>
             <translation type="unfinished"></translation>
         </message>
@@ -21889,19 +22832,11 @@ Minecraft %2 / %3
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>旧 Forge 注解未完整扫描（候选 %1 个，仅检查了 %2 个）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>未读取到旧 Forge @Mod 注解</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>嵌套 JAR 无可读取的兼容声明</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>仅检查顶层启用 JAR；按包内声明判断 Minecraft 范围，加载器版本、Java 和前置在本轮由适配替换再核对。嵌套 JAR 只随父 JAR 替换，不单独替换。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -22010,6 +22945,22 @@ Minecraft %2 / %3
         </message>
         <message>
             <source>；嵌套 %1：声明不支持目标版本</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未检查：本次未返回声明结果</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>旧 Forge 注解未完整扫描（候选 %1 个，仅检查 %2 个）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>嵌套 JAR 超过本次检查上限，未检查</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>仅检查顶层启用 JAR；按包内声明判断 Minecraft 范围，加载器版本、Java 和前置在本次由适配替换后再核对。嵌套 JAR 只随父 JAR 替换，不单独替换。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -23677,6 +24628,10 @@ Minecraft %2 / %3
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>其他版本</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>%1 亿</source>
             <translation type="unfinished"></translation>
         </message>
@@ -23721,10 +24676,6 @@ Minecraft %2 / %3
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>其它版本</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>文件不可用，请前往项目主页查看。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -23756,15 +24707,15 @@ Minecraft %2 / %3
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>此资源未发布任何版本</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>打开配置文件管理；共享配置需自行选择。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>转到 %1</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>这个资源一个版本都没发过</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -23807,7 +24758,7 @@ Minecraft %2 / %3
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>options.txt 已被外部修改；本次没有覆盖，请刷新后重新操作。</source>
+            <source>options.txt 已被外部修改；本次未覆盖，请刷新后重新操作。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -23930,7 +24881,9 @@ Minecraft %2 / %3
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>%1 下好了：%2</source>
+            <source>%1 已安装到此实例。
+
+%2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -23959,12 +24912,6 @@ Minecraft %2 / %3
             <source>下载完成</source>
             <translation type="unfinished"></translation>
         </message>
-        <message>
-            <source>%1 已经装进实例里了。
-
-%2</source>
-            <translation type="unfinished"></translation>
-        </message>
     </context>
     <context>
         <name>ResourceSearchController</name>
@@ -23984,7 +24931,7 @@ Minecraft %2 / %3
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>版本列表无法解析（接口返回的不是一份版本清单）</source>
+            <source>版本列表无法解析（接口返回的内容不是版本清单）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -24151,7 +25098,7 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>下载长时间没有任何进展，已停止。请检查网络后重试。</source>
+            <source>下载长时间无进展，已停止。请检查网络后重试。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -25276,7 +26223,7 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>该 zip 的 SHA-1；可用右侧按钮从本地 zip 计算</source>
+            <source>该 zip 的 SHA-1；可选择本地 zip 计算</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -25617,6 +26564,18 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
     </context>
     <context>
         <name>ServerSettingsPage</name>
+        <message>
+            <source>编辑存档</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>其他属性</source>
+            <translation type="unfinished"></translation>
+        </message>
         <message>
             <source>打开目录</source>
             <translation type="unfinished"></translation>
@@ -26018,10 +26977,6 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>版本记录里没有 realVersion，界面上只能显示目录名。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>请在「完整性检查」中检查版本 JSON 是否完整。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -26082,18 +27037,6 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>最近一份崩溃报告是内存不足（OutOfMemoryError）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>最近一份崩溃报告是 Java 版本不对（UnsupportedClassVersionError）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>最近一份崩溃报告里是缺类异常</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>请检查日志中对应类所属的模组，确认依赖已安装且与当前游戏版本兼容。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -26115,6 +27058,10 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         </message>
         <message>
             <source>请在实例设置中重新确认版本，或重新安装此实例。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>版本记录中无 realVersion，界面只能显示目录名。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -26214,11 +27161,23 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>最近一份崩溃报告为内存不足（OutOfMemoryError）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>请调大 Xmx（确认设备有空闲内存），或减少同时加载的模组。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>最近一份崩溃报告为 Java 版本不匹配（UnsupportedClassVersionError）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>此崩溃表明有内容使用比当前 Java 更新的版本编译。请更换更新的 Java 后重试。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>最近一份崩溃报告为缺类异常</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -26234,15 +27193,31 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>此数据目录下没有使用该启动器运行游戏的记录。</source>
+            <source>此数据目录下无使用该启动器运行游戏的记录。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>启动日志里出现 UnsupportedClassVersionError（Java 太旧）</source>
+            <source>启动日志中出现 UnsupportedClassVersionError（Java 太旧）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>换一个更新的 Java；具体要哪个版本查版本 json 或模组说明。</source>
+            <source>请更换更新的 Java；具体版本请查阅版本 json 或模组说明。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启动日志中有错误，但未看到退出码</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启动日志中未看到游戏退出记录</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>当前会话无游戏启动记录。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启动日志中出现 OutOfMemoryError</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -26262,23 +27237,7 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>启动日志里有错误，但没有看到退出码</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>尚未获取完整的启动结果。可在「日志」页查看最新记录。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>启动日志里没有看到游戏退出记录</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>当前会话没有游戏启动记录。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>启动日志里出现 OutOfMemoryError</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -27516,10 +28475,6 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>把 /give 指令复制走（按目标版本选择写法）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>步骤</source>
             <translation type="unfinished"></translation>
         </message>
@@ -27680,6 +28635,10 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>复制 /give 指令（写法随目标版本变化）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>步骤：</source>
             <translation type="unfinished"></translation>
         </message>
@@ -27837,7 +28796,54 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>跳过 %1 个（目标里已经有同名的，没有覆盖）</source>
+            <source>跳过 %1 个（目标中已有同名文件，未覆盖）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>
+
+未迁移的文件：</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>
+• …另有 %1 个</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未提供完整的源实例和目标实例目录。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未找到源实例目录：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未找到目标实例目录：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>源实例与目标实例相同或互相嵌套，本次未迁移任何文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>校验：已检查 %1 个文件，缺少 %2 个</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>；另有 %1 个目标中原有的同名文件大小不同（按规则未覆盖）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>
+
+目标中未找到的文件：</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>
+
+大小不同（目标原有）：</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -27850,53 +28856,6 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         </message>
         <message>
             <source>。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>
-
-没搬成的：</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>
-• …还有 %1 个</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>没有给全源实例和目标实例的目录。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>找不到源实例目录：%1</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>找不到目标实例目录：%1</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>源实例和目标实例是同一份（或互相嵌套），本次未移动任何文件。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>校验：看过 %1 个文件，缺 %2 个</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>；另有 %1 个目标里原有的同名文件大小不同（按规矩没有覆盖）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>
-
-没在目标里找到的：</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>
-
-大小不同的（原来是目标里就有的）：</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -27931,10 +28890,6 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>目标版本（%1 / %2）与源一致：模组与配置可以原样搬过去。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>目标游戏版本为 %1，源版本为 %2。模组和部分配置可能不兼容，默认不迁移模组。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -27959,19 +28914,11 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>%1 / 默认搬 %2 项（%3）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>将复制以下内容到升级副本：</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>本次迁移包括：</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>• %1：这一份实例里没有</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -27983,39 +28930,51 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>迁移只增加文件、不删除、不覆盖目标里已有的同名文件；两边的游戏都必须先关掉。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>将创建一份升级副本，并把选中的 %1 项（%2）搬进去。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>将把选中的 %1 项（%2）搬进目标实例。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>
-
-只增加文件，不删除、不覆盖目标里已有的同名文件。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>
 
 兼容性结论：%1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>找不到源实例目录：%1</source>
+            <source>目标版本（%1 / %2）与源一致：模组与配置可以原样迁移。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>（没有给）</source>
+            <source>%1 / 默认迁移 %2 项（%3）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>加载器小版本不同（源 %1 / 目标 %2），一般没问题，起不来时先看它。</source>
+            <source>• %1：当前实例无此项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>迁移只增加文件、不删除、不覆盖目标中已有的同名文件；两边的游戏都必须先关闭。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>将创建升级副本，并将选中的 %1 项（%2）迁移进去。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>将把选中的 %1 项（%2）迁移到目标实例。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>
+
+只增加文件，不删除、不覆盖目标中已有的同名文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未找到源实例目录：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>（未提供）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>加载器小版本不同（源 %1 / 目标 %2），通常不影响启动；若启动失败，请先检查此项。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -28067,7 +29026,7 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>目标版本 / 加载器与源不一致，模组可能起不来；确认要原样搬过去再自己勾上。</source>
+            <source>目标版本 / 加载器与源不一致，模组可能无法启动；确认需要原样迁移后再勾选。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -28129,10 +29088,6 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>嵌套 fabric.mod.json</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>嵌套 </source>
             <translation type="unfinished"></translation>
         </message>
@@ -28148,19 +29103,19 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
     <context>
         <name>UpgradeHistory</name>
         <message>
-            <source>读不了升级历史：%1</source>
+            <source>无法读取升级历史：%1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>升级历史大得不像一份记录，按读不懂处理。</source>
+            <source>升级历史文件过大，无法作为记录解析。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>升级历史读不懂（不是 JSON 对象）。</source>
+            <source>升级历史无法解析（不是 JSON 对象）。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>。这一条没有写进去。</source>
+            <source>，此条未写入。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -28232,7 +29187,7 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>快照：没有（副本模式以源实例为回滚材料）
+            <source>快照：无（副本模式以源实例为回滚材料）
 </source>
             <translation type="unfinished"></translation>
         </message>
@@ -28273,31 +29228,31 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>这个实例正在运行或被别的操作占用，等它停下来再升级。</source>
+            <source>此实例正在运行或被其他操作占用，请等待其结束后再升级。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>新实例的名字不能空着。</source>
+            <source>新实例名称不能为空。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>这个名字已经有一个实例在用了，换一个。</source>
+            <source>此名称已被其他实例使用，请更换。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>至少选一类要迁移的内容。</source>
+            <source>至少选择一类要迁移的内容。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>请执行兼容性检查后确认迁移。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标或选择已更改，需要重新检查。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>已选中模组配置，未选中模组文件。请同时迁移模组，或取消迁移相关配置。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>先做一次兼容性检查，再确认迁移。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>目标或选择改过了，需要重新检查一次。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -28407,11 +29362,11 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>还有 %1 项必要内容需要处理。</source>
+            <source>尚有 %1 项必要内容需处理。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>必要内容都已经明确处理。</source>
+            <source>必要内容均已明确处理。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -28422,11 +29377,11 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>Mod 文件</source>
+            <source>模组文件</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>Mod 配置</source>
+            <source>模组配置</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -28454,7 +29409,11 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>这一份里没有可迁移的内容。</source>
+            <source>此实例无可迁移的内容。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>光影包仅在安装对应渲染器后生效；新实例不会自动安装渲染器。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -28463,10 +29422,6 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         </message>
         <message>
             <source>已选中游戏设置，未选中资源包。新实例的设置可能引用缺失的资源包。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>光影包只在装了对应渲染器时才会生效；新实例不会替你装渲染器。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
