@@ -5,6 +5,7 @@
 
 #include "PresetInstallPicker.hpp"
 #include "ChromeDialog.hpp"
+#include "FlowLayout.hpp"
 
 #include "LoadingState.hpp"
 #include "MainWindowPageLayout.hpp"
@@ -654,14 +655,16 @@ void PresetInstallPicker::setComposites(const QList<Composite> &presets) {
         QHBoxLayout *foot = nullptr;
         QFrame *footFrame = addPageFoot(layout, page, &foot);
         foot->setSpacing(8);
-        foot->addWidget(new QLabel(tr("应用其中："), footFrame));
+        auto *chips = new FlowLayout(8, 8);  // 左栏随译文变宽后可能一行排不下
+        foot->addLayout(chips, 1);
+        chips->addWidget(new QLabel(tr("应用其中："), footFrame));
         for (const auto &category : std::as_const(m_categories)) {
             auto *chip = new QPushButton(category.title, footFrame);
             chip->setObjectName(QStringLiteral("presetCompositePart_") + category.key);
             chip->setCheckable(true);
             Theme::markChipButton(chip);
             chip->setEnabled(false);
-            foot->addWidget(chip);
+            chips->addWidget(chip);
             m_compositeChecks.insert(category.key, chip);
             connect(chip, &QPushButton::toggled, page, [this, key = category.key](bool on) {
                 for (const auto &preset : m_composites) if (preset.id == m_selectedComposite) {
@@ -674,7 +677,6 @@ void PresetInstallPicker::setComposites(const QList<Composite> &presets) {
                 }
             });
         }
-        foot->addStretch(1);
         connect(list, &QListWidget::currentRowChanged, page, [this, list](int row) {
             if (row < 0) return;
             const Composite preset = m_composites[row];
@@ -701,6 +703,12 @@ void PresetInstallPicker::setComposites(const QList<Composite> &presets) {
     m_stack->addWidget(page);
     auto *nav = new QListWidgetItem(tr("综合预设"), m_navigation);
     nav->setData(kCountRole, int(presets.size()));
+    // 左栏 150 起，译文更长时放宽：行里除了名字还有两侧 12 边距、圆点与计数（共 56）。
+    int railWidth = 150;
+    const QFontMetrics railMetrics(Theme::textFont(m_navigation->font(), Theme::TextRole::Body));
+    for (int i = 0; i < m_navigation->count(); ++i)
+        railWidth = qMax(railWidth, railMetrics.horizontalAdvance(m_navigation->item(i)->text()) + 56);
+    m_navigation->setFixedWidth(railWidth);
     updateCompositeChecks();
 }
 void PresetInstallPicker::updateCompositeChecks() {

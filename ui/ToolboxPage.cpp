@@ -441,6 +441,12 @@ QWidget *makeNumberField(QWidget *parent, QAbstractSpinBox *spin, bool steppers,
     row->setSpacing(2);
     spin->setParent(field);
     styleNumberSpin(spin);
+    // width 是中文口径的下限；译文后缀更长时按「最大值 + 后缀」放宽。
+    if (const auto *whole = qobject_cast<QSpinBox *>(spin)) {
+        spin->ensurePolished();
+        const QString widest = whole->prefix() + QString::number(whole->maximum()) + whole->suffix();
+        width = qMax(width, spin->fontMetrics().horizontalAdvance(widest) + InputSizing::kHorizontalChrome);
+    }
     spin->setFixedWidth(width);
     if (steppers) {
         auto *minus = makeGlyphButton(field, spin->objectName() + QStringLiteral("Minus"), Glyph::Minus,
@@ -3424,8 +3430,8 @@ QWidget *ToolboxPage::buildTrimPanel() {
     m_trimResourceStatus->setText(tr("未载入盔甲资源"));
     right->addWidget(m_trimResourceStatus);
     // 资源操作：三颗次要的小钮成一组靠右；「取消」只在读取 / 下载中出现。
-    auto *actions=new QHBoxLayout; actions->setContentsMargins(0,0,0,0); actions->setSpacing(2);
-    actions->addStretch(1);
+    auto *actions=new FlowLayout(2,2);  // 英文三颗排不下时折行
+    actions->alignRight();
     const QStringList titles{tr("读取本地"),tr("选择 JAR"),tr("下载资源"),tr("取消")};
     const QStringList tips{tr("从本机已安装的游戏读取盔甲贴图"),tr("手动选择客户端 JAR"),
                            tr("联网下载此版本的盔甲资源"),tr("取消正在进行的读取 / 下载")};
