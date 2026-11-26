@@ -136,7 +136,7 @@ QList<AgentSkill> AgentSkillRegistry::builtins() {
 
     list.append(make(
         QStringLiteral("inspection"), QCoreApplication::translate("AgentSkill", "实例诊断"),
-        QCoreApplication::translate("AgentSkill", "仅只读检查：运行启动诊断、完整性校验与模组统计，列出问题及后续操作。"),
+        QCoreApplication::translate("AgentSkill", "只读检查：运行启动诊断、完整性校验与模组统计，列出问题及后续操作。"),
         QStringLiteral("inspection"), false, readOnlyTools(), true, false,
         {QStringLiteral("diagnostics.startup")},
         QStringLiteral("At least one evidence item; severity-ranked findings and next steps; strictly read-only."),  // i18n-ignore

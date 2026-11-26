@@ -499,7 +499,7 @@ int UiAgentCheck() {
     // 模式卡片（Stage 2）：五颗胶囊按钮，选中的那颗可勾选；换选中态后状态行跟着变。
     page->setSkills({{QStringLiteral("general"), QStringLiteral("自由对话"),
                       QStringLiteral("对话 + 受控工具")},
-                     {QStringLiteral("inspection"), QStringLiteral("实例体检"),
+                     {QStringLiteral("inspection"), QStringLiteral("实例诊断"),
                       QStringLiteral("只读诊断")}},
                     QStringLiteral("general"));
     QApplication::processEvents();
@@ -511,7 +511,7 @@ int UiAgentCheck() {
           "智能体 UI：默认停在自由对话");
     page->setSkills({{QStringLiteral("general"), QStringLiteral("自由对话"),
                       QStringLiteral("对话 + 受控工具")},
-                     {QStringLiteral("inspection"), QStringLiteral("实例体检"),
+                     {QStringLiteral("inspection"), QStringLiteral("实例诊断"),
                       QStringLiteral("只读诊断")}},
                     QStringLiteral("inspection"));
     QApplication::processEvents();
@@ -541,11 +541,11 @@ int UiAgentCheck() {
     QApplication::processEvents();
     check(autoSafe != nullptr && autoSafe->isHidden() && !page->autoSafeEnabled(),
           "智能体 UI：离开展示后 Auto-safe 收起并复位");
-    page->setWorkflowStatus(QStringLiteral("模式：实例体检 · 阶段：collect"));
+    page->setWorkflowStatus(QStringLiteral("模式：实例诊断 · 阶段：collect"));
     QApplication::processEvents();
     auto *statusLabel = page->findChild<QLabel *>(QStringLiteral("agentWorkflowStatus"));
     check(statusLabel != nullptr && statusLabel->isVisible() &&
-              statusLabel->text().contains(QStringLiteral("实例体检")),
+              statusLabel->text().contains(QStringLiteral("实例诊断")),
           "智能体 UI：工作流状态行可见");
     page->setWorkflowStatus(QString());
     QApplication::processEvents();
