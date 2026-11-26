@@ -409,6 +409,45 @@
         </message>
     </context>
     <context>
+        <name>AgentArtifactStore</name>
+        <message>
+            <source>artifact 缺少会话 ID。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>artifact 加密失败，未写入磁盘。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>本会话的 artifact 已达上限（%1 MB），不再写入新内容。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法创建 artifact 目录。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>artifact 写入失败。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>artifact 元数据写入失败。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>artifact 读取范围无效。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>artifact 不存在或不可读。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>artifact 无法解密：可能已更换 Windows 账户或设备，或内容已损坏。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>AgentAutoSafe::Authorizer</name>
         <message>
             <source>Auto-safe 没有开启</source>
@@ -476,6 +515,124 @@
         </message>
     </context>
     <context>
+        <name>AgentBackupIndex</name>
+        <message>
+            <source>无法创建维护备份目录。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份加密失败，未保存。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份内容写入失败。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>没有可备份的文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份内容为空或格式无法识别。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份元数据写入失败。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份不存在。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份无法解密。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>只能清理智能体创建的备份（owner=agent）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份目录未能完全删除。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentCommandTools</name>
+        <message>
+            <source>本机命令输出，按不可信内容处理。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>ping 主机</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>nslookup 主机</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>诊断命令</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>诊断命令默认关闭，需先在智能体设置中开启「允许诊断命令」。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>不存在该诊断命令。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>host 只接受域名或 IP 地址。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已有诊断命令正在运行，请等待其结束。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>找不到 %1（不在 PATH 中）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>执行诊断命令：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>超时或取消时会清理进程树；输出上限 256 KB，结果按不可信内容处理。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>审批请求已失效。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>用户已拒绝执行此命令。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>诊断命令已结束（退出码 %1）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>命令无法启动。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>命令超时，已清理进程树。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>正在执行诊断命令…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>诊断命令已取消。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>AgentComposer</name>
         <message>
             <source>描述遇到的问题…</source>
@@ -486,6 +643,38 @@
         <name>AgentCompositeToolEngine</name>
         <message>
             <source>Auto-safe 拒绝：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>当前模式（%1）不允许调用 %2。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>当前模式（%1）为只读，不能执行写操作。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工作流已失败，不能继续写入。请说明失败原因并重新提交计划。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>修复计划尚未批准。请先用 workflow.submitPlan 提交计划。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>计划中的步骤已全部执行，不能继续写入。请先验证并提交报告。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>计划须按顺序执行：当前第 %1 步为 %2，不是 %3。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未知工具。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>审批请求已失效。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -606,6 +795,10 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>MCP 配置读取失败：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>只会删除会话正文、恢复快照和本会话 artifacts；文件维护备份会保留。确认删除？</source>
             <translation type="unfinished"></translation>
         </message>
@@ -682,11 +875,98 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>服务器：%1
+%2
+
+参数：%3
+工作目录：%4
+环境变量：%5
+
+该服务器以当前 Windows 用户权限运行，可能读写本机文件与网络；仅添加可信服务器。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>（无）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>（智能体数据目录）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>（不继承）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>重新连接 MCP 服务器</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启动 MCP 服务器</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>确认并连接</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已取消：未启动服务器。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已断开。重新连接前须再次确认。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>添加 MCP 服务器</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已保存「%1」，首次启动前须确认可执行文件身份。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>编辑 MCP 服务器</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已保存「%1」；配置已变更，下次启动须重新确认。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>删除 MCP 服务器</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>删除此服务器的配置和确认记录；仅删除配置，不删除本机程序。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已删除。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1：%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>MCP 服务器</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>模式「%1」不可用：%2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>先停止当前回复再切换模式。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已切换至自由对话。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已切换至「%1」：%2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -707,6 +987,10 @@
         </message>
         <message>
             <source>等待事务</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>SearXNG 地址须为 http/https。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -747,114 +1031,382 @@
         </message>
     </context>
     <context>
-        <name>AgentCrashSnapshot</name>
+        <name>AgentEgressPolicy</name>
         <message>
-            <source>Mixin apply for mod 语句</source>
+            <source>禁止读取和发送凭据文件或凭据存储。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>mixin 配置 %1</source>
+            <source>二进制文件仅提供元数据，不读取或发送内容。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>mixin 配置 %1 无归属声明</source>
+            <source>严格模式：元数据同样需逐次确认。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>栈帧含该模组</source>
+            <source>自动读取，可能发送至当前模型服务。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>失败区文本提及</source>
+            <source>严格模式：日志、崩溃报告与 artifact 需逐次确认。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>报告头 Suspected Mods</source>
+            <source>自动读取且已脱敏，可能发送至当前模型服务。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>规则 %1 的线索</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>（%1）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>%1 个 mixin 配置能由 JAR 声明归属到模组</source>
+            <source>需逐次确认；确认后仅发送脱敏片段。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
     <context>
         <name>AgentFileToolEngine</name>
         <message>
+            <source>未知工具。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工具未实现。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>只返回目录元数据，不含文件名。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>完整文件名清单：%1 项（已截断）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>完整文件名清单：%1 项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>不提供「本会话允许此目录」，每次均需重新确认。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>禁止读取凭据文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>读取文本：%1（%2 字节，已截断）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>读取文本：%1（%2 字节）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>确认后只发送脱敏片段，不提供本会话的目录放行。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工作区与当前实例不匹配。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>修复事务进行中，不能直接写入原实例。请带 workspaceId 写入工作区。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写入 %1（%2 → %3 字节）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写入前会先备份到维护备份目录。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>artifact 不存在或不可读。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>读取 artifact（已重新脱敏）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>审批请求已失效。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>用户已拒绝本次操作，未写入任何内容。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>文件内容未变化，未写入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写入成功：%1 → %2 字节，已备份并校验。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未知审批类型。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
     <context>
-        <name>AgentKnowledge</name>
+        <name>AgentFileTools</name>
         <message>
-            <source>崩溃规则不是有效 JSON：%1</source>
+            <source>当前内容</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>崩溃规则缺少 rules 数组</source>
+            <source>写入内容</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>规则不是对象，已跳过</source>
+            <source>
+…（diff 已截断）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>规则 id 不合法，已跳过：%1</source>
+            <source>目录：%1 个文件，%2 个子目录，合计 %3 字节（超过 2000 项，统计不完整）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>规则 id 重复，已跳过：%1</source>
+            <source>目录：%1 个文件，%2 个子目录，合计 %3 字节</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>%1：缺少 priority</source>
+            <source>目标是目录，不能按文件读取。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>%1：priority 超出 1–100</source>
+            <source>无法读取文件。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>%1：phase 不认识：%2</source>
+            <source>检测到二进制内容，只能读取文件名、哈希等元数据。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>%1：match 不能为空</source>
+            <source>只允许写入 config/**、defaultconfigs/** 和 options.txt。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>%1：confidence 必须在 0–1 之间</source>
+            <source>写入内容超过 1 MB。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>%1：confidenceBasis 为空或超长</source>
+            <source>目标不存在，但调用提供了 expectedSha256 或 fileIdentityToken。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>里程碑规则不是有效 JSON：%1</source>
+            <source>目标是目录，不能写入。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>里程碑 %1 没有标记</source>
+            <source>覆盖已有文件必须提供 expectedSha256 和 fileIdentityToken。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>里程碑缺少 main_menu/world_loaded/crash 之一</source>
+            <source>文件身份已变化，请重新读取后再试。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法读取原文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>文件内容已变化，请重新读取后再试。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>父目录身份已变化，已拒绝提交。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>待新建的文件在提交前已存在，已拒绝覆盖。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标在提交前消失或被替换。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标在提交前被替换或修改，已拒绝写入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法读取目标。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标内容在提交前已变化，已拒绝写入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写入文件前的备份</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写入前备份失败：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法创建临时文件：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写入临时文件失败：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法提交写入：%1。原文件和备份均已保留。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写入后无法回读：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写入后内容校验失败，备份已保留。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentInstanceLock</name>
+        <message>
+            <source>没有可锁定的实例。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1（不可用）</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
     <context>
         <name>AgentLauncherHostImpl</name>
         <message>
+            <source>主窗口未接入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>上一次平台查询尚未结束。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>上一次地址解析尚未结束。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>上一次下载尚未结束。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>下载目标不完整。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法创建暂存目录。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已有下载任务正在进行，请等待其结束后再修复。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>实例不存在。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>该实例没有启动记录，可能尚未启动过。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>未找到日志文件（实例目录的 logs/latest.log 或数据根的 logs/latest.log、logs/wtfml.log）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>mods 目录不存在。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>该实例没有 mods 目录。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>该文件未被禁用。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>该文件未启用。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标文件名已存在，未修改任何文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>重命名失败，文件可能被占用。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>该设置键不在白名单中。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>维护备份</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>实例目录不存在。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未读取到可备份的文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智能体备份：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份元数据缺少实例 ID，已拒绝恢复。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>实例目录已不存在。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>恢复备份前的快照</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法创建恢复前快照，已中止恢复。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份中的路径无效：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法写回：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未知页面。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>会话尚未锁定实例。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>测试启动未接入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>修复事务未接入。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -865,15 +1417,7 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>解析最新一份崩溃报告（或日志尾）：环境、阶段、异常链、模组嫌疑与命中规则；报告头部提到的模组只算线索。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>搜索日志</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>按字面量（大小写不敏感）搜日志，带行号与上下文；最多 200 条，路径已脱敏。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -881,15 +1425,7 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>从第 startLine 行开始读一段日志，最多 500 行；已脱敏。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>读崩溃报告全文</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>把整份崩溃报告脱敏后存成 artifact，只返回分段目录与摘要；原文用 artifact.read 按偏移读。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -901,10 +1437,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>搜索命中 %1 处</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>日志搜索：命中 %1 处（返回 %2 处）</source>
             <translation type="unfinished"></translation>
         </message>
@@ -913,7 +1445,175 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>第 %1–%2 行（共 %3 行）</source>
+            <source>写操作审批，不发送文件内容。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>列出实例</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>查看锁定实例</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启动诊断</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>崩溃诊断</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>看日志结尾</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>列崩溃报告</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>完整性检查</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>列模组</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启停模组</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>读启动器设置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>改启动器设置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>列本机 Java</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>内存建议</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>列备份</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>创建备份</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>恢复备份</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>升级检查</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>打开升级向导</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>打开启动器页面</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>不提供本会话放行，每次均需重新确认。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未知工具。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启动器工具宿主未接入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工具未实现。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>实例总数</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>当前游戏目录共有 %1 个实例。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1（%2 · %3）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>原版</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>完整实例清单</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>完整清单：%1 项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>会话尚未锁定实例。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1（%2 · %3），Xmx %4 MB</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>锁定实例</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>诊断未得出可用结论，建议打开实例设置自行排查。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启动诊断：%1 个问题、%2 条提醒</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>最近一次启动正常退出，没有可诊断的异常。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>日志结尾：%1（%2 行）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>日志结尾</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>崩溃报告概况</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>崩溃报告：%1 份</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 · %2 字节 · %3</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>崩溃报告清单</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>崩溃报告清单：%1 份</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -952,6 +1652,214 @@
             <source>崩溃报告全文</source>
             <translation type="unfinished"></translation>
         </message>
+        <message>
+            <source>模组概况</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模组 %1 个：已启用 %2 个，已禁用 %3 个</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1（已禁用）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模组清单</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模组清单：%1 项（已截断）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模组清单：%1 项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启动器设置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启动器设置当前值</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>本机 Java</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>本机 Java 主版本：%1 个</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>建议 Xmx %1 MB、Xms %2 MB</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份列表</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>维护备份：%1 份</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>升级检查：%1 个候选目标</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已打开：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>该设置键不在白名单中。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>该设置键只接受 true 或 false。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>内存取值超出范围（Xmx 512–65536 MB，Xms 256–65536 MB）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>该工作区没有对应的修复事务。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>修复事务进行中，不能直接修改启动器设置。请带 workspaceId 调用。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>修改设置 %1：%2 → %3</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>修改启动器设置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>只修改白名单中的设置键；写入失败不会覆盖已保存的设置。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>只能处理 .jar 和 .jar.disabled 文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工作区与当前实例不匹配。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工作区的 mods 目录中没有该文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>该模组已启用。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>该模组已禁用。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>修复事务进行中，不能直接修改原实例。请带 workspaceId 调用。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>mods 目录中没有该文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启用模组：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>禁用模组：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>只修改扩展名（.jar ↔ .jar.disabled），可随时改回。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>所选范围内没有可备份的文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>范围：%1
+文件：%2 个
+大小：%3 字节
+保存位置：%4
+</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>创建备份：%1（%2 个文件）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>创建维护备份</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份保存在维护备份目录，删除会话不会删除它。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>修复事务进行中，不能直接恢复备份。请先提交或回滚事务。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>找不到该备份。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>恢复备份：%1（%2）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>恢复前会先创建快照；来源会话已删除时也能恢复。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>审批请求已失效。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>用户已拒绝本次操作，未修改任何内容。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已写入设置 %1（旧值 %2）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工作区中的模组重命名失败。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已启用：%1（原文件名 %2）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已禁用：%1（原文件名 %2）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>备份完成：%1（%2 个文件）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已恢复备份 %1（恢复前快照 %2）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未知审批类型。</source>
+            <translation type="unfinished"></translation>
+        </message>
     </context>
     <context>
         <name>AgentLogIndex</name>
@@ -979,7 +1887,209 @@
     <context>
         <name>AgentLoop</name>
         <message>
+            <source>模型客户端未就绪。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无可用 API Key，需先在设置中配置。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无可用用户消息。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无可用重发用户消息。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>上下文预算不足以容纳当前消息。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>本会话的工具调用已达上限（%1 次）。需要继续排查时开一个新会话。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工具未注册。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>超过最大工具步数，已停止。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentMcpPage</name>
+        <message>
+            <source>未启用</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已连接（%1 个工具）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未连接</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>失败</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>连接中…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>MCP 服务器</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>MCP 服务器（stdio）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>MCP 服务器以当前 Windows 用户权限运行，可读写本机文件与网络。仅添加可信服务器；首次启动、修改配置、重新连接或可执行文件变更前均须确认。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>暂无服务器。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>添加服务器…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>刷新</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>关闭</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>尚未确认（首次启动前须确认可执行文件身份）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>SHA-256：%1…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>重新连接</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>连接</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>断开</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>编辑…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>删除</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>绝对路径，例如 C:\Servers\mcp\server.exe</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>一行一个参数，不经过 shell</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>透传的环境变量名，逗号分隔（仅保存名称）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启用服务器</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>名称</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>可执行文件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>参数</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工作目录</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>环境变量</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>保存配置后须重新确认；不会自动下载或安装 MCP 服务器。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentMcpToolEngine</name>
+        <message>
+            <source>结果来自外部 MCP 服务器「%1」，按不可信数据处理</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>MCP 未接入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>MCP 工具不存在或服务器未连接。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>调用 MCP 工具：%1（服务器「%2」）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>外部 MCP 工具</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务器以当前 Windows 用户权限运行，结果按不可信数据处理。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>审批请求已失效。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>用户拒绝了本次 MCP 调用。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>MCP 服务器当前不可调用（未连接或待处理请求已满）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已发送至 MCP 服务器，等待结果…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>MCP 工具返回错误（%1）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>MCP 工具完成：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已取消本次 MCP 调用。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -1293,14 +2403,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>先把文件下载到暂存目录并校验大小与 SHA-1，全部通过后才复制进工作区 mods/；%1任何一步失败都不改工作区，也不碰原实例。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>会补齐版本声明的必需前置；</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>修复模组文件</source>
             <translation type="unfinished"></translation>
         </message>
@@ -1330,6 +2432,18 @@
         </message>
         <message>
             <source>修复游戏核心文件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>校验模组文件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>先把文件下载到暂存目录并校验大小与 SHA-1，全部通过后才复制进工作区 mods/；会补齐版本声明的必需前置；任何一步失败都不改工作区，也不碰原实例。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>先把文件下载到暂存目录并校验大小与 SHA-1，全部通过后才复制进工作区 mods/；任何一步失败都不改工作区，也不碰原实例。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -1441,19 +2555,11 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>只改了事务工作区；用 repair.diff 看改动，repair.verify 验证，repair.finish 提交或回滚。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>模组修复：%1 个文件已写进工作区（事务 %2）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>核心文件修复失败。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>已把缺文件/哈希不符的文件排进下载并等它收尾；再跑 instance.integrity 复核分组计数。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -1717,44 +2823,99 @@
         </message>
     </context>
     <context>
-        <name>AgentPromptLibrary</name>
+        <name>AgentPaths</name>
         <message>
-            <source>提示词 id 不合法：%1</source>
+            <source>无法创建智能体数据目录：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentProviderAdapters</name>
+        <message>
+            <source>Base URL 不能为空。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>未找到技能提示词资源：%1</source>
+            <source>Base URL 格式无效。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>提示词超过预算（%1 字节）：%2</source>
+            <source>Base URL 不能包含用户名或密码。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>技能提示词不是有效 UTF-8：%1</source>
+            <source>Base URL 不能包含 # 片段。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>技能提示词为空：%1</source>
+            <source>Base URL 不能包含查询串。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>技能提示词 id 不合法：%1</source>
+            <source>远程服务必须使用 https://，http:// 仅允许本机回环地址。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>技能提示词不可用（%1）：%2</source>
+            <source>本机 http:// 地址需先在「连接」中启用「允许本机 HTTP」。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>技能提示词组合后超过预算（%1 字节）</source>
+            <source>Base URL 仅支持 https://（本机回环地址可显式启用 http://）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>部署类型为本地，但 Base URL 不是回环地址。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无认证模式仅限本机回环服务。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模型 ID 不能为空。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentRedaction</name>
+        <message>
+            <source>
+…（已截断）</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
     <context>
         <name>AgentRepairToolEngine</name>
         <message>
+            <source>开始修复事务</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>查看事务差异</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>验证修复事务</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>提交或回滚事务</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>查看修复事务</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>创建修复事务</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>自动回滚没有开始：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>提交修复事务</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -1778,6 +2939,250 @@
         </message>
         <message>
             <source>尚未保存 API Key</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentSecretStore</name>
+        <message>
+            <source>Windows 凭据管理器写入失败（错误码 %1）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Windows 凭据管理器删除失败（错误码 %1）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>配置 id 为空，拒绝保存凭据。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>凭据为空，拒绝保存。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模拟故障：两条凭据存储路径均不可用，拒绝保存，已保留原值。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>当前平台无 Windows 凭据管理器。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>DPAPI 后备写盘失败（%1）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>DPAPI 保护失败，拒绝保存凭据（不降级为明文）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 DPAPI 后备同样不可用，拒绝保存。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>配置 id 为空。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>DPAPI 后备凭据无法解密（账户变更、设备变更或内容损坏）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无可用凭据，需重新输入 API Key。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>DPAPI 后备清除失败（%1）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentSession</name>
+        <message>
+            <source>新对话</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>我</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>助手</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentSessionStore</name>
+        <message>
+            <source>无法创建目录：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法写入：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写盘失败：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法读取元数据：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>元数据损坏：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>会话版本过新（schema %1），当前版本不覆盖原文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>元数据缺少 id：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>会话缺少 id。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>会话超过 %1 条消息，已停止追加，可导出或新建会话。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>会话正文超过 %1 MB，已停止追加，可导出或新建会话。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>整会话加密失败，已保留原正文。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法删除旧正文：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>会话 id 为空。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法解密：加密正文不存在或不可读。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法读取会话正文：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>会话正文超过大小上限，拒绝载入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法解密该会话（账户变更、设备变更或内容损坏）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>会话正文损坏，已隔离原文件，可从恢复快照手动恢复。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>会话版本过新（schema %1），不覆盖原文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>损坏，已隔离</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>会话没有待删除标记。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>正文删除失败：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>会话附属文件删除失败：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>元数据删除失败：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1（%2）：%3</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法创建恢复快照目录。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>恢复快照复制元数据失败。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>恢复快照复制正文失败。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>损坏文件隔离失败：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentSettings</name>
+        <message>
+            <source>配置 id 不能为空。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>配置 id 含非法字符。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>认证头模式不是允许的枚举值。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>max_tokens 字段名不是允许的枚举值。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>system role 不是允许的枚举值。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>reasoning 回传方式不是允许的枚举值。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>部署类型不是允许的枚举值。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>上下文窗口超出合理范围。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>最大输出必须小于上下文窗口。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>超时时间应在 5–600 秒之间。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>温度应在 0–2 之间。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>配置写盘失败（%1）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>默认模型服务</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -1984,6 +3389,26 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>联网与诊断</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>SearXNG 地址</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>填写自建 SearXNG 实例地址后方可联网搜索，搜索词将发送至该实例。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>允许诊断命令</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>默认关闭。开启后可执行固定诊断命令（java -version、ping、nslookup、netstat -ano 等），每次均须确认；不开放任意命令。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>协议适配</source>
             <translation type="unfinished"></translation>
         </message>
@@ -2056,6 +3481,10 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>MCP 服务器…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>保存后清除已存密钥。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -2077,6 +3506,67 @@
         </message>
         <message>
             <source>发送输入的文字，以及关联实例的日志末尾、最新崩溃报告和版本信息。发送前移除账号信息。读取配置及其他文件前须确认。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentSkill</name>
+        <message>
+            <source>自由对话</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>对话及锁定实例内的受控文件与诊断工具，不含修复事务、测试启动与二分定位。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>实例诊断</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>只读检查：运行启动诊断、完整性校验与模组统计，列出问题及后续操作。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>崩溃急救</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>支持诊断、计划、逐步审批修复与验证，每步均可拒绝或回滚。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>版本升级 / 移植</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>只读检查升级目标，执行升级时打开升级向导。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模组维护</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>查看模组清单、解析声明检测兼容与前置、启用/禁用或备份、按平台记录修复文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentSseParser</name>
+        <message>
+            <source>SSE 单行超过 1 MB，已中止。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>SSE 行缓冲超过 1 MB，已中止。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentTestLaunchToolEngine</name>
+        <message>
+            <source>测试启动</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -2104,9 +3594,413 @@
         </message>
     </context>
     <context>
+        <name>AgentToolRegistry</name>
+        <message>
+            <source>查看目录概况</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>查看完整文件名</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>读取文本文件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写入文本配置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>读取模型 artifact</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentWebPolicy</name>
+        <message>
+            <source>URL 无效。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>仅允许 http/https，拒绝 %1。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>URL 不能包含用户信息。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>URL 不能包含片段。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>URL 缺少主机名。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>域名无法解析为任何地址。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标地址 %1 属于 %2，拒绝连接。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>AgentWebTools</name>
         <message>
+            <source>审批请求已失效。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>请求将发送至第三方站点 %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>联网搜索</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>抓取网页</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>联网组件未接入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>搜索词不能为空。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>需先在 API 设置中填写 SearXNG 实例地址，再执行联网搜索。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>SearXNG 地址不可用：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未知工具。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>联网搜索：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>抓取网页：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>仅连接公网地址，不跟随至内网；结果按不可信内容处理。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>用户拒绝了此次联网请求。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>本会话已放行 %1，正在联网获取…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>正在联网获取…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>解析失败：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>重定向次数超过上限（%1）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>重定向目标不可用：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标返回 HTTP %1。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>拒绝解析此 Content-Type：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>抓取完成：%1（HTTP %2，%3 字节）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>SearXNG 返回内容不是有效 JSON。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>搜索完成：%1 条结果</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已取消本次联网请求。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentWinPath</name>
+        <message>
+            <source>路径使用 Windows 保留设备名：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法读取文件属性。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>路径包含重解析点（junction 或符号链接），已拒绝。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法读取最终路径。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>最终路径与预期不一致，可能经 junction 或符号链接指向别处：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法读取文件 ID。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法读取文件时间。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法读取文件大小。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法打开路径（错误码 %1）：%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>相对路径为空。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>相对路径过长。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>只接受实例目录内的相对路径。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>路径不能包含冒号（ADS）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>路径包含非法字符。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>路径不能包含 . 或 .. 段。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>路径段不能以点或空格结尾：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>非 Windows 系统尚不支持句柄级路径校验。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标不是目录。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentWorkflow</name>
+        <message>
+            <source>自由对话模式无需提交计划。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>当前模式无需提交计划，可直接调用工具。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>计划缺少目标（goal）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>计划目标过长（上限 500 字）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>计划未包含任何步骤。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>计划步数超过上限（%1）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>第 %1 步</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 的工具 %2 不存在。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 不能为工作流工具本身。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 的工具 %2 不在当前模式白名单内。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 为写操作，当前模式仅限只读。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 的参数无效：%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 的说明过长。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 被标记为验证步，但其为写操作。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>计划未包含任何修复步骤，不能仅包含只读步骤。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>计划须至少包含一个验证步（verify=true）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标：%1
+</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>（验证步）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>注意：批准计划不等于批准所有写入，每个写步骤仍需单独审批。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>用户拒绝了修复计划。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>第 %1 步（%2）失败：%3</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工作流已失败。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>修复计划尚未通过审批。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>计划仍有 %1 步未执行。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未执行验证步，不能标记完成。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>缺少必需的工具调用：%1。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>缺少证据 id，不能标记完成。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>仍有未收尾的修复事务（%1）；需先通过 repair.finish 提交或回滚。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模式：%1 · 阶段：%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source> · 计划 %1/%2 步</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source> · 证据 %1 条</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentWorkflowEngine</name>
+        <message>
+            <source>计划不含文件内容</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>提交修复计划</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>提交完成报告</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工作流未接入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未知工具。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>修复计划</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>批准计划仅表示同意该方案；每个写步骤执行时仍需单独确认。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>待批准计划：%1（%2 步）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>报告不能为空。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已提交完成报告。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>审批请求已失效。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>用户拒绝了修复计划；计划已作废，停止执行写操作。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>计划已批准（%1 步），按顺序执行；每个写步骤仍需单独确认。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -3243,10 +5137,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>（日志异常）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>中断恢复检查</source>
             <translation type="unfinished"></translation>
         </message>
@@ -3457,6 +5347,10 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>%1（日志异常）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>此实例正在运行，或正被复制、备份、还原或安装占用。请等待其结束后再替换。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -3637,13 +5531,6 @@
         </message>
         <message>
             <source>%1：已取消。</source>
-            <translation type="unfinished"></translation>
-        </message>
-    </context>
-    <context>
-        <name>BackupFiles</name>
-        <message>
-            <source>恢复前-</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -5855,6 +7742,10 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>仍未完成全部文件操作：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>：</source>
             <translation type="unfinished"></translation>
         </message>
@@ -5864,10 +7755,6 @@
         </message>
         <message>
             <source>已取消，未发布的暂存保留着。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>仍未完成全部文件操作：%1%2</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -6199,6 +8086,10 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>「%1」要求 Java %2，本次实际使用的是 Java %3（%4）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>缺少系统 DLL</source>
             <translation type="unfinished"></translation>
         </message>
@@ -6212,10 +8103,6 @@
         </message>
         <message>
             <source>「%1」要求 Java %2，本次实际使用的是 Java %3。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>（%1）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -6799,20 +8686,6 @@
     <context>
         <name>GlobalJavaSettings</name>
         <message>
-            <source>（zip:</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>此版本需要 Java %1，当前使用 Java %2，检测到的最高版本为 Java %3。
-
-请安装 Java %1，或在设置中指定 Java 路径。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>版本未知</source>
             <translation type="unfinished"></translation>
         </message>
@@ -6821,27 +8694,25 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>此版本需要 Java %1；当前使用：%2；检测到的最高版本：%3。
+
+请安装 Java %1，或在设置中指定 Java 路径。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>当前设置为手动指定 Java，但未指定路径。未找到兼容版本时取消启动。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>当前设置为手动指定 Java，路径「%1」的主版本不是 %2。未找到兼容版本时取消启动。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>本机无 Java %1，且当前不允许下载运行时。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>未找到 Java %1，且无法下载。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>当前设置为手动指定 Java，</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>未指定路径</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source> 的主版本不是 </source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>，未找到兼容版本时取消启动。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -8916,6 +10787,10 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>其中 %1 个为链接，仅删除链接本身，指向的目标不受影响。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>文件和文件夹将移入回收站，可从回收站恢复；链接将直接删除。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -11315,10 +13190,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>升级副本校验失败，自动撤回也未完成。请检查以下内容：%1</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>原实例已恢复，但回滚记录未能更新；未删除恢复材料。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -11384,6 +13255,10 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>副本已发布，但事务记录未能更新；未删除任何文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>更新副本校验失败，自动撤回也未完成。请检查以下内容：%1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -12987,18 +14862,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>，跳过 %1 项</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>，%1 部分不可用</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>，需确认覆盖</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>正在检查模组兼容性…</source>
             <translation type="unfinished"></translation>
         </message>
@@ -13048,6 +14911,22 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>无法计算此计划。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>跳过 %1 项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 部分不可用</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>需确认覆盖</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>，</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -13285,10 +15164,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>此%1未列出支持的游戏版本。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>%1 无搜索结果（%2）。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -13314,6 +15189,10 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>空搜索词</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>此资源未列出支持的游戏版本。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -13349,10 +15228,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>将解除对玩家「%1」的封禁。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>将从服务器列表中移除「%1」。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -13393,18 +15268,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>目标名称「%1」已存在，请选择其他名称。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>启用</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>禁用</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>游戏目录尚未创建</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -13459,6 +15322,10 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>已将「%3」添加到服务端 %1 的%2。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>将从%1中移除「%2」。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -13520,11 +15387,11 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>服务端 %1 的「%2」已%3（当前为「%4」）。</source>
+            <source>未找到此文件夹</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>未找到此文件夹</source>
+            <source>目录尚未创建</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -13617,6 +15484,14 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>服务端 %1 的「%2」已启用（当前为「%3」）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务端 %1 的「%2」已禁用（当前为「%3」）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>「%1」尚未生成。首次启动服务端后再创建备份。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -13705,15 +15580,11 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>服务端 %1：异常退出后自动重启%2。</source>
+            <source>服务端 %1：异常退出后已启用自动重启。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>已打开</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>已关闭</source>
+            <source>服务端 %1：异常退出后已关闭自动重启。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -16316,10 +18187,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>选择本地 zip…</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>保存</source>
             <translation type="unfinished"></translation>
         </message>
@@ -16574,6 +18441,10 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>删除服务端…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>选择本地 ZIP…</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -17035,6 +18906,258 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>%1 个版本</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>McpClient</name>
+        <message>
+            <source>可执行文件身份不可用，拒绝启动。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>可执行文件须为绝对路径。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>可执行文件不存在。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务器进程无法启动。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务器进程已退出（退出码 %1），不会自动重启。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>正在启动服务器…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>正在握手…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>并发 MCP 请求过多。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>握手</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>列工具</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工具调用</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>MCP %1超时，已按配置终止服务器进程。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>MCP %1超时，不自动重启。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>MCP 会话已停止。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已停止。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>stdout 无效输出过多，已终止会话。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>MCP 错误 %1：%2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务器未返回协议版本。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务器协议版本 %1 过旧（最低要求 2024-11-05）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>正在获取工具列表…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>就绪（%1 个工具）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工具清单已变更，正在重新获取…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>用户取消了本次 MCP 调用。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>McpManager</name>
+        <message>
+            <source>MCP 配置存储未接入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未启动。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>重新连接前需确认。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务器配置不存在。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」与「%2」映射出了同一工具名，已拒绝。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>McpTrustStore</name>
+        <message>
+            <source>无法读取可执行文件：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>可执行文件哈希计算失败。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法打开 MCP 配置文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>MCP 配置文件格式无效。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法创建 MCP 配置目录。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>MCP 配置写盘失败。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务器缺少 id。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务器缺少名称。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未填写可执行文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>可执行文件须为绝对路径（不解析 PATH）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>参数超过 %1 个。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>单个参数超过 %1 字符。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工作目录须为绝对路径。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工作目录路径过长。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>工作目录不能是可执行文件自身。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>可执行文件路径为空。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>可执行文件不存在：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法打开 MCP 确认记录。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>MCP 确认记录写盘失败。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务器配置不存在。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务器未启用。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法获取可执行文件身份。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>首次启动该服务器前需确认。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>配置已变更，需重新确认。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>可执行文件已变更（SHA-256、大小或文件 ID），需重新确认。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已确认（%1）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已确认，可启动。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>McpTypes</name>
+        <message>
+            <source>身份不可用</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1
+SHA-256：%2
+大小：%3 字节</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>
+修改时间：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>
+文件 ID：%1</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -18291,6 +20414,109 @@ Minecraft %2 / %3 %4</source>
         </message>
     </context>
     <context>
+        <name>OpenAiCompatibleClient</name>
+        <message>
+            <source>无可用 API Key，需先在设置中配置。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模型响应超过 16 MB 上限，已中止。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模型返回了无法解析的流式数据。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模型返回了无法解析的 JSON。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模型响应缺少 choices。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已停止生成。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>连接成功（HTTP %1，耗时 %2 ms）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务端不支持模型列表（HTTP 404）；无法通过列表验证，但配置格式有效。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>认证失败（HTTP %1），需检查 API Key。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>连接失败（HTTP %1）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>流已开始后中断，已保留收到的部分内容。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模型返回了空响应。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>请求超时。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>TLS 证书握手失败；不会忽略证书错误。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法解析模型服务主机（DNS 失败）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模型服务拒绝连接。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模型服务提前关闭连接。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>网络暂时不可用。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>网络请求失败（%1）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>认证失败（HTTP %1），需检查 API Key 或权限。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>请求被限流（HTTP 429）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>额度或配额不足。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模型服务暂时不可用（HTTP %1）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模型服务返回了重定向（HTTP %1）；本客户端不跟随重定向。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>模型服务返回 HTTP %1。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>OperationReport</name>
         <message>
             <source>取消</source>
@@ -18683,10 +20909,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>（草稿）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>仅提取游戏设置、按键和资源清单。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -18796,10 +21018,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>；平台模组 %1 项（发行文件及前置待执行时确认）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>无法完成%1</source>
             <translation type="unfinished"></translation>
         </message>
@@ -18853,6 +21071,10 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>状态无法确认</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1：%2；写入 %3 项</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19084,6 +21306,10 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>%1（草稿）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>请选择预设类别。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -19185,10 +21411,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>（新增 %1 条）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>；另有 %1 个模组的来源未知。可在「预设编辑器 → 从本地模组导入」中重新识别，或在模组页手动补充。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -19201,6 +21423,18 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>已收到 %1 条平台模组引用（新增 %2 条）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已收到 %1 条平台模组引用。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>另有 %1 个模组的来源未知。可在「预设编辑器 → 从本地模组导入」中重新识别，或在模组页手动补充。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>、</source>
             <translation type="unfinished"></translation>
         </message>
@@ -19210,6 +21444,14 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>（%1）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>平台模组 %1 项（发行文件及前置待执行时确认）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1；%2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19474,10 +21716,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>：</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>本次应用 &lt;span style="color:%1; font-weight:500"&gt;%2&lt;/span&gt; 类</source>
             <translation type="unfinished"></translation>
         </message>
@@ -19519,6 +21757,10 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>替换%1：%2 → %3</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1：%2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19765,10 +22007,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>（默认）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>类别：%1</source>
             <translation type="unfinished"></translation>
         </message>
@@ -19826,15 +22064,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>（%1）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>%1（%2）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>（正在运行）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -19870,11 +22100,19 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>%1（默认）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>暂无预设</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
             <source>无符合筛选条件的预设</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1（正在运行）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -20663,6 +22901,10 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>%1 副本</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>无法打开预设文件</source>
             <translation type="unfinished"></translation>
         </message>
@@ -20680,10 +22922,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>预设 ID「%1」与目录名不一致</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source> 副本</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -21116,6 +23354,10 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>%1：为链接（符号链接 / junction），未跟随。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>覆盖</source>
             <translation type="unfinished"></translation>
         </message>
@@ -21165,10 +23407,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>「%1」所在位置不是目录，未扫描。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>：为链接（符号链接 / junction），未跟随。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -21260,10 +23498,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>无此项</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>「%1」：此项载荷无值，已跳过。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -21297,6 +23531,10 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>「%1」中，目标「%2」的类型为%3，已保留原值。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>缺少此项</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -21808,11 +24046,159 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>待选择 %1 %2</source>
+            <source>删除 %1 项</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>删除 %1 %2</source>
+            <source>，删除 %1 项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>删除 %1 个</source>
+            <comment>服务器条目</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>，删除 %1 个</source>
+            <comment>服务器条目</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>删除 %1 个</source>
+            <comment>文件</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>，删除 %1 个</source>
+            <comment>文件</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>删除 %1 个</source>
+            <comment>数据包</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>，删除 %1 个</source>
+            <comment>数据包</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>待应用 %1 项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>，待应用 %1 项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>待应用 %1 个</source>
+            <comment>服务器条目</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>，待应用 %1 个</source>
+            <comment>服务器条目</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>待应用 %1 个</source>
+            <comment>文件</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>，待应用 %1 个</source>
+            <comment>文件</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>待应用 %1 个</source>
+            <comment>数据包</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>，待应用 %1 个</source>
+            <comment>数据包</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>跳过 %1 项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>，跳过 %1 项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>跳过 %1 个</source>
+            <comment>服务器条目</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>，跳过 %1 个</source>
+            <comment>服务器条目</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>跳过 %1 个</source>
+            <comment>文件</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>，跳过 %1 个</source>
+            <comment>文件</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>跳过 %1 个</source>
+            <comment>数据包</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>，跳过 %1 个</source>
+            <comment>数据包</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>待选择 %1 项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>待选择 %1 个</source>
+            <comment>服务器条目</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>待选择 %1 个</source>
+            <comment>文件</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>待选择 %1 个</source>
+            <comment>数据包</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>，冲突 %1 项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 %2 项</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 %2 个</source>
+            <comment>服务器条目</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 %2 个</source>
+            <comment>文件</comment>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 %2 个</source>
+            <comment>数据包</comment>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -21820,15 +24206,7 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>待应用 %1 %2</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>冲突 %1 项</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>跳过 %1 %2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -22135,7 +24513,11 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>搜索中文名或方块 ID，例如石头 / minecraft:stone</source>
+            <source>读取方块名称</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>搜索方块名称或 ID，例如石头 / minecraft:stone</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -24170,6 +26552,17 @@ Minecraft %2 / %3
         </message>
     </context>
     <context>
+        <name>QtAgentWebTransport</name>
+        <message>
+            <source>域名无法解析为有效地址。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>请求超时或已取消。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
         <name>QuickPlay</name>
         <message>
             <source>「加入服务器」需要游戏的 --quickPlayMultiplayer 参数，此版本（1.20 之前）不支持该参数，传入后游戏将直接报错并退出。</source>
@@ -25379,15 +27772,15 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>目录：%1/（%2 MB）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目录：%1/。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>世界「%1」已存在</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>目录：%1/%2。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>，大小 %1 MB</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -26223,7 +28616,7 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>该 zip 的 SHA-1；可选择本地 zip 计算</source>
+            <source>该 ZIP 文件的 SHA-1；可选择本地 ZIP 文件计算</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -26585,6 +28978,10 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>常用设置</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>停止服务端</source>
             <translation type="unfinished"></translation>
         </message>
@@ -26594,10 +28991,6 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         </message>
         <message>
             <source>启动设置</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>设置</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -28740,10 +31133,6 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>：</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>不是源实例 mods 中的普通文件</source>
             <translation type="unfinished"></translation>
         </message>
@@ -28800,6 +31189,10 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>%1。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>
 
 未迁移的文件：</source>
@@ -28827,11 +31220,11 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>校验：已检查 %1 个文件，缺少 %2 个</source>
+            <source>校验：已检查 %1 个文件，缺少 %2 个；另有 %3 个目标中原有的同名文件大小不同（按规则未覆盖）。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>；另有 %1 个目标中原有的同名文件大小不同（按规则未覆盖）</source>
+            <source>校验：已检查 %1 个文件，缺少 %2 个。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -28851,11 +31244,11 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>，</source>
+            <source>%1：%2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>。</source>
+            <source>，</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -29088,11 +31481,11 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>嵌套 </source>
+            <source>嵌套 %1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>（%1）</source>
+            <source>%1（%2）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -29115,7 +31508,7 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>，此条未写入。</source>
+            <source>此条升级历史未写入。原因：%1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -29192,12 +31585,17 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>快照：%1%2
+            <source>快照：%1（可恢复）
 </source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>（可恢复）</source>
+            <source>快照：%1
+</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1：%2</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -29214,10 +31612,6 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         </message>
         <message>
             <source>失败</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>：%1</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -31060,6 +33454,141 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         </message>
         <message>
             <source>未写入</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>ZipUtil</name>
+        <message>
+            <source>%1无法启动（%2）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1过程中进程被强制结束（%2）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1超时</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1已取消或超时。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1失败：要传给 PowerShell 的脚本过长（编码后 %2 个字符，Windows 命令行上限约 3.2 万字符）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>PowerShell 退出码 %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>没有需要解压的压缩包</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法创建目录：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>解压压缩包</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>解压失败（%1 个压缩包）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>元数据批次过大，未读取。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法准备批量元数据读取。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>读取模组信息</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>声明超过 1 MiB 限制</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1过程中 PowerShell 被强制结束</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1：声明超过读取大小上限，未采用。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1失败（退出码 %2）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法读取临时文件 %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1：无法读取条目表（临时文件不是 JSON）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>没有需要解压的目录</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>解压 gzip 文件</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>解压 gzip 失败</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>压缩为 gzip</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>写入 gzip 文件失败</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>打包已取消或超时。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未指定输出文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标文件已经存在，未覆盖：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>打包的条目表包含空名称或空来源。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>打包的条目名包含反斜杠：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法写入打包条目表：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>打包条目表写入不完整：%1（请检查临时目录空间）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>打包压缩包</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>打包失败</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
