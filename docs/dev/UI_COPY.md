@@ -91,7 +91,7 @@
 | **账号** | Account | 指代玩家身份凭据（微软账号、离线账号）。 | 「账户」只用于操作系统账户（如「当前 Windows 账户」），玩家凭据一律写「账号」 |
 | **下载源** | Download source | 指代游戏核心与资源下载的分发渠道（如官方源、BMCLAPI 镜像）。 | 严禁叫「下载节点」「下载渠道」「下载网站」 |
 | **实例目录** | Instance folder | 特指某一个实例专用的独立文件存储路径（位于 versions/<name>/ 下）。 | 严禁混叫「游戏文件夹」「工作目录」 |
-| **游戏目录** | Game directory | 指代存放多个实例的总游戏文件夹（即包含 versions/、assets/ 的主目录）。 | 严禁与单个实例的「实例目录」混用；界面不再用「游戏文件夹」 |
+| **游戏目录** | Game directory | 指代存放多个实例的总目录（即包含 versions/、assets/ 的主目录）。 | 严禁与单个实例的「实例目录」混用；界面不再用「游戏文件夹」 |
 | **数据目录** | Data directory | 特指启动器本身存储配置、令牌与全局日志的应用数据路径（AppData/Local/...）。 | 严禁简称为「文件夹」或与游戏目录混为一谈 |
 | **加载器** | Loader | 指代各类模组加载程序（Forge、NeoForge、Fabric、Quilt）。界面中统一使用短名。 | 默认不展开写「模组加载器」，严禁使用「ModLoader」「Mod 加载器」 |
 | **整合包** | Modpack | 指代打包分发的模组包（如 CurseForge 整合包、Modrinth 整合包）。 | 严禁使用「模组包」「Modpack」「modpack」 |
@@ -123,13 +123,13 @@
 | 存档 / 世界 | World；文件操作写 world save | 列表页标题 Worlds |
 | 原版 | Vanilla | 单作标签写 Vanilla，句中作定语写 vanilla |
 | 正式版 / 快照 / 远古版 / 愚人节版 | Release / Snapshot / Old (Alpha/Beta)→ 短标签 Legacy / April Fools | |
-| 账号 / 离线账号 / 正版账号 | Account / Offline account / Microsoft account | |
+| 账号 / 离线账号 / 微软账号 | Account / Offline account / Microsoft account | |
 | 登录 / 退出登录 | Sign in / Sign out | 不写 Log in |
 | 皮肤 / 披风 / 鞘翅 / 经典（粗手臂）/ 纤细 | Skin / Cape / Elytra / Wide / Slim | |
 | 收藏（动词 / 状态）| Favorite / Favorites | |
 | 分组 | Group | |
 | 版本 | Version | |
-| 游戏目录（游戏文件夹）/ 实例目录 / 数据目录 | Game directory / Instance folder / Data directory | 「文件夹」泛指写 folder |
+| 游戏目录 / 实例目录 / 数据目录 | Game directory / Instance folder / Data directory | 「文件夹」泛指写 folder；界面不再用「游戏文件夹」 |
 | 下载源 / 优先官方源 / 镜像 | Download source / Official first / Mirror | |
 | 任务中心 / 后台任务 | Task center / Background tasks | |
 | 预设 / 模组预设 | Preset / Mod preset | |
