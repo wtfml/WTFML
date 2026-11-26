@@ -174,6 +174,7 @@ set(PROJECT_SOURCES
     ${REPO_ROOT}/src/agent/AgentLauncherTools.cpp
     ${REPO_ROOT}/src/agent/AgentLauncherTools.hpp
     ${REPO_ROOT}/src/agent/AgentWorkflow.cpp
+    ${REPO_ROOT}/src/controllers/AgentTaskLedger.cpp
     ${REPO_ROOT}/src/agent/AgentWorkflow.hpp
     ${REPO_ROOT}/src/agent/AgentWorkflowEngine.cpp
     ${REPO_ROOT}/src/agent/AgentWorkflowEngine.hpp

@@ -66,6 +66,7 @@ public:
     bool canFinish(QString *problem) const;
     void markFinished();
     void markFailed(const QString &reason);
+    QString failureReason() const { return m_failureReason; }
 
     QStringList evidenceIds() const { return m_evidenceIds; }
     QJsonObject statusJson() const;

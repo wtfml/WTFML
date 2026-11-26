@@ -88,6 +88,8 @@ public:
                       int parentStep = -1);
     bool startQueued(TaskId id);
     bool pause(TaskId id);
+    /// 运行中 ⇄ 等待用户（智能体等审批、等会话继续）。只在这两态之间切，别的状态回 false。
+    bool setWaitingUser(TaskId id, bool waiting);
     bool queueRecovery(TaskId id);
 
     /// 换一句"现在在干什么"（面板里标题下面那行小字）。

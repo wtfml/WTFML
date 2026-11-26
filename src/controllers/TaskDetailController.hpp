@@ -50,6 +50,8 @@ public:
         /// 「继续未完成操作」：主窗口按报告钥匙把那趟文件操作接着做完。
         std::function<void(const QString &)> recoverOperation;
         std::function<void(const QString &)> pauseTask;
+        /// 「查看会话」：切到智能体页并打开发起这一项的会话。
+        std::function<void(const QString &)> openAgentSession;
     };
 
     TaskDetailController(ActivityCenterController *activity, CrashReportController *crash,

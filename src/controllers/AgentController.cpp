@@ -184,6 +184,12 @@ AgentController::AgentController(AgentPage *page, OverlayHost *overlay, QObject 
     m_ownedClient = new OpenAiCompatibleClient(this);
     m_client = m_ownedClient;
     m_loop = new AgentLoop(m_client, this);
+    m_taskLedger = new AgentTaskLedger(&m_workflow, this);
+    m_taskLedger->setContextProvider([this] {
+        return AgentTaskLedger::Context{m_session.meta.id, m_session.meta.instanceLock.id,
+                                        m_session.meta.instanceLock.name};
+    });
+    m_taskLedger->attach(m_loop);
     m_toolEngine = new AgentFileToolEngine(
         &m_files, &m_artifacts, [this](QString *problem) { return toolContext(problem); });
     m_toolEngine->setStrictEgress(AgentSettings::strictEgress());
@@ -572,6 +578,7 @@ void AgentController::selectSession(const QString &sessionId) {
     // 会话里记着它上一轮用哪个模式；换会话时工作流从头开始，旧计划不留。
     disableAutoSafe(QStringLiteral("切换会话"));  // i18n-ignore
     m_workflow.setSkill(usableSkill(m_session.meta.skill));
+    m_taskLedger->onWorkflowReset();
     refreshSkillUi();
 }
 
@@ -682,6 +689,7 @@ bool AgentController::ensureBlankSession() {
             return false;
         }
         m_session = created;
+        m_taskLedger->onWorkflowReset();
     }
     return true;
 }
@@ -1486,6 +1494,7 @@ void AgentController::onSkillChosen(const QString &skillId) {
     if (m_workflow.skill().id == skill.id) return;
     disableAutoSafe(QStringLiteral("切换模式"));  // i18n-ignore
     m_workflow.setSkill(skill);
+    m_taskLedger->onWorkflowReset();
     if (!m_session.meta.id.isEmpty()) {
         m_session.meta.skill = skill.id;
         flushSave(false);
@@ -1572,6 +1581,7 @@ void AgentController::onSessionApproval() {
     m_session.pendingApproval = {};
     flushSave(true);
     if (m_page != nullptr) m_page->hideApproval();
+    m_taskLedger->onApprovalResolved(true);
     m_loop->resolveSessionApproval();
 }
 
@@ -1582,7 +1592,35 @@ void AgentController::onApproval(bool approved) {
     m_session.pendingApproval = {};
     flushSave(true);
     if (m_page != nullptr) m_page->hideApproval();
+    m_taskLedger->onApprovalResolved(approved);
     m_loop->resolveApproval(approved);
+}
+
+bool AgentController::cancelTask(Tasks::TaskId id) {
+    if (!m_taskLedger->cancelFromTaskCenter(id)) return false;
+    onStop();
+    return true;
+}
+
+bool AgentController::openTaskSession(Tasks::TaskId id) {
+    const QString sessionId = m_taskLedger->sessionFor(id);
+    QList<AgentSessionMeta> metas;
+    m_store.list(&metas, nullptr);
+    // 当前会话可能还没落盘（新建的空会话），它本身就在眼前，算存在。
+    const bool exists = !sessionId.isEmpty() &&
+                        (sessionId == m_session.meta.id ||
+                         std::any_of(metas.cbegin(), metas.cend(), [&](const AgentSessionMeta &meta) {
+                             return meta.id == sessionId && meta.deletionState == QLatin1String("none");
+                         }));
+    if (!exists) {
+        InlineMessage::information(m_overlay, tr("会话不存在"), tr("该会话已删除。"));
+        return false;
+    }
+    if (m_session.meta.id != sessionId) {
+        selectSession(sessionId);
+        refreshSessions();
+    }
+    return true;
 }
 
 QList<AgentView::ToolCard> AgentController::toolCardsFromHistory() const {

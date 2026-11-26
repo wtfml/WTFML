@@ -253,6 +253,7 @@ add_library(core_cases_agent OBJECT
  core_modules/AgentArtifactTests.cpp
  core_modules/AgentInstanceLockTests.cpp
  core_modules/AgentBackupLifecycleTests.cpp
+ core_modules/AgentTaskLedgerTests.cpp
  core_modules/AgentToolTests.cpp
  core_modules/AgentOpenAiClientTests.cpp
  core_modules/AgentDiagnosticProjectionTests.cpp

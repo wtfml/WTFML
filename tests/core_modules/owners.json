@@ -126,6 +126,7 @@
   "AgentArtifactTests.cpp": "agent",
   "AgentInstanceLockTests.cpp": "agent",
   "AgentBackupLifecycleTests.cpp": "agent",
+  "AgentTaskLedgerTests.cpp": "agent",
   "AgentToolTests.cpp": "agent",
   "AgentOpenAiClientTests.cpp": "agent",
   "AgentDiagnosticProjectionTests.cpp": "agent",

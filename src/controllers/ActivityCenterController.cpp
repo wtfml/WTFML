@@ -349,6 +349,7 @@ TaskCenter::Item ActivityCenterController::item(const Tasks::TaskSnapshot &task,
     result.capabilities.exportReport = task.capabilities.canExportReport
                                        && crashRecordAvailable;
     result.capabilities.openCrashDir = task.capabilities.canOpenCrashDir;
+    result.capabilities.openAgentSession = task.capabilities.canOpenAgentSession;
     // 「为什么没有取消」：账本那边明写的优先；「这一类本来允许取消、只是这一段停不得」
     // （加载器安装器在跑、整合包解压…）由这里补一句通用说法 —— 那是执行器的临时状态，
     // 没必要让每个执行器都自己拼一遍。
