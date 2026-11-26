@@ -391,9 +391,9 @@ void runBackupTaskTests() {
                       .arg(QFile::exists(instancePath + QStringLiteral("/只在这儿有.txt")) ? 1 : 0)
                       .arg(static_cast<int>(finished.state)));
 
-            const QStringList safetyNames = zipsIn(instanceZipDir, QStringLiteral("*恢复前*.zip"));
+            const QStringList safetyNames = zipsIn(instanceZipDir, QStringLiteral("*before-restore*.zip"));
             check(safetyNames.size() == 1,
-                  "★★ T35.3 还原之前自动给「现在这一份」留了一份安全快照（文件名里带「恢复前」）",
+                  "★★ T35.3 还原之前自动给「现在这一份」留了一份安全快照（文件名里带 before-restore）",
                   safetyNames.join(QLatin1Char('|')));
             if (safetyNames.size() == 1) {
                 safetyZip = instanceZipDir + QLatin1Char('/') + safetyNames.first();

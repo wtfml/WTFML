@@ -460,7 +460,7 @@ void ServerSettingsPageController::refreshWorlds() {
             }
         }
         // 不能直接按整名字典序倒排（`QDir::Name | QDir::Reversed`）：自动留的
-        // 「恢复前-」安全快照名字里多一段汉字，码位在数字之后 ⇒ 它们全被排到最新的常规
+        // 安全快照名字里多一段记号（`before-restore-`），按整名字典序会把它们排到最新的常规
         // 备份前面，这一列"最新在上面"就不成立了。和挑备份那一段同一个出处。
         matching = BackupFiles::sortBackupsNewestFirst(matching, prefix);
         for (const QString &path : std::as_const(matching)) {
