@@ -187,7 +187,7 @@ void ServerManagementActions::removeServerPlayer(MainWindow *owner, const QStrin
                 ? MainWindow::tr("将解除对地址「%1」的封禁。").arg(who)
                 : list == ServerPlayers::List::BannedPlayers
                       ? MainWindow::tr("将解除对玩家「%1」的封禁。").arg(who)
-                      : MainWindow::tr("将从服务器列表中移除「%1」。").arg(who),
+                      : MainWindow::tr("将从%1中移除「%2」。").arg(listTitle, who),
             MainWindow::tr("移除条目"), MainWindow::tr("取消"), /*defaultYes=*/false, /*destructive=*/false)) {
         return;
     }
@@ -418,8 +418,9 @@ void ServerManagementActions::toggleServerContent(MainWindow *owner, const QStri
                                     .arg(name, target, file.errorString()));
         return;
     }
-    owner->appendLog(MainWindow::tr("服务端 %1 的「%2」已%3（当前为「%4」）。")
-                  .arg(serverId, name, enable ? MainWindow::tr("启用") : MainWindow::tr("禁用"), target));
+    owner->appendLog(enable
+        ? MainWindow::tr("服务端 %1 的「%2」已启用（当前为「%3」）。").arg(serverId, name, target)
+        : MainWindow::tr("服务端 %1 的「%2」已禁用（当前为「%3」）。").arg(serverId, name, target));
     owner->refreshServerContent();
 }
 
@@ -434,7 +435,7 @@ void ServerManagementActions::openServerContentFolder(MainWindow *owner) {
         // 还没往里放过东西（服务端还没跑过 / 还没装过任何内容）——说清楚它该在哪儿，
         // 别弹一个"打开失败"（`QDesktopServices` 对不存在的路径只会静默不受理）。
         InlineMessage::information(
-            owner->m_ui->overlay(), MainWindow::tr("游戏目录尚未创建"),
+            owner->m_ui->overlay(), MainWindow::tr("目录尚未创建"),
             MainWindow::tr("请先通过「添加…」放入文件，或手动创建该目录：\n%1")
                 .arg(QDir::toNativeSeparators(folder)));
         return;

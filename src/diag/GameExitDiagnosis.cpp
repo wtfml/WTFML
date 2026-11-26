@@ -148,12 +148,18 @@ QStringList hints(const Facts &facts) {
     // "没测出来"，那时候说"版本不匹配"就是猜。
     if (facts.requiredJavaMajor > 0 && facts.usedJavaMajor > 0
         && facts.requiredJavaMajor != facts.usedJavaMajor) {
-        QString text = QCoreApplication::translate("GameExitDiagnosis", "「%1」要求 Java %2，本次实际使用的是 Java %3。")
-                           .arg(where)
-                           .arg(facts.requiredJavaMajor)
-                           .arg(facts.usedJavaMajor);
-        if (!facts.javaPath.isEmpty()) {
-            text += QCoreApplication::translate("GameExitDiagnosis", "（%1）").arg(facts.javaPath);
+        QString text;
+        if (facts.javaPath.isEmpty()) {
+            text = QCoreApplication::translate("GameExitDiagnosis", "「%1」要求 Java %2，本次实际使用的是 Java %3。")
+                       .arg(where)
+                       .arg(facts.requiredJavaMajor)
+                       .arg(facts.usedJavaMajor);
+        } else {
+            text = QCoreApplication::translate("GameExitDiagnosis", "「%1」要求 Java %2，本次实际使用的是 Java %3（%4）。")
+                       .arg(where)
+                       .arg(facts.requiredJavaMajor)
+                       .arg(facts.usedJavaMajor)
+                       .arg(facts.javaPath);
         }
         say(text);
     }

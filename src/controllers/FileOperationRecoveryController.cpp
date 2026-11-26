@@ -474,9 +474,8 @@ void FileOperationRecoveryController::settle(Tasks::TaskId task, OperationReport
     if (m_host.setTaskRecovery) m_host.setTaskRecovery(task, token);
     const QString failure = writeFailureReport(token, problem);
     if (m_host.log) {
-        m_host.log(tr("仍未完成全部文件操作：%1%2")
-                       .arg(problem, failure.isEmpty()
-                                        ? QString()
-                                        : QStringLiteral("\n%1").arg(failure)));
+        QStringList lines{tr("仍未完成全部文件操作：%1").arg(problem)};
+        if (!failure.isEmpty()) lines.append(failure);
+        m_host.log(lines.join(QLatin1Char('\n')));
     }
 }

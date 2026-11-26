@@ -107,7 +107,8 @@ void BackupController::inspectRecovery() {
     const auto items = RecoveryReview::inspect(root);
     QStringList labels{tr("浏览游戏目录（人工检查未登记残留）"), tr("浏览暂存登记（不自动删除）")};
     for (const auto &item : items) labels.append(item.target.isEmpty()
-        ? QFileInfo(item.journal).fileName() + tr("（日志异常）") : QDir::toNativeSeparators(item.target));
+        ? tr("%1（日志异常）").arg(QFileInfo(item.journal).fileName())
+        : QDir::toNativeSeparators(item.target));
     int index = -1;
     if (!InlineMessage::pickFromList(m_overlay, tr("中断恢复检查"),
         tr("待检查还原事务：%1。历史未登记或标记异常目录需人工核对，不按名称自动删除。")
