@@ -167,8 +167,8 @@ void ResourceSearchController::fillResourceHitRows(QTreeWidget *tree, ResourceCa
         if (choices.isEmpty()) {
             // 一个游戏版本都没列（数据包那类）。摆一行灰的说清楚 —— 不然这一行看着能展开、
             // 点开却是空的。
-            m_owner.addResourcePlaceholderChild(item, MainWindow::tr("此%1未列出支持的游戏版本。")
-                                                  .arg(ResourceCatalog::kindLabel(kind)));
+            m_owner.addResourcePlaceholderChild(item,
+                                                MainWindow::tr("此资源未列出支持的游戏版本。"));
         }
         QStringList rows;
         for (const QString &gameVersion : choices) {
