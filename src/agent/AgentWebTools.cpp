@@ -9,6 +9,7 @@
 #include "AgentRedaction.hpp"
 #include "AgentSettings.hpp"
 
+#include <QCoreApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QUuid>
@@ -54,13 +55,13 @@ void AgentWebTools::setTransport(AgentWebTransport *transport) {
 QList<AgentToolSpec> AgentWebTools::specs() {
     QList<AgentToolSpec> list;
     list.append(AgentToolSpec{
-        QStringLiteral("web.search"), QStringLiteral("联网搜索"),
+        QStringLiteral("web.search"), QCoreApplication::translate("AgentWebTools", "联网搜索"),
         QStringLiteral("用设置里的 SearXNG 实例搜一次；搜索词会发给第三方，每次都要确认。"),
         AgentRisk::NetworkRead,
         objectSchema({QStringLiteral("query")},
                      {{QStringLiteral("query"), stringField(400)}})});
     list.append(AgentToolSpec{
-        QStringLiteral("web.fetch"), QStringLiteral("抓取网页"),
+        QStringLiteral("web.fetch"), QCoreApplication::translate("AgentWebTools", "抓取网页"),
         QStringLiteral("只抓 http/https 公网地址；全部 A/AAAA 校验、逐跳重定向重检、强制直连；"
                        "HTML 转文本后返回。"),
         AgentRisk::NetworkRead,

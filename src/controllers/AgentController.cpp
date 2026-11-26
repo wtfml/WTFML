@@ -154,9 +154,18 @@ AgentSkill usableSkill(const QString &id) {
     return skill;
 }
 
-QString promptProblemText(const AgentSkill &skill) {
-    if (!skill.promptProblem.isEmpty()) return skill.promptProblem;
-    return QCoreApplication::translate("AgentController", "提示词为空。");
+/// 工具卡的标题：用注册表里的显示名（已按界面语言翻译）；MCP 等外部工具没有登记，保留原名。
+QString toolCardTitle(const QString &wireName) {
+    const AgentToolSpec spec = AgentToolRegistry::find(wireName);
+    return spec.displayName.isEmpty() ? wireName : spec.displayName;
+}
+
+/// 内嵌提示词/知识文件坏了：细节只写日志，界面上只给一句兜底文案（§13.3 的“提示词不可用”）。
+void logPromptProblem(const AgentSkill &skill) {
+    if (!skill.promptProblem.isEmpty()) {
+        qWarning("agent skill '%s' prompt unavailable: %s", qPrintable(skill.id),
+                 qPrintable(skill.promptProblem));
+    }
 }
 
 }  // namespace
@@ -295,7 +304,7 @@ AgentController::AgentController(AgentPage *page, OverlayHost *overlay, QObject 
         if (m_page == nullptr) return;
         AgentView::ToolCard card;
         card.id = call.id;
-        card.title = call.name;
+        card.title = toolCardTitle(call.name);
         card.summary = QCoreApplication::translate("AgentController", "参数已接收");
         card.detail = QString::fromUtf8(
             QJsonDocument(call.arguments).toJson(QJsonDocument::Indented));
@@ -316,7 +325,7 @@ AgentController::AgentController(AgentPage *page, OverlayHost *overlay, QObject 
                 }
                 AgentView::ToolCard card;
                 card.id = call.id;
-                card.title = call.name;
+                card.title = toolCardTitle(call.name);
                 card.summary = result.summary;
                 card.detail = QString::fromUtf8(
                     QJsonDocument(result.data).toJson(QJsonDocument::Indented));
@@ -709,9 +718,10 @@ void AgentController::onSend(const QString &text) {
         return;
     }
     if (!m_workflow.skill().promptAvailable()) {
+        logPromptProblem(m_workflow.skill());
         if (m_page != nullptr) {
-            m_page->showNotice(QCoreApplication::translate("AgentController", "当前模式的提示词不可用：%1")
-                                   .arg(promptProblemText(m_workflow.skill())));
+            m_page->showNotice(QCoreApplication::translate(
+                "AgentController", "当前模式的提示词不可用，请重启启动器后再试。"));
         }
         return;
     }
@@ -1373,9 +1383,10 @@ void AgentController::onSkillChosen(const QString &skillId) {
     const AgentSkill skill = AgentSkillRegistry::find(skillId);
     if (skill.id.isEmpty()) return;
     if (!skill.promptAvailable()) {
+        logPromptProblem(skill);
         if (m_page != nullptr) {
-            m_page->showNotice(QCoreApplication::translate("AgentController", "模式「%1」不可用：%2")
-                                   .arg(skill.name, promptProblemText(skill)));
+            m_page->showNotice(QCoreApplication::translate("AgentController", "模式「%1」不可用，请重启启动器后再试。")
+                                   .arg(skill.name));
         }
         return;
     }
@@ -1484,7 +1495,7 @@ QList<AgentView::ToolCard> AgentController::toolCardsFromHistory() const {
         if (message.role != Agent::Role::Tool) continue;
         AgentView::ToolCard card;
         card.id = message.toolCallId.isEmpty() ? message.id : message.toolCallId;
-        card.title = message.toolName;
+        card.title = toolCardTitle(message.toolName);
         QJsonObject body = QJsonDocument::fromJson(message.content.toUtf8()).object();
         card.summary = body.value(QStringLiteral("summary")).toString();
         const QJsonObject data = body.value(QStringLiteral("data")).toObject();

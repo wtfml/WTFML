@@ -7,6 +7,7 @@
 
 #include "AgentApprovalPolicy.hpp"
 
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QJsonArray>
 #include <QUuid>
@@ -60,7 +61,8 @@ AgentToolSpec spec() {
               enumField({QStringLiteral("stable"), QStringLiteral("crash")})},
          }},
         {QStringLiteral("additionalProperties"), false}};
-    return AgentToolSpec{QStringLiteral("instance.testLaunch"), QStringLiteral("测试启动"),  // i18n-ignore
+    return AgentToolSpec{QStringLiteral("instance.testLaunch"),
+                         QCoreApplication::translate("AgentTestLaunchToolEngine", "测试启动"),
                          QStringLiteral("在隔离工作区用启动器自己的启动流程跑一次游戏，"  // i18n-ignore
                                         "等待主菜单/世界/崩溃或超时；不改原实例。"),  // i18n-ignore
                          AgentRisk::Command, schema};

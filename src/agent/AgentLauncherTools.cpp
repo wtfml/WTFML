@@ -177,29 +177,35 @@ bool pickCrashReport(const QList<AgentHostCrashReport> &reports, const QString &
 
 QList<AgentToolSpec> AgentLauncherTools::specs() {
     QList<AgentToolSpec> list;
-    list.append(spec(QStringLiteral("instance.list"), QStringLiteral("列出实例"),
+    list.append(spec(QStringLiteral("instance.list"),
+                     QCoreApplication::translate("AgentLauncherTools", "列出实例"),
                      QStringLiteral("默认只返回实例总数；detail=full 返回名称/版本/加载器，需要逐次确认，"
                                     "不返回绝对路径与账户信息。"),
                      AgentRisk::ReadOnly,
                      objectSchema({}, {{QStringLiteral("detail"),
                                         enumField({QStringLiteral("summary"),
                                                    QStringLiteral("full")})}})));
-    list.append(spec(QStringLiteral("instance.context"), QStringLiteral("查看锁定实例"),
+    list.append(spec(QStringLiteral("instance.context"),
+                     QCoreApplication::translate("AgentLauncherTools", "查看锁定实例"),
                      QStringLiteral("返回本会话锁定实例的元数据摘要；未锁定实例时拒绝。"),
                      AgentRisk::ReadOnly, objectSchema({}, {})));
-    list.append(spec(QStringLiteral("diagnostics.startup"), QStringLiteral("启动诊断"),
+    list.append(spec(QStringLiteral("diagnostics.startup"),
+                     QCoreApplication::translate("AgentLauncherTools", "启动诊断"),
                      QStringLiteral("跑一遍启动诊断；结果按字段白名单投影，不含路径与账户。"),
                      AgentRisk::ReadOnly, objectSchema({}, {})));
-    list.append(spec(QStringLiteral("diagnostics.crash"), QStringLiteral("崩溃诊断"),
+    list.append(spec(QStringLiteral("diagnostics.crash"),
+                     QCoreApplication::translate("AgentLauncherTools", "崩溃诊断"),
                      QStringLiteral("读最近一次异常退出事实与规则提示；不猜具体模组。"),
                      AgentRisk::ReadOnly, objectSchema({}, {})));
-    list.append(spec(QStringLiteral("logs.tail"), QStringLiteral("看日志结尾"),
+    list.append(spec(QStringLiteral("logs.tail"),
+                     QCoreApplication::translate("AgentLauncherTools", "看日志结尾"),
                      QStringLiteral("读 latest.log 末尾若干行（最多 500）；已脱敏，不含本机路径。"),
                      AgentRisk::ReadOnly,
                      objectSchema({}, {{QStringLiteral("lines"),
                                         QJsonObject{{QStringLiteral("type"), QStringLiteral("integer")},
                                                     {QStringLiteral("maximum"), kLogTailLinesMax}}}})));
-    list.append(spec(QStringLiteral("crash.list"), QStringLiteral("列崩溃报告"),
+    list.append(spec(QStringLiteral("crash.list"),
+                     QCoreApplication::translate("AgentLauncherTools", "列崩溃报告"),
                      QStringLiteral("默认只给条数与最新一份的概况；detail=full 列文件名，需要逐次确认。"),
                      AgentRisk::ReadOnly,
                      objectSchema({}, {{QStringLiteral("detail"),
@@ -207,15 +213,15 @@ QList<AgentToolSpec> AgentLauncherTools::specs() {
                                                    QStringLiteral("full")})}})));
     list.append(spec(QStringLiteral("diagnostics.crashSnapshot"),
                      QCoreApplication::translate("AgentLauncherTools", "崩溃快照"),
-                     QCoreApplication::translate("AgentLauncherTools", "解析最新一份崩溃报告（或日志尾）：环境、阶段、异常链、"
-                                         "模组嫌疑与命中规则；报告头部提到的模组只算线索。"),
+                     QStringLiteral("解析最新一份崩溃报告（或日志尾）：环境、阶段、异常链、"  // i18n-ignore
+                                    "模组嫌疑与命中规则；报告头部提到的模组只算线索。"),  // i18n-ignore
                      AgentRisk::ReadOnly,
                      objectSchema({}, {{QStringLiteral("reportId"),
                                         stringField(QStringLiteral("string"), 128)}})));
     list.append(spec(QStringLiteral("logs.search"),
                      QCoreApplication::translate("AgentLauncherTools", "搜索日志"),
-                     QCoreApplication::translate("AgentLauncherTools", "按字面量（大小写不敏感）搜日志，带行号与上下文；"
-                                         "最多 200 条，路径已脱敏。"),
+                     QStringLiteral("按字面量（大小写不敏感）搜日志，带行号与上下文；"  // i18n-ignore
+                                    "最多 200 条，路径已脱敏。"),  // i18n-ignore
                      AgentRisk::ReadOnly,
                      objectSchema({QStringLiteral("query")},
                                   {{QStringLiteral("query"), stringField(QStringLiteral("string"), 400)},
@@ -229,7 +235,7 @@ QList<AgentToolSpec> AgentLauncherTools::specs() {
                                     integerField(AgentLogIndex::maxMatchesLimit())}})));
     list.append(spec(QStringLiteral("logs.readRange"),
                      QCoreApplication::translate("AgentLauncherTools", "按行读日志"),
-                     QCoreApplication::translate("AgentLauncherTools", "从第 startLine 行开始读一段日志，最多 500 行；已脱敏。"),
+                     QStringLiteral("从第 startLine 行开始读一段日志，最多 500 行；已脱敏。"),  // i18n-ignore
                      AgentRisk::ReadOnly,
                      objectSchema({QStringLiteral("startLine")},
                                   {{QStringLiteral("source"),
@@ -242,22 +248,25 @@ QList<AgentToolSpec> AgentLauncherTools::specs() {
                                     integerField(AgentLogIndex::maxLinesLimit())}})));
     list.append(spec(QStringLiteral("crash.readFull"),
                      QCoreApplication::translate("AgentLauncherTools", "读崩溃报告全文"),
-                     QCoreApplication::translate("AgentLauncherTools", "把整份崩溃报告脱敏后存成 artifact，只返回分段目录与摘要；"
-                                         "原文用 artifact.read 按偏移读。"),
+                     QStringLiteral("把整份崩溃报告脱敏后存成 artifact，只返回分段目录与摘要；"  // i18n-ignore
+                                    "原文用 artifact.read 按偏移读。"),  // i18n-ignore
                      AgentRisk::ReadOnly,
                      objectSchema({QStringLiteral("reportId")},
                                   {{QStringLiteral("reportId"),
                                     stringField(QStringLiteral("string"), 128)}})));
-    list.append(spec(QStringLiteral("instance.integrity"), QStringLiteral("完整性体检"),
+    list.append(spec(QStringLiteral("instance.integrity"),
+                     QCoreApplication::translate("AgentLauncherTools", "完整性体检"),
                      QStringLiteral("按现有完整性判据扫一遍；只给分组计数，不给路径；可能耗时数秒。"),
                      AgentRisk::ReadOnly, objectSchema({}, {})));
-    list.append(spec(QStringLiteral("mods.list"), QStringLiteral("列模组"),
+    list.append(spec(QStringLiteral("mods.list"),
+                     QCoreApplication::translate("AgentLauncherTools", "列模组"),
                      QStringLiteral("默认只返回数量与启停统计；detail=full 返回完整文件名，逐次确认。"),
                      AgentRisk::ReadOnly,
                      objectSchema({}, {{QStringLiteral("detail"),
                                         enumField({QStringLiteral("summary"),
                                                    QStringLiteral("full")})}})));
-    list.append(spec(QStringLiteral("mods.setEnabled"), QStringLiteral("启停模组"),
+    list.append(spec(QStringLiteral("mods.setEnabled"),
+                     QCoreApplication::translate("AgentLauncherTools", "启停模组"),
                      QStringLiteral("只改扩展名（.jar ↔ .jar.disabled），可原路改回；每次审批。"),
                      AgentRisk::Write,
                      objectSchema({QStringLiteral("fileName"), QStringLiteral("enabled")},
@@ -267,10 +276,12 @@ QList<AgentToolSpec> AgentLauncherTools::specs() {
                                     QJsonObject{{QStringLiteral("type"), QStringLiteral("boolean")}}},
                                    {QStringLiteral("workspaceId"),
                                     stringField(QStringLiteral("string"), 80)}})));
-    list.append(spec(QStringLiteral("settings.get"), QStringLiteral("读启动器设置"),
+    list.append(spec(QStringLiteral("settings.get"),
+                     QCoreApplication::translate("AgentLauncherTools", "读启动器设置"),
                      QStringLiteral("只返回白名单键的非路径字段。"), AgentRisk::ReadOnly,
                      objectSchema({}, {})));
-    list.append(spec(QStringLiteral("settings.set"), QStringLiteral("改启动器设置"),
+    list.append(spec(QStringLiteral("settings.set"),
+                     QCoreApplication::translate("AgentLauncherTools", "改启动器设置"),
                      QStringLiteral("只允许白名单键；每次审批，记录旧值与新值。"), AgentRisk::Write,
                      objectSchema({QStringLiteral("key"), QStringLiteral("value")},
                                   {{QStringLiteral("key"), enumField(settingsKeys())},
@@ -279,16 +290,20 @@ QList<AgentToolSpec> AgentLauncherTools::specs() {
                                                 {QStringLiteral("maxLength"), 2048}}},
                                    {QStringLiteral("workspaceId"),
                                     stringField(QStringLiteral("string"), 80)}})));
-    list.append(spec(QStringLiteral("java.list"), QStringLiteral("列本机 Java"),
+    list.append(spec(QStringLiteral("java.list"),
+                     QCoreApplication::translate("AgentLauncherTools", "列本机 Java"),
                      QStringLiteral("只返回主版本等非路径字段。"), AgentRisk::ReadOnly,
                      objectSchema({}, {})));
-    list.append(spec(QStringLiteral("memory.suggest"), QStringLiteral("内存建议"),
+    list.append(spec(QStringLiteral("memory.suggest"),
+                     QCoreApplication::translate("AgentLauncherTools", "内存建议"),
                      QStringLiteral("按现有纯函数给推荐 Xmx/Xms；只说不写。"), AgentRisk::ReadOnly,
                      objectSchema({}, {})));
-    list.append(spec(QStringLiteral("backup.list"), QStringLiteral("列备份"),
+    list.append(spec(QStringLiteral("backup.list"),
+                     QCoreApplication::translate("AgentLauncherTools", "列备份"),
                      QStringLiteral("列维护备份的 owner/source/时间/大小，来源会话删除也列得出。"),
                      AgentRisk::ReadOnly, objectSchema({}, {})));
-    list.append(spec(QStringLiteral("backup.create"), QStringLiteral("创建备份"),
+    list.append(spec(QStringLiteral("backup.create"),
+                     QCoreApplication::translate("AgentLauncherTools", "创建备份"),
                      QStringLiteral("备份所选范围；每次审批，owner=agent 写入 maintenance。"),
                      AgentRisk::Write,
                      objectSchema({QStringLiteral("reason")},
@@ -297,19 +312,23 @@ QList<AgentToolSpec> AgentLauncherTools::specs() {
                                    {QStringLiteral("scopes"),
                                     QJsonObject{{QStringLiteral("type"), QStringLiteral("array")},
                                                 {QStringLiteral("maxItems"), 4}}}})));
-    list.append(spec(QStringLiteral("backup.restore"), QStringLiteral("恢复备份"),
+    list.append(spec(QStringLiteral("backup.restore"),
+                     QCoreApplication::translate("AgentLauncherTools", "恢复备份"),
                      QStringLiteral("恢复前先做一份快照；每次审批；共享/外部备份只引用不改写。"),
                      AgentRisk::Destructive,
                      objectSchema({QStringLiteral("backupId")},
                                   {{QStringLiteral("backupId"),
                                     stringField(QStringLiteral("string"), 64)}})));
-    list.append(spec(QStringLiteral("upgrade.inspect"), QStringLiteral("升级检查"),
+    list.append(spec(QStringLiteral("upgrade.inspect"),
+                     QCoreApplication::translate("AgentLauncherTools", "升级检查"),
                      QStringLiteral("只读：列出可升级到的目标与兼容性结论，不执行升级。"),
                      AgentRisk::ReadOnly, objectSchema({}, {})));
-    list.append(spec(QStringLiteral("upgrade.openWizard"), QStringLiteral("打开升级向导"),
+    list.append(spec(QStringLiteral("upgrade.openWizard"),
+                     QCoreApplication::translate("AgentLauncherTools", "打开升级向导"),
                      QStringLiteral("打开现有升级页，由用户在原界面里选择与确认。"), AgentRisk::ReadOnly,
                      objectSchema({}, {})));
-    list.append(spec(QStringLiteral("launcher.openPage"), QStringLiteral("打开启动器页面"),
+    list.append(spec(QStringLiteral("launcher.openPage"),
+                     QCoreApplication::translate("AgentLauncherTools", "打开启动器页面"),
                      QStringLiteral("只打开已有入口（实例设置/日志/备份/完整性），不执行写操作。"),
                      AgentRisk::ReadOnly,
                      objectSchema({QStringLiteral("page")},

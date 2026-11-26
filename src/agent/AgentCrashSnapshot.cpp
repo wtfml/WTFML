@@ -7,7 +7,6 @@
 
 #include "AgentMixinOwnership.hpp"
 
-#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QHash>
@@ -27,10 +26,6 @@ constexpr int kMaxRecommendations = 8;
 constexpr int kMaxFailureRegionChars = 8000;
 constexpr int kMaxExcerptChars = 400;
 constexpr int kMaxModList = 2000;
-
-QString tr(const char *text) {
-    return QCoreApplication::translate("AgentCrashSnapshot", text);
-}
 
 /// Minecraft 日志行头：`[12:00:00] [main/ERROR]: `（第三段 `[Mixin]` 之类可有可无）。
 QString logPayload(const QString &line) {
@@ -449,18 +444,18 @@ Snapshot build(const SnapshotInput &input) {
         return text;
     }();
     for (const QString &modId : parsed.mixinMods) {
-        addSuspect(&drafts, &order, modId, 1, tr("Mixin apply for mod 语句"));
+        addSuspect(&drafts, &order, modId, 1, QStringLiteral("Mixin apply for mod 语句"));  // i18n-ignore
     }
     for (const QString &config : parsed.mixinConfigs) {
         const QString normalized = AgentMixinOwnership::normalizeConfig(config);
         const QString owner = input.mixinOwners.value(normalized);
         if (!owner.isEmpty()) {
-            addSuspect(&drafts, &order, owner, 2, tr("mixin 配置 %1").arg(config));
+            addSuspect(&drafts, &order, owner, 2, QStringLiteral("mixin 配置 %1").arg(config));  // i18n-ignore
             continue;
         }
         // 读不到归属就标 unknown：不按文件名猜模组。
         addSuspect(&drafts, &order, QStringLiteral("unknown"), 3,
-                   tr("mixin 配置 %1 无归属声明").arg(config));
+                   QStringLiteral("mixin 配置 %1 无归属声明").arg(config));  // i18n-ignore
     }
     // 失败区文本/栈帧里出现的已装模组：算“被提到/栈帧”，不算根因。
     for (const ModEntry &entry : parsed.modList) {
@@ -468,16 +463,17 @@ Snapshot build(const SnapshotInput &input) {
         if (!wordContains(parsed.failureRegion, entry.modId)) continue;
         const bool inFrame = wordContains(stackText, entry.modId);
         addSuspect(&drafts, &order, entry.modId, inFrame ? 1 : 3,
-                   inFrame ? tr("栈帧含该模组") : tr("失败区文本提及"));
+                   inFrame ? QStringLiteral("栈帧含该模组")  // i18n-ignore
+                            : QStringLiteral("失败区文本提及"));  // i18n-ignore
     }
     for (const QString &modId : parsed.suspectedMods) {
         if (isPlatformModId(modId)) continue;
-        addSuspect(&drafts, &order, modId, 3, tr("报告头 Suspected Mods"));
+        addSuspect(&drafts, &order, modId, 3, QStringLiteral("报告头 Suspected Mods"));  // i18n-ignore
     }
     for (const AgentKnowledge::CrashRule &rule : hits) {
         for (const QString &modId : rule.suspects) {
             if (isPlatformModId(modId)) continue;
-            addSuspect(&drafts, &order, modId, 3, tr("规则 %1 的线索").arg(rule.id));
+            addSuspect(&drafts, &order, modId, 3, QStringLiteral("规则 %1 的线索").arg(rule.id));  // i18n-ignore
         }
     }
 
@@ -523,7 +519,9 @@ Snapshot build(const SnapshotInput &input) {
         row.confidence = rounded(qMin(0.95, confidence));
         row.basis = (primaryRule.isEmpty() ? QStringLiteral("no-rule") : primaryRule) +
                     QStringLiteral(" + ") + tierLabel;
-        if (!draft.detail.isEmpty()) row.basis += tr("（%1）").arg(draft.detail);
+        if (!draft.detail.isEmpty()) {
+            row.basis += QStringLiteral(": ") + draft.detail;  // i18n-ignore
+        }
         row.tier = draft.tier;
         rows.append(row);
     }
@@ -559,7 +557,7 @@ Snapshot build(const SnapshotInput &input) {
             {QStringLiteral("source"), QStringLiteral("mods")},
             {QStringLiteral("capturedAt"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate)},
             {QStringLiteral("excerpt"),
-             tr("%1 个 mixin 配置能由 JAR 声明归属到模组").arg(input.mixinOwners.size())}});
+             QStringLiteral("%1 个 mixin 配置能由 JAR 声明归属到模组").arg(input.mixinOwners.size())}});  // i18n-ignore
     }
 
     QJsonArray suspects;

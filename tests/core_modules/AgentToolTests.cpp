@@ -10,13 +10,16 @@
 #include "agent/AgentBackupIndex.hpp"
 #include "agent/AgentFileToolEngine.hpp"
 #include "agent/AgentInstanceLock.hpp"
+#include "agent/AgentSkill.hpp"
 #include "agent/AgentTool.hpp"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QJsonDocument>
 #include <QRegularExpression>
 #include <QTemporaryDir>
+#include <QTranslator>
 
 namespace {
 Agent::ToolCall callFor(const QString &name, const QJsonObject &arguments) {
@@ -252,4 +255,59 @@ void runAgentToolTests() {
               !modelRead.data.value(QStringLiteral("content")).toString().contains(
                   QStringLiteral("abc123456")),
           "工具：artifact.read 每次重新脱敏");
+
+    // ---------- 语言策略：工具显示名跟着界面语言，面向模型的说明不翻 ----------
+    {
+        // 假翻译器：有源文就回 "EN:<源文>"，用来分辨哪些字面量真的走了 translate()。
+        class EchoTranslator : public QTranslator {
+        public:
+            QString translate(const char *, const char *sourceText, const char *, int) const override {
+                if (sourceText == nullptr || *sourceText == '\0') return QString();
+                return QStringLiteral("EN:") + QString::fromUtf8(sourceText);
+            }
+        };
+        EchoTranslator translator;
+        QCoreApplication::installTranslator(&translator);
+
+        bool titlesTranslated = true;
+        bool descriptionsUntouched = true;
+        QStringList evidence;
+        for (const AgentToolSpec &spec : AgentToolRegistry::builtins()) {
+            if (!spec.displayName.startsWith(QStringLiteral("EN:"))) {
+                titlesTranslated = false;
+                evidence.append(spec.name + QStringLiteral("=title:") + spec.displayName);
+            }
+            if (spec.description.startsWith(QStringLiteral("EN:"))) {
+                descriptionsUntouched = false;
+                evidence.append(spec.name + QStringLiteral("=description"));
+            }
+        }
+        QCoreApplication::removeTranslator(&translator);
+        check(titlesTranslated, "工具：每个工具显示名都走了翻译（跟着界面语言）",
+              evidence.join(QLatin1Char(' ')));
+        check(descriptionsUntouched, "工具：发给模型的工具说明不走翻译（同一份 schema 一个语言）",
+              evidence.join(QLatin1Char(' ')));
+        check(evidence.isEmpty(), "工具：显示名/说明的语言分工没有漏项", evidence.join(QLatin1Char(' ')));
+
+        // 技能名与说明也是给用户看的；按同一份假翻译器验一遍。
+        QCoreApplication::installTranslator(&translator);
+        bool skillNamesTranslated = true;
+        bool skillDescriptionsTranslated = true;
+        QStringList skillEvidence;
+        for (const AgentSkill &skill : AgentSkillRegistry::builtins()) {
+            if (!skill.name.startsWith(QStringLiteral("EN:"))) {
+                skillNamesTranslated = false;
+                skillEvidence.append(skill.id + QStringLiteral("=name:") + skill.name);
+            }
+            if (!skill.description.startsWith(QStringLiteral("EN:"))) {
+                skillDescriptionsTranslated = false;
+                skillEvidence.append(skill.id + QStringLiteral("=description"));
+            }
+        }
+        QCoreApplication::removeTranslator(&translator);
+        check(skillNamesTranslated, "技能：名字都走了翻译", skillEvidence.join(QLatin1Char(' ')));
+        check(skillDescriptionsTranslated, "技能：说明都走了翻译",
+              skillEvidence.join(QLatin1Char(' ')));
+        check(skillEvidence.isEmpty(), "技能：名字与说明没有漏翻的", skillEvidence.join(QLatin1Char(' ')));
+    }
 }

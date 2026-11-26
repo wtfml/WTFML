@@ -13,6 +13,7 @@
 #include "AgentWebTools.hpp"
 #include "AgentWorkflowEngine.hpp"
 
+#include <QCoreApplication>
 #include <QJsonValue>
 
 namespace {
@@ -133,7 +134,7 @@ QString AgentToolRegistry::riskKey(AgentRisk risk) {
 QList<AgentToolSpec> AgentToolRegistry::fileBuiltins() {
     QList<AgentToolSpec> list;
     list.append(AgentToolSpec{
-        QStringLiteral("fs.list"), QStringLiteral("查看目录概况"),
+        QStringLiteral("fs.list"), QCoreApplication::translate("AgentToolRegistry", "查看目录概况"),
         QStringLiteral("只返回锁定实例内的目录元数据（数量/大小），不返回文件名。"),
         AgentRisk::ReadOnly,
         objectSchema({QStringLiteral("path")},
@@ -141,7 +142,7 @@ QList<AgentToolSpec> AgentToolRegistry::fileBuiltins() {
                        QJsonObject{{QStringLiteral("type"), QStringLiteral("string")},
                                    {QStringLiteral("maxLength"), 1024}}}})});
     list.append(AgentToolSpec{
-        QStringLiteral("fs.listNames"), QStringLiteral("查看完整文件名"),
+        QStringLiteral("fs.listNames"), QCoreApplication::translate("AgentToolRegistry", "查看完整文件名"),
         QStringLiteral("返回目录内完整文件名；每次都需要用户确认，截断到 2000 项。"),
         AgentRisk::ReadOnly,
         objectSchema({QStringLiteral("path")},
@@ -152,7 +153,7 @@ QList<AgentToolSpec> AgentToolRegistry::fileBuiltins() {
                        QJsonObject{{QStringLiteral("type"), QStringLiteral("integer")},
                                    {QStringLiteral("maximum"), 2000}}}})});
     list.append(AgentToolSpec{
-        QStringLiteral("fs.read"), QStringLiteral("读取文本文件"),
+        QStringLiteral("fs.read"), QCoreApplication::translate("AgentToolRegistry", "读取文本文件"),
         QStringLiteral("读取锁定实例内的文本；默认 256 KB，最大 1 MB；二进制拒绝。"),
         AgentRisk::ReadOnly,
         objectSchema({QStringLiteral("path")},
@@ -163,7 +164,7 @@ QList<AgentToolSpec> AgentToolRegistry::fileBuiltins() {
                        QJsonObject{{QStringLiteral("type"), QStringLiteral("integer")},
                                    {QStringLiteral("maximum"), 1048576}}}})});
     list.append(AgentToolSpec{
-        QStringLiteral("fs.write"), QStringLiteral("写入文本配置"),
+        QStringLiteral("fs.write"), QCoreApplication::translate("AgentToolRegistry", "写入文本配置"),
         QStringLiteral("只允许 config/**、defaultconfigs/**、options.txt；必须带旧内容哈希与身份 token；"
                        "每次审批，写前备份，原子写，写后校验。"),
         AgentRisk::Write,
@@ -184,7 +185,7 @@ QList<AgentToolSpec> AgentToolRegistry::fileBuiltins() {
                        QJsonObject{{QStringLiteral("type"), QStringLiteral("string")},
                                    {QStringLiteral("maxLength"), 80}}}})});
     list.append(AgentToolSpec{
-        QStringLiteral("artifact.read"), QStringLiteral("读取模型 artifact"),
+        QStringLiteral("artifact.read"), QCoreApplication::translate("AgentToolRegistry", "读取模型 artifact"),
         QStringLiteral("只读本会话模型可读 artifact；每次重新脱敏；本地原始存档不可读。"),
         AgentRisk::ReadOnly,
         objectSchema({QStringLiteral("artifactId")},

@@ -5,7 +5,6 @@
 
 #include "AgentKnowledgeRules.hpp"
 
-#include <QCoreApplication>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -36,10 +35,6 @@ constexpr int kMaxStringLength = 200;
 constexpr int kMaxBasisLength = 120;
 constexpr int kMaxMilestoneMarkers = 8;
 
-QString tr(const char *text) {
-    return QCoreApplication::translate("AgentKnowledge", text);
-}
-
 void ensureResources() {
     static const bool initialized = [] {
         initAgentKnowledgeResources();
@@ -57,12 +52,12 @@ bool readResource(const QString &path, QByteArray *bytes, QString *problem) {
     ensureResources();
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        if (problem != nullptr) *problem = tr("找不到内嵌知识文件：%1").arg(path);
+        if (problem != nullptr) *problem = QStringLiteral("找不到内嵌知识文件：%1").arg(path);  // i18n-ignore
         return false;
     }
     *bytes = file.read(kMaxKnowledgeBytes + 1);
     if (bytes->size() > kMaxKnowledgeBytes) {
-        if (problem != nullptr) *problem = tr("内嵌知识文件超过 %1 字节：%2").arg(kMaxKnowledgeBytes).arg(path);
+        if (problem != nullptr) *problem = QStringLiteral("内嵌知识文件超过 %1 字节：%2").arg(kMaxKnowledgeBytes).arg(path);  // i18n-ignore
         return false;
     }
     return true;
@@ -74,26 +69,26 @@ bool readStrings(const QJsonValue &value, const QString &field, const QString &r
     if (value.isUndefined() || value.isNull()) return true;
     if (!value.isArray()) {
         if (problems != nullptr) {
-            problems->append(tr("%1：%2 必须是数组").arg(ruleId, field));
+            problems->append(QStringLiteral("%1：%2 必须是数组").arg(ruleId, field));  // i18n-ignore
         }
         return false;
     }
     const QJsonArray array = value.toArray();
     if (array.size() > limit) {
         if (problems != nullptr) {
-            problems->append(tr("%1：%2 超过 %3 条").arg(ruleId, field).arg(limit));
+            problems->append(QStringLiteral("%1：%2 超过 %3 条").arg(ruleId, field).arg(limit));  // i18n-ignore
         }
         return false;
     }
     for (const QJsonValue &item : array) {
         if (!item.isString()) {
-            if (problems != nullptr) problems->append(tr("%1：%2 里有非字符串项").arg(ruleId, field));
+            if (problems != nullptr) problems->append(QStringLiteral("%1：%2 里有非字符串项").arg(ruleId, field));  // i18n-ignore
             return false;
         }
         const QString text = item.toString().trimmed();
         if (text.isEmpty() || text.size() > kMaxStringLength) {
             if (problems != nullptr) {
-                problems->append(tr("%1：%2 里有空串或超长项").arg(ruleId, field));
+                problems->append(QStringLiteral("%1：%2 里有空串或超长项").arg(ruleId, field));  // i18n-ignore
             }
             return false;
         }
@@ -162,7 +157,7 @@ CrashRuleSet parseCrashRules(const QByteArray &json) {
     QJsonParseError error{};
     const QJsonDocument document = QJsonDocument::fromJson(json, &error);
     if (error.error != QJsonParseError::NoError || !document.isObject()) {
-        result.resourceProblem = tr("崩溃规则不是有效 JSON：%1").arg(error.errorString());
+        result.resourceProblem = QStringLiteral("崩溃规则不是有效 JSON：%1").arg(error.errorString());  // i18n-ignore
         return result;
     }
     const QJsonObject root = document.object();
@@ -170,47 +165,47 @@ CrashRuleSet parseCrashRules(const QByteArray &json) {
     if (result.version.isEmpty()) result.version = QStringLiteral("unknown");
     const QJsonValue rulesValue = root.value(QStringLiteral("rules"));
     if (!rulesValue.isArray()) {
-        result.resourceProblem = tr("崩溃规则缺少 rules 数组");
+        result.resourceProblem = QStringLiteral("崩溃规则缺少 rules 数组");  // i18n-ignore
         return result;
     }
     const QStringList allowed = phases();
     QHash<QString, bool> seen;
     for (const QJsonValue &value : rulesValue.toArray()) {
         if (!value.isObject()) {
-            result.problems.append(tr("规则不是对象，已跳过"));
+            result.problems.append(QStringLiteral("规则不是对象，已跳过"));  // i18n-ignore
             continue;
         }
         const QJsonObject object = value.toObject();
         CrashRule rule;
         rule.id = object.value(QStringLiteral("id")).toString().trimmed();
         if (!validRuleId(rule.id)) {
-            result.problems.append(tr("规则 id 不合法，已跳过：%1").arg(rule.id));
+            result.problems.append(QStringLiteral("规则 id 不合法，已跳过：%1").arg(rule.id));  // i18n-ignore
             continue;
         }
         if (seen.contains(rule.id)) {
-            result.problems.append(tr("规则 id 重复，已跳过：%1").arg(rule.id));
+            result.problems.append(QStringLiteral("规则 id 重复，已跳过：%1").arg(rule.id));  // i18n-ignore
             continue;
         }
         const QJsonValue priorityValue = object.value(QStringLiteral("priority"));
         if (!priorityValue.isDouble()) {
-            result.problems.append(tr("%1：缺少 priority").arg(rule.id));
+            result.problems.append(QStringLiteral("%1：缺少 priority").arg(rule.id));  // i18n-ignore
             continue;
         }
         rule.priority = priorityValue.toInt();
         if (rule.priority < 1 || rule.priority > 100) {
-            result.problems.append(tr("%1：priority 超出 1–100").arg(rule.id));
+            result.problems.append(QStringLiteral("%1：priority 超出 1–100").arg(rule.id));  // i18n-ignore
             continue;
         }
         rule.phase = object.value(QStringLiteral("phase")).toString();
         if (!allowed.contains(rule.phase)) {
-            result.problems.append(tr("%1：phase 不认识：%2").arg(rule.id, rule.phase));
+            result.problems.append(QStringLiteral("%1：phase 不认识：%2").arg(rule.id, rule.phase));  // i18n-ignore
             continue;
         }
         QStringList problems;
         bool ok = readStrings(object.value(QStringLiteral("match")), QStringLiteral("match"),
                               rule.id, kMaxMatchStrings, &rule.match, &problems);
         if (ok && rule.match.isEmpty()) {
-            problems.append(tr("%1：match 不能为空").arg(rule.id));
+            problems.append(QStringLiteral("%1：match 不能为空").arg(rule.id));  // i18n-ignore
             ok = false;
         }
         if (ok) {
@@ -234,7 +229,7 @@ CrashRuleSet parseCrashRules(const QByteArray &json) {
         const QJsonValue confidenceValue = object.value(QStringLiteral("confidence"));
         if (ok && (!confidenceValue.isDouble() || confidenceValue.toDouble() < 0.0 ||
                    confidenceValue.toDouble() > 1.0)) {
-            problems.append(tr("%1：confidence 必须在 0–1 之间").arg(rule.id));
+            problems.append(QStringLiteral("%1：confidence 必须在 0–1 之间").arg(rule.id));  // i18n-ignore
             ok = false;
         } else if (ok) {
             rule.confidence = confidenceValue.toDouble();
@@ -243,7 +238,7 @@ CrashRuleSet parseCrashRules(const QByteArray &json) {
             object.value(QStringLiteral("confidenceBasis")).toString().trimmed();
         if (ok && (rule.confidenceBasis.isEmpty() ||
                    rule.confidenceBasis.size() > kMaxBasisLength)) {
-            problems.append(tr("%1：confidenceBasis 为空或超长").arg(rule.id));
+            problems.append(QStringLiteral("%1：confidenceBasis 为空或超长").arg(rule.id));  // i18n-ignore
             ok = false;
         }
         if (!ok) {
@@ -291,7 +286,7 @@ MilestoneRuleSet parseMilestones(const QByteArray &json) {
     QJsonParseError error{};
     const QJsonDocument document = QJsonDocument::fromJson(json, &error);
     if (error.error != QJsonParseError::NoError || !document.isObject()) {
-        result.resourceProblem = tr("里程碑规则不是有效 JSON：%1").arg(error.errorString());
+        result.resourceProblem = QStringLiteral("里程碑规则不是有效 JSON：%1").arg(error.errorString());  // i18n-ignore
         return result;
     }
     const QJsonObject root = document.object();
@@ -307,12 +302,12 @@ MilestoneRuleSet parseMilestones(const QByteArray &json) {
             continue;
         }
         if (markers.isEmpty()) {
-            result.problems.append(tr("里程碑 %1 没有标记").arg(key));
+            result.problems.append(QStringLiteral("里程碑 %1 没有标记").arg(key));  // i18n-ignore
             continue;
         }
         result.milestones.insert(key, markers);
     }
-    if (!result.ok()) result.problems.append(tr("里程碑缺少 main_menu/world_loaded/crash 之一"));
+    if (!result.ok()) result.problems.append(QStringLiteral("里程碑缺少 main_menu/world_loaded/crash 之一"));  // i18n-ignore
     return result;
 }
 

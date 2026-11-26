@@ -33,7 +33,11 @@ struct AgentToolContext {
 
 struct AgentToolSpec {
     QString name;
+    /// 用户可见的工具名（工具卡、审批卡、命令摘要）：必须按界面语言翻译，
+    /// 用 `QCoreApplication::translate("<模块名>", "…")` 或 `tr()` 写死。
     QString displayName;
+    /// 发给模型的说明（`tools[].function.description`）：统一用源语言中文，**不**翻译，
+    /// 免得同一份 schema 随界面语言变成半中半英。
     QString description;
     AgentRisk risk = AgentRisk::ExternalMcp;
     QJsonObject schema;

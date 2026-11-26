@@ -23,6 +23,7 @@
 #include <QFile>
 #include <QJsonDocument>
 #include <QDialog>
+#include <QLabel>
 #include <QPushButton>
 #include <QTabWidget>
 #include <QThread>
@@ -226,8 +227,14 @@ int MwAgentChecks(QApplication &app) {
                   return controller->loop()->state() == AgentLoop::State::Completed;
               }),
               "真窗口：审批通过后模型继续并完成");
-        check(page->findChild<AgentToolCard *>() != nullptr,
-              "真窗口：工具结果卡片存在");
+        AgentToolCard *toolCard = page->findChild<AgentToolCard *>();
+        check(toolCard != nullptr, "真窗口：工具结果卡片存在");
+        auto *toolTitle = toolCard != nullptr
+                              ? toolCard->findChild<QLabel *>(QStringLiteral("agentToolTitle"))
+                              : nullptr;
+        check(toolTitle != nullptr && toolTitle->text() == QStringLiteral("读取文本文件"),
+              "真窗口：工具卡标题用显示名（中文界面下是中文），不是线上工具名",
+              toolTitle != nullptr ? toolTitle->text() : QString());
         AgentSession readSession;
         controller->sessionStore()->load(controller->currentSessionId(), &readSession, nullptr);
         bool hasToolMessage = false;

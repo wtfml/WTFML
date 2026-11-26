@@ -6,7 +6,6 @@
 #include "AgentPromptLibrary.hpp"
 
 #include <QByteArray>
-#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QFile>
 #include <QHash>
@@ -79,7 +78,7 @@ int AgentPromptLibrary::maxComposedPromptBytes() { return kMaxComposedBytes; }
 AgentPrompt AgentPromptLibrary::load(const QString &id, QString *problem) {
     if (problem != nullptr) problem->clear();
     if (!validId(id)) {
-        if (problem != nullptr) *problem = QCoreApplication::translate("AgentPromptLibrary", "提示词 id 不合法：%1").arg(id);
+        if (problem != nullptr) *problem = QStringLiteral("提示词 id 不合法：%1").arg(id);  // i18n-ignore
         return {};
     }
     ensureResources();
@@ -95,14 +94,14 @@ AgentPrompt AgentPromptLibrary::load(const QString &id, QString *problem) {
     const QString path = resourcePath(id);
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        if (problem != nullptr) *problem = QCoreApplication::translate("AgentPromptLibrary", "未找到技能提示词资源：%1").arg(path);
+        if (problem != nullptr) *problem = QStringLiteral("未找到技能提示词资源：%1").arg(path);  // i18n-ignore
         return {};
     }
     const int budget = id == QStringLiteral("common") ? kMaxCommonBytes : kMaxSkillBytes;
     QByteArray bytes = file.read(budget + 1);
     if (bytes.size() > budget) {
         if (problem != nullptr) {
-            *problem = QCoreApplication::translate("AgentPromptLibrary", "提示词超过预算（%1 字节）：%2").arg(budget).arg(path);  // i18n-ignore
+            *problem = QStringLiteral("提示词超过预算（%1 字节）：%2").arg(budget).arg(path);  // i18n-ignore
         }
         return {};
     }
@@ -110,12 +109,12 @@ AgentPrompt AgentPromptLibrary::load(const QString &id, QString *problem) {
 
     QString text = QString::fromUtf8(bytes);
     if (text.contains(QChar::ReplacementCharacter)) {
-        if (problem != nullptr) *problem = QCoreApplication::translate("AgentPromptLibrary", "技能提示词不是有效 UTF-8：%1").arg(path);
+        if (problem != nullptr) *problem = QStringLiteral("技能提示词不是有效 UTF-8：%1").arg(path);  // i18n-ignore
         return {};
     }
     text = normalizedPrompt(text);
     if (text.isEmpty()) {
-        if (problem != nullptr) *problem = QCoreApplication::translate("AgentPromptLibrary", "技能提示词为空：%1").arg(path);
+        if (problem != nullptr) *problem = QStringLiteral("技能提示词为空：%1").arg(path);  // i18n-ignore
         return {};
     }
 
@@ -131,7 +130,7 @@ AgentPrompt AgentPromptLibrary::compose(const QString &skillId, bool includeRepa
                                         QString *problem) {
     if (problem != nullptr) problem->clear();
     if (!validId(skillId)) {
-        if (problem != nullptr) *problem = QCoreApplication::translate("AgentPromptLibrary", "技能提示词 id 不合法：%1").arg(skillId);
+        if (problem != nullptr) *problem = QStringLiteral("技能提示词 id 不合法：%1").arg(skillId);  // i18n-ignore
         return {};
     }
 
@@ -144,7 +143,7 @@ AgentPrompt AgentPromptLibrary::compose(const QString &skillId, bool includeRepa
         const AgentPrompt prompt = load(id, &localProblem);
         if (!localProblem.isEmpty()) {
             if (problem != nullptr) {
-                *problem = QCoreApplication::translate("AgentPromptLibrary", "技能提示词不可用（%1）：%2").arg(id, localProblem);
+                *problem = QStringLiteral("技能提示词不可用（%1）：%2").arg(id, localProblem);  // i18n-ignore
             }
             return {};
         }
@@ -154,7 +153,7 @@ AgentPrompt AgentPromptLibrary::compose(const QString &skillId, bool includeRepa
     QString text = parts.join(QStringLiteral("\n\n"));
     if (text.toUtf8().size() > kMaxComposedBytes) {
         if (problem != nullptr) {
-            *problem = QCoreApplication::translate("AgentPromptLibrary", "技能提示词组合后超过预算（%1 字节）").arg(kMaxComposedBytes);  // i18n-ignore
+            *problem = QStringLiteral("技能提示词组合后超过预算（%1 字节）").arg(kMaxComposedBytes);  // i18n-ignore
         }
         return {};
     }
