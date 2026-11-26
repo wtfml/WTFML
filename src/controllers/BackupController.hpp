@@ -20,6 +20,9 @@ struct Manifest;
 struct WriteResult;
 struct RestoreResult;
 }
+namespace AgentBackups {
+struct Item;
+}
 
 class BackupController final : public QObject {
     Q_OBJECT
@@ -57,7 +60,7 @@ public:
     void backupWorld(const QString &worldDir);
     void restoreWorld(const QString &worldDir, InstanceSettingsDialog *dialog = nullptr);
     void snapshotInstance(const QString &versionId);
-    /// 从快照还原一整个实例。
+    /// 从快照还原一整个实例。列表里同时列出这个实例的智能体备份（只还原其中列出的文件）。
     ///
     /// @param dialog 从实例设置页点进来时那一页（可为空）。还原会把目录里的文件整个
     /// 换掉，而那一页的控件里还是**还原之前**的值 —— 留着它，用户随便改一格就会
@@ -85,8 +88,20 @@ public:
 private:
     static QString sizeText(qint64 bytes);
     static QString pickLine(const QString &zipPath, const QString &from = QString());
+    /// 一行智能体备份（`fs.write` 按会话归成一组，@p group 从新到旧）。
+    static QString agentPickLine(const QList<AgentBackups::Item> &group);
+    /// @p agentInstanceId 非空时把这个实例的智能体备份一起列进来，选中走 @p agentSelected
+    /// （第二个参数是那一行的文字）。
     void pickZip(BackupFiles::Kind kind, const QString &label, const QString &what,
-                 std::function<void(QString)> selected);
+                 std::function<void(QString)> selected,
+                 const QString &agentInstanceId = QString(),
+                 std::function<void(QList<AgentBackups::Item>, QString)> agentSelected = {});
+    /// 还原一组智能体备份：每个文件取组里最早那一份，只覆盖这些文件。
+    Tasks::TaskId startFilesRestore(const QString &instanceId,
+                                    const QList<AgentBackups::Item> &group, const QString &title);
+    /// 在后台线程跑一趟还原（@p job 拿停止条件），收尾走 restoreFinished()。
+    void runRestoreJob(std::function<BackupFiles::RestoreResult(const std::function<bool()> &)> job,
+                       const QString &successTitle, const QString &failureTitle);
     bool m_scanning = false;
     QString displayName(const QString &id) const;
     void log(const QString &message) const;

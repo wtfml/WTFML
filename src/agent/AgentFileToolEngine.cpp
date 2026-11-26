@@ -271,7 +271,9 @@ AgentToolResult AgentFileToolEngine::handleWrite(const Agent::ToolCall &call,
     return approvalRequired(pending, pending.summary,
                             AgentRedaction::preview(plan.newContent, 4000),
                             AgentRedaction::redact(plan.diff).text,
-                            QCoreApplication::translate("AgentFileToolEngine", "写入前会先备份到维护备份目录。"),
+                            workspaceId.isEmpty()
+                                ? QCoreApplication::translate("AgentFileToolEngine", "写入前会先备份，可在实例概览页「从快照恢复…」中还原。")
+                                : QCoreApplication::translate("AgentFileToolEngine", "写入修复工作区，不另做备份。"),
                             pending.egress);
 }
 
@@ -389,10 +391,13 @@ AgentToolResult AgentFileToolEngine::resolveApproval(const QString &approvalId, 
         return result;
     }
     case Pending::Kind::Write: {
+        // 写进事务工作区不备份：那是一份副本，备份记原实例 id 会让「恢复」写回原实例。
+        const bool workspace =
+            !pending.call.arguments.value(QStringLiteral("workspaceId")).toString().isEmpty();
         m_committing = true;
         const AgentWriteResult write = m_files->commitWrite(
             pending.context.rootPath, pending.writePlan, pending.context.sessionId,
-            pending.context.instanceId);
+            pending.context.instanceId, pending.context.sessionTitle, !workspace);
         m_committing = false;
         if (!write.ok) return errorResult(write.error.kind, write.error.message);
         AgentToolResult result;
@@ -400,6 +405,14 @@ AgentToolResult AgentFileToolEngine::resolveApproval(const QString &approvalId, 
         result.summary =
             write.unchanged
                 ? QCoreApplication::translate("AgentFileToolEngine", "文件内容未变化，未写入。")
+            : workspace
+                ? QCoreApplication::translate("AgentFileToolEngine", "已写入工作区：%1 → %2 字节，已校验。")
+                      .arg(write.bytesBefore)
+                      .arg(write.bytesAfter)
+            : write.backupId.isEmpty()
+                ? QCoreApplication::translate("AgentFileToolEngine", "写入成功：%1 → %2 字节，已校验。")
+                      .arg(write.bytesBefore)
+                      .arg(write.bytesAfter)
                 : QCoreApplication::translate("AgentFileToolEngine", "写入成功：%1 → %2 字节，已备份并校验。")
                       .arg(write.bytesBefore)
                       .arg(write.bytesAfter);

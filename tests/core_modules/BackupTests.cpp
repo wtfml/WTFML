@@ -1277,6 +1277,140 @@ void runBackupTests() {
                   .entryList({QStringLiteral("*.json")}, QDir::Files).isEmpty(),
               "ZQ12 目标原本不存在的事务恢复后不留记录（没有旧目录要检查）");
     }
+
+    // ---------- ZQ13. 文件备份（智能体备份并入启动器备份，#129） ----------
+    //
+    // 容器是目录：`cache/backups/files/<id>/wtfml-backup.json` + `<id>/<root>/<相对路径>`。
+    // 还原**只覆盖列出的文件**，先给它们做一份安全备份；中途失败把已写的改回去。
+    {
+        const QString instanceDir = work + QStringLiteral("/files-instance");
+        writeFileAt(instanceDir + QStringLiteral("/options.txt"), "fov:70\n");
+        writeFileAt(instanceDir + QStringLiteral("/config/a.toml"), "a = 1\n");
+        writeFileAt(instanceDir + QStringLiteral("/config/keep.toml"), "untouched\n");
+        const QString filesRoot = BackupFiles::backupDir(BackupFiles::Kind::Files);
+        QDir().mkpath(filesRoot);
+        const auto manifestFor = [&at](const QString &instanceId, const QString &sessionId,
+                                       int minutes) {
+            BackupFiles::Manifest manifest;
+            manifest.root = QStringLiteral("files");
+            manifest.label = instanceId;
+            manifest.sourceInstanceId = instanceId;
+            manifest.sessionId = sessionId;
+            manifest.trigger = QStringLiteral("fs.write");
+            manifest.createdAt = at.addSecs(minutes * 60);
+            return manifest;
+        };
+
+        // 往返：布局、清单（目录直接读，不起 PowerShell）、内容逐个核对。
+        const QString backupDir = filesRoot + QStringLiteral("/roundtrip");
+        const QList<BackupFiles::FilePayload> payload{
+            {QStringLiteral("options.txt"), QByteArray("fov:90\n")},
+            {QStringLiteral("config/a.toml"), QByteArray("a = 2\n")},
+            {QStringLiteral("config/new.toml"), QByteArray("created\n")}};
+        const BackupFiles::WriteResult written = BackupFiles::writeFilesBackup(
+            manifestFor(QStringLiteral("files-instance"), QStringLiteral("s-1"), 0), payload,
+            backupDir);
+        check(written.ok && QFileInfo(backupDir + QStringLiteral("/wtfml-backup.json")).isFile()
+                  && readAll(backupDir + QStringLiteral("/files/config/a.toml")) == "a = 2\n",
+              "★ ZQ13 文件备份是目录：清单在根上、文件在 <root>/ 底下", written.problem);
+        bool readable = false;
+        QString problem;
+        const BackupFiles::Manifest readBack = BackupFiles::readManifest(backupDir, &readable, &problem);
+        check(readable && readBack.kind == BackupFiles::Kind::Files && readBack.fileCount() == 3
+                  && readBack.sessionId == QStringLiteral("s-1")
+                  && readBack.trigger == QStringLiteral("fs.write"),
+              "ZQ13 目录备份的清单读得回来（kind=files、会话、来源都在）", problem);
+        check(!BackupFiles::writeFilesBackup(manifestFor(QStringLiteral("files-instance"),
+                                                         QString(), 0), payload, backupDir).ok,
+              "ZQ13 目标目录已存在 ⇒ 不覆盖");
+        QList<BackupFiles::FilePayload> loaded;
+        check(BackupFiles::readFilesPayload(backupDir, &loaded, &problem) && loaded.size() == 3,
+              "ZQ13 内容读回来且 sha1 对得上", problem);
+
+        // 只覆盖列出的文件：keep.toml 不动，新建的那一份落下，安全备份里是还原前的原文。
+        const BackupFiles::RestoreResult restored = BackupFiles::restoreFiles(
+            instanceDir, loaded, manifestFor(QStringLiteral("files-instance"), QString(), 0));
+        check(restored.ok && restored.checked == 3
+                  && readAll(instanceDir + QStringLiteral("/options.txt")) == "fov:90\n"
+                  && readAll(instanceDir + QStringLiteral("/config/new.toml")) == "created\n"
+                  && readAll(instanceDir + QStringLiteral("/config/keep.toml")) == "untouched\n",
+              "★★ ZQ13 部分还原只覆盖列出的文件，其他文件一个字节不动", restored.problem);
+        QList<BackupFiles::FilePayload> safety;
+        check(!restored.safetyZip.isEmpty()
+                  && BackupFiles::readFilesPayload(restored.safetyZip, &safety, &problem)
+                  && safety.size() == 2
+                  && BackupFiles::readManifest(restored.safetyZip, &readable, nullptr).safety,
+              "★ ZQ13 还原前给被覆盖的文件做了安全备份（原先不存在的不算）", problem);
+
+        // 中途失败：第二个文件写不进去（只读）⇒ 第一个改回原文，新建的删掉。
+        writeFileAt(instanceDir + QStringLiteral("/config/locked.toml"), "locked\n");
+        QFile::setPermissions(instanceDir + QStringLiteral("/config/locked.toml"),
+                              QFileDevice::ReadOwner | QFileDevice::ReadUser);
+        const QList<BackupFiles::FilePayload> partial{
+            {QStringLiteral("options.txt"), QByteArray("fov:110\n")},
+            {QStringLiteral("config/fresh.toml"), QByteArray("fresh\n")},
+            {QStringLiteral("config/locked.toml"), QByteArray("changed\n")}};
+        const BackupFiles::RestoreResult rolled = BackupFiles::restoreFiles(
+            instanceDir, partial, manifestFor(QStringLiteral("files-instance"), QString(), 0));
+        QFile::setPermissions(instanceDir + QStringLiteral("/config/locked.toml"),
+                              QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+        check(!rolled.ok && !rolled.recoveryFailed
+                  && rolled.stage == BackupFiles::RestoreResult::Stage::Extract
+                  && readAll(instanceDir + QStringLiteral("/options.txt")) == "fov:90\n"
+                  && !QFileInfo::exists(instanceDir + QStringLiteral("/config/fresh.toml"))
+                  && readAll(instanceDir + QStringLiteral("/config/locked.toml")) == "locked\n",
+              "★★★ ZQ13 写回中途失败 ⇒ 已写的改回原文、新建的删掉", rolled.problem);
+
+        // 路径：`..`、绝对路径、设备名、末尾点一律不认，盘上一个字节不动。
+        for (const QString &bad : {QStringLiteral("../escape.txt"), QStringLiteral("C:/x.txt"),
+                                   QStringLiteral("config/CON"), QStringLiteral("config/a. ")}) {
+            const BackupFiles::RestoreResult refusedPath = BackupFiles::restoreFiles(
+                instanceDir, {{bad, QByteArray("x")}},
+                manifestFor(QStringLiteral("files-instance"), QString(), 0));
+            check(!refusedPath.ok && refusedPath.safetyZip.isEmpty()
+                      && !QFileInfo::exists(work + QStringLiteral("/escape.txt")),
+                  QStringLiteral("ZQ13 可疑路径被拒（%1）").arg(bad), refusedPath.problem);
+        }
+
+        // 备份内容被改过：整份不认。
+        writeFileAt(backupDir + QStringLiteral("/files/options.txt"), "tampered\n");
+        check(!BackupFiles::readFilesPayload(backupDir, &loaded, &problem) && loaded.isEmpty(),
+              "★ ZQ13 备份里的文件被改过 ⇒ 读回失败，不拿它还原", problem);
+
+        // 保留策略：按实例，最多 N 份、合计上限，最新几份不受大小限制，当前会话的不删。
+        QDir(filesRoot).removeRecursively();
+        QDir().mkpath(filesRoot);
+        const QByteArray big(400, 'x');
+        for (int i = 0; i < 7; ++i) {
+            const QString session = i == 0 ? QStringLiteral("current") : QStringLiteral("old");
+            BackupFiles::writeFilesBackup(manifestFor(QStringLiteral("files-instance"), session, i),
+                                          {{QStringLiteral("options.txt"), big}},
+                                          filesRoot + QStringLiteral("/keep-%1").arg(i));
+        }
+        BackupFiles::writeFilesBackup(manifestFor(QStringLiteral("other-instance"), QString(), 0),
+                                      {{QStringLiteral("options.txt"), big}},
+                                      filesRoot + QStringLiteral("/other"));
+        // 最新 2 份豁免大小；合计 1000 字节 ⇒ 第 3 份（第 1200 字节）起超限；最多 5 份。
+        const QStringList pruned = BackupFiles::pruneFilesBackups(
+            QStringLiteral("files-instance"), QStringLiteral("current"), 5, 1000, 2);
+        QStringList left;
+        for (const BackupFiles::FilesBackup &backup :
+             BackupFiles::listFilesBackups(QStringLiteral("files-instance"))) {
+            left.append(QFileInfo(backup.path).fileName());
+        }
+        check(left == QStringList{QStringLiteral("keep-6"), QStringLiteral("keep-5"),
+                                  QStringLiteral("keep-0")}
+                  && pruned.size() == 4
+                  && QFileInfo(filesRoot + QStringLiteral("/other")).isDir(),
+              "★★ ZQ13 保留策略：最新两份留着、超限的从旧删、当前会话那份不删、别的实例不碰",
+              left.join(QLatin1Char(',')));
+        const QStringList byCount = BackupFiles::pruneFilesBackups(
+            QStringLiteral("files-instance"), QString(), 1, 1024LL * 1024 * 1024, 5);
+        check(byCount.size() == 2
+                  && BackupFiles::listFilesBackups(QStringLiteral("files-instance")).size() == 1,
+              "ZQ13 保留策略：份数上限对最新几份也生效", byCount.join(QLatin1Char(',')));
+        QDir(filesRoot).removeRecursively();
+    }
     AppPaths::setMinecraftDir(originalDir);
 }
 

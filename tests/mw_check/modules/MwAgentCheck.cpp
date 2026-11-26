@@ -14,6 +14,8 @@
 #include "util/AppPaths.hpp"
 #include "agent/AgentSessionStore.hpp"
 #include "controllers/AgentController.hpp"
+#include "controllers/AgentLauncherHostImpl.hpp"
+#include "agent/AgentBackupIndex.hpp"
 #include "agent/AgentModelClient.hpp"
 
 #include <QCoreApplication>
@@ -658,6 +660,49 @@ int MwAgentChecks(QApplication &app) {
             check(controller->currentSessionId() == extra.meta.id,
                   "空会话：「+」复用盘上现成的空会话", controller->currentSessionId());
         }
+    }
+
+    // #129：智能体恢复备份和「从快照恢复…」同三道闸 —— 实例正被占用时拒绝，盘上不动。
+    {
+        const QString instanceId = QStringLiteral("mw-backup-gate");
+        const QString root = AppPaths::versionDir(instanceId);
+        QDir().mkpath(root);
+        const auto writeOptions = [&root](const QByteArray &bytes) {
+            QFile file(root + QStringLiteral("/options.txt"));
+            if (file.open(QIODevice::WriteOnly)) file.write(bytes);
+        };
+        const auto readOptions = [&root] {
+            QFile file(root + QStringLiteral("/options.txt"));
+            return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
+        };
+        writeOptions("fov:110\n");
+        QString backupId;
+        QString problem;
+        check(AgentBackups::write(QString(AgentBackups::kTriggerCreate), instanceId,
+                                  QStringLiteral("mw-session"), QString(), QStringLiteral("options"),
+                                  {{QStringLiteral("options.txt"), QByteArray("fov:70\n")}},
+                                  &backupId, nullptr, &problem),
+              "备份闸：写一份智能体备份", problem);
+        AgentLauncherHostImpl host(&window);
+        QList<AgentHostBackupRef> refs;
+        host.backups(&refs, nullptr);
+        check(std::any_of(refs.cbegin(), refs.cend(), [&](const AgentHostBackupRef &ref) {
+                  return ref.backupId == backupId && ref.instanceId == instanceId && ref.restorable;
+              }),
+              "备份闸：宿主列出新格式备份并带上实例");
+        window.markFileOperationBusyForTest(instanceId);
+        QString snapshot;
+        const bool refused = !host.restoreBackup(QStringLiteral("mw-session"), backupId, &snapshot, &problem);
+        window.releaseFileOperationBusyForTest(instanceId);
+        check(refused && readOptions() == QByteArray("fov:110\n"),
+              "★ 备份闸：实例正被占用时拒绝恢复，文件不动", problem);
+        problem.clear();
+        check(host.restoreBackup(QStringLiteral("mw-session"), backupId, &snapshot, &problem) &&
+                  readOptions() == QByteArray("fov:70\n") && !snapshot.isEmpty(),
+              "备份闸：占用解除后恢复成功并留下恢复前备份", problem);
+        check(!window.instanceBusyForTest(instanceId),
+              "备份闸：恢复结束后实例不再记成忙");
+        QDir(root).removeRecursively();
     }
 
     controller->shutdown();

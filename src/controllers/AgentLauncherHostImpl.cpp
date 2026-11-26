@@ -11,6 +11,8 @@
 
 #include "MainWindow.hpp"
 
+#include "BackupController.hpp"
+
 #include "InstancePagesController.hpp"
 #include "agent/AgentInstancePaths.hpp"
 #include "agent/AgentPaths.hpp"
@@ -19,6 +21,7 @@
 #include "manage/InstanceFiles.hpp"
 #include "manage/LaunchHistory.hpp"
 #include "download/DownloadManager.hpp"
+#include "launcher/LauncherManager.hpp"
 #include "manage/VersionManager.hpp"
 #include "settings/EffectiveJavaSettings.hpp"
 #include "settings/GlobalJavaSettings.hpp"
@@ -660,18 +663,19 @@ bool AgentLauncherHostImpl::javaVersions(QList<int> *majors, QString *problem) {
 bool AgentLauncherHostImpl::backups(QList<AgentHostBackupRef> *items, QString *problem) {
     if (items == nullptr) return false;
     items->clear();
-    QList<AgentBackupEntry> entries;
-    if (!m_maintenance.list(&entries, problem)) return false;
-    for (const AgentBackupEntry &entry : entries) {
+    Q_UNUSED(problem);
+    // 新格式（启动器备份目录）与冻结的旧库一起列；旧库只读，恢复前快照一律进新格式。
+    for (const AgentBackups::Item &item : AgentBackups::list(QString(), &m_maintenance)) {
         AgentHostBackupRef ref;
-        ref.backupId = entry.backupId;
-        ref.owner = entry.owner;
-        ref.source = entry.source;
-        ref.label = entry.reason.isEmpty() ? QCoreApplication::translate("AgentLauncherHostImpl", "维护备份") : entry.reason;
-        ref.sourceSessionId = entry.sourceSessionId;
-        ref.createdAt = entry.createdAt;
-        ref.bytes = entry.size;
-        ref.restorable = entry.owner == QStringLiteral("agent");
+        ref.backupId = item.backupId;
+        ref.owner = QStringLiteral("agent");
+        ref.source = item.legacy() ? QStringLiteral("agent-session") : QStringLiteral("launcher-files");
+        ref.label = AgentBackups::label(item);
+        ref.sourceSessionId = item.sessionId;
+        ref.instanceId = item.instanceId;
+        ref.createdAt = item.createdAt;
+        ref.bytes = item.bytes;
+        ref.restorable = true;
         items->append(ref);
     }
     // 启动器自己的实例/世界备份只列文件（读清单要起一次外部进程，太贵）：只引用不改写。
@@ -738,7 +742,7 @@ bool AgentLauncherHostImpl::planBackup(const QString &instanceId, const QStringL
     plan->scope = scopes.join(QStringLiteral("+"));
     plan->relativePaths = relativePaths;
     plan->bytes = bytes;
-    plan->saveLocation = AgentPaths::maintenanceBackupDir();
+    plan->saveLocation = BackupFiles::backupDir(BackupFiles::Kind::Files);
     return true;
 }
 
@@ -746,7 +750,7 @@ bool AgentLauncherHostImpl::createBackup(const QString &sessionId, const QString
                                          const AgentHostBackupPlan &plan, QString *backupId,
                                          QString *problem) {
     const QString root = instanceDir(instanceId);
-    QList<QPair<QString, QByteArray>> files;
+    QList<BackupFiles::FilePayload> files;
     qint64 total = 0;
     for (const QString &relative : plan.relativePaths) {
         QFile file(root + QLatin1Char('/') + relative);
@@ -761,66 +765,55 @@ bool AgentLauncherHostImpl::createBackup(const QString &sessionId, const QString
         if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "未读取到可备份的文件。");
         return false;
     }
-    return m_maintenance.createFromFiles(sessionId, instanceId, files,
-                                         QCoreApplication::translate("AgentLauncherHostImpl", "智能体备份：%1").arg(plan.scope),
-                                         backupId, problem);
+    return AgentBackups::write(QString(AgentBackups::kTriggerCreate), instanceId, sessionId,
+                               QString(), plan.scope, files, backupId, nullptr,
+                               problem);
 }
 
 bool AgentLauncherHostImpl::restoreBackup(const QString &sessionId, const QString &backupId,
                                           QString *preRestoreBackupId, QString *problem) {
-    QList<QPair<QString, QByteArray>> files;
-    if (!m_maintenance.readFiles(backupId, &files, problem)) return false;
-    QList<AgentBackupEntry> entries;
-    m_maintenance.list(&entries);
-    QString instanceId;
-    for (const AgentBackupEntry &entry : entries) {
-        if (entry.backupId == backupId) instanceId = entry.instanceId;
-    }
-    if (instanceId.isEmpty()) {
-        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "备份元数据缺少实例 ID，已拒绝恢复。");
+    const auto failWith = [problem](const QString &text) {
+        if (problem != nullptr) *problem = text;
         return false;
+    };
+    AgentBackups::Item item;
+    for (const AgentBackups::Item &candidate : AgentBackups::list(QString(), &m_maintenance)) {
+        if (candidate.backupId == backupId) item = candidate;
+    }
+    if (item.backupId.isEmpty()) {
+        return failWith(QCoreApplication::translate("AgentLauncherHostImpl", "找不到该备份。"));
+    }
+    const QString instanceId = item.instanceId;
+    if (instanceId.isEmpty()) {
+        return failWith(QCoreApplication::translate("AgentLauncherHostImpl", "备份元数据缺少实例 ID，已拒绝恢复。"));
     }
     const QString root = instanceDir(instanceId);
     if (!QFileInfo(root).isDir()) {
-        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "实例目录已不存在。");
-        return false;
+        return failWith(QCoreApplication::translate("AgentLauncherHostImpl", "实例目录已不存在。"));
     }
-    // 恢复前快照：把**现在**这几个文件存一份，恢复出错还能原路回来。
-    QList<QPair<QString, QByteArray>> current;
-    for (const auto &file : files) {
-        QFile existing(root + QLatin1Char('/') + file.first);
-        if (!existing.open(QIODevice::ReadOnly)) continue;
-        const QByteArray bytes = existing.read(kBackupFileLimit + 1);
-        if (bytes.size() > kBackupFileLimit) continue;
-        current.append({file.first, bytes});
+    // 和备份页「从快照恢复…」同三道闸：运行中、正被复制/安装/还原、备份任务进行中。
+    if (m_owner != nullptr &&
+        ((m_owner->m_launcherManager != nullptr && m_owner->m_launcherManager->isVersionRunning(instanceId)) ||
+         m_owner->installingVersionIds().contains(instanceId) ||
+         (m_owner->m_backupController != nullptr && m_owner->m_backupController->busy()))) {
+        return failWith(QCoreApplication::translate("AgentLauncherHostImpl", "实例正在运行，或正被复制、备份、还原或安装占用，已拒绝恢复。请等待其结束后再试。"));
     }
-    QString snapshotId;
-    if (!current.isEmpty() &&
-        !m_maintenance.createFromFiles(sessionId, instanceId, current,
-                                       QCoreApplication::translate("AgentLauncherHostImpl", "恢复备份前的快照"), &snapshotId,
-                                       nullptr)) {
-        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "无法创建恢复前快照，已中止恢复。");
-        return false;
+    QList<BackupFiles::FilePayload> files;
+    if (!AgentBackups::readFiles(item, &m_maintenance, &files, problem)) return false;
+    BackupFiles::Manifest safety;
+    safety.root = QStringLiteral("files");
+    safety.label = instanceId;
+    safety.sourceInstanceId = instanceId;
+    safety.sessionId = sessionId;
+    if (m_owner != nullptr) m_owner->markFileOperationBusy(instanceId);
+    const BackupFiles::RestoreResult restored = BackupFiles::restoreFiles(root, files, safety);
+    if (m_owner != nullptr) m_owner->releaseFileOperationBusy(instanceId);
+    BackupFiles::pruneFilesBackups(instanceId, sessionId);
+    if (!restored.ok) return failWith(restored.problem);
+    if (preRestoreBackupId != nullptr) {
+        *preRestoreBackupId =
+            restored.safetyZip.isEmpty() ? QString() : QFileInfo(restored.safetyZip).fileName();
     }
-    for (const auto &file : files) {
-        const QString relative = QString::fromUtf8(file.first.toUtf8());
-        const QString normalized = QDir::cleanPath(relative);
-        if (normalized.startsWith(QStringLiteral("..")) || QDir::isAbsolutePath(normalized) ||
-            InstanceFiles::validatePathSegment(normalized.split(QLatin1Char('/')).constFirst())
-                .isEmpty()) {
-            if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "备份中的路径无效：%1").arg(relative);
-            return false;
-        }
-        const QString target = root + QLatin1Char('/') + normalized;
-        QDir().mkpath(QFileInfo(target).absolutePath());
-        QSaveFile out(target);
-        if (!out.open(QIODevice::WriteOnly) || out.write(file.second) != file.second.size() ||
-            !out.commit()) {
-            if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "无法写回：%1").arg(normalized);
-            return false;
-        }
-    }
-    if (preRestoreBackupId != nullptr) *preRestoreBackupId = snapshotId;
     return true;
 }
 

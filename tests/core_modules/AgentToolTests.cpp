@@ -11,6 +11,9 @@
 #include "agent/AgentFileToolEngine.hpp"
 #include "agent/AgentInstanceLock.hpp"
 #include "agent/AgentTool.hpp"
+#include "agent/AgentWorkspaceStore.hpp"
+#include "manage/BackupFiles.hpp"
+#include "util/AppPaths.hpp"
 
 #include <QDir>
 #include <QFile>
@@ -41,9 +44,15 @@ void runAgentToolTests() {
     other.write("password=super-secret-value\n");
     other.close();
 
-    AgentBackupIndex backups(fixture.path() + QStringLiteral("/backups"));
+    // 写前备份落在当前游戏文件夹的 cache/backups/files：指到临时目录，收尾还原。
+    const QString originalGameDir = AppPaths::minecraftDir();
+    AppPaths::setMinecraftDir(fixture.path());
+    struct GameDirGuard {
+        QString dir;
+        ~GameDirGuard() { AppPaths::setMinecraftDir(dir); }
+    } gameDirGuard{originalGameDir};
     AgentArtifactStore artifacts(fixture.path() + QStringLiteral("/artifacts"));
-    AgentFileTools files(&backups);
+    AgentFileTools files(true);
     const AgentToolContext context{QStringLiteral("s1"), QStringLiteral("inst-1"),
                                    QStringLiteral("实例 1"),
                                    AgentInstanceLocks::gameRootId(fixture.path()), root,
@@ -200,8 +209,54 @@ void runAgentToolTests() {
     after.close();
     check(!written.data.value(QStringLiteral("backupId")).toString().isEmpty(),
           "工具：写入带写前备份 id");
-    check(written.data.value(QStringLiteral("backupDir")).toString().startsWith(backups.root()),
-          "工具：备份落在维护备份目录");
+    check(written.data.value(QStringLiteral("backupDir")).toString().startsWith(
+              BackupFiles::backupDir(BackupFiles::Kind::Files)),
+          "工具：备份落在启动器备份目录（cache/backups/files）");
+    {
+        const QList<AgentBackups::Item> listed = AgentBackups::list(QStringLiteral("inst-1"), nullptr);
+        QList<BackupFiles::FilePayload> payload;
+        check(listed.size() == 1 && listed.constFirst().trigger == AgentBackups::kTriggerWrite &&
+                  listed.constFirst().sessionId == QStringLiteral("s1") &&
+                  AgentBackups::readFiles(listed.constFirst(), nullptr, &payload) &&
+                  payload.size() == 1 &&
+                  payload.constFirst().path == QStringLiteral("config/a.toml") &&
+                  payload.constFirst().data == QByteArray("maxMemory = 4096\n"),
+              "工具：写前备份可列出，内容是写入前的原文");
+    }
+
+    // 写进修复工作区：不备份（那是副本，备份记原实例 id 会让「恢复」写回原实例）。
+    {
+        AgentWorkspaceStore workspaces;
+        AgentWorkspaceRecord workspace;
+        workspace.id = AgentWorkspaceStore::newId();
+        workspace.sourceInstanceId = context.instanceId;
+        workspace.versionId = AgentWorkspaceStore::newVersionId(workspace.id);
+        workspace.rootPath = workspaces.workspaceRoot(workspace.id);
+        workspace.status = QStringLiteral("ready");
+        const QString copyRoot =
+            workspace.rootPath + QStringLiteral("/versions/") + workspace.versionId;
+        QDir().mkpath(copyRoot + QStringLiteral("/config"));
+        QFile copy(copyRoot + QStringLiteral("/config/a.toml"));
+        check(copy.open(QIODevice::WriteOnly), "工具：造工作区里的配置", copy.fileName());
+        copy.write("maxMemory = 4096\n");
+        copy.close();
+        QString problem;
+        check(workspaces.create(workspace, &problem), "工具：建测试工作区", problem);
+        const AgentFileReadResult inCopy = files.read(copyRoot, QStringLiteral("config/a.toml"), 4096);
+        const AgentToolResult askCopy = engine.invoke(callFor(
+            QStringLiteral("fs.write"),
+            QJsonObject{{QStringLiteral("path"), QStringLiteral("config/a.toml")},
+                        {QStringLiteral("content"), QStringLiteral("maxMemory = 2048\n")},
+                        {QStringLiteral("expectedSha256"), inCopy.sha256},
+                        {QStringLiteral("fileIdentityToken"), inCopy.identityToken},
+                        {QStringLiteral("workspaceId"), workspace.id}}));
+        const AgentToolResult wroteCopy = engine.resolveApproval(
+            askCopy.approval.value(QStringLiteral("approvalId")).toString(), true);
+        check(wroteCopy.ok() && wroteCopy.data.value(QStringLiteral("backupId")).toString().isEmpty() &&
+                  AgentBackups::list(QStringLiteral("inst-1"), nullptr).size() == 1,
+              "工具：写工作区成功且不留备份", wroteCopy.summary);
+        QDir(workspace.rootPath).removeRecursively();
+    }
 
     // prepare 之后对象被替换：提交拒绝，不假装成功。
     const AgentFileReadResult snapshot = files.read(root, QStringLiteral("config/a.toml"), 4096);

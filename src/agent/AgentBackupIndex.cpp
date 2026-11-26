@@ -12,6 +12,7 @@
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -283,3 +284,117 @@ bool AgentBackupIndex::removeOwnedBackup(const QString &backupId, QString *probl
     if (!ok && problem != nullptr) *problem = QCoreApplication::translate("AgentBackupIndex", "备份目录未能完全删除。");
     return ok;
 }
+
+namespace AgentBackups {
+
+namespace {
+
+/// 旧库没有 trigger 字段，只能按当时写进去的 reason 认（中文原文或当时的译文）。
+QString legacyTrigger(const QString &reason) {
+    if (reason == QStringLiteral("写入文件前的备份") ||  // i18n-ignore
+        reason == QCoreApplication::translate("AgentFileTools", "写入文件前的备份")) {
+        return QString(kTriggerWrite);
+    }
+    if (reason == QStringLiteral("恢复备份前的快照") ||  // i18n-ignore
+        reason == QCoreApplication::translate("AgentLauncherHostImpl", "恢复备份前的快照")) {
+        return QString(kTriggerBeforeRestore);
+    }
+    return QString(kTriggerCreate);
+}
+
+}  // namespace
+
+QList<Item> list(const QString &instanceId, AgentBackupIndex *legacy) {
+    QList<Item> items;
+    for (const BackupFiles::FilesBackup &backup : BackupFiles::listFilesBackups(instanceId)) {
+        const BackupFiles::Manifest &manifest = backup.manifest;
+        Item item;
+        item.backupId = QFileInfo(backup.path).fileName();
+        item.instanceId = manifest.sourceInstanceId;
+        item.sessionId = manifest.sessionId;
+        item.sessionTitle = manifest.sessionTitle;
+        item.trigger = manifest.trigger.isEmpty() ? QString(kTriggerCreate) : manifest.trigger;
+        item.scope = manifest.scope.join(QLatin1Char('+'));
+        for (const BackupFiles::FileRecord &record : manifest.files) item.paths.append(record.path);
+        item.bytes = manifest.totalBytes;
+        item.createdAt = manifest.createdAt;
+        item.path = backup.path;
+        items.append(item);
+    }
+    QList<AgentBackupEntry> entries;
+    if (legacy != nullptr) legacy->list(&entries);
+    for (const AgentBackupEntry &entry : std::as_const(entries)) {
+        if (entry.owner != QStringLiteral("agent")) continue;
+        if (!instanceId.isEmpty() && entry.instanceId != instanceId) continue;
+        Item item;
+        item.backupId = entry.backupId;
+        item.instanceId = entry.instanceId;
+        item.sessionId = entry.sourceSessionId;
+        item.trigger = legacyTrigger(entry.reason);
+        if (item.trigger == kTriggerCreate) item.scope = entry.reason.section(QChar(0xFF1A), 1);
+        item.paths = entry.originalPaths;
+        item.bytes = entry.size;
+        item.createdAt = entry.createdAt;
+        items.append(item);
+    }
+    std::stable_sort(items.begin(), items.end(),
+                     [](const Item &a, const Item &b) { return a.createdAt > b.createdAt; });
+    return items;
+}
+
+bool readFiles(const Item &item, AgentBackupIndex *legacy,
+               QList<BackupFiles::FilePayload> *files, QString *problem) {
+    if (files == nullptr) return false;
+    files->clear();
+    if (!item.legacy()) return BackupFiles::readFilesPayload(item.path, files, problem);
+    QList<QPair<QString, QByteArray>> pairs;
+    if (legacy == nullptr || !legacy->readFiles(item.backupId, &pairs, problem)) {
+        if (problem != nullptr && problem->isEmpty()) {
+            *problem = QCoreApplication::translate("AgentBackupIndex", "备份不存在。");
+        }
+        return false;
+    }
+    for (const auto &pair : std::as_const(pairs)) files->append({pair.first, pair.second});
+    return true;
+}
+
+bool write(const QString &trigger, const QString &instanceId, const QString &sessionId,
+           const QString &sessionTitle, const QString &scope,
+           const QList<BackupFiles::FilePayload> &files, QString *backupId, QString *backupDir,
+           QString *problem) {
+    BackupFiles::Manifest manifest;
+    manifest.kind = BackupFiles::Kind::Files;
+    manifest.root = QStringLiteral("files");
+    manifest.label = instanceId;
+    manifest.sourceInstanceId = instanceId;
+    manifest.createdAt = QDateTime::currentDateTime();
+    manifest.trigger = trigger;
+    manifest.sessionId = sessionId;
+    manifest.sessionTitle = sessionTitle;
+    if (!scope.isEmpty()) manifest.scope = QStringList{scope};
+    const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    const QString root = BackupFiles::backupDir(BackupFiles::Kind::Files);
+    const QString dir = QDir(root).filePath(id);
+    QDir().mkpath(root);
+    const BackupFiles::WriteResult written = BackupFiles::writeFilesBackup(manifest, files, dir);
+    if (!written.ok) {
+        if (problem != nullptr) *problem = written.problem;
+        return false;
+    }
+    BackupFiles::pruneFilesBackups(instanceId, sessionId);
+    if (backupId != nullptr) *backupId = id;
+    if (backupDir != nullptr) *backupDir = dir;
+    return true;
+}
+
+QString label(const Item &item) {
+    if (item.trigger == kTriggerWrite) {
+        return QCoreApplication::translate("AgentFileTools", "写入文件前的备份");
+    }
+    if (item.trigger == kTriggerBeforeRestore) {
+        return QCoreApplication::translate("AgentLauncherHostImpl", "恢复备份前的快照");
+    }
+    return QCoreApplication::translate("AgentLauncherHostImpl", "智能体备份：%1").arg(item.scope);
+}
+
+}  // namespace AgentBackups
