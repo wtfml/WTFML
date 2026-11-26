@@ -90,9 +90,9 @@ UpgradeHistoryDialog::UpgradeHistoryDialog(QWidget *parent) : ChromeDialog(paren
         if (entry.snapshotName.isEmpty()) {
             text += QCoreApplication::translate("UpgradeHistoryDialog", "快照：无（副本模式以源实例为回滚材料）\n");
         } else {
-            text += QCoreApplication::translate("UpgradeHistoryDialog", "快照：%1%2\n")
-                        .arg(entry.snapshotName,
-                             entry.rollbackAvailable ? QCoreApplication::translate("UpgradeHistoryDialog", "（可恢复）") : QString());
+            text += entry.rollbackAvailable
+                ? QCoreApplication::translate("UpgradeHistoryDialog", "快照：%1（可恢复）\n").arg(entry.snapshotName)
+                : QCoreApplication::translate("UpgradeHistoryDialog", "快照：%1\n").arg(entry.snapshotName);
         }
         if (!entry.problem.isEmpty()) {
             text += QCoreApplication::translate("UpgradeHistoryDialog", "说明：%1").arg(entry.problem);
@@ -127,7 +127,7 @@ void UpgradeHistoryDialog::rebuild() {
                          : entry.cancelled ? QCoreApplication::translate("UpgradeHistoryDialog", "已取消")
                                            : QCoreApplication::translate("UpgradeHistoryDialog", "失败");
         if (!entry.ok && !entry.problem.isEmpty()) {
-            result += QCoreApplication::translate("UpgradeHistoryDialog", "：%1").arg(entry.problem);
+            result = QCoreApplication::translate("UpgradeHistoryDialog", "%1：%2").arg(result, entry.problem);
         }
         item->setText(2, result);
         item->setData(0, Qt::UserRole, i);

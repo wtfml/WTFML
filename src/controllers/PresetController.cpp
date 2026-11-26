@@ -580,7 +580,7 @@ void PresetController::pushCatalog(const Presets::CatalogSnapshot &snapshot, con
         item.categoryKeys = summary.componentCategories;
         item.iconPath = summary.iconPath;
         if (!summary.componentCategories.isEmpty()) { item.categoryKey = QStringLiteral("composite"); item.categoryText = tr("综合预设"); }
-        if (summary.id.startsWith(QStringLiteral("draft:"))) { item.categoryKey = QStringLiteral("draft"); item.categoryText = tr("草稿"); item.name += tr("（草稿）"); }
+        if (summary.id.startsWith(QStringLiteral("draft:"))) { item.categoryKey = QStringLiteral("draft"); item.categoryText = tr("草稿"); item.name = tr("%1（草稿）").arg(item.name); }
         items.append(item);
     }
 
@@ -984,17 +984,17 @@ void PresetController::captureInto(const QString &presetId, const QString &insta
                 .arg(added));
         refreshList(presetId);
         if (m_page != nullptr) {
-            QString status = tr("已收到 %1 条平台模组引用").arg(manifest.modReferences.size());
-            if (added > 0) {
-                status += tr("（新增 %1 条）").arg(added);
-            }
+            QString status = added > 0
+                ? tr("已收到 %1 条平台模组引用（新增 %2 条）。")
+                      .arg(manifest.modReferences.size())
+                      .arg(added)
+                : tr("已收到 %1 条平台模组引用。").arg(manifest.modReferences.size());
             if (unidentified > 0) {
                 // 认不出的那几件怎么处理**要说出来**：编辑器那条「从本地模组导入」会按
                 // CurseForge 指纹 + Modrinth sha1 再认一遍（这一层只认安装记录，不联网）。
-                status += tr("；另有 %1 个模组的来源未知。可在「预设编辑器 → 从本地模组导入」中重新识别，或在模组页手动补充。")
+                status += tr("另有 %1 个模组的来源未知。可在「预设编辑器 → 从本地模组导入」中重新识别，或在模组页手动补充。")
                               .arg(unidentified);
             }
-            status += tr("。");
             m_page->showStatus(status);
         }
         return;
@@ -1264,17 +1264,20 @@ void PresetController::showPreview(const Presets::PreviewSnapshot &snapshot) {
             QStringLiteral("%1 ← %2").arg(conflict.keys, conflict.claims.join(QStringLiteral(" / "))));
     }
     if (plan.ok) {
-        QString summary = tr("%1 段，将改动 %2 项").arg(plan.rows.size()).arg(plan.totalCount());
+        QStringList parts{tr("%1 段，将改动 %2 项").arg(plan.rows.size()).arg(plan.totalCount())};
         if (plan.blockedRowCount() > 0) {
-            summary += tr("，%1 段无法完成").arg(plan.blockedRowCount());
+            parts.append(tr("，%1 段无法完成").arg(plan.blockedRowCount()));
         }
         if (plan.riskyRowCount() > 0) {
-            summary += tr("，%1 段需留意").arg(plan.riskyRowCount());
+            parts.append(tr("，%1 段需留意").arg(plan.riskyRowCount()));
         }
-        view.summary = summary;
+        view.summary = parts.join(QString());
     }
-    if (!manifest.modReferences.isEmpty())
-        view.summary += tr("；平台模组 %1 项（发行文件及前置待执行时确认）").arg(manifest.modReferences.size());
+    if (!manifest.modReferences.isEmpty()) {
+        const QString mods = tr("平台模组 %1 项（发行文件及前置待执行时确认）")
+                                 .arg(manifest.modReferences.size());
+        view.summary = view.summary.isEmpty() ? mods : tr("%1；%2").arg(view.summary, mods);
+    }
     m_page->showPlan(view);
 }
 
@@ -1341,9 +1344,13 @@ void PresetController::showExecutionReport(const QString &presetId, const QStrin
         {"blocked", tr("未解决")}, {"skipped", tr("已跳过")}, {"pending-world", tr("待应用：等待目标世界")}};
     for (const auto &value : rows) {
         const auto row = value.toObject(); const QString state = row.value("state").toString();
-        view.lines.append(tr("%1：%2；写入 %3 项 %4")
-            .arg(row.value(mods ? "filename" : "title").toString(), states.value(state, tr("状态无法确认")))
-            .arg(row.value("written").toInt()).arg(row.value("reason").toString()));
+        const QString name = row.value(mods ? "filename" : "title").toString();
+        const QString stateText = states.value(state, tr("状态无法确认"));
+        const int written = row.value("written").toInt();
+        const QString reason = row.value("reason").toString();
+        view.lines.append(reason.isEmpty()
+            ? tr("%1：%2；写入 %3 项").arg(name, stateText).arg(written)
+            : tr("%1：%2；写入 %3 项 %4").arg(name, stateText).arg(written).arg(reason));
     }
     view.lines.append(tr("已完成项保留；继续时重新核对预设和实际文件，只重试未完成部分。不会声明整个流程回滚。"));
     m_page->showApplyResult(view);

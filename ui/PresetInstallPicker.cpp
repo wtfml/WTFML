@@ -563,7 +563,7 @@ void PresetInstallPicker::updateSummary() {
             const QString name = nameFor(category.key, category.selectedId).toHtmlEscaped();
             m_pages[i].source->setText(QStringLiteral("<span style=\"color:%1\">%2</span><span style=\"color:%3\">%4</span>")
                 .arg(muted, tr("已选："), chosen ? ink : muted, name));
-            m_pages[i].source->setToolTip(category.title + tr("：") + nameFor(category.key, category.selectedId));
+            m_pages[i].source->setToolTip(tr("%1：%2").arg(category.title, nameFor(category.key, category.selectedId)));
         }
         if (chosen) { missing += qMax(0, m_pages[i].missing); unknown += qMax(0, m_pages[i].unknown); }
     }
