@@ -14292,6 +14292,10 @@ Re-import the modpack with the same instance name to resume downloading.</transl
             <translation>Couldn't connect</translation>
         </message>
         <message>
+            <source>不再提示</source>
+            <translation>Don't ask again</translation>
+        </message>
+        <message>
             <source>无法刷新登录凭据</source>
             <translation>Couldn't refresh sign-in credentials</translation>
         </message>
@@ -17955,10 +17959,6 @@ You can undo the last update in "Update center".</translation>
         <message>
             <source>启动 %1</source>
             <translation>Play %1</translation>
-        </message>
-        <message>
-            <source>停止游戏</source>
-            <translation>Stop</translation>
         </message>
         <message>
             <source>安装中 %1%</source>
