@@ -5,6 +5,7 @@
 
 #include "AgentSettings.hpp"
 
+#include <QCoreApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QSettings>
@@ -70,40 +71,40 @@ bool AgentProviderProfile::validateEnumFields(QString *problem) const {
         }
         return false;
     };
-    if (id.isEmpty()) return reject(QStringLiteral("配置 id 不能为空。"));
+    if (id.isEmpty()) return reject(QCoreApplication::translate("AgentSettings", "配置 id 不能为空。"));
     if (id.contains(QLatin1Char('/')) || id.contains(QLatin1Char('\\')) ||
         id.contains(QLatin1Char('?')) || id.contains(QLatin1Char('#'))) {
-        return reject(QStringLiteral("配置 id 含非法字符，请换一个。"));
+        return reject(QCoreApplication::translate("AgentSettings", "配置 id 含非法字符。"));
     }
     if (authMode != QLatin1String("bearer") && authMode != QLatin1String("api-key-header") &&
         authMode != QLatin1String("none")) {
-        return reject(QStringLiteral("认证头模式不是允许的枚举值。"));
+        return reject(QCoreApplication::translate("AgentSettings", "认证头模式不是允许的枚举值。"));
     }
     if (maxTokensField != QLatin1String("max_tokens") &&
         maxTokensField != QLatin1String("max_completion_tokens")) {
-        return reject(QStringLiteral("max_tokens 字段名不是允许的枚举值。"));
+        return reject(QCoreApplication::translate("AgentSettings", "max_tokens 字段名不是允许的枚举值。"));
     }
     if (systemRole != QLatin1String("system") && systemRole != QLatin1String("developer")) {
-        return reject(QStringLiteral("system role 不是允许的枚举值。"));
+        return reject(QCoreApplication::translate("AgentSettings", "system role 不是允许的枚举值。"));
     }
     if (reasoningEcho != QLatin1String("display-only") &&
         reasoningEcho != QLatin1String("send-back")) {
-        return reject(QStringLiteral("reasoning 回传方式不是允许的枚举值。"));
+        return reject(QCoreApplication::translate("AgentSettings", "reasoning 回传方式不是允许的枚举值。"));
     }
     if (deployment != QLatin1String("cloud") && deployment != QLatin1String("local")) {
-        return reject(QStringLiteral("部署类型不是允许的枚举值。"));
+        return reject(QCoreApplication::translate("AgentSettings", "部署类型不是允许的枚举值。"));
     }
     if (contextWindow < 1024 || contextWindow > 10000000) {
-        return reject(QStringLiteral("上下文窗口超出合理范围。"));
+        return reject(QCoreApplication::translate("AgentSettings", "上下文窗口超出合理范围。"));
     }
     if (maxOutput < 1 || maxOutput >= contextWindow) {
-        return reject(QStringLiteral("最大输出必须小于上下文窗口。"));
+        return reject(QCoreApplication::translate("AgentSettings", "最大输出必须小于上下文窗口。"));
     }
     if (timeoutSec < 5 || timeoutSec > 600) {
-        return reject(QStringLiteral("超时时间应在 5–600 秒之间。"));
+        return reject(QCoreApplication::translate("AgentSettings", "超时时间应在 5–600 秒之间。"));
     }
     if (temperature < 0.0 || temperature > 2.0) {
-        return reject(QStringLiteral("温度应在 0–2 之间。"));
+        return reject(QCoreApplication::translate("AgentSettings", "温度应在 0–2 之间。"));
     }
     return true;
 }
@@ -149,7 +150,7 @@ bool AgentSettings::saveProfile(const AgentProviderProfile &profile, QString *pr
     settings.sync();
     if (settings.status() != QSettings::NoError) {
         if (problem != nullptr) {
-            *problem = QStringLiteral("配置写盘失败（%1）。").arg(settings.fileName());
+            *problem = QCoreApplication::translate("AgentSettings", "配置写盘失败（%1）。").arg(settings.fileName());
         }
         return false;
     }
@@ -175,7 +176,7 @@ bool AgentSettings::removeProfile(const QString &profileId, QString *problem) {
     settings.sync();
     if (settings.status() != QSettings::NoError) {
         if (problem != nullptr) {
-            *problem = QStringLiteral("配置写盘失败（%1）。").arg(settings.fileName());
+            *problem = QCoreApplication::translate("AgentSettings", "配置写盘失败（%1）。").arg(settings.fileName());
         }
         return false;
     }

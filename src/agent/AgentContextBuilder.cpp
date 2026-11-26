@@ -40,7 +40,7 @@ int AgentContextBuilder::reservedOutputTokens(int maxOutput) {
 }
 
 QString AgentContextBuilder::omissionMarker(int omittedCount) {
-    return QStringLiteral("（更早的 %1 条消息已省略）").arg(qMax(0, omittedCount));
+    return QStringLiteral("(Earlier %1 message(s) omitted)").arg(qMax(0, omittedCount));  // i18n-ignore
 }
 
 QString AgentContextBuilder::interfaceLanguageName() {

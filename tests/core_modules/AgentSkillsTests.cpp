@@ -57,7 +57,7 @@ void runAgentSkillsTests() {
           "提示词：共享规则要求按最新消息或界面语言回复");
 
     const AgentSkill inspection = AgentSkillRegistry::find(QStringLiteral("inspection"));
-    check(inspection.name == QStringLiteral("实例体检"), "技能：体检已注册");
+    check(inspection.name == QStringLiteral("实例诊断"), "技能：体检已注册");
     check(inspection.readOnly, "技能：体检是只读");
     check(!inspection.requiresPlan, "技能：体检不要求计划");
     check(inspection.allowedTools.contains(QStringLiteral("diagnostics.startup")),

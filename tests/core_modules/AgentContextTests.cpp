@@ -55,7 +55,7 @@ void runAgentContextTests() {
     check(report.omittedMessages > 0 && report.truncated, "上下文：超预算时裁剪并标记",
           QString::number(report.omittedMessages));
     check(kept.constFirst().role == Agent::Role::System &&
-              kept.constFirst().content.contains(QStringLiteral("已省略")),
+              kept.constFirst().content.contains(QStringLiteral("omitted")),
           "上下文：旧消息位置插入省略标记");
     check(report.estimatedTokens <= report.budgetTokens ||
               kept.size() == 1,

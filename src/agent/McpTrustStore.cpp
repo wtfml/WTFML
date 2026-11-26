@@ -8,6 +8,7 @@
 #include "AgentPaths.hpp"
 #include "AgentRedaction.hpp"
 
+#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDir>
@@ -30,12 +31,12 @@ namespace {
 QString sha256OfFile(const QString &path, QString *problem) {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        if (problem != nullptr) *problem = QStringLiteral("可执行文件读不动：%1").arg(path);
+        if (problem != nullptr) *problem = QCoreApplication::translate("McpTrustStore", "无法读取可执行文件：%1").arg(path);
         return QString();
     }
     QCryptographicHash hash(QCryptographicHash::Sha256);
     if (!hash.addData(&file)) {
-        if (problem != nullptr) *problem = QStringLiteral("可执行文件哈希计算失败。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("McpTrustStore", "可执行文件哈希计算失败。");
         return QString();
     }
     return QString::fromLatin1(hash.result().toHex());
@@ -97,13 +98,13 @@ bool McpTrustStore::load(QList<McpServerConfig> *servers, QString *problem) cons
     QFile file(serversPath());
     if (!file.exists()) return true;
     if (!file.open(QIODevice::ReadOnly)) {
-        if (problem != nullptr) *problem = QStringLiteral("MCP 配置文件打不开。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("McpTrustStore", "无法打开 MCP 配置文件。");
         return false;
     }
     QJsonParseError error{};
     const QJsonDocument document = QJsonDocument::fromJson(file.readAll(), &error);
     if (error.error != QJsonParseError::NoError || !document.isObject()) {
-        if (problem != nullptr) *problem = QStringLiteral("MCP 配置文件格式不对。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("McpTrustStore", "MCP 配置文件格式无效。");
         return false;
     }
     for (const QJsonValue &value : document.object().value(QStringLiteral("servers")).toArray()) {
@@ -115,7 +116,7 @@ bool McpTrustStore::load(QList<McpServerConfig> *servers, QString *problem) cons
 
 bool McpTrustStore::save(const QList<McpServerConfig> &servers, QString *problem) {
     if (!QDir().mkpath(m_root)) {
-        if (problem != nullptr) *problem = QStringLiteral("MCP 配置目录建不出来。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("McpTrustStore", "无法创建 MCP 配置目录。");
         return false;
     }
     QJsonArray array;
@@ -126,7 +127,7 @@ bool McpTrustStore::save(const QList<McpServerConfig> &servers, QString *problem
     QSaveFile file(serversPath());
     if (!file.open(QIODevice::WriteOnly) || file.write(payload) != payload.size() ||
         !file.commit()) {
-        if (problem != nullptr) *problem = QStringLiteral("MCP 配置写盘失败。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("McpTrustStore", "MCP 配置写盘失败。");
         return false;
     }
     return true;
@@ -169,29 +170,29 @@ McpServerConfig McpTrustStore::find(const QString &serverId) const {
 }
 
 QString McpTrustStore::validateConfig(const McpServerConfig &server) {
-    if (server.id.isEmpty()) return QStringLiteral("服务器缺少 id。");
-    if (server.name.trimmed().isEmpty()) return QStringLiteral("服务器缺少名称。");
-    if (server.command.trimmed().isEmpty()) return QStringLiteral("没有填可执行文件。");
+    if (server.id.isEmpty()) return QCoreApplication::translate("McpTrustStore", "服务器缺少 id。");
+    if (server.name.trimmed().isEmpty()) return QCoreApplication::translate("McpTrustStore", "服务器缺少名称。");
+    if (server.command.trimmed().isEmpty()) return QCoreApplication::translate("McpTrustStore", "未填写可执行文件。");
     if (!QDir::isAbsolutePath(server.command)) {
-        return QStringLiteral("可执行文件必须是绝对路径（不解析 PATH）。");
+        return QCoreApplication::translate("McpTrustStore", "可执行文件须为绝对路径（不解析 PATH）。");
     }
     if (server.arguments.size() > McpLimits::kMaxArguments) {
-        return QStringLiteral("参数超过 %1 个。").arg(McpLimits::kMaxArguments);
+        return QCoreApplication::translate("McpTrustStore", "参数超过 %1 个。").arg(McpLimits::kMaxArguments);
     }
     for (const QString &argument : server.arguments) {
         if (argument.size() > McpLimits::kMaxArgumentLength) {
-            return QStringLiteral("单个参数超过 %1 字符。").arg(McpLimits::kMaxArgumentLength);
+            return QCoreApplication::translate("McpTrustStore", "单个参数超过 %1 字符。").arg(McpLimits::kMaxArgumentLength);
         }
     }
     if (!server.workingDirectory.isEmpty()) {
         if (!QDir::isAbsolutePath(server.workingDirectory)) {
-            return QStringLiteral("工作目录必须是绝对路径。");
+            return QCoreApplication::translate("McpTrustStore", "工作目录须为绝对路径。");
         }
         if (server.workingDirectory.size() > McpLimits::kMaxCwdLength) {
-            return QStringLiteral("工作目录路径太长。");
+            return QCoreApplication::translate("McpTrustStore", "工作目录路径过长。");
         }
         if (QFileInfo(server.workingDirectory) == QFileInfo(server.command)) {
-            return QStringLiteral("工作目录不能就是可执行文件本身。");
+            return QCoreApplication::translate("McpTrustStore", "工作目录不能是可执行文件自身。");
         }
     }
     return QString();
@@ -200,12 +201,12 @@ QString McpTrustStore::validateConfig(const McpServerConfig &server) {
 McpExecutableIdentity McpTrustStore::computeIdentity(const QString &path, QString *problem) {
     McpExecutableIdentity identity;
     if (path.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("可执行文件路径为空。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("McpTrustStore", "可执行文件路径为空。");
         return identity;
     }
     const QFileInfo info(path);
     if (!info.exists() || !info.isFile()) {
-        if (problem != nullptr) *problem = QStringLiteral("可执行文件不存在：%1").arg(path);
+        if (problem != nullptr) *problem = QCoreApplication::translate("McpTrustStore", "可执行文件不存在：%1").arg(path);
         return identity;
     }
     identity.absolutePath = info.canonicalFilePath();
@@ -228,7 +229,7 @@ bool McpTrustStore::loadConfirmations(QString *problem) const {
     QFile file(confirmationsPath());
     if (!file.exists()) return true;
     if (!file.open(QIODevice::ReadOnly)) {
-        if (problem != nullptr) *problem = QStringLiteral("MCP 确认记录打不开。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("McpTrustStore", "无法打开 MCP 确认记录。");
         return false;
     }
     const QJsonDocument document = QJsonDocument::fromJson(file.readAll());
@@ -244,7 +245,7 @@ bool McpTrustStore::loadConfirmations(QString *problem) const {
 
 bool McpTrustStore::saveConfirmations(QString *problem) const {
     if (!QDir().mkpath(m_root)) {
-        if (problem != nullptr) *problem = QStringLiteral("MCP 配置目录建不出来。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("McpTrustStore", "无法创建 MCP 配置目录。");
         return false;
     }
     QJsonArray array;
@@ -258,7 +259,7 @@ bool McpTrustStore::saveConfirmations(QString *problem) const {
     QSaveFile file(confirmationsPath());
     if (!file.open(QIODevice::WriteOnly) || file.write(payload) != payload.size() ||
         !file.commit()) {
-        if (problem != nullptr) *problem = QStringLiteral("MCP 确认记录写盘失败。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("McpTrustStore", "MCP 确认记录写盘失败。");
         return false;
     }
     return true;
@@ -281,12 +282,12 @@ McpTrustStore::GateResult McpTrustStore::checkStart(const QString &serverId) con
     result.server = find(serverId);
     if (!result.server.isValid()) {
         result.gate = GateResult::Gate::Blocked;
-        result.reason = QStringLiteral("服务器配置不存在。");
+        result.reason = QCoreApplication::translate("McpTrustStore", "服务器配置不存在。");
         return result;
     }
     if (!result.server.enabled) {
         result.gate = GateResult::Gate::Blocked;
-        result.reason = QStringLiteral("服务器没有启用。");
+        result.reason = QCoreApplication::translate("McpTrustStore", "服务器未启用。");
         return result;
     }
     result.configHash = result.server.configHash();
@@ -294,28 +295,28 @@ McpTrustStore::GateResult McpTrustStore::checkStart(const QString &serverId) con
     result.identity = computeIdentity(result.server.command, &identityProblem);
     if (!result.identity.isValid()) {
         result.gate = GateResult::Gate::Blocked;
-        result.reason = identityProblem.isEmpty() ? QStringLiteral("算不出可执行文件身份。")
+        result.reason = identityProblem.isEmpty() ? QCoreApplication::translate("McpTrustStore", "无法获取可执行文件身份。")
                                                    : identityProblem;
         return result;
     }
     McpConfirmation stored;
     if (!confirmation(serverId, &stored)) {
         result.gate = GateResult::Gate::NeedsConfirmation;
-        result.reason = QStringLiteral("首次启动这个服务器前需要确认。");
+        result.reason = QCoreApplication::translate("McpTrustStore", "首次启动该服务器前需确认。");
         return result;
     }
     if (stored.configHash != result.configHash) {
         result.gate = GateResult::Gate::NeedsConfirmation;
-        result.reason = QStringLiteral("配置改过了，需要重新确认。");
+        result.reason = QCoreApplication::translate("McpTrustStore", "配置已变更，需重新确认。");
         return result;
     }
     if (!stored.identity.sameAs(result.identity)) {
         result.gate = GateResult::Gate::NeedsConfirmation;
-        result.reason = QStringLiteral("可执行文件变了（SHA-256/大小/文件 ID），需要重新确认。");
+        result.reason = QCoreApplication::translate("McpTrustStore", "可执行文件已变更（SHA-256、大小或文件 ID），需重新确认。");
         return result;
     }
     result.gate = GateResult::Gate::Allowed;
-    result.reason = QStringLiteral("已确认（%1）。").arg(stored.confirmedAt);
+    result.reason = QCoreApplication::translate("McpTrustStore", "已确认（%1）。").arg(stored.confirmedAt);
     return result;
 }
 
@@ -337,7 +338,7 @@ bool McpTrustStore::confirm(const QString &serverId, const QString &purpose, Gat
     m_confirmations.insert(serverId, confirmation);
     if (!saveConfirmations(problem)) return false;
     gate.gate = GateResult::Gate::Allowed;
-    gate.reason = QStringLiteral("已确认，可以启动。");
+    gate.reason = QCoreApplication::translate("McpTrustStore", "已确认，可启动。");
     if (result != nullptr) *result = gate;
     return true;
 }

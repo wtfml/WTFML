@@ -68,7 +68,7 @@ bool credWrite(const QString &target, const QByteArray &secret, QString *problem
     credential.UserName = const_cast<LPWSTR>(L"WTFML");
     if (CredWriteW(&credential, 0) == FALSE) {
         if (problem != nullptr) {
-            *problem = QStringLiteral("Windows 凭据管理器写入失败（错误码 %1）。")
+            *problem = QCoreApplication::translate("AgentSecretStore", "Windows 凭据管理器写入失败（错误码 %1）。")
                            .arg(int(GetLastError()));
         }
         return false;
@@ -83,7 +83,7 @@ bool credDelete(const QString &target, QString *problem) {
             return true;
         }
         if (problem != nullptr) {
-            *problem = QStringLiteral("Windows 凭据管理器删除失败（错误码 %1）。").arg(int(error));
+            *problem = QCoreApplication::translate("AgentSecretStore", "Windows 凭据管理器删除失败（错误码 %1）。").arg(int(error));
         }
         return false;
     }
@@ -112,15 +112,15 @@ bool credentialManagerAvailable() {
 
 bool write(const QString &profileId, const QString &secret, Backend *backendOut, QString *problem) {
     if (profileId.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("配置 id 为空，拒绝保存凭据。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentSecretStore", "配置 id 为空，拒绝保存凭据。");
         return false;
     }
     if (secret.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("凭据为空，拒绝保存。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentSecretStore", "凭据为空，拒绝保存。");
         return false;
     }
     if (propertyTrue("wtfml.testAgentSecretProtectFail")) {
-        if (problem != nullptr) *problem = QStringLiteral("模拟故障：两条凭据存储路径都不可用，拒绝保存（旧值保留）。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentSecretStore", "模拟故障：两条凭据存储路径均不可用，拒绝保存，已保留原值。");
         return false;
     }
 
@@ -138,7 +138,7 @@ bool write(const QString &profileId, const QString &secret, Backend *backendOut,
     }
 #else
     if (credentialManagerAvailable()) {
-        credProblem = QStringLiteral("当前平台没有 Windows 凭据管理器。");
+        credProblem = QCoreApplication::translate("AgentSecretStore", "当前平台无 Windows 凭据管理器。");
     }
 #endif
 
@@ -156,15 +156,15 @@ bool write(const QString &profileId, const QString &secret, Backend *backendOut,
             return true;
         }
         if (problem != nullptr) {
-            *problem = QStringLiteral("DPAPI 后备写盘失败（%1）。").arg(fallback.fileName());
+            *problem = QCoreApplication::translate("AgentSecretStore", "DPAPI 后备写盘失败（%1）。").arg(fallback.fileName());
         }
         return false;
     }
 
     if (problem != nullptr) {
         *problem = credProblem.isEmpty()
-                       ? QStringLiteral("DPAPI 保护失败，拒绝保存凭据（不降级为明文）。")
-                       : QStringLiteral("%1 DPAPI 后备也不可用，拒绝保存。").arg(credProblem);
+                       ? QCoreApplication::translate("AgentSecretStore", "DPAPI 保护失败，拒绝保存凭据（不降级为明文）。")
+                       : QCoreApplication::translate("AgentSecretStore", "%1 DPAPI 后备同样不可用，拒绝保存。").arg(credProblem);
     }
     return false;
 }
@@ -172,7 +172,7 @@ bool write(const QString &profileId, const QString &secret, Backend *backendOut,
 ReadResult read(const QString &profileId) {
     ReadResult result;
     if (profileId.isEmpty()) {
-        result.problem = QStringLiteral("配置 id 为空。");
+        result.problem = QCoreApplication::translate("AgentSecretStore", "配置 id 为空。");
         return result;
     }
 
@@ -193,7 +193,7 @@ ReadResult read(const QString &profileId) {
         const QByteArray decrypted =
             SecretProtector::unprotect(QByteArray::fromBase64(stored.toLatin1()), secretMagic());
         if (decrypted.isEmpty()) {
-            result.problem = QStringLiteral("DPAPI 后备里的凭据解不开（换用户/换机器或值损坏）。");
+            result.problem = QCoreApplication::translate("AgentSecretStore", "DPAPI 后备凭据无法解密（账户变更、设备变更或内容损坏）。");
             return result;
         }
         result.secret = QString::fromUtf8(decrypted);
@@ -214,7 +214,7 @@ ReadResult read(const QString &profileId) {
         return result;
     }
 
-    result.problem = QStringLiteral("没有可用的凭据，请重新输入 API Key。");
+    result.problem = QCoreApplication::translate("AgentSecretStore", "无可用凭据，需重新输入 API Key。");
     return result;
 }
 
@@ -234,7 +234,7 @@ bool clear(const QString &profileId, QString *problem) {
     if (fallback.status() != QSettings::NoError) {
         ok = false;
         if (firstProblem.isEmpty()) {
-            firstProblem = QStringLiteral("DPAPI 后备清除失败（%1）。").arg(fallback.fileName());
+            firstProblem = QCoreApplication::translate("AgentSecretStore", "DPAPI 后备清除失败（%1）。").arg(fallback.fileName());
         }
     }
     if (!ok && problem != nullptr) {

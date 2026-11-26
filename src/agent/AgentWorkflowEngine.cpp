@@ -25,7 +25,7 @@ QJsonObject objectSchema(const QStringList &required, const QJsonObject &propert
 QJsonObject planEgress() {
     return QJsonObject{{QStringLiteral("kind"), QStringLiteral("workflow-plan")},
                        {QStringLiteral("decision"), QStringLiteral("confirm")},
-                       {QStringLiteral("reason"), QStringLiteral("计划本身不含文件内容")}};
+                       {QStringLiteral("reason"), QCoreApplication::translate("AgentWorkflowEngine", "计划不含文件内容")}};
 }
 
 }  // namespace
@@ -96,11 +96,11 @@ AgentToolResult AgentWorkflowEngine::errorResult(Agent::ErrorKind kind,
 AgentToolResult AgentWorkflowEngine::invoke(const Agent::ToolCall &call) {
     const QString internal = AgentToolRegistry::internalName(call.name);
     if (m_workflow == nullptr) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("工作流未接入。"));
+        return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentWorkflowEngine", "工作流未接入。"));
     }
     if (internal == QStringLiteral("workflow.submitPlan")) return handleSubmitPlan(call);
     if (internal == QStringLiteral("workflow.finish")) return handleFinish(call);
-    return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("未知工具。"));
+    return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentWorkflowEngine", "未知工具。"));
 }
 
 AgentToolResult AgentWorkflowEngine::handleSubmitPlan(const Agent::ToolCall &call) {
@@ -125,16 +125,16 @@ AgentToolResult AgentWorkflowEngine::handleSubmitPlan(const Agent::ToolCall &cal
     pending.steps = steps;
     const QString approvalId = QUuid::createUuid().toString(QUuid::WithoutBraces);
     QJsonObject request = AgentApprovalPolicy::request(
-        call.name, QStringLiteral("修复计划"), m_workflow->skill().name, goal,
+        call.name, QCoreApplication::translate("AgentWorkflowEngine", "修复计划"), m_workflow->skill().name, goal,
         m_workflow->planPreview(), QString(),
-        QStringLiteral("批准计划只表示同意这条路线；每个写步骤执行时还会单独确认。"),
+        QCoreApplication::translate("AgentWorkflowEngine", "批准计划仅表示同意该方案；每个写步骤执行时仍需单独确认。"),
         planEgress());
     request.insert(QStringLiteral("approvalId"), approvalId);
     request.insert(QStringLiteral("plan"), m_workflow->planJson());
     m_pending.insert(approvalId, pending);
     AgentToolResult result;
     result.status = AgentToolResult::Status::ApprovalRequired;
-    result.summary = QStringLiteral("待批准计划：%1（%2 步）").arg(goal).arg(steps.size());
+    result.summary = QCoreApplication::translate("AgentWorkflowEngine", "待批准计划：%1（%2 步）").arg(goal).arg(steps.size());
     result.approval = request;
     return result;
 }
@@ -143,7 +143,7 @@ AgentToolResult AgentWorkflowEngine::handleFinish(const Agent::ToolCall &call) {
     const QString report = call.arguments.value(QStringLiteral("report")).toString();
     const QString unresolved = call.arguments.value(QStringLiteral("unresolved")).toString();
     if (report.trimmed().isEmpty()) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("报告不能为空。"));
+        return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentWorkflowEngine", "报告不能为空。"));
     }
     QString problem;
     if (!m_workflow->canFinish(&problem)) {
@@ -152,7 +152,7 @@ AgentToolResult AgentWorkflowEngine::handleFinish(const Agent::ToolCall &call) {
     m_workflow->markFinished();
     AgentToolResult result;
     result.status = AgentToolResult::Status::Ok;
-    result.summary = QStringLiteral("已提交完成报告。");
+    result.summary = QCoreApplication::translate("AgentWorkflowEngine", "已提交完成报告。");
     result.data = QJsonObject{{QStringLiteral("report"), report},
                               {QStringLiteral("unresolved"), unresolved},
                               {QStringLiteral("evidenceIds"),
@@ -163,17 +163,17 @@ AgentToolResult AgentWorkflowEngine::handleFinish(const Agent::ToolCall &call) {
 
 AgentToolResult AgentWorkflowEngine::resolveApproval(const QString &approvalId, bool approved) {
     if (!m_pending.contains(approvalId)) {
-        return errorResult(Agent::ErrorKind::ToolError, QStringLiteral("审批请求已失效。"));
+        return errorResult(Agent::ErrorKind::ToolError, QCoreApplication::translate("AgentWorkflowEngine", "审批请求已失效。"));
     }
     m_pending.remove(approvalId);
     m_workflow->approvePlan(approved);
     if (!approved) {
         return errorResult(Agent::ErrorKind::ApprovalDenied,
-                           QStringLiteral("用户拒绝了修复计划；计划作废，请不要继续执行写操作。"));
+                           QCoreApplication::translate("AgentWorkflowEngine", "用户拒绝了修复计划；计划已作废，停止执行写操作。"));
     }
     AgentToolResult result;
     result.status = AgentToolResult::Status::Ok;
-    result.summary = QStringLiteral("计划已批准（%1 步），按顺序执行；每个写步骤仍会单独确认。")
+    result.summary = QCoreApplication::translate("AgentWorkflowEngine", "计划已批准（%1 步），按顺序执行；每个写步骤仍需单独确认。")
                          .arg(m_workflow->planSteps().size());
     result.data = QJsonObject{{QStringLiteral("plan"), m_workflow->planJson()},
                               {QStringLiteral("stage"), m_workflow->stageName()}};

@@ -131,39 +131,41 @@ QList<AgentSkill> AgentSkillRegistry::builtins() {
 
     list.append(make(
         QStringLiteral("general"), QCoreApplication::translate("AgentSkill", "自由对话"),
-        QStringLiteral("对话 + 锁定实例内的受控文件工具与诊断工具；不含事务/启动测试/二分。"),
+        QCoreApplication::translate("AgentSkill", "对话及锁定实例内的受控文件与诊断工具，不含修复事务、测试启动与二分定位。"),
         QStringLiteral("general"), false, generalTools(), false, false, {}, {}, 3));
 
     list.append(make(
-        QStringLiteral("inspection"), QCoreApplication::translate("AgentSkill", "实例体检"),
-        QStringLiteral("只读：跑启动诊断/完整性/模组统计，列出问题与下一步。"),
+        QStringLiteral("inspection"), QCoreApplication::translate("AgentSkill", "实例诊断"),
+        QCoreApplication::translate("AgentSkill", "仅只读检查：运行启动诊断、完整性校验与模组统计，列出问题及后续操作。"),
         QStringLiteral("inspection"), false, readOnlyTools(), true, false,
         {QStringLiteral("diagnostics.startup")},
-        QStringLiteral("至少一条证据；给出问题分级与下一步选项；全程没有写操作。"), 3));
+        QStringLiteral("At least one evidence item; severity-ranked findings and next steps; strictly read-only."),  // i18n-ignore
+        3));
 
     list.append(make(
         QStringLiteral("crash-rescue"), QCoreApplication::translate("AgentSkill", "崩溃急救"),
-        QStringLiteral("诊断 + 计划 + 逐步审批修复 + 验证；每步可拒绝、可回退。"),
+        QCoreApplication::translate("AgentSkill", "支持诊断、计划、逐步审批修复与验证，每步均可拒绝或回滚。"),
         QStringLiteral("crash_rescue"), true, QStringList(readOnlyTools() + repairTools()), false,
         true, {QStringLiteral("diagnostics.crash")},
-        QStringLiteral("计划已批准；每步都有结果；至少一条证据；有验证步骤；"
-                       "报告写明回退方式与未解决项。"),
+        QStringLiteral("Plan approved; results for every step; at least one evidence item; verification step completed; report states rollback method and unresolved items."),  // i18n-ignore
         5));
 
     list.append(make(
         QStringLiteral("upgrade"), QCoreApplication::translate("AgentSkill", "版本升级 / 移植"),
-        QStringLiteral("只读检查升级目标，执行时打开现有升级向导。"),
+        QCoreApplication::translate("AgentSkill", "只读检查升级目标，执行升级时打开升级向导。"),
         QStringLiteral("upgrade"), false,
         QStringList(readOnlyTools() + QStringList{QStringLiteral("backup.create")}), false, true,
         {QStringLiteral("upgrade.inspect")},
-        QStringLiteral("给出兼容性结论与风险；执行交给现有向导；有证据。"), 3));
+        QStringLiteral("Compatibility verdict and risks provided; execution handed off to native wizard; backed by evidence."),  // i18n-ignore
+        3));
 
     list.append(make(
         QStringLiteral("mods"), QCoreApplication::translate("AgentSkill", "模组维护"),
-        QStringLiteral("列模组、读声明查兼容/缺前置、启停或备份、按平台记录修复文件；不猜文件名兼容性。"),
+        QCoreApplication::translate("AgentSkill", "查看模组清单、解析声明检测兼容与前置、启用/禁用或备份、按平台记录修复文件。"),
         QStringLiteral("mods"), true, QStringList(readOnlyTools() + repairTools()), false, true,
         {QStringLiteral("mods.list")},
-        QStringLiteral("模组清单有证据；每个改动都有结果；不确定项写明。"), 6));
+        QStringLiteral("Mod inventory backed by evidence; outcomes for every change; uncertainties explicitly noted."),  // i18n-ignore
+        6));
 
     return list;
 }
