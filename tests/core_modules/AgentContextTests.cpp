@@ -7,6 +7,26 @@
 
 #include "agent/AgentContextBuilder.hpp"
 
+#include <QCoreApplication>
+#include <QTranslator>
+
+namespace {
+
+class EnglishUiTranslator final : public QTranslator {
+public:
+    QString translate(const char *context, const char *sourceText,
+                      const char *disambiguation = nullptr, int n = -1) const override {
+        Q_UNUSED(disambiguation);
+        Q_UNUSED(n);
+        if (qstrcmp(context, "UiLanguage") == 0 && qstrcmp(sourceText, "zh") == 0) {
+            return QStringLiteral("en");
+        }
+        return {};
+    }
+};
+
+}  // namespace
+
 void runAgentContextTests() {
     check(AgentContextBuilder::estimateTokens(QStringLiteral("hello")) >= 1,
           "上下文：ASCII 估算非零");
@@ -58,4 +78,22 @@ void runAgentContextTests() {
         huge, QStringLiteral("system"), 1200, 200, &hugeReport);
     check(keptHuge.size() == 1 && keptHuge.constLast().content.size() == 100000,
           "上下文：最后一条 user 即使超预算也保留（交给上层报 ContextOverflow）");
+
+    {
+        check(AgentContextBuilder::interfaceLanguageName() == QStringLiteral("Simplified Chinese"),
+              "上下文：未装英文翻译时界面语言为 Simplified Chinese");
+        check(AgentContextBuilder::withRuntimeContext(QStringLiteral("sys")) ==
+                  QStringLiteral("sys\n\nInterface language: Simplified Chinese"),
+              "上下文：运行时系统提示带 Simplified Chinese");
+        EnglishUiTranslator translator;
+        QCoreApplication::installTranslator(&translator);
+        check(AgentContextBuilder::interfaceLanguageName() == QStringLiteral("English"),
+              "上下文：安装英文翻译后动态切为 English");
+        check(AgentContextBuilder::withRuntimeContext(QStringLiteral("sys")) ==
+                  QStringLiteral("sys\n\nInterface language: English"),
+              "上下文：运行时系统提示即时切为 English");
+        QCoreApplication::removeTranslator(&translator);
+        check(AgentContextBuilder::interfaceLanguageName() == QStringLiteral("Simplified Chinese"),
+              "上下文：移除英文翻译后即时回到 Simplified Chinese");
+    }
 }

@@ -132,14 +132,14 @@ QList<AgentSkill> AgentSkillRegistry::builtins() {
     list.append(make(
         QStringLiteral("general"), QCoreApplication::translate("AgentSkill", "自由对话"),
         QStringLiteral("对话 + 锁定实例内的受控文件工具与诊断工具；不含事务/启动测试/二分。"),
-        QStringLiteral("general"), false, generalTools(), false, false, {}, {}, 2));
+        QStringLiteral("general"), false, generalTools(), false, false, {}, {}, 3));
 
     list.append(make(
         QStringLiteral("inspection"), QCoreApplication::translate("AgentSkill", "实例体检"),
         QStringLiteral("只读：跑启动诊断/完整性/模组统计，列出问题与下一步。"),
         QStringLiteral("inspection"), false, readOnlyTools(), true, false,
         {QStringLiteral("diagnostics.startup")},
-        QStringLiteral("至少一条证据；给出问题分级与下一步选项；全程没有写操作。"), 2));
+        QStringLiteral("至少一条证据；给出问题分级与下一步选项；全程没有写操作。"), 3));
 
     list.append(make(
         QStringLiteral("crash-rescue"), QCoreApplication::translate("AgentSkill", "崩溃急救"),
@@ -148,7 +148,7 @@ QList<AgentSkill> AgentSkillRegistry::builtins() {
         true, {QStringLiteral("diagnostics.crash")},
         QStringLiteral("计划已批准；每步都有结果；至少一条证据；有验证步骤；"
                        "报告写明回退方式与未解决项。"),
-        4));
+        5));
 
     list.append(make(
         QStringLiteral("upgrade"), QCoreApplication::translate("AgentSkill", "版本升级 / 移植"),
@@ -156,14 +156,14 @@ QList<AgentSkill> AgentSkillRegistry::builtins() {
         QStringLiteral("upgrade"), false,
         QStringList(readOnlyTools() + QStringList{QStringLiteral("backup.create")}), false, true,
         {QStringLiteral("upgrade.inspect")},
-        QStringLiteral("给出兼容性结论与风险；执行交给现有向导；有证据。"), 2));
+        QStringLiteral("给出兼容性结论与风险；执行交给现有向导；有证据。"), 3));
 
     list.append(make(
         QStringLiteral("mods"), QCoreApplication::translate("AgentSkill", "模组维护"),
         QStringLiteral("列模组、读声明查兼容/缺前置、启停或备份、按平台记录修复文件；不猜文件名兼容性。"),
         QStringLiteral("mods"), true, QStringList(readOnlyTools() + repairTools()), false, true,
         {QStringLiteral("mods.list")},
-        QStringLiteral("模组清单有证据；每个改动都有结果；不确定项写明。"), 5));
+        QStringLiteral("模组清单有证据；每个改动都有结果；不确定项写明。"), 6));
 
     return list;
 }

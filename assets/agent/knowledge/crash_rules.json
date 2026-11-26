@@ -120,7 +120,7 @@
       "requires": [],
       "suspects": [],
       "confidence": 0.68,
-      "confidenceBasis": "加载器报告的缺失前置",
+      "confidenceBasis": "Missing dependency reported by loader",
       "recommendedTests": ["inspect_mod_declarations"],
       "suggestedActions": ["install_missing_dependency"]
     },
@@ -132,7 +132,7 @@
       "requires": [],
       "suspects": [],
       "confidence": 0.7,
-      "confidenceBasis": "重复的 mod id",
+      "confidenceBasis": "Duplicate mod id",
       "recommendedTests": ["list_duplicate_mods"],
       "suggestedActions": ["disable_duplicate_mod"]
     },
@@ -148,7 +148,7 @@
       "requires": [],
       "suspects": [],
       "confidence": 0.55,
-      "confidenceBasis": "JAR 读取失败",
+      "confidenceBasis": "JAR read failure",
       "recommendedTests": ["verify_mod_files"],
       "suggestedActions": ["reinstall_mod_file"]
     },
@@ -165,7 +165,7 @@
       "requires": [],
       "suspects": [],
       "confidence": 0.55,
-      "confidenceBasis": "配置解析异常",
+      "confidenceBasis": "Config parse exception",
       "recommendedTests": ["inspect_config_file"],
       "suggestedActions": ["restore_config_backup"]
     },
@@ -181,7 +181,7 @@
       "requires": [],
       "suspects": [],
       "confidence": 0.6,
-      "confidenceBasis": "JVM 致命错误日志",
+      "confidenceBasis": "JVM fatal error log",
       "recommendedTests": ["inspect_native_modules", "bisect_mod_pair"],
       "suggestedActions": ["check_graphics_settings"]
     },
@@ -198,7 +198,7 @@
       "requires": [],
       "suspects": [],
       "confidence": 0.6,
-      "confidenceBasis": "世界加载异常",
+      "confidenceBasis": "World load exception",
       "recommendedTests": ["verify_world_copy"],
       "suggestedActions": ["restore_world_backup"]
     },
@@ -215,7 +215,7 @@
       "requires": [],
       "suspects": [],
       "confidence": 0.58,
-      "confidenceBasis": "实体/方块实体 tick 异常",
+      "confidenceBasis": "Entity/block-entity tick exception",
       "recommendedTests": ["identify_ticking_mod", "bisect_mod_pair"],
       "suggestedActions": ["check_mod_compatibility"]
     },
@@ -227,7 +227,7 @@
       "requires": [],
       "suspects": [],
       "confidence": 0.4,
-      "confidenceBasis": "加载器报告模组加载失败",
+      "confidenceBasis": "Mod loading failure reported by loader",
       "recommendedTests": ["inspect_mod_declarations"],
       "suggestedActions": ["check_mod_compatibility"]
     }

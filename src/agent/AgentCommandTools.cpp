@@ -50,23 +50,23 @@ QList<AgentCommandSpec> all() {
     list.append(AgentCommandSpec{QStringLiteral("java-version"), QStringLiteral("java -version"),
                                  QStringLiteral("java"), {QStringLiteral("-version")}, false,
                                  20000,
-                                 QStringLiteral("看本机默认 java 的版本与发行版。")});
+                                 QStringLiteral("Check default local java version and distribution.")});
     list.append(AgentCommandSpec{QStringLiteral("where-java"), QStringLiteral("where java"),
                                  QStringLiteral("where"), {QStringLiteral("java")}, false, 15000,
-                                 QStringLiteral("列出 PATH 上能找到的 java.exe。")});
+                                 QStringLiteral("List java.exe locations found on PATH.")});
     list.append(AgentCommandSpec{QStringLiteral("ping"), QStringLiteral("ping 主机"),
                                  QStringLiteral("ping"),
                                  {QStringLiteral("-n"), QStringLiteral("4"), QStringLiteral("%1")},
-                                 true, 30000, QStringLiteral("连发 4 个 ICMP 包。")});
+                                 true, 30000, QStringLiteral("Send 4 ICMP packets.")});
     list.append(AgentCommandSpec{QStringLiteral("nslookup"), QStringLiteral("nslookup 主机"),
                                  QStringLiteral("nslookup"), {QStringLiteral("%1")}, true, 30000,
-                                 QStringLiteral("查一次 DNS 解析。")});
+                                 QStringLiteral("Run one DNS lookup.")});
     list.append(AgentCommandSpec{QStringLiteral("netstat"), QStringLiteral("netstat -ano"),
                                  QStringLiteral("netstat"), {QStringLiteral("-ano")}, false,
-                                 30000, QStringLiteral("列出本机连接与 PID。")});
+                                 30000, QStringLiteral("List local connections and PIDs.")});
     list.append(AgentCommandSpec{QStringLiteral("ipconfig"), QStringLiteral("ipconfig /all"),
                                  QStringLiteral("ipconfig"), {QStringLiteral("/all")}, false,
-                                 30000, QStringLiteral("本机网络配置（含适配器与 DNS）。")});
+                                 30000, QStringLiteral("Show local network configuration (adapters and DNS).")});
     return list;
 }
 
@@ -96,8 +96,7 @@ QList<AgentToolSpec> AgentCommandTools::specs() {
     for (const AgentCommandSpec &spec : AgentCommandSpecs::all()) ids.append(spec.id);
     return {AgentToolSpec{
         QStringLiteral("command.diagnose"), QCoreApplication::translate("AgentCommandTools", "诊断命令"),
-        QStringLiteral("只执行固定诊断命令（java -version、ping、nslookup、netstat -ano 等）；"
-                       "默认关闭，每次都要审批。"),
+        QStringLiteral("Run fixed diagnostic commands only (java -version, ping, nslookup, netstat -ano, etc.); disabled by default, requires per-action approval."),
         AgentRisk::Command,
         objectSchema({QStringLiteral("command")},
                      {{QStringLiteral("command"),

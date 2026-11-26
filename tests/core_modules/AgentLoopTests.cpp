@@ -5,6 +5,7 @@
 
 #include "Support.hpp"
 
+#include "agent/AgentContextBuilder.hpp"
 #include "agent/AgentLoop.hpp"
 #include "agent/AgentModelClient.hpp"
 #include "agent/AgentTool.hpp"
@@ -13,8 +14,22 @@
 #include <QElapsedTimer>
 #include <QThread>
 #include <QTimer>
+#include <QTranslator>
 
 namespace {
+
+class EnglishUiTranslator final : public QTranslator {
+public:
+    QString translate(const char *context, const char *sourceText,
+                      const char *disambiguation = nullptr, int n = -1) const override {
+        Q_UNUSED(disambiguation);
+        Q_UNUSED(n);
+        if (qstrcmp(context, "UiLanguage") == 0 && qstrcmp(sourceText, "zh") == 0) {
+            return QStringLiteral("en");
+        }
+        return {};
+    }
+};
 
 class FakeModelClient : public AgentModelClient {
 public:
@@ -199,8 +214,25 @@ void runAgentLoopTests() {
         check(loop.history().size() == 2 && loop.history().constLast().role == Agent::Role::Assistant,
               "Loop：完成后历史追加 assistant");
         check(client.starts == 1, "Loop：只发一次请求");
-        check(client.requests.constFirst().systemPrompt == QStringLiteral("system"),
-              "Loop：系统提示进入请求");
+        check(client.requests.constFirst().systemPrompt ==
+                  QStringLiteral("system\n\nInterface language: Simplified Chinese"),
+              "Loop：系统提示动态注入当前界面语言", client.requests.constFirst().systemPrompt);
+
+        // 切换界面翻译后，下一轮不改 config 也应即时带入新界面语言。
+        EnglishUiTranslator translator;
+        QCoreApplication::installTranslator(&translator);
+        QList<Agent::Message> secondHistory = loop.history();
+        secondHistory.append(user(QStringLiteral("hi again")));
+        loop.setHistory(secondHistory);
+        loop.start();
+        check(waitFor([&] { return client.starts == 2 && loop.state() == AgentLoop::State::Completed; }),
+              "Loop：切语言后第二轮完成");
+        check(client.starts == 2 &&
+                  client.requests.constLast().systemPrompt ==
+                      QStringLiteral("system\n\nInterface language: English"),
+              "Loop：切换语言后下一轮系统提示即时生效",
+              client.requests.constLast().systemPrompt);
+        QCoreApplication::removeTranslator(&translator);
     }
     {
         FakeModelClient client;

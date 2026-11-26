@@ -181,9 +181,10 @@ void AgentLoop::beginRequest(bool isRetry) {
         return;
     }
     setState(State::Preparing);
+    const QString systemPrompt = AgentContextBuilder::withRuntimeContext(m_config.systemPrompt);
     AgentContextReport report;
     const QList<Agent::Message> context = AgentContextBuilder::build(
-        m_history, m_config.systemPrompt, m_config.profile.contextWindow,
+        m_history, systemPrompt, m_config.profile.contextWindow,
         m_config.profile.maxOutput, &report);
     if (context.isEmpty() && m_history.constLast().role == Agent::Role::User) {
         Agent::Error error;
@@ -206,7 +207,7 @@ void AgentLoop::beginRequest(bool isRetry) {
     request.model = m_config.profile.model;
     request.apiKey = m_config.apiKey;
     request.messages = context;
-    request.systemPrompt = m_config.systemPrompt;
+    request.systemPrompt = systemPrompt;
     request.contextWindow = m_config.profile.contextWindow;
     request.maxOutput = m_config.profile.maxOutput;
     request.temperature = m_config.profile.temperature;

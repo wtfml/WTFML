@@ -552,7 +552,7 @@ AgentToolResult AgentLauncherTools::handleInstanceList(const Agent::ToolCall &ca
                             facts.loaderName.isEmpty() ? QStringLiteral("原版") : facts.loaderName);
     }
     addEvidence(&evidence, QStringLiteral("tool"), QStringLiteral("instance.list"),
-                QStringLiteral("实例清单 %1 项").arg(items.size()));
+                QStringLiteral("%1 instance(s)").arg(items.size()));
     const QJsonObject data{{QStringLiteral("count"), int(items.size())},
                            {QStringLiteral("instances"), array},
                            {QStringLiteral("evidence"), evidenceJson(evidence)}};
@@ -579,7 +579,7 @@ AgentToolResult AgentLauncherTools::handleInstanceContext(const Agent::ToolCall 
     facts.instanceId = context.instanceId;
     QList<AgentDiagnosticProjection::Evidence> evidence;
     addEvidence(&evidence, QStringLiteral("tool"), QStringLiteral("instance.context"),
-                QStringLiteral("实例 %1").arg(facts.instanceName));
+                QStringLiteral("Instance %1").arg(facts.instanceName));
     QJsonObject data = facts.toJson();
     data.insert(QStringLiteral("evidence"), evidenceJson(evidence));
     const QString summary = QStringLiteral("%1（%2 · %3），Xmx %4 MB")
@@ -671,7 +671,7 @@ AgentToolResult AgentLauncherTools::handleLogsTail(const Agent::ToolCall &call,
     const AgentRedaction::Result redacted = AgentRedaction::redact(text);
     QList<AgentDiagnosticProjection::Evidence> evidence;
     addEvidence(&evidence, QStringLiteral("log"), source,
-                QStringLiteral("%1 末尾 %2 行").arg(source).arg(bounded),
+                QStringLiteral("Last %2 line(s) of %1").arg(source).arg(bounded),
                 contentDigest(redacted.text));
     const QJsonObject data{{QStringLiteral("source"), source},
                            {QStringLiteral("lines"), bounded},
@@ -706,7 +706,7 @@ AgentToolResult AgentLauncherTools::handleCrashList(const Agent::ToolCall &call,
         }
         QList<AgentDiagnosticProjection::Evidence> evidence;
         addEvidence(&evidence, QStringLiteral("file"), QStringLiteral("crash-reports"),
-                    QStringLiteral("崩溃报告 %1 份").arg(reports.size()));
+                    QStringLiteral("%1 crash report(s)").arg(reports.size()));
         const QJsonObject data{{QStringLiteral("count"), int(reports.size())},
                                {QStringLiteral("latest"), newest},
                                {QStringLiteral("evidence"), evidenceJson(evidence)}};
@@ -777,8 +777,7 @@ AgentToolResult AgentLauncherTools::handleLogsSearch(const Agent::ToolCall &call
     }
     QList<AgentDiagnosticProjection::Evidence> evidence;
     addEvidence(&evidence, QStringLiteral("log"), source->label,
-                QCoreApplication::translate("AgentLauncherTools", "搜索命中 %1 处")
-                    .arg(found.totalMatches),
+                QStringLiteral("%1 search match(es)").arg(found.totalMatches),
                 contentDigest(preview));
     const QJsonObject data{
         {QStringLiteral("source"), source->label},
@@ -841,7 +840,7 @@ AgentToolResult AgentLauncherTools::handleLogsReadRange(const Agent::ToolCall &c
     }
     QList<AgentDiagnosticProjection::Evidence> evidence;
     addEvidence(&evidence, QStringLiteral("log"), source->label,
-                QCoreApplication::translate("AgentLauncherTools", "第 %1–%2 行（共 %3 行）")
+                QStringLiteral("Lines %1-%2 (total %3)")
                     .arg(range.firstLine)
                     .arg(range.lastLine)
                     .arg(range.totalLines),
@@ -1111,7 +1110,7 @@ AgentToolResult AgentLauncherTools::handleModsList(const Agent::ToolCall &call,
     if (!wantsFull(call)) {
         QList<AgentDiagnosticProjection::Evidence> evidence;
         addEvidence(&evidence, QStringLiteral("tool"), QStringLiteral("mods.list"),
-                    QStringLiteral("模组 %1 个（启用 %2、停用 %3）")
+                    QStringLiteral("%1 mod(s) (%2 enabled, %3 disabled)")
                         .arg(mods.size())
                         .arg(enabled)
                         .arg(disabled));
@@ -1157,7 +1156,7 @@ AgentToolResult AgentLauncherTools::handleSettingsGet(const Agent::ToolCall &cal
         if (it.key() == QStringLiteral("java.path")) continue;
         if (it.value().isString() &&
             AgentDiagnosticProjection::containsLocalPath(it.value().toString())) {
-            values.insert(it.key(), QStringLiteral("<本机路径已隐藏>"));
+            values.insert(it.key(), QStringLiteral("<local path hidden>"));
         } else {
             values.insert(it.key(), it.value());
         }
@@ -1166,7 +1165,7 @@ AgentToolResult AgentLauncherTools::handleSettingsGet(const Agent::ToolCall &cal
     }
     QList<AgentDiagnosticProjection::Evidence> evidence;
     addEvidence(&evidence, QStringLiteral("tool"), QStringLiteral("settings.get"),
-                QStringLiteral("启动器设置 %1 项").arg(values.size()));
+                QStringLiteral("%1 launcher setting(s)").arg(values.size()));
     const QJsonObject data{{QStringLiteral("values"), values},
                            {QStringLiteral("writableKeys"),
                             QJsonArray::fromStringList(settings.writableKeys)},
@@ -1188,7 +1187,7 @@ AgentToolResult AgentLauncherTools::handleJavaList(const Agent::ToolCall &call,
     for (int major : majors) array.append(major);
     QList<AgentDiagnosticProjection::Evidence> evidence;
     addEvidence(&evidence, QStringLiteral("tool"), QStringLiteral("java.list"),
-                QStringLiteral("本机 Java 主版本 %1 个").arg(majors.size()));
+                QStringLiteral("%1 local Java major version(s)").arg(majors.size()));
     const QJsonObject data{{QStringLiteral("majors"), array},
                            {QStringLiteral("count"), int(majors.size())},
                            {QStringLiteral("evidence"), evidenceJson(evidence)}};
@@ -1213,7 +1212,7 @@ AgentToolResult AgentLauncherTools::handleMemorySuggest(const Agent::ToolCall &c
     const int xms = GlobalJavaSettings::suggestXmsMb(xmx);
     QList<AgentDiagnosticProjection::Evidence> evidence;
     addEvidence(&evidence, QStringLiteral("tool"), QStringLiteral("memory.suggest"),
-                QStringLiteral("系统内存 %1 MB、可用 %2 MB，模组 %3 个")
+                QStringLiteral("System memory %1 MB total, %2 MB available, %3 mod(s)")
                     .arg(usage.totalMb)
                     .arg(usage.availableMb)
                     .arg(modCount));
@@ -1253,7 +1252,7 @@ AgentToolResult AgentLauncherTools::handleBackupList(const Agent::ToolCall &call
     }
     QList<AgentDiagnosticProjection::Evidence> evidence;
     addEvidence(&evidence, QStringLiteral("tool"), QStringLiteral("backup.list"),
-                QStringLiteral("备份 %1 份").arg(backups.size()));
+                QStringLiteral("%1 backup(s)").arg(backups.size()));
     const QJsonObject data{{QStringLiteral("count"), int(backups.size())},
                            {QStringLiteral("backups"), array},
                            {QStringLiteral("evidence"), evidenceJson(evidence)}};
@@ -1274,7 +1273,7 @@ AgentToolResult AgentLauncherTools::handleUpgradeInspect(const Agent::ToolCall &
     }
     QList<AgentDiagnosticProjection::Evidence> evidence;
     addEvidence(&evidence, QStringLiteral("tool"), QStringLiteral("upgrade.inspect"),
-                QStringLiteral("升级目标 %1 个")
+                QStringLiteral("%1 upgrade candidate target(s)")
                     .arg(data.value(QStringLiteral("targets")).toArray().size()));
     data.insert(QStringLiteral("evidence"), evidenceJson(evidence));
     const QString summary = QStringLiteral("升级检查：%1 个候选目标")

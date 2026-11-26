@@ -7,7 +7,6 @@
 
 #include "AgentMixinOwnership.hpp"
 
-#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QHash>
@@ -27,10 +26,6 @@ constexpr int kMaxRecommendations = 8;
 constexpr int kMaxFailureRegionChars = 8000;
 constexpr int kMaxExcerptChars = 400;
 constexpr int kMaxModList = 2000;
-
-QString tr(const char *text) {
-    return QCoreApplication::translate("AgentCrashSnapshot", text);
-}
 
 /// Minecraft 日志行头：`[12:00:00] [main/ERROR]: `（第三段 `[Mixin]` 之类可有可无）。
 QString logPayload(const QString &line) {
@@ -560,7 +555,8 @@ Snapshot build(const SnapshotInput &input) {
             {QStringLiteral("source"), QStringLiteral("mods")},
             {QStringLiteral("capturedAt"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate)},
             {QStringLiteral("excerpt"),
-             tr("%1 个 mixin 配置能由 JAR 声明归属到模组").arg(input.mixinOwners.size())}});
+             QStringLiteral("%1 mixin config(s) attributed to a mod via JAR declarations")
+                 .arg(input.mixinOwners.size())}});
     }
 
     QJsonArray suspects;
