@@ -1322,7 +1322,7 @@ QString GameLogWindow::filteredOutPlaceholderText() {
 }
 
 QString GameLogWindow::searchPlaceholderText() {
-    return QCoreApplication::translate("GameLogWindow", "搜索日志（不区分大小写，与级别筛选同时生效）");
+    return QCoreApplication::translate("GameLogWindow", "搜索日志");
 }
 
 QString GameLogWindow::searchEmptyPlaceholderText() {
@@ -1330,7 +1330,10 @@ QString GameLogWindow::searchEmptyPlaceholderText() {
 }
 
 QString GameLogWindow::searchTooltip() {
-    return QCoreApplication::translate("GameLogWindow", "仅显示包含该字符串的行；导出仍为完整日志。");
+    // 占位文字只留「搜索日志」，原来的括号说明和这条悬停提示并成一条。
+    return QCoreApplication::translate("GameLogWindow",
+                                       "仅显示包含该字符串的行；导出仍为完整日志。"
+                                       "不区分大小写，与级别筛选同时生效。");
 }
 
 QString GameLogWindow::searchText() const {

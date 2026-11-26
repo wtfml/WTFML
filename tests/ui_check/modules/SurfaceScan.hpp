@@ -392,9 +392,7 @@ inline QList<TextFitFinding> scanTextFit(QWidget *root, bool english) {
             if (label->wordWrap()) {
                 checkWrapped(label, text);
             } else {
-                const QMargins m = label->contentsMargins();
-                checkSingle(label, text, label->font(),
-                            label->contentsRect().width() - m.left() - m.right());
+                checkSingle(label, text, label->font(), label->contentsRect().width());  // contentsRect 已扣过内边距
             }
             continue;
         }

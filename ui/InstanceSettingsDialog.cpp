@@ -1821,6 +1821,8 @@ int InstanceSettingsDialog::fittedNavigationTreeWidth(const QTreeWidget *tree) {
         // 36 = 右留白 12 + 树内部左右各约 12 的余量（按截图实测：整项可画宽比树宽少约 22）
         widest = qMax(widest, depth * tree->indentation() + 8 + textWidth + 36);
     }
+    // 分组展开后左栏要竖滚，滚动条占掉的宽也得让出来。
+    widest += tree->verticalScrollBar()->sizeHint().width();
     return qBound(navigationTreeWidth(), widest, 240);
 }
 

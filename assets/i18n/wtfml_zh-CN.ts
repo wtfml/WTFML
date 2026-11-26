@@ -6362,11 +6362,15 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>搜索日志</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>无匹配的日志。请更换关键词，或清空搜索框。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>仅显示包含该字符串的行；导出仍为完整日志。</source>
+            <source>仅显示包含该字符串的行；导出仍为完整日志。不区分大小写，与级别筛选同时生效。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -6383,10 +6387,6 @@
         </message>
         <message>
             <source>当前筛选无日志。勾选要查看的日志级别。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>搜索日志（不区分大小写，与级别筛选同时生效）</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -28406,7 +28406,7 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <source>未搭建</source>
             <translation type="unfinished"></translation>
         </message>
-        <message>
+        <message numerus="yes">
             <source> 颗</source>
             <translation type="unfinished"></translation>
         </message>
@@ -28458,7 +28458,7 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
             <source>形态</source>
             <translation type="unfinished"></translation>
         </message>
-        <message>
+        <message numerus="yes">
             <source> 瓶</source>
             <translation type="unfinished"></translation>
         </message>

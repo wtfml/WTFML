@@ -419,8 +419,9 @@ bool extractZipWithPowerShell(const QString &zipFile, const QString &targetDir) 
         // 解压失败必须留下**为什么**（Expand-Archive 会把它说得很清楚：空间不够、
         // 压缩包坏了、路径太长……）。不读 stderr 的话，用户看到的只有
         // 后面那句"找不到也下载不到 Java"。
-        qWarning().noquote() << "解压 Java 运行时失败：" << stdErr.trimmed()
-                             << QCoreApplication::translate("GlobalJavaSettings", "（zip:") << zipFile << QCoreApplication::translate("GlobalJavaSettings", "）");
+        const QString detail = QStringLiteral("解压 Java 运行时失败：%1（zip:%2）")  // i18n-ignore
+                                   .arg(stdErr.trimmed(), zipFile);
+        qWarning().noquote() << detail;
     }
     Q_UNUSED(stdOut);
     return ok;
@@ -1267,12 +1268,17 @@ bool GlobalJavaSettings::installerJavaFor(int requiredMajor, const QString &conf
         qWarning() << "No Java" << requiredMajor << "for the installer; configured:"
                    << configuredPath << "highest local:" << highest;
         if (reasonOut != nullptr) {
+            const QString configured = configuredMajor > 0
+                ? QStringLiteral("Java %1").arg(configuredMajor)
+                : QCoreApplication::translate("GlobalJavaSettings", "版本未知");
+            const QString highestText = highest > 0
+                ? QStringLiteral("Java %1").arg(highest)
+                : QCoreApplication::translate("GlobalJavaSettings", "无");
             *reasonOut =
-                QCoreApplication::translate("GlobalJavaSettings", "此版本需要 Java %1，当前使用 Java %2，检测到的最高版本为 Java %3。\n\n请安装 Java %1，或在设置中指定 Java 路径。")
+                QCoreApplication::translate("GlobalJavaSettings", "此版本需要 Java %1；当前使用：%2；检测到的最高版本：%3。\n\n请安装 Java %1，或在设置中指定 Java 路径。")
                     .arg(requiredMajor)
-                    .arg(configuredMajor > 0 ? QString::number(configuredMajor)
-                                             : QCoreApplication::translate("GlobalJavaSettings", "版本未知"))
-                    .arg(highest > 0 ? QString::number(highest) : QCoreApplication::translate("GlobalJavaSettings", "无"));
+                    .arg(configured)
+                    .arg(highestText);
         }
         return false;
     }
@@ -1522,11 +1528,11 @@ bool GlobalJavaSettings::ensureJavaForVersion(
     // 只会得到 UnsupportedClassVersionError，而且看不出是启动器换的。报错好过猜。
     if (!allowAutoSelect) {
         const QString reason =
-            QCoreApplication::translate("GlobalJavaSettings", "当前设置为手动指定 Java，")
-            + (io.javaPath.isEmpty() ? QCoreApplication::translate("GlobalJavaSettings", "未指定路径")
-                                     : io.javaPath + QCoreApplication::translate("GlobalJavaSettings", " 的主版本不是 ")
-                                           + QString::number(majorVersion))
-            + QCoreApplication::translate("GlobalJavaSettings", "，未找到兼容版本时取消启动。");
+            io.javaPath.isEmpty()
+                ? QCoreApplication::translate("GlobalJavaSettings", "当前设置为手动指定 Java，但未指定路径。未找到兼容版本时取消启动。")
+                : QCoreApplication::translate("GlobalJavaSettings", "当前设置为手动指定 Java，路径「%1」的主版本不是 %2。未找到兼容版本时取消启动。")
+                      .arg(io.javaPath)
+                      .arg(majorVersion);
         qWarning() << reason;
         return fail(reason);
     }

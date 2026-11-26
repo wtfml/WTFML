@@ -611,17 +611,18 @@ void InstallPageController::openPresetPicker() {
             out.problem = true;
             return out;
         }
-        QString text = MainWindow::tr("应用 %1 项").arg(preview.itemCount);
+        QStringList parts;
+        parts.append(MainWindow::tr("应用 %1 项").arg(preview.itemCount));
         if (preview.skippedCount > 0) {
-            text += MainWindow::tr("，跳过 %1 项").arg(preview.skippedCount);
+            parts.append(MainWindow::tr("跳过 %1 项").arg(preview.skippedCount));
         }
         if (preview.blockedCount > 0) {
-            text += MainWindow::tr("，%1 部分不可用").arg(preview.blockedCount);
+            parts.append(MainWindow::tr("%1 部分不可用").arg(preview.blockedCount));
         }
         if (preview.needsConfirm) {
-            text += MainWindow::tr("，需确认覆盖");
+            parts.append(MainWindow::tr("需确认覆盖"));
         }
-        out.status = text;
+        out.status = parts.join(MainWindow::tr("，"));
         out.reasons = preview.reasons;
         // 「要做不了 / 要确认」才染红；"跳过几项"是正常计划的一部分。
         out.problem = preview.blockedCount > 0 || preview.needsConfirm;

@@ -14,6 +14,7 @@
 #include <QDateTime>
 #include <QFontMetrics>
 #include <QHBoxLayout>
+#include "FlowLayout.hpp"
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
@@ -119,6 +120,19 @@ QString signatureOf(const WorldSettingsPage::WorldView &view) {
     return out;
 }
 
+/// 几行的标签同宽：下限 kLabelWidth，译文更长时按最宽的那条。
+void alignOptionLabels(QWidget *parent) {
+    QList<QLabel *> labels;
+    int width = kLabelWidth;
+    for (QLabel *label : parent->findChildren<QLabel *>()) {
+        if (!label->property("wtfmlOptionLabel").toBool()) continue;
+        label->ensurePolished();
+        width = qMax(width, label->sizeHint().width());
+        labels.append(label);
+    }
+    for (QLabel *label : labels) label->setFixedWidth(width);
+}
+
 /// 搭一格"标签 + 控件"的行，返回那一行（标签宽度统一，控件靠右留 stretch）。
 QHBoxLayout *makeOptionRow(QWidget *parent, const QString &labelText, QWidget *control,
                            const QString &tip, bool stretchControl = false) {
@@ -126,7 +140,7 @@ QHBoxLayout *makeOptionRow(QWidget *parent, const QString &labelText, QWidget *c
     row->setContentsMargins(0, 0, 0, 0);
     row->setSpacing(8);
     auto *label = new QLabel(labelText, parent);
-    label->setFixedWidth(kLabelWidth);
+    label->setProperty("wtfmlOptionLabel", true);
     if (!tip.isEmpty()) {
         label->setToolTip(tip);
     }
@@ -156,9 +170,7 @@ WorldSettingsPage::WorldSettingsPage(QWidget *parent) : QWidget(parent) {
     //
     // 都在这儿，**一个字节的盘都不碰**：改名和删除是 MainWindow 的事（它要弹输入框 /
     // 确认框、还要在成功之后把这一页的名字摆回来或者干脆收掉这一页）。
-    auto *actions = new QHBoxLayout;
-    actions->setContentsMargins(0, 0, 0, 0);
-    actions->setSpacing(8);
+    auto *actions = new FlowLayout(8, 8);  // 窄栏（实例设置「存档」页）里折行
 
     m_rename = new QPushButton(renameText(), this);
     m_rename->setObjectName(renameButtonName());
@@ -213,7 +225,6 @@ WorldSettingsPage::WorldSettingsPage(QWidget *parent) : QWidget(parent) {
     Theme::markButton(m_delete, Theme::ButtonKind::Danger);
     connect(m_delete, &QPushButton::clicked, this, &WorldSettingsPage::deleteRequested);
     actions->addWidget(m_delete);
-    actions->addStretch(1);
     root->addLayout(actions);
     // 页眉面包屑上的「返回」在覆盖层上；这一页的顺序跟着这一排的版面走。
     setTabOrder({m_rename, m_openFolder, m_fullBackup, m_restore, m_backupFolder, m_delete});
@@ -314,6 +325,7 @@ WorldSettingsPage::WorldSettingsPage(QWidget *parent) : QWidget(parent) {
     m_difficulty->setCurrentIndex(m_difficulty->findData(m_view.difficulty));
     fileBody->addLayout(makeOptionRow(m_fileBody, tr("难度"), m_difficulty,
                                       tr("0 和平 / 1 简单 / 2 普通 / 3 困难。")));
+    alignOptionLabels(m_fileBody);
 
     connect(m_fileToggle, &QAbstractButton::toggled, this, [this](bool open) {
         if (m_applyingFileEditing) {

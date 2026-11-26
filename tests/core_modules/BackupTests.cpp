@@ -693,8 +693,8 @@ void runBackupTests() {
     check(oddName == QStringLiteral("基地-周目-一-2026-10-13-101530.zip"),
           "★ ZQ6 文件名里的非法字符换成 `-`，时间戳定宽（按名字排序 = 按时间排序）", oddName);
     check(BackupFiles::backupFileName(QStringLiteral("基地周目"), at, true)
-              == QStringLiteral("基地周目-恢复前-2026-10-13-101530.zip"),
-          "ZQ6 安全快照那一份文件名里带「恢复前」");
+              == QStringLiteral("基地周目-before-restore-2026-10-13-101530.zip"),
+          "ZQ6 安全快照那一份文件名里带固定 ASCII 记号 `before-restore-`（不走翻译）");
     check(BackupFiles::backupFileName(QStringLiteral("基地：周目"), at)
               .startsWith(BackupFiles::backupFilePrefix(QStringLiteral("基地：周目"))),
           "★★ ZQ6 前缀筛子和文件名是**同一把尺子**"
@@ -729,11 +729,35 @@ void runBackupTests() {
         // 原来按整名字典序倒排 —— 安全快照名字里那段汉字码位在数字之后，
         // 于是**每一份安全快照都排到了最新那份的上面**，"越上面越新"当场不成立。
         check(sorted.size() == 4 && sorted.value(0) == safetyFile && sorted.value(1) == newerFile,
-              "★★ ZQ6' 「恢复前-」安全快照不会因为汉字排在数字后面就被摆到最新那份前面"
+              "★★ ZQ6' 安全快照不会因为名字记号排在数字后面就被摆到最新那份前面"
               "（同一秒里它在前、常规那份紧跟）",
               sorted.join(QLatin1Char('|')));
         check(sorted.value(2) == midFile && sorted.value(3) == oldFile,
               "★ ZQ6' 剩下的按时间从新到旧", sorted.join(QLatin1Char('|')));
+        // 历史前缀也要认：0.6.2 及以前英文界面建的 `Before recovery -`、中文界面的「恢复前-」，
+        // 以及现在写的 `before-restore-`；换界面语言后都不能失效。
+        const QString legacyCn = dir + QStringLiteral("新世界-恢复前-2026-10-19-213000.zip");
+        const QString legacyEn = dir + QStringLiteral("新世界-Before recovery -2026-10-19-213000.zip");
+        const QString legacyAscii = dir + QStringLiteral("新世界-before-restore-2026-10-19-213000.zip");
+        const QStringList legacy{legacyCn, legacyEn, legacyAscii};
+        bool allSafety = true;
+        bool allMatched = true;
+        for (const QString &one : legacy) {
+            const QString fileName = QFileInfo(one).fileName();
+            allSafety = allSafety && BackupFiles::nameIsSafety(fileName, prefix);
+            allMatched = allMatched && BackupFiles::matchesBackupPrefix(fileName, prefix);
+        }
+        check(allSafety, "★★ ZQ6'' 三种安全前缀（含历史英文前缀）都认成安全快照");
+        check(allMatched, "★★ ZQ6'' 三种安全前缀都过得了备份清单的筛子");
+        const QStringList legacySorted =
+            BackupFiles::sortBackupsNewestFirst(QStringList{newerFile, legacyCn, legacyEn, legacyAscii}, prefix);
+        check(legacySorted.size() == 4 &&
+                  BackupFiles::nameIsSafety(QFileInfo(legacySorted.at(0)).fileName(), prefix) &&
+                  BackupFiles::nameIsSafety(QFileInfo(legacySorted.at(1)).fileName(), prefix) &&
+                  BackupFiles::nameIsSafety(QFileInfo(legacySorted.at(2)).fileName(), prefix) &&
+                  legacySorted.at(3) == newerFile,
+              "★★ ZQ6'' 三种安全前缀都排在同一秒的常规备份前面",
+              legacySorted.join(QLatin1Char('|')));
         const QStringList junk = BackupFiles::sortBackupsNewestFirst(
             QStringList{dir + QStringLiteral("新世界-随手放的一份.zip"), newerFile}, prefix);
         check(junk.size() == 2 && junk.value(0) == newerFile,

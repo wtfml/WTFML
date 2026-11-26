@@ -125,6 +125,8 @@ void ThemeAdvancedEditor::refresh() {
         Theme::partForeground(Theme::Part(part), palette.color(QPalette::WindowText)));
     m_background->setText(style.hasBackground ? tr("自定义底色…") : tr("选择底色…"));
     m_foreground->setText(style.hasForeground ? tr("自定义字色…") : tr("选择字色…"));
+    for (QPushButton *swatch : {m_roleColor, m_background, m_foreground})  // 色块上的字两边留出边距
+        swatch->setMinimumWidth(swatch->fontMetrics().horizontalAdvance(swatch->text()) + 16);
     const bool hasText = part != int(Theme::Part::Scrim);
     m_foregroundRow->setEnabled(hasText);
     m_opacity->setEnabled(hasText);

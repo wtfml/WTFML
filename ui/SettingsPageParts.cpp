@@ -1,6 +1,7 @@
 #include "SettingsPageParts.hpp"
 
 #include "Animations.hpp"
+#include "InputSizing.hpp"
 #include "MainWindowPageLayout.hpp"
 #include "Theme.hpp"
 
@@ -125,7 +126,9 @@ SettingsRow::SettingsRow(const RowSpec &spec, QWidget *control, QWidget *parent)
     m_label->setProperty("settingsItemLabel", true);
     m_label->setWordWrap(true);
     m_label->setFont(uiFont(14));
-    top->addWidget(m_label, 0, Qt::AlignVCenter);
+    m_label->ensurePolished();
+    m_label->setMaximumWidth(m_label->fontMetrics().horizontalAdvance(spec.label) + 2);
+    top->addWidget(m_label, 100, Qt::AlignVCenter);  // 吃到一行宽为止，行再窄才换行
     if (!spec.tip.isEmpty()) top->addWidget(new InfoDot(spec.tip, m_left), 0, Qt::AlignVCenter);
     top->addStretch(1);
     leftLayout->addLayout(top);
@@ -153,6 +156,13 @@ SettingsRow::SettingsRow(const RowSpec &spec, QWidget *control, QWidget *parent)
     if (spec.placement == Placement::Column) {
         control->setSizePolicy(QSizePolicy::Expanding, control->sizePolicy().verticalPolicy());
         control->setMinimumWidth(0);
+        // 占位文字比控件列还长（译文）就放宽这一格；中文短，不起作用。
+        if (auto *edit = qobject_cast<QLineEdit *>(control)) {
+            edit->ensurePolished();
+            const int wanted = edit->fontMetrics().horizontalAdvance(edit->placeholderText()) +
+                               InputSizing::kHorizontalChrome;
+            if (wanted > kControlColumn) edit->setMinimumWidth(wanted);
+        }
     }
 
     m_hoverAnim = new QVariantAnimation(this);
@@ -186,7 +196,7 @@ void SettingsRow::place() {
         m_grid->addWidget(m_left, 0, 0, Qt::AlignVCenter);
         m_grid->addWidget(m_cell, 0, 1, Qt::AlignRight | Qt::AlignVCenter);
         if (m_spec.placement == Placement::Column) {
-            m_cell->setFixedWidth(kControlColumn);
+            m_cell->setFixedWidth(qMax(kControlColumn, m_control->minimumWidth()));
         } else {
             m_cell->setMinimumWidth(0);
             m_cell->setMaximumWidth(QWIDGETSIZE_MAX);

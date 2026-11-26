@@ -43,10 +43,30 @@ const char *kKindWorld = "world";
 const char *kKindInstance = "instance";
 
 /// 「还原之前自动做的那一份」在文件名里那段记号（`backupFileName(…, safety=true)` 把它
-/// 插在前缀和时间戳中间）。**一处定义**：`nameIsSafety()`（认人）与
-/// `sortBackupsNewestFirst()`（排序）都得认它 —— 两边各写一份的话，哪天这个记号变了，
-/// 会变成"排在前面"和"认成安全的"两件事。
-const QString kSafetyMark = QCoreApplication::translate("BackupFiles", "恢复前-");
+/// 插在前缀和时间戳中间）。**一处定义**：`nameIsSafety()`（认人）、`matchesBackupPrefix()`
+/// （筛子）与 `sortBackupsNewestFirst()`（排序）都得认它。
+///
+/// 用固定 ASCII，**不走翻译**：文件名是盘上的身份，翻译器装上之前求值、切换界面语言之后
+/// 还得认得出老备份。`恢复前-`（中文界面）和 `Before recovery -`（0.6.2 及以前的英文
+/// 界面）是历史前缀，继续认，用户已有的备份不能失效。
+const QString kSafetyMark = QStringLiteral("before-restore-");
+static const QStringList &legacySafetyMarks() {
+    static const QStringList marks{QStringLiteral("恢复前-"), QStringLiteral("Before recovery -")};  // i18n-ignore
+    return marks;
+}
+
+/// 名字开头是安全记号时返回记号长度，否则 0。
+static int safetyMarkLength(const QString &text) {
+    if (text.startsWith(kSafetyMark)) {
+        return int(kSafetyMark.size());
+    }
+    for (const QString &mark : legacySafetyMarks()) {
+        if (text.startsWith(mark)) {
+            return int(mark.size());
+        }
+    }
+    return 0;
+}
 
 /// 还原之前对着空闲空间判"放不放得下"时，在清单里那些字节之外再留的**固定**余量。
 /// 宁可留大一点：留多了什么也没浪费（还原完就还回去了），留少了就是"判够了、解到一半
@@ -359,7 +379,7 @@ QString backupFileName(const QString &label, const QDateTime &at, bool safety) {
         // 「恢复前」夹在中间而不是放在尾巴上：这一份是**自动**做出来的，摆前面一点是为了
         // 在按名字排序的列表里一眼看得见（它的时间戳和用户点的那一份几乎一样，只看时间
         // 排不出先后）。
-        name += QCoreApplication::translate("BackupFiles", "恢复前-");
+        name += kSafetyMark;
     }
     name += at.toString(QStringLiteral("yyyy-MM-dd-HHmmss"));
     name += QStringLiteral(".zip");
@@ -367,18 +387,18 @@ QString backupFileName(const QString &label, const QDateTime &at, bool safety) {
 }
 
 QStringList sortBackupsNewestFirst(const QStringList &paths, const QString &prefix) {
-    const QString &safetyMark = kSafetyMark;
     struct Key {
-        QString stamp;   // 名字里那串时间戳（不含「恢复前-」和 `.zip`）
+        QString stamp;   // 名字里那串时间戳（不含安全记号和 `.zip`）
         bool stamped = false;
         bool safety = false;
     };
-    const auto keyOf = [&prefix, &safetyMark](const QString &path) {
+    const auto keyOf = [&prefix](const QString &path) {
         Key key;
         // 前缀长度是定死的（label + '-'），大小写不敏感匹配也不影响截取位置。
         QString rest = QFileInfo(path).fileName().mid(prefix.size());
-        key.safety = rest.startsWith(safetyMark);
-        if (key.safety) rest = rest.mid(safetyMark.size());
+        const int markLength = safetyMarkLength(rest);
+        key.safety = markLength > 0;
+        if (key.safety) rest.remove(0, markLength);
         key.stamped = !rest.isEmpty() && rest.at(0).isDigit();
         key.stamp = rest;
         return key;
@@ -409,16 +429,15 @@ QString sizeText(qint64 bytes) {
 }
 
 bool nameIsSafety(const QString &fileName, const QString &prefix) {
-    return fileName.mid(prefix.size()).startsWith(kSafetyMark);
+    return safetyMarkLength(fileName.mid(prefix.size())) > 0;
 }
 
 bool matchesBackupPrefix(const QString &fileName, const QString &prefix) {
     if (!fileName.startsWith(prefix, Qt::CaseInsensitive) || !fileName.endsWith(QLatin1String(".zip"), Qt::CaseInsensitive))
         return false;
     QString stamp = fileName.mid(prefix.size()).chopped(4);
-    const QString currentMark = QCoreApplication::translate("BackupFiles", "恢复前-");
-    if (stamp.startsWith(kSafetyMark)) stamp.remove(0, kSafetyMark.size());
-    else if (stamp.startsWith(currentMark)) stamp.remove(0, currentMark.size());
+    const int markLength = safetyMarkLength(stamp);
+    if (markLength > 0) stamp.remove(0, markLength);
     return QDateTime::fromString(stamp, QStringLiteral("yyyy-MM-dd-HHmmss")).isValid();
 }
 

@@ -115,14 +115,15 @@ QString backupDir(Kind kind);
 QString backupFilePrefix(const QString &label);
 
 /// 备份文件名：`<label>--101530.zip`（**一定是合法文件名** —— label 里的非法
-/// 字符先过一遍替换，见 .cpp）。`safety` 为真时中间多一个「恢复前」。
+/// 字符先过一遍替换，见 .cpp）。`safety` 为真时中间多一个 `before-restore-`（固定 ASCII，不跟界面语言走）。
 QString backupFileName(const QString &label, const QDateTime &at, bool safety = false);
 
 /// 把挑备份那一段要摆出来的那几份**按时间从新到旧**排好（`backupFileName()` 的逆运算：
 /// 认名字里那串定宽时间戳，**不是**按整个文件名字典序）。
 ///
-/// 为什么不能直接按文件名字典序：自动留下的「恢复前-」安全快照在名字里多插了一段汉字，
-/// 汉字码位在数字之后 ⇒ 每一份安全快照都会排到最新的常规备份前面，"越上面越新"就反了。
+/// 为什么不能直接按文件名字典序：自动留下的安全快照在名字里多插了一段记号
+/// （`before-restore-`；历史名字是「恢复前-」或 `Before recovery -`），按整个名字排会把
+/// 它们顶到最新的常规备份前面，"越上面越新"就反了。
 /// 同一秒里自动那份排前面（它就是用户刚点的那份改动之前的原样，一眼要看得见）。
 /// 名字里认不出时间戳的那几份排在最后（按名字倒序，稳定可复现）。
 QStringList sortBackupsNewestFirst(const QStringList &paths, const QString &prefix);
@@ -141,7 +142,7 @@ QString sizeText(qint64 bytes);
 ///
 /// 从**文件名**认，不去读清单：读一份清单要起一次 PowerShell，而这一列里可能摆着几十份
 /// （见 `backupFilePrefix()` 那段）。那个记号本身是 `backupFileName()` 定的 ——
-/// 「恢复前-」夹在前缀和时间戳中间。
+/// `before-restore-` 夹在前缀和时间戳中间；历史前缀「恢复前-」和 `Before recovery -` 也认。
 bool nameIsSafety(const QString &fileName, const QString &prefix);
 bool matchesBackupPrefix(const QString &fileName, const QString &prefix);
 
