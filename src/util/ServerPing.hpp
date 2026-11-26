@@ -156,13 +156,23 @@ enum class Kind {
     ConnectionLost,   ///< 连上之后被对面断开 / 写不出去
     Protocol,         ///< 答了，但答的不是一个合法的状态包（长度 / 包号 / JSON）
     Other,            ///< 其余（本机不让连之类）
+    /// 域名在 DNS 里**只有 AAAA**（AAAA 查得到），而本机没有可用的 IPv6 网络 ——
+    /// 这一类本身仍然表现为 `HostNotFoundError`（Qt 解析时带 AI_ADDRCONFIG，见 .cpp
+    /// 里 hostHasIpv6Address 那段注释），由 ping() 补查一次 AAAA 之后才归到这里。
+    NoIpv6Network,
 };
 
 /// 这一类的机器判据（界面上要换一句话时用它，不去认中文）。
 QString kindName(Kind kind);
 
 /// 一个 socket 错误归到哪一类（超时那一档由 `Status::timedOut` 另记，见 isTimeoutError）。
-Kind kindForSocketError(int socketError);
+///
+/// @param hostHasIpv6Addresses 只在 @p socketError 是 `HostNotFoundError` 时有意义：
+/// true = 域名查得到 AAAA、只是本机没有 IPv6 网络（归到 `Kind::NoIpv6Network`）。
+/// `HostNotFoundError` 把"域名不存在"和"只有 AAAA 但本机没 IPv6"混成同一句「未找到主机」，
+/// 而后者换一台有 IPv6 的机器就能连上。查不查 AAAA 是调用方（ping()）的事，这个函数只做
+/// 归类 —— 纯函数，验证工程离线钉得住。
+Kind kindForSocketError(int socketError, bool hostHasIpv6Addresses = false);
 
 /// 一次 ping 的结果。**OK 和"为什么没 OK"两件事都在这里面**（同 HttpClient::Reply）。
 struct Status {
@@ -328,7 +338,10 @@ QByteArray decodeFavicon(const QString &dataUrl);
 
 /// 这个 socket 错误对应哪句话。**自己写一张表，不用 QAbstractSocket::errorString()** ——
 /// 那是 Qt 翻译文件里的英文句子，而我们的部署里没有 Qt 的 .qm（`--no-translations`）。
-QString connectionErrorText(int socketError);
+///
+/// @param hostHasIpv6Addresses 同 kindForSocketError()：只有 `HostNotFoundError` 用得上，
+/// true 时换成「该服务器只有 IPv6 地址，本机当前没有可用的 IPv6 网络。」
+QString connectionErrorText(int socketError, bool hostHasIpv6Addresses = false);
 
 }  // namespace ServerPing
 

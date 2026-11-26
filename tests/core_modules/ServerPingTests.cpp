@@ -124,6 +124,21 @@ void runServerPingTests() {
                   ServerPing::Kind::Other,
               "★★ ZH1c 五种 socket 错误各归各的类（`timedOut` 那一档仍由 isTimeoutError 判）");
 
+        // #138：HostNotFoundError 底下有两种处境 —— 域名真的不存在，和域名只有 AAAA、本机
+        // 没有 IPv6 网络（Qt 解析带 AI_ADDRCONFIG，两种都报这一个错，见 ServerPing.cpp 里
+        // hostHasIpv6Address 那段）。补查过 AAAA 才分得开，所以这一位由调用方传进来。
+        check(ServerPing::kindForSocketError(QAbstractSocket::HostNotFoundError, false) ==
+                      ServerPing::Kind::HostNotFound &&
+                  ServerPing::kindForSocketError(QAbstractSocket::HostNotFoundError, true) ==
+                      ServerPing::Kind::NoIpv6Network &&
+                  ServerPing::kindForSocketError(QAbstractSocket::ConnectionRefusedError, true) ==
+                      ServerPing::Kind::Refused,
+              "★★ ZH1c 查到 AAAA ⇒ 「无 IPv6 网络」；查不到才是「未找到主机」（别的错不受这一位影响）");
+        check(ServerPing::kindName(ServerPing::Kind::NoIpv6Network) ==
+                  QStringLiteral("无 IPv6 网络"),
+              "ZH1c kindName 那一档是「无 IPv6 网络」",
+              ServerPing::kindName(ServerPing::Kind::NoIpv6Network));
+
         // 地址看不懂那一档连 socket 都还没用上 —— 它自己的类。
         check(ServerPing::resolve(QStringLiteral("::1")).valid == false,
               "ZH1c 看不懂的地址 ⇒ resolve 说 valid=false（不会去查 SRV、也不会去连）");
@@ -302,6 +317,16 @@ void runServerPingTests() {
                   .contains(QStringLiteral("未找到")),
               "ZH5 域名解析不了 = 「找不到主机」",
               ServerPing::connectionErrorText(QAbstractSocket::HostNotFoundError));
+        // 定稿文案，一个字都不许改：用户看到「未找到主机」会去改域名，而这台服务器
+        // 只是要从一台有 IPv6 的机器连。
+        check(ServerPing::connectionErrorText(QAbstractSocket::HostNotFoundError, true) ==
+                  QStringLiteral("该服务器只有 IPv6 地址，本机当前没有可用的 IPv6 网络。"),
+              "★★ ZH5 查得到 AAAA、本机没有 IPv6 网络 = 定稿那句（不再说「未找到主机」）",
+              ServerPing::connectionErrorText(QAbstractSocket::HostNotFoundError, true));
+        // 这一位只对 HostNotFoundError 生效，别的档不能被它带偏。
+        check(ServerPing::connectionErrorText(QAbstractSocket::ConnectionRefusedError, true)
+                  .contains(QStringLiteral("连接被拒绝")),
+              "ZH5 这一位不影响别的 socket 错误");
         check(ServerPing::connectionErrorText(QAbstractSocket::SocketTimeoutError)
                   .contains(QStringLiteral("超时")) &&
                   ServerPing::connectionErrorText(QAbstractSocket::NetworkError)
