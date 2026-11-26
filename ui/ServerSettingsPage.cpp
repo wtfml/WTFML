@@ -233,7 +233,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
     };
     addEntry(nullptr, tr("概览"), Section::Overview);
     addEntry(nullptr, tr("启动设置"), Section::Launch);
-    addEntry(nullptr, tr("设置"), Section::Common);
+    addEntry(nullptr, tr("常用设置"), Section::Common);
     auto *worlds = addEntry(nullptr, tr("世界与玩家"), Section::Count);
     addEntry(worlds, tr("世界"), Section::Backups);
     addEntry(worlds, tr("玩家"), Section::Players);

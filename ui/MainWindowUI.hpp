@@ -1375,7 +1375,7 @@ public:
     static QString serverSettingsPickZipButtonName() {
         return QStringLiteral("serverSettingsPickZip");
     }
-    static QString serverSettingsPickZipText() { return QCoreApplication::translate("MainWindowUI", "选择本地 zip…"); }
+    static QString serverSettingsPickZipText() { return QCoreApplication::translate("MainWindowUI", "选择本地 ZIP…"); }
     static QString serverSettingsRawEditName() { return QStringLiteral("serverSettingsRawText"); }
     static QString serverSettingsRawNoteName() { return QStringLiteral("serverSettingsRawNote"); }
     static QString serverSettingsBackupNoteName() {
