@@ -577,7 +577,7 @@ Select "Sign out" to try again.</translation>
         </message>
         <message>
             <source>ping 主机</source>
-            <translation>Ping host</translation>
+            <translation>ping host</translation>
         </message>
         <message>
             <source>nslookup 主机</source>
@@ -3701,8 +3701,8 @@ Location: %4
             <translation>Search query can't be empty.</translation>
         </message>
         <message>
-            <source>需先在 API 设置中填写 SearXNG 实例地址，再执行联网搜索。</source>
-            <translation>Enter a SearXNG instance URL in API settings before using web search.</translation>
+            <source>需先在 API 与模型设置中填写 SearXNG 实例地址，再执行联网搜索。</source>
+            <translation>Enter a SearXNG instance URL in API and model settings before using web search.</translation>
         </message>
         <message>
             <source>SearXNG 地址不可用：%1</source>

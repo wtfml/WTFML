@@ -3674,7 +3674,7 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>需先在 API 设置中填写 SearXNG 实例地址，再执行联网搜索。</source>
+            <source>需先在 API 与模型设置中填写 SearXNG 实例地址，再执行联网搜索。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
