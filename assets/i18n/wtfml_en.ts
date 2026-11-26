@@ -303,7 +303,7 @@ Select "Sign out" to try again.</translation>
         </message>
         <message>
             <source>更新检查结果可能不完整</source>
-            <translation>Update check results may be incomplete</translation>
+            <translation>Update check may be incomplete</translation>
         </message>
         <message>
             <source>已下载 %1 / %2</source>
@@ -869,7 +869,7 @@ Select "Sign out" to try again.</translation>
         <name>AgentLauncherHostImpl</name>
         <message>
             <source>未找到日志文件（实例目录的 logs/latest.log 或数据根的 logs/latest.log、logs/wtfml.log）。</source>
-            <translation>No log file found (checked logs/latest.log in the instance directory, and logs/latest.log or logs/wtfml.log in the data directory).</translation>
+            <translation>No log file found (checked logs/latest.log in the instance folder, and logs/latest.log or logs/wtfml.log in the data directory).</translation>
         </message>
     </context>
     <context>
@@ -4777,7 +4777,7 @@ Pre-restore snapshot saved at:
         </message>
         <message>
             <source>末地</source>
-            <translation>End</translation>
+            <translation>The End</translation>
         </message>
         <message>
             <source>未知维度</source>
@@ -5861,7 +5861,7 @@ Instance is ready; preset partially applied:
         </message>
         <message>
             <source>无法发布 %1（%2）</source>
-            <translation>Can't publish %1 (%2)</translation>
+            <translation>Can't finalize %1 (%2)</translation>
         </message>
         <message>
             <source>已登记可续的文件操作：%1（%2）</source>
@@ -6469,7 +6469,7 @@ Files already moved can be restored from the Recycle Bin.</translation>
         </message>
         <message>
             <source>搜索日志</source>
-            <translation>Search logs</translation>
+            <translation>Search logs…</translation>
         </message>
         <message>
             <source>无匹配的日志。请更换关键词，或清空搜索框。</source>
@@ -7505,7 +7505,7 @@ Checking size and SHA-1 (up to 900 s; cancelable anytime).</translation>
         </message>
         <message>
             <source>Java 版本过低</source>
-            <translation>Java version too low</translation>
+            <translation>Java version too old</translation>
         </message>
         <message>
             <source>手动选择 java.exe…</source>
@@ -7813,7 +7813,7 @@ The manifest may be corrupted; modpack wasn't imported.</translation>
             <translation>Each entry lists the mod or project name, project ID, file ID, and project page. Select an entry to see its filename, target location, and how to add it.
 
 You can install the rest first; missing files stay in the import report so you can add them later.
-Instance directory: %1</translation>
+Instance folder: %1</translation>
         </message>
         <message>
             <source>继续安装其余内容</source>
@@ -7845,7 +7845,7 @@ Instance directory: %1</translation>
         </message>
         <message>
             <source>写入 %1 失败：%2</source>
-            <translation>Couldn't write to %1: %2</translation>
+            <translation>Couldn't write %1: %2</translation>
         </message>
         <message>
             <source>无法读取拖入的 %1。</source>
@@ -8577,7 +8577,7 @@ Source files are deleted only after target verification succeeds.</translation>
         </message>
         <message>
             <source>备份完成</source>
-            <translation>Backup created</translation>
+            <translation>Backup complete</translation>
         </message>
         <message>
             <source>已备份「%1」的存档信息：
@@ -9025,7 +9025,7 @@ Discard changes?</translation>
         </message>
         <message>
             <source>打包失败。</source>
-            <translation>Couldn't package.</translation>
+            <translation>Couldn't create archive.</translation>
         </message>
         <message>
             <source>实例修改了主类或 JVM 参数。Prism / MultiMC 能识别导出的包，但可能缺少这些启动配置并导致启动失败。建议分发原整合包。</source>
@@ -9806,7 +9806,7 @@ Use a different instance name to keep the existing progress. To resume that impo
         </message>
         <message>
             <source>打开实例目录</source>
-            <translation>Open instance directory</translation>
+            <translation>Open instance folder</translation>
         </message>
         <message>
             <source>基础设置</source>
@@ -9850,7 +9850,7 @@ Use a different instance name to keep the existing progress. To resume that impo
         </message>
         <message>
             <source>打开实例目录及相关文件夹。</source>
-            <translation>Open the instance directory and related folders.</translation>
+            <translation>Open the instance folder and related folders.</translation>
         </message>
         <message>
             <source>查看投影和结构文件。</source>
@@ -10062,7 +10062,7 @@ Use a different instance name to keep the existing progress. To resume that impo
         </message>
         <message>
             <source>结构/原理图</source>
-            <translation>Structures / Schematics</translation>
+            <translation>Structures / schematics</translation>
         </message>
         <message>
             <source>配置文件</source>
@@ -10626,7 +10626,7 @@ Use a different instance name to keep the existing progress. To resume that impo
         </message>
         <message>
             <source>模组声明：正在读取…</source>
-            <translation>Mod compatibility: Reading…</translation>
+            <translation>Mod compatibility: reading…</translation>
         </message>
         <message>
             <source>重新检查</source>
@@ -10863,7 +10863,7 @@ Switch to that game directory to view it.</translation>
         </message>
         <message>
             <source>正在后台复制实例目录…</source>
-            <translation>Copying instance folder in background…</translation>
+            <translation>Copying instance folder in the background…</translation>
         </message>
         <message>
             <source>副本缺少 %1，无法识别实例。</source>
@@ -11947,7 +11947,7 @@ File changes:
         <name>IntegrityController</name>
         <message>
             <source>暂时无法操作</source>
-            <translation>Busy</translation>
+            <translation>Unavailable right now</translation>
         </message>
         <message>
             <source>「%1」正在进行完整性检查，请待其完成后再检查此实例。</source>
@@ -14574,7 +14574,7 @@ Delete this group?</translation>
         </message>
         <message>
             <source>删除分组</source>
-            <translation>Delete group?</translation>
+            <translation>Delete group</translation>
         </message>
         <message>
             <source>移出分组失败</source>
@@ -15678,7 +15678,7 @@ You can undo the last update in "Update center".</translation>
         </message>
         <message>
             <source>搜索设置</source>
-            <translation>Search…</translation>
+            <translation>Search settings…</translation>
         </message>
         <message>
             <source>运行时</source>
@@ -16213,11 +16213,11 @@ You can undo the last update in "Update center".</translation>
         </message>
         <message>
             <source>默认展开：开</source>
-            <translation>Expand by default: On</translation>
+            <translation>Expand by default: on</translation>
         </message>
         <message>
             <source>默认展开：关</source>
-            <translation>Expand by default: Off</translation>
+            <translation>Expand by default: off</translation>
         </message>
         <message>
             <source>删除分组…</source>
@@ -16385,7 +16385,7 @@ You can undo the last update in "Update center".</translation>
         </message>
         <message>
             <source>收藏</source>
-            <translation>Favorite</translation>
+            <translation>Favorites</translation>
         </message>
         <message>
             <source>取消收藏</source>
@@ -16947,7 +16947,7 @@ You can still remove online players with "Kick…"; output appears in the consol
         </message>
         <message>
             <source>打开世界备份</source>
-            <translation>Open World backups</translation>
+            <translation>Open world backups</translation>
         </message>
         <message>
             <source>登录</source>
@@ -17879,7 +17879,7 @@ Installed dependencies in this instance haven't been checked. Download them toge
         </message>
         <message>
             <source>暂时无法操作</source>
-            <translation>Busy</translation>
+            <translation>Unavailable right now</translation>
         </message>
         <message>
             <source>「%1」的文件正在变动。请等待安装、导入或检查完成后再导出。</source>
@@ -23201,7 +23201,7 @@ Report:
         </message>
         <message>
             <source>安装原版与加载器</source>
-            <translation>Install Vanilla and loader</translation>
+            <translation>Install vanilla and loader</translation>
         </message>
         <message>
             <source>下载模组与清单文件</source>
@@ -23549,7 +23549,7 @@ Nested JARs not fully listed</translation>
         </message>
         <message>
             <source>原版 / 未识别</source>
-            <translation>Vanilla / Unidentified</translation>
+            <translation>Vanilla / unidentified</translation>
         </message>
         <message>
             <source>%1 个启用模组。%2</source>
@@ -23717,7 +23717,7 @@ Nested JARs not fully listed</translation>
         </message>
         <message>
             <source>打包失败。</source>
-            <translation>Packaging failed.</translation>
+            <translation>Couldn't create archive.</translation>
         </message>
         <message>
             <source>未找到备份记录中的目标目录（%1），未解压备份。</source>
@@ -24760,7 +24760,7 @@ Wait a minute or two and retry.</translation>
         </message>
         <message>
             <source>读取 Replay 元数据</source>
-            <translation>Read Replay metadata</translation>
+            <translation>Read replay metadata</translation>
         </message>
         <message>
             <source>压缩包中无 metaData.json，不是 Replay 录像</source>
@@ -25424,7 +25424,7 @@ Wait a minute or two and retry.</translation>
         </message>
         <message>
             <source>%1 下载失败：%2</source>
-            <translation>%1 download failed: %2</translation>
+            <translation>Couldn't download %1: %2</translation>
         </message>
         <message>
             <source>下载失败</source>
@@ -26297,7 +26297,7 @@ Close the app using the port, or change the port in General.</translation>
         </message>
         <message>
             <source>获取原版版本信息</source>
-            <translation>Fetch Vanilla version info</translation>
+            <translation>Fetch vanilla version info</translation>
         </message>
         <message>
             <source>获取 Paper 构建列表</source>
@@ -26568,7 +26568,7 @@ Close the app using the port, or change the port in General.</translation>
         </message>
         <message>
             <source>连接失败</source>
-            <translation>Connection failed</translation>
+            <translation>Couldn't connect</translation>
         </message>
         <message>
             <source>服务器地址格式无效。请输入主机名和端口，省略端口时使用 25565。</source>
@@ -27351,7 +27351,7 @@ Close the app using the port, or change the port in General.</translation>
         </message>
         <message>
             <source>无法创建临时目录。</source>
-            <translation>Can't create temporary folder.</translation>
+            <translation>Can't create temp folder.</translation>
         </message>
         <message>
             <source>无法启动 7z.exe。</source>
@@ -29161,7 +29161,7 @@ Close the app using the port, or change the port in General.</translation>
         </message>
         <message>
             <source>光柱配色 · 自下而上</source>
-            <translation>Beam colors · Bottom to top</translation>
+            <translation>Beam colors · bottom to top</translation>
         </message>
         <message>
             <source>将所选玻璃添加到最上层</source>
@@ -29901,7 +29901,7 @@ Back up the instance first. Continue anyway?</translation>
         </message>
         <message>
             <source>缺少目标加载器声明</source>
-            <translation>Missing target loader</translation>
+            <translation>Missing target loader declaration</translation>
         </message>
         <message>
             <source>失败</source>
@@ -29909,7 +29909,7 @@ Back up the instance first. Continue anyway?</translation>
         </message>
         <message>
             <source>读取失败</source>
-            <translation>Read failed</translation>
+            <translation>Couldn't read</translation>
         </message>
         <message>
             <source>查询失败</source>
@@ -30552,7 +30552,7 @@ New modpack saved at %2.</translation>
         </message>
         <message>
             <source>导出计划缺少实例目录，无法读取来源未知的文件。</source>
-            <translation>Export plan is missing instance directory; can't read files from unknown sources.</translation>
+            <translation>Export plan is missing the instance folder; can't read files from unknown sources.</translation>
         </message>
         <message>
             <source>无法创建临时目录以准备整合包：%1</source>
@@ -30560,7 +30560,7 @@ New modpack saved at %2.</translation>
         </message>
         <message>
             <source>打包失败。</source>
-            <translation>Couldn't package modpack.</translation>
+            <translation>Couldn't create archive.</translation>
         </message>
         <message>
             <source>整合包已生成，但无法替换 %1，也无法恢复原文件。原文件位于 %2。</source>
@@ -30798,7 +30798,7 @@ Last output:
             <source>%1 %2 的安装器已结束（退出码 0），但临时目录中未新增版本目录，无法定位安装目录。
 安装器输出：
 %3</source>
-            <translation>%1 %2 installer finished (exit code 0), but created no version folder in temp directory.
+            <translation>%1 %2 installer finished (exit code 0), but created no version folder in the temp folder.
 Installer output:
 %3</translation>
         </message>
