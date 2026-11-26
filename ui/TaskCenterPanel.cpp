@@ -33,6 +33,7 @@
 #include <QScreen>
 #include <QScrollArea>
 #include <QScrollBar>
+#include <QTextLayout>
 #include <QTimer>
 #include <QVBoxLayout>
 // `setProperty()` 收的是 QVariant（那一行"这行是谁"的钥匙）—— 少了它，编译器报的是
@@ -49,6 +50,64 @@
 #include "VersionIcons.hpp"
 
 namespace {
+/// 概览栏的大字标题：最多两行，第二行放不下的末尾省略，被截时悬停看全名（#131）。
+/// 自己画，`text()` 仍是完整标题；字号字体照旧由 markDisplay 给。
+class TwoLineTitle final : public QLabel {
+public:
+    using QLabel::QLabel;
+    bool hasHeightForWidth() const override { return true; }
+    int heightForWidth(int width) const override {
+        const QMargins m = contentsMargins();
+        return m.top() + int(lines(width - m.left() - m.right()).size()) * fontMetrics().lineSpacing() + m.bottom();
+    }
+    QSize sizeHint() const override { const int w = QLabel::sizeHint().width(); return {w, heightForWidth(w)}; }
+    QSize minimumSizeHint() const override { return {1, heightForWidth(1)}; }
+
+protected:
+    void resizeEvent(QResizeEvent *event) override {
+        QLabel::resizeEvent(event);
+        bool clipped = false;
+        lines(contentsRect().width(), &clipped);
+        setToolTip(clipped ? text() : QString());
+    }
+    void paintEvent(QPaintEvent *) override {
+        const QRect box = contentsRect();
+        const int step = fontMetrics().lineSpacing();
+        QPainter painter(this);
+        painter.setPen(palette().color(foregroundRole()));
+        const QStringList shown = lines(box.width());
+        for (int i = 0; i < shown.size(); ++i)
+            painter.drawText(QRect(box.left(), box.top() + i * step, box.width(), step), Qt::AlignLeft | Qt::AlignVCenter | Qt::TextSingleLine, shown.at(i));
+    }
+
+private:
+    QStringList lines(int width, bool *clipped = nullptr) const {
+        const QString full = text();
+        QStringList out;
+        if (width <= 0 || full.isEmpty()) return {full};
+        QTextLayout layout(full, font());
+        QTextOption option;
+        option.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
+        layout.setTextOption(option);
+        layout.beginLayout();
+        for (int start = 0; out.size() < 2 && start < full.size();) {
+            QTextLine line = layout.createLine();
+            if (!line.isValid()) break;
+            line.setLineWidth(width);
+            if (out.size() == 1) {  // 第二行：剩下的全塞进来，放不下就省略
+                const QString rest = full.mid(start).trimmed();
+                out << fontMetrics().elidedText(rest, Qt::ElideRight, width);
+                if (clipped) *clipped = out.last() != rest;
+                break;
+            }
+            out << full.mid(start, line.textLength()).trimmed();
+            start += line.textLength();
+        }
+        layout.endLayout();
+        return out;
+    }
+};
+
 bool taskDragActive = false;
 constexpr char taskMime[] = "application/x-wtfml-queued-task";
 class TaskDragHandle final : public QLabel {
@@ -1229,9 +1288,8 @@ void TaskCenterPanel::rebuildDetail(const QList<TaskCenter::Item> &items) {
     box->addLayout(stateRow);
 
     // ---------- 标题（手写体）----------
-    auto *title = new QLabel(item.title, column);
+    auto *title = new TwoLineTitle(item.title, column);
     title->setObjectName(MainWindowUI::taskDetailTitleName());
-    title->setWordWrap(true);
     Theme::markDisplay(title, Theme::textFont(title->font(), Theme::TextRole::Display));
     box->addWidget(title);
     if (!item.detail.isEmpty()) {

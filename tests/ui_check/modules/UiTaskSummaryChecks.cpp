@@ -166,6 +166,29 @@ int UiTaskSummaryChecks(MainWindowUI &ui) {
             QApplication::processEvents();
             check(progress->isVisible() && progress->toolTip() == tip && cell->toolTip() == tip,
                   "★★ E4 导航轨折叠后进度环仍保留完整悬停提示", progress->toolTip());
+
+            // #131：鼠标点开任务中心时按钮拿到焦点，焦点可见性那一路（Theme.cpp 的
+            // ControlFocusVisibility）就地 unpolish + polish 它，换主题的 repolishWidgets() 也是；
+            // 样式表里的 min-height 随之把最小高冲回 0。任务卡若不跟着重算，就被压回一行字高，
+            // 环的下半截被按钮边裁掉。最小高被冲成 0 之后，轨底布局就按 sizeHint / minimumSizeHint
+            // 给高度，所以这两个提示本身就得装得下整枚环。
+            {
+                Summary unread = detailed;
+                unread.unreadFailure = true;
+                ui.setBottomBarTaskSummary(unread);
+                QApplication::processEvents();
+                cell->style()->unpolish(cell);
+                cell->style()->polish(cell);
+                for (int i = 0; i < 4; ++i) QApplication::processEvents();
+                const QRect ring = progress->geometry();
+                const int need = ring.height() + 16;  // 环 + 上下各 8 的边距
+                check(progress->isVisible() && cell->rect().contains(ring) && cell->sizeHint().height() >= need &&
+                          cell->minimumSizeHint().height() >= need,
+                      "★★ #131 任务卡按钮的尺寸提示装得下整枚进度环（polish 冲掉最小高后不被压成半截）",
+                      QStringLiteral("卡 %1 高，sizeHint %2，minimumSizeHint %3，环 y=%4..%5")
+                          .arg(cell->height()).arg(cell->sizeHint().height()).arg(cell->minimumSizeHint().height())
+                          .arg(ring.top()).arg(ring.bottom()));
+            }
             if (host != nullptr) {
                 host->resize(1280, 800);
                 QApplication::processEvents();
