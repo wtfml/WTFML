@@ -16,7 +16,6 @@
 #include <QList>
 #include <QString>
 
-class AgentBackupIndex;
 
 struct AgentDirMetadata {
     bool exists = false;
@@ -76,9 +75,8 @@ struct AgentWriteResult {
 
 class AgentFileTools {
 public:
-    explicit AgentFileTools(AgentBackupIndex *backups = nullptr);
-
-    void setBackups(AgentBackupIndex *backups) { m_backups = backups; }
+    /// @p backupBeforeWrite 为真时，覆盖已有文件前先写一份 Files 备份到启动器备份目录。
+    explicit AgentFileTools(bool backupBeforeWrite = false) : m_backupBeforeWrite(backupBeforeWrite) {}
 
     AgentDirMetadata list(const QString &root, const QString &relativePath,
                           QString *problem = nullptr) const;
@@ -94,8 +92,10 @@ public:
                                 const QString &identityToken) const;
 
     /// 提交计划：重新核身份/hash、备份原文件、原子写、写后回读。@p sourceSessionId 进备份元数据。
+    /// @p backup 为假时不备份（写进修复事务工作区：那份副本本身就不是原实例）。
     AgentWriteResult commitWrite(const QString &root, const AgentWritePlan &plan,
-                                 const QString &sourceSessionId, const QString &instanceId) const;
+                                 const QString &sourceSessionId, const QString &instanceId,
+                                 const QString &sessionTitle = QString(), bool backup = true) const;
 
     static bool isConfigWhitelist(const QString &relativePath);
     static int maxReadBytes();
@@ -103,5 +103,5 @@ public:
     static int maxListEntries();
 
 private:
-    AgentBackupIndex *m_backups = nullptr;
+    bool m_backupBeforeWrite = false;
 };

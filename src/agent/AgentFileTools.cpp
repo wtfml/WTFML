@@ -39,7 +39,6 @@ QString lineDiff(const QString &oldText, const QString &newText) {
 }
 }  // namespace
 
-AgentFileTools::AgentFileTools(AgentBackupIndex *backups) : m_backups(backups) {}
 
 int AgentFileTools::maxReadBytes() { return 1024 * 1024; }
 int AgentFileTools::maxInlineBytes() { return 256 * 1024; }
@@ -231,7 +230,8 @@ AgentWritePlan AgentFileTools::prepareWrite(const QString &root, const QString &
 
 AgentWriteResult AgentFileTools::commitWrite(const QString &root, const AgentWritePlan &plan,
                                              const QString &sourceSessionId,
-                                             const QString &instanceId) const {
+                                             const QString &instanceId,
+                                             const QString &sessionTitle, bool backup) const {
     AgentWriteResult result;
     if (!plan.ok) {
         result.error = plan.error;
@@ -281,16 +281,16 @@ AgentWriteResult AgentFileTools::commitWrite(const QString &root, const AgentWri
             return result;
         }
         result.bytesBefore = oldBytes.size();
-        if (m_backups != nullptr) {
+        if (m_backupBeforeWrite && backup) {
             QString backupProblem;
-            if (!m_backups->createFromBytes(sourceSessionId, instanceId, normalized, oldBytes,
-                                            QCoreApplication::translate("AgentFileTools", "写入文件前的备份"), &result.backupId,
-                                            &backupProblem)) {
+            if (!AgentBackups::write(QString(AgentBackups::kTriggerWrite), instanceId,
+                                     sourceSessionId, sessionTitle, QString(),
+                                     {{normalized, oldBytes}}, &result.backupId,
+                                     &result.backupDir, &backupProblem)) {
                 result.error = makeError(Agent::ErrorKind::ToolError,
                                          QCoreApplication::translate("AgentFileTools", "写入前备份失败：%1").arg(backupProblem));
                 return result;
             }
-            result.backupDir = m_backups->dirFor(result.backupId);
         }
     }
 

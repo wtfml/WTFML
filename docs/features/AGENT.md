@@ -23,7 +23,7 @@
 | D7 | MCP 只做 stdio，单独验收；首次启动/改配置/重连都确认；文件身份变了重新确认；不自动重连；工具逐次审批 |
 | D8 | 首次实例工具调用锁定实例；之后不跟主页切换；工具不接受模型传的实例 id |
 | D9 | 第一版只开放固定诊断命令 + 参数白名单，默认关闭；任意可执行文件未开放 |
-| D10 | 删除会话不删维护备份；备份带 `owner/source/sourceSessionId`；只清 `owner=agent` |
+| D10 | 删除会话不删备份；备份带来源实例与 `sourceSessionId`；智能体备份并入启动器备份（#129），在实例设置「备份与操作」页的「从快照恢复…」里与快照一起列出、可还原 |
 | D11 | 外发按内容判定：自动读取脱敏日志/崩溃报告/实例与目录元数据；配置/完整文件名/完整实例清单逐次确认；凭据与二进制硬阻断 |
 | D12 | Auto-safe（2026-11-24 产品确认）：用户显式打开后，**一次批准一个有范围、有时效的事务**，事务内按已批准计划执行写/启动/提交，不再逐次确认；范围来自计划与 `repair.begin`（工具、文件、设置键、模组、项目号），最长 60 分钟或 20 次启动；`java.path`、`args.extraJvm`、`saves/`、删除、`backup.restore`、`instance.repairCore`、别的工区一律拒绝；默认关闭、不随会话记忆；每次事务结束写审计。这是 D5 的唯一例外，其它路径仍逐次确认 |
 
@@ -101,7 +101,7 @@ agent/
   sessions/.recovery/<uuid>/         稳定点快照（最多 3 份）
   artifacts/<uuid>/<id>.enc + .meta.json   模型可读 artifact（DPAPI，meta 只有大小/哈希）
   repair-cases/<uuid>.json            本地修复病例库（默认关闭，只存结构化字段）
-  backups/maintenance/<id>/original.enc + meta.json   维护备份（owner/source/sourceSessionId）
+  backups/maintenance/<id>/original.enc + meta.json   旧维护备份（#129 起冻结：只读，不写不删）
   mcp/servers.json, mcp/confirmations.json            MCP 配置与确认记录
   logs/
 ```
@@ -124,7 +124,15 @@ agent/
 
 ### 6.6 导出、备份、删除
 
-删除会话删正文/快照/artifacts/元数据，不删维护备份；活动会话先取消/等待，文件提交阶段拒绝强行中断；`owner=launcher/user/shared` 只删引用；来源会话删除后备份仍可恢复。
+删除会话删正文/快照/artifacts/元数据，不删备份；活动会话先取消/等待，文件提交阶段拒绝强行中断；`owner=launcher/user/shared` 只删引用；来源会话删除后备份仍可恢复。
+
+智能体备份（#129）写进当前游戏文件夹的 `cache/backups/files/<id>/`：`wtfml-backup.json`（`kind=files`，记来源实例、`trigger`、会话 id 与标题、逐文件大小与 sha1）+ `files/<相对路径>`，不加密，目录先写暂存再改名发布。
+
+- 列表：实例设置「备份与操作」页的「从快照恢复…」把这个实例的智能体备份与 zip 快照按时间混排，行内写明来源与范围；`fs.write` 的写前备份按会话归一行，选中即撤销这次会话的修改（每个文件取会话里最早那份原文）。
+- 还原只覆盖列出的文件，其他文件与备份后新增的文件不动；路径逐段校验、途经链接拒绝；先给被覆盖的文件做一份还原前备份，写回或核对失败就把已写的改回、新建的删掉。运行中、正被复制/安装/还原或有备份任务时拒绝。
+- 保留：每个实例最多 50 份、合计 1 GB，从最旧的删；最新 5 份不受大小限制，当前会话的不删；只清这一类，不碰 zip 与旧库。
+- 写进修复事务工作区的 `fs.write` 不备份（那是副本）。
+- 旧库 `agent/backups/maintenance` 照旧解密列出与还原，旧条目出现在当前游戏文件夹同名实例下；还原前备份一律写新格式。
 
 ### 6.7 整会话加密
 
@@ -216,7 +224,7 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 | `mods.list` | 默认给启用/停用数；`detail=full` 列文件名并逐次确认，≤2000 |
 | `settings.get` | 白名单键的非路径字段（`java.path` 只写不读） |
 | `java.list` / `memory.suggest` | 主版本列表 / 推荐 Xmx、Xms |
-| `backup.list` | 维护备份 + 启动器 zip（zip 只列，`restorable=false`），≤200 条 |
+| `backup.list` | 智能体备份（新格式 + 旧库）+ 启动器 zip（zip 只列，`restorable=false`），带 `instanceId`，zip ≤200 条 |
 | `upgrade.inspect` | 候选目标 + 兼容性结论，≤40 个目标 |
 
 写 / 高风险（逐次审批）：
@@ -225,8 +233,8 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 | --- | --- |
 | `settings.set` | 白名单键：`memory.auto/xmx/xms`、`java.autoSelect`、`java.path`、`args.extraJvm`、`launch.afterLaunch/showGameLog/processPriority`；审批卡写旧值→新值；Xmx 512–65536、Xms 256–65536 |
 | `mods.setEnabled` | 只改扩展名 `.jar` ↔ `.jar.disabled`；目标已存在拒绝 |
-| `backup.create` | 范围 config/mods/options/servers；单文件 ≤8 MB、总量 ≤32 MB、≤400 文件；`owner=agent` 写 `backups/maintenance` |
-| `backup.restore` | 恢复前先做快照；路径越界/绝对路径拒绝；只恢复 `owner=agent` |
+| `backup.create` | 范围 config/mods/options/servers；单文件 ≤8 MB、总量 ≤32 MB、≤400 文件；写进 `cache/backups/files` |
+| `backup.restore` | 只恢复会话锁定实例的智能体备份（别的实例、启动器 zip 直接拒绝）；实例忙时拒绝；恢复前先做备份，失败回滚；路径越界/绝对路径/链接拒绝 |
 | `mods.installFix` | 只接受 `projectId`/`versionId`/`expectedSha1`；先在暂存目录下载并校验大小与 SHA-1，全部通过才写进事务工作区；可补齐版本声明的必需前置；没有活动事务时拒绝 |
 | `instance.repairCore` | 复用 `VersionManager::repairVersionFiles()` 重下客户端 jar、库和资源索引；每次审批；事务活动期间拒绝 |
 | `mods.bisect` | 在事务工作区里反复启停模组并启动游戏，做依赖感知 delta debugging；默认 8 次启动（最多 20）、45 分钟；结束后恢复 mods/config/options 基线 |

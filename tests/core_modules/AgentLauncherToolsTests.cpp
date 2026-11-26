@@ -281,7 +281,17 @@ void runAgentLauncherToolsTests() {
     backup.backupId = QStringLiteral("backup-1");
     backup.owner = QStringLiteral("agent");
     backup.label = QStringLiteral("backup.create：config");
+    backup.instanceId = QStringLiteral("1.20.1-Fabric");
     host.backupEntries.append(backup);
+    AgentHostBackupRef foreign = backup;
+    foreign.backupId = QStringLiteral("backup-other");
+    foreign.instanceId = QStringLiteral("1.21-Vanilla");
+    host.backupEntries.append(foreign);
+    AgentHostBackupRef launcherZip = backup;
+    launcherZip.backupId = QStringLiteral("launcher-zip");
+    launcherZip.owner = QStringLiteral("launcher");
+    launcherZip.restorable = false;
+    host.backupEntries.append(launcherZip);
 
     host.settingsValues = QJsonObject{{QStringLiteral("memory.xmx"), 4096},
                                       {QStringLiteral("java.path"),
@@ -424,7 +434,10 @@ void runAgentLauncherToolsTests() {
     // ---------- 备份 ----------
     result = tools.invoke(callFor(QStringLiteral("backup.list")));
     check(result.status == AgentToolResult::Status::Ok, "启动器工具：backup.list 自动执行");
-    check(result.data.value(QStringLiteral("count")).toInt() == 1, "启动器工具：列出备份条数");
+    check(result.data.value(QStringLiteral("count")).toInt() == 3, "启动器工具：列出备份条数");
+    check(result.data.value(QStringLiteral("backups")).toArray().at(0).toObject()
+                  .value(QStringLiteral("instanceId")).toString() == QStringLiteral("1.20.1-Fabric"),
+          "启动器工具：备份列表带来源实例");
 
     host.created = false;
     result = tools.invoke(callFor(QStringLiteral("backup.create"),
@@ -462,6 +475,15 @@ void runAgentLauncherToolsTests() {
     result = tools.invoke(callFor(QStringLiteral("backup.restore"),
                                   QJsonObject{{QStringLiteral("backupId"), QStringLiteral("nope")}}));
     check(result.status == AgentToolResult::Status::Error, "启动器工具：未知备份 id 被拒");
+    host.restored = false;
+    result = tools.invoke(callFor(QStringLiteral("backup.restore"),
+                                  QJsonObject{{QStringLiteral("backupId"), QStringLiteral("backup-other")}}));
+    check(result.status == AgentToolResult::Status::Error && !host.restored,
+          "启动器工具：别的实例的备份不审批、直接拒绝", result.summary);
+    result = tools.invoke(callFor(QStringLiteral("backup.restore"),
+                                  QJsonObject{{QStringLiteral("backupId"), QStringLiteral("launcher-zip")}}));
+    check(result.status == AgentToolResult::Status::Error && !host.restored,
+          "启动器工具：启动器自己的 zip 备份不由智能体恢复", result.summary);
 
     // ---------- 只读检查与打开页面 ----------
     result = tools.invoke(callFor(QStringLiteral("upgrade.inspect")));

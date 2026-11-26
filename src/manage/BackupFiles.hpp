@@ -46,6 +46,9 @@ namespace BackupFiles {
 enum class Kind {
     World,     ///< 一个存档（`<实例>/saves/<世界名>`）。
     Instance,  ///< 一个实例（默认排除可以重新下回来的那一堆）。
+    /// 实例里的若干文件（智能体备份）。容器是**目录**而不是 zip：智能体在界面线程同步提交，
+    /// 打 zip / 读 zip 清单都要起 PowerShell。布局同 zip 内部摊开，见 `writeFilesBackup()`。
+    Files,
 };
 
 /// 备份里的一个文件。
@@ -82,6 +85,11 @@ struct Manifest {
     QStringList excluded;
     QList<FileRecord> files;
     qint64 totalBytes = 0;
+    /// 以下仅 Files：谁做的这一份（`backup.create` / `fs.write` / `before-restore`），
+    /// 来自哪个智能体会话。还原只覆盖 `files` 里列出的文件。
+    QString trigger;
+    QString sessionId;
+    QString sessionTitle;
 
     int fileCount() const { return int(files.size()); }
     /// 认得出来的一份清单（有格式标记、有前缀、有时间）。读盘读坏 / 拿一个别人的 zip
@@ -104,7 +112,8 @@ Manifest manifestFromJson(const QByteArray &bytes, bool *ok = nullptr);
 /// 备份根：`<当前游戏文件夹>/cache/backups`（= `AppPaths::backupDir()`，那边写了为什么
 /// 是 `cache/` 底下而不是实例里面）。
 QString backupRoot();
-/// 备份落在哪个子目录：世界 `cache/backups/worlds`、实例 `cache/backups/instances`。
+/// 备份落在哪个子目录：世界 `cache/backups/worlds`、实例 `cache/backups/instances`、
+/// 文件 `cache/backups/files`。
 QString backupDir(Kind kind);
 /// 某个 label 的备份文件名**都**以它开头（`<换了非法字符的 label>-`）。
 ///
@@ -173,8 +182,8 @@ struct WriteResult {
 WriteResult writeBackup(const Manifest &manifest, const QString &sourceDir,
                         const QString &targetZip, const std::function<bool()> &cancelled = {});
 
-/// 读一份备份的清单（从 zip 里那个根条目）。**不是我们做的包**和**读不动**在这里是两件事
-/// （两句话不一样），调用方只要看 `ok`。
+/// 读一份备份的清单（从 zip 里那个根条目；Files 备份是目录，直接读目录里那份）。
+/// **不是我们做的包**和**读不动**在这里是两件事（两句话不一样），调用方只要看 `ok`。
 Manifest readManifest(const QString &zipPath, bool *ok, QString *problemOut);
 
 /// 还原一份备份。
@@ -252,5 +261,51 @@ int verifyTree(const QString &dir, const QList<FileRecord> &files,
 /// 那一句话（「包含范围」摆给用户看的那几句）拼好之后的形状：`saves/基地周目（1234 个文件）`。
 /// 世界备份和实例快照各拼各的，这里只提供"范围里那一条"怎么写的唯一出处。
 QString scopeLine(const QString &what, int fileCount);
+
+/// Files 备份里的一份文件：路径相对实例目录、`/` 分隔，内容整份放在内存里
+/// （智能体备份有单文件 8 MB、合计 32 MB 的上限）。
+struct FilePayload {
+    QString path;
+    QByteArray data;
+};
+
+/// 写一份 Files 备份：`<targetDir>/wtfml-backup.json` + `<targetDir>/<root>/<相对路径>`。
+/// 先写进同级暂存目录，写完再改名发布；失败不留半成品，目标已存在时不覆盖。
+/// `files` / `totalBytes` 由这一趟按 @p files 填；`kind` 一律记成 Files。
+WriteResult writeFilesBackup(const Manifest &manifest, const QList<FilePayload> &files,
+                             const QString &targetDir);
+
+/// 读回一份 Files 备份的内容，逐个核对大小与 sha1；任何一份对不上整份不认。
+bool readFilesPayload(const QString &backupDir, QList<FilePayload> *files, QString *problemOut);
+
+/// 当前游戏文件夹里的 Files 备份（@p instanceId 为空 = 全部），按时间从新到旧。
+/// 暂存中的、清单读不动的目录不列。
+struct FilesBackup {
+    QString path;
+    Manifest manifest;
+};
+QList<FilesBackup> listFilesBackups(const QString &instanceId = QString());
+
+/**
+ * @brief 把 @p files 写回 @p instanceDir：**只覆盖列出的文件**，其他文件不动。
+ *
+ * 路径逐段校验（拒绝 `..`、绝对路径、设备名、途经链接）→ 空间预检 →
+ * 把这些文件的当前内容写成一份 Files 安全备份（`safety`、`before-restore`；写不成整次中止）→
+ * 逐个原子写回 → 逐个核对 sha1。写回或核对任一失败：已写的改回原内容、新建的删掉。
+ * 回滚也失败时 `recoveryFailed` 为真，安全备份留着供手动恢复。
+ *
+ * @param safetyTemplate 安全备份的描述（来源实例、会话）；其余字段由这一趟填。
+ * @return `safetyZip` 是安全备份的目录（这些文件原先都不存在时为空）。
+ */
+RestoreResult restoreFiles(const QString &instanceDir, const QList<FilePayload> &files,
+                           const Manifest &safetyTemplate,
+                           const std::function<bool()> &cancelled = {});
+
+/// Files 备份的保留策略（按实例）：最多 @p maxCount 份、合计不超过 @p maxBytes，
+/// 从最旧的删；最新 @p exemptNewest 份不受大小限制；@p protectedSessionId 那个会话的一份都不删。
+/// 只动 Files 备份，不碰 zip 与旧的维护备份库。@return 删掉的目录。
+QStringList pruneFilesBackups(const QString &instanceId, const QString &protectedSessionId,
+                              int maxCount = 50, qint64 maxBytes = 1024LL * 1024 * 1024,
+                              int exemptNewest = 5);
 
 }  // namespace BackupFiles
