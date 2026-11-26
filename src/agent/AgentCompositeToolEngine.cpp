@@ -137,7 +137,7 @@ QJsonArray AgentCompositeToolEngine::schemas() const {
 
 QString AgentCompositeToolEngine::riskBlockedMessage(const QString &skillName,
                                                      const QString &toolName) {
-    return QStringLiteral("当前模式（%1）不允许调用 %2。").arg(skillName, toolName);
+    return QCoreApplication::translate("AgentCompositeToolEngine", "当前模式（%1）不允许调用 %2。").arg(skillName, toolName);
 }
 
 QString AgentCompositeToolEngine::gate(const QString &internalName) const {
@@ -149,25 +149,25 @@ QString AgentCompositeToolEngine::gate(const QString &internalName) const {
     if (m_workflow == nullptr || !m_workflow->active()) return QString();
     const AgentToolSpec toolSpec = AgentToolRegistry::find(internalName);
     if (skill.readOnly && isWriteRisk(toolSpec.risk)) {
-        return QStringLiteral("当前模式（%1）是只读模式，不能执行写操作。").arg(skill.name);
+        return QCoreApplication::translate("AgentCompositeToolEngine", "当前模式（%1）为只读，不能执行写操作。").arg(skill.name);
     }
     // rollback 是失败后的收尾动作；commit 仍由工具自己要求和验证证据与逐次审批。
     if (internalName == QStringLiteral("repair.finish")) return QString();
     if (m_workflow->stage() == AgentWorkflowStage::Failed &&
         internalName != QStringLiteral("workflow.finish") && isWriteRisk(toolSpec.risk)) {
-        return QStringLiteral("工作流已经失败，不能继续写入；请先说明失败原因并重新提交计划。");
+        return QCoreApplication::translate("AgentCompositeToolEngine", "工作流已失败，不能继续写入。请说明失败原因并重新提交计划。");
     }
     if (skill.requiresPlan && isWriteRisk(toolSpec.risk)) {
         if (!m_workflow->planApproved()) {
-            return QStringLiteral("修复计划还没批准；请先用 workflow.submitPlan 提交计划。");
+            return QCoreApplication::translate("AgentCompositeToolEngine", "修复计划尚未批准。请先用 workflow.submitPlan 提交计划。");
         }
         if (!m_workflow->stepAllows(internalName)) {
             const QList<AgentPlanStep> steps = m_workflow->planSteps();
             const int index = m_workflow->nextStepIndex();
             if (index >= steps.size()) {
-                return QStringLiteral("计划里的步骤都执行完了，不能再写；请先验证并提交报告。");
+                return QCoreApplication::translate("AgentCompositeToolEngine", "计划中的步骤已全部执行，不能继续写入。请先验证并提交报告。");
             }
-            return QStringLiteral("计划按顺序执行：当前第 %1 步是 %2，不是 %3。")
+            return QCoreApplication::translate("AgentCompositeToolEngine", "计划须按顺序执行：当前第 %1 步为 %2，不是 %3。")
                 .arg(index + 1)
                 .arg(steps.at(index).tool, internalName);
         }
@@ -182,7 +182,7 @@ AgentToolResult AgentCompositeToolEngine::invoke(const Agent::ToolCall &call) {
     if (engine == nullptr) {
         AgentToolResult result;
         result.status = AgentToolResult::Status::Error;
-        result.summary = QStringLiteral("未知工具。");
+        result.summary = QCoreApplication::translate("AgentCompositeToolEngine", "未知工具。");
         result.error.kind = Agent::ErrorKind::ToolError;
         result.error.message = result.summary;
         return result;
@@ -237,7 +237,7 @@ AgentToolResult AgentCompositeToolEngine::resolveApprovalInternal(const QString 
     if (engine == nullptr) {
         AgentToolResult result;
         result.status = AgentToolResult::Status::Error;
-        result.summary = QStringLiteral("审批请求已失效。");
+        result.summary = QCoreApplication::translate("AgentCompositeToolEngine", "审批请求已失效。");
         result.error.kind = Agent::ErrorKind::ToolError;
         result.error.message = result.summary;
         return result;

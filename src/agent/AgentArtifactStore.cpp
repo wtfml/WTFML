@@ -9,6 +9,7 @@
 #include "AgentRedaction.hpp"
 #include "util/SecretProtector.hpp"
 
+#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDir>
@@ -67,7 +68,7 @@ bool AgentArtifactStore::putLocalRaw(const QString &sessionId, const QString &co
 bool AgentArtifactStore::put(const QString &sessionId, const QString &content, bool modelReadable,
                              QString *artifactId, QString *problem) {
     if (sessionId.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("artifact 缺少会话 id。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentArtifactStore", "artifact 缺少会话 ID。");
         return false;
     }
     const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -75,20 +76,20 @@ bool AgentArtifactStore::put(const QString &sessionId, const QString &content, b
     const QByteArray plain = storedContent.toUtf8();
     const QByteArray encrypted = SecretProtector::protect(plain, artifactMagic());
     if (encrypted.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("artifact DPAPI 加密失败，拒绝落盘。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentArtifactStore", "artifact 加密失败，未写入磁盘。");
         return false;
     }
     if (m_sessionQuotaBytes > 0 &&
         sessionBytes(sessionId) + encrypted.size() > m_sessionQuotaBytes) {
         if (problem != nullptr) {
-            *problem = QStringLiteral("本会话的 artifact 已到上限（%1 MB），不再写入新的。")  // i18n-ignore
+            *problem = QCoreApplication::translate("AgentArtifactStore", "本会话的 artifact 已达上限（%1 MB），不再写入新内容。")
                            .arg(double(m_sessionQuotaBytes) / (1024.0 * 1024.0), 0, 'f', 1);
         }
         return false;
     }
     const QString dir = sessionDir(sessionId);
     if (!QDir().mkpath(dir)) {
-        if (problem != nullptr) *problem = QStringLiteral("无法创建 artifact 目录。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentArtifactStore", "无法创建 artifact 目录。");
         return false;
     }
     const QString dataPath = dir + QStringLiteral("/") + id + QStringLiteral(".enc");
@@ -97,7 +98,7 @@ bool AgentArtifactStore::put(const QString &sessionId, const QString &content, b
         QSaveFile file(dataPath);
         if (!file.open(QIODevice::WriteOnly) || file.write(encrypted) != encrypted.size() ||
             !file.commit()) {
-            if (problem != nullptr) *problem = QStringLiteral("artifact 写盘失败。");
+            if (problem != nullptr) *problem = QCoreApplication::translate("AgentArtifactStore", "artifact 写入失败。");
             return false;
         }
     }
@@ -112,7 +113,7 @@ bool AgentArtifactStore::put(const QString &sessionId, const QString &content, b
     if (!file.open(QIODevice::WriteOnly) ||
         file.write(QJsonDocument(meta).toJson(QJsonDocument::Indented)) < 0 || !file.commit()) {
         QFile::remove(dataPath);
-        if (problem != nullptr) *problem = QStringLiteral("artifact 元数据写盘失败。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentArtifactStore", "artifact 元数据写入失败。");
         return false;
     }
     if (artifactId != nullptr) *artifactId = id;
@@ -124,7 +125,7 @@ bool AgentArtifactStore::readModel(const QString &sessionId, const QString &arti
     QString plain;
     if (!readEncrypted(sessionId, artifactId, true, &plain, problem)) return false;
     if (offset < 0 || length <= 0 || offset >= plain.size()) {
-        if (problem != nullptr) *problem = QStringLiteral("artifact 读取范围无效。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentArtifactStore", "artifact 读取范围无效。");
         return false;
     }
     const QString slice = plain.mid(offset, qMin(length, 1024 * 1024));
@@ -148,23 +149,23 @@ bool AgentArtifactStore::readEncrypted(const QString &sessionId, const QString &
     const QString dir = sessionDir(sessionId);
     QFile metaFile(dir + QStringLiteral("/") + artifactId + QStringLiteral(".meta.json"));
     if (!metaFile.open(QIODevice::ReadOnly)) {
-        if (problem != nullptr) *problem = QStringLiteral("artifact 不存在或不可读。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentArtifactStore", "artifact 不存在或不可读。");
         return false;
     }
     const QJsonObject meta = QJsonDocument::fromJson(metaFile.readAll()).object();
     if (requireModelReadable && !meta.value(QStringLiteral("modelReadable")).toBool(false)) {
         // 不区分“不存在”和“本地原始存档”：不泄露存在性。
-        if (problem != nullptr) *problem = QStringLiteral("artifact 不存在或不可读。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentArtifactStore", "artifact 不存在或不可读。");
         return false;
     }
     QFile data(dir + QStringLiteral("/") + artifactId + QStringLiteral(".enc"));
     if (!data.open(QIODevice::ReadOnly)) {
-        if (problem != nullptr) *problem = QStringLiteral("artifact 不存在或不可读。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentArtifactStore", "artifact 不存在或不可读。");
         return false;
     }
     const QByteArray plain = SecretProtector::unprotect(data.readAll(), artifactMagic());
     if (plain.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("artifact 无法解密（换用户/换机器或内容损坏）。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentArtifactStore", "artifact 无法解密：可能已更换 Windows 账户或设备，或内容已损坏。");
         return false;
     }
     if (content != nullptr) *content = QString::fromUtf8(plain);

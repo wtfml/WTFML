@@ -81,7 +81,7 @@ bool containsLocalPath(const QString &text) {
 QString sanitizeEvidence(const QString &text) {
     if (text.isEmpty()) return QString();
     QStringList kept;
-    const QStringList sentences = text.split(QRegularExpression(QStringLiteral("[。\\n]")),
+    const QStringList sentences = text.split(QRegularExpression(QStringLiteral("[。\\n]")),  // i18n-ignore
                                              Qt::SkipEmptyParts);
     for (const QString &sentence : sentences) {
         if (containsLocalPath(sentence)) continue;
@@ -90,7 +90,7 @@ QString sanitizeEvidence(const QString &text) {
         kept.append(AgentRedaction::redact(trimmed).text);
     }
     if (kept.isEmpty()) return QString();
-    QString result = kept.join(QStringLiteral("。"));
+    QString result = kept.join(QStringLiteral("。"));  // i18n-ignore
     // 证据片段只做定位线索，不把整段报告搬进上下文。
     if (result.size() > 400) result = result.left(400) + QStringLiteral("…");
     return result;

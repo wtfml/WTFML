@@ -88,7 +88,7 @@ bool ensureDataDir(QString *problem) {
     for (const QString &dir : dirs) {
         if (!QDir().mkpath(dir)) {
             if (problem != nullptr) {
-                *problem = QStringLiteral("无法创建智能体数据目录：%1").arg(dir);
+                *problem = QCoreApplication::translate("AgentPaths", "无法创建智能体数据目录：%1").arg(dir);
             }
             return false;
         }

@@ -115,11 +115,11 @@ bool AgentLauncherHostImpl::lookupModPlatform(const QString &instanceId,
     Q_UNUSED(instanceId);
     Q_UNUSED(loaderVersion);
     if (m_owner == nullptr) {
-        if (problem != nullptr) *problem = QStringLiteral("主窗口未接入。");  // i18n-ignore
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "主窗口未接入。");  // i18n-ignore
         return false;
     }
     if (m_modPlatformBusy) {
-        if (problem != nullptr) *problem = QStringLiteral("上一次平台查询还没结束。");  // i18n-ignore
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "上一次平台查询尚未结束。");
         return false;
     }
     m_modPlatformBusy = true;
@@ -150,11 +150,11 @@ bool AgentLauncherHostImpl::resolveModTarget(const QString &instanceId, const QS
                                              const ResolveCompletion &done, QString *problem) {
     Q_UNUSED(instanceId);
     if (m_owner == nullptr) {
-        if (problem != nullptr) *problem = QStringLiteral("主窗口未接入。");  // i18n-ignore
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "主窗口未接入。");  // i18n-ignore
         return false;
     }
     if (m_modResolveBusy) {
-        if (problem != nullptr) *problem = QStringLiteral("上一次地址解析还没结束。");  // i18n-ignore
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "上一次地址解析尚未结束。");
         return false;
     }
     m_modResolveBusy = true;
@@ -185,19 +185,19 @@ bool AgentLauncherHostImpl::downloadModFile(const AgentHostModTarget &target,
                                             const QString &stagingDir,
                                             const DownloadCompletion &done, QString *problem) {
     if (m_owner == nullptr) {
-        if (problem != nullptr) *problem = QStringLiteral("主窗口未接入。");  // i18n-ignore
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "主窗口未接入。");  // i18n-ignore
         return false;
     }
     if (m_modDownloadJob) {
-        if (problem != nullptr) *problem = QStringLiteral("上一次下载还没结束。");  // i18n-ignore
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "上一次下载尚未结束。");
         return false;
     }
     if (target.url.isEmpty() || target.fileName.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("下载目标不完整。");  // i18n-ignore
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "下载目标不完整。");
         return false;
     }
     if (!QDir().mkpath(stagingDir)) {
-        if (problem != nullptr) *problem = QStringLiteral("建不出暂存目录。");  // i18n-ignore
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "无法创建暂存目录。");
         return false;
     }
     if (m_modDownloader == nullptr) {
@@ -241,11 +241,11 @@ bool AgentLauncherHostImpl::repairCoreFiles(const QString &instanceId,
                                             const QStringList &flaggedPaths,
                                             const RepairCompletion &done, QString *problem) {
     if (m_owner == nullptr || m_owner->m_versionManager == nullptr) {
-        if (problem != nullptr) *problem = QStringLiteral("主窗口未接入。");  // i18n-ignore
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "主窗口未接入。");  // i18n-ignore
         return false;
     }
     if (m_owner->m_versionManager->downloads()->isBusy()) {
-        if (problem != nullptr) *problem = QStringLiteral("已有下载任务在进行，等它结束再修。");  // i18n-ignore
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "已有下载任务正在进行，请等待其结束后再修复。");
         return false;
     }
     struct State {
@@ -332,7 +332,7 @@ AgentDiagnosticProjection::InstanceFacts AgentLauncherHostImpl::factsFor(
 bool AgentLauncherHostImpl::instanceList(
     QList<AgentDiagnosticProjection::InstanceFacts> *items, QString *problem) {
     if (m_owner == nullptr) {
-        if (problem != nullptr) *problem = QStringLiteral("主窗口未接入。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "主窗口未接入。");
         return false;
     }
     if (items == nullptr) return false;
@@ -346,7 +346,7 @@ bool AgentLauncherHostImpl::instanceFacts(const QString &instanceId,
                                           AgentDiagnosticProjection::InstanceFacts *facts,
                                           QString *problem) {
     if (instanceId.isEmpty() || !QFileInfo(instanceDir(instanceId)).isDir()) {
-        if (problem != nullptr) *problem = QStringLiteral("实例不存在。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "实例不存在。");
         return false;
     }
     if (facts != nullptr) *facts = factsFor(instanceId);
@@ -356,7 +356,7 @@ bool AgentLauncherHostImpl::instanceFacts(const QString &instanceId,
 bool AgentLauncherHostImpl::startupDiagnosis(const QString &instanceId,
                                              StartupDiagnosis::Report *report, QString *problem) {
     if (instanceId.isEmpty() || m_owner == nullptr) {
-        if (problem != nullptr) *problem = QStringLiteral("实例不存在。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "实例不存在。");
         return false;
     }
     const StartupDiagnosis::Inputs inputs = m_owner->startupDiagnosisInputs(instanceId);
@@ -368,7 +368,7 @@ bool AgentLauncherHostImpl::crashFacts(const QString &instanceId,
                                        GameExitDiagnosis::Facts *facts, QStringList *hints,
                                        QString *problem) {
     if (instanceId.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("实例不存在。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "实例不存在。");
         return false;
     }
     const QList<LaunchHistory::Record> records = LaunchHistory::load(LaunchHistory::historyPath());
@@ -379,7 +379,7 @@ bool AgentLauncherHostImpl::crashFacts(const QString &instanceId,
     }
     if (!latest.isValid()) {
         if (problem != nullptr) {
-            *problem = QStringLiteral("没有这一份实例的启动记录（可能还没启动过）。");
+            *problem = QCoreApplication::translate("AgentLauncherHostImpl", "该实例没有启动记录，可能尚未启动过。");
         }
         return false;
     }
@@ -490,7 +490,7 @@ bool AgentLauncherHostImpl::modsDirectory(const QString &instanceId, QString *pa
                                           QString *problem) {
     const QString dir = modsDir(instanceId);
     if (dir.isEmpty() || !QFileInfo(dir).isDir()) {
-        if (problem != nullptr) *problem = QStringLiteral("mods 目录不存在。");  // i18n-ignore
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "mods 目录不存在。");
         return false;
     }
     if (path != nullptr) *path = dir;
@@ -500,7 +500,7 @@ bool AgentLauncherHostImpl::modsDirectory(const QString &instanceId, QString *pa
 bool AgentLauncherHostImpl::integrity(const QString &instanceId, VersionIntegrity::Report *report,
                                       QString *problem) {
     if (m_owner == nullptr) {
-        if (problem != nullptr) *problem = QStringLiteral("主窗口未接入。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "主窗口未接入。");
         return false;
     }
     QString planError;
@@ -550,31 +550,31 @@ bool AgentLauncherHostImpl::setModEnabled(const QString &instanceId, const QStri
                                           bool enabled, QString *previous, QString *problem) {
     QDir dir(modsDir(instanceId));
     if (!dir.exists()) {
-        if (problem != nullptr) *problem = QStringLiteral("这个实例没有 mods 目录。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "该实例没有 mods 目录。");
         return false;
     }
     QString source = fileName;
     QString target;
     if (enabled) {
         if (!source.endsWith(QStringLiteral(".jar.disabled"))) {
-            if (problem != nullptr) *problem = QStringLiteral("这个文件不是停用状态。");
+            if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "该文件未被禁用。");
             return false;
         }
         target = source;
         target.chop(int(qstrlen(".disabled")));
     } else {
         if (!source.endsWith(QStringLiteral(".jar"))) {
-            if (problem != nullptr) *problem = QStringLiteral("这个文件不是启用状态。");
+            if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "该文件未启用。");
             return false;
         }
         target = source + QStringLiteral(".disabled");
     }
     if (QFileInfo::exists(dir.filePath(target))) {
-        if (problem != nullptr) *problem = QStringLiteral("目标文件名已经存在，未改动任何文件。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "目标文件名已存在，未修改任何文件。");
         return false;
     }
     if (!dir.rename(source, target)) {
-        if (problem != nullptr) *problem = QStringLiteral("重命名失败（可能被占用）。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "重命名失败，文件可能被占用。");
         return false;
     }
     if (previous != nullptr) *previous = source;
@@ -583,7 +583,7 @@ bool AgentLauncherHostImpl::setModEnabled(const QString &instanceId, const QStri
 
 bool AgentLauncherHostImpl::settings(AgentHostSettings *settings, QString *problem) {
     if (m_owner == nullptr) {
-        if (problem != nullptr) *problem = QStringLiteral("主窗口未接入。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "主窗口未接入。");
         return false;
     }
     if (settings == nullptr) return false;
@@ -615,7 +615,7 @@ bool AgentLauncherHostImpl::settings(AgentHostSettings *settings, QString *probl
 bool AgentLauncherHostImpl::applySetting(const QString &key, const QJsonValue &value,
                                          QJsonObject *applied, QString *problem) {
     if (m_owner == nullptr) {
-        if (problem != nullptr) *problem = QStringLiteral("主窗口未接入。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "主窗口未接入。");
         return false;
     }
     if (key == QStringLiteral("memory.auto")) {
@@ -641,7 +641,7 @@ bool AgentLauncherHostImpl::applySetting(const QString &key, const QJsonValue &v
         m_owner->m_settings->setProcessPriority(
             LauncherSettings::processPriorityFromKey(value.toString()));
     } else {
-        if (problem != nullptr) *problem = QStringLiteral("这个设置键不在白名单里。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "该设置键不在白名单中。");
         return false;
     }
     if (applied != nullptr) *applied = QJsonObject{{QStringLiteral("key"), key}};
@@ -667,7 +667,7 @@ bool AgentLauncherHostImpl::backups(QList<AgentHostBackupRef> *items, QString *p
         ref.backupId = entry.backupId;
         ref.owner = entry.owner;
         ref.source = entry.source;
-        ref.label = entry.reason.isEmpty() ? QStringLiteral("维护备份") : entry.reason;
+        ref.label = entry.reason.isEmpty() ? QCoreApplication::translate("AgentLauncherHostImpl", "维护备份") : entry.reason;
         ref.sourceSessionId = entry.sourceSessionId;
         ref.createdAt = entry.createdAt;
         ref.bytes = entry.size;
@@ -703,7 +703,7 @@ bool AgentLauncherHostImpl::planBackup(const QString &instanceId, const QStringL
     if (plan == nullptr) return false;
     const QString root = instanceDir(instanceId);
     if (!QFileInfo(root).isDir()) {
-        if (problem != nullptr) *problem = QStringLiteral("实例目录不存在。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "实例目录不存在。");
         return false;
     }
     QStringList relativePaths;
@@ -758,11 +758,11 @@ bool AgentLauncherHostImpl::createBackup(const QString &sessionId, const QString
         files.append({relative, bytes});
     }
     if (files.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("没有读到可备份的文件。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "未读取到可备份的文件。");
         return false;
     }
     return m_maintenance.createFromFiles(sessionId, instanceId, files,
-                                         QStringLiteral("backup.create：%1").arg(plan.scope),
+                                         QCoreApplication::translate("AgentLauncherHostImpl", "智能体备份：%1").arg(plan.scope),
                                          backupId, problem);
 }
 
@@ -777,12 +777,12 @@ bool AgentLauncherHostImpl::restoreBackup(const QString &sessionId, const QStrin
         if (entry.backupId == backupId) instanceId = entry.instanceId;
     }
     if (instanceId.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("备份元数据缺少实例 id，拒绝恢复。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "备份元数据缺少实例 ID，已拒绝恢复。");
         return false;
     }
     const QString root = instanceDir(instanceId);
     if (!QFileInfo(root).isDir()) {
-        if (problem != nullptr) *problem = QStringLiteral("实例目录已不存在。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "实例目录已不存在。");
         return false;
     }
     // 恢复前快照：把**现在**这几个文件存一份，恢复出错还能原路回来。
@@ -797,9 +797,9 @@ bool AgentLauncherHostImpl::restoreBackup(const QString &sessionId, const QStrin
     QString snapshotId;
     if (!current.isEmpty() &&
         !m_maintenance.createFromFiles(sessionId, instanceId, current,
-                                       QStringLiteral("backup.restore 恢复前快照"), &snapshotId,
+                                       QCoreApplication::translate("AgentLauncherHostImpl", "恢复备份前的快照"), &snapshotId,
                                        nullptr)) {
-        if (problem != nullptr) *problem = QStringLiteral("恢复前快照失败，已中止恢复。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "无法创建恢复前快照，已中止恢复。");
         return false;
     }
     for (const auto &file : files) {
@@ -808,7 +808,7 @@ bool AgentLauncherHostImpl::restoreBackup(const QString &sessionId, const QStrin
         if (normalized.startsWith(QStringLiteral("..")) || QDir::isAbsolutePath(normalized) ||
             InstanceFiles::validatePathSegment(normalized.split(QLatin1Char('/')).constFirst())
                 .isEmpty()) {
-            if (problem != nullptr) *problem = QStringLiteral("备份里的路径不合法：%1").arg(relative);
+            if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "备份中的路径无效：%1").arg(relative);
             return false;
         }
         const QString target = root + QLatin1Char('/') + normalized;
@@ -816,7 +816,7 @@ bool AgentLauncherHostImpl::restoreBackup(const QString &sessionId, const QStrin
         QSaveFile out(target);
         if (!out.open(QIODevice::WriteOnly) || out.write(file.second) != file.second.size() ||
             !out.commit()) {
-            if (problem != nullptr) *problem = QStringLiteral("写回失败：%1").arg(normalized);
+            if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "无法写回：%1").arg(normalized);
             return false;
         }
     }
@@ -859,8 +859,8 @@ bool AgentLauncherHostImpl::upgradeInspect(const QString &instanceId, QJsonObjec
     *data = QJsonObject{{QStringLiteral("instance"), factsFor(instanceId).toJson()},
                         {QStringLiteral("targets"), targets},
                         {QStringLiteral("executionPath"),
-                         QStringLiteral("只读检查；执行请走升级向导（upgrade.openWizard），"
-                                        "由现有事务与回滚负责。")}};
+                         QStringLiteral("Read-only check. To apply the upgrade, open the upgrade wizard "  // i18n-ignore
+                                        "(upgrade.openWizard), which handles transactions and rollback.")}};  // i18n-ignore
     return true;
 }
 
@@ -879,11 +879,11 @@ bool AgentLauncherHostImpl::openPage(const QString &page, const QString &instanc
     } else if (page == QStringLiteral("upgrade")) {
         pageKey = QStringLiteral("upgrade");
     } else {
-        if (problem != nullptr) *problem = QStringLiteral("不认识的页面。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "未知页面。");
         return false;
     }
     if (instanceId.isEmpty()) {
-        if (problem != nullptr) *problem = QStringLiteral("会话还没有锁定实例。");
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "会话尚未锁定实例。");
         return false;
     }
     m_owner->openInstanceSettings(instanceId, pageKey);
@@ -894,7 +894,7 @@ bool AgentLauncherHostImpl::startTestLaunch(const QString &instanceId, const QSt
                                             const AgentTestLaunchOptions &options,
                                             const Completion &done, QString *problem) {
     if (m_testLaunchRunner == nullptr) {
-        if (problem != nullptr) *problem = QStringLiteral("测试启动未接入。");  // i18n-ignore
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "测试启动未接入。");
         return false;
     }
     return m_testLaunchRunner->start(instanceId, workspaceId, options, done, problem);
@@ -908,7 +908,7 @@ bool AgentLauncherHostImpl::beginTransaction(const QString &instanceId,
                                               const QStringList &scopes,
                                               const BeginCompletion &done, QString *problem) {
     if (m_repairRunner == nullptr) {
-        if (problem != nullptr) *problem = QStringLiteral("修复事务未接入。");  // i18n-ignore
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "修复事务未接入。");
         return false;
     }
     return m_repairRunner->begin(instanceId, scopes, done, problem);
@@ -917,7 +917,7 @@ bool AgentLauncherHostImpl::beginTransaction(const QString &instanceId,
 bool AgentLauncherHostImpl::finishTransaction(const QString &transactionId, bool commit,
                                               const FinishCompletion &done, QString *problem) {
     if (m_repairRunner == nullptr) {
-        if (problem != nullptr) *problem = QStringLiteral("修复事务未接入。");  // i18n-ignore
+        if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "修复事务未接入。");
         return false;
     }
     return m_repairRunner->finish(transactionId, commit, done, problem);
