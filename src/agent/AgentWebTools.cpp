@@ -132,7 +132,7 @@ AgentToolResult AgentWebTools::invoke(const Agent::ToolCall &call) {
         const QString endpoint = AgentSettings::webSearchEndpoint();
         if (endpoint.isEmpty()) {
             return errorResult(Agent::ErrorKind::ToolError,
-                               tr("需先在 API 设置中填写 SearXNG 实例地址，再执行联网搜索。"));
+                               tr("需先在 API 与模型设置中填写 SearXNG 实例地址，再执行联网搜索。"));
         }
         approval.url = QUrl(endpoint);
         const AgentWebPolicy::UrlCheck check = AgentWebPolicy::validateUrl(approval.url);

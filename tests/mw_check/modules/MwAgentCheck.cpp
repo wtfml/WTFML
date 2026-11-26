@@ -277,7 +277,7 @@ int MwAgentChecks(QApplication &app) {
               "真窗口：Stage 2 用例先建立一个会话");
         controller->chooseSkillForTest(QStringLiteral("inspection"));
         check(controller->workflow()->skill().id == QStringLiteral("inspection"),
-              "真窗口：切到实例体检模式");
+              "真窗口：切到实例诊断模式");
         check(page->findChild<QPushButton *>(QStringLiteral("agentSkill_inspection")) != nullptr,
               "真窗口：模式卡片跟着换");
         AgentSession skillSession;
