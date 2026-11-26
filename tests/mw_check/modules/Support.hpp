@@ -141,7 +141,8 @@ void answerJavaMismatchDialog(const QString &buttonName, bool checkDontRemind);
 class PromptAnswerer {
 public:
     /// @param script 第 1、2、3… 条提示各点第几颗按钮（不够用时最后一格顶上）。
-    explicit PromptAnswerer(const QList<int> &script) : m_script(script) {
+    explicit PromptAnswerer(const QList<int> &script, const QList<bool> &checkScript = {})
+        : m_script(script), m_checkScript(checkScript) {
         m_timer.setInterval(10);
         QObject::connect(&m_timer, &QTimer::timeout, [this] { tick(); });
     }
@@ -164,6 +165,8 @@ public:
         QString title;
         QString text;
         QString note;
+        QString checkBoxText;
+        bool hasCheckBox = false;
         QStringList buttons;
     };
     QList<Answered> answered;
@@ -187,6 +190,10 @@ private:
             one.text = text->text();
         }
         one.note = box->noteText();
+        if (QCheckBox *check = box->checkBox()) {
+            one.hasCheckBox = true;
+            one.checkBoxText = check->text();
+        }
         for (int i = 0;; ++i) {
             auto *button = box->findChild<QPushButton *>(InlineMessageBox::buttonName(i));
             if (button == nullptr) {
@@ -196,6 +203,10 @@ private:
         }
         answered.append(one);
         const int nth = answered.size();  // 这是第几条（1 起）
+        if (QCheckBox *check = box->checkBox();
+            check != nullptr && nth <= m_checkScript.size() && m_checkScript.at(nth - 1)) {
+            check->setChecked(true);
+        }
         const int index = nth <= m_script.size() ? m_script.at(nth - 1)
                                                 : m_script.value(m_script.size() - 1, 0);
         clickPromptButton(index);
@@ -203,6 +214,7 @@ private:
     QTimer m_timer;
     QElapsedTimer m_clock;
     QList<int> m_script;
+    QList<bool> m_checkScript;
 };
 
 /// 把**整页**（`OverlayHost::showPage()` 摆出来的那种）收掉：它们自己开出来、调用方早已

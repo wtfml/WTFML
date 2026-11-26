@@ -979,14 +979,7 @@ MainWindow::MainWindow(QWidget *parent)
                 openInstanceSettings(key);
                 return;
             }
-            if (action == MainWindowUI::HomeQuickAction::Stop) {
-                // 停的是这个实例名下在跑的每一份会话（多开时一起停）。
-                for (const LauncherManager::GameSession &game : m_launcherManager->runningGames()) {
-                    if (game.versionId == key) stopGameSession(game.sessionId);
-                }
-                return;
-            }
-            // Select = 设为当前实例；Launch = 设为当前再启动（实例带上那颗 ▶ 也走这里）。
+            // Select = 设为当前实例；Launch = 设为当前再启动（主按钮与实例带上那颗 ▶ 都走这里）。
             QComboBox *combo = m_ui->getInstalledVersionCombo();
             const int row = combo == nullptr ? -1 : combo->findData(key);
             if (row >= 0) {

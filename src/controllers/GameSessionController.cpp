@@ -10,6 +10,7 @@
 #include "controllers/LaunchHistoryController.hpp"
 #include "diag/GameExitDiagnosis.hpp"
 #include "launcher/LauncherManager.hpp"
+#include "launcher/RunningProcesses.hpp"
 #include "manage/VersionDisplay.hpp"
 #include "manage/VersionManager.hpp"
 #include "settings/LauncherSettings.hpp"
@@ -81,7 +82,12 @@ GameSessionController::GameSessionController(LauncherManager *launcherManager, L
                                              Host host, QObject *parent)
     : QObject(parent), m_launcherManager(launcherManager), m_settings(settings),
       m_versionManager(versionManager), m_launchHistory(launchHistory), m_ui(ui),
-      m_host(std::move(host)) {}
+      m_host(std::move(host)) {
+    if (m_launcherManager != nullptr) {
+        connect(m_launcherManager, &LauncherManager::gameStarted, this,
+                &GameSessionController::syncOpenGameLogTitles);
+    }
+}
 
 void GameSessionController::beginSession(int sessionId, const QString &displayName,
                                          Tasks::TaskId launchTask, const GameSessionFacts &facts) {
@@ -357,12 +363,14 @@ GameLogWindow *GameSessionController::ensureGameLogWindow(int sessionId, bool us
     // 第一次收到**这一份**的输出才建窗（不去"启动成功"那一刻建）：这样三条早退路径
     // 上一个空窗都不会冒出来，而"进程真的起来了"那一句（startGame 内部同步发的第一条
     // processOutput）正好在建窗这一刻被写上 —— 用户看到的第一行就是"游戏已启动"。
-    const QString name = m_launcherManager->session(sessionId).displayName;
+    const LauncherManager::GameSession live = m_launcherManager->session(sessionId);
+    const int displayNumber =
+        RunningProcesses::displayedInstanceNumber(live.instanceNumber, live.instanceNumbered);
     // **父窗口传 nullptr**：在 Windows 上"有主的窗"永远压在自己的主窗上面，
     // 用户点启动器也翻不上来 —— 日志窗会一直遮住启动器。这是平台规则，不是能调的
     // 风格，所以只能不给它主。代价是"跟着启动器一起关掉"要自己接
     // （见 closeAllGameLogWindows()）。
-    window = new GameLogWindow(name, nullptr);
+    window = new GameLogWindow(live.displayName, nullptr, displayNumber);
     // 错开的位置数**在插进去之前**取：开第二扇时那是 1（往下错一点，不盖住第一扇）。
     const int cascade = m_gameLogWindows.size();
     m_gameLogWindows.insert(sessionId, window);
@@ -370,7 +378,6 @@ GameLogWindow *GameSessionController::ensureGameLogWindow(int sessionId, bool us
     // **建窗这一刻**取，因为再往后这个会话只会越来越空（结束时记录会被摘掉）。
     // 那一刻会话一定还在（窗是收到它的第一行输出才建的）。
     {
-        const LauncherManager::GameSession live = m_launcherManager->session(sessionId);
         GameLogFacts snapshot;
         snapshot.instanceId = live.versionId;
         snapshot.accountName = live.accountName;
@@ -410,6 +417,27 @@ GameLogWindow *GameSessionController::ensureGameLogWindow(int sessionId, bool us
     // 那扇窗会把整个启动器挡住 —— 一个"看输出"的窗没有拦人的道理。
     window->show();
     return window;
+}
+
+void GameSessionController::syncOpenGameLogTitles(int startedSessionId) {
+    if (m_launcherManager == nullptr || startedSessionId <= 0) {
+        return;
+    }
+    const LauncherManager::GameSession started = m_launcherManager->session(startedSessionId);
+    if (started.sessionId == 0 || started.versionId.isEmpty()) {
+        return;
+    }
+    for (auto it = m_gameLogWindows.cbegin(); it != m_gameLogWindows.cend(); ++it) {
+        GameLogWindow *window = it.value();
+        if (window == nullptr) {
+            continue;
+        }
+        const LauncherManager::GameSession live = m_launcherManager->session(it.key());
+        if (live.sessionId > 0 && live.versionId == started.versionId) {
+            window->setInstanceNumber(RunningProcesses::displayedInstanceNumber(
+                live.instanceNumber, live.instanceNumbered));
+        }
+    }
 }
 
 void GameSessionController::openGameLogForSession(int sessionId) {
@@ -639,7 +667,10 @@ void GameSessionController::stopGameSession(int sessionId) {
         m_host.log(tr("此实例已结束。"));
         return;
     }
-    if (!confirmStopGame(game.displayName, 1)) {
+    const QString titledName = RunningProcesses::numberedName(
+        game.displayName,
+        RunningProcesses::displayedInstanceNumber(game.instanceNumber, game.instanceNumbered));
+    if (!confirmStopGame(titledName, 1)) {
         return;
     }
     // 先记再 kill，避免极快进程在 stopGame() 返回之前就把 finished 投递回来。
@@ -647,10 +678,10 @@ void GameSessionController::stopGameSession(int sessionId) {
     if (!m_launcherManager->stopGame(sessionId)) {
         m_userStoppedSessions.remove(sessionId);
         // 上面那一问期间它退出了（游戏自己崩了/被别处停了）。
-        m_host.log(tr("「%1」已结束。").arg(game.displayName));
+        m_host.log(tr("「%1」已结束。").arg(titledName));
         return;
     }
-    m_host.log(tr("已停止「%1」。").arg(game.displayName));
+    m_host.log(tr("已停止「%1」。").arg(titledName));
     // 进程真的没了要等 Qt 把 finished 送回来（onGameFinished 那边会重画），但"正在启动"
     // 这一格该现在收：用户刚看见的那句话已经不对了。
     m_launchingSessions.remove(sessionId);

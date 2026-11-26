@@ -14,12 +14,25 @@ int UiGameLogActionsChecks(QFrame * &bar) {
 
         // ---- (a) 标题带实例名：同时开着好几份时靠它认哪个是哪个 ----
         check(GameLogWindow::windowTitleText(QStringLiteral("我的整合包"))
-                      .contains(QStringLiteral("我的整合包")),
-              "Z3 标题里带实例名", GameLogWindow::windowTitleText(QStringLiteral("我的整合包")));
-        // 实例名是空的（会话快照没拿到）时不留一个光秃秃的破折号。
-        check(GameLogWindow::windowTitleText(QString()) == QStringLiteral("游戏日志"),
+                      == QStringLiteral("游戏日志 — 我的整合包"),
+              "Z3 单开标题带实例名且不带序号",
+              GameLogWindow::windowTitleText(QStringLiteral("我的整合包")));
+        check(GameLogWindow::windowTitleText(QStringLiteral("我的整合包"), 2)
+                      == QStringLiteral("游戏日志 — 我的整合包 #2"),
+              "Z3 多开标题带实例名和 #序号",
+              GameLogWindow::windowTitleText(QStringLiteral("我的整合包"), 2));
+        // 实例名是空的（会话快照没拿到）时不留一个光秃秃的破折号或序号。
+        check(GameLogWindow::windowTitleText(QString()) == QStringLiteral("游戏日志")
+                  && GameLogWindow::windowTitleText(QString(), 2) == QStringLiteral("游戏日志"),
               "Z3 没有实例名时标题就是「游戏日志」",
               GameLogWindow::windowTitleText(QString()));
+        log->setInstanceNumber(1);
+        auto *titleInstance = log->findChild<QLabel *>(QStringLiteral("gameLogTitleInstance"));
+        check(log->windowTitle() == QStringLiteral("游戏日志 — 我的整合包 #1")
+                  && titleInstance != nullptr
+                  && titleInstance->text() == QStringLiteral("我的整合包 #1"),
+              "Z3 setInstanceNumber 会同步更新系统标题栏与自绘标题条",
+              log->windowTitle());
 
         QPlainTextEdit *view = log->getLogView();
         check(view != nullptr && view->objectName() == GameLogWindow::logViewName(),
