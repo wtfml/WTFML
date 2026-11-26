@@ -158,15 +158,18 @@ inline AccountSkinDialog *accountFixture(MainWindow &w, const QString &current, 
     return dialog;
 }
 
-/// 打开账号页，450 ms 之后（页面自己那发刷新跑完）摆演示数据，再过 250 ms 跑 after。
+/// 打开账号页，450 ms 之后（页面自己那发刷新跑完）摆演示数据并跑 after。
+/// after 不再另挂 250 ms 的定时器：机器卡的时候 450 ms 那发和 run() 里 1000 ms 的截图同时到期，
+/// 截图会抢在 after 和布局之前（选中没生效、「添加账号」压在最后一行上）。这里在同一发里把事件跑完。
 inline QWidget *accountPage(MainWindow &w, const QString &current, std::function<void(AccountSkinDialog *)> after = {},
                             bool reloginDemo = false) {
     w.ui()->getTabWidget()->setCurrentIndex(MainWindowUI::homeTabIndex());
     QMetaObject::invokeMethod(&w, "onAccountSkinButtonClicked", Qt::QueuedConnection);
     QTimer::singleShot(450, &w, [&w, current, after, reloginDemo] {
         if (auto *dialog = accountFixture(w, current, reloginDemo)) {
-            // 列表高度变了要等一轮布局，菜单按按钮位置弹，晚一点再点。
-            if (after) QTimer::singleShot(250, dialog, [dialog, after] { after(dialog); });
+            QCoreApplication::processEvents();  // 列表高度变了要先走完一轮布局，菜单按按钮位置弹
+            if (after) after(dialog);
+            QCoreApplication::processEvents();
         }
     });
     return &w;

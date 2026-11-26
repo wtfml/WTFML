@@ -96,7 +96,7 @@
 | **加载器** | Loader | 指代各类模组加载程序（Forge、NeoForge、Fabric、Quilt）。界面中统一使用短名。 | 默认不展开写「模组加载器」，严禁使用「ModLoader」「Mod 加载器」 |
 | **整合包** | Modpack | 指代打包分发的模组包（如 CurseForge 整合包、Modrinth 整合包）。 | 严禁使用「模组包」「Modpack」「modpack」 |
 | **模组预设** | Mod preset | 指代对模组组合清单及配置项的投影定义文件；在预设管理页内部上下文明确时可简称为「预设」。 | 严禁简写为「配置预设」或与游戏预设混淆 |
-| **微软登录、离线登录** | Microsoft sign-in / Offline sign-in | 登录入口和提示用全称；账号类型标签写 Microsoft / Offline。 | 界面不使用「正版」「正版登录」「Genuine login」 |
+| **微软登录、离线登录** | Microsoft sign-in / Offline sign-in | 登录入口和提示用全称；账号类型标签写 Microsoft / Offline。 | 界面不使用「正版」「正版登录」「Genuine login」。例外：服务端 server.properties 的 online-mode 设置沿用「正版验证」/ Online mode，指服务端校验玩家身份，不是登录方式 |
 | **世界存档** | Worlds / world save | 列表页用 Worlds，读写、备份等文件操作用 world save。压缩归档用 archive。 | Archive（指游戏世界时） |
 | **模组、数据包、光影包、原理图** | Mod, Data pack, Shader pack, Schematic | 文件类别页和列表标题用复数，单项和修饰语按上下文用单数。 | Module、Packet、Light and shadow package、Schematic diagram |
 | **启用、禁用** | Enable / Disable，Enabled / Disabled | 按钮用动词，状态和统计标签用 Enabled 或 Disabled。 | Activating（指已启用时） |
