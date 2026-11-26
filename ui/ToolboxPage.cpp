@@ -1768,11 +1768,9 @@ void ToolboxPage::setAnvilView(const AnvilView &view) {
         html.append(QStringLiteral("<div style='color:%1;margin-bottom:6px'>%2</div>")
                         .arg(Theme::tokens().secondary.name(QColor::HexRgb), notes.join(QStringLiteral("<br>"))));
     }
-    html.append(QStringLiteral("<ol style='margin:0 0 0 -16px'>"));
     for (const QString &step : view.steps) {
-        html.append(QStringLiteral("<li style='margin-top:3px'>%1</li>").arg(step.toHtmlEscaped()));
+        html.append(QStringLiteral("<div style='margin-top:3px'>%1</div>").arg(step.toHtmlEscaped()));
     }
-    html.append(QStringLiteral("</ol>"));
     m_anvilResult->setText(html);
 }
 

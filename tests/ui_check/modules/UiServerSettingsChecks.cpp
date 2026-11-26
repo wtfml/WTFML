@@ -103,7 +103,7 @@ int UiServerSettingsChecks() {
                 sectionTexts.append(sections->topLevelItem(i)->text(0));
             }
             const QStringList expected{QStringLiteral("概览"), QStringLiteral("启动设置"),
-                QStringLiteral("设置"), QStringLiteral("世界与玩家"),
+                QStringLiteral("常用设置"), QStringLiteral("世界与玩家"),
                 QStringLiteral("内容管理"), QStringLiteral("维护")};
             check(sectionTexts == expected && stack->count() == static_cast<int>(ServerSettingsPage::Section::Count),
                   "★★ U37.1 左栏按管理对象分组，概览排第一",

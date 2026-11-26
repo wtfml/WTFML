@@ -1045,7 +1045,7 @@ static Result prepareCopyAndCommitImpl(Request r, const Core &core, const QStrin
         result.problem = QCoreApplication::translate("InstanceUpgrade", "更新副本发布后校验失败，已保留在被拒绝目录：%1")
                              .arg(rejected);
     } else {
-        result.problem = QCoreApplication::translate("InstanceUpgrade", "升级副本校验失败，自动撤回也未完成。请检查以下内容：%1")
+        result.problem = QCoreApplication::translate("InstanceUpgrade", "更新副本校验失败，自动撤回也未完成。请检查以下内容：%1")
                              .arg(original);
     }
     return result;

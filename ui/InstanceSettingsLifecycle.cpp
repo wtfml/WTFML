@@ -585,7 +585,9 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
                 auto *assessmentLayout = new QVBoxLayout(assessment);
                 assessmentLayout->setContentsMargins(0, 0, 0, 0);
                 assessmentLayout->addWidget(new QLabel(tr("版本与迁移评估"), assessment));
-                plan->setFixedHeight(104);
+                const int lineHeight = plan->fontMetrics().lineSpacing();
+                plan->setMinimumHeight(lineHeight * 4 + 16);
+                plan->setMaximumHeight(lineHeight * 10 + 16);
                 assessmentLayout->addWidget(plan);
                 auto *summary = new QLabel(tr("模组声明：正在读取…"), assessment);
                 summary->setObjectName(QStringLiteral("instanceUpgradeModSummary"));
