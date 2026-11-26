@@ -428,7 +428,7 @@ Select "Sign out" to try again.</translation>
         </message>
         <message>
             <source>artifact 加密失败，未写入磁盘。</source>
-            <translation>Artifact encryption failed; not written to disk.</translation>
+            <translation>Couldn't encrypt artifact; not written to disk.</translation>
         </message>
         <message>
             <source>本会话的 artifact 已达上限（%1 MB），不再写入新内容。</source>
@@ -534,7 +534,7 @@ Select "Sign out" to try again.</translation>
         </message>
         <message>
             <source>备份加密失败，未保存。</source>
-            <translation>Backup encryption failed; not saved.</translation>
+            <translation>Couldn't encrypt backup; not saved.</translation>
         </message>
         <message>
             <source>备份内容写入失败。</source>
@@ -900,9 +900,9 @@ Select "Sign out" to try again.</translation>
             <translation>Server: %1
 %2
 
-Args: %3
+Arguments: %3
 Working folder: %4
-Env vars: %5
+Environment variables: %5
 
 This server runs with your Windows user privileges and can access local files and the network; add trusted servers only.</translation>
         </message>
@@ -1271,11 +1271,11 @@ This server runs with your Windows user privileges and can access local files an
         </message>
         <message>
             <source>无法创建临时文件：%1</source>
-            <translation>Can't create temp folder or file: %1</translation>
+            <translation>Can't create temp file: %1</translation>
         </message>
         <message>
             <source>写入临时文件失败：%1</source>
-            <translation>Couldn't write temporary file: %1</translation>
+            <translation>Couldn't write temp file: %1</translation>
         </message>
         <message>
             <source>无法提交写入：%1。原文件和备份均已保留。</source>
@@ -1369,7 +1369,7 @@ This server runs with your Windows user privileges and can access local files an
         </message>
         <message>
             <source>重命名失败，文件可能被占用。</source>
-            <translation>Rename failed; the file may be in use.</translation>
+            <translation>Couldn't rename file; it may be in use.</translation>
         </message>
         <message>
             <source>该设置键不在白名单中。</source>
@@ -1997,7 +1997,7 @@ Location: %4
         </message>
         <message>
             <source>尚未确认（首次启动前须确认可执行文件身份）</source>
-            <translation>Unconfirmed (verify executable identity before first launch)</translation>
+            <translation>Unconfirmed (confirm executable identity before first launch)</translation>
         </message>
         <message>
             <source>SHA-256：%1…</source>
@@ -2462,15 +2462,15 @@ Location: %4
         </message>
         <message>
             <source>校验模组文件</source>
-            <translation>Verify mod file</translation>
+            <translation>Verify mod files</translation>
         </message>
         <message>
             <source>先把文件下载到暂存目录并校验大小与 SHA-1，全部通过后才复制进工作区 mods/；会补齐版本声明的必需前置；任何一步失败都不改工作区，也不碰原实例。</source>
-            <translation>Downloads files to a staging folder and checks size and SHA-1 before copying to workspace mods/; installs required dependencies declared by the version; any error leaves the workspace and original instance untouched.</translation>
+            <translation>Downloads files to a staging folder and verifies size and SHA-1 before copying to workspace mods/; installs required dependencies declared by the version; any error leaves the workspace and original instance untouched.</translation>
         </message>
         <message>
             <source>先把文件下载到暂存目录并校验大小与 SHA-1，全部通过后才复制进工作区 mods/；任何一步失败都不改工作区，也不碰原实例。</source>
-            <translation>Downloads files to a staging folder and checks size and SHA-1 before copying to workspace mods/; any error leaves the workspace and original instance untouched.</translation>
+            <translation>Downloads files to a staging folder and verifies size and SHA-1 before copying to workspace mods/; any error leaves the workspace and original instance untouched.</translation>
         </message>
         <message>
             <source>共享库/资源不保留旧副本；失败时按官方哈希重下。</source>
@@ -2883,7 +2883,7 @@ Location: %4
         </message>
         <message>
             <source>本机 http:// 地址需先在「连接」中启用「允许本机 HTTP」。</source>
-            <translation>Local http:// endpoints require enabling "Allow local HTTP" in Connections first.</translation>
+            <translation>Local http:// endpoints require enabling "Allow local HTTP" in Connection first.</translation>
         </message>
         <message>
             <source>Base URL 仅支持 https://（本机回环地址可显式启用 http://）。</source>
@@ -3051,7 +3051,7 @@ Location: %4
         </message>
         <message>
             <source>写盘失败：%1</source>
-            <translation>Write error: %1</translation>
+            <translation>Couldn't write to disk: %1</translation>
         </message>
         <message>
             <source>无法读取元数据：%1</source>
@@ -3067,11 +3067,11 @@ Location: %4
         </message>
         <message>
             <source>元数据缺少 id：%1</source>
-            <translation>Metadata is missing id: %1</translation>
+            <translation>Metadata is missing an ID: %1</translation>
         </message>
         <message>
             <source>会话缺少 id。</source>
-            <translation>Chat is missing id.</translation>
+            <translation>Chat is missing an ID.</translation>
         </message>
         <message>
             <source>会话超过 %1 条消息，已停止追加，可导出或新建会话。</source>
@@ -3166,7 +3166,7 @@ Location: %4
         </message>
         <message>
             <source>配置 id 含非法字符。</source>
-            <translation>Profile ID contains illegal characters.</translation>
+            <translation>Profile ID contains invalid characters.</translation>
         </message>
         <message>
             <source>认证头模式不是允许的枚举值。</source>
@@ -3417,7 +3417,7 @@ Location: %4
         </message>
         <message>
             <source>联网与诊断</source>
-            <translation>Web &amp; Diagnostics</translation>
+            <translation>Web and diagnostics</translation>
         </message>
         <message>
             <source>SearXNG 地址</source>
@@ -3564,7 +3564,7 @@ Location: %4
         </message>
         <message>
             <source>版本升级 / 移植</source>
-            <translation>Upgrade / Migrate</translation>
+            <translation>Upgrade / migrate</translation>
         </message>
         <message>
             <source>只读检查升级目标，执行升级时打开升级向导。</source>
@@ -3829,7 +3829,7 @@ Location: %4
         </message>
         <message>
             <source>路径包含非法字符。</source>
-            <translation>Path contains illegal characters.</translation>
+            <translation>Path contains invalid characters.</translation>
         </message>
         <message>
             <source>路径不能包含 . 或 .. 段。</source>
@@ -5408,7 +5408,7 @@ Backup folder: %2</translation>
         </message>
         <message>
             <source>%1（日志异常）</source>
-            <translation>%1 (log issue)</translation>
+            <translation>%1 (log error)</translation>
         </message>
         <message>
             <source>此实例正在运行，或正被复制、备份、还原或安装占用。请等待其结束后再替换。</source>
@@ -7848,7 +7848,7 @@ Report:
         </message>
         <message>
             <source>仍未完成全部文件操作：%1</source>
-            <translation>Incomplete file operations remain: %1</translation>
+            <translation>Not all file operations completed: %1</translation>
         </message>
         <message>
             <source>：</source>
@@ -8828,15 +8828,15 @@ Stop anyway?</translation>
 请安装 Java %1，或在设置中指定 Java 路径。</source>
             <translation>This version requires Java %1; currently using: %2; highest detected: %3.
 
-Install Java %1 or set the Java path in Settings.</translation>
+Install Java %1, or set a Java path in Settings.</translation>
         </message>
         <message>
             <source>当前设置为手动指定 Java，但未指定路径。未找到兼容版本时取消启动。</source>
-            <translation>Java is set to manual, but no path is specified. Launch will cancel if no compatible version is found.</translation>
+            <translation>Java is set to manual, but no path is specified. Launch will be canceled if no compatible version is found.</translation>
         </message>
         <message>
             <source>当前设置为手动指定 Java，路径「%1」的主版本不是 %2。未找到兼容版本时取消启动。</source>
-            <translation>Java is set to manual, and path "%1" isn't major version %2. Launch will cancel if no compatible version is found.</translation>
+            <translation>Java is set to manual, and path "%1" isn't major version %2. Launch will be canceled if no compatible version is found.</translation>
         </message>
         <message>
             <source>本机无 Java %1，且当前不允许下载运行时。</source>
@@ -15253,7 +15253,7 @@ The game can still launch and will download missing assets on first run. Retry d
         </message>
         <message>
             <source>%1 部分不可用</source>
-            <translation>%1 blocked</translation>
+            <translation>%1 unavailable</translation>
         </message>
         <message>
             <source>需确认覆盖</source>
@@ -15743,7 +15743,7 @@ Existing files with the same name were kept. To replace them, click "Open folder
         </message>
         <message>
             <source>目录尚未创建</source>
-            <translation>Folder hasn't been created</translation>
+            <translation>Folder not created</translation>
         </message>
         <message>
             <source>请先通过「添加…」放入文件，或手动创建该目录：
@@ -15841,11 +15841,11 @@ Enter a valid world folder name in General.</translation>
         </message>
         <message>
             <source>服务端 %1 的「%2」已启用（当前为「%3」）。</source>
-            <translation>Enabled "%2" on server %1 (currently "%3").</translation>
+            <translation>Enabled "%2" on server %1 (now "%3").</translation>
         </message>
         <message>
             <source>服务端 %1 的「%2」已禁用（当前为「%3」）。</source>
-            <translation>Disabled "%2" on server %1 (currently "%3").</translation>
+            <translation>Disabled "%2" on server %1 (now "%3").</translation>
         </message>
         <message>
             <source>「%1」尚未生成。首次启动服务端后再创建备份。</source>
@@ -15949,11 +15949,11 @@ Delete it?</translation>
         </message>
         <message>
             <source>服务端 %1：异常退出后已启用自动重启。</source>
-            <translation>Server %1: auto-restart after crash enabled.</translation>
+            <translation>Server %1: auto-restart on crash enabled.</translation>
         </message>
         <message>
             <source>服务端 %1：异常退出后已关闭自动重启。</source>
-            <translation>Server %1: auto-restart after crash disabled.</translation>
+            <translation>Server %1: auto-restart on crash disabled.</translation>
         </message>
         <message>
             <source>世界存档正在备份或还原。请等待操作完成后再启动。</source>
@@ -18892,7 +18892,7 @@ You can still remove online players with "Kick…"; output appears in the consol
         </message>
         <message>
             <source>选择本地 ZIP…</source>
-            <translation>Select local zip…</translation>
+            <translation>Select local ZIP…</translation>
         </message>
         <message>
             <source>放弃更改</source>
@@ -19397,7 +19397,7 @@ You can still remove online players with "Kick…"; output appears in the consol
         </message>
         <message>
             <source>列工具</source>
-            <translation>listing tools</translation>
+            <translation>tool listing</translation>
         </message>
         <message>
             <source>工具调用</source>
@@ -19503,7 +19503,7 @@ You can still remove online players with "Kick…"; output appears in the consol
         </message>
         <message>
             <source>服务器缺少 id。</source>
-            <translation>Server is missing an id.</translation>
+            <translation>Server is missing an ID.</translation>
         </message>
         <message>
             <source>服务器缺少名称。</source>
@@ -20937,7 +20937,7 @@ How to complete: Open the project page above, find the file matching the game ve
         </message>
         <message>
             <source>连接失败（HTTP %1）。</source>
-            <translation>Connection failed (HTTP %1).</translation>
+            <translation>Couldn't connect (HTTP %1).</translation>
         </message>
         <message>
             <source>流已开始后中断，已保留收到的部分内容。</source>
@@ -21792,7 +21792,7 @@ Not supported by this preset category: %1.</translation>
         </message>
         <message>
             <source>%1（草稿）</source>
-            <translation>%1 (Draft)</translation>
+            <translation>%1 (draft)</translation>
         </message>
         <message>
             <source>请选择预设类别。</source>
@@ -21918,7 +21918,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>另有 %1 个模组的来源未知。可在「预设编辑器 → 从本地模组导入」中重新识别，或在模组页手动补充。</source>
-            <translation>%1 other mods have an unknown source. Re-identify them via "Preset editor → Import from local mods" or add them manually on the Mods tab.</translation>
+            <translation>%1 other mods have an unknown source. Re-identify them via "Preset editor → Import from local mods" or add them manually on the Mods page.</translation>
         </message>
         <message>
             <source>、</source>
@@ -22588,7 +22588,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>%1（默认）</source>
-            <translation>%1 (Default)</translation>
+            <translation>%1 (default)</translation>
         </message>
         <message>
             <source>暂无预设</source>
@@ -22600,7 +22600,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>%1（正在运行）</source>
-            <translation>%1 (Running)</translation>
+            <translation>%1 (running)</translation>
         </message>
         <message>
             <source>取消本次预览，不会修改实例。</source>
@@ -24022,7 +24022,7 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>缺少此项</source>
-            <translation>Missing item</translation>
+            <translation>missing</translation>
         </message>
         <message>
             <source>目标中缺少「%1」，已跳过。请检查模组版本是否一致。</source>
@@ -24572,49 +24572,49 @@ Not captured: %1</translation>
         </message>
         <message>
             <source>待应用 %1 项</source>
-            <translation>Pending %1 entries</translation>
+            <translation>%1 entries pending</translation>
         </message>
         <message>
             <source>，待应用 %1 项</source>
-            <translation>, pending %1 entries</translation>
+            <translation>, %1 entries pending</translation>
         </message>
         <message>
             <source>待应用 %1 个</source>
             <comment>服务器条目</comment>
-            <translation>Pending %1 servers</translation>
+            <translation>%1 servers pending</translation>
         </message>
         <message>
             <source>，待应用 %1 个</source>
             <comment>服务器条目</comment>
-            <translation>, pending %1 servers</translation>
+            <translation>, %1 servers pending</translation>
         </message>
         <message>
             <source>待应用 %1 个</source>
             <comment>文件</comment>
-            <translation>Pending %1 files</translation>
+            <translation>%1 files pending</translation>
         </message>
         <message>
             <source>，待应用 %1 个</source>
             <comment>文件</comment>
-            <translation>, pending %1 files</translation>
+            <translation>, %1 files pending</translation>
         </message>
         <message>
             <source>待应用 %1 个</source>
             <comment>数据包</comment>
-            <translation>Pending %1 data packs</translation>
+            <translation>%1 data packs pending</translation>
         </message>
         <message>
             <source>，待应用 %1 个</source>
             <comment>数据包</comment>
-            <translation>, pending %1 data packs</translation>
+            <translation>, %1 data packs pending</translation>
         </message>
         <message>
             <source>跳过 %1 项</source>
-            <translation>Skip %1</translation>
+            <translation>Skip %1 entries</translation>
         </message>
         <message>
             <source>，跳过 %1 项</source>
-            <translation>, skip %1</translation>
+            <translation>, skip %1 entries</translation>
         </message>
         <message>
             <source>跳过 %1 个</source>
@@ -25003,7 +25003,7 @@ Move Java or the instance to a shallower folder (e.g. D:/MC) and try again.</tra
         </message>
         <message>
             <source>读取方块名称</source>
-            <translation>Read block names</translation>
+            <translation>Reading block names</translation>
         </message>
         <message>
             <source>搜索方块名称或 ID，例如石头 / minecraft:stone</source>
@@ -31815,11 +31815,11 @@ Files not migrated:</translation>
         </message>
         <message>
             <source>校验：已检查 %1 个文件，缺少 %2 个；另有 %3 个目标中原有的同名文件大小不同（按规则未覆盖）。</source>
-            <translation>Verify: checked %1 files, %2 missing; %3 existing files with the same name differ in size (kept per policy).</translation>
+            <translation>Verification: %1 files checked, %2 missing; %3 existing files with the same name differ in size (kept per policy).</translation>
         </message>
         <message>
             <source>校验：已检查 %1 个文件，缺少 %2 个。</source>
-            <translation>Verify: checked %1 files, %2 missing.</translation>
+            <translation>Verification: %1 files checked, %2 missing.</translation>
         </message>
         <message>
             <source>
@@ -34178,7 +34178,7 @@ This world can only be viewed and backed up because its save data couldn't be re
         </message>
         <message>
             <source>解压失败（%1 个压缩包）</source>
-            <translation>Extraction failed (%1 archives)</translation>
+            <translation>Couldn't extract (%1 archives)</translation>
         </message>
         <message>
             <source>元数据批次过大，未读取。</source>
@@ -34270,7 +34270,7 @@ This world can only be viewed and backed up because its save data couldn't be re
         </message>
         <message>
             <source>打包失败</source>
-            <translation>Archive creation failed</translation>
+            <translation>Couldn't create archive</translation>
         </message>
     </context>
     </TS>
