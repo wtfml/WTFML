@@ -820,7 +820,7 @@ Select "Sign out" to try again.</translation>
             <source>「%1」刚刚异常退出。按崩溃急救流程直接开工：先取崩溃快照和日志证据，再提交修复计划，批准后在工作区里改、隔离启动验证、提交或回滚；能自己做的不要只给我人工步骤。全部做完再汇报结论、回退方式和未解决项。
 
 %2</source>
-            <translation>%1 just exited abnormally. Start working through Crash rescue right away: pull the crash snapshot and log evidence first, then submit a repair plan; after approval, edit in the workspace, verify with an isolated launch, then commit or roll back. Do whatever you can yourself instead of handing me manual steps. When everything is done, report the conclusion, how to roll back, and what's still unresolved.
+            <translation>"%1" just exited abnormally. Follow the Crash rescue workflow right away: gather the crash snapshot and log evidence first, then submit a repair plan; after approval, edit in the workspace, verify with an isolated launch, and commit or roll back. Do whatever you can yourself instead of giving me manual steps. When everything is done, report the conclusion, how to roll back, and any unresolved items.
 
 %2</translation>
         </message>
@@ -838,11 +838,11 @@ Select "Sign out" to try again.</translation>
 最长 60 分钟或 20 次启动；验证失败自动回滚；事务结束写审计。java.path、args.extraJvm、saves/ 和跨工作区写入无论如何都会被拒绝。
 
 不打开也可以修，只是每一步写盘都要你点一次「允许」。</source>
-            <translation>Once it's on, an approved plan runs to the end of the transaction: planned writes and test launches stop asking for approval step by step.
+            <translation>Once enabled, an approved plan runs until the transaction ends: planned writes and test launches won't ask for approval step by step.
 
-Up to 60 minutes or 20 launches; failed verification rolls back automatically; an audit is written when the transaction ends. java.path, args.extraJvm, saves/, and writes outside the workspace are always refused.
+Up to 60 minutes or 20 launches; failed verification rolls back automatically; an audit log is written when the transaction ends. java.path, args.extraJvm, saves/, and writes outside the workspace are always blocked.
 
-You can repair without it too; every write then needs a separate Allow click.</translation>
+You can still repair without it; you'll just need to click "Allow" for each write.</translation>
         </message>
         <message>
             <source>打开 Auto-safe</source>
@@ -1429,11 +1429,11 @@ This server runs with your Windows user privileges and can access local files an
         </message>
         <message>
             <source>备份元数据缺少实例 ID，已拒绝还原。</source>
-            <translation>Backup metadata is missing an instance ID; restore denied.</translation>
+            <translation>Backup metadata is missing an instance ID; restore blocked.</translation>
         </message>
         <message>
             <source>实例正在运行或正被其他操作占用，已拒绝还原。请等待结束后再试。</source>
-            <translation>Instance is running or busy with another operation; restore denied. Wait for it to finish and try again.</translation>
+            <translation>Instance is running or busy with another operation; restore blocked. Wait for it to finish and try again.</translation>
         </message>
         <message>
             <source>实例目录不存在。</source>
@@ -1888,7 +1888,7 @@ Location: %4
         </message>
         <message>
             <source>该备份不属于当前锁定的实例，已拒绝还原。</source>
-            <translation>This backup doesn't belong to the currently locked instance; restore denied.</translation>
+            <translation>This backup doesn't belong to the currently locked instance; restore blocked.</translation>
         </message>
         <message>
             <source>恢复备份：%1（%2）</source>
@@ -2482,7 +2482,7 @@ Location: %4
         </message>
         <message>
             <source>先把文件下载到暂存目录并校验大小与 SHA-1，全部通过后才复制进工作区 mods/。会补齐版本声明的必需前置，任何一步失败都不改工作区，也不碰原实例。</source>
-            <translation>Files are downloaded to a staging folder and verified for size and SHA-1; only after everything passes are they copied into the workspace mods/. Mandatory dependencies declared by the version are fetched too. If any step fails, the workspace stays untouched and the original instance is never modified.</translation>
+            <translation>Files are downloaded to a staging folder and verified for size and SHA-1; only after everything passes are they copied into the workspace mods/. Required dependencies declared by the version are installed too. If any step fails, the workspace stays untouched and the original instance is never modified.</translation>
         </message>
         <message>
             <source>先把文件下载到暂存目录并校验大小与 SHA-1，全部通过后才复制进工作区 mods/。任何一步失败都不改工作区，也不碰原实例。</source>
@@ -5559,7 +5559,7 @@ Backup folder: %2</translation>
         </message>
         <message>
             <source>智能体写入前备份：「%1」%2（%3）</source>
-            <translation>Agent pre-write backup: "%1" %2 (%3)</translation>
+            <translation>Agent pre-write backup: "%1", %2 (%3)</translation>
         </message>
         <message>
             <source>智能体还原前备份：%1（%2，%3）</source>
@@ -5686,7 +5686,7 @@ Redownloadable assets and libraries are skipped by default.</translation>
 
 待还原备份：
 %3</source>
-            <translation>Undo changes made by this chat to %2 files in "%1" and restore them to their state before the chat's first write. Other files stay unchanged. Current contents of these files will be backed up first.
+            <translation>This will undo changes made by this chat to %2 files in "%1" and restore them to their state before the chat's first write. Other files stay unchanged, and the current contents of these files will be backed up first.
 
 Backup to restore:
 %3</translation>
@@ -5696,7 +5696,7 @@ Backup to restore:
 
 待还原备份：
 %3</source>
-            <translation>Overwrite %2 files in "%1" with this backup. Other files stay unchanged, and files added after the backup are kept. Current contents of these files will be backed up first.
+            <translation>This will overwrite %2 files in "%1" with this backup. Other files stay unchanged, and files added after the backup are kept. The current contents of these files will be backed up first.
 
 Backup to restore:
 %3</translation>
@@ -10488,11 +10488,11 @@ Target file: %3
         </message>
         <message>
             <source>将更新 %1 项。下方列出依赖变化与需确认项，更新不会自动补装或删除模组。本预览不代表完整的依赖检查，也不保证游戏能正常启动。</source>
-            <translation>%1 items will be updated. Dependency changes and items that need confirmation are listed below; updating won't install or remove mods automatically. This preview is not a full dependency check and doesn't guarantee the game will launch.</translation>
+            <translation>%1 items will be updated. Dependency changes and items that need confirmation are listed below; updating won't install or remove mods automatically. This preview isn't a full dependency check and doesn't guarantee the game will launch.</translation>
         </message>
         <message>
             <source>将更新 %1 项。更新完成后将检查并补装缺失的必装前置，不会删除现有模组。本预览不代表完整的依赖检查，也不保证游戏能正常启动。</source>
-            <translation>%1 items will be updated. After updating, missing required dependencies will be checked and installed; existing mods won't be removed. This preview is not a full dependency check and doesn't guarantee the game will launch.</translation>
+            <translation>%1 items will be updated. After updating, the launcher will check for and install missing required dependencies; existing mods won't be removed. This preview isn't a full dependency check and doesn't guarantee the game will launch.</translation>
         </message>
         <message>
             <source>检查新增依赖并补全</source>
@@ -26560,7 +26560,7 @@ Restore canceled; existing files were kept.</translation>
         </message>
         <message>
             <source>无法写入备份目录：%1</source>
-            <translation>Can't write backup folder: %1</translation>
+            <translation>Can't write to backup folder: %1</translation>
         </message>
         <message>
             <source>不是文件备份。</source>
@@ -26576,11 +26576,11 @@ Restore canceled; existing files were kept.</translation>
         </message>
         <message>
             <source>实例目录不存在或为链接，已拒绝还原：%1</source>
-            <translation>Instance folder doesn't exist or is a link; restore denied: %1</translation>
+            <translation>Instance folder doesn't exist or is a link; restore blocked: %1</translation>
         </message>
         <message>
             <source>备份中的路径无效或目标含链接，已拒绝还原：%1</source>
-            <translation>Invalid path in backup or target contains links; restore denied: %1</translation>
+            <translation>Invalid path in backup or target contains links; restore blocked: %1</translation>
         </message>
         <message>
             <source>磁盘空间不足，未还原任何文件。</source>
