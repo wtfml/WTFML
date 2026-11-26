@@ -1681,7 +1681,7 @@ private:
     // / `shader`）—— 界面那边只说"是哪一页"。**空串 = 不是从某一页来的**（更新中心
     // / 那一批是跨类勾出来的），那时候落点全按每条自己那个目录算，不做校验。
     void updateInstanceFiles(const QString &instanceId, const QString &pageKey,
-                             const QStringList &paths);
+                             const QStringList &paths, bool checkNewDependencies = false);
     /// 「禁用」/「启用」：@p disable 为真 = 禁用。**只动该动的那几条**（选中集里本来就
     /// 混着已启用和已禁用 —— 灰化规则是"至少有一条能切"，不是"全都是同一种"）。
     void toggleInstanceFiles(const QStringList &paths, bool disable);
@@ -2862,6 +2862,15 @@ private:
         QStringList lines;
         /// 有几步是失败的（收尾时决定记成功还是失败）。
         int failedSteps = 0;
+        /// 用户勾选「检查新增依赖并补全」时为真：收尾后检查成功更新的模组新增了哪些缺失必装前置。
+        bool checkNewDependencies = false;
+        struct UpdatedModMeta {
+            ResourceCatalog::Source source = ResourceCatalog::Source::Modrinth;
+            QString projectId;
+            ResourceCatalog::VersionEntry previousVersion;
+            ResourceCatalog::VersionEntry targetVersion;
+        };
+        QHash<QString, UpdatedModMeta> modMetaByPath;
     };
     UpdateBatchRun m_updateBatch;
     /// 实例页那张树的**原料**：上一次 `refreshInstalledVersions()` 扫出来的那份（能启动

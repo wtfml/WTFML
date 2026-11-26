@@ -5,6 +5,7 @@
 
 #include "ModDependencies.hpp"
 #include <QCoreApplication>
+#include <algorithm>
 #include "DependencyInspection.hpp"
 
 namespace ModDependencies {
@@ -102,8 +103,68 @@ QString updateDifferenceText(const ResourceCatalog::VersionEntry &current,
         removed.sort(); lines.append(removed);
         if (complete && !changes && removed.isEmpty()) lines.append(QCoreApplication::translate("ModDependencies", "依赖声明未变化。"));
     }
-    lines.append(QCoreApplication::translate("ModDependencies", "移除声明不删除现有模组；此预览不是完整依赖求解或启动兼容保证。"));
     return lines.join(QLatin1Char('\n'));
+}
+
+namespace {
+QString summarizeList(const QStringList &items, int maxShown = 3) {
+    if (items.size() <= maxShown) {
+        return items.join(QStringLiteral(" / "));
+    }
+    return QCoreApplication::translate("ModDependencies", "%1 等 %2 项")
+        .arg(items.mid(0, maxShown).join(QStringLiteral(" / ")))
+        .arg(items.size());
+}
+}  // namespace
+
+QString updateCompatibilityLine(const ResourceCatalog::VersionEntry &version,
+                                const QString &instanceLoader,
+                                const QString &instanceGameVersion) {
+    const QString trimmedLoader = instanceLoader.trimmed();
+    const QString trimmedGame = instanceGameVersion.trimmed();
+
+    const bool loaderMatched =
+        !trimmedLoader.isEmpty() && !version.loaders.isEmpty() &&
+        std::any_of(version.loaders.cbegin(), version.loaders.cend(),
+                    [&trimmedLoader](const QString &loader) {
+                        return loader.trimmed().compare(trimmedLoader, Qt::CaseInsensitive) == 0;
+                    });
+    const bool gameMatched =
+        !trimmedGame.isEmpty() && !version.gameVersions.isEmpty() &&
+        version.gameVersions.contains(trimmedGame);
+
+    if (loaderMatched && gameMatched) {
+        return QCoreApplication::translate("ModDependencies", "兼容本实例（%1 · %2）")
+            .arg(trimmedLoader, trimmedGame);
+    }
+
+    QString loaderText;
+    if (version.loaders.isEmpty()) {
+        loaderText = QCoreApplication::translate("ModDependencies", "加载器：未注明");
+    } else if (!trimmedLoader.isEmpty()) {
+        loaderText = loaderMatched
+                         ? QCoreApplication::translate("ModDependencies", "加载器：支持 %1").arg(trimmedLoader)
+                         : QCoreApplication::translate("ModDependencies", "加载器：未注明支持 %1（声明：%2）")
+                               .arg(trimmedLoader, summarizeList(version.loaders));
+    } else {
+        loaderText = QCoreApplication::translate("ModDependencies", "加载器：%1")
+                         .arg(summarizeList(version.loaders));
+    }
+
+    QString gameText;
+    if (version.gameVersions.isEmpty()) {
+        gameText = QCoreApplication::translate("ModDependencies", "游戏版本：未注明");
+    } else if (!trimmedGame.isEmpty()) {
+        gameText = gameMatched
+                       ? QCoreApplication::translate("ModDependencies", "游戏版本：支持 %1").arg(trimmedGame)
+                       : QCoreApplication::translate("ModDependencies", "游戏版本：未列出 %1（声明：%2）")
+                             .arg(trimmedGame, summarizeList(version.gameVersions));
+    } else {
+        gameText = QCoreApplication::translate("ModDependencies", "游戏版本：%1")
+                       .arg(summarizeList(version.gameVersions));
+    }
+
+    return loaderText + QStringLiteral(" · ") + gameText;
 }
 
 QString inspectInstalledDependencies(const QList<InstalledItem> &selected,
@@ -284,6 +345,26 @@ QList<Lookup> missingRequiredDependencies(const ResourceCatalog::VersionEntry &v
         out.append(lookup);
     }
     return out;
+}
+
+QList<Lookup> missingNewRequiredDependencies(const QList<UpdatedVersionPair> &updates,
+                                             const QSet<QString> &installedKeys,
+                                             const Target &target) {
+    ResourceCatalog::VersionEntry combined;
+    for (const UpdatedVersionPair &pair : updates) {
+        QSet<QString> previousRequired;
+        if (pair.previous.dependencyMetadataKnown) {
+            for (const ResourceCatalog::Dependency &dep : requiredDependenciesOf(pair.previous)) {
+                previousRequired.insert(dep.projectId);
+            }
+        }
+        for (const ResourceCatalog::Dependency &dep : requiredDependenciesOf(pair.target)) {
+            if (!previousRequired.contains(dep.projectId)) {
+                combined.dependencies.append(dep);
+            }
+        }
+    }
+    return missingRequiredDependencies(combined, installedKeys, target);
 }
 
 bool resolveDependency(const ResourceCatalog::Dependency &dependency,

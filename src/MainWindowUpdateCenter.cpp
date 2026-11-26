@@ -26,6 +26,7 @@
 #include "MainWindow.hpp"
 
 #include "..\ui\InlineMessage.hpp"
+#include "..\ui\InstanceFilesPage.hpp"
 #include "..\ui\MainWindowUI.hpp"
 #include "..\ui\UpdateCenterPage.hpp"
 #include "controllers/ActivityCenterController.hpp"
@@ -33,9 +34,12 @@
 #include "controllers/InstanceUpdateCheckController.hpp"
 #include "controllers/MainWindowViewData.hpp"
 #include "controllers/PresetController.hpp"
+#include "controllers/ResourceInstallController.hpp"
 #include "controllers/UpdateCenterController.hpp"
 
+#include <QFileInfo>
 #include <QSet>
+#include <QTimer>
 
 using namespace MainWindowViewData;
 
@@ -243,5 +247,47 @@ void MainWindow::finishUpdateBatch(bool success, const QString &errorMessage) {
     // 别的页去了）⇒ 走 `openPageWhenIdle()`：**不驱逐**他正看着的那一页，等它收干净再开。
     const QString instanceId = run.instanceId;
     openPageWhenIdle([this, instanceId] { openUpdateCenter(instanceId); });
+
+    if (run.checkNewDependencies && !userCancelled && !run.succeeded.isEmpty()
+        && m_resourceInstall != nullptr) {
+        QList<ResourceInstallController::SourceModUpdates> updatesBySource;
+        const auto appendPair = [&updatesBySource](ResourceCatalog::Source source,
+                                                   ModDependencies::UpdatedVersionPair pair) {
+            for (auto &bucket : updatesBySource) {
+                if (bucket.source == source) {
+                    bucket.pairs.append(std::move(pair));
+                    return;
+                }
+            }
+            updatesBySource.append({source, {std::move(pair)}});
+        };
+        QSet<QString> extraInstalledKeys;
+        for (const QString &path : run.succeeded) {
+            const auto metaIt = run.modMetaByPath.constFind(path);
+            if (metaIt == run.modMetaByPath.constEnd()) {
+                continue;
+            }
+            if (!metaIt->projectId.isEmpty()) {
+                extraInstalledKeys.insert(projectTitleKey(metaIt->source, metaIt->projectId));
+            }
+            appendPair(metaIt->source, {metaIt->previousVersion, metaIt->targetVersion});
+        }
+        for (const auto &verdict : m_instanceUpdateResults.value(instanceId).verdicts) {
+            if (verdict.item.projectId.isEmpty() || !QFileInfo(verdict.item.path).isFile()
+                || verdict.item.path.endsWith(InstanceFilesPage::disabledSuffix(),
+                                              Qt::CaseInsensitive)) {
+                continue;
+            }
+            extraInstalledKeys.insert(projectTitleKey(verdict.item.source, verdict.item.projectId));
+        }
+        if (!updatesBySource.isEmpty()) {
+            QTimer::singleShot(0, this, [this, instanceId, updatesBySource, extraInstalledKeys] {
+                if (m_resourceInstall != nullptr) {
+                    m_resourceInstall->checkMissingDependenciesForUpdates(
+                        instanceId, updatesBySource, extraInstalledKeys);
+                }
+            });
+        }
+    }
 }
 

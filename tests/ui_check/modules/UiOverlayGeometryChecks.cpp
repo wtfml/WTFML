@@ -680,6 +680,80 @@ int UiOverlayGeometryChecks(QMainWindow &window, MainWindowUI &ui, QTabWidget * 
                   "★ 收尾：提示那一层关掉了、页面那一层自己也收掉了");
             QObject::disconnect(dismissSpy);
         }
+
+        // #135: responsive mod-update confirmation dialog (width/height follow window with margins,
+        // primary confirm + neutral cancel, dynamic text on checkbox toggle, at most one scrollbar).
+        {
+            const QString uncheckedText = QStringLiteral(
+                "将更新 12 项。下方列出依赖变化与需确认项，更新不会自动补装或删除模组。本预览不代表完整的依赖检查，也不保证游戏能正常启动。");
+            const QString checkedText = QStringLiteral(
+                "将更新 12 项。更新完成后将检查并补装缺失的必装前置，不会删除现有模组。本预览不代表完整的依赖检查，也不保证游戏能正常启动。");
+            InlineMessageBox preview(MessageKind::Question, QStringLiteral("模组更新差异"),
+                                     uncheckedText,
+                                     {QStringLiteral("确认更新"), QStringLiteral("取消")}, 0, -1);
+            preview.setResponsiveSize(0.74, 0.80, 580, 960, 440, 760);
+            auto *diffEdit = new QPlainTextEdit;
+            diffEdit->setObjectName(QStringLiteral("modUpdateDifferenceText"));
+            diffEdit->setReadOnly(true);
+            diffEdit->setLineWrapMode(QPlainTextEdit::WidgetWidth);
+            diffEdit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+            QStringList longLines;
+            for (int i = 0; i < 40; ++i) {
+                longLines.append(QStringLiteral("mod-%1.jar\n版本：1.0 → 2.0\n加载器：支持 Fabric · 游戏版本：支持 1.21.11").arg(i));
+            }
+            diffEdit->setPlainText(longLines.join(QStringLiteral("\n\n────────────────\n\n")));
+            diffEdit->setMinimumHeight(180);
+            preview.setContent(diffEdit);
+            QCheckBox *checkDeps = preview.setCheckBox(QStringLiteral("检查新增依赖并补全"));
+            QObject::connect(checkDeps, &QCheckBox::toggled, &preview,
+                             [&preview, uncheckedText, checkedText](bool checked) {
+                                 preview.setBodyText(checked ? checkedText : uncheckedText);
+                             });
+
+            overlay->openPrompt(false)->layout()->addWidget(&preview);
+            QApplication::processEvents();
+
+            QWidget *card = overlay->findChild<QWidget *>(OverlayHost::overlayPromptHostName());
+            check(card != nullptr && card->width() > OverlayHost::promptWidth() &&
+                      card->width() <= overlay->width() - 2 * 32 &&
+                      card->height() <= overlay->height() - 2 * 32,
+                  "★ #135 模组更新确认框随窗口加大并留出四周留白",
+                  card ? QStringLiteral("card=%1x%2 overlay=%3x%4")
+                             .arg(card->width()).arg(card->height())
+                             .arg(overlay->width()).arg(overlay->height())
+                       : QStringLiteral("<null>"));
+            auto *confirmBtn = preview.buttonAt(0);
+            auto *cancelBtn = preview.buttonAt(1);
+            check(confirmBtn != nullptr && cancelBtn != nullptr &&
+                      confirmBtn->property("wtfmlButtonKind").toString() == QStringLiteral("primary") &&
+                      cancelBtn->property("wtfmlButtonKind").toString() == QStringLiteral("neutral") &&
+                      confirmBtn->isDefault(),
+                  "★ #135 确认更新为主按钮、取消为普通按钮");
+            check(checkDeps != nullptr && !checkDeps->isChecked(),
+                  "★ #135 「检查新增依赖并补全」默认不勾选");
+
+            auto *bodyLabel = preview.findChild<QLabel *>(InlineMessageBox::textLabelName());
+            auto *bodyScroll = preview.findChild<QScrollArea *>(InlineMessageBox::textScrollName());
+            check(bodyLabel != nullptr && bodyLabel->text() == uncheckedText,
+                  "★ #135 未勾选时显示默认提示语");
+            checkDeps->setChecked(true);
+            QApplication::processEvents();
+            check(bodyLabel != nullptr && bodyLabel->text() == checkedText,
+                  "★ #135 勾选后提示语切换为补装说明");
+
+            int visibleScrollBars = 0;
+            for (QScrollBar *sb : preview.findChildren<QScrollBar *>()) {
+                if (sb->isVisible()) ++visibleScrollBars;
+            }
+            check(visibleScrollBars <= 1 && bodyScroll != nullptr &&
+                      bodyScroll->verticalScrollBarPolicy() == Qt::ScrollBarAlwaysOff &&
+                      diffEdit->horizontalScrollBarPolicy() == Qt::ScrollBarAlwaysOff,
+                  "★ #135 弹窗内至多只有一条滚动条",
+                  QStringLiteral("visibleScrollBars=%1").arg(visibleScrollBars));
+
+            overlay->closeOverlay();
+            QApplication::processEvents();
+        }
     }
     return 0;
 }

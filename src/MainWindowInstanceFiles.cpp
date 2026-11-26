@@ -59,7 +59,7 @@ bool MainWindow::removeInstanceFileUnasked(const QString &path, QString *problem
 // 进行"的失败框。理由写在头文件那段里。
 
 void MainWindow::updateInstanceFiles(const QString &instanceId, const QString &pageKey,
-                                     const QStringList &paths) {
+                                     const QStringList &paths, bool checkNewDependencies) {
     if (instanceId.isEmpty() || paths.isEmpty()) {
         return;
     }
@@ -179,6 +179,23 @@ void MainWindow::updateInstanceFiles(const QString &instanceId, const QString &p
     m_updateBatch = UpdateBatchRun{};
     m_updateBatch.label = label;
     m_updateBatch.instanceId = instanceId;
+    m_updateBatch.checkNewDependencies = checkNewDependencies;
+    if (checkNewDependencies) {
+        QHash<QString, ModDependencies::UpdateVerdict> byPath;
+        for (const auto &entry : m_instanceUpdateResults.value(instanceId).verdicts) {
+            byPath.insert(entry.item.path, entry);
+        }
+        for (const QString &path : updatedPaths) {
+            const auto verdictIt = byPath.constFind(path);
+            const auto targetIt = targets.constFind(path);
+            if (verdictIt != byPath.constEnd() && targetIt != targets.constEnd()) {
+                m_updateBatch.modMetaByPath.insert(
+                    path,
+                    {verdictIt->item.source, verdictIt->item.projectId, verdictIt->currentVersion,
+                     targetIt.value()});
+            }
+        }
+    }
     // 一个资源一步（「更新任务显示每个资源的结果，不只显示总数」）。
     QList<Tasks::TaskStep> steps;
     for (int i = 0; i < files.size(); ++i) {

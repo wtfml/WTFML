@@ -790,15 +790,39 @@ void OverlayHost::relayout() {
         return;
     }
     // 宽度**恒定**、只夹高度：所有提示一样宽，不允许出现尺寸不一样的弹窗。
-    // 窄一点就成了另一种弹窗，矮一点只是内容滚。
+    // 窄一点就成了另一种弹窗，矮一点只是内容滚。显式设了比例属性的弹窗随窗口缩放并留出边距。
     int preferredWidth = promptWidth();
+    int wanted = -1;
+    int margin = promptMargin();
     if (m_promptContentLayout && m_promptContentLayout->count() > 0) {
-        if (QWidget *content = m_promptContentLayout->itemAt(0)->widget())
-            preferredWidth = qBound(promptWidth(), content->property("wtfmlPromptWidth").toInt(), 1000);
+        if (QWidget *content = m_promptContentLayout->itemAt(0)->widget()) {
+            const double widthRatio = content->property("wtfmlPromptWidthRatio").toDouble();
+            const double heightRatio = content->property("wtfmlPromptHeightRatio").toDouble();
+            if (widthRatio > 0.0 || heightRatio > 0.0) {
+                const int customMargin = content->property("wtfmlPromptMargin").toInt();
+                if (customMargin > 0) margin = qMax(promptMargin(), customMargin);
+                const int availW = qMax(0, this->width() - 2 * margin);
+                const int availH = qMax(0, height() - 2 * margin);
+                if (widthRatio > 0.0) {
+                    const int minW = qMax(promptWidth(), content->property("wtfmlPromptMinWidth").toInt());
+                    const int maxW = qMax(minW, content->property("wtfmlPromptMaxWidth").toInt());
+                    preferredWidth = qMin(availW, qBound(minW, qRound(this->width() * widthRatio), maxW));
+                }
+                if (heightRatio > 0.0) {
+                    const int minH = qMax(240, content->property("wtfmlPromptMinHeight").toInt());
+                    const int maxH = qMax(minH, content->property("wtfmlPromptMaxHeight").toInt());
+                    wanted = qMin(availH, qBound(minH, qRound(height() * heightRatio), maxH));
+                }
+            } else {
+                preferredWidth = qBound(promptWidth(), content->property("wtfmlPromptWidth").toInt(), 1000);
+            }
+        }
     }
-    const int width = qMin(preferredWidth, qMax(0, this->width() - 2 * promptMargin()));
-    const int available = qMax(0, height() - 2 * promptMargin());
-    const int wanted = qMin(m_promptCard->sizeHint().height(), available);
+    const int width = qMin(preferredWidth, qMax(0, this->width() - 2 * margin));
+    const int available = qMax(0, height() - 2 * margin);
+    if (wanted < 0) {
+        wanted = qMin(m_promptCard->sizeHint().height(), available);
+    }
     // 一样就不动：这一条是**防循环**的 —— 改尺寸会让卡片里那套布局重算，而重算又会
     // 以 LayoutRequest 的形状回到上面 eventFilter 里（那边还会再叫一次 relayout）。
     if (m_promptCard->width() != width || m_promptCard->height() != wanted) {

@@ -1,3 +1,4 @@
+#include "controllers/ResourceInstallController.hpp"
 #include "controllers/ResourcePageController.hpp"
 #include "TextMarks.hpp"
 
@@ -568,6 +569,9 @@ void ResourcePageController::onDownloadFinished(const QString &label, bool succe
     }
 
     if (!success) {
+        if (m_owner.m_resourceInstall != nullptr) {
+            m_owner.m_resourceInstall->onDependencyDownloadFinished();
+        }
         if (userCancelled) {
             // 取消不是失败：日志照写，不弹「下载失败」、也不算一次没看过的失败。
             m_owner.appendLog(TextMarks::failed(tr("%1 已由用户取消下载。").arg(label)));
@@ -582,4 +586,7 @@ void ResourcePageController::onDownloadFinished(const QString &label, bool succe
     m_owner.appendLog(TextMarks::done(tr("%1 下载完成：%2").arg(label, errorMessage)));
     InlineMessage::information(m_owner.m_ui->overlay(), tr("下载完成"),
                              tr("%1 已安装到此实例。\n\n%2").arg(label, errorMessage));
+    if (m_owner.m_resourceInstall != nullptr) {
+        m_owner.m_resourceInstall->onDependencyDownloadFinished();
+    }
 }

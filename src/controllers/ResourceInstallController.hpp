@@ -64,6 +64,18 @@ public:
                  ResourceCatalog::VersionEntry version, ResourceCatalog::Source source,
                  const QString &projectIconId = {});
 
+    struct SourceModUpdates {
+        ResourceCatalog::Source source = ResourceCatalog::Source::Modrinth;
+        QList<ModDependencies::UpdatedVersionPair> pairs;
+    };
+
+    /// 检查批量更新后的模组新增了哪些缺失的必装前置，缺的话复用既有前置查询与下载流程补装。
+    void checkMissingDependenciesForUpdates(const QString &instanceId,
+                                            const QList<SourceModUpdates> &updatesBySource,
+                                            const QSet<QString> &extraInstalledKeys = {});
+    /// 单批前置补全下载结束时继续处理混合来源批次里剩余来源的前置检查。
+    void onDependencyDownloadFinished();
+
     /// 名字那一发回来了（`ResourceStore::projectsFinished`）。
     void onProjectsFinished(const QString &requestKey, const QList<ResourceCatalog::Hit> &hits,
                             const QString &problem);
@@ -86,11 +98,14 @@ private:
                     const ResourceCatalog::VersionEntry &version,
                     const QList<ModDependencies::Resolved> &extras, const InstallTarget &target,
                     const QString &projectIconId = {});
+    bool installDependenciesNow(const QList<ModDependencies::Resolved> &extras,
+                                const InstallTarget &target);
 
     /// 正在跑的这一趟前置检查（**只有一趟**：用户连点两下"下载"时第二下不该再起一趟 ——
     /// 两趟会各问一遍、各弹一个框，而第一趟已经弹着的那个框正转着嵌套事件循环）。
     struct DependencyCheck {
         bool active = false;
+        bool dependenciesOnly = false;
         ResourceCatalog::Kind kind = ResourceCatalog::Kind::Mod;
         QString title;
         ResourceCatalog::VersionEntry version;
@@ -126,11 +141,23 @@ private:
                               const ResourceCatalog::VersionEntry &version,
                               const InstallTarget &destination,
                               const ModDependencies::Target &target,
-                              const QList<ModDependencies::Lookup> &missing, bool installedKnown);
+                              const QList<ModDependencies::Lookup> &missing, bool installedKnown,
+                              bool dependenciesOnly = false);
     /// 全问完了：算 Plan、弹框、按用户那一按继续装（或者只装主模组）。
     void finishDependencyCheck();
+    void presentDependencyPlan(DependencyCheck check, ModDependencies::Plan plan,
+                               QStringList names, QString note);
+    void drainPendingUpdateChecks();
+
+    struct PendingUpdateDepCheck {
+        InstallTarget destination;
+        ModDependencies::Target target;
+        QList<ModDependencies::Lookup> missing;
+        bool installedKnown = false;
+    };
 
     MainWindow &m_owner;
     bool m_installing = false;
     DependencyCheck m_check;
+    QList<PendingUpdateDepCheck> m_pendingUpdateChecks;
 };

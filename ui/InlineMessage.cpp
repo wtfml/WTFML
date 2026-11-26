@@ -20,6 +20,7 @@
 #include <QListWidget>
 #include <QPalette>
 #include <QPushButton>
+#include <QResizeEvent>
 #include <QVBoxLayout>
 
 #include "MainWindowUI.hpp"
@@ -135,25 +136,14 @@ InlineMessageBox::InlineMessageBox(MessageKind kind, const QString &title, const
     // 是会失手的那种）。
     // 正文超过卡片高度时**滚动**，别把按钮挤出卡片：长错误（复制整棵目录失败、
     // 多个文件占用）会很长，wordWrap 的 QLabel 没有上限，卡片会被顶出屏幕。
-    const int textWidth = OverlayHost::promptContentWidth();
-    m_textLabel->setFixedWidth(textWidth - 14);  // 给竖直滚动条留一格
-    // QLabel::heightForWidth() 在没上屏前不稳定；这里直接用字体度量算出换行后的高度。
-    const QFontMetrics metrics(m_textLabel->font());
-    const int neededHeight = metrics
-        .boundingRect(QRect(0, 0, textWidth - 14, 100000), Qt::TextWordWrap, m_textLabel->text())
-        .height();
-    // QScrollArea 不认 heightForWidth：把量出来的高度钉成最小高度，滚动条才有范围。
-    m_textLabel->setMinimumHeight(neededHeight + 4);
-    auto *textScroll = new QScrollArea(this);
-    textScroll->setObjectName(textScrollName());
-    textScroll->setFrameShape(QFrame::NoFrame);
-    textScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    textScroll->setWidgetResizable(true);
-    textScroll->setWidget(m_textLabel);
-    textScroll->setFixedWidth(textWidth);
-    // 和上面最小高度同一个数：差那 2px 就会白白冒出一根滚动条。
-    textScroll->setFixedHeight(qBound(24, neededHeight + 4, 260));
-    layout->addWidget(textScroll);
+    m_textScroll = new QScrollArea(this);
+    m_textScroll->setObjectName(textScrollName());
+    m_textScroll->setFrameShape(QFrame::NoFrame);
+    m_textScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_textScroll->setWidgetResizable(true);
+    m_textScroll->setWidget(m_textLabel);
+    updateTextScrollGeometry();
+    layout->addWidget(m_textScroll);
 
     QWidget *row = new QWidget(this);
     row->setObjectName(buttonRowName());
@@ -245,6 +235,83 @@ QPixmap headerChip(MessageKind kind, const QString &icon) {
 void InlineMessageBox::setHeaderIcon(const QString &icon) {
     if (auto *chip = findChild<QLabel *>(QStringLiteral("inlineMessageIcon"), Qt::FindDirectChildrenOnly))
         chip->setPixmap(headerChip(m_kind, icon));
+}
+
+void InlineMessageBox::setBodyText(const QString &text) {
+    if (m_textLabel == nullptr) {
+        return;
+    }
+    m_textLabel->setText(text);
+    updateTextScrollGeometry();
+}
+
+void InlineMessageBox::setResponsiveSize(double widthRatio, double heightRatio, int minWidth,
+                                         int maxWidth, int minHeight, int maxHeight, int margin) {
+    m_responsiveSize = true;
+    setProperty("wtfmlPromptWidthRatio", widthRatio);
+    setProperty("wtfmlPromptHeightRatio", heightRatio);
+    setProperty("wtfmlPromptMinWidth", minWidth);
+    setProperty("wtfmlPromptMaxWidth", maxWidth);
+    setProperty("wtfmlPromptMinHeight", minHeight);
+    setProperty("wtfmlPromptMaxHeight", maxHeight);
+    setProperty("wtfmlPromptMargin", margin);
+    if (m_textScroll != nullptr) {
+        m_textScroll->setMinimumWidth(0);
+        m_textScroll->setMaximumWidth(QWIDGETSIZE_MAX);
+        m_textScroll->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        m_textScroll->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    }
+    if (m_textLabel != nullptr) {
+        m_textLabel->setMinimumWidth(0);
+        m_textLabel->setMaximumWidth(QWIDGETSIZE_MAX);
+    }
+    if (m_content != nullptr) {
+        m_content->setMinimumWidth(0);
+        m_content->setMaximumWidth(QWIDGETSIZE_MAX);
+        m_content->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        if (auto *vbox = qobject_cast<QVBoxLayout *>(layout())) {
+            vbox->setStretchFactor(m_content, 1);
+        }
+    }
+    updateTextScrollGeometry();
+}
+
+void InlineMessageBox::updateTextScrollGeometry() {
+    if (m_textLabel == nullptr || m_textScroll == nullptr) {
+        return;
+    }
+    const QFontMetrics metrics(m_textLabel->font());
+    if (m_responsiveSize) {
+        const int fallbackWidth =
+            qMax(OverlayHost::promptContentWidth(),
+                 property("wtfmlPromptMinWidth").toInt() - 2 * OverlayHost::promptPadding()
+                     - 2 * OverlayHost::promptFrameWidth());
+        const int wrapWidth = qMax(120, width() > 0 ? width() : fallbackWidth);
+        const int neededHeight = metrics
+            .boundingRect(QRect(0, 0, wrapWidth, 100000), Qt::TextWordWrap, m_textLabel->text())
+            .height();
+        m_textLabel->setMinimumHeight(neededHeight + 4);
+        m_textScroll->setFixedHeight(qMax(24, neededHeight + 4));
+        return;
+    }
+    const int textWidth = OverlayHost::promptContentWidth();
+    m_textLabel->setFixedWidth(textWidth - 14);  // 给竖直滚动条留一格
+    // QLabel::heightForWidth() 在没上屏前不稳定；这里直接用字体度量算出换行后的高度。
+    const int neededHeight = metrics
+        .boundingRect(QRect(0, 0, textWidth - 14, 100000), Qt::TextWordWrap, m_textLabel->text())
+        .height();
+    // QScrollArea 不认 heightForWidth：把量出来的高度钉成最小高度，滚动条才有范围。
+    m_textLabel->setMinimumHeight(neededHeight + 4);
+    m_textScroll->setFixedWidth(textWidth);
+    // 和上面最小高度同一个数：差那 2px 就会白白冒出一根滚动条。
+    m_textScroll->setFixedHeight(qBound(24, neededHeight + 4, 260));
+}
+
+void InlineMessageBox::resizeEvent(QResizeEvent *event) {
+    QDialog::resizeEvent(event);
+    if (m_responsiveSize) {
+        updateTextScrollGeometry();
+    }
 }
 
 QHBoxLayout *InlineMessageBox::makeHeader(QWidget *owner, QLabel *title, MessageKind kind,
@@ -516,9 +583,13 @@ QWidget *InlineMessageBox::setContent(QWidget *content, int preferredWidth) {
         m_header->addWidget(close);
         connect(close, &QPushButton::clicked, this, &QDialog::reject);
         }
+    } else if (m_responsiveSize) {
+        m_content->setMinimumWidth(0);
+        m_content->setMaximumWidth(QWIDGETSIZE_MAX);
+        m_content->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     } else m_content->setFixedWidth(OverlayHost::promptContentWidth());
     // 插在**按钮行前面**（写成 count()-1 不写死下标，同 setLineEdit 那一句）。
-    layout->insertWidget(layout->count() - 1, m_content);
+    layout->insertWidget(layout->count() - 1, m_content, m_responsiveSize ? 1 : 0);
     // 那块里挂了 `wtfmlPromptActionsLead` 的一格（如预设弹窗的「本次应用」汇总）挪到按钮行左边。
     // shortcut: 换内容时不把它还回旧那块；今天挂它的只有 PresetInstallPicker，且只 setContent 一次。
     if (auto *row = findChild<QWidget *>(buttonRowName()); row != nullptr) {

@@ -5,10 +5,12 @@
 #include <QComboBox>
 #include <QFileDialog>
 #include <QFormLayout>
+#include <QPointer>
 #include <QScopedValueRollback>
 #include <QScrollArea>
 #include <QSet>
 #include <QStringList>
+#include <QTimer>
 #include <algorithm>
 
 #include "MainWindow.hpp"
@@ -139,16 +141,81 @@ void ResourceInstallController::install(ResourceCatalog::Kind kind, QString disp
     installNow(kind, displayTitle, version, {}, *destination, projectIconId);
 }
 
+void ResourceInstallController::checkMissingDependenciesForUpdates(
+    const QString &instanceId, const QList<SourceModUpdates> &updatesBySource,
+    const QSet<QString> &extraInstalledKeys) {
+    if (instanceId.isEmpty() || updatesBySource.isEmpty()) {
+        return;
+    }
+    const QString instanceDir = AppPaths::versionDir(instanceId);
+    const InstallTarget destination{
+        QDir(instanceDir).filePath(QStringLiteral("mods")),
+        instanceId,
+        instanceDir,
+    };
+    if (!targetStillAvailable(destination)) {
+        return;
+    }
+
+    bool installedKnown = false;
+    QSet<QString> installed = m_owner.installedModKeys(instanceId, &installedKnown);
+    installed.unite(extraInstalledKeys);
+
+    QList<PendingUpdateDepCheck> queued;
+    for (const SourceModUpdates &batch : updatesBySource) {
+        if (batch.pairs.isEmpty()) {
+            continue;
+        }
+        const ModDependencies::Target target = m_owner.dependencyTargetFor(instanceId, batch.source);
+        const QList<ModDependencies::Lookup> missing =
+            ModDependencies::missingNewRequiredDependencies(batch.pairs, installed, target);
+        if (!missing.isEmpty()) {
+            queued.append({destination, target, missing, installedKnown});
+        }
+    }
+    if (queued.isEmpty()) {
+        m_owner.appendLog(MainWindow::tr("本次更新的模组未发现缺失的新增必装前置。"));
+        return;
+    }
+
+    m_pendingUpdateChecks.append(queued);
+    if (!m_installing && !m_check.active) {
+        drainPendingUpdateChecks();
+    }
+}
+
+void ResourceInstallController::onDependencyDownloadFinished() {
+    if (!m_pendingUpdateChecks.isEmpty() && !m_installing && !m_check.active) {
+        QTimer::singleShot(0, this, [this] { drainPendingUpdateChecks(); });
+    }
+}
+
+void ResourceInstallController::drainPendingUpdateChecks() {
+    if (m_installing || m_check.active || m_pendingUpdateChecks.isEmpty()) {
+        return;
+    }
+    const PendingUpdateDepCheck next = m_pendingUpdateChecks.takeFirst();
+    if (!targetStillAvailable(next.destination)) {
+        drainPendingUpdateChecks();
+        return;
+    }
+    startDependencyCheck(ResourceCatalog::Kind::Mod, QString(), ResourceCatalog::VersionEntry{},
+                         next.destination, next.target, next.missing, next.installedKnown,
+                         /*dependenciesOnly=*/true);
+}
+
 void ResourceInstallController::startDependencyCheck(ResourceCatalog::Kind kind,
                                                      const QString &displayTitle,
                                                      const ResourceCatalog::VersionEntry &version,
                                                      const InstallTarget &destination,
                                                      const ModDependencies::Target &target,
                                                      const QList<ModDependencies::Lookup> &missing,
-                                                     bool installedKnown) {
+                                                     bool installedKnown,
+                                                     bool dependenciesOnly) {
     MainWindow &owner = m_owner;
     m_check = DependencyCheck{};
     m_check.active = true;
+    m_check.dependenciesOnly = dependenciesOnly;
     m_check.kind = kind;
     m_check.title = displayTitle;
     m_check.version = version;
@@ -253,14 +320,14 @@ void ResourceInstallController::onVersionsFinished(
 
 void ResourceInstallController::finishDependencyCheck() {
     MainWindow &owner = m_owner;
-    const QScopedValueRollback installing(m_installing, true);
     DependencyCheck check = std::move(m_check);
     m_check.active = false;
     if (!targetStillAvailable(check.destination)) {
+        if (check.dependenciesOnly) {
+            drainPendingUpdateChecks();
+        }
         return;
     }
-
-    const bool installedKnown = check.installedKnown;
 
     // 名字从会话缓存里查（详情页那一行读的是同一份）。缺的那几条**退成项目号**——
     // 列出来总比"有 2 个前置没找到"强（见 ModDependencies::buildPlan 那段），
@@ -285,6 +352,50 @@ void ResourceInstallController::finishDependencyCheck() {
     }
 
     const QString note = ModDependencies::unresolvedNoteText(plan.unresolved);
+    if (check.dependenciesOnly) {
+        if (plan.downloads.isEmpty()) {
+            if (!note.isEmpty()) {
+                InlineMessage::information(owner.m_ui->overlay(),
+                                           ModDependencies::dependencyPromptTitle(), note);
+            }
+            QTimer::singleShot(0, this, [this] { drainPendingUpdateChecks(); });
+            return;
+        }
+        QStringList resolvedLabels;
+        resolvedLabels.reserve(plan.downloads.size());
+        for (const ModDependencies::Resolved &resolved : plan.downloads) {
+            const QString ver = resolved.version.versionNumber.isEmpty()
+                                    ? resolved.file.filename
+                                    : resolved.version.versionNumber;
+            resolvedLabels.append(ver.isEmpty() ? resolved.title
+                                                : QStringLiteral("%1 %2").arg(resolved.title, ver));
+        }
+        owner.appendLog(MainWindow::tr("正在自动补全 %1 个新增必装前置：%2。")
+                            .arg(plan.downloads.size())
+                            .arg(resolvedLabels.join(MainWindow::tr("、"))));
+        const bool started = installDependenciesNow(plan.downloads, check.destination);
+        if (!note.isEmpty()) {
+            InlineMessage::information(owner.m_ui->overlay(),
+                                       ModDependencies::dependencyPromptTitle(), note);
+        }
+        if (!started) {
+            QTimer::singleShot(0, this, [this] { drainPendingUpdateChecks(); });
+        }
+        return;
+    }
+    presentDependencyPlan(std::move(check), std::move(plan), std::move(names), std::move(note));
+}
+
+void ResourceInstallController::presentDependencyPlan(DependencyCheck check,
+                                                      ModDependencies::Plan plan,
+                                                      QStringList names, QString note) {
+    MainWindow &owner = m_owner;
+    const QScopedValueRollback installing(m_installing, true);
+    if (!targetStillAvailable(check.destination)) {
+        return;
+    }
+
+    const bool installedKnown = check.installedKnown;
     QList<ModDependencies::Resolved> extras;
     if (plan.downloads.isEmpty()) {
         const int choice = InlineMessage::ask(
@@ -304,7 +415,8 @@ void ResourceInstallController::finishDependencyCheck() {
         InlineMessageBox prompt(MessageKind::Question, ModDependencies::dependencyPromptTitle(), text,
                                 {ModDependencies::dependencyOnlyThisButtonText(),
                                  plan.unresolved.isEmpty() ? ModDependencies::dependencyAllButtonText()
-                                                           : MainWindow::tr("下载可用前置")}, 0, -1);
+                                                           : MainWindow::tr("下载可用前置")},
+                                0, -1);
         prompt.setNote(ModDependencies::dependencyPromptNoteText());
         auto *scroll = new QScrollArea(&prompt);
         scroll->setWidgetResizable(true);
@@ -344,6 +456,80 @@ void ResourceInstallController::finishDependencyCheck() {
     }
 
     installNow(check.kind, check.title, check.version, extras, check.destination);
+}
+
+bool ResourceInstallController::installDependenciesNow(const QList<ModDependencies::Resolved> &extras,
+                                                       const InstallTarget &target) {
+    MainWindow &owner = m_owner;
+    if (extras.isEmpty() || !targetStillAvailable(target)) {
+        return false;
+    }
+    const QString &instanceId = target.instanceId;
+    const QString dependencyDir = QDir(target.instanceDirectory).filePath(QStringLiteral("mods"));
+    QList<VersionManager::ResourceFile> files;
+    files.reserve(extras.size());
+    for (const ModDependencies::Resolved &extra : extras) {
+        if (extra.file.url.isEmpty() || extra.file.filename.isEmpty()) {
+            continue;
+        }
+        const QString fileNameProblem = InstanceFiles::validateFileName(extra.file.filename);
+        if (!fileNameProblem.isEmpty()) {
+            InlineMessage::warning(owner.m_ui->overlay(), MainWindow::tr("下载失败"),
+                                   MainWindow::tr("版本文件名无效，已取消下载（%1）：%2")
+                                       .arg(extra.file.filename, fileNameProblem));
+            return false;
+        }
+        VersionManager::ResourceFile extraFile;
+        extraFile.url = extra.file.url;
+        extraFile.filename = extra.file.filename;
+        extraFile.sha1 = extra.file.sha1;
+        extraFile.size = extra.file.size;
+        extraFile.dir = dependencyDir;
+        files.append(extraFile);
+    }
+    if (files.isEmpty()) {
+        return false;
+    }
+
+    const auto isBatchBusy = [&owner]() {
+        return owner.m_downloadInFlight || owner.m_versionManager->isDownloading()
+               || owner.m_versionManager->isLoaderInstalling()
+               || owner.m_versionManager->isModpackImporting()
+               || owner.m_versionManager->isNamedInstanceInstalling()
+               || (owner.m_serverInstall != nullptr && owner.m_serverInstall->ownsDownloadBatch());
+    };
+    if (isBatchBusy()) {
+        InlineMessage::information(
+            owner.m_ui->overlay(), MainWindow::tr("暂时无法操作"),
+            MainWindow::tr("已有下载或安装任务正在进行，请等待其结束后再下载此项。"));
+        return false;
+    }
+
+    const QString label = MainWindow::tr("补全「%1」的 %2 个前置模组")
+                              .arg(owner.instanceDisplayName(instanceId))
+                              .arg(files.size());
+    owner.appendLog(MainWindow::tr("%1 个前置将作为模组安装到 %2。")
+                        .arg(files.size())
+                        .arg(QDir::toNativeSeparators(dependencyDir)));
+
+    const Tasks::TaskId task = owner.beginTask(Tasks::TaskKind::Download, label, instanceId);
+    owner.m_downloadTaskLedger->setResourceLabel(label);
+    owner.m_downloadTaskLedger->setTask(task);
+    const bool started =
+        owner.m_versionManager->downloadResourceFiles(dependencyDir, instanceId, label, files);
+    if (started) {
+        if (owner.m_downloadTaskLedger->task() == task) {
+            owner.m_downloadTaskLedger->setOwner(task);
+            owner.m_activityCenter->tasks()->setProgress(task, 0, 0);
+        }
+        return true;
+    }
+    if (owner.m_downloadTaskLedger->task() == task) {
+        owner.m_downloadTaskLedger->clearTask();
+        owner.m_downloadTaskLedger->setResourceLabel(QString());
+        owner.finishTask(task, false, MainWindow::tr("无法开始下载。"));
+    }
+    return false;
 }
 
 void ResourceInstallController::installNow(ResourceCatalog::Kind kind, const QString &displayTitle,
