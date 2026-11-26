@@ -735,8 +735,23 @@ QString summaryText(const Info &info, const QString &targetGameVersion) {
     return text;
 }
 
-QJsonObject loadChineseBlockNames(const QString &assetsRoot, const QString &indexId) {
-    if (assetsRoot.isEmpty() || !AssetNames::isSafeIndexId(indexId)) return {};
+static bool isSafeLanguageCode(const QString &language) {
+    static const QRegularExpression pattern(QStringLiteral("^[a-z0-9_]+$"));
+    return pattern.match(language).hasMatch();
+}
+
+QJsonObject blockNamesFromJson(const QByteArray &json) {
+    if (json.isEmpty() || json.size() > 8 * 1024 * 1024) return {};
+    const QJsonDocument doc = QJsonDocument::fromJson(json);
+    return doc.isObject() ? doc.object() : QJsonObject();
+}
+
+QJsonObject loadBlockNames(const QString &assetsRoot, const QString &indexId,
+                           const QString &language) {
+    if (assetsRoot.isEmpty() || !AssetNames::isSafeIndexId(indexId) ||
+        !isSafeLanguageCode(language)) {
+        return {};
+    }
     const auto readObject = [&assetsRoot](const QString &path, qint64 limit) {
         if (!InstanceFiles::pathIsSameOrInside(assetsRoot, path)) return QJsonObject();
         QFile file(path);
@@ -745,10 +760,15 @@ QJsonObject loadChineseBlockNames(const QString &assetsRoot, const QString &inde
         return bytes.size() <= limit ? QJsonDocument::fromJson(bytes).object() : QJsonObject();
     };
     const auto index = readObject(assetsRoot + QStringLiteral("/indexes/%1.json").arg(indexId), 32 * 1024 * 1024);
+    const QString entry = QStringLiteral("minecraft/lang/%1.json").arg(language);
     const QString hash = index.value(QStringLiteral("objects")).toObject()
-        .value(QStringLiteral("minecraft/lang/zh_cn.json")).toObject().value(QStringLiteral("hash")).toString();
+        .value(entry).toObject().value(QStringLiteral("hash")).toString();
     if (!AssetNames::isSha1Hex(hash)) return {};
     return readObject(assetsRoot + QStringLiteral("/objects/%1/%2").arg(hash.left(2), hash), 8 * 1024 * 1024);
+}
+
+QJsonObject loadChineseBlockNames(const QString &assetsRoot, const QString &indexId) {
+    return loadBlockNames(assetsRoot, indexId, QStringLiteral("zh_cn"));
 }
 
 QString chineseBlockName(const QJsonObject &language, const QString &blockId) {
