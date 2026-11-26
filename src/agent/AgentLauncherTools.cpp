@@ -251,7 +251,7 @@ QList<AgentToolSpec> AgentLauncherTools::specs() {
                                   {{QStringLiteral("reportId"),
                                     stringField(QStringLiteral("string"), 128)}})));
     list.append(spec(QStringLiteral("instance.integrity"),
-                     QCoreApplication::translate("AgentLauncherTools", "完整性体检"),
+                     QCoreApplication::translate("AgentLauncherTools", "完整性检查"),
                      QStringLiteral("Scans using existing integrity checks; returns grouped counts only without paths; may take several seconds."),  // i18n-ignore
                      AgentRisk::ReadOnly, objectSchema({}, {})));
     list.append(spec(QStringLiteral("mods.list"),
@@ -1088,7 +1088,7 @@ AgentToolResult AgentLauncherTools::handleIntegrity(const Agent::ToolCall &call,
     const QString summary = report.summary();
     return deliverRead(context, call, AgentEgressPolicy::Kind::InstanceMetadata, QString(),
                        QString::fromUtf8(QJsonDocument(data).toJson(QJsonDocument::Compact)),
-                       QCoreApplication::translate("AgentLauncherTools", "完整性体检"), summary, summary, data);
+                       QCoreApplication::translate("AgentLauncherTools", "完整性检查"), summary, summary, data);
 }
 
 AgentToolResult AgentLauncherTools::handleModsList(const Agent::ToolCall &call,
