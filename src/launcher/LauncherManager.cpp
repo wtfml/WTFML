@@ -591,7 +591,10 @@ QStringList LauncherManager::generateJvmArguments(const QString &token, const QS
         args << QStringLiteral("-Dstdout.encoding=utf-8");
         args << QStringLiteral("-Dstderr.encoding=utf-8");
     }
-    args << QStringLiteral("-Djava.net.preferIPv4Stack=true");
+    // NOTE: 这里**不许**加 -Djava.net.preferIPv4Stack=true（曾无条件加过）：它让 JVM 完全
+    // 不用 IPv6，DNS 里只有 AAAA 的服务器必然连不上。Java 默认 preferIPv6Addresses=false，
+    // 两种地址都有时本来就先试 IPv4，这一条除了砍掉 IPv6 什么也没换到。用户自定义的、
+    // 或 version.json 声明的 -Djava.net.prefer* 照常原样传（见下面的 declared）。
 
     // NOTE: 去重按**路径**比，大小写不敏感 —— Windows 的路径本来就是大小写不敏感的，
     // 而 BootstrapLauncher（Forge/NeoForge）拿 `java.class.path` 里的字符串去和
