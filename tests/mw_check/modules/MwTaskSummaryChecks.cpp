@@ -58,12 +58,24 @@ int MwTaskSummaryChecks(MainWindow &window) {
                             if (label->objectName().startsWith(QStringLiteral("activityDetail:"))) return label->text();
                     return QString();
                 };
+                // 上一批自己写的计数：下一批 0 / 0 那一帧照常回到「正在准备下载…」。
                 report(3);
-                const QString before = line();
+                const QString counted = line();
                 report(0);
-                check(before == QStringLiteral("已下载 3 个文件") && line() == before,
-                      "★ #147 手里没有数的那一帧不把标题下那行打回「正在准备下载…」",
-                      before + QStringLiteral(" → ") + line());
+                check(counted == QStringLiteral("已下载 3 个文件") && line() == QStringLiteral("正在准备下载…"),
+                      "★ #147 上一批写的计数不留到下一批：0 / 0 那一帧回到「正在准备下载…」",
+                      counted + QStringLiteral(" → ") + line());
+                // 别人写的阶段说明：0 / 0 那一帧不盖掉它。
+                Tasks::TaskManager *ledger = nullptr;
+                if (auto *activity = window.findChild<ActivityCenterController *>()) ledger = activity->tasks();
+                Tasks::TaskId running = Tasks::invalidTaskId();
+                for (const Tasks::TaskSnapshot &task : ledger != nullptr ? ledger->all() : QList<Tasks::TaskSnapshot>())
+                    if (Tasks::isActiveState(task.state) && task.title == QStringLiteral("下载游戏文件")) running = task.id;
+                const QString stage = QStringLiteral("正在安装 Forge…");
+                if (ledger != nullptr && running != Tasks::invalidTaskId()) ledger->setDetail(running, stage);
+                QApplication::processEvents();
+                report(0);
+                check(line() == stage, "★ #147 手里没有数的那一帧不把阶段说明打回「正在准备下载…」", line());
                 abCell->click();  // 收起
                 QApplication::processEvents();
                 QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
