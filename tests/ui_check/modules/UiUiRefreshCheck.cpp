@@ -1052,7 +1052,6 @@ int UiUiRefreshCheck(QApplication &app) {
                 }
             }
         }
-        printf("UI refresh check: %d failure(s)\n", failures);
         {
             // #147：浮动面板里测不出进度的那件，条要滚，标题下那行跟着任务走。
             const bool animWas = Anim::enabled();
@@ -1093,6 +1092,7 @@ int UiUiRefreshCheck(QApplication &app) {
             QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
             Anim::setEnabled(animWas);
         }
+        printf("UI refresh check: %d failure(s)\n", failures);
     return failures == 0 ? 0 : 1;
     
  return 0;
