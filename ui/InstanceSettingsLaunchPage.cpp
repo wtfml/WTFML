@@ -13,6 +13,7 @@
 #include "WheelSafeComboBox.hpp"
 
 #include "Animations.hpp"
+#include "AutoHeight.hpp"
 #include "SettingsPageParts.hpp"
 #include "Theme.hpp"   // 浮层的底色（Theme::Part::Panel）
 
@@ -430,8 +431,8 @@ void InstanceSettingsDialog::setupLaunchPage(const GlobalValues &global, const Q
             advancedRow += 2;
             m_appendJvmArgsEdit = new QPlainTextEdit(cell);
             m_appendJvmArgsEdit->setObjectName(appendJvmArgsEditName());
-            m_appendJvmArgsEdit->setFixedHeight(kAppendJvmArgsHeight);
             m_appendJvmArgsEdit->setPlainText(appendJvmArgs.join(QLatin1Char('\n')));
+            AutoHeight::install(m_appendJvmArgsEdit, kAppendJvmArgsHeight);  // 随行数撑高，由本页滚动
             cellLayout->addWidget(m_appendJvmArgsEdit);
             cell->setToolTip(appendJvmArgsHint());
         }
