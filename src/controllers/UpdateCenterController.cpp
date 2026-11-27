@@ -33,6 +33,7 @@
 #include "manage/UpdateRollback.hpp"
 #include "util/AppPaths.hpp"
 
+#include <QDir>
 #include <QFileInfo>
 #include <QHash>
 #include <QTimer>
@@ -374,6 +375,26 @@ void UpdateCenterController::onUndoRequested() {
         UpdateRollback::discard(instanceId);
         m_owner.appendLog(
             MainWindow::tr("「%1」已恢复到更新前的状态。").arg(m_owner.instanceDisplayName(instanceId)));
+    }
+    // 放回去的那几条结论翻回「有新版本」，目标就是刚撤掉的那一版（#143）。
+    const auto checked = m_owner.m_instanceUpdateResults.find(instanceId);
+    if (checked != m_owner.m_instanceUpdateResults.end()) {
+        const QDir instanceDir(AppPaths::versionDir(instanceId));
+        for (ModDependencies::UpdateVerdict &verdict : checked->verdicts) {
+            const auto sha1 =
+                result.restoredSha1.constFind(instanceDir.relativeFilePath(verdict.item.path));
+            if (sha1 == result.restoredSha1.constEnd()) continue;
+            verdict.item.sha1 = *sha1;
+            if (verdict.state != ModDependencies::UpdateState::UpToDate) continue;
+            const ResourceCatalog::VersionEntry undone = verdict.currentVersion;
+            m_owner.m_instanceUpdateTargets[instanceId].insert(verdict.item.path, undone);
+            // 撤销前又查过一遍的话，暂存的就是新版自己：宁可留空，别说成"X → X"。
+            verdict.currentVersion = verdict.item.currentVersion.id == undone.id
+                                         ? ResourceCatalog::VersionEntry()
+                                         : verdict.item.currentVersion;
+            verdict.state = ModDependencies::UpdateState::Outdated;
+            verdict.newerCount = 1;
+        }
     }
     // 这一批文件的内容换过了 ⇒ 「固定此版本」那几条的判据（sha1）多半已经对不上，
     // 顺手清一遍过期的（不清的话那几条会一直挂着"已固定"，而它其实早就失效了）。
