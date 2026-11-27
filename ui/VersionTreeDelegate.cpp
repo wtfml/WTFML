@@ -90,6 +90,11 @@ bool VersionTreeDelegate::helpEvent(QHelpEvent *event, QAbstractItemView *view,
 
 void VersionTreeDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
                                 const QModelIndex &index) const {
+    // 整行是控件（加载器的「显示全部 / 收起」）：不画兜底图标和底色。
+    if (const auto *view = qobject_cast<const QAbstractItemView *>(option.widget);
+        view != nullptr && view->indexWidget(index) != nullptr) {
+        return;
+    }
     QStyleOptionViewItem opt(option);
     initStyleOption(&opt, index);
     // 背景/选中/悬停那一层交给样式画，但**文字和图标先清掉** —— 这一行是"两行字 + 一个小图标"，

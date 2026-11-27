@@ -218,11 +218,20 @@ public:
     static QString loaderTreeName() { return QStringLiteral("loaderTree"); }
     /// 每一条身份存在第几列。只有一列（和版本树同一个约定）。
     static int loaderTreeKeyColumn() { return 0; }
-    /// 这棵树最高长到几行：五条加载器都收起来时是 5 行，展开其中一条之后按
-    /// "5 + 那条的版本数"往上长，长到这么多行就停（再多就出滚动条）。
-    /// 太小的话展开一条只能看见两三个版本，太大（比如整页铺满）会让「安装」按钮被推到
-    /// 窗口最底下 —— 「安装」键做得大一点、摆在右侧居中，它得一直在看得见的地方。
-    static int loaderTreeMaxRows() { return 10; }
+    /// 展开一条加载器默认只列最新的这么多个版本，其余收在末行「显示全部 %1 个版本」后面。
+    static int loaderLatestVersions() { return 5; }
+    /// 安装页内容底部留给悬浮「安装」按钮的高度。
+    static int installFooterClearance() { return qMax(48, installButtonMinHeight()) + 40; }
+    static QString loaderShowAllText(int total) {
+        return QCoreApplication::translate("MainWindowUI", "显示全部 %1 个版本").arg(total);
+    }
+    static QString loaderShowLatestText() { return QCoreApplication::translate("MainWindowUI", "收起"); }
+    static QString loaderMoreButtonName() { return QStringLiteral("loaderMoreVersions"); }
+    /// 树高 = 现在露着的行数 × 行高。树自己不滚，整页只靠 installScroll 那一条。
+    static void fitLoaderTree(QTreeWidget *tree);
+    /// @p loader 底下从第 @p firstVersion 个子条目起是版本号（新到旧）：超过
+    /// loaderLatestVersions() 个就藏起旧的，末尾加一行带按钮的「显示全部 / 收起」。
+    static void foldLoaderVersions(QTreeWidgetItem *loader, int firstVersion);
     /// 选中了某个加载器时，**其余那几个加载器**那条上写的话（「与【已选中的加载器
     /// 名称】不兼容」）。
     ///

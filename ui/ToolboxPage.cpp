@@ -11,6 +11,7 @@
 #include "DownloadToolPanel.hpp"
 #include "GlassPopover.hpp"
 #include "MotdText.hpp"
+#include "AutoHeight.hpp"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -283,11 +284,10 @@ QPlainTextEdit *makeOutputBox(QFrame *card, const QString &objectName = QString(
     box->setFrameShape(QFrame::NoFrame);
     box->setLineWrapMode(QPlainTextEdit::WidgetWidth);
     box->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
-    // 高度按两行钉一档（**不设 maximumHeight**：窗口拉高时这些框跟着长，读长命令舒服）。
-    // 固定三行高（长内容在框里滚）：四个框一样高，页面不会被某一格撑出一大块空。
-    box->setFixedHeight(box->fontMetrics().lineSpacing() * 3 + 12);
     // 卡片自己已经是那个面了 —— 框里不要再铺一层底（两层底会变成一块深色的疙瘩）。
     box->setStyleSheet(QStringLiteral("QPlainTextEdit { background: transparent; }"));
+    // 至少三行；高度跟着卡片，内容再长就撑高，由工具页那一条滚动。
+    AutoHeight::install(box, box->fontMetrics().lineSpacing() * 3 + 12, /*stretch=*/true);
     return box;
 }
 
@@ -1799,7 +1799,7 @@ QWidget *ToolboxPage::buildTextPanel() {
     m_textPreview->setObjectName(QStringLiteral("textPreview"));
     m_textPreview->setAcceptRichText(false);
     m_textPreview->setPlaceholderText(QCoreApplication::translate("ToolboxPage", "输入或粘贴文本，再为选中文字设置颜色和格式。"));
-    m_textPreview->setFixedHeight(96);
+    AutoHeight::install(m_textPreview, 96);
     connect(m_textPreview, &QTextEdit::textChanged, this, &ToolboxPage::textPreviewEdited);
 
     // 色码 + 字形那两排（按钮全部由 controller 喂进来的表生成 —— 十六色那张表在
@@ -1891,8 +1891,6 @@ QWidget *ToolboxPage::buildTextPanel() {
         segmentLayout->addWidget(button);
         segments.append(button);
         QPlainTextEdit *box = makeOutputBox(outCard, QString::fromLatin1(spec.objectName));
-        box->setMinimumHeight(60);
-        box->setMaximumHeight(QWIDGETSIZE_MAX);  // 高度跟着卡片，不钉三行
         box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         outStack->addWidget(box);
         if (qstrcmp(spec.objectName, "textSource") == 0) {
@@ -2382,7 +2380,7 @@ QWidget *ToolboxPage::buildServerPanel() {
     m_serverHistory->setObjectName(QStringLiteral("serverHistory"));
     m_serverHistory->setUniformItemSizes(true);
     m_serverHistory->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_serverHistory->setFixedHeight(112);
+    AutoHeight::install(m_serverHistory);
     history->box()->addWidget(m_serverHistory);
     history->hide();
     layout->addWidget(history);
@@ -2611,10 +2609,9 @@ QWidget *ToolboxPage::buildBeaconPanel() {
     glassList->setObjectName(QStringLiteral("beamGlassList"));
     glassList->setFrameShape(QFrame::NoFrame);
     glassList->setIconSize(QSize(14, 14));
-    glassList->setMinimumHeight(kBeamBodyHeight);
-    glassList->setMaximumHeight(kBeamBodyHeight);
     glassList->setStyleSheet(QStringLiteral("QListWidget { background: transparent; border: none; }"
                                             "QListWidget::item { padding: 3px 6px; border-radius: 6px; }"));
+    AutoHeight::install(glassList, kBeamBodyHeight);  // 与旁边光柱预览同高起步
     // 上移 / 下移 / 删除：一组小图标钮，靠右挨着「添加」那一行。
     const QList<QPair<Glyph, QString>> actions{{Glyph::Up, QCoreApplication::translate("ToolboxPage", "上移")},
                                                {Glyph::Down, QCoreApplication::translate("ToolboxPage", "下移")},
@@ -3008,9 +3005,9 @@ QWidget *ToolboxPage::buildBannerPanel() {
     m_bannerList->setDropIndicatorShown(true);
     m_bannerList->setFrameShape(QFrame::NoFrame);
     m_bannerList->setIconSize(QSize(14, 14));
-    m_bannerList->setFixedHeight(kBannerBodyHeight);
     m_bannerList->setStyleSheet(QStringLiteral("QListWidget { background: transparent; border: none; }"
                                                "QListWidget::item { padding: 4px 6px; border-radius: 6px; }"));
+    AutoHeight::install(m_bannerList, kBannerBodyHeight);
     bannerPreviewRow->addWidget(m_bannerList, 1);
     layerCard->box()->addLayout(bannerPreviewRow);
 
@@ -3063,8 +3060,6 @@ QWidget *ToolboxPage::buildBannerPanel() {
             segmentLayout->addWidget(tab);
             tabs.append(tab);
             QPlainTextEdit *box = makeOutputBox(result.card, QString::fromLatin1(spec.objectName));
-            box->setMinimumHeight(60);
-            box->setMaximumHeight(QWIDGETSIZE_MAX);  // 高度跟着卡片，不钉三行
             box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
             if (qstrcmp(spec.objectName, "bannerCommandBox") != 0) box->setFont(QApplication::font());  // 步骤 / 材料是人话，不用等宽
             resultStack->addWidget(box);

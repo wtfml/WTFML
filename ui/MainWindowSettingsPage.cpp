@@ -8,6 +8,7 @@
 #include "InputSizing.hpp"
 
 #include "Animations.hpp"
+#include "AutoHeight.hpp"
 #include "ElidedLabel.hpp"
 #include "Glass.hpp"
 #include "MemorySlider.hpp"
@@ -471,13 +472,13 @@ void MainWindowUI::setupSettingsLaunchPanel(QStackedWidget *stack) {
     extraJvmArgsEdit = new QPlainTextEdit(form);
     extraJvmArgsEdit->setObjectName(extraJvmArgsEditName());
     extraJvmArgsEdit->setPlaceholderText(QStringLiteral("-XX:+UseG1GC -XX:MaxGCPauseMillis=50"));
-    extraJvmArgsEdit->setFixedHeight(kJvmArgsEditHeight);
     {
         QFont mono(QStringLiteral("Cascadia Mono"));
         mono.setStyleHint(QFont::Monospace);
         mono.setPixelSize(13);
         extraJvmArgsEdit->setFont(mono);
     }
+    AutoHeight::install(extraJvmArgsEdit, kJvmArgsEditHeight);  // 随行数撑高，由本页滚动
     // 失焦（或 Ctrl+Enter）即存：边打字边存会把半条参数写进命令行。
     extraJvmArgsCommit = new SettingsParts::CommitOnFocusOut(extraJvmArgsEdit);
     addRow(jvm, QCoreApplication::translate("MainWindowSettingsPage", "全局额外参数"), extraJvmArgsEdit, Placement::Wide,

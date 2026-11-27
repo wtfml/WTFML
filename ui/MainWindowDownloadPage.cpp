@@ -18,6 +18,8 @@
 #include "VersionTreeDelegate.hpp"
 #include "WindowChrome.hpp"
 #include "RowActivation.hpp"
+#include "AutoHeight.hpp"
+#include <QFocusEvent>
 #include <QPointer>
 #include <QScrollBar>
 
@@ -452,7 +454,7 @@ void MainWindowUI::setupDownloadGamePage() {
     installContentLayout->addWidget(installScroll, 0, 0);
     installLayout->addWidget(installContent, 1);
     // The floating action must not cover the last selectable row at the scroll limit.
-    installBodyLayout->setContentsMargins(0, 0, 0, qMax(48, installButtonMinHeight()) + 40);
+    installBodyLayout->setContentsMargins(0, 0, 0, installFooterClearance());
 
     // 版本名称：实例的目录名（`versions/<这个名字>`）。默认名和名字不合法那句原因，
     // 都在 InstallPageController::updateInstallNameState() 一处刷（界面这边不持有
@@ -594,8 +596,8 @@ void MainWindowUI::setupDownloadGamePage() {
                             installPresetSummaryText(0));
         loaderTree->insertTopLevelItem(modLoaderNoneIndex(), presetItem);
     }
-    // 这棵树的高度**跟着"现在展开了几条"变**：五条全收着就是 5 行高，展开一条之后
-    // 按 5 + 那条的版本数往上长，长到 loaderTreeMaxRows() 行就停（再多出滚动条）。
+    // 这棵树的高度**跟着"现在露着几行"变**：五条全收着就是 5 行高，展开一条之后
+    // 按露出来的版本数往上长，不封顶、不自己滚（整页只靠 installScroll 那一条）。
     // 不这么做的话：写死 5 行高，展开之后版本号全挤在一条一行高的缝里看不见；
     // 写死"铺满整页"，那五条收着的时候底下空一大片、安装按钮还被推到窗口最底下。
     // 挂在 expanded/collapsed 上（而不是让 MainWindow 每次灌完数据记得调一下）：
@@ -603,20 +605,19 @@ void MainWindowUI::setupDownloadGamePage() {
     // NOTE: 这个 lambda 只捕获树的指针、**不捕获 this** —— 它挂在树上（context 也是树），
     // 而 MainWindowUI 本身不是 QObject（它只是搭界面的那个类，连着两句都用
     // 树自己当 context）。
-    const auto fitLoaderTreeHeight = [tree = loaderTree]() {
-        if (tree == nullptr) {
-            return;
-        }
-        int rows = 0;
-        for (int i = 0; i < tree->topLevelItemCount(); ++i) {
-            QTreeWidgetItem *top = tree->topLevelItem(i);
-            if (top->isHidden()) continue;
-            rows += 1 + (top->isExpanded() ? top->childCount() : 0);
-        }
-        rows = qBound(1, rows, loaderTreeMaxRows());
-        const int frame = 2 * tree->frameWidth();
-        tree->setFixedHeight(rows * versionTreeRowHeight() + frame);
-    };
+    loaderTree->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    const auto fitLoaderTreeHeight = [tree = loaderTree]() { fitLoaderTree(tree); };
+    // 树自己没有行程了：键盘移动当前行时让整页跟过去。
+    QObject::connect(loaderTree, &QTreeWidget::currentItemChanged, loaderTree,
+                     [tree = loaderTree](QTreeWidgetItem *item) {
+                         if (item == nullptr || !tree->hasFocus()) return;
+                         QTimer::singleShot(0, tree, [tree] {
+                             if (auto *current = tree->currentItem()) {
+                                 AutoHeight::reveal(tree->viewport(), tree->visualItemRect(current),
+                                                    installFooterClearance());
+                             }
+                         });
+                     });
     // NOTE: 写 QObject::connect 而不是 connect —— MainWindowUI **不是** QObject
     // （见类声明），成员那版 connect 在这儿不存在；直接写 connect 编译器会
     // 去找一个叫 connect 的普通函数。这两句用树自己当 context。
@@ -661,6 +662,91 @@ void MainWindowUI::setupDownloadGamePage() {
     // 于是"第 i 个分类 = 第 i 页"这条对应关系成立（验证工程会数一遍两边的条数）。
     downloadStack->addWidget(gamePage);
 
+}
+
+namespace {
+/// 「显示全部」按钮拿到键盘焦点时，别停在悬浮的「安装」底下。
+class RevealOnTabFocus : public QObject {
+public:
+    explicit RevealOnTabFocus(QWidget *target) : QObject(target) { target->installEventFilter(this); }
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override {
+        if (event->type() == QEvent::FocusIn) {
+            const auto reason = static_cast<QFocusEvent *>(event)->reason();
+            auto *target = static_cast<QWidget *>(watched);
+            if (reason == Qt::TabFocusReason || reason == Qt::BacktabFocusReason) {
+                QTimer::singleShot(0, target, [target] {
+                    AutoHeight::reveal(target, target->rect(), MainWindowUI::installFooterClearance());
+                });
+            }
+        }
+        return false;
+    }
+};
+}  // namespace
+
+void MainWindowUI::fitLoaderTree(QTreeWidget *tree) {
+    if (tree == nullptr) return;
+    int rows = 0;
+    for (int i = 0; i < tree->topLevelItemCount(); ++i) {
+        const QTreeWidgetItem *top = tree->topLevelItem(i);
+        if (top->isHidden()) continue;
+        ++rows;
+        if (!top->isExpanded()) continue;
+        for (int c = 0; c < top->childCount(); ++c) rows += top->child(c)->isHidden() ? 0 : 1;
+    }
+    tree->ensurePolished();
+    const int rowHeight = tree->topLevelItemCount() > 0 ? tree->sizeHintForRow(0) : versionTreeRowHeight();
+    tree->setFixedHeight(qMax(1, rows) * rowHeight + 2 * tree->frameWidth());
+    tree->verticalScrollBar()->setValue(0);
+}
+
+void MainWindowUI::foldLoaderVersions(QTreeWidgetItem *loader, int firstVersion) {
+    QTreeWidget *tree = loader != nullptr ? loader->treeWidget() : nullptr;
+    if (tree == nullptr) return;
+    const int count = loader->childCount();
+    const int total = count - firstVersion;
+    if (total <= loaderLatestVersions()) return;
+    for (int i = firstVersion + loaderLatestVersions(); i < count; ++i) loader->child(i)->setHidden(true);
+
+    auto *row = new QTreeWidgetItem(loader);
+    row->setFlags(Qt::NoItemFlags);  // 不是版本号：点行、方向键都不认它，只认里面那颗按钮
+    auto *button = new QPushButton(loaderShowAllText(total));
+    button->setObjectName(loaderMoreButtonName());
+    button->setCursor(Qt::PointingHandCursor);
+    button->setFocusPolicy(Qt::StrongFocus);
+    Theme::markButton(button, Theme::ButtonKind::Ghost);
+    tree->setItemWidget(row, loaderTreeKeyColumn(), button);
+    new RevealOnTabFocus(button);
+    for (const Qt::Key key : {Qt::Key_Return, Qt::Key_Enter}) {  // 空格是按钮自带的，回车不是
+        auto *shortcut = new QShortcut(QKeySequence(key), button);
+        shortcut->setContext(Qt::WidgetShortcut);
+        shortcut->setAutoRepeat(false);
+        QObject::connect(shortcut, &QShortcut::activated, button, &QAbstractButton::click);
+    }
+    QObject::connect(button, &QPushButton::clicked, tree, [tree, loader, row, button, firstVersion, total] {
+        const int older = firstVersion + loaderLatestVersions();
+        const bool showAll = loader->child(older)->isHidden();
+        for (int i = older; i < loader->indexOfChild(row); ++i) loader->child(i)->setHidden(!showAll);
+        button->setText(showAll ? loaderShowLatestText() : loaderShowAllText(total));
+        fitLoaderTree(tree);
+        // 展开时页面原地不动（新版本就出现在眼前）；收起后这一行跳到上面去了，跟过去。
+        if (showAll) return;
+        QTimer::singleShot(0, button, [button] {
+            AutoHeight::reveal(button, button->rect(), installFooterClearance());
+        });
+    });
+    // Tab 次序按画面从上到下：树 → 各条的这颗按钮。
+    QWidget *previous = tree;
+    for (int i = 0; i < tree->topLevelItemCount(); ++i) {
+        const QTreeWidgetItem *top = tree->topLevelItem(i);
+        if (top->childCount() == 0) continue;
+        if (QWidget *more = tree->itemWidget(top->child(top->childCount() - 1), loaderTreeKeyColumn())) {
+            QWidget::setTabOrder(previous, more);
+            previous = more;
+        }
+    }
 }
 
 /// 下载页「服务端」那一栏：和「游戏」**一个形状**（两层），不是另开一个界面。

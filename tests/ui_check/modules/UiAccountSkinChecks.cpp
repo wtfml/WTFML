@@ -206,6 +206,25 @@ int UiAccountSkinChecks() {
             check(accountList->item(1)->toolTip().isEmpty(),
                   "没有时间的账号不摆一个空 tooltip");
 
+            {   // #136：账号再多列表也随行数撑高，自己不滚（整页那一条滚）。
+                QList<AccountSkinDialog::AccountRow> many;
+                for (int i = 0; i < 8; ++i) {
+                    AccountSkinDialog::AccountRow one;
+                    one.uuid = QStringLiteral("uuid-many-%1").arg(i);
+                    one.name = QStringLiteral("Player%1").arg(i);
+                    one.offline = true;
+                    many.append(one);
+                }
+                dialog.setAccounts(many);
+                QApplication::processEvents();
+                check(accountList->height() >= 8 * accountList->sizeHintForRow(0) &&
+                          accountList->verticalScrollBarPolicy() == Qt::ScrollBarAlwaysOff,
+                      "八个账号全部露出、列表自己没有竖滚动条",
+                      QString("高=%1 行高=%2").arg(accountList->height()).arg(accountList->sizeHintForRow(0)));
+                dialog.setAccounts(rows);
+                QApplication::processEvents();
+            }
+
             // ---- X4 没有「当前」账号时选第一条 ----
             // 凭据被清掉了（比如删了当前账号）但列表还在，这时不能一行都不选 ——
             // 一行都不选的话三个按钮全是灰的，看着像坏了。
