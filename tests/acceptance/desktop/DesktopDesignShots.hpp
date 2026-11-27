@@ -703,6 +703,11 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
             for (const char *kind : {"plain", "hidden", "menu"})
                 list.append({QStringLiteral("server-address-%1-%2-1280x800.png").arg(QLatin1String(kind), theme), theme, {1280, 800}, false, manage,
                              QStringLiteral("srv:") + QLatin1String(kind)});
+        // #144 / #136（FILTER=i144-）：实例概览拉到底（删除实例行）浅深各一、深色打开后切浅色看次要字色、删除确认框，960×620。
+        for (const QString &theme : {QStringLiteral("emerald"), QStringLiteral("dark")})
+            list.append({QStringLiteral("i144-bottom-%1.png").arg(theme), theme, {960, 620}, false, manage, QStringLiteral("i144:bottom")});
+        list.append({QStringLiteral("i144-lines-dark-to-emerald.png"), QStringLiteral("dark"), {960, 620}, false, manage, QStringLiteral("i144:lines")});
+        list.append({QStringLiteral("i144-confirm-emerald.png"), QStringLiteral("emerald"), {960, 620}, false, manage, QStringLiteral("i144:confirm")});
         // #136 批 3（FILTER=i136-）：模组页未选 / 已选、资源包启用与顺序、配置编辑器 / 大纲浮层，960×620。
         // 英文那张另起一趟带 WTFML_SHOT_LANG=en。
         for (const QString &theme : {QStringLiteral("emerald"), QStringLiteral("dark")})
@@ -997,6 +1002,41 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                             });
                     }
                 });
+            } else if (shot.page.startsWith(QStringLiteral("i144:"))) {
+                QMetaObject::invokeMethod(&window, "openInstanceSettings", Q_ARG(QString, QStringLiteral("create")), Q_ARG(QString, QString()));
+                QTimer::singleShot(500, &window, [&window, shot]() {
+                    // 上一张的设置页可能还没删掉：只认此刻露着的那一份。
+                    InstanceSettingsDialog *dialog = nullptr;
+                    for (auto *one : window.findChildren<InstanceSettingsDialog *>())
+                        if (one->isVisible()) dialog = one;
+                    if (dialog == nullptr) return;
+                    auto *remove = dialog->findChild<QPushButton *>(InstanceSettingsDialog::overviewDeleteButtonName());
+                    auto *last = dialog->findChild<QLabel *>(QStringLiteral("instanceLastLaunch"));
+                    if (remove == nullptr || last == nullptr) return;
+                    const bool lines = shot.page == QStringLiteral("i144:lines");
+                    if (lines) {  // 页面已经按深色建好了，这时换到浅色
+                        Theme::setSpec(Theme::presetSpec(QStringLiteral("emerald")));
+                        Theme::apply(*static_cast<QApplication *>(QCoreApplication::instance()));
+                    }
+                    for (auto *area : dialog->findChildren<QScrollArea *>()) {
+                        if (!area->isAncestorOf(remove)) continue;
+                        QScrollBar *bar = area->verticalScrollBar();
+                        bar->setValue(lines ? last->mapTo(area->widget(), QPoint()).y() - 150 : bar->maximum());
+                    }
+                    QApplication::processEvents();
+                    // 审计（窗口坐标）：两颗按钮的右缘（含该像素）与露着的竖滑条 x 范围。
+                    const auto winX = [&window](const QWidget *w, int x) { return w->mapTo(&window, QPoint(x, 0)).x(); };
+                    QString barText;
+                    for (auto *bar : dialog->findChildren<QScrollBar *>())
+                        if (bar->orientation() == Qt::Vertical && bar->isVisible())
+                            barText += QStringLiteral(" [%1,%2)").arg(winX(bar, 0)).arg(winX(bar, bar->width()));
+                    auto *reset = dialog->findChild<QPushButton *>(QStringLiteral("instancePlayTimeReset"));
+                    std::fprintf(stdout, "I144 %s deleteRight=%d resetRight=%d bars:%s\n", qPrintable(shot.file),
+                                 winX(remove, remove->width()) - 1, reset != nullptr ? winX(reset, reset->width()) - 1 : -1,
+                                 qPrintable(barText));
+                    std::fflush(stdout);
+                    if (shot.page == QStringLiteral("i144:confirm")) QTimer::singleShot(0, remove, &QPushButton::click);
+                });
             } else if (!shot.page.isEmpty()) QMetaObject::invokeMethod(&window, "openInstanceSettings", Q_ARG(QString, QStringLiteral("create")), Q_ARG(QString, shot.page));
             else if (shot.tab == MainWindowUI::instancesTabIndex()) hoverInstanceRow(window);
         });
@@ -1150,7 +1190,11 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                                       {"height", window.height()}, {"dpr", window.devicePixelRatioF()},
                                       {"maxWidth", window.maximumWidth()}, {"screenWidth", window.screen()->availableGeometry().width()},
                                       {"state", int(window.windowState())}});
-            if (!shot.page.isEmpty()) window.ui()->overlay()->closeOverlay();
+            if (shot.page == QStringLiteral("i144:confirm")) {
+                // 先让提示走「取消」（什么都不删），等它那层事件循环退出，再收底下的设置页。
+                window.ui()->overlay()->evict();
+                QTimer::singleShot(150, &window, [&window] { window.ui()->overlay()->closeOverlay(); });
+            } else if (!shot.page.isEmpty()) window.ui()->overlay()->closeOverlay();
             if (shot.page.startsWith(QStringLiteral("toolbox"))) window.ui()->getTabWidget()->setCurrentIndex(MainWindowUI::homeTabIndex());
             QTimer::singleShot(shot.page.isEmpty() ? 0 : 300, &window, step);
         });
