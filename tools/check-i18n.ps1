@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 <#
 .SYNOPSIS
     守卫：src/ 与 ui/ 里含中文、却没包进 tr() / translate() / QT_TR_NOOP 之类里的字符串字面量，
@@ -206,6 +206,7 @@ $EnRules = [ordered]@{
     'Example / Examples'    = '(?-i)\bExamples?\b'
     'canceled 拼错'          = '\bcancell(ed|ing)\b'
     '三个半角句点'           = '\.\.\.'
+    'Mandatory dependencies' = '\bmandatory dependenc(y|ies)\b'
 }
 
 function Get-EnViolations([string]$Path) {
@@ -291,6 +292,7 @@ void g() {
     <message><source>g3</source><translation>Cancellation is supported.</translation></message>
     <message><source>g4</source><translation>Fabulous!</translation></message>
     <message><source>g5</source><translation>Update check canceled</translation></message>
+    <message><source>g6</source><translation>Required dependencies are missing</translation></message>
     <message><source>b1</source><translation>Unable to open</translation></message>
     <message><source>b2</source><translation>Please wait</translation></message>
     <message><source>b3</source><translation>Logged in</translation></message>
@@ -301,6 +303,7 @@ void g() {
     <message><source>b8</source><translation>打开</translation></message>
     <message><source>b9</source><translation>Failed to save</translation></message>
     <message><source>b10</source><translation>Saved successfully</translation></message>
+    <message><source>b11</source><translation>Mandatory dependencies are missing</translation></message>
     <message><source>skip</source><translation type="unfinished">Unable to open</translation></message>
     <message numerus="yes"><source>n1</source><translation><numerusform>Log in to continue</numerusform><numerusform>Logged in</numerusform></translation></message>
 </context>
@@ -309,17 +312,17 @@ void g() {
     $enBad = Get-EnViolations $enSample
     Remove-Item -LiteralPath $tmp -Recurse -Force -ErrorAction SilentlyContinue
     if ($got -ne 11) { Write-Host "FAIL 自测：期望 11 处未包，实际 $got"; exit 1 }
-    if ($enBad.Count -ne 12) {
-        Write-Host "FAIL 自测：英文门禁期望命中 12 条，实际 $($enBad.Count)"
+    if ($enBad.Count -ne 13) {
+        Write-Host "FAIL 自测：英文门禁期望命中 13 条，实际 $($enBad.Count)"
         $enBad | ForEach-Object { Write-Host "  $_" }
         exit 1
     }
-    foreach ($ok in "Couldn't open", 'latest.log in', 'Cancellation is', 'Fabulous!', 'Update check canceled') {
+    foreach ($ok in "Couldn't open", 'latest.log in', 'Cancellation is', 'Fabulous!', 'Update check canceled', 'Required dependencies') {
         if ($enBad | Where-Object { $_ -like "*$ok*" }) { Write-Host "FAIL 自测：不该命中的「$ok」被命中"; exit 1 }
     }
     if ($enBad | Where-Object { $_ -like "*skip*" }) { Write-Host 'FAIL 自测：unfinished 的条目不该查'; exit 1 }
     Write-Host 'PASS 自测：注释 / include / 包装调用 / 不翻标记都不计；跨行字面量、字符与原始字符串、预处理行不平衡括号都不误判；裸字面量计 11'
-    Write-Host 'PASS 自测：英文门禁命中 Unable to、please、logged in、log in、mod(s)、Examples、cancelled、...、中文、successfully 共 12 条；路径里的 latest.log in、cancellation、美式 canceled、Fabulous! 与 unfinished 条目不算命中'
+    Write-Host 'PASS 自测：英文门禁命中 Unable to、please、logged in、log in、mod(s)、Examples、cancelled、...、中文、successfully、Mandatory dependencies 共 13 条；路径里的 latest.log in、cancellation、美式 canceled、Required dependencies、Fabulous! 与 unfinished 条目不算命中'
     exit 0
 }
 

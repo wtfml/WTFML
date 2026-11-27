@@ -396,6 +396,10 @@ Select "Sign out" to try again.</translation>
     <context>
         <name>AgentApprovalCard</name>
         <message>
+            <source>展开全文</source>
+            <translation>Show full text</translation>
+        </message>
+        <message>
             <source>本会话允许此来源</source>
             <translation>Allow source for this chat</translation>
         </message>
@@ -418,6 +422,10 @@ Select "Sign out" to try again.</translation>
         <message>
             <source>外发：%1 · %2</source>
             <translation>External transfer: %1 · %2</translation>
+        </message>
+        <message>
+            <source>收起</source>
+            <translation>Collapse</translation>
         </message>
     </context>
     <context>
@@ -2738,6 +2746,10 @@ Location: %4
         <message>
             <source>新对话</source>
             <translation>New chat</translation>
+        </message>
+        <message>
+            <source>会话列表</source>
+            <translation>Chats</translation>
         </message>
         <message>
             <source>点击重命名</source>
@@ -8409,6 +8421,22 @@ Files already moved can be restored from the Recycle Bin.</translation>
             <translation>"%1" crashed (%2).</translation>
         </message>
         <message>
+            <source>游戏模组加载失败并退出（退出码 0）。</source>
+            <translation>Game exited after mod loading failed (exit code 0).</translation>
+        </message>
+        <message>
+            <source>「%1」模组加载失败并退出（退出码 0）。</source>
+            <translation>"%1" exited after mod loading failed (exit code 0).</translation>
+        </message>
+        <message>
+            <source>游戏异常退出（退出码 %1）。</source>
+            <translation>Game exited abnormally (exit code %1).</translation>
+        </message>
+        <message>
+            <source>「%1」异常退出（退出码 %2）。</source>
+            <translation>"%1" exited abnormally (exit code %2).</translation>
+        </message>
+        <message>
             <source>游戏以非 0 退出码结束（%1）。</source>
             <translation>Game exited with non-zero code (%1).</translation>
         </message>
@@ -8451,6 +8479,14 @@ Files already moved can be restored from the Recycle Bin.</translation>
         <message>
             <source>日志显示缺少模组依赖。请在「文件」页选择「检查更新」，查看所需依赖。</source>
             <translation>Log shows missing mod dependencies. Click "Check for updates" on the Files tab to see what's missing.</translation>
+        </message>
+        <message>
+            <source>日志显示模组加载失败。请检查模组版本、加载器或模组间冲突。</source>
+            <translation>Log shows mod loading failed. Check mod versions, the mod loader, or mod conflicts.</translation>
+        </message>
+        <message>
+            <source>本次运行生成了新的崩溃报告，可在实例目录的 crash-reports 中查看。</source>
+            <translation>A new crash report was generated for this run; check crash-reports in the instance folder.</translation>
         </message>
         <message>
             <source>游戏出现内存访问错误（%1）。请检查设备驱动和安全软件是否影响游戏进程。</source>
@@ -8522,6 +8558,10 @@ Files already moved can be restored from the Recycle Bin.</translation>
         <message>
             <source>游戏已崩溃退出，退出码：%1</source>
             <translation>Game crashed (exit code: %1)</translation>
+        </message>
+        <message>
+            <source>游戏异常退出，退出码：%1</source>
+            <translation>Game exited abnormally (exit code: %1)</translation>
         </message>
         <message>
             <source>游戏已退出，退出码：%1</source>
@@ -8933,6 +8973,14 @@ Files already moved can be restored from the Recycle Bin.</translation>
 </source>
             <translation>
 [Game crashed, exit code: %1]
+</translation>
+        </message>
+        <message>
+            <source>
+[游戏异常退出，退出码：%1]
+</source>
+            <translation>
+[Game exited abnormally, exit code: %1]
 </translation>
         </message>
         <message>
@@ -11457,14 +11505,6 @@ Use a different instance name to keep the existing progress. To resume that impo
             <translation>Unidentified resource; no details available.</translation>
         </message>
         <message>
-            <source>操作</source>
-            <translation>Actions</translation>
-        </message>
-        <message>
-            <source>收起操作栏（保留选择）</source>
-            <translation>Collapse bar (keep selection)</translation>
-        </message>
-        <message>
             <source>清除选择</source>
             <translation>Clear selection</translation>
         </message>
@@ -11627,14 +11667,6 @@ Use a different instance name to keep the existing progress. To resume that impo
             <translation>Copy to another instance</translation>
         </message>
         <message>
-            <source>移动</source>
-            <translation>Move</translation>
-        </message>
-        <message>
-            <source>复制</source>
-            <translation>Copy</translation>
-        </message>
-        <message>
             <source>更多</source>
             <translation>More</translation>
         </message>
@@ -11697,10 +11729,6 @@ Use a different instance name to keep the existing progress. To resume that impo
         <message>
             <source>已选 %1 项</source>
             <translation>%1 selected</translation>
-        </message>
-        <message>
-            <source>启用 %1  /  禁用 %2</source>
-            <translation>Enabled: %1 / Disabled: %2</translation>
         </message>
     </context>
     <context>
@@ -12841,6 +12869,10 @@ In-place upgrade keeps all user files.</translation>
         <message>
             <source>清除此实例已记录的累计游玩时间和上次游玩时长。</source>
             <translation>Clears the recorded total playtime and last session duration for this instance.</translation>
+        </message>
+        <message>
+            <source>删除…</source>
+            <translation>Delete…</translation>
         </message>
         <message>
             <source>客户端文件中无可用的物品图标。</source>
@@ -18762,6 +18794,14 @@ You can undo the last update in "Update center".</translation>
         <message>
             <source>不安装（纯原版）</source>
             <translation>None (vanilla)</translation>
+        </message>
+        <message>
+            <source>显示全部 %1 个版本</source>
+            <translation>Show all %1 versions</translation>
+        </message>
+        <message>
+            <source>收起</source>
+            <translation>Collapse</translation>
         </message>
         <message>
             <source>无正式版</source>
@@ -28084,20 +28124,12 @@ Wait a minute or two and retry.</translation>
             <translation>Refresh</translation>
         </message>
         <message>
-            <source>可用</source>
-            <translation>Available</translation>
+            <source>已启用（优先级从高到低）</source>
+            <translation>Enabled (highest priority first)</translation>
         </message>
         <message>
-            <source>已启用（上方优先覆盖）</source>
-            <translation>Enabled (top takes priority)</translation>
-        </message>
-        <message>
-            <source>启用 →</source>
-            <translation>Enable →</translation>
-        </message>
-        <message>
-            <source>← 停用</source>
-            <translation>← Disable</translation>
+            <source>可用资源包</source>
+            <translation>Available resource packs</translation>
         </message>
         <message>
             <source>提高优先级</source>
@@ -28106,6 +28138,14 @@ Wait a minute or two and retry.</translation>
         <message>
             <source>降低优先级</source>
             <translation>Decrease priority</translation>
+        </message>
+        <message>
+            <source>停用</source>
+            <translation>Disable</translation>
+        </message>
+        <message>
+            <source>启用</source>
+            <translation>Enable</translation>
         </message>
         <message>
             <source>（文件缺失）</source>

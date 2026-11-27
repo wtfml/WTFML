@@ -384,6 +384,10 @@
     <context>
         <name>AgentApprovalCard</name>
         <message>
+            <source>展开全文</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>本会话允许此来源</source>
             <translation type="unfinished"></translation>
         </message>
@@ -405,6 +409,10 @@
         </message>
         <message>
             <source>外发：%1 · %2</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>收起</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -2707,6 +2715,10 @@
         </message>
         <message>
             <source>新对话</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>会话列表</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -8279,6 +8291,22 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>游戏模组加载失败并退出（退出码 0）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」模组加载失败并退出（退出码 0）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>游戏异常退出（退出码 %1）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」异常退出（退出码 %2）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>游戏以非 0 退出码结束（%1）。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -8320,6 +8348,14 @@
         </message>
         <message>
             <source>日志显示缺少模组依赖。请在「文件」页选择「检查更新」，查看所需依赖。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>日志显示模组加载失败。请检查模组版本、加载器或模组间冲突。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>本次运行生成了新的崩溃报告，可在实例目录的 crash-reports 中查看。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -8391,6 +8427,10 @@
         </message>
         <message>
             <source>游戏已崩溃退出，退出码：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>游戏异常退出，退出码：%1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -8799,6 +8839,12 @@
         <message>
             <source>
 [游戏已崩溃退出，退出码：%1]
+</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>
+[游戏异常退出，退出码：%1]
 </source>
             <translation type="unfinished"></translation>
         </message>
@@ -11189,14 +11235,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>操作</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>收起操作栏（保留选择）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>清除选择</source>
             <translation type="unfinished"></translation>
         </message>
@@ -11359,14 +11397,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>移动</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>复制</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>更多</source>
             <translation type="unfinished"></translation>
         </message>
@@ -11426,10 +11456,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>已选 %1 项</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>启用 %1  /  禁用 %2</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -12569,6 +12595,10 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>清除此实例已记录的累计游玩时间和上次游玩时长。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>删除…</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -18309,6 +18339,14 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>不安装（纯原版）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>显示全部 %1 个版本</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>收起</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -27527,19 +27565,11 @@ Minecraft %2 / %3
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>可用</source>
+            <source>已启用（优先级从高到低）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>已启用（上方优先覆盖）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>启用 →</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>← 停用</source>
+            <source>可用资源包</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -27548,6 +27578,14 @@ Minecraft %2 / %3
         </message>
         <message>
             <source>降低优先级</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>停用</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>启用</source>
             <translation type="unfinished"></translation>
         </message>
         <message>

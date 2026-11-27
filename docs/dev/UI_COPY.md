@@ -247,6 +247,24 @@
 | 依赖感知二分 | Dependency-aware bisect | 智能体模组排查 |
 | 事务工作区 | Transaction workspace | 智能体隔离修复工作区 |
 | 修复病例 | Repair cases | 智能体本机记忆（记住修复病例 → Remember repair cases） |
+| 自由对话 / 实例诊断 / 版本升级 / 移植 | Free chat / Instance diagnostics / Upgrade / migrate | 智能体技能模式名（与 Crash rescue / Mod maintenance 同套，均用 sentence case） |
+| 修复事务 / 修复计划 / 完成报告 | Repair transaction / Repair plan / Completion report | 智能体工作流术语 |
+| 维护备份 / 恢复快照 | Maintenance backup / Recovery snapshot | 智能体备份与会话恢复 |
+| 诊断命令 / 允许诊断命令 | Diagnostic command / Allow diagnostic commands | 智能体固定诊断命令工具与设置项 |
+| MCP 服务器 / 外部 MCP 工具 | MCP server / External MCP tool | MCP 页面与审批提示（列表/标题复数 MCP servers） |
+| 工作目录（MCP） | Working folder | MCP 服务器配置项 |
+| 联网与诊断 | Web and diagnostics | 智能体设置分区名 |
+| 测试启动 | Test launch | 智能体隔离测试启动工具名 |
+| artifact | artifact | 智能体脱敏附件，保持英文不译 |
+| 临时文件 | Temp file | 与 Temp folder 统一用 temp，不写 temporary file |
+| 启动器窗口大小 | Launcher window size | 与游戏窗口大小区分 |
+| 必装前置 / 必需前置 / 必要前置 | Required dependency / Required dependencies | 不用 Mandatory dependencies |
+| 已拒绝（系统安全拦截） | blocked | 如 `restore blocked` / `write blocked` / `always blocked`，与用户审批拒绝 `Denied` 区分 |
+| 等待确认 / 等待确认… | Awaiting confirmation / Waiting for approval… | 任务中心状态与详情统一用 `Awaiting confirmation`（`MainWindowUI` / `AgentTaskLedger`）；智能体对话气泡审批状态用 `Waiting for approval…`（`AgentMessageView`） |
+| 查看会话 | View chat | 任务详情页按钮，与「会话」= `Chat` 统一 |
+| 审计（Auto-safe 写审计） | audit log | 如 `an audit log is written` |
+| 智能体备份 / 智能体写入前备份 / 智能体还原前备份 | Agent backup / Agent pre-write backup / Agent pre-restore backup | 备份选择列表项 |
+| 无 IPv6 网络 | No IPv6 network | 延迟测试状态 |
 
 ### 英文写法
 
