@@ -3457,8 +3457,44 @@ void save(const Spec &spec) {
     persisted.semantic = desired;
 }
 
+namespace {
+
+// #143：主题色是无条件写盘的，所以出厂主色换过之后，从没改过颜色的老用户盘上还是旧值。
+// 下面是各预设用过的出厂主色（`system` 当时跟着系统深浅取 dark / emerald 那一支）。
+struct RetiredAccent {
+    const char *preset;
+    QRgb rgba;
+};
+constexpr RetiredAccent kRetiredAccents[] = {
+    {"emerald", 0xff087a68}, {"emerald", 0xff56eb6c},
+    {"dark", 0xff536f80},    {"dark", 0xff6a6c9e},    {"dark", 0xff56eb6c},
+    {"ocean", 0xff196daa},
+    {"system", 0xff087a68},  {"system", 0xff536f80},  {"system", 0xff56eb6c},
+};
+const char *const kAccentMigratedKey = "Theme/AccentMigrated";
+
+/// 只迁一次（记在 `kAccentMigratedKey`）：迁完用户再把旧色选回来，就是他自己要的。
+void migrateRetiredAccent(QSettings &settings) {
+    if (settings.value(QLatin1String(kAccentMigratedKey)).toBool()) return;
+    QString preset =
+        settings.value(QLatin1String(kPresetKey), defaultSpec().presetId).toString();
+    if (preset == QLatin1String("light")) preset = QStringLiteral("emerald");  // 旧名字
+    const QColor accent = colorFromString(settings.value(QLatin1String(kAccentKey)).toString());
+    for (const RetiredAccent &retired : kRetiredAccents) {
+        if (accent.isValid() && preset == QLatin1String(retired.preset) &&
+            accent.rgba() == retired.rgba) {
+            settings.setValue(QLatin1String(kAccentKey), colorToString(tokens(preset).primary));
+            break;
+        }
+    }
+    settings.setValue(QLatin1String(kAccentMigratedKey), true);
+}
+
+}  // namespace
+
 Spec load() {
     QSettings settings;
+    migrateRetiredAccent(settings);  // 必须在记账之前：`save()` 比的是迁完的值
     // 记账：盘上**现在**是什么（只收 `Theme/` 这一组）。`save()` 靠它分辨"这一项我改过没有"，
     // 从而只写改过的那几项（见那份结构上面的注释）。原始值保留用于删除前的冲突比较；
     // 未识别的键不进入语义基线，保存时不会删除。

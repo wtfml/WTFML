@@ -324,6 +324,38 @@ int UiThemePaletteChecks(QApplication &app, QTabWidget * &tabs, QFrame * &bar) {
                   .arg(storedEmerald.presetId, storedEmerald.accent.name(),
                        Theme::tokens(QStringLiteral("emerald")).primary.name()));
 
+        // ---------- W7b 换过出厂主色之后的一次性迁移（#143）----------
+        {
+            const auto loadAccent = [](const char *preset, const char *accent) {
+                QSettings disk;
+                disk.setValue(QStringLiteral("Theme/Preset"), QLatin1String(preset));
+                disk.setValue(QStringLiteral("Theme/Accent"), QLatin1String(accent));
+                disk.sync();
+                return Theme::load().accent;
+            };
+            const QColor oldEmerald(QStringLiteral("#087A68"));
+            const QColor factory = Theme::tokens(QStringLiteral("emerald")).primary;
+            QSettings().clear();
+            const QColor migrated = loadAccent("emerald", "#087a68");
+            const QColor onDisk = QColor::fromString(
+                QSettings().value(QStringLiteral("Theme/Accent")).toString());
+            check(sameColor(migrated, factory) && sameColor(onDisk, factory),
+                  "★★ W7b 冰川碧湖存着旧出厂主色：读回来是现在的默认主色，盘上也改写了（#143）",
+                  QStringLiteral("读回 %1 / 盘上 %2").arg(migrated.name(), onDisk.name()));
+            const QColor again = loadAccent("emerald", "#ff087a68");
+            check(sameColor(again, oldEmerald), "★★ W7b 只迁一次：迁过之后再选回旧色就保留",
+                  again.name());
+            QSettings().clear();
+            const QColor custom = loadAccent("emerald", "#ff336699");
+            check(sameColor(custom, QColor(QStringLiteral("#336699"))),
+                  "★★ W7b 自己挑的别的颜色不动", custom.name());
+            QSettings().clear();
+            const QColor otherPreset = loadAccent("ocean", "#ff087a68");
+            check(sameColor(otherPreset, oldEmerald),
+                  "★★ W7b 别的预设存着这个值（不是它的旧出厂值）不动", otherPreset.name());
+            QSettings().clear();
+        }
+
         // ---------- W8 盘上是垃圾（注册表能手改）⇒ 一律退回出厂 ----------
         QSettings raw;
         raw.setValue(QStringLiteral("Theme/Preset"), QStringLiteral("no-such-preset"));
