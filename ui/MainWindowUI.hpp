@@ -2308,6 +2308,7 @@ public:
     static QString taskDetailTargetName() { return QStringLiteral("taskDetailTarget"); }
     static QString taskDetailReportName() { return QStringLiteral("taskDetailReport"); }
     static QString taskDetailCrashDirName() { return QStringLiteral("taskDetailCrashDir"); }
+    static QString taskDetailAskAgentName() { return QStringLiteral("taskDetailAskAgent"); }
     static QString taskDetailCopyName() { return QStringLiteral("taskDetailCopy"); }
     static QString taskDetailCloseName() { return QStringLiteral("taskDetailClose"); }
 
@@ -2322,6 +2323,7 @@ public:
     static QString taskDetailTargetText() { return QCoreApplication::translate("MainWindowUI", "打开目标位置"); }
     static QString taskDetailReportText() { return QCoreApplication::translate("MainWindowUI", "导出错误报告"); }
     static QString taskDetailCrashDirText() { return QCoreApplication::translate("MainWindowUI", "打开崩溃报告目录"); }
+    static QString taskDetailAskAgentText() { return QCoreApplication::translate("MainWindowUI", "询问智能体"); }
     static QString taskDetailCopyText() { return QCoreApplication::translate("MainWindowUI", "复制摘要"); }
     static QString taskDetailCloseText() { return QCoreApplication::translate("MainWindowUI", "关闭"); }
 

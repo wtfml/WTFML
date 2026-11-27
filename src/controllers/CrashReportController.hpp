@@ -65,6 +65,15 @@ public:
     QString latestPendingInstanceName() const;
 
     int sessionIdForTask(Tasks::TaskId id) const;
+
+    /// 交给智能体的那一份（实例 id + 摘要）。任务中心那一颗「询问智能体」和崩溃卡片
+    /// 用的是同一份 —— 两个入口进去看到的东西必须一样。
+    struct AgentHandoff {
+        bool available = false;
+        QString instanceId;
+        QString context;
+    };
+    AgentHandoff agentHandoff(const QString &key) const;
     void exportReport(const QString &key);
     void exportFullLog(const QString &key);
     void openReportsDirectory();

@@ -204,9 +204,7 @@ void CrashReportController::showCrashDialog(Tasks::TaskId id, int overlayRetry) 
     }
     text += tr("\n\n如为偶发，可先重启游戏；反复出现时，建议先按上述提示处理，再导出报告或完整日志。");
 
-    QString context = tr("实例：%1\n退出码：%2\n\n").arg(where, GameExitDiagnosis::exitDescription(record.facts.exitCode));
-    context += hints.isEmpty() ? tr("日志中未识别出明确原因。") : hints.join(QLatin1Char('\n'));
-    if (context.size() > 6000) context = context.left(6000) + tr("\n…（已截断）");
+    const AgentHandoff handoff = agentHandoff(QString::number(id));
 
     for (;;) {
         InlineMessageBox box(MessageKind::Warning, tr("游戏已崩溃"), text,
@@ -225,10 +223,30 @@ void CrashReportController::showCrashDialog(Tasks::TaskId id, int overlayRetry) 
             continue;
         }
         if (clicked == 3) {
-            if (m_host.askAgent) m_host.askAgent(context, record.facts.instanceId);
+            if (m_host.askAgent) m_host.askAgent(handoff.context, handoff.instanceId);
             return;
         }
     }
+}
+
+CrashReportController::AgentHandoff CrashReportController::agentHandoff(const QString &key) const {
+    AgentHandoff handoff;
+    bool parsed = false;
+    const Tasks::TaskId id = key.toULongLong(&parsed);
+    const auto found = parsed ? m_records.constFind(id) : m_records.cend();
+    if (found == m_records.cend()) return handoff;
+    const Record &record = found.value();
+    handoff.available = true;
+    handoff.instanceId = record.facts.instanceId;
+    const QString where = record.facts.instanceName.isEmpty()
+                              ? record.facts.instanceId
+                              : record.facts.instanceName;
+    const QStringList hints = GameExitDiagnosis::hints(record.facts);
+    handoff.context = tr("实例：%1\n退出码：%2\n\n")
+                          .arg(where, GameExitDiagnosis::exitDescription(record.facts.exitCode));
+    handoff.context += hints.isEmpty() ? tr("日志中未识别出明确原因。") : hints.join(QLatin1Char('\n'));
+    if (handoff.context.size() > 6000) handoff.context = handoff.context.left(6000) + tr("\n…（已截断）");
+    return handoff;
 }
 
 void CrashReportController::exportFullLog(const QString &key) {

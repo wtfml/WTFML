@@ -1509,10 +1509,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>完整性体检</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>启停模组</source>
             <translation type="unfinished"></translation>
         </message>
@@ -18510,6 +18506,10 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>询问智能体</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>%1 的微软账号外观（含披风）</source>
             <translation type="unfinished"></translation>
         </message>
@@ -29965,6 +29965,10 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         <name>TaskDetailController</name>
         <message>
             <source>无法打开任务详情页：界面已被另一页占用。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>这次退出没有留下可交给智能体的记录。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>

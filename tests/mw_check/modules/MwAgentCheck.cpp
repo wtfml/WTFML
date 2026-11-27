@@ -15,6 +15,8 @@
 #include "agent/AgentSessionStore.hpp"
 #include "controllers/AgentController.hpp"
 #include "controllers/AgentLauncherHostImpl.hpp"
+#include "controllers/CrashReportController.hpp"
+#include "controllers/TaskDetailController.hpp"
 #include "agent/AgentBackupIndex.hpp"
 #include "agent/AgentModelClient.hpp"
 
@@ -714,6 +716,9 @@ int MwAgentChecks(QApplication &app) {
 
     // 崩溃卡片「使用智能体询问」：另起一条会话、切崩溃急救、锁崩的那个实例、要求直接开工。
     {
+        // 两张卡都是给人看的（崩溃卡片、开不开 Auto-safe 那一问）：这一节只量会话，不等鼠标。
+        QCoreApplication::instance()->setProperty("wtfml.suppressCrashDialog", true);
+        QCoreApplication::instance()->setProperty("wtfml.suppressAgentPrompt", true);
         const QString root = AppPaths::versionDir(QStringLiteral("mw-crash-forward"));
         QDir().mkpath(root + QStringLiteral("/mods"));
         AgentInstanceInfo info;
@@ -732,7 +737,7 @@ int MwAgentChecks(QApplication &app) {
         const QString chatted = controller->currentSessionId();
 
         const int startsBefore = fake.starts;
-        controller->askAboutCrashForTest(
+        controller->askAboutCrash(
             QStringLiteral("实例：崩溃实例\n退出码：0xC0000005（内存访问冲突）"), info.id);
         check(waitFor([&] { return controller->loop()->state() == AgentLoop::State::Completed; }),
               "崩溃转发：假模型答完");
@@ -756,6 +761,52 @@ int MwAgentChecks(QApplication &app) {
         check(fake.lastRequest.systemPrompt.contains(QStringLiteral("Crash Rescue")),
               "崩溃转发：这一轮的系统提示就是崩溃急救");
         controller->chooseSkillForTest(QStringLiteral("general"));
+
+        // 任务中心那一颗「询问智能体」走的是**同一条路**：先有一笔崩溃记录（带实例与退出码），
+        // 再从任务详情那一条动作进来；会话/模式/实例的结果必须和上面一模一样。
+        auto *crashController = window.findChild<CrashReportController *>();
+        auto *detail = window.findChild<TaskDetailController *>();
+        check(crashController != nullptr && detail != nullptr,
+              "任务中心：崩溃记录与详情页控制器都已接线");
+        if (crashController != nullptr && detail != nullptr) {
+            CrashReportController::LaunchFacts facts;
+            facts.instanceId = info.id;
+            facts.instanceName = info.name;
+            facts.requiredJavaMajor = 17;
+            const Tasks::TaskId taskId = crashController->report(
+                0, int(0xC0000005), true, facts, QStringLiteral("java.lang.RuntimeException: boom"),
+                QStringLiteral("[main/ERROR]: java.lang.RuntimeException: boom"));
+            TaskCenter::Item crashItem;
+            check(window.taskCenterItemsForTest().isEmpty() ||
+                      crashController->hasRecord(taskId),
+                  "任务中心：异常退出那一条进了账本");
+            const QString beforeAsk = controller->currentSessionId();
+            const int startsBeforeAsk = fake.starts;
+            detail->action(QString::number(taskId), TaskDetailPage::Action::AskAgent);
+            // 这一颗是先收页、排到下一轮才叫智能体的（见 `TaskDetailController::action`），
+            // 所以先等“真的发出去了”，再等“答完” —— 不能只等后者，它上一轮就已经是完成态。
+            check(waitFor([&] { return fake.starts == startsBeforeAsk + 1; }),
+                  "任务中心：点「询问智能体」后自动发出一问");
+            check(waitFor([&] { return controller->loop()->state() == AgentLoop::State::Completed; }),
+                  "任务中心：假模型答完");
+            const QString askedSession = controller->currentSessionId();
+            check(fake.starts == startsBeforeAsk + 1 && askedSession != beforeAsk,
+                  "任务中心：另起一条会话并发出一问", askedSession);
+            AgentSession fromTask;
+            QString fromTaskProblem;
+            check(controller->sessionStore()->load(askedSession, &fromTask, &fromTaskProblem),
+                  "任务中心：会话在盘上", fromTaskProblem);
+            check(fromTask.meta.skill == QStringLiteral("crash-rescue") &&
+                      fromTask.meta.instanceLock.id == info.id,
+                  "任务中心：同样是崩溃急救 + 锁住那个实例",
+                  fromTask.meta.skill + QStringLiteral(" / ") + fromTask.meta.instanceLock.id);
+            const QString taskPrompt =
+                fromTask.messages.isEmpty() ? QString() : fromTask.messages.constFirst().content;
+            check(taskPrompt.contains(QStringLiteral("直接开工")) &&
+                      taskPrompt.contains(QStringLiteral("0xC0000005")),
+                  "任务中心：提问同样要求直接开工并带上退出码", taskPrompt.left(80));
+            controller->chooseSkillForTest(QStringLiteral("general"));
+        }
         QDir(root).removeRecursively();
     }
 

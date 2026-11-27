@@ -42,6 +42,9 @@ int UiCrashReportChecks() {
         crash.capabilities.openTarget = true;
         crash.capabilities.exportReport = true;
         crash.capabilities.openCrashDir = true;
+        // 「询问智能体」和上面那两颗同一份判据（能力位由账本那边一起置，见
+        // `ActivityCenterController::item()`）。
+        crash.capabilities.askAgent = true;
         TaskCenter::Step collected;
         collected.name = QStringLiteral("收集退出信息");
         collected.state = TaskCenter::StepState::Done;
@@ -56,6 +59,7 @@ int UiCrashReportChecks() {
         };
         auto *report = buttonBy(MainWindowUI::taskDetailReportName());
         auto *crashDir = buttonBy(MainWindowUI::taskDetailCrashDirName());
+        auto *askAgent = buttonBy(MainWindowUI::taskDetailAskAgentName());
         auto *cancel = buttonBy(MainWindowUI::taskDetailCancelName());
         auto *retry = buttonBy(MainWindowUI::taskDetailRetryName());
         auto *log = buttonBy(MainWindowUI::taskDetailLogName());
@@ -79,6 +83,19 @@ int UiCrashReportChecks() {
         // 次要钮最多露两颗，其余收进「更多…」：判"有没有提供"问 offers()，不问 isVisible()。
         check(log != nullptr && page.offers(log) && copy != nullptr && page.offers(copy),
               "★ U29.1 「打开日志」「复制摘要」照旧在（这一节加的两颗是**多出来**的，不是替换）");
+        // 「询问智能体」：和崩溃卡片上那一颗同一个去处（另起崩溃急救会话），露在底条上。
+        check(askAgent != nullptr && askAgent->isVisible()
+                  && askAgent->text() == MainWindowUI::taskDetailAskAgentText(),
+              "★ U29.1 崩溃那一项底条上多出「询问智能体」",
+              askAgent != nullptr ? askAgent->text() : QStringLiteral("<没找到>"));
+        if (askAgent != nullptr) {
+            askAgent->click();
+            QApplication::processEvents();
+            check(seenKey == QStringLiteral("77")
+                      && seenAction == static_cast<int>(TaskDetailPage::Action::AskAgent),
+                  "★ U29.3 点「询问智能体」带出去的是它自己的动作",
+                  QStringLiteral("key=%1 action=%2").arg(seenKey).arg(seenAction));
+        }
 
         auto *detailLabel = page.findChild<QLabel *>(MainWindowUI::taskDetailDetailName());
         check(detailLabel != nullptr
@@ -127,6 +144,8 @@ int UiCrashReportChecks() {
                   && !crashDir->isVisible(),
               "★★ U29.4 别的任务身上这两颗**不在**（它手里没有那份会话事实，摆一颗点了"
               "只能弹「没有可导出的东西」的键比不给还糟）");
+        check(askAgent != nullptr && !askAgent->isVisible(),
+              "★ U29.4 「询问智能体」也跟着收起来（它要的是同一份崩溃记录）");
         check(retry != nullptr && retry->isVisible() && log != nullptr && log->isVisible(),
               "★ U29.4 同一份任务上「重试」「打开日志」照常露着 —— 说明收起来的是这两颗、"
               "不是整排");
