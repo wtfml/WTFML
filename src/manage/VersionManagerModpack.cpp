@@ -42,6 +42,7 @@
 #include <QUrl>
 #include <QUuid>
 #include <QtConcurrent/QtConcurrentRun>
+#include <algorithm>
 
 #include "../download/DownloadRetryPolicy.hpp"
 #include "../download/LoaderMeta.hpp"
@@ -264,7 +265,11 @@ void VersionManager::startModpackFiles() {
     versionJsons[id] = json;
     mergedVersionJsons.remove(id);
 
-    const QList<ModpackImport::PackFile> files = m_modpackInstall.pack.files;
+    QList<ModpackImport::PackFile> files = m_modpackInstall.pack.files;
+    // 大文件先占用空闲连接，减少小文件都完成后只剩一个大文件传输的时间。
+    std::stable_sort(files.begin(), files.end(), [](const auto &left, const auto &right) {
+        return left.size > right.size;
+    });
     m_modpackInstall.phase = ModpackInstall::Phase::DownloadingFiles;
     m_currentVersionDownloading = id;  // 这一批的"名字"（兜底终态那条路要用）
     emit modpackImportStageChanged(

@@ -246,7 +246,13 @@ void runModpackCompletionTests(const QString &sandbox) {
         server.status = 404;
         server.body = modBytes;
         server.headers = QByteArrayLiteral("Connection: close\r\n");
-        const bool listening = server.start();
+        FakeIconServer largerFile;
+        largerFile.body = modBytes + modBytes;
+        largerFile.headers = server.headers;
+        FakeIconServer alternate;
+        alternate.status = 404;
+        alternate.headers = server.headers;
+        const bool listening = server.start() && largerFile.start() && alternate.start();
         check(listening, "ZG11 模拟整合包文件下载服务");
         if (listening) {
             const QString id = QStringLiteral("retry-in-place");
@@ -255,10 +261,21 @@ void runModpackCompletionTests(const QString &sandbox) {
             retryPack.filesNotDistributable = 0;
             retryPack.fileIssues.clear();
             const QString url = QStringLiteral("http://127.0.0.1:%1/file").arg(server.server.serverPort());
-            retryPack.files = {{QStringLiteral("mods/retry-file.bin"), {url}, hash(modBytes), modBytes.size()}};
+            const QString largeUrl = QStringLiteral("http://127.0.0.1:%1/large").arg(largerFile.server.serverPort());
+            const QString alternateUrl = QStringLiteral("http://127.0.0.1:%1/alternate").arg(alternate.server.serverPort());
+            retryPack.files = {{QStringLiteral("mods/retry-file.bin"), {url, alternateUrl}, hash(modBytes), modBytes.size()},
+                               {QStringLiteral("mods/large.bin"), {largeUrl}, hash(largerFile.body), largerFile.body.size()}};
             VersionManager manager;
             manager.setUseMirror(false);
+            manager.setDownloadConcurrency(1);
             manager.setVersionManifestUrlOverride(QUrl::fromLocalFile(root + "/index.json").toString());
+            QStringList completedFiles;
+            QObject::connect(manager.downloads(), &DownloadManager::downloadFinished, &manager,
+                [&](const QString &file, bool, const QString &) {
+                    if (file == QLatin1String("large.bin") || file == QLatin1String("retry-file.bin")) {
+                        completedFiles.append(file);
+                    }
+                });
             QJsonObject manifestContinuation;
             QObject::connect(manager.downloads(), &DownloadManager::batchStarted, &manager, [&] {
                 const QJsonObject intent = manager.downloadContinuation();
@@ -286,6 +303,12 @@ void runModpackCompletionTests(const QString &sandbox) {
                       manager.canRetryDownload() && manager.retryModpackInstance() == id &&
                       InstanceFiles::isUnfinishedImport(id) && !QFileInfo::exists(instancePath + "/config/test.txt"),
                   "ZG11 清单下载失败保留原安装，且尚未解压覆盖文件");
+            check(completedFiles == QStringList({QStringLiteral("large.bin"), QStringLiteral("retry-file.bin")}),
+                  "ZG11 文件较大的作业先占用下载连接", completedFiles.join(QLatin1Char(',')));
+            const auto failedFiles = manager.downloads()->failedJobs();
+            check(failedFiles.size() == 1 && !failedFiles.first().reason.isEmpty() &&
+                      resultText.contains(failedFiles.first().reason),
+                  "ZG11 整合包失败详情包含文件请求的错误原因", resultText);
             check(manifestContinuation.value("kind") == "modpack" &&
                       manifestContinuation.value("instance") == id && manifestContinuation.value("root") == root &&
                       manifestContinuation.value("archive") == archive &&
@@ -297,7 +320,8 @@ void runModpackCompletionTests(const QString &sandbox) {
             server.status = 200;
             bool started = false;
             const bool complete = waitForImport([&] { started = manager.retryDownload(&error); }, true);
-            check(complete && started && server.requests == 2 &&
+            check(complete && started && server.requests == 2 && largerFile.requests == 1 &&
+                      alternate.requests == 1 &&
                       !manager.canRetryDownload() && !InstanceFiles::isUnfinishedImport(id) &&
                       QFileInfo::exists(instancePath + "/mods/retry-file.bin") &&
                       QFileInfo::exists(instancePath + "/config/test.txt"),
