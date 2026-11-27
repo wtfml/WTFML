@@ -77,9 +77,13 @@ DetailHeader makeDetailHeader(QWidget *parent) {
     title->setFitPixelRange(Theme::textSize(Theme::TextRole::Display), 20);
     text->addWidget(title);
     auto *meta = new QLabel(header);
-    QPalette palette = meta->palette();
-    palette.setColor(QPalette::WindowText, Theme::tokens().secondary);
-    meta->setPalette(palette);
+    const auto tone = [meta] {
+        QPalette palette = meta->palette();
+        palette.setColor(QPalette::WindowText, Theme::tokens().secondary);
+        meta->setPalette(palette);
+    };
+    tone();
+    Theme::follow(meta, tone);
     text->addWidget(meta);
     line->addLayout(text, 1);
     return {header, line, icon, title, meta};

@@ -163,11 +163,6 @@ void InstanceSettingsDialog::setupOverviewPage(const QString &instanceId) {
         InputSizing::shortValue(m_instanceNameEdit, InputSizing::kNameChars, InputSizing::Script::Han);
         m_instanceNameEdit->setFixedWidth(260);
         m_lastLaunchLabel = new QLabel(this);
-        {
-            QPalette pal = m_lastLaunchLabel->palette();
-            pal.setColor(QPalette::WindowText, Theme::tokens().secondary);
-            m_lastLaunchLabel->setPalette(pal);
-        }
         m_lastLaunchLabel->setObjectName(QStringLiteral("instanceLastLaunch"));
         // 这一行只有一句状态，**不折行**：折行标签的 sizeHint 是"按要折成的宽度量出来的一行"，
         // 而这一行是按 sizeHint 宽摆的（makeSettingRow 里 AlignLeft），于是日期被折到第二行、
@@ -176,7 +171,15 @@ void InstanceSettingsDialog::setupOverviewPage(const QString &instanceId) {
         setLastLaunch(QDateTime());
         m_playTimeLabel = new QLabel(this);
         m_playTimeLabel->setObjectName(QStringLiteral("instancePlayTime"));
-        m_playTimeLabel->setPalette(m_lastLaunchLabel->palette());
+        for (QLabel *label : {m_lastLaunchLabel, m_playTimeLabel}) {
+            const auto tone = [label] {
+                QPalette pal = label->palette();
+                pal.setColor(QPalette::WindowText, Theme::tokens().secondary);
+                label->setPalette(pal);
+            };
+            tone();
+            Theme::follow(label, tone);
+        }
         setPlayTime(QStringLiteral("0:00:00"), QString());
 
         grid->addWidget(overviewSection(tr("基本"), this, true), row++, 0, 1, 2);
@@ -672,6 +675,16 @@ void InstanceSettingsDialog::setupOverviewPage(const QString &instanceId) {
         grid->addWidget(MainWindowPageLayout::makeSettingRow(this, MainWindowPageLayout::makeSettingRowTitle(showPagesLabelText(), this), QString(), cell, true), row++, 0, 1, 2);
     }
 
+    // 页底的删除入口（#144）：和维护页那颗发同一个信号。
+    {
+        auto *remove = new QPushButton(tr("删除…"), this);
+        remove->setObjectName(overviewDeleteButtonName());
+        remove->setToolTip(deleteButtonTooltip());
+        Theme::markButton(remove, Theme::ButtonKind::Danger);
+        connect(remove, &QPushButton::clicked, this, &InstanceSettingsDialog::deleteInstanceRequested);
+        grid->addWidget(MainWindowPageLayout::makeSettingRow(this, MainWindowPageLayout::makeSettingRowTitle(deleteText(), this), deleteHint(), remove),
+                        row++, 0, 1, 2);
+    }
 }
 
 void InstanceSettingsDialog::setGameIconChoices(const QList<QPair<QString, QImage>> &choices) {

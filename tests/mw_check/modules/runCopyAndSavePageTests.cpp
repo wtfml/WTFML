@@ -1592,7 +1592,7 @@ void runCopyAndSavePageTests() {
             auto *page = host != nullptr ? host->findChild<InstanceSettingsDialog *>() : nullptr;
             auto *button = page != nullptr
                                ? page->findChild<QPushButton *>(
-                                     InstanceSettingsDialog::deleteButtonName())
+                                     InstanceSettingsDialog::overviewDeleteButtonName())
                                : nullptr;
             if (button == nullptr) {
                 return;
@@ -1682,6 +1682,9 @@ void runCopyAndSavePageTests() {
               QDir::toNativeSeparators(versionDir));
         check(!window.findChild<InstanceSettingsDialog *>(),
               "★ T27.8 覆盖层里也不再挂着那一页了");
+        auto *installed = window.findChild<QComboBox *>(MainWindowUI::installedVersionComboName());
+        check(installed != nullptr && installed->findData(id) < 0,
+              "★ #144 删完列表刷新了：已装实例里没有它");
     }
 
     restoreSettings();

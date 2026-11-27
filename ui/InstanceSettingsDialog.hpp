@@ -1121,6 +1121,8 @@ public:
     // "真的要删吗"、把整个目录删掉）都要覆盖层和 VersionManager，ui/ 两样都没有。
     // / 概览页那一颗「删除实例」的 objectName。
     static QString deleteButtonName() { return QStringLiteral("instanceDeleteButton"); }
+    /// 概览页底部那一行的按钮；发的是同一个 deleteInstanceRequested()。
+    static QString overviewDeleteButtonName() { return QStringLiteral("instanceOverviewDeleteButton"); }
     /// 那颗按钮上的字（**唯一出处**）。
     static QString deleteText() { return QCoreApplication::translate("InstanceSettingsDialog", "删除实例"); }
     /// 那一格下面那句解释。
