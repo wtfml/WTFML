@@ -709,6 +709,10 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
             for (const char *state : {"mod", "mod-sel", "pack", "cfg", "cfg-outline"})
                 list.append({QStringLiteral("i136-%1-%2-960x620.png").arg(QLatin1String(state), theme), theme, {960, 620}, false, manage,
                              QStringLiteral("i136:") + QLatin1String(state)});
+        // #143（FILTER=i143-）：模组页选中「可更新」并全选 / 同一页全部更新成功后，浅色。
+        for (const char *state : {"before", "after"})
+            list.append({QStringLiteral("i143-%1-960x620.png").arg(QLatin1String(state)), QStringLiteral("emerald"), {960, 620}, false, manage,
+                         QStringLiteral("i143:") + QLatin1String(state)});
         // 只出名字含这段字的几张（逐页精修时不必每次跑满 56 张）。
         const QString only = qEnvironmentVariable("WTFML_DESIGN_SHOT_FILTER");
         if (!only.isEmpty())
@@ -996,6 +1000,34 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                                 if (editor != nullptr) editor->openIndex();
                             });
                     }
+                });
+            } else if (shot.page.startsWith(QStringLiteral("i143:"))) {
+                const QString mods = AppPaths::versionDir(QStringLiteral("create")) + QStringLiteral("/mods/");
+                QDir().mkpath(mods);
+                for (const char *name : {"appleskin-forge-2.5.1.jar", "create-1.20.1-0.5.1.f.jar", "iris-1.8.1+1.20.1.jar",
+                                         "jade-11.8.0.jar", "jei-1.20.1-forge-15.3.0.4.jar", "journeymap-5.9.18.jar"}) {
+                    QFile file(mods + QLatin1String(name));
+                    if (file.open(QIODevice::WriteOnly)) file.write("stub");
+                }
+                // 不带页键打开：带着 "mod" 开会自动联网检查，结果回来会盖掉下面摆的名单。
+                QMetaObject::invokeMethod(&window, "openInstanceSettings", Q_ARG(QString, QStringLiteral("create")));
+                const bool updated = shot.page.endsWith(QStringLiteral("after"));
+                QTimer::singleShot(350, &window, [&window, updated]() {
+                    InstanceSettingsDialog *dialog = nullptr;
+                    for (auto *one : window.findChildren<InstanceSettingsDialog *>())
+                        if (one->isVisible()) dialog = one;
+                    if (dialog == nullptr) return;
+                    QObject::disconnect(dialog, &InstanceSettingsDialog::checkUpdatesRequested, nullptr, nullptr);
+                    dialog->showPage(QStringLiteral("mod"));
+                    InstanceFilesPage *files = dialog->filesPage(QStringLiteral("mod"));
+                    if (files == nullptr || files->list() == nullptr) return;
+                    QStringList updatable;
+                    for (int row = 0; row < 3 && row < files->list()->count(); ++row)
+                        updatable.append(files->list()->item(row)->data(InstanceFilesPage::pathRole()).toString());
+                    dialog->setFileUpdates(updatable, true);
+                    files->stateButtonAt(InstanceFilesPage::StateFilter::Update)->click();
+                    files->selectionButtonAt(static_cast<int>(InstanceFilesPage::SelectionAction::SelectAll))->click();
+                    if (updated) dialog->setFileUpdates({}, true);  // 全部更新成功：收尾递来的就是空名单
                 });
             } else if (!shot.page.isEmpty()) QMetaObject::invokeMethod(&window, "openInstanceSettings", Q_ARG(QString, QStringLiteral("create")), Q_ARG(QString, shot.page));
             else if (shot.tab == MainWindowUI::instancesTabIndex()) hoverInstanceRow(window);
