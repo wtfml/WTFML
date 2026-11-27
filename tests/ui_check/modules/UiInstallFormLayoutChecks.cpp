@@ -138,13 +138,14 @@ int UiInstallFormLayoutChecks(MainWindowUI &ui, QLineEdit * &installNameEdit, QL
                         .arg(installNameEdit != nullptr ? installNameEdit->font().pixelSize() : -1)
                         .arg(installBtn->minimumHeight())
                   : QStringLiteral("<null>"));
-        // 靠右：底栏里那颗键**右边**贴着底栏右边缘、左边空着一大截（前面垫着一条 stretch）。
-        // 反面（"悬浮在页面中间"）就是两边差不多 —— 那一条现在必须不成立。
+        // 居中在表单内容那一栏上（#136）：底栏右边多让出滑条列 scrollBarGutterInset()，
+        // 所以按钮左右两侧差的正是这一列，中线和滚动区去掉滑条列之后的中线重合。
         const int footerLeftGap = rInstall.left() - rFooter.left();
         const int footerRightGap = rFooter.right() - rInstall.right();
+        const int contentCentre = rScroll.left() + (rScroll.width() - Theme::scrollBarGutterInset()) / 2;
         check(!rInstall.isNull() && !rFooter.isNull() &&
-                  qAbs(footerLeftGap - footerRightGap) <= 2 &&
-                  qAbs(rInstall.center().x() - rScroll.center().x()) <= 2,
+                  qAbs(footerRightGap - footerLeftGap - Theme::scrollBarGutterInset()) <= 2 &&
+                  qAbs(rInstall.center().x() - contentCentre) <= 2,
               "「安装」在右侧内容区居中悬浮",
               QString("left=%1 right=%2 footer=%3..%4 btn=%5..%6")
                   .arg(footerLeftGap)

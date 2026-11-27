@@ -788,7 +788,8 @@ int UiServerPageChecks(InstanceSettingsDialog &dialog) {
                         }
                     }
                     // 默认行代理在行尾留 8 的白（圆角块内缩 3 + 字离块边），靠右的字离格边约 13；左对齐会差一百多。
-                    check(rightMost >= 0 && rightMost >= cell.width() - 16,
+                    // 这张表是视口页（#136，applyViewportScrollGutter），最后一列再让出 contentToScrollBarGap() 给滑条列。
+                    check(rightMost >= 0 && rightMost >= cell.width() - 16 - Theme::contentToScrollBarGap(),
                           "★ U10L 而且那两行**贴着右边**（靠右对齐真的生效了）",
                           QStringLiteral("最右那个墨点在 x=%1，这一格宽 %2")
                               .arg(rightMost)

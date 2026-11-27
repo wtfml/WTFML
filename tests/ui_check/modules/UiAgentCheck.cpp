@@ -833,6 +833,11 @@ int UiAgentCheck() {
             }
             return count;
         };
+        // 本模块没挂 Theme::apply()，滑条按 Fusion 出厂宽 14 画；产品里应用样式表把它钉在
+        // scrollBarThickness()，页眉 / 输入岛让出的 scrollBarGutterInset() 也按这个宽算。照产品那条规则挂上再量。
+        if (auto *messageScroll = page->findChild<QScrollArea *>(QStringLiteral("agentMessageScroll")))
+            messageScroll->verticalScrollBar()->setStyleSheet(
+                QStringLiteral("QScrollBar:vertical { width: %1px; margin: 0px; }").arg(Theme::scrollBarThickness()));
         for (const QSize size : {QSize(960, 620), QSize(1280, 800)}) {
             window.resize(size);
             for (int i = 0; i < 4; ++i) QApplication::processEvents();

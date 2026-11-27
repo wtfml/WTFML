@@ -103,7 +103,8 @@ int UiInstallLayoutCheck(QApplication &app) {
             auto *button = ui.getInstallButton();
             auto *scroll = ui.getInstallScroll();
             const QPoint origin = scroll->mapFromGlobal(button->mapToGlobal(QPoint()));
-            expect(qAbs(origin.x() + button->width() / 2 - scroll->width() / 2) <= 2,
+            // 居中的是表单内容那一栏（右边让出滑条列 scrollBarGutterInset()，#136），不是连滑条在内的整个滚动区。
+            expect(qAbs(origin.x() + button->width() / 2 - (scroll->width() - Theme::scrollBarGutterInset()) / 2) <= 2,
                    "install action is centred in the right pane");
             expect(origin.y() > 0 && origin.y() + button->height() <= scroll->height(),
                    "floating action remains inside the content pane");
@@ -158,7 +159,8 @@ int UiInstallLayoutCheck(QApplication &app) {
             expect(serverFilterRow && serverSearch && serverTypeChip && serverFilterRow->isVisible() &&
                        serverTypeChip->geometry().top() == serverSearch->geometry().top() &&
                        serverTypeChip->geometry().left() == 0 &&
-                       serverSearch->geometry().right() == serverFilterRow->rect().right(),
+                       // 右缘对齐下面列表的行右缘：筛选行右边让出滑条列（#136）。
+                       serverSearch->geometry().right() == serverFilterRow->rect().right() - Theme::scrollBarGutterInset(),
                    "server filters and search align to the left and right of the same row");
             if (preview) {
                 QDir().mkpath("build/install-previews");
@@ -209,7 +211,7 @@ int UiInstallLayoutCheck(QApplication &app) {
             expect(presetFilterRow && presetSearch && firstChip && lastChip &&
                        firstChip->mapTo(presetFilterRow, QPoint()).y() == presetSearch->y() &&
                        lastChip->mapTo(presetFilterRow, QPoint()).y() == presetSearch->y() &&
-                       presetSearch->geometry().right() == presetFilterRow->rect().right(),
+                       presetSearch->geometry().right() == presetFilterRow->rect().right() - Theme::scrollBarGutterInset(),
                    "preset categories and search fit on one aligned row at a regular width");
             if (preview) {
                 expect(window.grab().save("build/install-previews/preset-filters.png"), "preset filter preview saved");
