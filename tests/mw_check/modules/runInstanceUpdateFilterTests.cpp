@@ -537,12 +537,19 @@ void runInstanceUpdateFilterTests() {
             QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
             QApplication::processEvents();
         };
+        // 收掉的实例页只是藏起来、等主人 deleteLater()（OverlayHost::releaseContent 那段），删掉之前仍挂在
+        // 这一层底下；这里不在事件循环里，processEvents() 不处理 DeferredDelete。不先清掉的话 findChild
+        // 拿到的是上一页（早已停在「模组」上，切页不会重查），所以先清，再只认没藏起来的那一页。
         const auto openSettings = [&w, &idV]() -> InstanceSettingsDialog * {
+            QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
             QMetaObject::invokeMethod(&w, "openInstanceSettings", Qt::DirectConnection,
                                       Q_ARG(QString, idV));
             QApplication::processEvents();
             OverlayHost *open = currentPageOverlay();
-            return open != nullptr ? open->findChild<InstanceSettingsDialog *>() : nullptr;
+            if (open == nullptr) return nullptr;
+            for (auto *dialog : open->findChildren<InstanceSettingsDialog *>())
+                if (!dialog->isHidden()) return dialog;
+            return nullptr;
         };
         const auto chipText = [](int count) {
             return InstanceFilesPage::stateFilterButtonText(InstanceFilesPage::StateFilter::Update,
