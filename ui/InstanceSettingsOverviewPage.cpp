@@ -672,6 +672,16 @@ void InstanceSettingsDialog::setupOverviewPage(const QString &instanceId) {
         grid->addWidget(MainWindowPageLayout::makeSettingRow(this, MainWindowPageLayout::makeSettingRowTitle(showPagesLabelText(), this), QString(), cell, true), row++, 0, 1, 2);
     }
 
+    // 页底的删除入口（#144）：和维护页那颗发同一个信号。
+    {
+        auto *remove = new QPushButton(tr("删除…"), this);
+        remove->setObjectName(overviewDeleteButtonName());
+        remove->setToolTip(deleteButtonTooltip());
+        Theme::markButton(remove, Theme::ButtonKind::Danger);
+        connect(remove, &QPushButton::clicked, this, &InstanceSettingsDialog::deleteInstanceRequested);
+        grid->addWidget(MainWindowPageLayout::makeSettingRow(this, MainWindowPageLayout::makeSettingRowTitle(deleteText(), this), deleteHint(), remove),
+                        row++, 0, 1, 2);
+    }
 }
 
 void InstanceSettingsDialog::setGameIconChoices(const QList<QPair<QString, QImage>> &choices) {

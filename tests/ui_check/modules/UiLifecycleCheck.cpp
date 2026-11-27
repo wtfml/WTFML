@@ -205,6 +205,26 @@ int UiLifecycleCheck(QApplication &app) {
         dialog.showPage(Dlg::overviewCategoryKey());
         expect(!dialog.findChild<QPushButton *>(Dlg::checkUpdatesButtonName()),
                "overview has no manual update check entry");
+        {
+            // #144 概览页底部的「删除…」和维护页那颗发同一个信号。
+            int deleteRequests = 0;
+            const auto counting = QObject::connect(&dialog, &Dlg::deleteInstanceRequested,
+                                                   [&deleteRequests] { ++deleteRequests; });
+            auto *overviewRemove = dialog.findChild<QPushButton *>(Dlg::overviewDeleteButtonName());
+            expect(overviewRemove && overviewRemove->isVisibleTo(&dialog)
+                       && overviewRemove->text() == QStringLiteral("删除…")
+                       && overviewRemove->property("wtfmlButtonKind").toString()
+                              == Theme::buttonKindKey(Theme::ButtonKind::Danger),
+                   "overview offers a danger delete action");
+            if (overviewRemove) overviewRemove->click();
+            expect(deleteRequests == 1, "overview delete emits deleteInstanceRequested once");
+            dialog.showPage(QStringLiteral("operationsmenu"));
+            auto *remove = dialog.findChild<QPushButton *>(Dlg::deleteButtonName());
+            expect(remove && remove->isVisibleTo(&dialog), "maintenance page keeps its delete action");
+            if (remove) remove->click();
+            expect(deleteRequests == 2, "maintenance delete emits the same signal");
+            QObject::disconnect(counting);
+        }
         dialog.showPage(QStringLiteral("snapshots"));
         expect(dialog.currentPageKey() == QStringLiteral("operationsmenu"), "snapshot route opens consolidated backup and operations page");
         auto *snapshot = dialog.findChild<QPushButton *>(Dlg::createSnapshotButtonName());
