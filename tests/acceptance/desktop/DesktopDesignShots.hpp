@@ -3,6 +3,9 @@
 // 只截图，不登录、不联网、不启动游戏；实例和账号是写在隔离目录里的夹具。
 #include "AgentApprovalCard.hpp"
 #include "AgentPage.hpp"
+#include "agent/AgentModelClient.hpp"
+#include "agent/AgentSettings.hpp"
+#include "controllers/AgentController.hpp"
 #include "Animations.hpp"
 #include "Glass.hpp"
 #include "GlassPopover.hpp"
@@ -486,6 +489,21 @@ inline void fillToolboxSample(ToolboxPage &page, const QString &key) {
     }
 }
 
+/// #141 的假模型：一直流式吐字、从不收尾，让询问框背后的页面持续在变。
+class StreamingAgentClient final : public AgentModelClient {
+public:
+    using AgentModelClient::AgentModelClient;
+    void start(const Agent::ModelRequest &request) override {
+        auto *timer = new QTimer(this);
+        QObject::connect(timer, &QTimer::timeout, this, [this, id = request.requestId] {
+            emit textDelta(id, QStringLiteral("正在查看崩溃日志，随后给出修复计划。\n\n"));
+        });
+        timer->start(120);
+    }
+    void cancel(const QString &) override { qDeleteAll(findChildren<QTimer *>()); }
+    void testConnection(const Agent::ModelRequest &) override {}
+};
+
 /// r2 智能体页对照（设计稿 r2/png/agent-A-*）：直接往页上灌会话 / 消息 / 状态，不经控制器、不发请求。
 /// @p state：chat / empty / noapi / sys / menu / inst。
 inline void seedAgent(AgentPage &page, const QString &state) {
@@ -810,6 +828,9 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                                      .arg(size.height()),
                                  theme, size, false, agent,
                                  QStringLiteral("i136a:") + QLatin1String(state)});
+        // #141（FILTER=i141-）：崩溃 → 询问智能体 → Auto-safe 询问框，框背后智能体还在流式输出。
+        list.append({QStringLiteral("i141-autosafe-ask-emerald-960x620.png"), QStringLiteral("emerald"), {960, 620}, false, home,
+                     QStringLiteral("i141")});
         // 只出名字含这段字的几张（逐页精修时不必每次跑满 56 张）。
         const QString only = qEnvironmentVariable("WTFML_DESIGN_SHOT_FILTER");
         if (!only.isEmpty())
@@ -1039,6 +1060,26 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                 if (auto *page = window.findChild<AgentPage *>()) {
                     seedAgentBatch4(*page, shot.page.section(QLatin1Char(':'), 1));
                 }
+            } else if (shot.page == QStringLiteral("i141")) {
+                // askAboutCrash 卡在询问框的嵌套事件循环里，排到下一拍调。步骤同 MainWindow::askAgentAboutCrash。
+                QTimer::singleShot(0, &window, [&window]() {
+                    AgentController *controller = window.agentController();
+                    controller->setModelClientForTest(new StreamingAgentClient(&window));
+                    AgentProviderProfile profile;
+                    profile.id = QStringLiteral("shot");
+                    profile.name = QStringLiteral("示例服务");
+                    profile.baseUrl = QStringLiteral("https://api.example.com/v1");
+                    profile.model = QStringLiteral("example-model");
+                    controller->applyProfileForTest(profile, QStringLiteral("sk-example"));
+                    // 临时放开那一问，问完恢复。
+                    const QVariant suppressed = qApp->property("wtfml.suppressAgentPrompt");
+                    qunsetenv("WTFML_SUPPRESS_AGENT_PROMPT");
+                    qApp->setProperty("wtfml.suppressAgentPrompt", false);
+                    window.ui()->getTabWidget()->setCurrentIndex(MainWindowUI::agentTabIndex());
+                    controller->askAboutCrash(QStringLiteral("实例：机械动力 Create\n退出码：0xC0000005（内存访问冲突）"),
+                                              QStringLiteral("create"));
+                    qApp->setProperty("wtfml.suppressAgentPrompt", suppressed);
+                });
             } else if (shot.page.startsWith(QStringLiteral("i136:"))) {
                 // 「机械动力 Create」里摆几个模组、资源包和一份配置，开对应页，再按样张走一步真操作。
                 const QString dir = AppPaths::versionDir(QStringLiteral("create"));
@@ -1308,7 +1349,14 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                                       {"height", window.height()}, {"dpr", window.devicePixelRatioF()},
                                       {"maxWidth", window.maximumWidth()}, {"screenWidth", window.screen()->availableGeometry().width()},
                                       {"state", int(window.windowState())}});
-            if (!shot.page.isEmpty()) window.ui()->overlay()->closeOverlay();
+            if (shot.page == QStringLiteral("i141")) {
+                std::fprintf(stdout, "I141 %s promptOpen=%d\n", qPrintable(shot.file), window.ui()->overlay()->promptOpen());
+                std::fflush(stdout);
+                window.agentController()->cancelForTest();
+                window.ui()->overlay()->dismiss();  // 走提示自己的 reject，嵌套循环随即退出
+            } else if (!shot.page.isEmpty()) {
+                window.ui()->overlay()->closeOverlay();
+            }
             if (shot.page.startsWith(QStringLiteral("toolbox"))) window.ui()->getTabWidget()->setCurrentIndex(MainWindowUI::homeTabIndex());
             QTimer::singleShot(shot.page.isEmpty() ? 0 : 300, &window, step);
         });

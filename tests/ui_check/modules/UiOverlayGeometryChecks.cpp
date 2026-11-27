@@ -1,6 +1,29 @@
 #include "Support.hpp"
 int UiOverlayGeometryChecks(QMainWindow &window, MainWindowUI &ui, QTabWidget * &tabs, QFrame * &bar) {
     if (OverlayHost *overlay = ui.overlay()) {
+        // #141：提示开着时底下那一页还会变（智能体在流式追加卡片），露出来的只能是开之前那张底图。
+        {
+            auto *late = new QWidget(tabs->currentWidget());
+            late->setAutoFillBackground(true);
+            QPalette red = late->palette();
+            red.setColor(QPalette::Window, Qt::red);
+            late->setPalette(red);
+            late->setGeometry(8, 8, 120, 60);  // 左上角：居中的提示卡盖不到
+            late->hide();
+            QApplication::processEvents();
+            const bool opened = overlay->openPrompt() != nullptr;
+            QApplication::processEvents();
+            const QRect spot(late->mapTo(&window, QPoint(0, 0)), late->size());
+            const QImage before = captureWidget(&window).copy(spot);
+            late->show();
+            late->raise();
+            QApplication::processEvents();
+            const QImage after = captureWidget(&window).copy(spot);
+            check(opened && before == after, "提示开着时，底下那一页后来的改动不透出来（#141）");
+            if (opened) overlay->closeOverlay();
+            delete late;
+            QApplication::processEvents();
+        }
         // 内容区 = 标签页**当前那一页**占的那块。期望值**不复用 contentRect()** —— 拿被测
         // 代码自己的算法去算期望，等于"它算错也算对"（这个仓库已经在"两端读同一个常数"
         // 上吃过一次亏）。这里走 mapTo()，是另一条路。
