@@ -1318,6 +1318,12 @@ QColor defaultAccentColor() {
     return QColor(QStringLiteral("#457F70"));
 }
 
+namespace {
+// 挂了 `background: transparent` 样式表的列表 / 树，`Base` 是全透明的黑：拿它混色、判明暗会当成深底
+// （浅色界面上选中行成了白字，#143）。这时屏幕上露出来的是页面底。
+QColor shownBase(const QColor &base) { return base.alpha() == 0 ? tokens().page : base; }
+}  // namespace
+
 QColor rowHoverFill(const QColor &base) {
     if (current().presetId != QLatin1String("system") && current().accent == tokens().primary)
         return tokens().hover;
@@ -1330,10 +1336,7 @@ QColor rowHoverFill(const QColor &base) {
     // 浅色下 `base` 就是白，这一份和 `accentShade(AccentShade::Hover)` 因此**逐字节相等**
     // —— ui_check 钉着这条（"行悬停和按钮悬停是同一个色"就是靠它）。四舍五入那一位
     // （`+50`）不改的话两边会对不上，而那种差 1 的错在屏幕上完全看不出来。
-    const int p = qBound(0, rowHoverAccentPercent(), 100);
-    const auto mix = [p](int b, int a) { return (b * (100 - p) + a * p + 50) / 100; };
-    return QColor(mix(base.red(), accent.red()), mix(base.green(), accent.green()),
-                  mix(base.blue(), accent.blue()));
+    return mixToward(shownBase(base), accent, rowHoverAccentPercent());
 }
 
 QColor neutralFill(const QColor &base, const QColor &ink, int percent) {
@@ -1359,7 +1362,7 @@ QColor selectionFill(const QColor &base) {
     if (!accent.isValid()) {
         accent = tokens().primary;
     }
-    return mixToward(base, accent, selectionAccentPercent());
+    return mixToward(shownBase(base), accent, selectionAccentPercent());
 }
 
 namespace {

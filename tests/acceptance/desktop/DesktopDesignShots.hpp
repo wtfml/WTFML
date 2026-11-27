@@ -713,6 +713,10 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
         for (const char *state : {"before", "after"})
             list.append({QStringLiteral("i143-%1-960x620.png").arg(QLatin1String(state)), QStringLiteral("emerald"), {960, 620}, false, manage,
                          QStringLiteral("i143:") + QLatin1String(state)});
+        // 左栏选中项「模组」的字色（旧版主题色，见下面 i143: 那一支），浅色 / 深色。
+        for (const QString &theme : {QStringLiteral("emerald"), QStringLiteral("dark")})
+            list.append({QStringLiteral("i143-nav-mods-%1-960x620.png").arg(theme), theme, {960, 620}, false, manage,
+                         QStringLiteral("i143:nav-mods")});
         // 只出名字含这段字的几张（逐页精修时不必每次跑满 56 张）。
         const QString only = qEnvironmentVariable("WTFML_DESIGN_SHOT_FILTER");
         if (!only.isEmpty())
@@ -1009,10 +1013,18 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                     QFile file(mods + QLatin1String(name));
                     if (file.open(QIODevice::WriteOnly)) file.write("stub");
                 }
+                const bool navOnly = shot.page.endsWith(QStringLiteral("nav-mods"));
+                if (navOnly) {
+                    // 主题色和预设默认不一样时左栏选中字色才出过错：用旧版冰川碧湖那支（老设置里存着它）。
+                    Theme::Spec spec = Theme::presetSpec(shot.theme);
+                    spec.accent = QColor(QStringLiteral("#087A68"));
+                    Theme::setSpec(spec);
+                    Theme::apply(*qApp);
+                }
                 // 不带页键打开：带着 "mod" 开会自动联网检查，结果回来会盖掉下面摆的名单。
                 QMetaObject::invokeMethod(&window, "openInstanceSettings", Q_ARG(QString, QStringLiteral("create")));
                 const bool updated = shot.page.endsWith(QStringLiteral("after"));
-                QTimer::singleShot(350, &window, [&window, updated]() {
+                QTimer::singleShot(350, &window, [&window, updated, navOnly]() {
                     InstanceSettingsDialog *dialog = nullptr;
                     for (auto *one : window.findChildren<InstanceSettingsDialog *>())
                         if (one->isVisible()) dialog = one;
@@ -1020,7 +1032,7 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                     QObject::disconnect(dialog, &InstanceSettingsDialog::checkUpdatesRequested, nullptr, nullptr);
                     dialog->showPage(QStringLiteral("mod"));
                     InstanceFilesPage *files = dialog->filesPage(QStringLiteral("mod"));
-                    if (files == nullptr || files->list() == nullptr) return;
+                    if (navOnly || files == nullptr || files->list() == nullptr) return;
                     QStringList updatable;
                     for (int row = 0; row < 3 && row < files->list()->count(); ++row)
                         updatable.append(files->list()->item(row)->data(InstanceFilesPage::pathRole()).toString());

@@ -846,6 +846,18 @@ int UiInstanceGroupingChecks(MainWindowUI &ui, QTreeWidget * &instanceList) {
                       "一点、方向跟着这一支主题色」，不会闪成一片近白",
                       QStringLiteral("白底混出 %1 / 深底混出 %2 / 深底本色 %3")
                           .arg(onWhite.name(), onDarkBase.name(), selectionDarkBase.name()));
+                // #143：实例设置左侧导航树挂着 `background: transparent`，代理拿到的 `Base`
+                // 是全透明黑。浅色预设下选中行必须仍是深字。
+                QPalette seeThrough;
+                seeThrough.setColor(QPalette::Base, Qt::transparent);
+                const QColor ink = Theme::selectionPalette(seeThrough, true).color(QPalette::Text);
+                check(ink.lightness() < 128 &&
+                          Theme::selectionFill(Qt::transparent) ==
+                              Theme::selectionFill(Theme::tokens().page) &&
+                          Theme::rowHoverFill(Qt::transparent) ==
+                              Theme::rowHoverFill(Theme::tokens().page),
+                      "★★ 自定义主题色 + 透明底的列表：按页面底判明暗，浅色下选中行是深字（#143）",
+                      ink.name());
                 Theme::setSpec(savedSpec);
                 Theme::apply(*qApp);
             }
