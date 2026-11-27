@@ -1,4 +1,5 @@
 #include "Support.hpp"
+#include "controllers/ImportController.hpp"
 int MwModpackImportChecks(const QDir &versionsDir, MainWindow &window, GlobalJavaSettings * &windowJava, const std::function<void(const QString &)> &pinGlobalJava, const std::function<void()> &unpinGlobalJava) {
     // ------------------------------------------------------------------
     // 这一节驱动的是 MainWindow::applyModpackImport() —— 导入的**执行部分**，
