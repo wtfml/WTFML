@@ -7767,7 +7767,7 @@ Instance is ready; preset partially applied:
         </message>
         <message>
             <source>下载节点 %1 在 %2 秒内未返回数据。</source>
-            <translation>Download node %1 returned no data within %2 s.</translation>
+            <translation>Download source %1 returned no data within %2 s.</translation>
         </message>
         <message>
             <source>下载尚未结束，请稍后继续。</source>
