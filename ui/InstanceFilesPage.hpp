@@ -1085,6 +1085,8 @@ private:
     /// 紧凑页头（资源包页）的状态胶囊：页宽装得下就排进搜索那一排，装不下单占一排。
     /// 排法只看页宽，胶囊出现或消失不改列表的纵向位置。挪了位置返回 true。
     bool placeCompactStateRow();
+    /// 列表之外每一行右边让出滑条那一列（Theme::scrollBarGutterInset），右缘对齐页眉按钮。
+    void alignFixedRows();
 
     /// 按路径取那一份"筛之前"的条目（`m_entries`）。找不到给 nullptr。
     const Entry *entryForPath(const QString &path) const;

@@ -25,7 +25,7 @@ ResourcePackPage::ResourcePackPage(QWidget *parent) : QWidget(parent) {
     refresh->setObjectName(QStringLiteral("resourcePackRefresh"));
     Theme::markButton(refresh, Theme::ButtonKind::Neutral);
     top->addWidget(refresh);
-    layout->addLayout(top);
+    Theme::addScrollGutterAligned(layout, top);
     // 上下两段同在一个滚动区里：两张列表随内容撑高、不自己滚，整页只有这一条竖滑条（#136）。
     m_scroll = new Theme::GutterScrollArea(this);
     m_scroll->setObjectName(QStringLiteral("resourcePackScroll"));
@@ -34,7 +34,6 @@ ResourcePackPage::ResourcePackPage(QWidget *parent) : QWidget(parent) {
     m_scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     auto *body = new QWidget(m_scroll);
     auto *sections = new QVBoxLayout(body);
-    sections->setContentsMargins(0, 0, 0, 0);
     const auto addSection = [this, body, sections](const QString &title, const QString &name, QHBoxLayout *&header) {
         header = new QHBoxLayout;
         auto *label = new QLabel(title, body);
@@ -52,6 +51,8 @@ ResourcePackPage::ResourcePackPage(QWidget *parent) : QWidget(parent) {
         list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         list->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
         sections->addWidget(list);
+        // 列表行四周有 spacing 那一圈：标题行的按钮也让这么多，右缘和行底对齐。
+        header->setContentsMargins(0, 0, list->spacing(), 0);
         // 键盘换行时把当前那一行滚进外层视野（列表自己不滚）。
         connect(list, &QListWidget::currentItemChanged, this, [this, list](QListWidgetItem *item) {
             if (item == nullptr || item->isHidden()) return;
@@ -67,6 +68,8 @@ ResourcePackPage::ResourcePackPage(QWidget *parent) : QWidget(parent) {
     sections->addSpacing(8);
     m_available = addSection(tr("可用资源包"), QStringLiteral("resourcePackAvailable"), availableHeader);
     sections->addStretch(1);
+    // 滚动区里的内容右缘离滑条 contentToScrollBarGap()；列表行自带 spacing 那一圈，先扣掉。
+    sections->setContentsMargins(0, 0, Theme::contentToScrollBarGap() - m_selected->spacing(), 0);
     m_scroll->setWidget(body);
     m_selected->setDragDropMode(QAbstractItemView::InternalMove);
     m_selected->setDefaultDropAction(Qt::MoveAction);
@@ -86,7 +89,7 @@ ResourcePackPage::ResourcePackPage(QWidget *parent) : QWidget(parent) {
     m_note = new QLabel(this);
     m_note->setObjectName(QStringLiteral("resourcePackNote"));
     m_note->setWordWrap(true);
-    layout->addWidget(m_note);
+    Theme::addScrollGutterAligned(layout, m_note);
     connect(refresh, &QPushButton::clicked, this, &ResourcePackPage::refreshRequested);
     connect(m_search, &QLineEdit::textChanged, this, [this] { filter(); });
     connect(m_available, &QListWidget::itemSelectionChanged, this, &ResourcePackPage::updateButtons);

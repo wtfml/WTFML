@@ -58,8 +58,8 @@ class CodeEditor;
 /// 常驻不删：条目树随正文重建，关掉只是藏起来；页面析构时一起删。
 class OutlinePopover final : public GlassPopover {
 public:
-    OutlinePopover(QWidget *anchor, QWidget *panel, QTreeWidget *tree)
-        : GlassPopover(anchor), m_panel(panel), m_tree(tree) {
+    OutlinePopover(QWidget *anchor, QWidget *panel, QTreeWidget *tree, QWidget *editor)
+        : GlassPopover(anchor), m_panel(panel), m_tree(tree), m_editor(editor) {
         setObjectName(QStringLiteral("configFileOutline"));
         setAttribute(Qt::WA_DeleteOnClose, false);
         auto *box = new QVBoxLayout(this);
@@ -72,19 +72,26 @@ protected:
     void place() override {
         QWidget *host = parentWidget();
         if (host == nullptr || m_anchor == nullptr) return;
+        QWidget *page = m_anchor->parentWidget();
         const QPoint a = m_anchor->mapTo(host, QPoint(0, m_anchor->height() + 6));
-        // 宽：一行装得下常见的「键 = 值」；高：按行高把整棵树摊开，放不下就收到窗底留 16。
-        const int width = qMin(host->width() - 16, qMax(sizeHint().width(), fontMetrics().averageCharWidth() * 56));
+        // 右缘对齐「条目」所在那一行的内容右缘，往左长；底边停在编辑框底边，不盖住下面的提示和「保存」。
+        const QLayout *row = page != nullptr && page->layout() != nullptr ? rowOf(page->layout(), m_anchor) : nullptr;
+        const int rowRight = row != nullptr ? row->geometry().right() - row->contentsMargins().right()
+                                            : m_anchor->geometry().right();
+        const int right = page->mapTo(host, QPoint(rowRight, 0)).x();
+        const int bottom = m_editor != nullptr ? m_editor->mapTo(host, QPoint(0, m_editor->height())).y()
+                                               : host->height() - 16;
+        // 宽：一行装得下常见的「键 = 值」；高：按行高把整棵树摊开，放不下就收到编辑框底边。
+        const int width = qMin(right + 1 - 8, qMax(sizeHint().width(), fontMetrics().averageCharWidth() * 56));
         int rows = 0;
         for (QTreeWidgetItemIterator it(m_tree, QTreeWidgetItemIterator::NotHidden); *it != nullptr; ++it) ++rows;
-        const int row = m_tree->sizeHintForRow(0) > 0 ? m_tree->sizeHintForRow(0) : fontMetrics().lineSpacing();
+        const int rowHeight = m_tree->sizeHintForRow(0) > 0 ? m_tree->sizeHintForRow(0) : fontMetrics().lineSpacing();
         const QMargins m = layout()->contentsMargins();
         const int wanted = m.top() + m.bottom() + m_panel->sizeHint().height() - m_tree->sizeHint().height()
-            + m_tree->header()->sizeHint().height() + (rows + 1) * row + 2 * m_tree->frameWidth();
+            + m_tree->header()->sizeHint().height() + (rows + 1) * rowHeight + 2 * m_tree->frameWidth();
         const int top = a.y();
-        const int height = qMin(wanted, qMax(row * 4, host->height() - top - 16));
-        const int x = qBound(8, a.x(), qMax(8, host->width() - width - 8));
-        setGeometry(x, top, width, height);
+        const int height = qMin(wanted, qMax(rowHeight * 4, bottom - top));
+        setGeometry(right + 1 - width, top, width, height);
         raise();
     }
     void closeEvent(QCloseEvent *event) override {
@@ -96,8 +103,17 @@ protected:
     }
 
 private:
+    static const QLayout *rowOf(const QLayout *in, QWidget *widget) {
+        if (in->indexOf(widget) >= 0) return in;
+        for (int i = 0; i < in->count(); ++i)
+            if (const QLayout *child = in->itemAt(i)->layout())
+                if (const QLayout *found = rowOf(child, widget)) return found;
+        return nullptr;
+    }
+
     QWidget *m_panel;
     QTreeWidget *m_tree;
+    QPointer<QWidget> m_editor;
 };
 
 /// 行号槽那一格。**是一个真控件，不是画在编辑框上的** —— 它得自己占掉编辑框左侧那一条
@@ -185,18 +201,37 @@ public:
         }
     }
 
+    /// 视口页：滑条常驻最右一列、输入面收在内容右缘以内（Theme::applyViewportScrollGutter），
+    /// 行号槽跟着输入面往里挪。
+    void useViewportGutter() {
+        Theme::applyViewportScrollGutter(this);
+        updateLineNumberAreaWidth(blockCount());
+    }
+
 protected:
     void resizeEvent(QResizeEvent *event) override {
         QPlainTextEdit::resizeEvent(event);
-        const QRect cr = contentsRect();
-        m_gutter->setGeometry(QRect(cr.left(), cr.top(), gutterWidth(), cr.height()));
+        placeGutter();
     }
 
 private:
+    /// 输入面相对外框的内缩：和 Theme::applyViewportScrollGutter 给视口留的那一圈同一组数。
+    QMargins surfaceInset() const {
+        return property("wtfmlViewportScrollGutter").toBool() ? QMargins(7, 5, Theme::contentToScrollBarGap() + 7, 5)
+                                                             : QMargins();
+    }
+
+    void placeGutter() {
+        const QRect cr = contentsRect().marginsRemoved(surfaceInset());
+        m_gutter->setGeometry(QRect(cr.left(), cr.top(), gutterWidth(), cr.height()));
+    }
+
     void updateLineNumberAreaWidth(int /*newBlockCount*/) {
         // 正文左边让出这么宽 —— `setViewportMargins` 说的就是"这一块是留给别人的"，
         // 于是正文从槽右边开始，滚到哪儿都不重叠。
-        setViewportMargins(gutterWidth(), 0, 0, 0);
+        const QMargins inset = surfaceInset();
+        setViewportMargins(inset.left() + gutterWidth(), inset.top(), inset.right(), inset.bottom());
+        placeGutter();
     }
 
     void updateLineNumberArea(const QRect &rect, int dy) {
@@ -247,7 +282,8 @@ ConfigFileEditorPage::ConfigFileEditorPage(QWidget *parent) : QWidget(parent) {
 
     // ---------- 上面一行：返回 + 这是哪个文件 + 打开文件夹 ----------
     auto *topRow = new QHBoxLayout;
-    topRow->setContentsMargins(0, 0, 0, 0);
+    // 只有编辑框滚动：上下两行右边让出滑条那一列，右缘对齐页眉按钮（#136）。
+    topRow->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
     topRow->setSpacing(8);
 
     // 这一颗是必须的：覆盖层那颗返回箭头顶上顶着的是**整个「实例设置」**（点一下这一趟
@@ -372,10 +408,12 @@ ConfigFileEditorPage::ConfigFileEditorPage(QWidget *parent) : QWidget(parent) {
     // 展开/折叠动画（规则见 ui/Animations.hpp）。
     Anim::animateExpansion(m_index);
 
-    m_editor = new CodeEditor(this);
+    auto *codeEditor = new CodeEditor(this);
+    m_editor = codeEditor;
     m_editor->setObjectName(editorName());
     m_editor->setPlaceholderText(tr("（此文件为空）"));
     m_editor->setMinimumHeight(m_editor->fontMetrics().lineSpacing() * kEditorMinLines);
+    codeEditor->useViewportGutter();
     outer->addWidget(m_editor, 1);
 
     // 改字之后把索引重算一遍：**区间是拿正文算出来的，正文一动它就旧了**。
@@ -394,7 +432,7 @@ ConfigFileEditorPage::ConfigFileEditorPage(QWidget *parent) : QWidget(parent) {
 
     // ---------- 底下：一句话 + 保存 ----------
     auto *bottomRow = new QHBoxLayout;
-    bottomRow->setContentsMargins(0, 0, 0, 0);
+    bottomRow->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
     bottomRow->setSpacing(8);
 
     m_note = new QLabel(this);
@@ -752,7 +790,7 @@ ConfigFileEditorPage::~ConfigFileEditorPage() {
 
 void ConfigFileEditorPage::openIndex() {
     if (m_indexEntries <= 0 || m_indexToggle == nullptr) return;
-    if (m_outline == nullptr) m_outline = new OutlinePopover(m_indexToggle, m_indexPanel, m_index);
+    if (m_outline == nullptr) m_outline = new OutlinePopover(m_indexToggle, m_indexPanel, m_index, m_editor);
     m_outline->popUp();
     m_indexFilter->setFocus(Qt::PopupFocusReason);
     m_indexFilter->selectAll();

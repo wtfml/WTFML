@@ -409,7 +409,7 @@ void InstanceFilesPage::repositionSelectionBar() {
     if (m_actionPanelEnabled) {
         // 批量操作带字排得下就带字，排不下收成图标。按「带字时」的宽度判，和此刻是哪一档无关，
         // 改字之后再排一轮也得出同一个结论，不会来回翻。
-        const int available = m_contentHost->width();
+        const int available = m_contentHost->width() - Theme::scrollBarGutterInset();
         int trailing = 0;
         for (auto action : {SelectionAction::SelectAll, SelectionAction::InvertAll})
             trailing += m_selectionTools->layout()->spacing() + selectionButtonAt(static_cast<int>(action))->sizeHint().width();
@@ -480,7 +480,7 @@ bool InstanceFilesPage::placeCompactStateRow() {
     auto *outer = qobject_cast<QVBoxLayout *>(layout());
     // 搜索框留出它自己 sizeHint 那么宽，剩下的装得下全部胶囊才同排（和模组页计数排同一判据）。
     const int needed = m_search->sizeHint().width() + search->spacing() + possibleStatePillsWidth() + 24;
-    const bool inlineRow = m_contentHost->width() >= needed;
+    const bool inlineRow = m_contentHost->width() - Theme::scrollBarGutterInset() >= needed;
     if (inlineRow == (m_stateRow->parentWidget() == m_searchRow)) return false;
     if (inlineRow) {
         outer->removeWidget(m_stateRow);
@@ -490,6 +490,34 @@ bool InstanceFilesPage::placeCompactStateRow() {
         outer->insertWidget(outer->indexOf(m_structureRows) + 1, m_stateRow);
     }
     return true; // 换了父控件会被藏起来，显隐交给 applyState() 重摆
+}
+
+void InstanceFilesPage::alignFixedRows() {
+    auto *outer = qobject_cast<QVBoxLayout *>(layout());
+    if (outer == nullptr) return;
+    const auto setRight = [](QLayout *row, int right) {
+        if (row == nullptr || row->contentsMargins().right() == right) return;
+        QMargins margins = row->contentsMargins();
+        margins.setRight(right);
+        row->setContentsMargins(margins);
+    };
+    const int inset = Theme::scrollBarGutterInset();
+    for (int i = 0; i < outer->count(); ++i) {
+        QLayoutItem *item = outer->itemAt(i);
+        if (item->layout() != nullptr) {
+            setRight(item->layout(), inset);
+        } else if (QWidget *row = item->widget(); row != nullptr && row != m_contentHost) {
+            if (row->layout() != nullptr) {
+                setRight(row->layout(), inset);
+            } else if (row->contentsMargins().right() != inset) {
+                QMargins margins = row->contentsMargins();
+                margins.setRight(inset);
+                row->setContentsMargins(margins);
+            }
+        }
+    }
+    // 状态胶囊并进搜索行时，右边已由搜索行让过，自己不再让一遍。
+    if (m_stateRow != nullptr && m_stateRow->parentWidget() == m_searchRow) setRight(m_stateRow->layout(), 0);
 }
 
 QPushButton *InstanceFilesPage::selectionButtonAt(int action) const {

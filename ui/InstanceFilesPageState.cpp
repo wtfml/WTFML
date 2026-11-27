@@ -49,6 +49,7 @@ void InstanceFilesPage::applyState() {
         // placeCompactStateRow）：按「此刻有没有可选的」显隐的话，查完更新「可更新」一冒出来列表就下跳。
         const bool reserved = m_batchMode && (m_canToggle || m_canFilterUpdates);
         placeCompactStateRow();
+        alignFixedRows();
         m_stateRow->setVisible(filtersUseful && !m_worldLayout && (!m_compactHeader || choice || reserved));
     }
     // 那一排里**下拉框和四颗按钮互相显隐**（见 .hpp 里 m_stateRow 那段）：

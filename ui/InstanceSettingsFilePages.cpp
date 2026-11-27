@@ -201,7 +201,7 @@ void InstanceSettingsDialog::buildFilePage(const QString &key) {
                 switchMode->setObjectName(QStringLiteral("resourcePackMode"));
                 switchMode->setCheckable(true);
                 Theme::markButton(switchMode, Theme::ButtonKind::Neutral);
-                layout->addWidget(switchMode, 0, Qt::AlignLeft);
+                Theme::addScrollGutterAligned(layout, switchMode, Qt::AlignLeft);
                 switchMode->hide();
                 connect(switchMode, &QPushButton::toggled, this, [this, resourceStack, switchMode](bool on) {
                     resourceStack->setCurrentIndex(on ? 1 : 0);

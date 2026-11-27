@@ -25,6 +25,7 @@
 #include "InstanceFilesPage.hpp"
 #include "ResourcePackPage.hpp"
 #include <QScrollBar>
+#include <QPlainTextEdit>
 #include "PresetModReview.hpp"
 #include "UpgradeHistoryDialog.hpp"
 #include "UpgradeReportDialog.hpp"
@@ -1035,8 +1036,10 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
             if (shot.page.startsWith(QStringLiteral("i136:"))) {
                 // 数这一页自己露着几条竖滑条（不算外层那张实例设置的滚动区）。
                 QWidget *page = nullptr;
+                InstanceSettingsDialog *shown = nullptr;
                 for (auto *dialog : window.findChildren<InstanceSettingsDialog *>()) {
                     if (!dialog->isVisible()) continue;
+                    shown = dialog;
                     if (shot.page.startsWith(QStringLiteral("i136:mod"))) page = dialog->filesPage(QStringLiteral("mod"));
                     else if (shot.page == QStringLiteral("i136:pack")) page = dialog->resourcePackPage();
                     else page = dialog->configFilePage();
@@ -1047,6 +1050,51 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                         if (bar->orientation() == Qt::Vertical && bar->isVisible()) ++bars;
                 std::fprintf(stdout, "I136 %s page=%s visible=%d verticalScrollBars=%d\n", qPrintable(shot.file),
                              page != nullptr ? page->metaObject()->className() : "none", page != nullptr && page->isVisible(), bars);
+                // 审计（窗口坐标，右缘含该像素）：整张设置页露着的竖滑条 x 范围、不滚动行 / 滚动内容 / 页眉按钮的右缘。
+                const auto winX = [&window](const QWidget *w, int x) { return w->mapTo(&window, QPoint(x, 0)).x(); };
+                if (shown != nullptr && page != nullptr) {
+                    QString barText;
+                    int dialogBars = 0;
+                    for (auto *bar : shown->findChildren<QScrollBar *>()) {
+                        if (bar->orientation() != Qt::Vertical || !bar->isVisible()) continue;
+                        ++dialogBars;
+                        const QWidget *owner = bar->parentWidget() != nullptr ? bar->parentWidget()->parentWidget() : nullptr;
+                        barText += QStringLiteral(" %1[%2,%3)%4").arg(owner != nullptr ? owner->objectName() : QString())
+                                       .arg(winX(bar, 0)).arg(winX(bar, bar->width())).arg(bar->maximum() > 0 ? "*" : "");
+                    }
+                    const auto inScroll = [page](const QWidget *w) {
+                        for (const QWidget *p = w->parentWidget(); p != nullptr && p != page; p = p->parentWidget())
+                            if (auto *area = qobject_cast<QAbstractScrollArea *>(p->parentWidget()); area != nullptr && area->viewport() == p)
+                                return true;
+                        return false;
+                    };
+                    int fixedRight = -1, scrollRight = -1, headerRight = -1;
+                    for (auto *w : page->findChildren<QWidget *>()) {
+                        if (!w->isVisible() || !(qobject_cast<QAbstractButton *>(w) || qobject_cast<QLineEdit *>(w))) continue;
+                        int &slot = inScroll(w) ? scrollRight : fixedRight;
+                        slot = qMax(slot, winX(w, w->width()) - 1);
+                    }
+                    QString rowText;
+                    for (auto *view : page->findChildren<QAbstractItemView *>()) {
+                        if (!view->isVisible() || view->model() == nullptr || view->model()->rowCount() == 0) continue;
+                        const QRect cell = view->visualRect(view->model()->index(0, view->model()->columnCount() - 1));
+                        const int gap = view->property("wtfmlScrollContentGap").toInt();
+                        rowText += QStringLiteral(" %1=%2").arg(view->objectName()).arg(winX(view->viewport(), cell.right() + 1 - gap) - 1);
+                    }
+                    if (auto *header = shown->findChild<QWidget *>(QStringLiteral("instanceSettingsHeader")))
+                        for (auto *w : header->findChildren<QAbstractButton *>())
+                            if (w->isVisible()) headerRight = qMax(headerRight, winX(w, w->width()) - 1);
+                    std::fprintf(stdout, "AUDIT %s headerRight=%d fixedRight=%d scrollRight=%d rows:%s bars=%d:%s\n",
+                                 qPrintable(shot.file), headerRight, fixedRight, scrollRight, qPrintable(rowText), dialogBars,
+                                 qPrintable(barText));
+                    if (auto *outline = window.findChild<QWidget *>(QStringLiteral("configFileOutline")); outline != nullptr && outline->isVisible()) {
+                        const QPoint tl = outline->mapTo(&window, QPoint(0, 0));
+                        const auto *editor = page->findChild<QPlainTextEdit *>();
+                        std::fprintf(stdout, "AUDIT %s outline x=[%d,%d) y=[%d,%d) editorBottom=%d\n", qPrintable(shot.file), tl.x(),
+                                     tl.x() + outline->width(), tl.y(), tl.y() + outline->height(),
+                                     editor != nullptr ? editor->mapTo(&window, QPoint(0, editor->height())).y() : -1);
+                    }
+                }
                 std::fflush(stdout);
             }
             QPixmap shotImage = wizard != nullptr ? wizard->grab() : log != nullptr ? log->grab() : window.grab();

@@ -273,6 +273,8 @@ InstanceFilesPage::InstanceFilesPage(QWidget *parent) : QWidget(parent) {
     m_list->viewport()->setMouseTracking(true);
     // 行宽跟着视口走，不许出现横向滚动条，否则那一排按钮会跟着来回滑。
     m_list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    // 整页只有这张列表滚动（视口页）：滑条常驻最右一列，行右侧留出内容间距。
+    Theme::applyViewportScrollGutter(m_list);
     // 用 itemActivated 而不是 itemDoubleClicked：前者是 Qt 说的「用户激活了这一条」
     // —— 双击**和**选中之后按回车都会发它（各平台按自己的习惯），而那正是"打开一个
     // 文件"该有的两种手势。
