@@ -250,6 +250,11 @@ public:
      * NOTE: 产品代码里**不要**调它。
      */
     void seedDownloadInFlightForTest(bool busy) { m_downloadInFlight = busy; }
+    /// **给验证工程摆现场用**：把某实例标为整合包导入占用并走真实收尾回调，用于验证完成后跳转。
+    /// NOTE: 产品代码里**不要**调它。
+    void simulateModpackImportFinishedForTest(const QString &versionId, const QString &message);
+    /// **给验证工程用**：同步重扫已安装实例列表（清理临时测试实例后恢复现场）。
+    void refreshInstalledVersionsForTest() { refreshInstalledVersions(); }
 
     /**
      * @brief **给验证工程摆现场用**：把某一号会话的"启动事实"直接摆出来。

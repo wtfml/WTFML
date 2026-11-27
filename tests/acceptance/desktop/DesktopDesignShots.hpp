@@ -715,6 +715,10 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
         for (const QString &theme : {QStringLiteral("emerald"), QStringLiteral("dark")})
             list.append({QStringLiteral("i149-task-center-step-click-%1-960x620.png").arg(theme), theme, {960, 620}, false, manage,
                          QStringLiteral("i149:step-click")});
+        // #150（FILTER=i150-）：整合包安装完成弹窗点「查看实例」后跳转到新装实例的实例概览页。
+        for (const QString &theme : {QStringLiteral("emerald"), QStringLiteral("dark")})
+            list.append({QStringLiteral("i150-view-instance-overview-%1-1280x800.png").arg(theme), theme, {1280, 800}, false, download,
+                         QStringLiteral("i150:view-instance")});
         // 只出名字含这段字的几张（逐页精修时不必每次跑满 56 张）。
         const QString only = qEnvironmentVariable("WTFML_DESIGN_SHOT_FILTER");
         if (!only.isEmpty())
@@ -1053,6 +1057,25 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                                  workspace->isVisible(), step != nullptr && step->isVisible());
                     std::fflush(stdout);
                 });
+            } else if (shot.page.startsWith(QStringLiteral("i150:"))) {
+                // 在隔离目录里落地一份新导入的整合包实例，走真实导入收尾弹窗并点「查看实例」。
+                const QString id = QStringLiteral("i150-atm9");
+                const QString dir = AppPaths::versionDir(id);
+                QDir().mkpath(dir);
+                if (QFile jar(dir + QLatin1Char('/') + id + QStringLiteral(".jar")); jar.open(QIODevice::WriteOnly))
+                    jar.write("stub");
+                if (QFile json(dir + QLatin1Char('/') + id + QStringLiteral(".json")); json.open(QIODevice::WriteOnly))
+                    json.write("{\"id\":\"i150-atm9\",\"type\":\"release\"}");
+                if (QFile meta(dir + QStringLiteral("/wtfml.meta")); meta.open(QIODevice::WriteOnly))
+                    meta.write("{\"name\":\"All the Mods 9 - ATM9\",\"realVersion\":\"1.20.1\","
+                               "\"loaderName\":\"Forge\",\"loaderVersion\":\"47.3.0\"}");
+                QTimer::singleShot(120, &window, [&window]() {
+                    if (auto *box = window.ui()->overlay()->findChild<InlineMessageBox *>()) {
+                        if (QPushButton *view = box->buttonAt(0)) view->click();
+                    }
+                });
+                window.simulateModpackImportFinishedForTest(
+                    id, QStringLiteral("整合包「All the Mods 9」已导入，实例列表中名称为「All the Mods 9 - ATM9」。"));
             } else if (!shot.page.isEmpty()) QMetaObject::invokeMethod(&window, "openInstanceSettings", Q_ARG(QString, QStringLiteral("create")), Q_ARG(QString, shot.page));
             else if (shot.tab == MainWindowUI::instancesTabIndex()) hoverInstanceRow(window);
         });
@@ -1170,6 +1193,15 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                 }
                 std::fflush(stdout);
             }
+            if (shot.page.startsWith(QStringLiteral("i150:"))) {
+                InstanceSettingsDialog *shown = nullptr;
+                for (auto *dialog : window.findChildren<InstanceSettingsDialog *>())
+                    if (dialog->isVisible()) { shown = dialog; break; }
+                std::fprintf(stdout, "I150 %s tab=%d pageOpen=%d overview=%d\n", qPrintable(shot.file),
+                             window.ui()->getTabWidget()->currentIndex(), window.ui()->overlay()->pageOpen(),
+                             shown != nullptr && shown->currentPageKey() == InstanceSettingsDialog::overviewCategoryKey());
+                std::fflush(stdout);
+            }
             QPixmap shotImage = wizard != nullptr ? wizard->grab() : log != nullptr ? log->grab() : window.grab();
             if (wizard != nullptr) wizard->hide();
             if (shot.page.startsWith(QStringLiteral("edge"))) {
@@ -1208,6 +1240,10 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                                       {"state", int(window.windowState())}});
             if (!shot.page.isEmpty()) {
                 while (window.ui()->overlay()->isOpen()) window.ui()->overlay()->closeOverlay();
+            }
+            if (shot.page.startsWith(QStringLiteral("i150:"))) {
+                QDir(AppPaths::versionDir(QStringLiteral("i150-atm9"))).removeRecursively();
+                window.refreshInstalledVersionsForTest();
             }
             if (shot.page.startsWith(QStringLiteral("toolbox"))) window.ui()->getTabWidget()->setCurrentIndex(MainWindowUI::homeTabIndex());
             QTimer::singleShot(shot.page.isEmpty() ? 0 : 300, &window, step);

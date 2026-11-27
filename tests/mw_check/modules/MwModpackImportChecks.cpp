@@ -623,6 +623,74 @@ int MwModpackImportChecks(const QDir &versionsDir, MainWindow &window, GlobalJav
                   QString::number(QDir(versionsDir).entryList(QDir::Dirs |
                                                               QDir::NoDotAndDotDot).size()));
     }
+    {
+        // ---- #150 整合包安装完成后点「查看实例」：跳到新装实例的实例概览页 ----
+        const QString kImportedId = QStringLiteral("i150-atm9-pack");
+        const QString kDisplayName = QStringLiteral("All the Mods 9 - Test");
+        versionsDir.mkpath(kImportedId);
+        writeFileAt(versionsDir.filePath(kImportedId + QLatin1Char('/') + kImportedId + QStringLiteral(".jar")),
+                    QByteArrayLiteral("stub"));
+        writeFileAt(versionsDir.filePath(kImportedId + QLatin1Char('/') + kImportedId + QStringLiteral(".json")),
+                    QByteArrayLiteral("{\"id\":\"i150-atm9-pack\",\"type\":\"release\"}"));
+        writeFileAt(versionsDir.filePath(kImportedId + QStringLiteral("/wtfml.meta")),
+                    QByteArrayLiteral("{\"name\":\"All the Mods 9 - Test\",\"realVersion\":\"1.20.1\","
+                                      "\"loaderName\":\"Forge\",\"loaderVersion\":\"47.3.0\"}"));
+
+        QTabWidget *tabs = window.ui()->getTabWidget();
+        OverlayHost *overlay = window.ui()->overlay();
+        QDialog underPage(&window);
+        if (tabs != nullptr && overlay != nullptr) {
+            tabs->setCurrentIndex(MainWindowUI::downloadTabIndex());
+            overlay->showPage(&underPage, QStringLiteral("资源详情"), MainWindowUI::downloadTabIndex());
+            QApplication::processEvents();
+        }
+        g_modalTitle.clear();
+        answerNextPrompt(0);  // 点「查看实例」
+        window.simulateModpackImportFinishedForTest(
+            kImportedId,
+            QStringLiteral("整合包「All the Mods 9」已导入，实例列表中名称为「All the Mods 9 - Test」。"));
+        for (int i = 0; i < 6; ++i) {
+            QApplication::processEvents();
+        }
+
+        check(g_modalTitle == QStringLiteral("整合包已安装"),
+              "#150 安装完成弹出「整合包已安装」提示", g_modalTitle);
+        check(tabs != nullptr && tabs->currentIndex() == MainWindowUI::instancesTabIndex(),
+              "#150 点「查看实例」切到「实例」选项卡",
+              tabs != nullptr ? QString::number(tabs->currentIndex()) : QStringLiteral("<null>"));
+        QComboBox *combo = window.ui()->getInstalledVersionCombo();
+        check(combo != nullptr && combo->currentData().toString() == kImportedId,
+              "#150 点「查看实例」选中刚装好的新实例",
+              combo != nullptr ? combo->currentData().toString() : QStringLiteral("<null>"));
+
+        InstanceSettingsDialog *shownDialog = nullptr;
+        for (auto *candidate : window.findChildren<InstanceSettingsDialog *>()) {
+            if (candidate->isVisible()) {
+                shownDialog = candidate;
+                break;
+            }
+        }
+        check(overlay != nullptr && overlay->pageOpen() && shownDialog != nullptr &&
+                  shownDialog->currentPageKey() == InstanceSettingsDialog::overviewCategoryKey() &&
+                  overlayHeading(overlay).contains(kDisplayName) && !underPage.isVisible(),
+              "★ #150 点「查看实例」打开新装实例的实例概览页（并替换掉原下载详情覆盖页）",
+              QStringLiteral("pageOpen=%1 dialog=%2 key=%3 heading=%4")
+                  .arg(overlay != nullptr && overlay->pageOpen())
+                  .arg(shownDialog != nullptr)
+                  .arg(shownDialog != nullptr ? shownDialog->currentPageKey() : QStringLiteral("<null>"))
+                  .arg(overlay != nullptr ? overlayHeading(overlay) : QStringLiteral("<null>")));
+
+        if (overlay != nullptr) {
+            while (overlay->isOpen()) {
+                overlay->closeOverlay();
+            }
+        }
+        QApplication::processEvents();
+        QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        QDir(versionsDir.filePath(kImportedId)).removeRecursively();
+        window.refreshInstalledVersionsForTest();
+        QApplication::processEvents();
+    }
     return 0;
 }
 
