@@ -40,6 +40,35 @@ int MwTaskSummaryChecks(MainWindow &window) {
                   "AB1 还没报过总数：条是不确定态（不编 0%）",
                   QStringLiteral("%1..%2").arg(abBar->minimum()).arg(abBar->maximum()));
 
+            // ---- ①a #147 下一批刚开头的 0 / 0 那一帧不盖掉任务已经写着的那句 ----
+            {
+                abCell->click();  // 浮动面板开着，量它标题下那行跟不跟账本
+                QApplication::processEvents();
+                const auto report = [&window](int done) {
+                    QThread::msleep(250);  // 躲过 200 ms 节流（见 AB2 那段 NOTE）
+                    (void)QMetaObject::invokeMethod(&window, "onVersionDownloadStats", Qt::DirectConnection,
+                                                    Q_ARG(int, done), Q_ARG(int, 0), Q_ARG(int, 0),
+                                                    Q_ARG(QString, QString()));
+                    QApplication::processEvents();
+                };
+                const auto line = [&window] {
+                    auto *pop = window.findChild<QFrame *>(ActivityPopover::objectNameValue());
+                    if (pop != nullptr)
+                        for (QLabel *label : pop->findChildren<QLabel *>())
+                            if (label->objectName().startsWith(QStringLiteral("activityDetail:"))) return label->text();
+                    return QString();
+                };
+                report(3);
+                const QString before = line();
+                report(0);
+                check(before == QStringLiteral("已下载 3 个文件") && line() == before,
+                      "★ #147 手里没有数的那一帧不把标题下那行打回「正在准备下载…」",
+                      before + QStringLiteral(" → ") + line());
+                abCell->click();  // 收起
+                QApplication::processEvents();
+                QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+            }
+
             // ---- ①b 底下**真**摆一批下载（不摆的话下面那条「取消」本来就不该露）----
             // 账本里那位 `canCancel` 只说了"这一类活**允许**取消"；露不露还要过
             // `MainWindow::cancelWouldWork()` —— 它问的是"**这会儿真掐得动吗**"，也就是

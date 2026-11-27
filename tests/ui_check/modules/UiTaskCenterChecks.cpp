@@ -5,6 +5,7 @@
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPointer>
+#include <QTimer>
 int UiTaskCenterChecks(QMainWindow &window, MainWindowUI &ui, QTabWidget * &tabs) {
 
     {
@@ -347,6 +348,47 @@ int UiTaskCenterChecks(QMainWindow &window, MainWindowUI &ui, QTabWidget * &tabs
         QApplication::processEvents();
         check(watch.isNull() || !watch->isVisible(), "I2b 点在面板外面就收起");
         QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    }
+    {
+        // ---------- #147 浮动面板里测不出进度的那件：条要滚，标题下那行跟着任务走 ----------
+        const bool animWas = Anim::enabled();
+        Anim::setEnabled(true);
+        QWidget host;
+        host.resize(900, 700);
+        auto *anchor = new QPushButton(QStringLiteral("任务"), &host);
+        anchor->setGeometry(20, 640, 160, 40);
+        host.show();
+        QString detail = QStringLiteral("正在准备下载…");
+        ActivityPopover::Handlers handlers;
+        handlers.items = [&detail] {
+            TaskCenter::Item run;
+            run.key = QStringLiteral("i147");
+            run.title = QStringLiteral("安装整合包 SkyFactory 4");
+            run.detail = detail;
+            run.state = TaskCenter::State::Running;
+            return QList<TaskCenter::Item>{run};
+        };
+        auto *pop = new ActivityPopover(anchor, handlers);
+        pop->popUp();
+        QApplication::processEvents();
+        const QString barName = ActivityPopover::partName(QStringLiteral("Bar"), QStringLiteral("i147"));
+        auto *bar = pop->findChild<TaskProgressBar *>(barName);
+        auto *tick = bar != nullptr ? bar->findChild<QTimer *>() : nullptr;
+        check(bar != nullptr && bar->minimum() == bar->maximum() && tick != nullptr && tick->isActive(),
+              "★ #147 浮动面板的不确定态进度条是 TaskProgressBar，且定时器在转");
+        detail = QStringLiteral("正在安装 Forge");
+        pop->refresh();
+        QApplication::processEvents();
+        auto *line = pop->findChild<QLabel *>(
+            ActivityPopover::partName(QStringLiteral("Detail"), QStringLiteral("i147")));
+        bar = pop->findChild<TaskProgressBar *>(barName);
+        tick = bar != nullptr ? bar->findChild<QTimer *>() : nullptr;
+        check(line != nullptr && line->text() == detail && tick != nullptr && tick->isActive(),
+              "★ #147 刷新后标题下那行跟着任务更新，重建出来的条照样在转",
+              line != nullptr ? line->text() : QStringLiteral("<没找到>"));
+        pop->close();
+        QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        Anim::setEnabled(animWas);
     }
     {
         // ---------- #149 任务中心叠在覆盖页之上时，点击详情里的执行步骤不能把任务中心关掉 ----------
