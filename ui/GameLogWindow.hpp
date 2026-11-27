@@ -210,17 +210,10 @@ public:
      * @brief 游戏这一趟退出之后，这个窗要不要**自己关掉**。
      * @param exitCode 退出码。
      * @param crashed 是不是异常终止（`QProcess::ExitStatus == CrashExit`）。
-     * @return 正常退出**且**退出码为 0 时为真。
-     *
-     * 游戏正常以 0 退出就自动关闭日志界面。那一趟没有任何可看的东西
-     * （真出了事不会给 0），留着一扇只写着一行"已退出"的窗等于替用户留了个垃圾。
-     *
-     * NOTE: **崩溃（CrashExit）一律不关**，哪怕拿到的码正好是 0：崩溃那一趟正是用户要
-     * 逐行看的时候（见 .cpp 里那行「游戏已崩溃退出」）。这也是这个函数收两个参数
-     * 而不是一个的原因 —— 只看码的话 `CrashExit + 0`（Windows 上杀进程拿到的码）
-     * 会被误判成"正常退出"。
+     * @param abnormalEvidence 调用方根据 `GameExitDiagnosis::isAbnormal()` 判定的额外异常证据（如模组加载失败、新崩溃报告）。
+     * @return 正常退出、退出码为 0 且无异常证据时为真。
      */
-    static bool autoCloseOnExit(int exitCode, bool crashed);
+    static bool autoCloseOnExit(int exitCode, bool crashed, bool abnormalEvidence = false);
 
     // ---------- 数据进 ----------
 
@@ -234,8 +227,8 @@ public:
      * 是这类窗最招人烦的地方。
      */
     void appendText(const QString &text);
-    /// 标题旁那颗徽标开窗时是「运行中」；游戏结束（窗口没自动关）：徽标改成退出码，非 0 / 崩溃按危险色。
-    void setExited(int exitCode, bool crashed);
+    /// 标题旁那颗徽标开窗时是「运行中」；游戏结束（窗口没自动关）：徽标改成退出码，非 0 / 崩溃 / 异常按危险色。
+    void setExited(int exitCode, bool crashed, bool abnormalEvidence = false);
 
     // ---------- 当场读控件 ----------
 

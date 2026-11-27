@@ -579,6 +579,26 @@ int MwGameLogLifecycleChecks(const bool settingsWired, MainWindow &window, QChec
             check(openLogWindows().isEmpty(),
                   "AE7 这一节开的窗也收干净了",
                   QString::number(openLogWindows().size()));
+
+            // (e) #151：退出码 0 但日志含 Forge 加载失败特征 → 日志窗不能自动关掉。
+            const int modFailSession = fakeSession + 25;
+            feedLine(modFailSession,
+                     QStringLiteral("[15:50:52] [main/ERROR]: Missing or unsupported mandatory dependencies:\n"));
+            exitGame(modFailSession, 0, QProcess::NormalExit);
+            GameLogWindow *modFailWin =
+                findLogWindow(QStringLiteral("Missing or unsupported mandatory dependencies:"));
+            check(modFailWin != nullptr && openLogWindows().size() == 1,
+                  "★★ AE7 退出码 0 但含模组加载失败特征 → 日志窗保留不自动关闭",
+                  QString::number(openLogWindows().size()));
+            check(modFailWin != nullptr &&
+                      modFailWin->logText().contains(QStringLiteral("[游戏异常退出，退出码：0]")),
+                  "AE7 而且末行补上了「游戏异常退出，退出码：0」",
+                  modFailWin != nullptr ? modFailWin->logText().right(60) : QString());
+            for (GameLogWindow *left : openLogWindows()) {
+                left->close();
+            }
+            QApplication::processEvents();
+            QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
         }
 
         // ---- ⑧ 收尾：这一节改过的三项要恢复原样 ----

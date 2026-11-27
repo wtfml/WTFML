@@ -24,6 +24,7 @@
 #include <QLatin1Char>
 #include <QStandardPaths>
 #include <QString>
+#include <QStringList>
 #include <QVariant>
 
 namespace AppPaths {
@@ -164,6 +165,19 @@ inline QString replayRecordingsDir() {
 
 inline QString versionDir(const QString &versionId) {
     return versionsDir() + QLatin1Char('/') + versionId;
+}
+
+/// 实例专属 `crash-reports/` 优先，共享目录 `crashReportsDir()` 作为兜底（去重）。
+inline QStringList crashReportDirsFor(const QString &instanceId) {
+    QStringList dirs;
+    if (!instanceId.isEmpty()) {
+        dirs.append(versionDir(instanceId) + QStringLiteral("/crash-reports"));
+    }
+    const QString shared = crashReportsDir();
+    if (!dirs.contains(shared)) {
+        dirs.append(shared);
+    }
+    return dirs;
 }
 
 /// 客户端 jar：versions/<id>/<id>.jar。是"这个版本装好了没有"的判据。

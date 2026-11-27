@@ -2626,6 +2626,8 @@ int main(int argc, char *argv[]) {
         check(!GameLogWindow::autoCloseOnExit(1, true) &&
                   !GameLogWindow::autoCloseOnExit(-1, true),
               "Z9 崩溃退出 → 一律不关（崩栈那几行正是用户要看的）");
+        check(!GameLogWindow::autoCloseOnExit(0, false, true),
+              "Z9 码是 0 但有模组加载失败等异常证据 → 不关（给用户和 CA 留着日志窗）");
         // 上面五条是逐格念的，这一条把"**只有**一种情况会关"钉住：八种组合里只有一个真。
         // 少了它，把函数写成 `return exitCode >= 0;` 那种也躲得过逐格念的那几条。
         int closing = 0;

@@ -16,6 +16,7 @@
 #include "settings/LauncherSettings.hpp"
 #include "tasks/TaskManager.hpp"
 
+#include "util/AppPaths.hpp"
 #include "util/LogFileReader.hpp"
 
 #include <QDateTime>
@@ -506,21 +507,46 @@ void GameSessionController::onGameFinished(int sessionId, int exitCode, QProcess
     // 退出这件事记进那一份快照（「导出错误报告」的头部要写退出码，而**这个值是这一刻才知道
     // 的**、错过就再也拿不到了）。必须排在下面那次 close() **之前**：正常退出会关窗，而关窗
     // 那个 finished 里会把整份快照删掉。
+    const bool crashed = exitStatus == QProcess::CrashExit;
+    const GameSessionFacts sessionLaunch = m_sessionLaunchFacts.value(sessionId);
+    GameLogWindow *logWindow = m_gameLogWindows.value(sessionId, nullptr);
+    QString sessionOutput;
+    if (!userStopped) {
+        sessionOutput = logWindow != nullptr ? logWindow->allLogText() : sessionLogTail(sessionId);
+    }
+    // 判据只有一个出处（`GameExitDiagnosis::isAbnormal()`）：先取本次日志与启动后新生成的
+    // `crash-reports/`，再把结果同时喂给日志窗自动关闭逻辑、启动历史和异常退出报告。
+    GameExitDiagnosis::Facts exitFacts;
+    exitFacts.exitCode = exitCode;
+    exitFacts.crashed = crashed;
+    if (!userStopped) {
+        exitFacts.sawOutOfMemory = GameExitDiagnosis::logShowsOutOfMemory(sessionOutput);
+        exitFacts.sawMissingDependency = GameExitDiagnosis::logShowsMissingDependency(sessionOutput);
+        exitFacts.sawModLoadingFailure = GameExitDiagnosis::logShowsModLoadingFailure(sessionOutput);
+        exitFacts.sawCrashReport =
+            GameExitDiagnosis::logShowsCrashReport(sessionOutput)
+            || GameExitDiagnosis::hasNewCrashReport(AppPaths::crashReportDirsFor(sessionLaunch.instanceId),
+                                                    sessionLaunch.startedAtMs);
+    }
+    const bool abnormalExit = !userStopped && GameExitDiagnosis::isAbnormal(exitFacts);
+
     if (m_gameLogFacts.contains(sessionId)) {
         GameLogFacts &snapshot = m_gameLogFacts[sessionId];
         snapshot.finished = true;
-        snapshot.crashed = exitStatus == QProcess::CrashExit;
+        snapshot.crashed = crashed;
         snapshot.exitCode = exitCode;
     }
-    if (GameLogWindow *logWindow = m_gameLogWindows.value(sessionId, nullptr)) {
+    if (logWindow != nullptr) {
         if (userStopped ||
-            GameLogWindow::autoCloseOnExit(exitCode, exitStatus == QProcess::CrashExit)) {
+            GameLogWindow::autoCloseOnExit(exitCode, crashed, abnormalExit)) {
             logWindow->close();
         } else {
-            logWindow->setExited(exitCode, exitStatus == QProcess::CrashExit);
-            logWindow->appendText(exitStatus == QProcess::CrashExit
+            logWindow->setExited(exitCode, crashed, abnormalExit);
+            logWindow->appendText(crashed
                                       ? tr("\n[游戏已崩溃退出，退出码：%1]\n").arg(exitCode)
-                                      : tr("\n[游戏已退出，退出码：%1]\n").arg(exitCode));
+                                      : (exitCode == 0 && abnormalExit)
+                                            ? tr("\n[游戏异常退出，退出码：%1]\n").arg(exitCode)
+                                            : tr("\n[游戏已退出，退出码：%1]\n").arg(exitCode));
         }
     }
     // 这一份结束了，"用户关过它的日志窗"这件事不再有意义 —— 下一个实例是另一回事，
@@ -537,10 +563,8 @@ void GameSessionController::onGameFinished(int sessionId, int exitCode, QProcess
     // · 那个判据本身只有一个出处（`GameExitDiagnosis::isAbnormal()`），下面
     // 「异常退出补一项」那一支读的也是**同一个值**，不重算第二遍（两处各算一次的话，
     // 以后改判据就会有一处漏改）。
-    const bool abnormalExit =
-        !userStopped && GameExitDiagnosis::isAbnormal(exitCode, exitStatus == QProcess::CrashExit);
     m_launchHistory->recordFinish(
-        m_sessionLaunchFacts.value(sessionId).startedAtMs,
+        sessionLaunch.startedAtMs,
         LaunchHistoryController::resultFor(abnormalExit, m_launchingSessions.contains(sessionId)),
         QDateTime::currentMSecsSinceEpoch());
 
@@ -549,14 +573,13 @@ void GameSessionController::onGameFinished(int sessionId, int exitCode, QProcess
     m_launchingSessions.remove(sessionId);
     // 账本上那件「启动 X」要是**还活着**，说明这一次它一行输出都没出就结束了（正常那一
     // 路在上面 onProcessOutput() / onProcessError() 里已经收过尾了，那个表里就没它了）。
-    // 进程起来了但游戏自己没撑到能打日志 —— 按退出码如实说，不一律记成失败：以 0 退出
-    // 的（比如用户刚进去就自己关了）确实是一次成功的启动。
+    // 进程起来了但游戏自己没撑到能打日志 —— 按退出码与异常证据如实收尾。
     //
     // NOTE: 对已经成功收过尾的那一件，这里什么都不做（终态只落一次，见 TaskManager::finish），
     // 所以"游戏跑了三小时后正常退出"不会把那次成功改写成失败。
     const auto finishingLaunchTask = m_launchTaskIds.take(sessionId);
     const bool outputSeen = m_awaitingWindow.remove(sessionId) > 0;  // 出过话、窗口还没出来就退了
-    const bool launchSucceeded = exitCode == 0 && exitStatus != QProcess::CrashExit;
+    const bool launchSucceeded = !abnormalExit;
     // 用户自己按的「停止游戏」不是失败。`kill()` 在 Windows 上报的是
     // CrashExit / 非零退出码，不看 `userStopped` 的话，一次**主动取消**会以
     // 「游戏进程没等到能打日志就结束了，退出码 1」收尾 —— 任务中心多一行红色失败、
@@ -692,12 +715,14 @@ void GameSessionController::seedSessionFacts(int sessionId, const QString &versi
                                              const QString &displayName, int requiredJavaMajor,
                                              const QString &javaPath, int xmxMb, int xmsMb,
                                              const QString &loaderName,
-                                             const QString &loaderVersion) {
+                                             const QString &loaderVersion,
+                                             qint64 startedAtMs) {
     // 见 MainWindow 里那个同名入口的说明：产品这一侧的唯一写点在 LaunchController 里，
     // 而它要真起一个游戏进程 —— 验证工程摆不出真进程，所以这一格直接摆。
     GameSessionFacts facts;
     facts.instanceId = versionId;
     facts.instanceName = displayName;
+    facts.startedAtMs = startedAtMs;
     facts.requiredJavaMajor = requiredJavaMajor;
     facts.javaPath = javaPath;
     facts.xmxMb = xmxMb;

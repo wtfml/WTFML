@@ -81,6 +81,11 @@ CrashReportController::Record CrashReportController::buildRecord(
     // 报告的「可能的原因」里却一条都不提"。展示可以截，判据不能截。
     record.facts.sawOutOfMemory = GameExitDiagnosis::logShowsOutOfMemory(fullLog);
     record.facts.sawMissingDependency = GameExitDiagnosis::logShowsMissingDependency(fullLog);
+    record.facts.sawModLoadingFailure = GameExitDiagnosis::logShowsModLoadingFailure(fullLog);
+    record.facts.sawCrashReport =
+        GameExitDiagnosis::logShowsCrashReport(fullLog)
+        || GameExitDiagnosis::hasNewCrashReport(AppPaths::crashReportDirsFor(launch.instanceId),
+                                                launch.startedAtMs);
     record.facts.sawManualDebugCrash = GameExitDiagnosis::logShowsManualDebugCrash(fullLog);
     return record;
 }

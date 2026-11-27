@@ -265,10 +265,10 @@ public:
     void seedSessionFactsForTest(int sessionId, const QString &versionId, const QString &displayName,
                                  int requiredJavaMajor, const QString &javaPath, int xmxMb,
                                  int xmsMb, const QString &loaderName,
-                                 const QString &loaderVersion) {
+                                 const QString &loaderVersion, qint64 startedAtMs = 0) {
         m_gameSessionController->seedSessionFacts(sessionId, versionId, displayName,
                                                   requiredJavaMajor, javaPath, xmxMb, xmsMb,
-                                                  loaderName, loaderVersion);
+                                                  loaderName, loaderVersion, startedAtMs);
     }
 
     /// 给验证工程摆现场：这一号会话是用户从启动器里主动停止的。
