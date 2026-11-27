@@ -6,6 +6,7 @@
 #include "TaskProgressBar.hpp"
 
 #include <QApplication>
+#include <QElapsedTimer>
 #include <QPaintEvent>
 #include <QPainter>
 #include <QTimer>
@@ -19,11 +20,22 @@ namespace {
 /// 大半条都是它。
 constexpr qreal kBusyBandFraction = 0.32;
 
-/// 相位每 16 ms（≈ 一帧 60 Hz）往前挪多少。0.012 ⇒ 一整圈约 1.3 秒。
-constexpr qreal kBusyPhaseStep = 0.012;
+/// 那截带子滚一整圈多久（毫秒）。
+constexpr qint64 kBusyPeriodMs = 1333;
 
-/// 相位定时器的间隔（毫秒）。
+/// 重画定时器的间隔（毫秒，≈ 一帧 60 Hz）。
 constexpr int kBusyTickMs = 16;
+
+/// 现在滚到哪儿（0..1）。按单调时钟算、不记在控件里：任务中心每次刷新都重建这根条，
+/// 记在控件里的话下载时 200 ms 一刷，带子永远回到起点。关掉动效时恒 0（定住的那一格）。
+qreal busyPhase() {
+    static const QElapsedTimer clock = [] {
+        QElapsedTimer t;
+        t.start();
+        return t;
+    }();
+    return Anim::enabled() ? qreal(clock.elapsed() % kBusyPeriodMs) / qreal(kBusyPeriodMs) : 0.0;
+}
 
 }  // namespace
 
@@ -33,18 +45,7 @@ TaskProgressBar::TaskProgressBar(QWidget *parent) : QProgressBar(parent) {
     setTextVisible(false);
     m_busyTimer = new QTimer(this);
     m_busyTimer->setInterval(kBusyTickMs);
-    connect(m_busyTimer, &QTimer::timeout, this, [this] {
-        // 只在**动效开着**时推相位。产品里动效始终开；测试 / 验收截图调
-        // `Anim::setEnabled(false)` 跳终态时 ⇒ 相位定在 0，那截带子**不动**（颜色照旧，只是不滚）。
-        if (!Anim::enabled()) {
-            return;
-        }
-        m_phase += kBusyPhaseStep;
-        if (m_phase > 1.0) {
-            m_phase -= 1.0;
-        }
-        update();
-    });
+    connect(m_busyTimer, &QTimer::timeout, this, qOverload<>(&QWidget::update));
 }
 
 void TaskProgressBar::syncBusyTimer() {
@@ -101,7 +102,7 @@ void TaskProgressBar::paintEvent(QPaintEvent *) {
         painter.setPen(QPen(fill, side * 2.5 / 28.0, Qt::SolidLine, Qt::RoundCap));
         if (minimum() == maximum()) {
             // 测不出总量：一段三成长的弧绕圈转。
-            painter.drawArc(circle, int((90 - 360 * m_phase) * 16), int(-0.3 * 360 * 16));
+            painter.drawArc(circle, int((90 - 360 * busyPhase()) * 16), int(-0.3 * 360 * 16));
             return;
         }
         const int span = maximum() - minimum();
@@ -118,7 +119,7 @@ void TaskProgressBar::paintEvent(QPaintEvent *) {
     // 不确定态：`minimum() == maximum()`（底栏"有东西在跑但说不清到哪"那一档）。
     if (minimum() == maximum()) {
         const qreal band = w * kBusyBandFraction;
-        const qreal x = -band + (w + band * 2) * m_phase;
+        const qreal x = -band + (w + band * 2) * busyPhase();
         QLinearGradient gradient(x, 0, x + band, 0);
         QColor clear = fill;
         clear.setAlpha(0);

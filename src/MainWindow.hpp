@@ -3093,6 +3093,9 @@ private:
     // 由 enterSyncWait() 写进来、leaveSyncWait() 清掉 —— 做成字符串而不是布尔量，
     // 是因为"在等什么"只有进那一段的人知道（换令牌 / 挑 Java / 等进程起来）。
     QString m_syncWaitStatus;
+    /// `updateDownloadProgressUi()` 上一次往任务里写的那句说明。账本里的说明和它不同 =
+    /// 别人写的阶段说明（「正在安装 Forge…」），没有数的那一帧不盖掉它。
+    QString m_lastDownloadDetail;
     /// 同步等待**可以嵌套**（换令牌那一段自己会转嵌套事件循环，而那个循环里还能再点进
     /// 另一条会同步等的路）。这一摞记的是每一层进来**之前**那一句：内层离开时要把外层
     /// 那句还回去，而不是把"在等什么"和忙指针一起收掉（见 enterSyncWait()）。

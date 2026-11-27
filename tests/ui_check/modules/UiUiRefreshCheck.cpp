@@ -6,6 +6,7 @@
 #include "TaskCenterPanel.hpp"
 #include <QMouseEvent>
 #include <QThread>
+#include <QTimer>
 int UiUiRefreshCheck(QApplication &app) {
 
         const int fontId = QFontDatabase::addApplicationFont(QDir(qEnvironmentVariable("WINDIR")).filePath(QStringLiteral("Fonts/msyh.ttc")));
@@ -1050,6 +1051,46 @@ int UiUiRefreshCheck(QApplication &app) {
                            "clicking the only selected row clears selection and closes action panel");
                 }
             }
+        }
+        {
+            // #147：浮动面板里测不出进度的那件，条要滚，标题下那行跟着任务走。
+            const bool animWas = Anim::enabled();
+            Anim::setEnabled(true);
+            QWidget host;
+            host.resize(900, 700);
+            auto *anchor = new QPushButton(QStringLiteral("Tasks"), &host);
+            anchor->setGeometry(20, 640, 160, 40);
+            host.show();
+            QString detail = QStringLiteral("preparing");
+            ActivityPopover::Handlers handlers;
+            handlers.items = [&detail] {
+                TaskCenter::Item run;
+                run.key = QStringLiteral("i147");
+                run.title = QStringLiteral("Install modpack");
+                run.detail = detail;
+                run.state = TaskCenter::State::Running;
+                return QList<TaskCenter::Item>{run};
+            };
+            auto *pop = new ActivityPopover(anchor, handlers);
+            pop->popUp();
+            app.processEvents();
+            const auto ticking = [pop] {
+                auto *bar = pop->findChild<TaskProgressBar *>(
+                    ActivityPopover::partName(QStringLiteral("Bar"), QStringLiteral("i147")));
+                auto *timer = bar != nullptr ? bar->findChild<QTimer *>() : nullptr;
+                return bar != nullptr && bar->minimum() == bar->maximum() && timer != nullptr && timer->isActive();
+            };
+            expect(ticking(), "popover indeterminate bar is a ticking TaskProgressBar");
+            detail = QStringLiteral("installing loader");
+            pop->refresh();
+            app.processEvents();
+            auto *line = pop->findChild<QLabel *>(
+                ActivityPopover::partName(QStringLiteral("Detail"), QStringLiteral("i147")));
+            expect(line != nullptr && line->text() == detail && ticking(),
+                   "popover refresh updates the detail line and the rebuilt bar keeps ticking");
+            pop->close();
+            QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+            Anim::setEnabled(animWas);
         }
         printf("UI refresh check: %d failure(s)\n", failures);
     return failures == 0 ? 0 : 1;

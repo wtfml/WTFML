@@ -2,7 +2,7 @@
  * @file TaskProgressBar.hpp
  * @brief 自绘的进度条（统一自绘任务进度组件）。
  *
- * 三处进度条（底栏中间那格的摘要、任务中心面板里每一行、任务详情页）**共用这一条**，
+ * 任务进度条（底栏中间那格的摘要、任务中心浮动面板与整页、任务详情页）**共用这一条**，
  * 而不是各自就地 new 一颗原生 `QProgressBar`。
  *
  * 【为什么是 `QProgressBar` 的子类，而不是另起一个 `QWidget`】
@@ -21,8 +21,8 @@
  * 也一并关掉了（`ui_modernize.py audit` 里那条 "progress text enabled" 就是它）。
  *
  * 总量未知（`minimum() == maximum()`，底栏"有东西在跑、说不清到哪"那一档）画一截**来回
- * 滚的带子**；相位只在 `Anim::enabled()` 时往前推（关掉动效、以及 ui_shot 那种"像素每次
- * 都要一样"的场合 ⇒ 一条**不动**的带子，定住一个确定相位）。
+ * 滚的带子**；相位按单调时钟算（条被重建也接着滚）。关掉动效、以及 ui_shot 那种"像素每次
+ * 都要一样"的场合 ⇒ 一条**不动**的带子，定住相位 0。
  */
 
 #pragma once
@@ -50,12 +50,10 @@ protected:
     void hideEvent(QHideEvent *event) override;
 
 private:
-    /// 这一格现在**该不该**有个定时器在推相位（确定态 / 藏起来 / 关了动效 ⇒ 都不该）。
+    /// 这一格现在**该不该**有个定时器在催重画（确定态 / 藏起来 / 关了动效 ⇒ 都不该）。
     /// 幂等：状态没变就什么都不做。paint 一趟、显隐各一趟都会问它。
     void syncBusyTimer();
 
-    /// 不确定态那一截现在滚到哪儿（0..1）。关掉动效时恒 0（定住的那一格）。
-    qreal m_phase = 0.0;
     bool m_ring = false;
     bool m_fullAccent = false;
     QTimer *m_busyTimer = nullptr;

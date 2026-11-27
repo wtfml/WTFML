@@ -5,6 +5,7 @@
 #include "ActivityPopover.hpp"
 #include <QCoreApplication>
 
+#include "TaskProgressBar.hpp"
 #include "Theme.hpp"
 #include "VersionIcons.hpp"
 
@@ -86,29 +87,6 @@ QPushButton *textButton(const QString &text, const QString &name, QWidget *paren
     button->setCursor(Qt::PointingHandCursor);
     return button;
 }
-
-/// 4px 细进度条（设计稿 .bar）；percent < 0 画一段不确定态。
-class ThinBar : public QWidget {
-public:
-    ThinBar(int percent, QWidget *parent) : QWidget(parent), m_percent(percent) { setFixedHeight(4); }
-protected:
-    void paintEvent(QPaintEvent *) override {
-        const Theme::Tokens t = Theme::tokens();
-        QPainter p(this);
-        p.setRenderHint(QPainter::Antialiasing, true);
-        p.setPen(Qt::NoPen);
-        p.setBrush(t.track);
-        p.drawRoundedRect(rect(), 2, 2);
-        p.setBrush(t.primary);
-        if (m_percent >= 0) {
-            p.drawRoundedRect(QRectF(0, 0, width() * qBound(0, m_percent, 100) / 100.0, height()), 2, 2);
-        } else {
-            p.drawRoundedRect(QRectF(width() * 0.3, 0, width() * 0.25, height()), 2, 2);
-        }
-    }
-private:
-    int m_percent;
-};
 
 /// 整行可点（进详情）的那一层。
 class ClickRow : public QWidget {
@@ -268,9 +246,18 @@ void ActivityPopover::rebuild() {
         if (!item.detail.isEmpty()) {
             auto *detail = textLabel(item.detail, row, Theme::TextRole::Caption, t.secondary);
             detail->setText(QFontMetrics(detail->font()).elidedText(item.detail, Qt::ElideRight, kWidth - 2 * kPadding - 12));
+            detail->setObjectName(partName(QStringLiteral("Detail"), item.key));
             col->addWidget(detail);
         }
-        col->addWidget(new ThinBar(item.percent, row));
+        // 测不出总量时只有正在跑的那件滚不确定态；暂停 / 等待操作的不画（滚着像还在下）。
+        if (item.percent >= 0 || item.state == State::Running) {
+            auto *bar = new TaskProgressBar(row);
+            bar->setObjectName(partName(QStringLiteral("Bar"), item.key));
+            bar->setRange(0, item.percent < 0 ? 0 : 100);
+            if (item.percent >= 0) bar->setValue(qMin(item.percent, 100));
+            bar->setFixedHeight(4);
+            col->addWidget(bar);
+        }
         for (const TaskCenter::Step &raw : item.steps) {
             const TaskCenter::Step step = TaskCenter::stepForTask(item.state, raw);
             auto *line = new QHBoxLayout;
@@ -282,11 +269,18 @@ void ActivityPopover::rebuild() {
             else if (step.state == TaskCenter::StepState::Running) { icon = QStringLiteral("runc"); ink = t.primary; }
             else if (step.state == TaskCenter::StepState::Failed) { icon = QStringLiteral("xc"); ink = t.danger; }
             line->addWidget(iconLabel(icon, ink, row, 16));
-            line->addWidget(textLabel(step.name, row, Theme::TextRole::Caption,
-                                      step.state == TaskCenter::StepState::Running ? t.text : t.secondary,
-                                      step.state == TaskCenter::StepState::Running), 1);
-            if (!step.note.isEmpty())
-                line->addWidget(textLabel(step.note, row, Theme::TextRole::Caption, t.secondary));
+            auto *name = textLabel(step.name, row, Theme::TextRole::Caption,
+                                   step.state == TaskCenter::StepState::Running ? t.text : t.secondary,
+                                   step.state == TaskCenter::StepState::Running);
+            line->addWidget(name, 1);
+            if (!step.note.isEmpty()) {
+                // 长注记省略号收尾：不截的话整块内容被撑得比面板宽，右边被切掉。
+                auto *note = textLabel(QString(), row, Theme::TextRole::Caption, t.secondary);
+                const int room = kWidth - 2 * kPadding - 52 - name->sizeHint().width();
+                note->setText(QFontMetrics(note->font()).elidedText(step.note, Qt::ElideRight, qMax(40, room)));
+                if (note->text() != step.note) note->setToolTip(step.note);
+                line->addWidget(note);
+            }
             col->addLayout(line);
         }
         m_bodyLayout->addWidget(row);

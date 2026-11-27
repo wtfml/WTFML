@@ -40,6 +40,47 @@ int MwTaskSummaryChecks(MainWindow &window) {
                   "AB1 还没报过总数：条是不确定态（不编 0%）",
                   QStringLiteral("%1..%2").arg(abBar->minimum()).arg(abBar->maximum()));
 
+            // ---- ①a #147 下一批刚开头的 0 / 0 那一帧不盖掉任务已经写着的那句 ----
+            {
+                abCell->click();  // 浮动面板开着，量它标题下那行跟不跟账本
+                QApplication::processEvents();
+                const auto report = [&window](int done) {
+                    QThread::msleep(250);  // 躲过 200 ms 节流（见 AB2 那段 NOTE）
+                    (void)QMetaObject::invokeMethod(&window, "onVersionDownloadStats", Qt::DirectConnection,
+                                                    Q_ARG(int, done), Q_ARG(int, 0), Q_ARG(int, 0),
+                                                    Q_ARG(QString, QString()));
+                    QApplication::processEvents();
+                };
+                const auto line = [&window] {
+                    auto *pop = window.findChild<QFrame *>(ActivityPopover::objectNameValue());
+                    if (pop != nullptr)
+                        for (QLabel *label : pop->findChildren<QLabel *>())
+                            if (label->objectName().startsWith(QStringLiteral("activityDetail:"))) return label->text();
+                    return QString();
+                };
+                // 上一批自己写的计数：下一批 0 / 0 那一帧照常回到「正在准备下载…」。
+                report(3);
+                const QString counted = line();
+                report(0);
+                check(counted == QStringLiteral("已下载 3 个文件") && line() == QStringLiteral("正在准备下载…"),
+                      "★ #147 上一批写的计数不留到下一批：0 / 0 那一帧回到「正在准备下载…」",
+                      counted + QStringLiteral(" → ") + line());
+                // 别人写的阶段说明：0 / 0 那一帧不盖掉它。
+                Tasks::TaskManager *ledger = nullptr;
+                if (auto *activity = window.findChild<ActivityCenterController *>()) ledger = activity->tasks();
+                Tasks::TaskId running = Tasks::invalidTaskId();
+                for (const Tasks::TaskSnapshot &task : ledger != nullptr ? ledger->all() : QList<Tasks::TaskSnapshot>())
+                    if (Tasks::isActiveState(task.state) && task.title == QStringLiteral("下载游戏文件")) running = task.id;
+                const QString stage = QStringLiteral("正在安装 Forge…");
+                if (ledger != nullptr && running != Tasks::invalidTaskId()) ledger->setDetail(running, stage);
+                QApplication::processEvents();
+                report(0);
+                check(line() == stage, "★ #147 手里没有数的那一帧不把阶段说明打回「正在准备下载…」", line());
+                abCell->click();  // 收起
+                QApplication::processEvents();
+                QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+            }
+
             // ---- ①b 底下**真**摆一批下载（不摆的话下面那条「取消」本来就不该露）----
             // 账本里那位 `canCancel` 只说了"这一类活**允许**取消"；露不露还要过
             // `MainWindow::cancelWouldWork()` —— 它问的是"**这会儿真掐得动吗**"，也就是

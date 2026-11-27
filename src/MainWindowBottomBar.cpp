@@ -380,7 +380,13 @@ void MainWindow::updateDownloadProgressUi(int done, int total, int failed,
         // 文件总字节已知时按字节画进度，其余情况由账本按已处理文件数计算。
         const auto [bytesDone, bytesTotal] = m_versionManager->downloads()->batchByteProgress();
         m_activityCenter->tasks()->setBatchTransfer(task, done, total, bytesDone, bytesTotal);
-        m_activityCenter->tasks()->setDetail(task, detail);
+        // 手里一个数都没有的那一帧（下一批刚开头）不盖掉别人写的阶段说明；
+        // 空的、或者是这里上次写的计数，照常换成「正在准备下载…」。
+        const QString current = m_activityCenter->tasks()->snapshot(task).detail;
+        if (total > 0 || downloaded > 0 || current.isEmpty() || current == m_lastDownloadDetail) {
+            m_activityCenter->tasks()->setDetail(task, detail);
+            m_lastDownloadDetail = detail;
+        }
         // ⚠ 这一段里**不要**再自己写进度条和状态栏。它们由 `taskChanged` → 底栏重画那一发
         // 统一摆（`Anim::smoothProgress()` 也在那条路上）——两处各写一次，用户看到的是
         // 同一格在 240 ms 的追值动画里被第二只手按住，实际表现是"条子偶尔一顿"。
