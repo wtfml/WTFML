@@ -820,6 +820,27 @@ int UiLifecycleCheck(QApplication &app) {
         resource.modSettingsButton()->click();
         expect(configRequests == 1 && !resource.modSettingsButton()->isEnabled(),
                "reusing detail page for downloads resets config access");
+        {
+            // #136 深色下构造、再切浅色：游玩记录两行和页眉副题要跟着换色。
+            const Theme::Spec before = Theme::current();
+            Theme::setSpec(Theme::presetSpec(QStringLiteral("dark")));
+            Theme::apply(app);
+            Dlg themed(QStringLiteral("Test"), QStringLiteral("test"), Dlg::Override(),
+                       Dlg::GlobalValues(), {}, true);
+            themed.show();
+            app.processEvents();
+            Theme::setSpec(Theme::presetSpec(QStringLiteral("emerald")));
+            Theme::apply(app);
+            app.processEvents();
+            for (const QString &name : {QStringLiteral("instanceLastLaunch"), QStringLiteral("instancePlayTime"),
+                                        Dlg::headerMetaName()}) {
+                auto *label = themed.findChild<QLabel *>(name);
+                expect(label && label->palette().color(QPalette::WindowText) == Theme::tokens().secondary,
+                       "secondary text line follows the theme switched after construction");
+            }
+            Theme::setSpec(before);
+            Theme::apply(app);
+        }
         return failures == 0 ? 0 : 1;
     
  return 0;
