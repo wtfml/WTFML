@@ -180,12 +180,13 @@ void DownloadManager::finishSegmentedJob(ResumableDownload *task, bool success,
         failed.expectedSha1 = record.expectedSha1;
         failed.expectedSize = record.expectedSize;
         failed.officialUrl = record.officialUrl;
+        failed.reason = error.isEmpty()
+            ? QCoreApplication::translate("DownloadManagerSegmented", "分段下载失败") : error;
         m_failedJobInfos.append(failed);
         if (!record.destinationPath.isEmpty() && !m_failedPaths.contains(record.destinationPath)) {
             m_failedPaths << record.destinationPath;
         }
-        emit downloadFinished(fileName, false,
-                              error.isEmpty() ? QCoreApplication::translate("DownloadManagerSegmented", "分段下载失败") : error);
+        emit downloadFinished(fileName, false, failed.reason);
     }
 
     if (DownloadDiag::enabled()) {

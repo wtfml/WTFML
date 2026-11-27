@@ -232,6 +232,26 @@ bool isForgeCdnRedirect(const QNetworkReply *reply) {
            entry.host() == QLatin1String("edge.forgecdn.net") && landed.host() == QLatin1String("mediafilez.forgecdn.net");
 }
 
+QString resourceCdnFallback(const QUrl &url) {
+    if (url.scheme() != QLatin1String("https") || url.port() != -1 ||
+        !url.userInfo().isEmpty() || url.hasQuery() || url.hasFragment()) {
+        return {};
+    }
+    const QString host = url.host();
+    const QString path = url.path(QUrl::FullyEncoded);
+    if ((host == QLatin1String("cdn.modrinth.com") && path.startsWith(QLatin1String("/data/"))) ||
+        ((host == QLatin1String("edge.forgecdn.net") || host == QLatin1String("mediafilez.forgecdn.net") ||
+          host == QLatin1String("media.forgecdn.net")) && path.startsWith(QLatin1String("/files/")))) {
+        QUrl mirror = url;
+        mirror.setHost(QStringLiteral("mod.mcimirror.top"));
+        QString mirrorPath = path;
+        mirrorPath.replace(QLatin1Char('+'), QStringLiteral("%2B"));
+        mirror.setPath(mirrorPath, QUrl::StrictMode);
+        return mirror.toString(QUrl::FullyEncoded);
+    }
+    return {};
+}
+
 }  // namespace
 
 void DownloadManager::demoteMirrorForSlowDownload(const QString &host) {
@@ -963,6 +983,12 @@ void DownloadManager::scheduleFile(const QString &url, const QString &destinatio
         const QString domestic = mirrorUrl(url);
         if (domestic != url) job.officialUrl = domestic;
     }
+    // 社区 CDN 只用于有平台哈希的完整文件。清单已提供的备用地址优先。
+    if (expectedSha1.size() == 40 && !range.active() &&
+        (job.officialUrl.isEmpty() || job.officialUrl == url)) {
+        const QString fallback = resourceCdnFallback(QUrl(url));
+        if (!fallback.isEmpty()) job.officialUrl = fallback;
+    }
     job.expectedSize = expectedSize;
     job.mode = mode;
     job.range = range;
@@ -1477,6 +1503,7 @@ void DownloadManager::handleDownloadError(QNetworkReply *reply, const QString &e
     failed.expectedSha1 = expectedSha1s.value(reply);
     failed.expectedSize = expectedSizes.value(reply, -1);
     failed.officialUrl = m_officialFallbacks.value(reply);
+    failed.reason = errorMessage;
     if (failed.url.isEmpty() && !failed.officialUrl.isEmpty()) {
         failed.url = failed.officialUrl;
     }
@@ -1869,6 +1896,7 @@ bool DownloadManager::retryWithOfficialUrl(QNetworkReply *reply, const QString &
         m_streamedFiles.remove(reply);
         m_replyGenerations.remove(reply);
         m_stallMeters.remove(reply);
+        m_throttledReplies.remove(reply);
         // 计数在这里还回去：这条作业回到"排队中"了，发送那一步（startDownload）会再加回来。
         // 调用方拿到 true 会立刻 return，不会自己再减一次 --pendingDownloads —— 两处只能有
         // 一处减，减两次数就对不上（症状是整批提前宣布下完）。
@@ -1878,7 +1906,9 @@ bool DownloadManager::retryWithOfficialUrl(QNetworkReply *reply, const QString &
             pendingDownloads = 0;
         }
         // 摘完表再收尾：这条回复已经结账了，晚到的 finished 会在入口处被"没登记"挡掉。
+        if (!reply->isFinished()) reply->abort();
         reply->deleteLater();
+        updateBatchFileBytes(destinationPath, 0);
         requeueDownloadJob(
             PendingJob{officialUrl, destinationPath, expectedSha1, expectedSize, QString(),
                        retryHost, 0, 0, rangeOf(reply),
@@ -2249,6 +2279,10 @@ void DownloadManager::onDownloadReplyFinished() {
         errorMessage = stream->error;
     } else if (!rangeError.isEmpty()) {
         errorMessage = rangeError;
+    } else if (reply->error() == QNetworkReply::TimeoutError &&
+               m_stallMeters.value(reply).bytesSeen == 0 && (!stream || stream->bytes == 0)) {
+        errorMessage = tr("下载节点 %1 在 %2 秒内未返回数据。")
+                           .arg(reply->url().host()).arg(reply->request().transferTimeout() / 1000);
     } else if (reply->error() != QNetworkReply::NoError) {
         errorMessage = DownloadRetryPolicy::displayError(reply->error(), reply->errorString());
     } else if (reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() != (range.active() ? 206 : 200)) {
@@ -2417,7 +2451,9 @@ void DownloadManager::onStallWatchdogTick() {
                         : m_noFirstByteGiveUpMs)) {
             const QUrl landed = reply->url();
             const QUrl entry = reply->request().url();
-            noteDeadRedirectTarget(landed, entry, m_officialFallbacks.value(reply));
+            if (!isForgeCdnRedirect(reply)) {
+                noteDeadRedirectTarget(landed, entry, m_officialFallbacks.value(reply));
+            }
             stalled.append(reply);
             continue;
         }
@@ -2591,7 +2627,10 @@ void DownloadManager::failWedgedDownload(QNetworkReply *reply, qint64 giveUpMs) 
     const bool mirrorJob = m_officialFallbacks.contains(reply);
     const bool retryCdnEntry = wedgedAttempts == 0 && isForgeCdnRedirect(reply) &&
                                m_stallMeters.value(reply).bytesSeen == 0;
-    if ((mirrorJob || retryCdnEntry) && !m_shuttingDown && wedgedDelay >= 0 && replyIsFromCurrentBatch(reply)) {
+    const bool communityFallback = QUrl(m_officialFallbacks.value(reply)).host() ==
+                                   QLatin1String("mod.mcimirror.top");
+    if (((mirrorJob && !communityFallback) || retryCdnEntry) && !m_shuttingDown &&
+        wedgedDelay >= 0 && replyIsFromCurrentBatch(reply)) {
         updateBatchFileBytes(destPath, 0);
         const QString retryUrl = reply->request().url().toString();
         requeueDownloadJob(PendingJob{retryUrl, destPath, expectedSha1s.value(reply),
@@ -2649,12 +2688,16 @@ void DownloadManager::failWedgedDownload(QNetworkReply *reply, qint64 giveUpMs) 
         return;
     }
 
+    if (communityFallback && !m_shuttingDown &&
+        retryWithOfficialUrl(reply, destPath, &DownloadManager::onDownloadReplyFinished)) {
+        return;
+    }
+
     // 顺序不能反：handleDownloadError() 靠 activeDownloads 反查路径来记失败清单，
     // 所以先报错、再摘表。摘完表之后哪怕 abort() 真的憋出一个迟到的 finished，
     // 那两个处理函数开头也会把"没登记的回复"直接忽略掉 —— 不会重复计数。
-    handleDownloadError(reply,
-                        QStringLiteral("No data received within %1 s, gave up")
-                            .arg(giveUpMs / 1000));
+    handleDownloadError(reply, tr("下载节点 %1 在 %2 秒内未返回数据。")
+                                   .arg(reply->url().host()).arg(giveUpMs / 1000));
     // 问代次**必须在摘表之前**：摘完之后查不到记录，默认值就是"当前这一批"，那就等于没判。
     const bool currentBatch = replyIsFromCurrentBatch(reply);
     activeDownloads.remove(reply);

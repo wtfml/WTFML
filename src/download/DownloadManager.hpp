@@ -637,6 +637,7 @@ public:
         qint64 expectedSize = -1;
         /// 走镜像时留着的那条退路（空 = 没有）。重试时照样带着。
         QString officialUrl;
+        QString reason;
     };
 
     /// **上一次收尾的那一批**里失败的那几条。`beginBatch()` 会清空它。

@@ -1,4 +1,5 @@
 #include "Support.hpp"
+#include "download/ResourceStore.hpp"
 
 #include <QEventLoop>
 #include <QTimer>
@@ -18,12 +19,18 @@ public:
             if (isFinished()) return;
             if (m_body == QByteArray("NETWORK_FAILURE"))
                 setError(QNetworkReply::UnknownNetworkError, QStringLiteral("controlled failure"));
-            if (m_body == QByteArray("FORGE_REDIRECT_STALL")) {
+            if (m_body == QByteArray("NETWORK_FAILURE") || m_body == QByteArray("NOT_FOUND")) {
+                setAttribute(QNetworkRequest::HttpStatusCodeAttribute,
+                             m_body == QByteArray("NOT_FOUND") ? 404 : 503);
+            }
+            if (m_body == QByteArray("FORGE_REDIRECT_STALL") || m_body == QByteArray("FORGE_REDIRECT_SLOW")) {
+                const bool slow = m_body == QByteArray("FORGE_REDIRECT_SLOW");
                 const QUrl target(QStringLiteral("https://mediafilez.forgecdn.net/files/test"));
-                m_body.clear();
+                m_body = slow ? QByteArray("o") : QByteArray();
                 emit redirected(target);
                 setUrl(target);
-                setAttribute(QNetworkRequest::HttpStatusCodeAttribute, 302);
+                setAttribute(QNetworkRequest::HttpStatusCodeAttribute, slow ? 200 : 302);
+                if (slow) emit readyRead();
                 return;
             }
             if (m_body == QByteArray("REDIRECT_DNS_FAILURE")) {
@@ -264,6 +271,78 @@ void runDownloadConcurrencyTests() {
         loop.exec();
         check(succeeded && network->urls == QList<QUrl>{entry, entry},
               "CurseForge 跳转后未收到正文时从原入口重试");
+    }
+    for (int scenario : {0, 1, 2}) {
+        const bool startWithProgress = scenario == 2;
+        const bool mirrorOk = scenario != 1;
+        QTemporaryDir directory;
+        const QUrl entry(QStringLiteral("https://edge.forgecdn.net/files/123/456/mod+forge.jar"));
+        const QUrl mirror(QStringLiteral("https://mod.mcimirror.top/files/123/456/mod%2Bforge.jar"));
+        ManifestRaceNetwork *network = nullptr;
+        DownloadManager manager(nullptr, [&](QObject *owner) {
+            network = new ManifestRaceNetwork(owner, [&](const QUrl &url, int) {
+                if (url == mirror) return qMakePair(mirrorOk ? QByteArray("ok") : QByteArray("no"), 5);
+                return qMakePair(QByteArray(startWithProgress ? "FORGE_REDIRECT_SLOW" : "FORGE_REDIRECT_STALL"), 5);
+            });
+            return network;
+        });
+        manager.setNoProgressGiveUpMs(startWithProgress ? 2000 : 20);
+        const QString path = directory.filePath(QStringLiteral("mod.jar"));
+        const QString sha1 = QString::fromLatin1(QCryptographicHash::hash("ok", QCryptographicHash::Sha1).toHex());
+        QEventLoop loop;
+        int completions = 0;
+        bool succeeded = false;
+        QObject::connect(&manager, &DownloadManager::allDownloadsFinished, &loop, [&](bool ok) {
+            ++completions;
+            succeeded = ok;
+            loop.quit();
+        });
+        QTimer watchdog;
+        QObject::connect(&watchdog, &QTimer::timeout, &manager, [&manager] {
+            QMetaObject::invokeMethod(&manager, "onStallWatchdogTick");
+        });
+        watchdog.start(25);
+        manager.downloadFile(entry.toString(), path, sha1, 2, VerifyMode::SizeAndSha1);
+        QTimer::singleShot(3000, &loop, &QEventLoop::quit);
+        loop.exec();
+        check(completions == 1 && network->urls == QList<QUrl>{entry, entry, mirror} &&
+                  succeeded == mirrorOk && QFileInfo::exists(path) == mirrorOk,
+              startWithProgress ? "CurseForge 文件开始传输后失速，可切换 MCIM 并完成作业"
+                                : "CurseForge 无数据只重试一次入口，随后切换 MCIM 并验证文件 SHA-1");
+    }
+
+    for (int status : {200, 404, 503}) {
+        ManifestRaceNetwork *network = nullptr;
+        ResourceStore store(nullptr, [&](QObject *owner) {
+            network = new ManifestRaceNetwork(owner, [status](const QUrl &, int number) {
+                if (number > 1 && status == 200) return qMakePair(QByteArray("[]"), 5);
+                return qMakePair(status == 404 ? QByteArray("NOT_FOUND") : QByteArray("NETWORK_FAILURE"), 5);
+            });
+            return network;
+        });
+        QEventLoop loop;
+        int completions = 0;
+        QString reason;
+        QObject::connect(&store, &ResourceStore::versionsFinished, &loop,
+                         [&](const QString &, const auto &, const QString &problem) {
+            ++completions;
+            reason = problem;
+            loop.quit();
+        });
+        store.fetchVersions(QStringLiteral("modrinth-test"), QStringLiteral("sodium"),
+                            ResourceCatalog::Source::Modrinth, QStringLiteral("1.21.1"));
+        QTimer::singleShot(2000, &loop, &QEventLoop::quit);
+        loop.exec();
+        const QUrl official = network->urls.value(0);
+        const QUrl mirror = network->urls.value(1);
+        const bool urlsOk = official.host() == QLatin1String("api.modrinth.com") &&
+            (status == 404 ? network->requests == 1 :
+                network->requests == 2 && mirror.host() == QLatin1String("mod.mcimirror.top") &&
+                mirror.path() == QStringLiteral("/modrinth") + official.path() &&
+                mirror.query(QUrl::FullyEncoded) == official.query(QUrl::FullyEncoded));
+        check(completions == 1 && urlsOk &&
+                  (status == 200 ? reason.isEmpty() : reason.contains(QString::number(status))),
+              "Modrinth 版本请求在暂时性故障时切换一次，保留筛选和最终错误", reason);
     }
 
 }

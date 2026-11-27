@@ -152,7 +152,11 @@ QString unansweredText(const QString &what, const QString &jobError) {
 }
 
 ResourceStore::ResourceStore(QObject *parent)
-    : QObject(parent), m_net(new QNetworkAccessManager(this)) {}
+    : ResourceStore(parent, {}) {}
+
+ResourceStore::ResourceStore(QObject *parent,
+                             const std::function<QNetworkAccessManager *(QObject *)> &networkFactory)
+    : QObject(parent), m_net(networkFactory ? networkFactory(this) : new QNetworkAccessManager(this)) {}
 
 ResourceStore::~ResourceStore() { abortAll(); }
 
@@ -327,6 +331,35 @@ void ResourceStore::cancelSearch(ResourceCatalog::Kind kind, ResourceCatalog::So
     delete m_replies.take(ResourceCatalog::searchRequestKey(kind, source));
 }
 
+void ResourceStore::startResourceGet(const QString &requestKey, const QNetworkRequest &request,
+                                     RequestBudget::ControlGet::Completion finished) {
+    QUrl fallback;
+    const QUrl url = request.url();
+    if (m_modrinthApiBaseOverride.isEmpty() && url.scheme() == QLatin1String("https") &&
+        url.host() == QLatin1String("api.modrinth.com") && url.path().startsWith(QLatin1String("/v2/"))) {
+        fallback = url;
+        fallback.setHost(QStringLiteral("mod.mcimirror.top"));
+        fallback.setPath(QStringLiteral("/modrinth") + url.path(QUrl::FullyEncoded), QUrl::StrictMode);
+    }
+    auto *job = RequestBudget::ControlGet::start(
+        this, m_net, request, HttpClient::kDefaultTimeoutMs,
+        [this, requestKey, fallback, finished = std::move(finished)](QNetworkReply *reply,
+                                                                   const QString &jobError) mutable {
+            m_replies.remove(requestKey);
+            const int status = reply ? statusOf(reply) : 0;
+            if (!fallback.isEmpty() && reply &&
+                (status == 0 || status >= 500 ||
+                 DownloadRetryPolicy::transient(reply->error(), status) ||
+                 reply->property(RequestBudget::kDeadlineExpiredProperty).toBool())) {
+                startResourceGet(requestKey, resourceRequest(fallback.toString(QUrl::FullyEncoded)),
+                                 std::move(finished));
+                return;
+            }
+            finished(reply, jobError);
+        });
+    m_replies.insert(requestKey, job);
+}
+
 void ResourceStore::search(const QString &requestKey, ResourceCatalog::Kind kind,
                            ResourceCatalog::Source source, const QString &query,
                            const QString &gameVersion, const QString &loader,
@@ -360,15 +393,10 @@ void ResourceStore::search(const QString &requestKey, ResourceCatalog::Kind kind
     const QString url = ResourceCatalog::searchUrl(
         kind, searchText, 0, kSearchPageSize, searchVersion, loader, source, category,
         isCurseForge ? curseForgeApiBase() : m_modrinthApiBaseOverride);
-    auto *job = RequestBudget::ControlGet::start(
-        this, m_net,
+    startResourceGet(requestKey,
         resourceRequest(url, isCurseForge ? apiKeyHeaders(m_curseForgeApiKey)
                                           : QList<QPair<QByteArray, QByteArray>>()),
-        HttpClient::kDefaultTimeoutMs,
         [this, requestKey, source, searchText](QNetworkReply *reply, const QString &jobError) {
-            // 先把钥匙摘掉再发信号：接的人可能立刻又搜一次，那时候这一格归他不归我。
-            m_replies.remove(requestKey);
-
             ResourceCatalog::SearchResult result;
             if (reply == nullptr) {
                 // 排队到点 / 被掐 / 管理器先没：这一发没成，得让界面收场（不能一直转圈）。
@@ -416,7 +444,6 @@ void ResourceStore::search(const QString &requestKey, ResourceCatalog::Kind kind
             }
             emit searchFinished(requestKey, result);
         });
-    m_replies.insert(requestKey, job);
 }
 
 void ResourceStore::fetchModrinthFiles(const QString &requestKey, const QStringList &sha1s) {
@@ -574,14 +601,10 @@ void ResourceStore::fetchVersions(const QString &requestKey, const QString &proj
     const QString url = ResourceCatalog::versionsUrl(
         projectId, gameVersion, loader, source,
         isCurseForge ? curseForgeApiBase() : m_modrinthApiBaseOverride);
-    auto *job = RequestBudget::ControlGet::start(
-        this, m_net,
+    startResourceGet(requestKey,
         resourceRequest(url, isCurseForge ? apiKeyHeaders(m_curseForgeApiKey)
                                           : QList<QPair<QByteArray, QByteArray>>()),
-        HttpClient::kDefaultTimeoutMs,
         [this, requestKey, source](QNetworkReply *reply, const QString &jobError) {
-        m_replies.remove(requestKey);
-
         const QString what = QCoreApplication::translate("ResourceStore", "读取版本列表");
         if (reply == nullptr) {
             emit versionsFinished(requestKey, QList<ResourceCatalog::VersionEntry>(),
@@ -625,7 +648,6 @@ void ResourceStore::fetchVersions(const QString &requestKey, const QString &proj
         }
         emit versionsFinished(requestKey, ResourceCatalog::parseVersions(body), QString());
     });
-    m_replies.insert(requestKey, job);
 }
 
 void ResourceStore::fetchProjects(const QString &requestKey, const QStringList &projectIds,

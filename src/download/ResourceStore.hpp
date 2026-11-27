@@ -52,6 +52,7 @@
 #include <QPointer>
 #include <QSet>
 #include <QString>
+#include <functional>
 
 #include "download/ResourceCatalog.hpp"
 #include "net/ControlGet.hpp"
@@ -64,6 +65,7 @@ class ResourceStore : public QObject {
 
 public:
     explicit ResourceStore(QObject *parent = nullptr);
+    ResourceStore(QObject *parent, const std::function<QNetworkAccessManager *(QObject *)> &networkFactory);
     ~ResourceStore() override;
 
     /// CurseForge 那两发请求要用的设置（**和 VersionManager 那一对是同一件事、同一个来源**：
@@ -413,6 +415,9 @@ signals:
     void iconReady(const QString &iconId, const QPixmap &icon);
 
 private:
+    void startResourceGet(const QString &requestKey, const QNetworkRequest &request,
+                          RequestBudget::ControlGet::Completion finished);
+
     /// 失败话术（**不是** 429：那条有自己唯一的一句话，见 HttpClient::throttledText）。
     /// 正文里带着接口自己那句 `description` 时把它带上 —— 实测接口报错就是这个形状，
     /// 它比我们编的"搜索失败"有用得多。
