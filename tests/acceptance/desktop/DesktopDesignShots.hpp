@@ -1,6 +1,7 @@
 #pragma once
 // 设计稿对照截图（--design-shots）：主页三主题、窄窗、宽窗、折叠轨、组件总表。
 // 只截图，不登录、不联网、不启动游戏；实例和账号是写在隔离目录里的夹具。
+#include "AgentApprovalCard.hpp"
 #include "AgentPage.hpp"
 #include "Animations.hpp"
 #include "Glass.hpp"
@@ -543,6 +544,96 @@ inline void seedAgent(AgentPage &page, const QString &state) {
                               QStringLiteral("create"));
 }
 
+/// #136 批 4：多会话（抽屉可滚）+ 长对话（对话流可滚）+ 长审批卡（> 8 行，无内滚，带展开全文/收起）。
+inline void seedAgentBatch4(AgentPage &page, const QString &state) {
+    const bool en = qgetenv("WTFML_SHOT_LANG") == "en";
+    const auto text = [en](const char *zh, const char *enStr) {
+        return QString::fromUtf8(en ? enStr : zh);
+    };
+    const QDateTime now = QDateTime::currentDateTimeUtc();
+    page.closeSessionDrawer(false);
+    page.hideApproval();
+    QList<AgentView::SessionMeta> sessions;
+    for (int i = 0; i < 16; ++i) {
+        AgentView::SessionMeta meta;
+        meta.id = QStringLiteral("b4-%1").arg(i + 1);
+        meta.title = i == 0 ? text("排错会话 #1：模组冲突与日志分析", "Session #1: Mod conflict & log analysis")
+                            : text("排错会话 #%1：光影与启动排查", "Session #%1: Shader & launch check").arg(i + 1);
+        meta.updatedAt = i < 10 ? now.addSecs(-(i + 1) * 1800) : now.addDays(-(i - 8));
+        meta.pinned = (i == 1 || i == 2);
+        sessions.append(meta);
+    }
+    page.setSessions(sessions);
+    page.setConfigured(true, text("已连接 · OpenAI 兼容", "Connected · OpenAI-compatible"));
+    page.setModelLabel(QStringLiteral("deepseek-chat"));
+    page.setCurrentSession(QStringLiteral("b4-1"));
+    page.setInstanceChip(text("机械动力 Create", "Create 1.20.1"), true);
+
+    QList<AgentView::Message> messages;
+    const int turns = state.startsWith(QStringLiteral("approval")) ? 4 : 7;
+    for (int i = 1; i <= turns; ++i) {
+        AgentView::Message u;
+        u.id = QStringLiteral("b4-u%1").arg(i);
+        u.user = true;
+        u.content = text("第 %1 轮提问：光影开启后帧率骤降怎么定位？",
+                         "Turn %1: How do I diagnose FPS drops after enabling shaders?").arg(i);
+        u.status = AgentView::MessageStatus::Complete;
+        messages.append(u);
+
+        AgentView::Message a;
+        a.id = QStringLiteral("b4-a%1").arg(i);
+        a.user = false;
+        a.content = text("建议检查 Iris 与 Sodium 版本匹配，并查看 `latest.log` 中的 OpenGL 警告，同时给游戏分配 4~6 GB 内存。",
+                         "Check that Iris matches Sodium, inspect OpenGL warnings in `latest.log`, and allocate 4-6 GB RAM.");
+        a.status = AgentView::MessageStatus::Complete;
+        messages.append(a);
+    }
+    page.setMessages(messages);
+    page.showEmptyState(false);
+
+    if (state.startsWith(QStringLiteral("approval"))) {
+        QStringList diff;
+        diff << QStringLiteral("--- options.txt (before)")
+             << QStringLiteral("+++ options.txt (after)")
+             << QStringLiteral("@@ -1,20 +1,20 @@");
+        for (int i = 1; i <= 18; ++i) {
+            diff << QStringLiteral("- renderOption_%1:false").arg(i)
+                 << QStringLiteral("+ renderOption_%1:true").arg(i);
+        }
+        QJsonObject req{
+            {QStringLiteral("approvalId"), QStringLiteral("b4-approval-1")},
+            {QStringLiteral("tool"), QStringLiteral("fs.write")},
+            {QStringLiteral("displayName"), text("写入配置文件", "Write config file")},
+            {QStringLiteral("target"), QStringLiteral("config/sodium-options.json")},
+            {QStringLiteral("summary"), text("更新渲染与区块批处理设置（共 18 项变更）",
+                                             "Update rendering and chunk batching options (18 changes)")},
+            {QStringLiteral("diff"), diff.join(QLatin1Char('\n'))},
+            {QStringLiteral("backupHint"), text("写入前自动备份原文件。", "Original file will be backed up before writing.")},
+            {QStringLiteral("sessionAllowAvailable"), false},
+            {QStringLiteral("egress"),
+             QJsonObject{{QStringLiteral("kind"), QStringLiteral("config-file")},
+                         {QStringLiteral("reason"), text("逐次确认", "Confirm each write")}}}};
+        page.showApproval(req);
+        for (int i = 0; i < 4; ++i) QApplication::processEvents();
+        if (state == QStringLiteral("approval-expanded")) {
+            if (auto *card = page.approvalCard()) {
+                if (auto *toggle = card->findChild<QPushButton *>(QStringLiteral("agentApprovalPreviewToggle"))) {
+                    toggle->click();
+                    for (int i = 0; i < 4; ++i) QApplication::processEvents();
+                }
+            }
+        }
+        if (auto *scroll = page.findChild<QScrollArea *>(QStringLiteral("agentMessageScroll"))) {
+            for (int i = 0; i < 4; ++i) {
+                scroll->verticalScrollBar()->setValue(scroll->verticalScrollBar()->maximum());
+                QApplication::processEvents();
+            }
+        }
+    } else if (state == QStringLiteral("drawer")) {
+        page.openSessionDrawer();
+    }
+}
+
 inline QImage grabGallery(Gallery &gallery) {
     if (QListWidget *list = gallery.hoverList) {  // 第二行走一遍真的悬停（快捷操作只在悬停时出现）
         const QPoint at = list->visualItemRect(list->item(1)).center();
@@ -709,6 +800,16 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
             for (const char *state : {"mod", "mod-sel", "pack", "cfg", "cfg-outline"})
                 list.append({QStringLiteral("i136-%1-%2-960x620.png").arg(QLatin1String(state), theme), theme, {960, 620}, false, manage,
                              QStringLiteral("i136:") + QLatin1String(state)});
+        // #136 批 4（FILTER=i136-agent-）：智能体页抽屉关 / 抽屉开 / 长审批卡收起 / 长审批卡展开 × 浅深 × 960×620 与 1280×800。
+        for (const QSize &size : {QSize(960, 620), QSize(1280, 800)})
+            for (const QString &theme : {QStringLiteral("emerald"), QStringLiteral("dark")})
+                for (const char *state : {"closed", "drawer", "approval-collapsed", "approval-expanded"})
+                    list.append({QStringLiteral("i136-agent-%1-%2-%3x%4.png")
+                                     .arg(QLatin1String(state), theme)
+                                     .arg(size.width())
+                                     .arg(size.height()),
+                                 theme, size, false, agent,
+                                 QStringLiteral("i136a:") + QLatin1String(state)});
         // 只出名字含这段字的几张（逐页精修时不必每次跑满 56 张）。
         const QString only = qEnvironmentVariable("WTFML_DESIGN_SHOT_FILTER");
         if (!only.isEmpty())
@@ -934,6 +1035,10 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                 }
                 QMetaObject::invokeMethod(&window, "openInstanceSettings", Q_ARG(QString, QStringLiteral("create")),
                                           Q_ARG(QString, shot.page.section(QLatin1Char(':'), 1)));
+            } else if (shot.page.startsWith(QStringLiteral("i136a:"))) {
+                if (auto *page = window.findChild<AgentPage *>()) {
+                    seedAgentBatch4(*page, shot.page.section(QLatin1Char(':'), 1));
+                }
             } else if (shot.page.startsWith(QStringLiteral("i136:"))) {
                 // 「机械动力 Create」里摆几个模组、资源包和一份配置，开对应页，再按样张走一步真操作。
                 const QString dir = AppPaths::versionDir(QStringLiteral("create"));
@@ -1032,6 +1137,59 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                 const QString key = shot.page.section(QLatin1Char(':'), 1);
                 if (auto *all = window.findChild<QPushButton *>(QStringLiteral("instanceLifecycleBatchAll_%1").arg(key))) all->click();
                 for (int i = 0; i < 5; ++i) QApplication::processEvents();
+            }
+            if (shot.page.startsWith(QStringLiteral("i136a:"))) {
+                if (auto *page = window.findChild<AgentPage *>()) {
+                    const auto winX = [&window](const QWidget *w, int x) { return w->mapTo(&window, QPoint(x, 0)).x(); };
+                    QWidget *drawer = page->findChild<QWidget *>(QStringLiteral("agentSidebar"));
+                    QWidget *approval = page->approvalCard();
+                    int pageBars = 0, drawerBars = 0, approvalBars = 0;
+                    QString barText;
+                    for (auto *bar : page->findChildren<QScrollBar *>()) {
+                        if (bar->orientation() != Qt::Vertical || !bar->isVisible()) continue;
+                        const bool inDrawer = drawer != nullptr && (bar == drawer || drawer->isAncestorOf(bar));
+                        const bool inApproval = approval != nullptr && (bar == approval || approval->isAncestorOf(bar));
+                        if (inDrawer) ++drawerBars;
+                        else if (inApproval) ++approvalBars;
+                        else ++pageBars;
+                        const QWidget *owner = bar->parentWidget() != nullptr ? bar->parentWidget()->parentWidget() : nullptr;
+                        barText += QStringLiteral(" %1[%2,%3)%4")
+                                       .arg(owner != nullptr ? owner->objectName() : QString())
+                                       .arg(winX(bar, 0))
+                                       .arg(winX(bar, bar->width()))
+                                       .arg(bar->maximum() > 0 ? "*" : "");
+                    }
+                    int headerRight = -1;
+                    if (auto *header = page->findChild<QWidget *>(QStringLiteral("agentChatHeader"))) {
+                        for (auto *w : header->findChildren<QWidget *>()) {
+                            if (w->isVisible() && (qobject_cast<QAbstractButton *>(w) || qobject_cast<QLabel *>(w))) {
+                                headerRight = qMax(headerRight, winX(w, w->width()) - 1);
+                            }
+                        }
+                    }
+                    QString drawerText = QStringLiteral("closed");
+                    if (drawer != nullptr && drawer->isVisible()) {
+                        const QPoint tl = drawer->mapTo(&window, QPoint(0, 0));
+                        drawerText = QStringLiteral("x=[%1,%2) y=[%3,%4)")
+                                         .arg(tl.x()).arg(tl.x() + drawer->width())
+                                         .arg(tl.y()).arg(tl.y() + drawer->height());
+                    }
+                    QString approvalText = QStringLiteral("none");
+                    if (approval != nullptr && approval->isVisible()) {
+                        auto *prev = approval->findChild<QPlainTextEdit *>(QStringLiteral("agentEgressPreviewCard"));
+                        auto *tog = approval->findChild<QPushButton *>(QStringLiteral("agentApprovalPreviewToggle"));
+                        approvalText = QStringLiteral("previewH=%1 toggle=%2 approvalBars=%3")
+                                           .arg(prev != nullptr ? prev->height() : -1)
+                                           .arg(tog != nullptr && tog->isVisible() ? tog->text() : QStringLiteral("hidden"))
+                                           .arg(approvalBars);
+                    }
+                    std::fprintf(stdout,
+                                 "AUDIT_AGENT %s size=%dx%d headerRight=%d pageBars=%d drawerBars=%d approvalBars=%d bars:%s drawer=%s approval=%s\n",
+                                 qPrintable(shot.file), window.width(), window.height(), headerRight,
+                                 pageBars, drawerBars, approvalBars, qPrintable(barText),
+                                 qPrintable(drawerText), qPrintable(approvalText));
+                    std::fflush(stdout);
+                }
             }
             if (shot.page.startsWith(QStringLiteral("i136:"))) {
                 // 数这一页自己露着几条竖滑条（不算外层那张实例设置的滚动区）。

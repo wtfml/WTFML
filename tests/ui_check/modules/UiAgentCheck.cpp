@@ -90,11 +90,24 @@ int UiAgentCheck() {
           "智能体 UI：按 objectName 找得到页面");
     QWidget *sidebar = page != nullptr ? page->findChild<QWidget *>(QStringLiteral("agentSidebar"))
                                        : nullptr;
+    QWidget *chatArea = page != nullptr ? page->findChild<QWidget *>(QStringLiteral("agentChatArea"))
+                                        : nullptr;
+    auto *sessionsBtn = page != nullptr
+                            ? page->findChild<QPushButton *>(QStringLiteral("agentSessionsButton"))
+                            : nullptr;
     const int windowWidth = page != nullptr ? page->window()->width() : 0;
+    check(sidebar != nullptr && !sidebar->isVisible() && !page->isSessionDrawerOpen(),
+          "智能体 UI：会话抽屉默认收起");
+    check(chatArea != nullptr && chatArea->width() == page->width(),
+          "智能体 UI：对话区占满整页宽",
+          QStringLiteral("chat=%1 page=%2").arg(chatArea != nullptr ? chatArea->width() : -1).arg(page->width()));
+    check(sessionsBtn != nullptr && sessionsBtn->toolTip() == QStringLiteral("会话列表") &&
+              sessionsBtn->accessibleName() == QStringLiteral("会话列表"),
+          "智能体 UI：顶行最左有「会话列表」图标按钮");
     check(sidebar != nullptr &&
               sidebar->width() == (windowWidth < 1024 ? AgentPage::sidebarNarrowWidth() : AgentPage::sidebarWidth()),
-          "智能体 UI：侧栏宽按窗口宽取 236 / 216（1024 为界）",
-          QStringLiteral("窗口 %1 / 侧栏 %2").arg(windowWidth).arg(sidebar != nullptr ? sidebar->width() : -1));
+          "智能体 UI：抽屉宽按窗口宽取 236 / 216（1024 为界）",
+          QStringLiteral("窗口 %1 / 抽屉 %2").arg(windowWidth).arg(sidebar != nullptr ? sidebar->width() : -1));
     // "窄"这一档用一个不在布局里的 AgentPage 单独量：自己就是窗口，宽 700 < 1024 → 216。
     {
         AgentPage narrowPage;
@@ -106,8 +119,8 @@ int UiAgentCheck() {
             narrowPage.findChild<QWidget *>(QStringLiteral("agentSidebar"));
         check(narrowSidebar != nullptr &&
                   narrowSidebar->width() == AgentPage::sidebarNarrowWidth(),
-              "智能体 UI：窄页面侧栏降到 216",
-              QStringLiteral("侧栏 %1 / 页面宽 %2")
+              "智能体 UI：窄页面抽屉降到 216",
+              QStringLiteral("抽屉 %1 / 页面宽 %2")
                   .arg(narrowSidebar != nullptr ? narrowSidebar->width() : -1)
                   .arg(narrowPage.width()));
     }
@@ -249,6 +262,9 @@ int UiAgentCheck() {
         check(renames.isEmpty() && titleEdit() == nullptr && title->isVisible(),
               "智能体 UI：Esc 与空串都不改名", renames.join(QLatin1Char('|')));
 
+        // 列表双击改名在抽屉打开状态下触发。
+        page->openSessionDrawer();
+        QApplication::processEvents();
         QListWidgetItem *other = list != nullptr ? list->item(1) : nullptr;  // 「会话 1」
         if (other != nullptr) emit list->itemDoubleClicked(other);
         QApplication::processEvents();
@@ -264,17 +280,103 @@ int UiAgentCheck() {
         check(renames == QStringList{QStringLiteral("s1=模组冲突")} &&
                   page->findChild<QLineEdit *>(QStringLiteral("agentSessionRenameEdit")) == nullptr,
               "智能体 UI：列表改名回车确认", renames.join(QLatin1Char('|')));
+        page->closeSessionDrawer();
+        QApplication::processEvents();
         QObject::disconnect(spy);
     }
 
-    // 106：点「+」后光标直接进输入框（当前已是空会话、没再新建时也一样）。
+    // #136：会话抽屉交互：按钮开关、焦点进搜索框/回按钮、Esc 关闭、点外面关闭、选会话关闭并切换、滑条计数。
+    {
+        window.activateWindow();
+        auto *search = qobject_cast<QLineEdit *>(find("agentSessionSearch"));
+        auto *chatScroll = qobject_cast<QScrollArea *>(find("agentMessageScroll"));
+        check(sessionsBtn != nullptr && search != nullptr && list != nullptr && chatScroll != nullptr,
+              "智能体 UI（#136）：抽屉相关控件齐全");
+        if (sessionsBtn != nullptr && search != nullptr && list != nullptr && chatScroll != nullptr) {
+            // 1) 按钮开关 + 焦点往返
+            sessionsBtn->click();
+            QApplication::processEvents();
+            check(page->isSessionDrawerOpen() && sidebar->isVisible(),
+                  "智能体 UI（#136）：点「会话列表」打开抽屉");
+            check(search->hasFocus(), "智能体 UI（#136）：打开抽屉时焦点进搜索框",
+                  QApplication::focusWidget() != nullptr ? QApplication::focusWidget()->objectName()
+                                                         : QStringLiteral("无"));
+            sessionsBtn->click();
+            QApplication::processEvents();
+            check(!page->isSessionDrawerOpen() && !sidebar->isVisible(),
+                  "智能体 UI（#136）：再点一次「会话列表」关闭抽屉");
+            check(sessionsBtn->hasFocus(), "智能体 UI（#136）：关闭抽屉后焦点回到「会话列表」",
+                  QApplication::focusWidget() != nullptr ? QApplication::focusWidget()->objectName()
+                                                         : QStringLiteral("无"));
+
+            // 2) Esc 关闭抽屉并交回焦点
+            sessionsBtn->click();
+            QApplication::processEvents();
+            QKeyEvent esc(QEvent::KeyPress, Qt::Key_Escape, Qt::NoModifier);
+            QApplication::sendEvent(search, &esc);
+            QApplication::processEvents();
+            check(!page->isSessionDrawerOpen() && !sidebar->isVisible(),
+                  "智能体 UI（#136）：按 Esc 关闭抽屉");
+            check(sessionsBtn->hasFocus(), "智能体 UI（#136）：Esc 关闭后焦点回到「会话列表」",
+                  QApplication::focusWidget() != nullptr ? QApplication::focusWidget()->objectName()
+                                                         : QStringLiteral("无"));
+
+            // 3) 点抽屉外面关闭
+            sessionsBtn->click();
+            QApplication::processEvents();
+            const QPoint outsideLocal(chatScroll->viewport()->width() - 20, 40);
+            QMouseEvent outsidePress(QEvent::MouseButtonPress, QPointF(outsideLocal),
+                                     QPointF(chatScroll->viewport()->mapToGlobal(outsideLocal)),
+                                     Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+            QApplication::sendEvent(chatScroll->viewport(), &outsidePress);
+            QApplication::processEvents();
+            check(!page->isSessionDrawerOpen() && !sidebar->isVisible(),
+                  "智能体 UI（#136）：点抽屉外面关闭抽屉");
+
+            // 4) 选中会话：关闭抽屉并发出 sessionSelected 切换到该会话
+            QString selectedId;
+            const QMetaObject::Connection selectSpy = QObject::connect(
+                page, &AgentPage::sessionSelected, page,
+                [&selectedId, page](const QString &id) {
+                    selectedId = id;
+                    page->setCurrentSession(id);
+                });
+            sessionsBtn->click();
+            QApplication::processEvents();
+            QListWidgetItem *pick = list->item(1);  // s1
+            if (pick != nullptr) {
+                list->scrollToItem(pick);
+                QApplication::processEvents();
+                const QPoint rowCenter = list->visualItemRect(pick).center();
+                const QPointF rowGlobal(list->viewport()->mapToGlobal(rowCenter));
+                QMouseEvent press(QEvent::MouseButtonPress, QPointF(rowCenter), rowGlobal,
+                                  Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                QApplication::sendEvent(list->viewport(), &press);
+                QMouseEvent release(QEvent::MouseButtonRelease, QPointF(rowCenter), rowGlobal,
+                                    Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+                QApplication::sendEvent(list->viewport(), &release);
+                QApplication::processEvents();
+            }
+            check(selectedId == QStringLiteral("s1") && page->currentSessionId() == QStringLiteral("s1") &&
+                      !page->isSessionDrawerOpen() && !sidebar->isVisible(),
+                  "智能体 UI（#136）：选中会话后抽屉关闭且切到该会话", selectedId);
+            QObject::disconnect(selectSpy);
+            page->setCurrentSession(QStringLiteral("s0"));
+            QApplication::processEvents();
+        }
+    }
+
+    // 106：点「+」后光标直接进输入框（当前已是空会话、没再新建时也一样），若抽屉开着则同时收起。
     if (auto *plus = qobject_cast<QPushButton *>(find("agentNewSessionButton"))) {
         window.activateWindow();
+        page->openSessionDrawer();
+        QApplication::processEvents();
         list->setFocus();
         QApplication::processEvents();
         plus->click();
         QApplication::processEvents();
-        check(page->composer()->hasFocus(), "智能体 UI：点「+」后输入框拿到焦点",
+        check(page->composer()->hasFocus() && !page->isSessionDrawerOpen(),
+              "智能体 UI：点「+」后输入框拿到焦点并收起抽屉",
               QApplication::focusWidget() != nullptr ? QApplication::focusWidget()->objectName() : QStringLiteral("无"));
     }
 
@@ -638,9 +740,122 @@ int UiAgentCheck() {
     check(approvalPreview != nullptr &&
               approvalPreview->toPlainText().contains(QStringLiteral("new")),
           "智能体 UI：审批卡显示 diff/预览");
+    check(approvalPreview != nullptr &&
+              approvalPreview->verticalScrollBarPolicy() == Qt::ScrollBarAlwaysOff &&
+              !approvalPreview->verticalScrollBar()->isVisible(),
+          "智能体 UI（#136）：审批卡预览关闭自身竖滑条");
+    auto *shortToggle = approvalCard != nullptr
+                            ? approvalCard->findChild<QPushButton *>(
+                                  QStringLiteral("agentApprovalPreviewToggle"))
+                            : nullptr;
+    check(shortToggle != nullptr && !shortToggle->isVisible(),
+          "智能体 UI（#136）：短审批卡不显示「展开全文」");
+
+    // 长审批卡（> 8 行）：默认收起到 8 行高、无内部滑条、点击/键盘可展开全文与收起。
+    {
+        QStringList diffLines;
+        for (int i = 1; i <= 22; ++i) {
+            diffLines << QStringLiteral("+ option_%1 = value_%1").arg(i);
+        }
+        QJsonObject longApproval = approval;
+        longApproval.insert(QStringLiteral("approvalId"), QStringLiteral("a-long"));
+        longApproval.insert(QStringLiteral("diff"), diffLines.join(QLatin1Char('\n')));
+        page->showApproval(longApproval);
+        for (int i = 0; i < 4; ++i) QApplication::processEvents();
+        auto *longCard = page->findChild<AgentApprovalCard *>();
+        auto *longPreview = longCard != nullptr
+                                ? longCard->findChild<QPlainTextEdit *>(
+                                      QStringLiteral("agentEgressPreviewCard"))
+                                : nullptr;
+        auto *toggle = longCard != nullptr
+                           ? longCard->findChild<QPushButton *>(
+                                 QStringLiteral("agentApprovalPreviewToggle"))
+                           : nullptr;
+        check(longPreview != nullptr && toggle != nullptr && toggle->isVisible() &&
+                  toggle->text() == QStringLiteral("展开全文"),
+              "智能体 UI（#136）：超 8 行审批卡显示「展开全文」",
+              toggle != nullptr ? toggle->text() : QStringLiteral("无"));
+        check(longPreview != nullptr && !longPreview->verticalScrollBar()->isVisible(),
+              "智能体 UI（#136）：超长审批卡收起态无内部竖滑条");
+        const int collapsedHeight = longPreview != nullptr ? longPreview->height() : 0;
+        if (toggle != nullptr) {
+            toggle->click();
+            for (int i = 0; i < 4; ++i) QApplication::processEvents();
+        }
+        const int expandedHeight = longPreview != nullptr ? longPreview->height() : 0;
+        check(toggle != nullptr && toggle->text() == QStringLiteral("收起") &&
+                  expandedHeight > collapsedHeight &&
+                  longPreview != nullptr && !longPreview->verticalScrollBar()->isVisible(),
+              "智能体 UI（#136）：点「展开全文」撑开全文并切换为「收起」、仍无内部滑条",
+              QStringLiteral("collapsed=%1 expanded=%2 text=%3")
+                  .arg(collapsedHeight)
+                  .arg(expandedHeight)
+                  .arg(toggle != nullptr ? toggle->text() : QStringLiteral("无")));
+        if (toggle != nullptr) {
+            QKeyEvent enterKey(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
+            QApplication::sendEvent(toggle, &enterKey);
+            for (int i = 0; i < 4; ++i) QApplication::processEvents();
+        }
+        check(toggle != nullptr && toggle->text() == QStringLiteral("展开全文") &&
+                  longPreview != nullptr && longPreview->height() == collapsedHeight,
+              "智能体 UI（#136）：回车可收起回 8 行高",
+              QStringLiteral("height=%1 collapsed=%2")
+                  .arg(longPreview != nullptr ? longPreview->height() : -1)
+                  .arg(collapsedHeight));
+    }
     page->hideApproval();
     QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
     check(page->findChild<AgentApprovalCard *>() == nullptr, "智能体 UI：审批卡可收起");
+
+    // #136：960×620 与 1280×800 两档窗口，多会话 + 长对话时竖滑条计数。
+    {
+        QList<AgentView::SessionMeta> manySessions;
+        for (int i = 0; i < 18; ++i) {
+            AgentView::SessionMeta m;
+            m.id = QStringLiteral("cnt-%1").arg(i);
+            m.title = QStringLiteral("排错会话 #%1：光影与模组分析").arg(i + 1);
+            m.updatedAt = QDateTime::currentDateTimeUtc().addSecs(-i * 1800);
+            manySessions.append(m);
+        }
+        QList<AgentView::Message> longChat;
+        for (int i = 0; i < 20; ++i) {
+            longChat.append(messageFor(i % 2 == 0,
+                                       QStringLiteral("第 %1 条长对话消息，用于确保对话流超过视口高度并显示竖向滚动条。").arg(i + 1),
+                                       AgentView::MessageStatus::Complete));
+        }
+        page->setSessions(manySessions);
+        page->setCurrentSession(QStringLiteral("cnt-0"));
+        page->setMessages(longChat);
+        const auto countPageBars = [page] {
+            int count = 0;
+            for (QScrollBar *bar : page->findChildren<QScrollBar *>()) {
+                if (bar->orientation() == Qt::Vertical && bar->isVisible()) ++count;
+            }
+            return count;
+        };
+        for (const QSize size : {QSize(960, 620), QSize(1280, 800)}) {
+            window.resize(size);
+            for (int i = 0; i < 4; ++i) QApplication::processEvents();
+            page->closeSessionDrawer();
+            QApplication::processEvents();
+            const int closedBars = countPageBars();
+            check(closedBars == 1,
+                  "智能体 UI（#136）：抽屉关闭时整页竖滑条为 1 条",
+                  QStringLiteral("%1x%2 closedBars=%3").arg(size.width()).arg(size.height()).arg(closedBars));
+            page->openSessionDrawer();
+            for (int i = 0; i < 4; ++i) QApplication::processEvents();
+            const int openBars = countPageBars();
+            check(openBars == 2,
+                  "智能体 UI（#136）：抽屉打开时只多抽屉列表那 1 条竖滑条",
+                  QStringLiteral("%1x%2 openBars=%3").arg(size.width()).arg(size.height()).arg(openBars));
+            page->closeSessionDrawer();
+            QApplication::processEvents();
+        }
+        page->clearMessages();
+        page->setSessions(sessions);
+        page->setCurrentSession(QStringLiteral("s0"));
+        QApplication::processEvents();
+    }
 
     // 加密存储收进 ⋯ 菜单：开关 + 一句「标题和时间仍为明文。」，右上角不再挂状态字。
     QWidget *more = page->moreMenu();
