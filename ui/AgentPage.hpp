@@ -1,12 +1,12 @@
 /**
  * @file AgentPage.hpp
- * @brief 智能体页：左侧会话栏 + 右侧聊天区（样张 r2 agent 方案 A）。
+ * @brief 智能体页：全宽聊天区 + 左缘玻璃会话抽屉（#136 消除常驻双滚动条）。
  *
- * 左栏 236（窗口窄于 1024 时 216）：「会话」小标题 + 新建图标钮、搜索框、按「固定 / 今天 / 更早」
- * 分组的会话列表（行高 40，标题 + 右侧时间，选中 = 强调淡底，不画条）。
- * 右栏顶上一行（拖动区下沿再空 12px）：会话标题（双击改名）· API 未配置警示胶囊 · 「实例」下拉胶囊 ·
- * ⋯ 菜单（重命名 / 固定 / 加密存储 / 导出 / 删除会话）· ⚙ API 设置。下面是对话流（最宽 760，
- * 系统提示以居中淡色一行 + 两侧细线插在流里）、空状态，最底是磨砂输入岛。
+ * 顶行（拖动区下沿再空 12px）：「会话列表」抽屉钮 · 「新建对话」钮 · 会话标题（点击改名）·
+ * API 未配置警示胶囊 · 「实例」下拉胶囊 · ⋯ 菜单（重命名 / 固定 / 加密存储 / 导出 / 删除会话）·
+ * ⚙ API 设置。点「会话列表」从页面左缘滑出玻璃抽屉（宽 236，窗口窄于 1024 时 216），
+ * 盖在对话区上不推开内容，内含「会话」标题、搜索框和按「固定 / 今天 / 更早」分组的会话列表。
+ * 下面是对话流（最宽 760，系统提示以居中淡色一行 + 两侧细线插在流里）、空状态，最底是磨砂输入岛。
  *
  * 纯 QWidget：只认值、信号和槽；不 include `src/`，不读盘、不联网。
  */
@@ -19,10 +19,13 @@
 #include <QHash>
 #include <QJsonObject>
 #include <QList>
+#include <QPointer>
 
 class QListWidgetItem;
 class QPoint;
 class QHBoxLayout;
+class QHideEvent;
+class QVariantAnimation;
 
 class QCheckBox;
 class QFrame;
@@ -42,10 +45,16 @@ class AgentPage : public ThemeBackground {
 
 public:
     explicit AgentPage(QWidget *parent = nullptr);
+    ~AgentPage() override;
 
     static int sidebarWidth();
     static int sidebarNarrowWidth();
     static QString relativeTime(const QDateTime &when, const QDateTime &now);
+
+    bool isSessionDrawerOpen() const { return m_drawerOpen; }
+    void openSessionDrawer();
+    void closeSessionDrawer(bool restoreFocus = true);
+    void toggleSessionDrawer();
 
     void setSessions(const QList<AgentView::SessionMeta> &sessions);
     void setCurrentSession(const QString &sessionId);
@@ -95,6 +104,7 @@ public:
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 signals:
@@ -146,12 +156,17 @@ private:
     void promptRename(const QString &sessionId);
     void beginTitleRename();
     void beginListRename(QListWidgetItem *item);
+    void placeSessionDrawer();
 
     QWidget *m_sidebar = nullptr;
+    QWidget *m_header = nullptr;
+    QPushButton *m_sessionsButton = nullptr;
     QLineEdit *m_search = nullptr;
     QListWidget *m_sessionList = nullptr;
     QLabel *m_title = nullptr;
     QPushButton *m_newSession = nullptr;
+    QPointer<QVariantAnimation> m_drawerAnim;
+    bool m_drawerOpen = false;
     QPushButton *m_apiWarn = nullptr;
     QPushButton *m_settingsButton = nullptr;
     QPushButton *m_instanceChip = nullptr;

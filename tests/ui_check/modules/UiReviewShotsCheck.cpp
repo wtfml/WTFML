@@ -1524,6 +1524,8 @@ int runExtended(QApplication &app, const ShotOptions &options) {
             saveShot(app, window, options.out, QStringLiteral("agent-title-rename"), &saved);
             escape("agentTitleRenameEdit");
         }
+        agent->openSessionDrawer();
+        pump();
         QListWidget *list = agent->sessionList();
         for (int i = 0; list != nullptr && i < list->count(); ++i) {
             if (list->item(i)->text() == QStringLiteral("帮我写一条启动参数")) {
@@ -1533,6 +1535,7 @@ int runExtended(QApplication &app, const ShotOptions &options) {
                 break;
             }
         }
+        agent->closeSessionDrawer();
     } else {
         std::printf("  SKIP agent：拿不到 AgentPage\n");
     }

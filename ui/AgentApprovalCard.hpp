@@ -32,16 +32,23 @@ signals:
 
 protected:
     void paintEvent(QPaintEvent *event) override;
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
+    void updatePreviewHeight();
+    void updatePreviewToggleStyle();
+
     QString m_approvalId;
     QLabel *m_title = nullptr;
     QLabel *m_target = nullptr;
     QLabel *m_summary = nullptr;
     QPlainTextEdit *m_preview = nullptr;
+    QPushButton *m_previewToggle = nullptr;
     QLabel *m_backup = nullptr;
     QLabel *m_egress = nullptr;
     QPushButton *m_allow = nullptr;
     QPushButton *m_deny = nullptr;
     QPushButton *m_sessionAllow = nullptr;
+    bool m_previewExpanded = false;
+    bool m_fittingPreview = false;
 };

@@ -635,6 +635,8 @@ int MwAgentChecks(QApplication &app) {
         check(plus != nullptr, "空会话：「+」钮在");
         if (list != nullptr && plus != nullptr) {
             const auto clickSession = [&](const QString &id) {
+                page->openSessionDrawer();
+                QCoreApplication::processEvents();
                 for (int i = 0; i < list->count(); ++i) {
                     QListWidgetItem *row = list->item(i);
                     if (row->data(Qt::UserRole).toString() != id) continue;

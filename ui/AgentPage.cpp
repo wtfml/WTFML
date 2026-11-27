@@ -10,7 +10,9 @@
 #include "AgentComposer.hpp"
 #include "AgentMessageView.hpp"
 #include "AgentToolCard.hpp"
+#include "Animations.hpp"
 #include "ElidedLabel.hpp"
+#include "Glass.hpp"
 #include "GlassPopover.hpp"
 #include "Popups.hpp"
 #include "Theme.hpp"
@@ -19,9 +21,12 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QDateTime>
+#include <QEasingCurve>
 #include <QFont>
 #include <QFrame>
+#include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
+#include <QHideEvent>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
@@ -39,6 +44,7 @@
 #include <QStyledItemDelegate>
 #include <QTimer>
 #include <QVBoxLayout>
+#include <QVariantAnimation>
 
 #include <functional>
 
@@ -389,6 +395,74 @@ void markOpen(QPushButton *anchor, bool open) {
     anchor->style()->polish(anchor);
 }
 
+/// 阴影 + 整体透明度合在一个效果里（与 GlassPopover 同款参数：blur 36 / offset (0, 10) / 暗 120 浅 60）。
+class DrawerShadow final : public QGraphicsDropShadowEffect {
+public:
+    using QGraphicsDropShadowEffect::QGraphicsDropShadowEffect;
+    qreal fade() const { return m_fade; }
+    void setFade(qreal fade) {
+        m_fade = fade;
+        update();
+    }
+
+protected:
+    void draw(QPainter *painter) override {
+        painter->save();
+        painter->setOpacity(painter->opacity() * m_fade);
+        QGraphicsDropShadowEffect::draw(painter);
+        painter->restore();
+    }
+
+private:
+    qreal m_fade = 1.0;
+};
+
+/// 智能体页左缘玻璃会话抽屉：作为 AgentPage 子控件盖在对话区上（不入布局、不推开内容），
+/// 玻璃底、圆角（14）和柔和阴影与配置编辑器「条目」浮层（GlassPopover）一致。
+class SessionDrawer final : public QFrame {
+public:
+    explicit SessionDrawer(QWidget *parent) : QFrame(parent) {
+        setObjectName(QStringLiteral("agentSidebar"));
+        setFrameShape(QFrame::NoFrame);
+        setProperty("wtfmlGlassPopover", true);
+        setFocusPolicy(Qt::StrongFocus);
+        m_shadow = new DrawerShadow(this);
+        m_shadow->setBlurRadius(36);
+        m_shadow->setOffset(0, 10);
+        const auto tintShadow = [shadow = m_shadow] {
+            shadow->setColor(QColor(0, 0, 0, Theme::isDark() ? 120 : 60));
+        };
+        tintShadow();
+        Theme::follow(this, tintShadow);
+        setGraphicsEffect(m_shadow);
+    }
+
+    qreal fade() const { return m_shadow != nullptr ? m_shadow->fade() : 1.0; }
+    void setFade(qreal fade) {
+        if (m_shadow != nullptr) m_shadow->setFade(fade);
+    }
+
+protected:
+    void paintEvent(QPaintEvent *) override {
+        QPainter p(this);
+        QPainterPath path;
+        path.addRoundedRect(QRectF(rect()), GlassPopover::kRadius, GlassPopover::kRadius);
+        p.setRenderHint(QPainter::Antialiasing, true);
+        Glass::Backdrop *backdrop = window() != nullptr ? window()->findChild<Glass::Backdrop *>() : nullptr;
+        if (backdrop != nullptr && !Glass::systemBackdrop()) {
+            p.save();
+            p.setClipPath(path);
+            backdrop->paintBase(p, this, true);
+            p.restore();
+        }
+        GlassPopover::paintSurface(p, QRectF(rect()), GlassPopover::kRadius,
+                                   backdrop == nullptr || Glass::systemBackdrop());
+    }
+
+private:
+    DrawerShadow *m_shadow = nullptr;
+};
+
 }  // namespace
 
 AgentPage::AgentPage(QWidget *parent)
@@ -400,61 +474,7 @@ AgentPage::AgentPage(QWidget *parent)
     root->setContentsMargins(0, 0, 0, 0);
     root->setSpacing(0);
 
-    // ---------- 左侧会话栏（直接放在玻璃上，不加底）----------
-    // 页面顶上就是 40 高的拖动区下沿：第一行从 12 开始（tokens-r2 §8，体验反馈 18）。
-    m_sidebar = new QWidget(this);
-    m_sidebar->setObjectName(QStringLiteral("agentSidebar"));
-    m_sidebar->setFixedWidth(sidebarWidth());
-    auto *sideLayout = new QVBoxLayout(m_sidebar);
-    sideLayout->setContentsMargins(12, 12, 8, 14);
-    sideLayout->setSpacing(0);
-
-    auto *sideHead = new QHBoxLayout;
-    sideHead->setContentsMargins(10, 0, 2, 0);
-    auto *sideTitle = new QLabel(QCoreApplication::translate("AgentPage", "会话"), m_sidebar);
-    sideTitle->setObjectName(QStringLiteral("agentSidebarTitle"));
-    sideTitle->setFont(pxFont(sideTitle->font(), 16, QFont::DemiBold));
-    sideHead->addWidget(sideTitle, 1);
-    m_newSession = iconButton(m_sidebar, QStringLiteral("agentNewSessionButton"), QStringLiteral("plus"),
-                              QCoreApplication::translate("AgentPage", "新建对话"), 32, 18);
-    sideHead->addWidget(m_newSession);
-    auto *sideHeadBox = new QWidget(m_sidebar);
-    sideHeadBox->setFixedHeight(36);
-    sideHeadBox->setLayout(sideHead);
-    sideLayout->addWidget(sideHeadBox);
-    sideLayout->addSpacing(8);
-
-    m_search = new QLineEdit(m_sidebar);
-    m_search->setObjectName(QStringLiteral("agentSessionSearch"));
-    m_search->setPlaceholderText(QCoreApplication::translate("AgentPage", "搜索会话"));
-    m_search->setClearButtonEnabled(true);
-    m_search->setFixedHeight(34);
-    {
-        QAction *glass = m_search->addAction(QIcon(), QLineEdit::LeadingPosition);
-        const auto tint = [glass] {
-            glass->setIcon(VersionIcons::line(QStringLiteral("search"), 16, Theme::tokens().secondary));
-        };
-        tint();
-        Theme::follow(m_search, tint);
-    }
-    sideLayout->addWidget(m_search);
-    sideLayout->addSpacing(2);
-
-    m_sessionList = new QListWidget(m_sidebar);
-    m_sessionList->setObjectName(QStringLiteral("agentSessionList"));
-    m_sessionList->setFrameShape(QFrame::NoFrame);
-    m_sessionList->setContextMenuPolicy(Qt::CustomContextMenu);
-    m_sessionList->setSelectionMode(QAbstractItemView::SingleSelection);
-    m_sessionList->setMouseTracking(true);
-    m_sessionList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_sessionList->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    m_sessionList->setItemDelegate(new SessionDelegate(m_sessionList));
-    m_sessionList->setStyleSheet(QStringLiteral("QListWidget { background: transparent; border: none; outline: none; }"));
-    m_sessionList->viewport()->setAutoFillBackground(false);
-    sideLayout->addWidget(m_sessionList, 1);
-    root->addWidget(m_sidebar);
-
-    // ---------- 右侧聊天区 ----------
+    // ---------- 聊天区（占满整页宽，不再放常驻左侧栏；#136）----------
     auto *chat = new QWidget(this);
     chat->setObjectName(QStringLiteral("agentChatArea"));
     // 窄窗口要能真的缩下去：标题 / 胶囊都有长文字，允许被压缩，文字由省略 / 提示补。
@@ -464,13 +484,21 @@ AgentPage::AgentPage(QWidget *parent)
     chatLayout->setContentsMargins(24, 12, 20, 20);
     chatLayout->setSpacing(0);
 
-    // 顶上一行：标题 · 警示胶囊 · 实例 · ⋯ · ⚙（样张 .top，高 36）
+    // 顶上一行：会话列表 · 新建对话 · 标题 · 警示胶囊 · 实例 · ⋯ · ⚙（高 36）
     auto *header = new QWidget(chat);
+    m_header = header;
     header->setObjectName(QStringLiteral("agentChatHeader"));
     header->setFixedHeight(36);
     auto *headerLayout = new QHBoxLayout(header);
     headerLayout->setContentsMargins(0, 0, 0, 0);
     headerLayout->setSpacing(6);
+    m_sessionsButton = iconButton(header, QStringLiteral("agentSessionsButton"), QStringLiteral("list"),
+                                  QCoreApplication::translate("AgentPage", "会话列表"), 36, 18);
+    headerLayout->addWidget(m_sessionsButton);
+    m_newSession = iconButton(header, QStringLiteral("agentNewSessionButton"), QStringLiteral("plus"),
+                              QCoreApplication::translate("AgentPage", "新建对话"), 36, 18);
+    headerLayout->addWidget(m_newSession);
+    headerLayout->addSpacing(4);
     // 长标题装不下时收省略号，不让「实例」胶囊压住半个字。
     m_title = new ElidedLabel(header);
     m_title->setText(QCoreApplication::translate("AgentPage", "新对话"));
@@ -794,16 +822,80 @@ AgentPage::AgentPage(QWidget *parent)
     composerRow->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     root->addWidget(chat, 1);
 
+    // ---------- 左缘玻璃会话抽屉（盖在对话区上，默认收起；#136）----------
+    m_sidebar = new SessionDrawer(this);
+    m_sidebar->setFixedWidth(sidebarWidth());
+    auto *sideLayout = new QVBoxLayout(m_sidebar);
+    sideLayout->setContentsMargins(12, 12, 10, 12);
+    sideLayout->setSpacing(0);
+
+    auto *sideHead = new QHBoxLayout;
+    sideHead->setContentsMargins(10, 0, 2, 0);
+    auto *sideTitle = new QLabel(QCoreApplication::translate("AgentPage", "会话"), m_sidebar);
+    sideTitle->setObjectName(QStringLiteral("agentSidebarTitle"));
+    sideTitle->setFont(pxFont(sideTitle->font(), 16, QFont::DemiBold));
+    sideHead->addWidget(sideTitle, 1);
+    auto *sideHeadBox = new QWidget(m_sidebar);
+    sideHeadBox->setFixedHeight(32);
+    sideHeadBox->setLayout(sideHead);
+    sideLayout->addWidget(sideHeadBox);
+    sideLayout->addSpacing(8);
+
+    m_search = new QLineEdit(m_sidebar);
+    m_search->setObjectName(QStringLiteral("agentSessionSearch"));
+    m_search->setPlaceholderText(QCoreApplication::translate("AgentPage", "搜索会话"));
+    m_search->setClearButtonEnabled(true);
+    m_search->setFixedHeight(34);
+    {
+        QAction *glass = m_search->addAction(QIcon(), QLineEdit::LeadingPosition);
+        const auto tint = [glass] {
+            glass->setIcon(VersionIcons::line(QStringLiteral("search"), 16, Theme::tokens().secondary));
+        };
+        tint();
+        Theme::follow(m_search, tint);
+    }
+    sideLayout->addWidget(m_search);
+    sideLayout->addSpacing(4);
+
+    m_sessionList = new QListWidget(m_sidebar);
+    m_sessionList->setObjectName(QStringLiteral("agentSessionList"));
+    m_sessionList->setFrameShape(QFrame::NoFrame);
+    m_sessionList->setContextMenuPolicy(Qt::CustomContextMenu);
+    m_sessionList->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_sessionList->setMouseTracking(true);
+    m_sessionList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_sessionList->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    m_sessionList->setItemDelegate(new SessionDelegate(m_sessionList));
+    m_sessionList->setStyleSheet(QStringLiteral("QListWidget { background: transparent; border: none; outline: none; }"));
+    m_sessionList->viewport()->setAutoFillBackground(false);
+    sideLayout->addWidget(m_sessionList, 1);
+    m_sidebar->hide();
+    if (qApp != nullptr) qApp->installEventFilter(this);
+
     // ---------- 接线 ----------
+    connect(m_sessionsButton, &QPushButton::clicked, this, &AgentPage::toggleSessionDrawer);
     connect(m_newSession, &QPushButton::clicked, this, [this] {
+        if (m_drawerOpen) closeSessionDrawer(false);
         emit newSessionRequested();
         // 新建了、或者当前已是空会话没再建（64），都把光标交给输入框：点完「+」直接打字。
         if (m_configured) m_composer->setFocus(Qt::OtherFocusReason);
     });
-    connect(m_settingsButton, &QPushButton::clicked, this, &AgentPage::settingsRequested);
-    connect(m_apiWarn, &QPushButton::clicked, this, &AgentPage::settingsRequested);
-    connect(m_emptyAction, &QPushButton::clicked, this, &AgentPage::settingsRequested);
-    connect(m_instanceChip, &QPushButton::clicked, this, &AgentPage::instanceChipRequested);
+    connect(m_settingsButton, &QPushButton::clicked, this, [this] {
+        if (m_drawerOpen) closeSessionDrawer(false);
+        emit settingsRequested();
+    });
+    connect(m_apiWarn, &QPushButton::clicked, this, [this] {
+        if (m_drawerOpen) closeSessionDrawer(false);
+        emit settingsRequested();
+    });
+    connect(m_emptyAction, &QPushButton::clicked, this, [this] {
+        if (m_drawerOpen) closeSessionDrawer(false);
+        emit settingsRequested();
+    });
+    connect(m_instanceChip, &QPushButton::clicked, this, [this] {
+        if (m_drawerOpen) closeSessionDrawer(false);
+        emit instanceChipRequested();
+    });
     connect(m_moreButton, &QPushButton::clicked, this, &AgentPage::openMoreMenu);
     connect(m_send, &QPushButton::clicked, this, [this] {
         if (!m_configured) return;
@@ -822,8 +914,10 @@ AgentPage::AgentPage(QWidget *parent)
         emit textChanged();
     });
     connect(m_sessionList, &QListWidget::itemClicked, this, [this](QListWidgetItem *item) {
-        if (item != nullptr && !item->data(kGroupHeaderRole).toBool())
+        if (item != nullptr && !item->data(kGroupHeaderRole).toBool()) {
+            closeSessionDrawer();
             emit sessionSelected(item->data(Qt::UserRole).toString());
+        }
     });
     connect(m_sessionList, &QListWidget::itemDoubleClicked, this, &AgentPage::beginListRename);
     connect(m_sessionList, &QListWidget::customContextMenuRequested, this,
@@ -848,8 +942,122 @@ AgentPage::AgentPage(QWidget *parent)
     setConfigured(false, QCoreApplication::translate("AgentPage", "API 未配置"));
 }
 
+AgentPage::~AgentPage() {
+    if (qApp != nullptr) qApp->removeEventFilter(this);
+}
+
 int AgentPage::sidebarWidth() { return 236; }
 int AgentPage::sidebarNarrowWidth() { return 216; }
+
+void AgentPage::placeSessionDrawer() {
+    if (m_sidebar == nullptr) return;
+    const int width = window()->width() < 1024 ? sidebarNarrowWidth() : sidebarWidth();
+    if (m_sidebar->width() != width) m_sidebar->setFixedWidth(width);
+    const int left = 12;
+    const int top = m_header != nullptr ? m_header->mapTo(this, QPoint(0, m_header->height())).y() + 6 : 54;
+    const int bottomMargin = 12;
+    const int drawerHeight = qMax(120, height() - top - bottomMargin);
+    m_sidebar->setGeometry(left, top, width, drawerHeight);
+}
+
+void AgentPage::openSessionDrawer() {
+    if (m_sidebar == nullptr) return;
+    if (m_drawerAnim != nullptr) {
+        m_drawerAnim->stop();
+        m_drawerAnim->deleteLater();
+        m_drawerAnim = nullptr;
+    }
+    m_drawerOpen = true;
+    markOpen(m_sessionsButton, true);
+    placeSessionDrawer();
+    const QPoint target = m_sidebar->pos();
+    auto *drawer = static_cast<SessionDrawer *>(m_sidebar);
+    m_sidebar->show();
+    m_sidebar->raise();
+    if (m_search != nullptr) {
+        m_search->setFocus(Qt::PopupFocusReason);
+        m_search->selectAll();
+    }
+    // 仅测试与验收截图 Anim::setEnabled(false) 跳到终态；产品里动效强制开启。
+    if (!Anim::enabled()) {
+        drawer->move(target);
+        drawer->setFade(1.0);
+        return;
+    }
+    const int slide = Anim::panelSlideDistance();
+    drawer->move(target.x() - slide, target.y());
+    drawer->setFade(0.0);
+    auto *anim = new QVariantAnimation(this);
+    m_drawerAnim = anim;
+    anim->setStartValue(0.0);
+    anim->setEndValue(1.0);
+    anim->setDuration(Anim::panelMs());
+    anim->setEasingCurve(QEasingCurve::OutCubic);
+    connect(anim, &QVariantAnimation::valueChanged, this, [this, drawer, target, slide](const QVariant &value) {
+        if (!m_drawerOpen) return;
+        const qreal t = value.toReal();
+        drawer->move(target.x() - qRound(slide * (1.0 - t)), target.y());
+        drawer->setFade(t);
+    });
+    connect(anim, &QVariantAnimation::finished, this, [this, drawer, target, anim] {
+        if (m_drawerAnim == anim) m_drawerAnim = nullptr;
+        if (m_drawerOpen) {
+            drawer->move(target);
+            drawer->setFade(1.0);
+        }
+    });
+    anim->start(QAbstractAnimation::DeleteWhenStopped);
+}
+
+void AgentPage::closeSessionDrawer(bool restoreFocus) {
+    if (m_sidebar == nullptr) return;
+    if (!m_drawerOpen && !m_sidebar->isVisible()) return;
+    if (m_drawerAnim != nullptr) {
+        m_drawerAnim->stop();
+        m_drawerAnim->deleteLater();
+        m_drawerAnim = nullptr;
+    }
+    m_drawerOpen = false;
+    markOpen(m_sessionsButton, false);
+    if (restoreFocus && m_sessionsButton != nullptr) {
+        m_sessionsButton->setFocus(Qt::OtherFocusReason);
+    }
+    auto *drawer = static_cast<SessionDrawer *>(m_sidebar);
+    if (!Anim::enabled() || !m_sidebar->isVisible()) {
+        m_sidebar->hide();
+        drawer->setFade(1.0);
+        return;
+    }
+    const int slide = Anim::panelSlideDistance();
+    const QPoint openPos(12, m_sidebar->y());
+    const qreal startFade = drawer->fade();
+    auto *anim = new QVariantAnimation(this);
+    m_drawerAnim = anim;
+    anim->setStartValue(startFade);
+    anim->setEndValue(0.0);
+    anim->setDuration(Anim::exitMs());
+    anim->setEasingCurve(QEasingCurve::OutCubic);
+    connect(anim, &QVariantAnimation::valueChanged, this, [this, drawer, openPos, slide](const QVariant &value) {
+        if (m_drawerOpen) return;
+        const qreal t = value.toReal();
+        drawer->move(openPos.x() - qRound(slide * (1.0 - t)), openPos.y());
+        drawer->setFade(t);
+    });
+    connect(anim, &QVariantAnimation::finished, this, [this, drawer, openPos, anim] {
+        if (m_drawerAnim == anim) m_drawerAnim = nullptr;
+        if (!m_drawerOpen) {
+            drawer->hide();
+            drawer->move(openPos);
+            drawer->setFade(1.0);
+        }
+    });
+    anim->start(QAbstractAnimation::DeleteWhenStopped);
+}
+
+void AgentPage::toggleSessionDrawer() {
+    if (m_drawerOpen) closeSessionDrawer();
+    else openSessionDrawer();
+}
 
 QString AgentPage::relativeTime(const QDateTime &when, const QDateTime &now) {
     if (!when.isValid()) return QString();
@@ -1170,6 +1378,7 @@ void AgentPage::setInstanceChip(const QString &text, bool locked) {
 }
 
 void AgentPage::showInstanceMenu(const QList<AgentView::InstanceOption> &instances, const QString &lockedId) {
+    if (m_drawerOpen) closeSessionDrawer(false);
     if (m_instanceMenu != nullptr) m_instanceMenu->deleteLater();
     auto *menu = new PopMenu(this, QStringLiteral("agentInstanceMenu"), 260);
     m_instanceMenu = menu;
@@ -1200,6 +1409,7 @@ void AgentPage::showInstanceMenu(const QList<AgentView::InstanceOption> &instanc
 }
 
 void AgentPage::openMoreMenu() {
+    if (m_drawerOpen) closeSessionDrawer(false);
     const bool has = !m_currentSessionId.isEmpty();
     for (QPushButton *b : {m_renameAction, m_pinAction, m_exportAction, m_deleteAction}) b->setEnabled(has);
     m_encryptCheck->parentWidget()->setEnabled(has);
@@ -1336,15 +1546,37 @@ AgentMessageView *AgentPage::viewFor(const QString &messageId) {
 
 void AgentPage::resizeEvent(QResizeEvent *event) {
     ThemeBackground::resizeEvent(event);
-    // 窗口窄于 1024（导航轨收成 64 的那一档）侧栏收到 216（tokens-r2 §8）。
-    const int width = window()->width() < 1024 ? sidebarNarrowWidth() : sidebarWidth();
-    if (m_sidebar->width() != width) m_sidebar->setFixedWidth(width);
-    const int pad = event->size().width() - width < 700 ? 16 : 0;
+    const int pad = event->size().width() < 700 ? 16 : 0;
     if (auto *chatLayout = qobject_cast<QVBoxLayout *>(m_scroll->parentWidget()->layout()))
         chatLayout->setContentsMargins(pad ? 16 : 24, 12, pad ? 16 : 20, pad ? 16 : 20);
+    placeSessionDrawer();
+}
+
+void AgentPage::hideEvent(QHideEvent *event) {
+    ThemeBackground::hideEvent(event);
+    if (m_drawerOpen) closeSessionDrawer(false);
 }
 
 bool AgentPage::eventFilter(QObject *watched, QEvent *event) {
+    if (m_drawerOpen && m_sidebar != nullptr && m_sidebar->isVisible()) {
+        if (event->type() == QEvent::MouseButtonPress) {
+            auto *widget = qobject_cast<QWidget *>(watched);
+            if (widget != nullptr && widget->window() == window() &&
+                widget != m_sidebar && !m_sidebar->isAncestorOf(widget) &&
+                widget != m_sessionsButton && !m_sessionsButton->isAncestorOf(widget)) {
+                closeSessionDrawer();
+                return false;
+            }
+        } else if (event->type() == QEvent::KeyPress &&
+                   static_cast<QKeyEvent *>(event)->key() == Qt::Key_Escape) {
+            auto *widget = qobject_cast<QWidget *>(watched);
+            if (widget != nullptr && widget->window() == window() &&
+                dynamic_cast<InlineRenameEdit *>(widget) == nullptr) {
+                closeSessionDrawer();
+                return true;
+            }
+        }
+    }
     if (watched == m_title && !m_currentSessionId.isEmpty() &&
         (event->type() == QEvent::MouseMove || event->type() == QEvent::MouseButtonRelease)) {
         const auto *mouse = static_cast<QMouseEvent *>(event);
