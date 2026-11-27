@@ -574,9 +574,49 @@ void runInstanceUpdateFilterTests() {
         };
 
         // 第二个可更新的模组：模组乙换回旧内容，再添一个模组丙，两条一起重查。
+        check(readBytesAt(modJar) == newJar, "T28.6 前提：T28.5 之后模组乙在盘上是新版内容",
+              QString::fromLatin1(readBytesAt(modJar)));
         writeFileAt(modJar, QByteArrayLiteral("T28-MOD-B"));
         const QString otherJar = dirV + QStringLiteral("/mods/模组丙.jar");
         writeFileAt(otherJar, QByteArrayLiteral("T28-MOD-C"));
+        check(readBytesAt(modJar) == QByteArrayLiteral("T28-MOD-B") &&
+                  readBytesAt(otherJar) == QByteArrayLiteral("T28-MOD-C"),
+              "T28.6 前提：模组乙换回旧内容、模组丙写进去了",
+              QStringLiteral("乙=%1 丙=%2").arg(QString::fromLatin1(readBytesAt(modJar)),
+                                               QString::fromLatin1(readBytesAt(otherJar))));
+        // 失败时一眼看出缺的是哪条：每一行的文件名、盘上内容是哪一版、名字后有没有 ↑，再附上最近那一趟检测的逐条结论。
+        const int checksBefore6 = checksLogged();
+        const auto updateDiag = [&]() {
+            QStringList parts;
+            if (mods != nullptr) {
+                for (int row = 0; row < mods->list()->count(); ++row) {
+                    const QListWidgetItem *item = mods->list()->item(row);
+                    const QString path = item->data(InstanceFilesPage::pathRole()).toString();
+                    const QByteArray bytes = readBytesAt(path);
+                    const QString content = bytes == QByteArrayLiteral("T28-MOD-B")   ? QStringLiteral("乙旧版")
+                                            : bytes == newJar                        ? QStringLiteral("乙新版")
+                                            : bytes == QByteArrayLiteral("T28-MOD-C") ? QStringLiteral("丙")
+                                                                                     : QStringLiteral("其它");
+                    const bool marked = item->data(Qt::AccessibleTextRole).toString().endsWith(
+                        InstanceFilesPage::updateArrowText());
+                    parts.append(QStringLiteral("%1[%2%3]").arg(QFileInfo(path).fileName(), content,
+                                                                marked ? QStringLiteral(" ↑") : QString()));
+                }
+            }
+            const QStringList log = messagesSnapshot();
+            int last = -1;
+            for (int i = 0; i < log.size(); ++i)
+                if (log.at(i).contains(QStringLiteral("更新检测（"))) last = i;
+            QStringList verdicts;
+            for (int i = last; i >= 0 && i < log.size() && verdicts.size() < 8; ++i)
+                if (i == last || log.at(i).contains(QStringLiteral("•"))) verdicts.append(log.at(i).trimmed());
+            return QStringLiteral("%1%2 | 本趟检测%3收尾 | 行：%4 | 最近一趟检测：%5")
+                .arg(state != nullptr ? state->text() : QString(),
+                     state != nullptr && state->isHidden() ? QStringLiteral("（收着）") : QString(),
+                     checksLogged() > checksBefore6 ? QStringLiteral("已") : QStringLiteral("未"),
+                     parts.join(QStringLiteral("，")),
+                     verdicts.isEmpty() ? QStringLiteral("（没有检测日志）") : verdicts.join(QStringLiteral("；")));
+        };
         const QString otherSha1 = QString::fromLatin1(
             QCryptographicHash::hash(QByteArrayLiteral("T28-MOD-C"), QCryptographicHash::Sha1)
                 .toHex());
@@ -604,7 +644,7 @@ void runInstanceUpdateFilterTests() {
             state = mods->stateButtonAt(InstanceFilesPage::StateFilter::Update);
             const bool two = pumpUntil(
                 [&] { return !state->isHidden() && state->text() == chipText(2); }, 20000);
-            check(two, "T28.6 重查之后两条可更新", state->text());
+            check(two, "T28.6 重查之后两条可更新", updateDiag());
             if (two) {
                 state->click();
                 QString modPath;
