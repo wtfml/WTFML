@@ -597,7 +597,7 @@ QWidget *makeSettingRow(QWidget *parent, QWidget *title, const QString &desc, QW
     paintRow();
     Theme::follow(row, paintRow);
     auto *line = new QHBoxLayout(row);
-    line->setContentsMargins(0, 12, 0, 12);
+    line->setContentsMargins(0, 14, 0, 14);
     line->setSpacing(16);
     auto *text = new QVBoxLayout;
     text->setContentsMargins(0, 0, 0, 0);

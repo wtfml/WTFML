@@ -177,7 +177,7 @@ void InstanceSettingsDialog::buildFilePage(const QString &key) {
     // 挨着说两遍。每一页正文底下那行小字才是这一页**特有**的那句。
     {
         // ② 中间那七页：同一个控件，喂不同的目录与三条开关。
-            QWidget *page = addPage(key);
+            QWidget *page = addViewportPage(key);
             auto *layout = page != nullptr ? qobject_cast<QVBoxLayout *>(page->layout()) : nullptr;
             if (layout == nullptr) {
                 return;
@@ -364,7 +364,7 @@ void InstanceSettingsDialog::buildFilePage(const QString &key) {
                 connect(m_configUp, &QPushButton::clicked, this,
                         &InstanceSettingsDialog::leaveConfigDir);
                 layoutActionButtons(navRow, {m_configUp});
-                target->addLayout(navRow);
+                Theme::addScrollGutterAligned(target, navRow);
                 // 摆到"还没接过目录"那一档（m_configRoot 要等 setFileDirs 才有）。
                 updateConfigUpButton();
 
@@ -434,7 +434,7 @@ void InstanceSettingsDialog::buildFilePage(const QString &key) {
 void InstanceSettingsDialog::buildServerPage() {
     // ③ 服务器列表：读 servers.dat 的结果由调用方递进来（这一层不 include src/）。
     {
-            QWidget *page = addPage(QStringLiteral("server"));
+            QWidget *page = addViewportPage(QStringLiteral("server"));
             auto *layout = qobject_cast<QVBoxLayout *>(page->layout());
             if (layout != nullptr) {
                 auto *top = newActionGrid();
@@ -522,12 +522,12 @@ void InstanceSettingsDialog::buildServerPage() {
                 for (auto *button : {m_serverRefresh, m_serverEdit, m_serverAdd, m_serverDelete, m_serverJoin})
                     top->addWidget(button, 0, actionColumn++);
                 top->setColumnStretch(actionColumn, 1);
-                layout->addLayout(top);
+                Theme::addScrollGutterAligned(layout, top);
 
                 m_serverNotice = new QLabel(page);
                 m_serverNotice->setObjectName(serverNoticeName());
                 m_serverNotice->setWordWrap(true);
-                layout->addWidget(m_serverNotice);
+                Theme::addScrollGutterAligned(layout, m_serverNotice);
 
                 auto *favoriteTools = new QHBoxLayout;
                 m_serverFavoritesOnly = new QCheckBox(tr("仅看收藏"), page);
@@ -540,7 +540,7 @@ void InstanceSettingsDialog::buildServerPage() {
                 Theme::markButton(m_serverFavorite, Theme::ButtonKind::Neutral);
                 m_serverFavorite->setToolTip(tr("收藏保存在启动器中，不修改游戏的服务器列表。"));
                 favoriteTools->addWidget(m_serverFavorite);
-                layout->addLayout(favoriteTools);
+                Theme::addScrollGutterAligned(layout, favoriteTools);
                 connect(m_serverFavoritesOnly, &QCheckBox::toggled, this,
                         &InstanceSettingsDialog::refreshServerFavorites);
                 connect(m_serverFavorite, &QPushButton::clicked, this, [this] {
@@ -628,6 +628,7 @@ void InstanceSettingsDialog::buildServerPage() {
                         &InstanceSettingsDialog::updateServerSelectionActions);
                 // 初值：现在一条都没有 ⇒ 那两颗是灰的。setServerList() 每次换表还会再喊一遍。
                 updateServerSelectionActions();
+                Theme::applyViewportScrollGutter(m_serverTree);
                 layout->addWidget(m_serverTree, 1);
                 // 展开/折叠动画（规则见 ui/Animations.hpp）。
                 Anim::animateExpansion(m_serverTree);

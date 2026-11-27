@@ -70,11 +70,14 @@
 #include <utility>
 
 class QPainter;
+class QAbstractScrollArea;
 class QAbstractSpinBox;
 class QCheckBox;
+class QLayout;
 class QPushButton;
 class QLabel;
 class QStyle;
+class QVBoxLayout;
 class QWidget;
 class QModelIndex;
 class QStyleOptionViewItem;
@@ -734,11 +737,11 @@ constexpr int sectionRadius() { return 0; }
  * 这一位有三处读者：`widgetStyleSheet()` 里那两段 QSS（竖的给 `width`、横的给 `height`）、
  * 以及验证工程（量真控件的宽度 / 量把手的左右两边是不是各留了这么宽）。
  */
-constexpr int scrollBarThickness() { return 10; }
+constexpr int scrollBarThickness() { return 6; }
 
 /// 把手离滚动条自己那条边线的距离（左右各一份，横的那一档是上下各一份）。
 /// 于是**看得见的把手宽 = `scrollBarThickness()` - 2 * 这一位**。
-constexpr int scrollBarHandleMargin() { return 2; }
+constexpr int scrollBarHandleMargin() { return 1; }
 
 /// 把手两头的圆角：**就是可见宽度的一半**，因此始终是两头圆的胶囊。
 /// 写成一算就出来的式子，免得两个数将来各自漂走（漂了只会"看着不那么圆"，不会报错）。
@@ -747,6 +750,30 @@ constexpr int scrollBarHandleRadius() { return (scrollBarThickness() - 2 * scrol
 /// 把手最短画多长。Fusion 自己也有一条（`PM_ScrollBarSliderMin`）；这一条是我们钉的，
 /// 内容长到上千行时把手不至于短成一个小点。
 constexpr int scrollBarMinHandleLength() { return 28; }
+
+/// 表单/列表内容右缘与滚动条外框左缘之间的布局间隙（第 3 档：10 px；加 1 px 把手边距 = 11 px）。
+constexpr int contentToScrollBarGap() { return 10; }
+
+/// 视口页里不滚动控件（页眉右侧按钮、搜索框、工具条、底部操作行等）需要让出的右侧总宽度：
+/// 内容间距 + 滚动条占位（10 + 6 = 16 px），使其右缘与表单页内容右缘、页眉右按钮对齐。
+constexpr int scrollBarGutterInset() { return contentToScrollBarGap() + scrollBarThickness(); }
+
+/// 把不滚动子布局的右边距设为 `scrollBarGutterInset()`（保留原有左/上/下边距）。
+void alignToScrollGutter(QLayout *layout);
+
+/// 往视口页的竖排布局里加入一个不滚动控件，右边留出 `scrollBarGutterInset()`（不改控件父对象）。
+void addScrollGutterAligned(QVBoxLayout *parent, QWidget *widget,
+                            Qt::Alignment alignment = Qt::Alignment());
+
+/// 往视口页的竖排布局里加入一个不滚动子布局，并把它的右边距对齐到 `scrollBarGutterInset()`。
+void addScrollGutterAligned(QVBoxLayout *parent, QLayout *child);
+
+/// 给视口页的主滚动控件（列表/树/多行文本框）统一挂上滚动条槽位与内容右缘留白：
+/// 1) 竖滑条常驻并用 `wtfmlIdle` 在无需滚动时隐去把手，保证切换页面或内容增减时滑条列不跳动；
+/// 2) 挂 `wtfmlScrollContentGap = contentToScrollBarGap()`，让 `DesignDefaults::RowDelegate`
+///    与表头在最右列留出 10 px（距可见把手 11 px）；
+/// 3) 对 `QPlainTextEdit` / `QTextEdit` 同步将可见输入面收在内容右缘以内、滑条留在最右列。
+void applyViewportScrollGutter(QAbstractScrollArea *view);
 
 /**
  * @brief 右边常留一条"死区"的滚动区：宽度永远是 `scrollBarThickness()` 那一格。

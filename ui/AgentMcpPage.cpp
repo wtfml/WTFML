@@ -50,6 +50,7 @@ QString stateText(const AgentView::McpServerRow &row) {
 }  // namespace
 
 AgentMcpPage::AgentMcpPage(QWidget *parent) : QDialog(parent) {
+    setProperty("wtfmlSelfScrollingPage", true);
     setObjectName(QStringLiteral("agentMcpPage"));
     setWindowTitle(tr("MCP 服务器"));
     setModal(true);

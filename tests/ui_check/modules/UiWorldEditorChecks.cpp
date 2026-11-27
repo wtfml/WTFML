@@ -91,9 +91,13 @@ int UiWorldEditorChecks() {
             probe.setFileEditingOpen(true);
             QApplication::processEvents();
             QListWidget *plist = probe.ruleList();
-            check(plist->verticalScrollBar()->isVisible(),
-                  "（前提）这一页小到规则表**非滚不可** —— 不滚的话下面那条量的是空气",
-                  QStringLiteral("表高 %1、行高 %2、行数 %3")
+            auto *pscroll = probe.findChild<QScrollArea *>();
+            check(pscroll != nullptr && pscroll->verticalScrollBar()->maximum() > 0 &&
+                      plist->verticalScrollBarPolicy() == Qt::ScrollBarAlwaysOff &&
+                      !plist->verticalScrollBar()->isVisible(),
+                  "（前提）世界设置外层滚动区接管滚动，规则表随条目撑高且关掉自身竖滑条",
+                  QStringLiteral("外层可滚 %1、表高 %2、行高 %3、行数 %4")
+                      .arg(pscroll != nullptr ? pscroll->verticalScrollBar()->maximum() : -1)
                       .arg(plist->height())
                       .arg(plist->sizeHintForRow(0))
                       .arg(plist->count()));
