@@ -377,7 +377,15 @@ int UiTaskCenterChecks(QMainWindow &window, MainWindowUI &ui, QTabWidget * &tabs
             const QMetaObject::Connection spy = QObject::connect(
                 ui.overlay(), &OverlayHost::promptDismissed, ui.overlay(),
                 [&promptDismissals] { ++promptDismissals; });
-            ui.openTaskCenterPanel();
+            if (QPushButton *summary = ui.getTaskSummaryButton()) {
+                summary->click();
+                QApplication::processEvents();
+                if (auto *pop = window.findChild<QFrame *>(ActivityPopover::objectNameValue())) {
+                    if (auto *openAll = pop->findChild<QPushButton *>(ActivityPopover::openAllButtonName())) {
+                        openAll->click();
+                    }
+                }
+            }
             QApplication::processEvents();
             QWidget *workspace = window.findChild<QWidget *>(QStringLiteral("taskCenterPromptWorkspace"));
             check(workspace != nullptr && workspace->isVisible() && ui.overlay()->promptOpen(),

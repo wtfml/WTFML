@@ -1,6 +1,7 @@
 #pragma once
 // 设计稿对照截图（--design-shots）：主页三主题、窄窗、宽窗、折叠轨、组件总表。
 // 只截图，不登录、不联网、不启动游戏；实例和账号是写在隔离目录里的夹具。
+#include "ActivityPopover.hpp"
 #include "AgentApprovalCard.hpp"
 #include "AgentPage.hpp"
 #include "agent/AgentModelClient.hpp"
@@ -1292,7 +1293,15 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                 QMetaObject::invokeMethod(&window, "openInstanceSettings", Q_ARG(QString, QStringLiteral("create")),
                                           Q_ARG(QString, QStringLiteral("overview")));
                 QTimer::singleShot(250, &window, [&window]() {
-                    window.ui()->openTaskCenterPanel();
+                    if (QPushButton *summary = window.ui()->getTaskSummaryButton()) {
+                        summary->click();
+                        QApplication::processEvents();
+                        if (auto *pop = window.findChild<QFrame *>(ActivityPopover::objectNameValue())) {
+                            if (auto *openAll = pop->findChild<QPushButton *>(ActivityPopover::openAllButtonName())) {
+                                openAll->click();
+                            }
+                        }
+                    }
                 });
                 QTimer::singleShot(450, &window, [&window, shot]() {
                     QWidget *workspace = window.findChild<QWidget *>(QStringLiteral("taskCenterPromptWorkspace"));
