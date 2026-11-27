@@ -1142,6 +1142,27 @@ int UiSurfaceSweepCheck(QApplication &app) {
                       QStringLiteral("实例管理 → 资源包"), QStringLiteral("ui/ResourcePackPage.cpp"),
                       QStringLiteral("resource-packs"), wrapper.get(), QStringLiteral("资源包"));
     }
+    // 配置编辑器的「条目」大纲浮层。
+    {
+        auto *page = new ConfigFileEditorPage;
+        page->setFile(QStringLiteral("C:/示例/config/sodium-options.json"),
+                      ConfigFileText::decode(R"({"quality": "high", "maxFps": 120})"));
+        std::unique_ptr<QDialog> wrapper(embedPage(page, QStringLiteral("surfaceConfigEditor")));
+        ui.getTabWidget()->setCurrentIndex(MainWindowUI::instancesTabIndex());
+        pump();
+        if (ui.overlay()->showPage(wrapper.get(), QStringLiteral("配置文件"), MainWindowUI::instancesTabIndex())) {
+            for (int i = 0; i < 4; ++i) pump();
+            page->openIndex();
+            pump();
+        }
+        sweep.record(QStringLiteral("config-outline"), QStringLiteral("配置编辑器·条目浮层"),
+                     QStringLiteral("实例设置 → 配置文件 → 打开文件 → 「条目」"),
+                     QStringLiteral("ui/ConfigFileEditorPage.cpp"), QString(),
+                     window.findChild<QWidget *>(QStringLiteral("configFileOutline")), &window);
+        GlassPopover::closeAllIn(&window);
+        ui.overlay()->closeOverlay();
+        pump();
+    }
 
     // ---------------------------------------------------------------- 实例设置：逐页
     {
