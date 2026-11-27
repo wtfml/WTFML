@@ -1028,10 +1028,16 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
             } else if (shot.page == QStringLiteral("i136p:install")) {
                 window.ui()->getGameStack()->setCurrentIndex(MainWindowUI::downloadGameInstallIndex());
             } else if (shot.page == QStringLiteral("i136p:preset")) {
-                window.ui()->setInstanceMode(MainWindowUI::InstanceMode::Preset);
-                // 等控制器把（隔离目录里的空）列表灌完，再摆一份演示预设并嵌进编辑器。
-                QTimer::singleShot(200, &window, [&window]() {
+                // 点真按钮（走 MainWindow::setInstanceMode → PresetController::open）：只切 ui 那一档时
+                // 控制器不建预设页，「预设」下面整片空白。
+                if (QPushButton *mode = window.ui()->getInstanceModeButton(MainWindowUI::InstanceMode::Preset)) mode->click();
+                // 等控制器把（隔离目录里的空）目录读完再摆演示预设，免得读完那一下把它冲掉；最多等 1 秒。
+                auto *poll = new QTimer(&window);
+                poll->setInterval(50);
+                QObject::connect(poll, &QTimer::timeout, &window, [&window, poll, tries = 0]() mutable {
                     auto *page = window.findChild<PresetManagePage *>();
+                    if ((page == nullptr || page->isBusy()) && ++tries < 20) return;
+                    poll->deleteLater();
                     auto *list = page ? page->findChild<QTreeWidget *>(PresetManagePage::presetListName()) : nullptr;
                     if (list == nullptr) return;
                     PresetManagePage::PresetItem item;
@@ -1044,7 +1050,10 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                                                         PresetEditorPage::Presentation::Embedded);
                     editor->selectSection(1);
                     page->embedEditor(editor);
+                    // 左栏高亮跟到「游戏选项」（编辑器分段插在「概览」之后，第 1 段在第 2 行）。
+                    if (auto *nav = page->findChild<QListWidget *>(QStringLiteral("presetDetailNav"))) nav->setCurrentRow(2);
                 });
+                poll->start();
             } else if (shot.page == QStringLiteral("final:expand")) {
                 // 展开态：版本树头一个有孩子的频道展开、选中它下面头一条（看「收起」字与选中淡底）。
                 QTreeWidget *tree = window.ui()->getVersionTree();
