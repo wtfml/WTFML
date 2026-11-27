@@ -109,8 +109,12 @@ constexpr int kChoiceComboWidth = 110;
 /// 左栏那一列导航在算出来的宽度上再加多少余量（左右各一半）。
 /// `sizeHintForColumn` 给的是"字有多宽"，条目的字贴着边看着像被切了。
 constexpr int kNavListExtraWidth = 28;
-/// 两栏之间空多少。和整页外边距那一档（12）同一档。
-constexpr int kColumnSpacing = 16;
+/// 两栏之间空多少（第 3 档：左导航与右内容栏距 20 px）。
+constexpr int kColumnSpacing = 20;
+/// 覆盖层下页眉顶部留白（配合 OverlayHost 面包屑实现窗顶→页眉 76 px、面包屑底→页眉 7 px）。
+constexpr int kOuterTopMargin = 4;
+/// 右栏内容右缘与滚动条之间的布局间隙（第 3 档：布局 10 + 把手边距 1 = 11 px）。
+constexpr int kContentToScrollBarGap = 10;
 /// 单独拿出来用时的初始大小。宽是"一列导航 + 一块还放得下两列表格的内容"量出来的
 /// （见 .cpp 构造函数里那句 NOTE：嵌进覆盖层时这个数不作数）。
 constexpr int kDialogWidth = 820;
@@ -169,6 +173,7 @@ InstanceSettingsDialog::InstanceSettingsDialog(const QString &instanceName,
     : QDialog(parent), m_global(global), m_instanceId(instanceId) {
     // 在创建子控件前确定最终父容器与类型，避免挂载时整棵控件树重新继承样式。
     if (embedded) setWindowFlags(Qt::Widget);
+    setProperty("wtfmlSelfScrollingPage", true);
     setWindowTitle(tr("实例设置"));
     setAcceptDrops(true);
     // 比分组对话框宽得多：从左到右是**两栏**（左栏一列页 + 右栏一块内容），600 放不下。
@@ -191,8 +196,8 @@ InstanceSettingsDialog::InstanceSettingsDialog(const QString &instanceName,
     m_pendingWarnJavaMismatch = warnJavaMismatch;
 
     auto *outer = new QVBoxLayout(this);
-    // 左右不再留边：覆盖层自己两侧已经各留了 40，这一页再叠 12 会把右栏挤窄（UI问题 #6）。
-    outer->setContentsMargins(0, 12, 0, 12);
+    // 左右留白由覆盖层统一控制；顶部收紧至第 3 档避免面包屑与页眉之间空隙过大。
+    outer->setContentsMargins(0, kOuterTopMargin, 0, 12);
     outer->setSpacing(10);
 
     // UI 7b 页眉（设计稿 instance-*）：图标 + 实例名 + 一行元信息 | 打开目录（扁平）+ 启动实例（这一页唯一的实心钮）。
@@ -200,6 +205,8 @@ InstanceSettingsDialog::InstanceSettingsDialog(const QString &instanceName,
     auto *header = identity.widget;
     header->setObjectName(QStringLiteral("instanceSettingsHeader"));
     auto *headerLine = identity.line;
+    // 页眉右缘扣除滚动条宽度与内容间距，与下方内容控件右缘对齐。
+    headerLine->setContentsMargins(4, 0, kContentToScrollBarGap + Theme::scrollBarThickness(), 4);
     m_headerIcon = identity.icon;
     m_headerIcon->setObjectName(QStringLiteral("instanceHeaderIcon"));
     m_headerIcon->setScaledContents(true);
@@ -599,13 +606,30 @@ QWidget *InstanceSettingsDialog::addPage(const QString &key) {
     auto *page = new QWidget(scroll);
     page->setObjectName(panelName(key));
     auto *layout = new QVBoxLayout(page);
-    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setContentsMargins(0, 0, kContentToScrollBarGap, 0);
     layout->setSpacing(10);
     scroll->setWidget(page);
     auto *slotLayout = new QVBoxLayout(slot);
     slotLayout->setContentsMargins(0, 0, 0, 0);
     slotLayout->setSpacing(0);
     slotLayout->addWidget(scroll);
+    return page;
+}
+
+QWidget *InstanceSettingsDialog::addViewportPage(const QString &key) {
+    QWidget *slot = pageSlot(key);
+    if (slot == nullptr) {
+        return nullptr;
+    }
+    auto *page = new QWidget(slot);
+    page->setObjectName(panelName(key));
+    auto *layout = new QVBoxLayout(page);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(10);
+    auto *slotLayout = new QVBoxLayout(slot);
+    slotLayout->setContentsMargins(0, 0, 0, 0);
+    slotLayout->setSpacing(0);
+    slotLayout->addWidget(page);
     return page;
 }
 
@@ -1836,13 +1860,16 @@ void InstanceSettingsDialog::rebuildNavigationTree() {
     }
     const QSignalBlocker blocker(m_navigationTree);
     m_navigationTree->clear();
-    const auto add = [this](QTreeWidgetItem *parent, const QString &text, const QString &key) {
+    const QFont navBodyFont = Theme::textFont(m_navigationTree->font(), Theme::TextRole::Body);
+    const int navRowHeight = qMax(30, QFontMetrics(navBodyFont).height() + 10);
+    m_navigationTree->setProperty("wtfmlMinRowHeight", navRowHeight);
+    const auto add = [this, navRowHeight](QTreeWidgetItem *parent, const QString &text, const QString &key) {
         auto *item = parent != nullptr ? new QTreeWidgetItem(parent)
                                       : new QTreeWidgetItem(m_navigationTree);
         item->setText(0, text);
         item->setData(0, Qt::UserRole, key);
         item->setToolTip(0, text);
-        item->setSizeHint(0, QSize(0, 32));  // 一级二级同一行高；36 时最小窗里左栏要竖着滚
+        item->setSizeHint(0, QSize(0, navRowHeight));  // 按正文字体度量收紧行高，默认展开态左栏不出滑条
         if (key.isEmpty()) item->setFlags(Qt::ItemIsEnabled);
         if (parent == nullptr) {
             // 一级目录（「概览」「启动设置」和四个分组头）同一档：正文字号、加粗、正文色；二级页才是常规字重。

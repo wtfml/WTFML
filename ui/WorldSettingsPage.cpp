@@ -26,6 +26,7 @@
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QRegularExpressionValidator>
+#include <QScrollArea>
 #include <QShowEvent>
 #include <QSignalBlocker>
 // 正文收尾那根弹簧（见 m_bodyTail 那一段）。
@@ -35,6 +36,7 @@
 #include <QTimer>   // 搜索框那一发防抖（见 kRuleFilterDelayMs）
 #include <QToolButton>
 #include <QVBoxLayout>
+#include <QWheelEvent>
 
 #include <algorithm>
 
@@ -85,6 +87,17 @@ protected:
         opt.state &= ~(QStyle::State_Selected | QStyle::State_HasFocus |
                        QStyle::State_MouseOver);
         QStyledItemDelegate::paint(painter, opt, index);
+    }
+};
+
+/// 规则列表不自带竖滑条，滚轮事件放行给外层单滚动区。
+class AutoHeightRuleList final : public QListWidget {
+public:
+    using QListWidget::QListWidget;
+
+protected:
+    void wheelEvent(QWheelEvent *event) override {
+        event->ignore();
     }
 };
 
@@ -159,8 +172,20 @@ QHBoxLayout *makeOptionRow(QWidget *parent, const QString &labelText, QWidget *c
 WorldSettingsPage::WorldSettingsPage(QWidget *parent) : QWidget(parent) {
     setObjectName(pageName());
 
-    auto *root = new QVBoxLayout(this);
-    root->setContentsMargins(0, 0, 0, 0);
+    auto *outerRoot = new QVBoxLayout(this);
+    outerRoot->setContentsMargins(0, 0, 0, 0);
+    outerRoot->setSpacing(0);
+
+    m_scroll = new Theme::GutterScrollArea(this);
+    m_scroll->setObjectName(QStringLiteral("worldSettingsScroll"));
+    m_scroll->setWidgetResizable(true);
+    m_scroll->setFrameShape(QFrame::NoFrame);
+    m_scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    auto *content = new QWidget(m_scroll);
+    auto *root = new QVBoxLayout(content);
+    constexpr int kContentToScrollBarGap = 10;
+    root->setContentsMargins(0, 0, kContentToScrollBarGap, 0);
     root->setSpacing(8);
 
     // 页眉的「返回 / 世界设置：<世界名>」在覆盖层上（`OverlayHost`），这一页自己不再画
@@ -172,14 +197,14 @@ WorldSettingsPage::WorldSettingsPage(QWidget *parent) : QWidget(parent) {
     // 确认框、还要在成功之后把这一页的名字摆回来或者干脆收掉这一页）。
     auto *actions = new FlowLayout(8, 8);  // 窄栏（实例设置「存档」页）里折行
 
-    m_rename = new QPushButton(renameText(), this);
+    m_rename = new QPushButton(renameText(), content);
     m_rename->setObjectName(renameButtonName());
     m_rename->setToolTip(tr("修改存档的文件夹名称，游戏世界列表中显示的也是该名称。"));
     Theme::markButton(m_rename, Theme::ButtonKind::Neutral);
     connect(m_rename, &QPushButton::clicked, this, &WorldSettingsPage::renameRequested);
     actions->addWidget(m_rename);
 
-    m_openFolder = new QPushButton(openFolderText(), this);
+    m_openFolder = new QPushButton(openFolderText(), content);
     m_openFolder->setObjectName(openFolderButtonName());
     Theme::markButton(m_openFolder, Theme::ButtonKind::Accent);
     connect(m_openFolder, &QPushButton::clicked, this,
@@ -190,7 +215,7 @@ WorldSettingsPage::WorldSettingsPage(QWidget *parent) : QWidget(parent) {
     //
     // 它们动的是**这个存档**（打它、还原它、去看它的备份），和「重命名 / 打开文件夹 /
     // 删除世界」在同一排。整份备份只有「立即备份」这一条路（保存前另会自动备份 `level.dat`）。
-    m_fullBackup = new QPushButton(fullBackupText(), this);
+    m_fullBackup = new QPushButton(fullBackupText(), content);
     m_fullBackup->setObjectName(fullBackupButtonName());
     m_fullBackup->setToolTip(tr("将完整存档保存为压缩包并校验。"));
     Theme::markButton(m_fullBackup, Theme::ButtonKind::Neutral);
@@ -198,7 +223,7 @@ WorldSettingsPage::WorldSettingsPage(QWidget *parent) : QWidget(parent) {
             [this] { emit fullBackupRequested(); });
     actions->addWidget(m_fullBackup);
 
-    m_restore = new QPushButton(restoreBackupText(), this);
+    m_restore = new QPushButton(restoreBackupText(), content);
     m_restore->setObjectName(restoreButtonName());
     m_restore->setToolTip(tr("选择备份还原，还原前自动备份当前文件。"));
     // 红：它把**这个存档现在这一份**整个换掉 —— 和实例概览那颗「从快照恢复…」同一档
@@ -209,7 +234,7 @@ WorldSettingsPage::WorldSettingsPage(QWidget *parent) : QWidget(parent) {
             [this] { emit restoreBackupRequested(); });
     actions->addWidget(m_restore);
 
-    m_backupFolder = new QPushButton(openBackupFolderText(), this);
+    m_backupFolder = new QPushButton(openBackupFolderText(), content);
     m_backupFolder->setObjectName(backupFolderButtonName());
     m_backupFolder->setToolTip(tr("打开存档备份目录。"));
     Theme::markButton(m_backupFolder, Theme::ButtonKind::Accent);
@@ -217,7 +242,7 @@ WorldSettingsPage::WorldSettingsPage(QWidget *parent) : QWidget(parent) {
             [this] { emit openBackupFolderRequested(); });
     actions->addWidget(m_backupFolder);
 
-    m_delete = new QPushButton(deleteText(), this);
+    m_delete = new QPushButton(deleteText(), content);
     m_delete->setObjectName(deleteButtonName());
     m_delete->setToolTip(tr("删除此世界及其全部文件，删除前会确认。"));
     // 红：这一档叫「不可撤销（如修改存档，删除实例）」—— 这一颗删的就是一整个
@@ -229,7 +254,7 @@ WorldSettingsPage::WorldSettingsPage(QWidget *parent) : QWidget(parent) {
     // 页眉面包屑上的「返回」在覆盖层上；这一页的顺序跟着这一排的版面走。
     setTabOrder({m_rename, m_openFolder, m_fullBackup, m_restore, m_backupFolder, m_delete});
 
-    m_save = new QPushButton(saveText(), this);
+    m_save = new QPushButton(saveText(), content);
     m_save->setObjectName(saveButtonName());
     // 一律红：这一档叫「不可撤销（如**修改存档**，删除实例）」——
     // 这一颗写的就是存档里那份 level.dat。写之前会自动留一代备份
@@ -238,7 +263,7 @@ WorldSettingsPage::WorldSettingsPage(QWidget *parent) : QWidget(parent) {
     connect(m_save, &QPushButton::clicked, this, &WorldSettingsPage::saveRequested);
 
     // ---------- 正文（"读不出来"那一档整块藏起来）----------
-    m_body = new QWidget(this);
+    m_body = new QWidget(content);
     m_body->setObjectName(bodyName());
     m_bodyLayout = new QVBoxLayout(m_body);
     QVBoxLayout *body = m_bodyLayout;   // 这一段里那颗指针用得太多，另起一个短名字
@@ -285,7 +310,7 @@ WorldSettingsPage::WorldSettingsPage(QWidget *parent) : QWidget(parent) {
     fileBody->setSpacing(8);
     // 默认收起：这是"改存档文件"那几格，用户没点开之前一个都不该看见。
     m_fileBody->setVisible(false);
-    m_fileMotion = new SettingsParts::FoldMotion(m_fileBody, /*fillsSpace=*/true);
+    m_fileMotion = new SettingsParts::FoldMotion(m_fileBody, /*fillsSpace=*/false);
 
     // 世界名：盘上没有这一格
     // 时它照样能改，只是 tooltip 会说明"现在写的是默认值，改了才会写进去"（见
@@ -377,24 +402,22 @@ WorldSettingsPage::WorldSettingsPage(QWidget *parent) : QWidget(parent) {
     rulesRow->addWidget(m_ruleFilter, 1);
     fileBody->addLayout(rulesRow);
 
-    m_ruleList = new QListWidget(m_fileBody);
+    m_ruleList = new AutoHeightRuleList(m_fileBody);
     m_ruleList->setObjectName(ruleListName());
-    // 挂的是**视口**不是列表自己：要认的就是"视口被滚动条挤窄了"那一发，而那一发只落在
-    // 视口上。为什么必须接住它见 `eventFilter()` 那一段 ★★（行会被视口切掉半个）。
+    // 挂的是**视口**不是列表自己：要认的就是"视口宽度变化"那一发，重摆行控件宽度。
     m_ruleList->viewport()->installEventFilter(this);
-    // 一行一个自己摆的控件 ⇒ 不用选中态、不要焦点框、不要自带滚动条之外的任何装饰。
+    // 一行一个自己摆的控件 ⇒ 不用选中态、不要焦点框、关掉自身滑条随条目撑高，由外层单滚动区统一滚动。
     m_ruleList->setSelectionMode(QAbstractItemView::NoSelection);
     m_ruleList->setFocusPolicy(Qt::NoFocus);
     m_ruleList->setAlternatingRowColors(false);
     m_ruleList->setUniformItemSizes(true);
+    m_ruleList->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_ruleList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_ruleList->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     // 选中 / 当前项 / 悬停一个都不画（理由见上面 RuleItemDelegate 那段 ★★ —— 光靠
     // NoSelection 拦不住第 0 行被当成"当前项"染一道竖渐变）。
     m_ruleList->setItemDelegate(new RuleItemDelegate(m_ruleList));
-    // 撑头的那一份在**框里面**：`fileBody` 里是"四行固定高 + 搜索行 + 规则表(1)"，
-    // `body` 里是「说明 / 折叠钮 / 框(1)」。两级都把剩下的高度给表格，框收起来时这一串
-    // 自然塌掉（`m_fileBody` 一隐藏，`body` 里就只剩说明和那颗钮）。
-    fileBody->addWidget(m_ruleList, 1);
+    fileBody->addWidget(m_ruleList, 0);
 
     // 「保存」是「修改存档文件」这一组的最后一件事：写的就是上面这些格子，折叠框收着时不露面。
     auto *saveRow = new QHBoxLayout;
@@ -403,29 +426,25 @@ WorldSettingsPage::WorldSettingsPage(QWidget *parent) : QWidget(parent) {
     saveRow->addWidget(m_save);
     fileBody->addLayout(saveRow);
 
-    body->addWidget(m_fileBody, 1);
+    body->addWidget(m_fileBody, 0);
 
-    // 正文收尾那根弹簧。
-    //
-    // 框收着的时候正文里活着的只剩「那一行事实」和上面那颗折叠钮，而 `QVBoxLayout` 在
-    // 没有 stretch 可用的时候会把多出来的高度**均分**给它们 —— 屏幕上就是"那行事实飘在
-    // 正中间、那颗钮掉到最底下贴着说明"，看着像页坏了。这根弹簧收着时一个人吃掉全部多余
-    // 高度（两样都贴顶），摊开时让给规则表（那一份 stretch 才是 1）。
-    //
-    // `updateBodyTail()` 是唯一改它 stretch 的地方（两条路都要叫它）。
-    m_bodyTail = new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    m_bodyTail = new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum);
     m_bodyTailIndex = m_bodyLayout->count();
     m_bodyLayout->addSpacerItem(m_bodyTail);
     updateBodyTail(false);   // 默认就是收着的
 
-    root->addWidget(m_body, 1);
+    root->addWidget(m_body, 0);
 
     // ---------- 底下那行小字 ----------
-    m_note = new QLabel(this);
+    m_note = new QLabel(content);
     m_note->setObjectName(noteLabelName());
     m_note->setWordWrap(true);
     m_note->setForegroundRole(QPalette::PlaceholderText);
-    root->addWidget(m_note);
+    root->addWidget(m_note, 0);
+    root->addStretch(1);
+
+    m_scroll->setWidget(content);
+    outerRoot->addWidget(m_scroll, 1);
 
     // 一开始没摆世界：底下那句"还没打开"和"读不出来"是两回事，但这一页永远不会以
     // 空着的样子露出来（MainWindow 一定先 setWorld / setUnreadable 才切到这一格），
@@ -680,6 +699,7 @@ void WorldSettingsPage::setUnreadable(const QString &dirName, const QString &rea
     m_titleText = tr("存档读取失败：%1").arg(dirName);
     m_ruleList->clear();
     m_ruleRows.clear();
+    syncRuleListHeight();
     // 这一档里那个折叠框**整个收起来**（连那颗钮一起藏，见 applyUnreadableState()）——
     // 读不出存档内容，"改文件"这件事就无从谈起。
     setFileEditingOpen(false);
@@ -855,6 +875,7 @@ void WorldSettingsPage::rebuildRuleRows(bool harvestFromRows) {
         item->setText(emptyRulesText());
         item->setFlags(Qt::NoItemFlags);
         item->setSizeHint(QSize(0, ruleRowHeight()));
+        syncRuleListHeight();
         refreshSaveEnabled();
         return;
     }
@@ -958,7 +979,26 @@ void WorldSettingsPage::rebuildRuleRows(bool harvestFromRows) {
         item->setFlags(Qt::NoItemFlags);
         item->setSizeHint(QSize(0, ruleRowHeight()));
     }
+    syncRuleListHeight();
     refreshSaveEnabled();
+}
+
+void WorldSettingsPage::syncRuleListHeight() {
+    if (m_ruleList == nullptr) {
+        return;
+    }
+    int rowsHeight = 0;
+    const int fallback = ruleRowHeight();
+    for (int i = 0; i < m_ruleList->count(); ++i) {
+        const int h = m_ruleList->sizeHintForRow(i);
+        rowsHeight += h > 0 ? h : fallback;
+    }
+    const QMargins margins = m_ruleList->contentsMargins();
+    const int target = rowsHeight + 2 * m_ruleList->frameWidth() + margins.top() + margins.bottom();
+    if (m_ruleList->minimumHeight() != target || m_ruleList->maximumHeight() != target) {
+        m_ruleList->setFixedHeight(target);
+        m_ruleList->updateGeometry();
+    }
 }
 
 bool WorldSettingsPage::ruleMatches(const Rule &rule) const {

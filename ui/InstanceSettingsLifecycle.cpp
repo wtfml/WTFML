@@ -61,6 +61,11 @@
 #include <QSet>
 #include <QImageReader>
 #include <QVBoxLayout>
+#include <QAbstractTextDocumentLayout>
+#include <QResizeEvent>
+#include <QShowEvent>
+#include <QWheelEvent>
+#include <QtMath>
 #include <memory>
 #include <utility>
 #include <algorithm>
@@ -144,6 +149,87 @@ bool lifecycleBatchWorlds(const QString &key) {
 bool lifecycleBatchEnabled(const QString &key) {
     return lifecycleBatchAnyFile(key) || !lifecycleBatchSuffixes(key).isEmpty();
 }
+
+/// 随文本内容自动撑高、关掉内部竖滑条的只读文本框（实例迁移计划用，避免与外层表单双滑条）。
+class AutoHeightPlainTextEdit final : public QPlainTextEdit {
+public:
+    explicit AutoHeightPlainTextEdit(QWidget *parent = nullptr) : QPlainTextEdit(parent) {
+        setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        connect(this, &QPlainTextEdit::textChanged, this, [this] { syncHeight(); });
+        if (auto *docLayout = document() ? document()->documentLayout() : nullptr) {
+            connect(docLayout, &QAbstractTextDocumentLayout::documentSizeChanged, this,
+                    [this](const QSizeF &) { syncHeight(); });
+        }
+        syncHeight();
+    }
+
+    void syncHeight() {
+        const QAbstractTextDocumentLayout *docLayout = document() ? document()->documentLayout() : nullptr;
+        const int lines = docLayout ? qMax(1, qCeil(docLayout->documentSize().height())) : 1;
+        const int lineSpacing = qMax(1, fontMetrics().lineSpacing());
+        const int docMargin = document() ? qCeil(document()->documentMargin() * 2.0) : 0;
+        const QMargins margins = contentsMargins();
+        const int target = lines * lineSpacing + docMargin + 2 * frameWidth() + margins.top() + margins.bottom() + 4;
+        if (minimumHeight() != target || maximumHeight() != target) {
+            setFixedHeight(target);
+            updateGeometry();
+        }
+    }
+
+protected:
+    void resizeEvent(QResizeEvent *event) override {
+        QPlainTextEdit::resizeEvent(event);
+        syncHeight();
+    }
+
+    void showEvent(QShowEvent *event) override {
+        QPlainTextEdit::showEvent(event);
+        syncHeight();
+    }
+
+    void wheelEvent(QWheelEvent *event) override {
+        event->ignore();
+    }
+};
+
+/// 随条目数自动撑高、关掉内部竖滑条的列表（实例迁移勾选项用，避免与外层表单双滑条）。
+class AutoHeightListWidget final : public QListWidget {
+public:
+    explicit AutoHeightListWidget(QWidget *parent = nullptr) : QListWidget(parent) {
+        setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        syncHeight();
+    }
+
+    void syncHeight() {
+        int rowsHeight = 0;
+        const int fallbackRow = fontMetrics().height() + 10;
+        for (int i = 0; i < count(); ++i) {
+            const int h = sizeHintForRow(i);
+            rowsHeight += h > 0 ? h : fallbackRow;
+        }
+        const QMargins margins = contentsMargins();
+        const int target = rowsHeight + 2 * frameWidth() + margins.top() + margins.bottom()
+                           + (count() > 0 ? 4 : 0);
+        if (minimumHeight() != target || maximumHeight() != target) {
+            setFixedHeight(target);
+            updateGeometry();
+        }
+    }
+
+protected:
+    void showEvent(QShowEvent *event) override {
+        QListWidget::showEvent(event);
+        syncHeight();
+    }
+
+    void wheelEvent(QWheelEvent *event) override {
+        event->ignore();
+    }
+};
 
 /// 单击后底下那一格要不要摆信息（只在恰好选中一行时）。
 bool lifecycleInfoBySelection(const QString &key) {
@@ -287,7 +373,10 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
         ensurePage(overviewCategoryKey());  // 快照 / 复制 / 导出 / 删除那四颗都在概览上
     }
     {
-        QWidget *page = addPage(key);
+        const bool scrollFormPage = key == QStringLiteral("operationsmenu")
+                                    || key == QStringLiteral("migration")
+                                    || key == QStringLiteral("upgrade");
+        QWidget *page = scrollFormPage ? addPage(key) : addViewportPage(key);
         auto *layout = page != nullptr ? qobject_cast<QVBoxLayout *>(page->layout()) : nullptr;
         if (layout == nullptr) {
             return;
@@ -562,21 +651,24 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
             }
 
             // 计划正文：只读、可选中复制（用户想把这份范围说明贴到别处就用得上）。
-            auto *plan = new QPlainTextEdit(page);
+            // 迁移页走随内容撑高、无内部滑条的文本框，由外层 instanceSettingsScroll-migration 统一滚动。
+            QPlainTextEdit *plan = upgrade ? new QPlainTextEdit(page)
+                                           : static_cast<QPlainTextEdit *>(new AutoHeightPlainTextEdit(page));
             plan->setObjectName(transferPlanTextName(key));
             plan->setReadOnly(true);
             plan->setPlainText(tr("正在准备计划…"));
             plan->setLineWrapMode(QPlainTextEdit::WidgetWidth);
-            layout->addWidget(plan, 2);
+            layout->addWidget(plan, upgrade ? 2 : 0);
             m_transferPlans.insert(key, plan);
 
             // 可勾选的范围表。**只让勾选框可用、不让整行被选中**：点行 = 勾/取消勾，
             // 不会出现"选中了一条但没勾上"那种两套状态。
-            auto *items = new QListWidget(page);
+            QListWidget *items = upgrade ? new QListWidget(page)
+                                         : static_cast<QListWidget *>(new AutoHeightListWidget(page));
             items->setObjectName(transferItemsListName(key));
             items->setSelectionMode(QAbstractItemView::NoSelection);
             items->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);  // 窄栏里长项省略号收尾，不出横向滚动条
-            layout->addWidget(items, 3);
+            layout->addWidget(items, upgrade ? 3 : 0);
             m_transferItems.insert(key, items);
             if (upgrade) {
                 layout->removeWidget(plan); layout->removeWidget(items);
@@ -663,7 +755,10 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
             });
             updateTransferApplyState(key);
         }
-        if (key != QStringLiteral("upgrade") && key != QStringLiteral("diagnosis")) layout->addStretch(1);
+        if (key != QStringLiteral("upgrade") && key != QStringLiteral("diagnosis")
+            && key != QStringLiteral("worldbackup")) {
+            layout->addStretch(1);
+        }
         // 调用方（controller）**开页那一刻**就把这些灌进来了，而这一页是第一次切过去才建
         // 的 —— 存的那些在这儿摆上去（见 replayTransferPage() / setDiagnosisText()）。
         if (key == QStringLiteral("migration") || key == QStringLiteral("upgrade")) {
@@ -1084,6 +1179,9 @@ void InstanceSettingsDialog::setTransferItems(const QString &key,
         item->setData(Qt::UserRole, entry.second);
         item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
         item->setCheckState(defaultKeys.contains(entry.second) ? Qt::Checked : Qt::Unchecked);
+    }
+    if (auto *autoList = dynamic_cast<AutoHeightListWidget *>(list)) {
+        autoList->syncHeight();
     }
     updateTransferApplyState(key);
 }

@@ -2087,6 +2087,8 @@ private:
     /// NOTE: 现在只有 ensurePage() 跑 builder 的时候才调它 —— 堆叠页那一格（`addPageSlot()`）
     /// 在构造里就按 pageCount() 的顺序挖好了，页里的控件是第一次切过去才建的。
     QWidget *addPage(const QString &key);
+    /// 往堆叠页里加一页视口型页面（不套外层 GutterScrollArea，供列表/树/编辑器/日志独占滚动条）。
+    QWidget *addViewportPage(const QString &key);
 
     /// 在堆叠页里挖一格空位（构造里按 pageCount() 的顺序挖全部 23 格）。
     ///

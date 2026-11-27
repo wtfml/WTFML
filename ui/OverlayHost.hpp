@@ -461,8 +461,12 @@ public:
     /// 实例设置那一页实测 75 ms，而那份树紧接着就要被删掉）。谁设谁负责删 —— 在
     /// `pageClosed()` 那一发里 `deleteLater()`，和 `showPage()` 那一套本来就有的收尾一致。
     static const char *disposesOnCloseProperty();
+    /// 自管理滚动的整页：覆盖层外层不再额外启用垂直滚动条或预留滚动槽。
+    static const char *selfScrollingPageProperty();
 
 private:
+    /// 按当前窗口宽度与覆盖页模式同步面包屑与内容区的上/左/右边距（宽窗限宽居中）。
+    void updatePageMargins();
     /// 当前被盖住的那一页（锚点是 QTabWidget 时才有）。
     QWidget *coveredPage() const;
     /// 放掉"按住"的那一页。
@@ -504,6 +508,7 @@ private:
     // 验证工程就得重新 findChild 一次，而"页眉长得一样"这件事也没人保证了。
     QWidget *m_pageFrame = nullptr;
     QVBoxLayout *m_pageLayout = nullptr;
+    QWidget *m_breadcrumb = nullptr;
     QPushButton *m_backButton = nullptr;
     QLabel *m_titleLabel = nullptr;
     QPointer<QWidget> m_headerWidget;

@@ -85,6 +85,7 @@ class QLabel;
 class QLineEdit;
 class QListWidget;
 class QPushButton;
+class QScrollArea;
 class QSpacerItem;
 class QTimer;
 class QToolButton;
@@ -424,6 +425,8 @@ private:
     /// （开关永远不会空）—— 一个规则的值被清空后存下去，等于把那条规则写成一个空串，
     /// 游戏那边会当成坏值用默认的。用户多半是手滑，不是那个意思。
     void refreshSaveEnabled();
+    /// 按条目 sizeHintForRow 同步规则表高度（关掉自身滑条，由外层滚动区统一滚动）。
+    void syncRuleListHeight();
 
     WorldView m_view;
     /// **打开这一页时**摆进去的那一份，之后再不动它 —— `deltaFromOpened()` 就是拿现在这一份
@@ -444,6 +447,7 @@ private:
     QString m_titleText;
     /// `setFileEditingOpen()` 正在摆折叠框：`toggled` 那条槽见到它就不再发 `fileEditingRequested()`。
     bool m_applyingFileEditing = false;
+    QScrollArea *m_scroll = nullptr;
     QLabel *m_info = nullptr;
     QWidget *m_body = nullptr;
     /// 正文那一层布局（`updateBodyTail()` 要拿它改 stretch，所以得留个指针）。

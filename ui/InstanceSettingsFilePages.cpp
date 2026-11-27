@@ -177,7 +177,7 @@ void InstanceSettingsDialog::buildFilePage(const QString &key) {
     // 挨着说两遍。每一页正文底下那行小字才是这一页**特有**的那句。
     {
         // ② 中间那七页：同一个控件，喂不同的目录与三条开关。
-            QWidget *page = addPage(key);
+            QWidget *page = addViewportPage(key);
             auto *layout = page != nullptr ? qobject_cast<QVBoxLayout *>(page->layout()) : nullptr;
             if (layout == nullptr) {
                 return;
@@ -434,7 +434,7 @@ void InstanceSettingsDialog::buildFilePage(const QString &key) {
 void InstanceSettingsDialog::buildServerPage() {
     // ③ 服务器列表：读 servers.dat 的结果由调用方递进来（这一层不 include src/）。
     {
-            QWidget *page = addPage(QStringLiteral("server"));
+            QWidget *page = addViewportPage(QStringLiteral("server"));
             auto *layout = qobject_cast<QVBoxLayout *>(page->layout());
             if (layout != nullptr) {
                 auto *top = newActionGrid();

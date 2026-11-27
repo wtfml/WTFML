@@ -734,11 +734,11 @@ constexpr int sectionRadius() { return 0; }
  * 这一位有三处读者：`widgetStyleSheet()` 里那两段 QSS（竖的给 `width`、横的给 `height`）、
  * 以及验证工程（量真控件的宽度 / 量把手的左右两边是不是各留了这么宽）。
  */
-constexpr int scrollBarThickness() { return 10; }
+constexpr int scrollBarThickness() { return 6; }
 
 /// 把手离滚动条自己那条边线的距离（左右各一份，横的那一档是上下各一份）。
 /// 于是**看得见的把手宽 = `scrollBarThickness()` - 2 * 这一位**。
-constexpr int scrollBarHandleMargin() { return 2; }
+constexpr int scrollBarHandleMargin() { return 1; }
 
 /// 把手两头的圆角：**就是可见宽度的一半**，因此始终是两头圆的胶囊。
 /// 写成一算就出来的式子，免得两个数将来各自漂走（漂了只会"看着不那么圆"，不会报错）。

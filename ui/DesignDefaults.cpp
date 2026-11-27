@@ -133,7 +133,11 @@ bool optedOut(const QWidget *widget) {
 QSize RowDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const {
     QSize size = QStyledItemDelegate::sizeHint(option, index);
     if (iconMode(option)) return size;
-    return QSize(size.width() + 2 * extraTextPad(option.widget), qMax(size.height(), minRowHeight()));
+    const int customMin = option.widget != nullptr
+                              ? option.widget->property("wtfmlMinRowHeight").toInt()
+                              : 0;
+    const int floorHeight = customMin > 0 ? customMin : minRowHeight();
+    return QSize(size.width() + 2 * extraTextPad(option.widget), qMax(size.height(), floorHeight));
 }
 
 void RowDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
