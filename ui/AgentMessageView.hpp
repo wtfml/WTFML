@@ -12,6 +12,7 @@
 
 #include "AgentViewTypes.hpp"
 
+#include <QPoint>
 #include <QWidget>
 
 class QLabel;
@@ -33,9 +34,14 @@ signals:
 
 protected:
     void paintEvent(QPaintEvent *event) override;
+    /// 思考过程那一块点一下就折叠/展开（pi 那个手感）：按下时记位置，松开时位置没挪
+    /// 才算「点」，拖选文字不会误触。
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
     void refresh();
+    /// 「思考过程」那颗按钮的字与提示：收起时把字数写进去（看得出有多长）。
+    void refreshReasoningToggle();
 
     AgentView::Message m_message;
     QWidget *m_bubble = nullptr;  ///< 内容那一块；自己的话时它靠右、定宽，底色画在它下面
@@ -43,6 +49,9 @@ private:
     QLabel *m_body = nullptr;
     QLabel *m_reasoning = nullptr;
     QToolButton *m_reasoningToggle = nullptr;
+    /// 按在思考正文上的位置；松开时还在附近才算一次点击。
+    QPoint m_reasoningPressPos;
+    bool m_reasoningPressed = false;
     QLabel *m_status = nullptr;
     QPushButton *m_retry = nullptr;
 };

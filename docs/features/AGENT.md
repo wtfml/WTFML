@@ -25,7 +25,7 @@
 | D9 | 第一版只开放固定诊断命令 + 参数白名单，默认关闭；任意可执行文件未开放 |
 | D10 | 删除会话不删备份；备份带来源实例与 `sourceSessionId`；智能体备份并入启动器备份（#129），在实例设置「备份与操作」页的「从快照恢复…」里与快照一起列出、可还原 |
 | D11 | 外发按内容判定：自动读取脱敏日志/崩溃报告/实例与目录元数据；配置/完整文件名/完整实例清单逐次确认；凭据与二进制硬阻断 |
-| D12 | Auto-safe（2026-11-24 产品确认）：用户显式打开后，**一次批准一个有范围、有时效的事务**，事务内按已批准计划执行写/启动/提交，不再逐次确认；范围来自计划与 `repair.begin`（工具、文件、设置键、模组、项目号），最长 60 分钟或 20 次启动；`java.path`、`args.extraJvm`、`saves/`、删除、`backup.restore`、`instance.repairCore`、别的工区一律拒绝；默认关闭、不随会话记忆；每次事务结束写审计。这是 D5 的唯一例外，其它路径仍逐次确认 |
+| D12 | Auto-safe（2026-11-24 产品确认；2026-11-27 改口去掉时效与启动次数）：用户显式打开后，**一次批准一个事务**，事务内按已批准计划执行写/启动/提交，不再逐次确认；范围来自计划与 `repair.begin`（工具、文件、设置键、模组、项目号），**开着就一直有效**，不再有 60 分钟或 20 次启动的上限，启动次数只进审计；`java.path`、`args.extraJvm`、`saves/`、删除、`backup.restore`、`instance.repairCore`、别的工区一律拒绝；默认关闭、不随会话记忆；换模式/换会话/关窗/事务结束/每次调用前的复核失败都当场失效；每次事务结束写审计。计划审批始终要过。这是 D5 的唯一例外，其它路径仍逐次确认 |
 
 ## 3. 架构与依赖
 
@@ -41,13 +41,21 @@
 - 智能体页双栏：左侧会话栏（新建/搜索/分组/重命名/固定/删除），右侧聊天区。
 - 顶行：标题、API 状态胶囊、实例胶囊、`⋯`（重命名/固定/加密存储/导出/删除）、API 设置。
 - 输入岛上方一行**模式胶囊**：自由对话 / 实例诊断 / 崩溃急救 / 版本升级 / 模组维护（`agentSkill_<id>`）；下面一行工作流状态（模式/阶段/计划步数/证据数），空串收起。
-- 消息区：用户气泡、助手 Markdown、推理折叠、错误/中断、工具卡、审批卡（计划卡复用审批卡）。滚动跟随只在用户本来就贴着底部时生效：上翻阅读后，流式正文/工具卡/提示的更新不再把画面拽回最下方，折叠或展开思考过程同理；`Ctrl+End`（对话视图有焦点时）或滚轮回到最底部恢复跟随。
+- 消息区：用户气泡、助手 Markdown、推理折叠、错误/中断、工具卡、审批卡（计划卡复用审批卡）。思考过程两种折叠方式：「思考过程」那颗按钮，或直接点思考正文（拖选文字不算点击）；收起后按钮上写「思考过程（已折叠 · N 字）」。滚动跟随只在用户本来就贴着底部时生效：上翻阅读后，流式正文/工具卡/提示的更新不再把画面拽回最下方，折叠或展开思考过程同理；`Ctrl+End`（对话视图有焦点时）或滚轮回到最底部恢复跟随。
 - API 设置页另有「MCP 服务器…」入口与「联网与诊断」组（SearXNG 地址、允许诊断命令开关，默认关）。
 - 主题、尺寸、无障碍沿用现有 Theme 令牌与 `objectName`。
 
 ## 5. API 与网络安全
 
-### 5.1 Provider 兼容子集
+### 5.1 Provider 与模型
+
+设置页先选**厂商**（内置目录 `ui/AgentProviderCatalog`：OpenAI、DeepSeek、通义千问、Kimi、智谱、SiliconFlow、OpenRouter、Ollama、LM Studio、自定义），选完自动填接口地址与认证方式；模型是一颗**可编辑下拉**，「拉取模型列表」走 `GET /models`（复用已有客户端，新增 `AgentModelClient::listModels()`），401/网络/该服务不支持时回落到目录里的内置清单。选中模型后按目录填上下文上限与输出上限。
+
+厂商目录只是界面侧的默认值，不参与策略判定：URL 仍过 `AgentProviderAdapters::validateBaseUrl()`，密钥仍只走 `AgentSecretStore`。订阅制/plan 类入口（OAuth）暂不支持。手调参数（上下文长度、单次最多输出、温度、等待超时、协议适配）收在设置页「高级」里，默认收起。
+
+思考强度是一颗循环胶囊（`off / low / medium / high`，写进 `profile.reasoningEffort`），只在目录标了 `supportsReasoning` 的模型上出现；发送时映射成 `reasoning_effort`，`off` 或不支持时整条不发。
+
+### 5.2 Provider 兼容子集
 
 `POST <base>/chat/completions`；支持 `messages`、`tools`、`tool_choice:auto`、流式 SSE 与非流式 JSON；解析 `delta.content`、`reasoning_content`、`tool_calls`、`finish_reason`、`usage`、`data: [DONE]`。适配项只允许枚举：
 
@@ -63,11 +71,11 @@
 
 工具线上名必须匹配 `^[A-Za-z0-9_-]+$`；内部 `fs.read` 映射为 `fs_read`。错误分类：`NoConfiguration / Unauthorized / RateLimited / Quota / Network / Protocol / ContextOverflow / ToolError / EgressApprovalRequired / EgressBlocked / ApprovalDenied / Cancelled / Internal`；401/403/配额不重试，首字节前网络/429/5xx 最多 2 次（1 s / 4 s，尊重 Retry-After），流开始后失败保留部分文本不自动重发。
 
-### 5.2 凭据
+### 5.3 凭据
 
 API Key 只落 Windows 凭据管理器（`WTFML/Agent/<profileId>`），主路径失败用 DPAPI 后备（QSettings 里的密文）；两条都失败拒绝保存并保留旧值。界面默认星号遮挡、不回显；Key 不进日志、会话、错误、导出或 URL。
 
-### 5.3 网络边界
+### 5.4 网络边界
 
 Base URL 只接受 `https://`；loopback `http://` 需显式勾选并持续提示；拒绝 userinfo、片段、查询串。不跟随重定向、不忽略 TLS 错误；响应 16 MB、SSE 单行 1 MB。
 
@@ -148,9 +156,11 @@ agent/
 
 保守估算 token（CJK 1、ASCII 0.3、其它 1），预算 = `contextWindow − maxOutput − 512`；优先级：系统提示 → 工具 schema → 环境快照 → 最近完整轮次 → 工具结果摘要 → 更早摘要 → 省略标记；永远保留最后一条用户消息与进行中的 assistant/tool 配对。
 
-### 7.3 压缩与摘要
+### 7.3 上下文预算、裁剪与自动另起一段
 
-确定性裁剪并插入「（更早的 N 条消息已省略）」；不做 LLM 摘要；原文仍在会话文件里。
+预算 = 模型上下文上限 − 预留输出 − 512；上限取所选模型在 `ui/AgentProviderCatalog` 里的真实值（选模型时自动填，手改可覆盖）。历史从最新往回装，超预算就裁掉最旧的一段并在原位置插「（更早的 N 条消息已省略）」；assistant/tool 配对不拆开。
+
+每轮发出去之前把用量报给控制器（`AgentLoop::contextBudgetUpdated`，0–100）。**上一轮用掉 ≥ 90% 时，下一次发送另起一条会话**，并在正文前缀带上一段的一句话要点（会话标题 + 最后三条你说的话 + 用过的工具名去重，`carryOverSummary()`）。这里不做 LLM 压缩，原文仍在会话文件里。
 
 ### 7.4 消息转换
 
@@ -373,10 +383,10 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 | --- | --- |
 | 打开 | 只在崩溃急救/模组维护显示开关；需要先锁定实例；默认关闭，不随会话记忆。崩溃卡片转发进崩溃急救后会问一次要不要打开（默认落在「逐步确认」） |
 | 范围 | 已批准计划里的写工具、`fs.write` 路径、`settings.set` 键、`mods.setEnabled` 文件名、`mods.installFix` 项目号，加 `repair.begin/verify/finish/diff/status` 与启动测试/二分 |
-| 时效 | 60 分钟；启动次数 20（`instance.testLaunch`/`repair.verify` 按 `repeat` 计，`mods.bisect` 按 `maxLaunches` 计）；到期或用满退回逐次确认 |
+| 时效 | **没有**（2026-11-27 产品确认）：开着就一直有效，启动次数只记账不设上限 |
 | 硬禁止 | `settings.set` 的 `java.path` / `args.extraJvm`；`fs.write` 的 `saves/` 与带 `..` 的路径；`backup.restore`；`instance.repairCore`；不在本事务工作区的写入 |
 | 自动回滚 | `repair.verify` 失败时事务工具自己调 `repair.finish(rollback)`，把回滚结果并进验证结果 |
-| 失效 | 换模式、换会话、关窗、事务结束（commit/rollback）、到期；关窗时停测试进程 |
+| 失效 | 换模式、换会话、关窗、事务结束（commit/rollback）；`AgentCompositeToolEngine` 在**每次**工具调用前调 `Authorizer::revalidate()` 复核会话与实例，对不上就当场关掉；关窗时停测试进程 |
 | 审计 | 事务结束写 `agent/transactions/<id>/audit.json`：范围、限制、实际操作、启动次数、验证、最终状态、回滚结果；同时挂进 `repair.finish` 的结果数据 |
 
 限制：Auto-safe 只跳过"写操作逐次确认"，不跳过外发确认（D11）与审批矩阵里的其它类别；`mods.bisect` 的一次授权按它的启动上限占预算，不做更细的逐轮记账。
@@ -502,7 +512,7 @@ Collect → AwaitPlanApproval → Execute*（每步审批）→ Verify → Repor
 | 单次 API 响应 / SSE 单行 | 16 MB / 1 MB |
 | 单条工具参数 / 单条工具内联结果 | 64 KB / 16 KB |
 | 单会话正文 / 消息条数 / 快照 | 8 MB / 2000 条 / 3 份 |
-| 单轮工具步数 / 单会话总数 | 8 / 40（总数跨回合、跨重启按会话累计；被上限挡住的那次不执行也不计数） |
+| 单轮工具步数 / 单会话总数 | **不设上限**（`Config` 里两个字段默认 0 = 不限）；总数跨回合、跨重启按会话累计，只用于显示与审计。同一工具 + 完全相同的参数在最近 3 次里成功过时，第 4 次直接复用上次结果（不消耗往返，`data.reusedRepeat=true`） |
 | 重试 / 模型请求总时长 | 2 次 / 10 分钟（可取消） |
 | 工具超时 | 文件 30 s、MCP 120 s、命令 60 s、联网 20 s |
 | 测试启动 | 1–600 s，观察 0–60 s，重复 1–3 次；工作区记录/日志在本地 |
@@ -511,7 +521,7 @@ Collect → AwaitPlanApproval → Execute*（每步审批）→ Verify → Repor
 | 模组兼容 / 校验 | 2000 个文件、本地 60 s；平台每批 100 个哈希、总 180 s；单文件哈希 512 MB |
 | 模组修复 / 核心修复 | 单文件 100 MB、单事务 500 MB、≤10 个文件；核心修复 10 min |
 | 依赖感知二分 | 默认 8 次、最多 20 次启动；默认 45 min；每次启动 10–600 s；连续 3 次启动失败就停 |
-| Auto-safe | 60 min、20 次启动；一次只有一个授权；不随会话记忆 |
+| Auto-safe | 不设时效与启动次数；一次只有一个授权；不随会话记忆 |
 | 修复事务 | 范围 5 类；基线文件 ≤20000 个、总大小 ≤512 MB；单实例同时 1 个活动事务；提交备份在 `agent/transactions/<id>/backups/` |
 | 目录列表 / `fs.read` / `fs.write` | 2000 项 / 256 KB（最大 1 MB）/ 1 MB |
 | artifact 单会话配额 | 64 MB（按会话目录密文总字节；0 表示不限，只在测试里用） |

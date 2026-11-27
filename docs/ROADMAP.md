@@ -44,6 +44,7 @@
 - [ ] **A1–A8 人工验证**（清单见 [AGENT](features/AGENT.md) §13.3）：真实模型、真实实例的体检/急救/备份、真实 MCP、真实联网与代理/证书、诊断命令清理、凭据与换用户、干净机器启动与高 DPI/读屏。
 - [ ] **Stage 3 剩余**：资源搜索/安装/更新工具、Brave/Tavily provider、HTTP/SSE MCP（若批准）。
 - [ ] **智能体剩余边界**：病例库跨实例迁移、日志自造字段名与显卡/音频型号的遮挡（清单见 [AGENT](features/AGENT.md) §14）。
+- [ ] **订阅制 / plan 入口**：Claude Code、ChatGPT plan 这类 OAuth 登录的入口暂不进厂商目录（`ui/AgentProviderCatalog` 现在只收 API Key 的服务）；要做先定认证与凭据存储方案。
 
 ## 5. P2：性能与体验
 

@@ -266,6 +266,7 @@ set(HEADER_FILES
     ui/AgentSecretEdit.hpp
     ui/InputSizing.hpp
     ui/AgentSettingsPage.hpp
+    ui/AgentProviderCatalog.hpp
     ui/AgentToolCard.hpp
     ui/AgentPanelPaint.hpp
     ui/AgentApprovalCard.hpp
@@ -782,6 +783,7 @@ set(SOURCE_FILES
     ui/AgentPage.cpp
     ui/AgentSecretEdit.cpp
     ui/AgentSettingsPage.cpp
+    ui/AgentProviderCatalog.cpp
     ui/AgentToolCard.cpp
     ui/AgentApprovalCard.cpp
     ui/AgentMcpPage.cpp

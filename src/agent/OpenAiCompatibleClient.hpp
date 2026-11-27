@@ -32,6 +32,7 @@ public:
     void start(const Agent::ModelRequest &request) override;
     void cancel(const QString &requestId) override;
     void testConnection(const Agent::ModelRequest &request) override;
+    void listModels(const Agent::ModelRequest &request) override;
 
     /// 测试专用：注入自己的 QNetworkAccessManager（本地假服务器）。
     void setNetworkAccessManagerForTest(QNetworkAccessManager *manager);
@@ -55,11 +56,13 @@ private:
         QString finishReason;
         AgentSseParser *parser = nullptr;
         bool isConnectionTest = false;
+        bool isModelList = false;
         qint64 startedAt = 0;
         qint64 totalBytes = 0;
     };
 
     void begin(const Agent::ModelRequest &request, bool connectionTest);
+    void beginModelList(const Agent::ModelRequest &request);
     void feedReply(const QString &requestId, QNetworkReply *reply);
     void processStreamJson(const QString &requestId, ActiveRequest *active, const QByteArray &data);
     void processNonStreamBody(const QString &requestId, ActiveRequest *active, const QByteArray &body);

@@ -12,6 +12,7 @@
 
 #include <QCoreApplication>
 #include <QElapsedTimer>
+#include <QEventLoop>
 #include <QThread>
 #include <QTimer>
 #include <QTranslator>
@@ -39,7 +40,7 @@ public:
         starts += 1;
         requests.append(request);
         const int mode = behaviours.isEmpty() ? 0 : behaviours.takeFirst();
-        if (useTools && toolRounds == 0) {
+        if (useTools && toolRounds < toolRoundLimit) {
             ++toolRounds;
             QTimer::singleShot(0, this, [this, request] {
                 Agent::ModelReply reply;
@@ -49,7 +50,10 @@ public:
                 Agent::ToolCall call;
                 call.id = QStringLiteral("call-1");
                 call.name = QStringLiteral("fs.list");
-                call.arguments = QJsonObject{{QStringLiteral("path"), QStringLiteral(".")}};
+                // 每轮换一个路径：默认同一个参数会被 `AgentLoop` 的去重（kRepeatReuseWindow）
+                // 直接复用，测不到"不设限"那一条。
+                call.arguments = QJsonObject{
+                    {QStringLiteral("path"), QStringLiteral("dir-%1").arg(toolRounds)}};
                 reply.message.toolCalls.append(call);
                 emit finished(request.requestId, reply);
             });
@@ -84,6 +88,8 @@ public:
 
     int starts = 0;
     int toolRounds = 0;
+    /// 连续发几轮工具调用（默认 1 = 老行为：只发一次，之后收尾）。
+    int toolRoundLimit = 1;
     bool useTools = false;
     QList<int> behaviours;
     QList<Agent::ModelRequest> requests;
@@ -449,6 +455,84 @@ void runAgentLoopTests() {
         check(waitFor([&] { return seededLoop.state() == AgentLoop::State::Failed; }),
               "Loop 会话上限：切会话带过来的计数生效");
         check(seededEngine.invokeCount == 0, "Loop 会话上限：超限的工具一次都不执行");
+    }
+    {
+        // 2026-11-27：工具调用不再有次数上限。默认配置连跑多轮也不该被挡住。
+        FakeModelClient client;
+        client.useTools = true;
+        FakeToolEngine engine;
+        AgentLoop loop(&client);
+        loop.setToolEngine(&engine);
+        AgentLoop::Config config;
+        config.profile.baseUrl = QStringLiteral("https://api.example.com/v1");
+        config.profile.model = QStringLiteral("m");
+        config.apiKey = QStringLiteral("k");
+        check(config.maxToolSteps == 0 && config.maxSessionToolCalls == 0,
+              "Loop 不设限：默认配置就是 0（0 = 不限）");
+        loop.setConfig(config);
+        client.toolRoundLimit = 45;  // 连发 45 轮，跨过原来的 40 次会话上限
+        loop.setHistory({user(QStringLiteral("一直查"))});
+        loop.start();
+        int rounds = 0;
+        while (rounds < 60) {
+            if (loop.state() == AgentLoop::State::AwaitingApproval) {
+                loop.resolveApproval(true);
+                ++rounds;
+                continue;
+            }
+            if (loop.state() == AgentLoop::State::Completed ||
+                loop.state() == AgentLoop::State::Failed) {
+                break;
+            }
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 10);
+            QThread::msleep(1);
+        }
+        check(loop.state() != AgentLoop::State::Failed,
+              "Loop 不设限：撞不到「最大工具步数」/「会话上限」");
+        check(loop.sessionToolCalls() > 40,
+              "Loop 不设限：会话累计超过原来的 40 次也照样跑",
+              QString::number(loop.sessionToolCalls()));
+    }
+    {
+        // 同一工具 + 同一参数重复调用：第二次直接复用上次结果，不再走一次往返。
+        FakeModelClient client;
+        client.useTools = true;
+        FakeToolEngine firstEngine;
+        AgentLoop loop(&client);
+        loop.setToolEngine(&firstEngine);
+        AgentLoop::Config config;
+        config.profile.baseUrl = QStringLiteral("https://api.example.com/v1");
+        config.profile.model = QStringLiteral("m");
+        config.apiKey = QStringLiteral("k");
+        loop.setConfig(config);
+        loop.setHistory({user(QStringLiteral("查一次目录"))});
+        loop.start();
+        check(waitFor([&] { return loop.state() == AgentLoop::State::AwaitingApproval; }),
+              "Loop 去重：第一次调用照常审批");
+        loop.resolveApproval(true);
+        check(waitFor([&] { return loop.state() == AgentLoop::State::Completed; }),
+              "Loop 去重：第一次调用完成");
+
+        // 模型再发一次**完全一样**的调用：不去问执行器，直接抄上次的结果。
+        client.toolRounds = 0;
+        FakeToolEngine secondEngine;
+        loop.setToolEngine(&secondEngine);
+        loop.setHistory({user(QStringLiteral("再查一次同一个目录"))});
+        loop.start();
+        check(waitFor([&] { return loop.state() == AgentLoop::State::Completed ||
+                                    loop.state() == AgentLoop::State::AwaitingApproval; }),
+              "Loop 去重：第二次请求回来了");
+        check(secondEngine.invokeCount == 0,
+              "Loop 去重：同参数同工具第二次没有真正执行",
+              QString::number(secondEngine.invokeCount));
+        bool sawReuse = false;
+        for (const Agent::Message &message : loop.history()) {
+            if (message.role == Agent::Role::Tool &&
+                message.content.contains(QStringLiteral("reusedRepeat"))) {
+                sawReuse = true;
+            }
+        }
+        check(sawReuse, "Loop 去重：结果里标了 reusedRepeat");
     }
     {
         FakeModelClient client;

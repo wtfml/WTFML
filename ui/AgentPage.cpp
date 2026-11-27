@@ -725,13 +725,28 @@ AgentPage::AgentPage(QWidget *parent)
     m_autoSafeButton->setCursor(Qt::PointingHandCursor);
     m_autoSafeButton->setToolTip(
         QCoreApplication::translate("AgentPage",
-                                    "一次批准一个事务：按已批准计划执行，不再逐步确认；"  // i18n-ignore
-                                    "最长 60 分钟或 20 次启动，结束写审计。"));  // i18n-ignore
+                                    "一次批准一个事务：按已批准计划执行，不再逐步确认。"  // i18n-ignore
+                                    "开着就一直有效，事务结束写审计。"));  // i18n-ignore
     m_autoSafeButton->setAccessibleName(QStringLiteral("Auto-safe"));
     Theme::markButton(m_autoSafeButton, Theme::ButtonKind::Ghost);
     connect(m_autoSafeButton, &QPushButton::toggled, this,
             [this](bool checked) { emit autoSafeToggled(checked); });
     m_autoSafeButton->hide();
+    // 思考强度：一颗循环胶囊（和 pi 的 /thinking 同一个手感）——点一下换下一档。
+    m_reasoningChip = new QPushButton(m_skillBar);
+    m_reasoningChip->setObjectName(QStringLiteral("agentReasoningChip"));
+    m_reasoningChip->setCursor(Qt::PointingHandCursor);
+    m_reasoningChip->setAccessibleName(QCoreApplication::translate("AgentPage", "思考强度"));
+    Theme::markButton(m_reasoningChip, Theme::ButtonKind::Ghost);
+    connect(m_reasoningChip, &QPushButton::clicked, this, [this] {
+        if (m_reasoningLevels.isEmpty()) return;
+        m_reasoningIndex = (m_reasoningIndex + 1) % m_reasoningLevels.size();
+        const auto &entry = m_reasoningLevels.at(m_reasoningIndex);
+        m_reasoningChip->setText(
+            QCoreApplication::translate("AgentPage", "思考：%1").arg(entry.second));
+        emit reasoningLevelChosen(entry.first);
+    });
+    m_reasoningChip->hide();
     {
         auto *skillLine = new QHBoxLayout;
         skillLine->setContentsMargins(0, 0, 0, 0);
@@ -1217,6 +1232,7 @@ void AgentPage::setSkills(const QList<AgentView::SkillOption> &skills,
         // 查出上一轮的控件（测试和读屏都会拿到错的那个）。
         if (QWidget *widget = item->widget()) {
             if (widget == m_autoSafeButton) continue;  // 常驻开关，不跟着模式按钮重建
+            if (widget == m_reasoningChip) continue;    // 同上：思考强度不随模式变
             widget->hide();
             widget->setParent(nullptr);
             widget->deleteLater();
@@ -1239,6 +1255,9 @@ void AgentPage::setSkills(const QList<AgentView::SkillOption> &skills,
     }
     m_skillLayout->addStretch(1);
     if (m_autoSafeButton != nullptr) m_skillLayout->addWidget(m_autoSafeButton);
+    if (m_reasoningChip != nullptr && m_reasoningChip->isVisibleTo(this)) {
+        m_skillLayout->addWidget(m_reasoningChip);
+    }
 }
 
 void AgentPage::setAutoSafeVisible(bool visible) {
@@ -1261,6 +1280,36 @@ bool AgentPage::autoSafeEnabled() const {
 
 QString AgentPage::autoSafeText() const {
     return m_autoSafeButton != nullptr ? m_autoSafeButton->text() : QString();
+}
+
+void AgentPage::setReasoningLevels(const QList<QPair<QString, QString>> &levels,
+                                   const QString &current) {
+    if (m_reasoningChip == nullptr) return;
+    m_reasoningLevels = levels;
+    m_reasoningIndex = 0;
+    for (int i = 0; i < levels.size(); ++i) {
+        if (levels.at(i).first == current) {
+            m_reasoningIndex = i;
+            break;
+        }
+    }
+    const bool available = levels.size() > 1;
+    m_reasoningChip->setVisible(available);
+    if (available) {
+        m_reasoningChip->setText(QCoreApplication::translate("AgentPage", "思考：%1")
+                                     .arg(levels.at(m_reasoningIndex).second));
+        m_reasoningChip->setToolTip(QCoreApplication::translate(
+            "AgentPage", "点一下换下一档（发给支持推理的模型）"));
+        // 和 Auto-safe 一样挂在那条模式胶囊行上（重建模式按钮时不会被删，见 setSkills）。
+        if (m_skillLayout != nullptr && m_reasoningChip->parentWidget() == m_skillBar) {
+            m_skillLayout->addWidget(m_reasoningChip);
+        }
+    }
+}
+
+QString AgentPage::reasoningLevel() const {
+    if (m_reasoningLevels.isEmpty()) return {};
+    return m_reasoningLevels.at(qBound(0, m_reasoningIndex, m_reasoningLevels.size() - 1)).first;
 }
 
 void AgentPage::setWorkflowStatus(const QString &text) {

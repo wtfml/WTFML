@@ -82,6 +82,10 @@ void OpenAiCompatibleClient::testConnection(const Agent::ModelRequest &request) 
     begin(request, true);
 }
 
+void OpenAiCompatibleClient::listModels(const Agent::ModelRequest &request) {
+    beginModelList(request);
+}
+
 void OpenAiCompatibleClient::begin(const Agent::ModelRequest &request, bool connectionTest) {
     if (m_manager == nullptr) {
         m_manager = new QNetworkAccessManager(this);
@@ -157,6 +161,69 @@ void OpenAiCompatibleClient::begin(const Agent::ModelRequest &request, bool conn
         ActiveRequest *requestState = this->active(id);
         if (requestState == nullptr) return;
         finishReply(id, requestState);
+    });
+}
+
+void OpenAiCompatibleClient::beginModelList(const Agent::ModelRequest &request) {
+    if (m_manager == nullptr) {
+        m_manager = new QNetworkAccessManager(this);
+        m_ownsManager = true;
+    }
+    const AgentProviderProfile validationProfile = [&request] {
+        AgentProviderProfile profile;
+        profile.baseUrl = request.baseUrl;
+        profile.model = request.model;
+        profile.localHttpAllowed = request.localHttpAllowed;
+        profile.authMode = request.authMode;
+        return profile;
+    }();
+    QString problem;
+    bool loopback = false;
+    if (!AgentProviderAdapters::validateBaseUrl(request.baseUrl, request.localHttpAllowed,
+                                               &loopback, &problem)) {
+        emit modelsListed(request.requestId, false, {}, problem);
+        return;
+    }
+    if (request.apiKey.isEmpty() && request.authMode != QLatin1String("none")) {
+        emit modelsListed(request.requestId, false, {}, tr("没有可用的 API Key，无法列出模型。"));
+        return;
+    }
+    QNetworkRequest networkRequest{QUrl(AgentProviderAdapters::modelsUrl(validationProfile))};
+    networkRequest.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                               QNetworkRequest::ManualRedirectPolicy);
+    networkRequest.setTransferTimeout(clampTimeout(request.timeoutSec) * 1000);
+    networkRequest.setRawHeader("Accept", "application/json");
+    const QByteArray authName = AgentProviderAdapters::authHeaderName(validationProfile);
+    const QByteArray authValue =
+        AgentProviderAdapters::authHeaderValue(validationProfile, request.apiKey);
+    if (!authName.isEmpty() && !authValue.isEmpty()) {
+        networkRequest.setRawHeader(authName, authValue);
+    }
+    QNetworkReply *reply = m_manager->get(networkRequest);
+    // 列模型是一次性的：不走 m_active 那套流式状态机，拿到就解析、解析完就完事。
+    connect(reply, &QNetworkReply::finished, this, [this, reply, id = request.requestId] {
+        const QByteArray body = reply->readAll();
+        const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        reply->deleteLater();
+        if (status < 200 || status >= 300) {
+            const QString summary = status == 0
+                                        ? classifyNetworkError(reply).message
+                                        : tr("列出模型失败（HTTP %1）。").arg(status);
+            emit modelsListed(id, false, {}, summary);
+            return;
+        }
+        const QJsonDocument document = QJsonDocument::fromJson(body);
+        QStringList models;
+        for (const QJsonValue &value : document.object().value(QStringLiteral("data")).toArray()) {
+            const QString modelId = value.toObject().value(QStringLiteral("id")).toString();
+            if (!modelId.isEmpty() && !models.contains(modelId)) models.append(modelId);
+        }
+        models.sort(Qt::CaseInsensitive);
+        if (models.isEmpty()) {
+            emit modelsListed(id, false, {}, tr("服务端没有返回任何模型。"));
+            return;
+        }
+        emit modelsListed(id, true, models, tr("已列出 %1 个模型。").arg(models.size()));
     });
 }
 
