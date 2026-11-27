@@ -431,7 +431,7 @@ protected:
         QPainter painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
         painter.setPen(Qt::NoPen);
-        const QColor base = palette().color(QPalette::Base);
+        const QColor base = Theme::rowBase(palette());
         painter.setBrush(selected ? Theme::selectionFill(base) : Theme::rowHoverFill(base));
         painter.drawRoundedRect(rect(), 10, 10);
         if (m_dropHover) {

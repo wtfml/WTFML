@@ -560,7 +560,7 @@ int UiInstanceGroupingChecks(MainWindowUI &ui, QTreeWidget * &instanceList) {
             const QImage plainInstance = captureWidget(instanceProbe.viewport());
 
             const QColor hoverFill =
-                Theme::rowHoverFill(instanceProbe.palette().color(QPalette::Base));
+                Theme::rowHoverFill(Theme::rowBase(instanceProbe.palette()));
             const QRect childRowRect = instanceProbe.visualItemRect(hoverChildRow);
             const QRect childCardRect = InstanceGroupDelegate::cardRect(childRowRect);
             const QRect groupRowRect = instanceProbe.visualItemRect(hoverGroupRow);
@@ -694,7 +694,7 @@ int UiInstanceGroupingChecks(MainWindowUI &ui, QTreeWidget * &instanceList) {
             const QImage plainVersion = captureWidget(versionProbe.viewport());
 
             const QColor versionHoverFill =
-                Theme::rowHoverFill(versionProbe.palette().color(QPalette::Base));
+                Theme::rowHoverFill(Theme::rowBase(versionProbe.palette()));
             const QRect versionRowRect = versionProbe.visualItemRect(versionRow);
             const QRect channelRowRect = versionProbe.visualItemRect(channelRow);
             const QRect disabledRowRect = versionProbe.visualItemRect(disabledRow);

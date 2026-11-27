@@ -159,13 +159,13 @@ void VersionTreeDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
         painter->save();
         painter->setRenderHint(QPainter::Antialiasing, true);
         painter->setPen(Qt::NoPen);
-        painter->setBrush(Theme::rowHoverFill(option.palette.color(QPalette::Base)));
+        painter->setBrush(Theme::rowHoverFill(Theme::rowBase(option.palette)));
         painter->drawRoundedRect(QRectF(0, option.rect.top(), option.rect.right() + 1, option.rect.height())
                                      .adjusted(0, 1, 0, -1),
                                  Theme::controlRadius(), Theme::controlRadius());
         painter->restore();
     } else if (hoverable) {
-        const QColor hoverFill = Theme::rowHoverFill(option.palette.color(QPalette::Base));
+        const QColor hoverFill = Theme::rowHoverFill(Theme::rowBase(option.palette));
         if (m_navRow) {
             const QRectF hoverRect = QRectF(option.rect.adjusted(3, 2, -3, -2));
             painter->save();

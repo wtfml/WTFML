@@ -361,8 +361,13 @@ QColor neutralFill(const QColor &base, const QColor &ink, int percent = 29);
 /// 选中那一行往主题色混多少（百分比，见上面那段）。
 constexpr int selectionAccentPercent() { return 20; }
 
-/// 选中那一行的底。入参是**这一行自己的底色**（`option.palette.color(QPalette::Base)`）；
-/// 不传 = 白底（默认那身浅色主题上所有表的底色都是白）。
+/// 这一行自己的底色，喂给下面这几个取色函数用：**一律走它，别直接读 `color(QPalette::Base)`**。
+/// 挂了 `background: transparent` 样式表的列表，Qt 把 `Base` 设成 `NoBrush`（`QRenderRule::configurePalette`
+/// 的 embedded 分支），它的颜色是**不透明黑** —— 直接读就把浅色界面当成黑底（#143 左栏白字）。这时按全透明给。
+QColor rowBase(const QPalette &palette);
+
+/// 选中那一行的底。入参是**这一行自己的底色**（`rowBase(option.palette)`）；半透明 / 全透明的
+/// 先叠到页面底上再算。不传 = 白底（默认那身浅色主题上所有表的底色都是白）。
 QColor selectionFill(const QColor &base = QColor(Qt::white));
 /// 它上面那行字：主题色那一支里"白底上写字"的那一档（`AccentShade::Ink`，约 7.4:1）。
 /// 深底（深色预设）上自动换成那一支里"深底上写字"的那一档 —— 见 .cpp 里那段。

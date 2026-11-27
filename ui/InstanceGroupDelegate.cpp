@@ -200,7 +200,7 @@ void InstanceGroupDelegate::paint(QPainter *painter, const QStyleOptionViewItem 
         // 不可用的那几行不染：这张树上它们整体是半透明的（`setDisabled()` 那条路），
         // 再铺一层底色反而像是"点得动"。
         if (hovered && (index.flags() & Qt::ItemIsEnabled) != 0) {
-            painter->fillRect(opt.rect, Theme::rowHoverFill(option.palette.color(QPalette::Base)));
+            painter->fillRect(opt.rect, Theme::rowHoverFill(Theme::rowBase(option.palette)));
         }
         if (QStyle *style = opt.widget != nullptr ? opt.widget->style() : QApplication::style()) {
             // 停在哪：最左那颗按钮**命中格**的左边（它已经比字形大一圈，天然留出一点空隙）。
@@ -250,7 +250,7 @@ void InstanceGroupDelegate::paint(QPainter *painter, const QStyleOptionViewItem 
     // 读成一个名字 —— 读的仍然是**传进来**那一份，时序和上面那句一模一样。
     const bool rowHovered = (option.state & QStyle::State_MouseOver) != 0;
     if (!inlineRowActions() && rowHovered && (index.flags() & Qt::ItemIsEnabled) != 0) {
-        painter->fillRect(opt.rect, Theme::rowHoverFill(option.palette.color(QPalette::Base)));
+        painter->fillRect(opt.rect, Theme::rowHoverFill(Theme::rowBase(option.palette)));
     }
     opt.state &= ~QStyle::State_MouseOver;
     if (QStyle *style = opt.widget != nullptr ? opt.widget->style() : QApplication::style()) {

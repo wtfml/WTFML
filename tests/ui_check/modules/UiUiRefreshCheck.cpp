@@ -1016,7 +1016,7 @@ int UiUiRefreshCheck(QApplication &app) {
                     {
                         const QImage image = shot();
                         const QColor got = image.pixelColor(rowSpot);
-                        const QColor want = overOpaque(Theme::selectionFill(list->palette().color(QPalette::Base)),
+                        const QColor want = overOpaque(Theme::selectionFill(Theme::rowBase(list->palette())),
                                                        image.pixelColor(emptySpot));
                         expect(near(got, want), "embedded row shows exactly one selected layer over the list base");
                     }

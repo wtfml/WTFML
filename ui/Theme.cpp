@@ -1122,7 +1122,7 @@ public:
                 const bool rowBlock = view != nullptr && DesignDefaults::isRowDelegate(view->itemDelegate());
                 if (pe == PE_PanelItemViewRow && (cardOnly || rowBlock))
                     return;
-                p->fillRect(vopt->rect, selectionFill(vopt->palette.color(QPalette::Base)));
+                p->fillRect(vopt->rect, selectionFill(rowBase(vopt->palette)));
                 return;
             }
         }
@@ -1319,10 +1319,21 @@ QColor defaultAccentColor() {
 }
 
 namespace {
-// 挂了 `background: transparent` 样式表的列表 / 树，`Base` 是全透明的黑：拿它混色、判明暗会当成深底
-// （浅色界面上选中行成了白字，#143）。这时屏幕上露出来的是页面底。
-QColor shownBase(const QColor &base) { return base.alpha() == 0 ? tokens().page : base; }
+// 列表的 `Base` 多是半透明的（令牌 `input`：浅色是 58% 白、深色是 7% 白），透明底的列表更是只剩页面底。
+// 只拿 RGB 混色、判明暗的话，深色界面上 7% 白会被当成白底（选中行配上深墨），所以先叠到页面底上（#143）。
+QColor shownBase(const QColor &base) {
+    if (base.alpha() == 255) return base;
+    const QColor page = tokens().page;
+    const qreal a = base.alphaF();
+    const auto over = [a](int top, int under) { return qRound(top * a + under * (1 - a)); };
+    return QColor(over(base.red(), page.red()), over(base.green(), page.green()), over(base.blue(), page.blue()));
+}
 }  // namespace
+
+QColor rowBase(const QPalette &palette) {
+    const QBrush brush = palette.brush(QPalette::Base);
+    return brush.style() == Qt::NoBrush ? QColor(Qt::transparent) : brush.color();
+}
 
 QColor rowHoverFill(const QColor &base) {
     if (current().presetId != QLatin1String("system") && current().accent == tokens().primary)
@@ -1366,12 +1377,12 @@ QColor selectionFill(const QColor &base) {
 }
 
 namespace {
-// 选中那块底**在屏幕上**亮不亮：7a 令牌里它是半透明的，要先叠到页面底上再量明度
+// 选中那块底**在屏幕上**亮不亮：7a 令牌里它是半透明的，要先叠到这一行露出来的底上再量明度
 // （半透明的绿本身明度不到 128，直接量会把浅底误判成深底、配上亮墨）。
 bool selectionLooksLight(const QColor &base) {
     const QColor top = selectionFill(base);
     if (top.alpha() == 255) return top.lightness() > 128;
-    const QColor under = tokens().page;
+    const QColor under = shownBase(base);
     const qreal a = top.alphaF();
     const QColor shown(qRound(top.red() * a + under.red() * (1 - a)),
                        qRound(top.green() * a + under.green() * (1 - a)),
@@ -1412,7 +1423,7 @@ QPalette selectionPalette(const QPalette &palette, bool selected) {
     }
     // 这一行**自己的底色**（`QAbstractItemView` 构造里给视口设的 backgroundRole 就是它）：
     // 底和墨都从它推 —— 深色预设下底是 `#323232`，不从这个出发就会闪成一片近白。
-    const QColor base = palette.color(QPalette::Base);
+    const QColor base = rowBase(palette);
     // 换上去的墨沿用**原来那一档的 alpha**（用户把"文字透明度"调低过的话，选中那一行的字
     // 也该一样淡 —— `kInkRoles` 里就有这几位，那个 alpha 正是这个意思）。
     const auto inkOn = [](const QColor &want, const QColor &was) {
