@@ -219,6 +219,8 @@ int runPresetPreviewChecks() {
         const auto inlinePreset = Presets::create(PresetController::presetsRoot(), "Inline editor test");
         check(!inlinePreset.id.isEmpty(), "published preset fixture is saved before the catalog can load");
         QWidget host;
+        host.resize(1280, 800);
+        host.show();
         // 编辑器现在是**整页**（铺在内容区上，和实例设置同一条路）。`showPage()` 摆上去
         // 就返回，收页之后才叫那条回调 —— 和真覆盖层同一个语义。验证工程没有真覆盖层，
         // 这里给它一个假的：把页塞进宿主、show()，`finished` 一响就把结果交回去。
@@ -325,8 +327,11 @@ int runPresetPreviewChecks() {
                       "Game Options tab shows its editor on the right without a second sidebar or window");
                 QApplication::processEvents();
                 auto *optionTable = sections ? sections->currentWidget()->findChild<QTableWidget *>() : nullptr;
-                check(optionTable && optionTable->mapTo(detailPages, QPoint(optionTable->width(), 0)).x() == detailPages->width(),
-                      "inline editor table reaches the page edge so its scrollbar shares the common column");
+                const int tableRight = optionTable
+                    ? optionTable->mapTo(detailPages, QPoint(optionTable->width(), 0)).x() : -1;
+                check(optionTable && optionTable->isVisible() && tableRight == detailPages->width(),
+                      qPrintable(QStringLiteral("inline editor table reaches the page edge so its scrollbar shares the common column [table=%1, page=%2]")
+                          .arg(tableRight).arg(detailPages->width())));
                 tabs->setCurrentItem(keys);
                 check(sections && sections->currentIndex() == 2 && visibleEditor() == inlineEditor,
                       "Keys tab reuses the same editor document");
