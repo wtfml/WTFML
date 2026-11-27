@@ -1068,12 +1068,29 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                                 return true;
                         return false;
                     };
-                    int fixedRight = -1, scrollRight = -1, headerRight = -1;
+                    // 固定行按行分组（竖直范围相交的算同一行），每行取最右侧那个可见按钮 / 输入框的右缘，
+                    // 不量行容器：容器对齐了、里面的控件却可能又让了一次。
+                    int scrollRight = -1, headerRight = -1;
+                    struct Band { int top, bottom, right; };
+                    QList<Band> bands;
                     for (auto *w : page->findChildren<QWidget *>()) {
                         if (!w->isVisible() || !(qobject_cast<QAbstractButton *>(w) || qobject_cast<QLineEdit *>(w))) continue;
-                        int &slot = inScroll(w) ? scrollRight : fixedRight;
-                        slot = qMax(slot, winX(w, w->width()) - 1);
+                        if (qobject_cast<QLineEdit *>(w->parentWidget()) != nullptr) continue;  // 输入框里的清除钮
+                        const int right = winX(w, w->width()) - 1;
+                        if (inScroll(w)) { scrollRight = qMax(scrollRight, right); continue; }
+                        const int top = w->mapTo(&window, QPoint(0, 0)).y(), bottom = top + w->height();
+                        bool merged = false;
+                        for (Band &band : bands)
+                            if (top < band.bottom && bottom > band.top) {
+                                band = {qMin(band.top, top), qMax(band.bottom, bottom), qMax(band.right, right)};
+                                merged = true;
+                                break;
+                            }
+                        if (!merged) bands.append({top, bottom, right});
                     }
+                    std::sort(bands.begin(), bands.end(), [](const Band &a, const Band &b) { return a.top < b.top; });
+                    QString fixedText;
+                    for (const Band &band : bands) fixedText += QStringLiteral(" y%1-%2=%3").arg(band.top).arg(band.bottom).arg(band.right);
                     QString rowText;
                     for (auto *view : page->findChildren<QAbstractItemView *>()) {
                         if (!view->isVisible() || view->model() == nullptr || view->model()->rowCount() == 0) continue;
@@ -1084,8 +1101,8 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                     if (auto *header = shown->findChild<QWidget *>(QStringLiteral("instanceSettingsHeader")))
                         for (auto *w : header->findChildren<QAbstractButton *>())
                             if (w->isVisible()) headerRight = qMax(headerRight, winX(w, w->width()) - 1);
-                    std::fprintf(stdout, "AUDIT %s headerRight=%d fixedRight=%d scrollRight=%d rows:%s bars=%d:%s\n",
-                                 qPrintable(shot.file), headerRight, fixedRight, scrollRight, qPrintable(rowText), dialogBars,
+                    std::fprintf(stdout, "AUDIT %s headerRight=%d fixedRows:%s scrollRight=%d rows:%s bars=%d:%s\n",
+                                 qPrintable(shot.file), headerRight, qPrintable(fixedText), scrollRight, qPrintable(rowText), dialogBars,
                                  qPrintable(barText));
                     if (auto *outline = window.findChild<QWidget *>(QStringLiteral("configFileOutline")); outline != nullptr && outline->isVisible()) {
                         const QPoint tl = outline->mapTo(&window, QPoint(0, 0));

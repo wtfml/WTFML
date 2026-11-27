@@ -509,7 +509,9 @@ void InstanceFilesPage::alignFixedRows() {
         } else if (QWidget *row = item->widget(); row != nullptr && row != m_contentHost) {
             if (row->layout() != nullptr) {
                 setRight(row->layout(), inset);
-            } else if (row->contentsMargins().right() != inset) {
+            } else if (qobject_cast<QLabel *>(row) != nullptr && row->contentsMargins().right() != inset) {
+                // 只给本身没有布局的提示文字设控件边距：还没建布局的行（如操作行）以后建了布局
+                // 会再按布局让一次，这里先设就成了让两次。
                 QMargins margins = row->contentsMargins();
                 margins.setRight(inset);
                 row->setContentsMargins(margins);
