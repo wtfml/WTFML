@@ -534,7 +534,7 @@ public:
     /// 不是表尾的一行。
     /// 没选中任何一条时它是藏着的（见 .cpp 里 updateSelectionBar）。
     QWidget *selectionBar() const { return m_selectionBar; }
-    /// 那条操作条最左边那句「已选择 N 个文件」。
+    /// 那条操作条最左边那句「已选 N 项」（`selectionCountText()`）。
     QLabel *selectionCountLabel() const { return m_selectionCount; }
     /// 那条操作条上第 @p action 颗按钮（顺序见 `SelectionAction`）。
     QPushButton *selectionButtonAt(int action) const;
@@ -710,9 +710,9 @@ public:
     static QString stateFilterButtonText(StateFilter filter, int count) {
         return QStringLiteral("%1(%2)").arg(stateFilterText(filter)).arg(count);
     }
-    /// 那条悬浮操作条最左边那句。
+    /// 那条悬浮操作条最左边那句（操作面板与旧式悬浮条共用这一处）。
     static QString selectionCountText(int count) {
-        return QCoreApplication::translate("InstanceFilesPage", "已选择 %1 个文件").arg(count);
+        return QCoreApplication::translate("InstanceFilesPage", "已选 %1 项").arg(count);
     }
     /// 那七颗按钮上写的字。**顺序 = SelectionAction 那七档**。
     static QString selectionActionText(SelectionAction action) {
@@ -1054,7 +1054,7 @@ private:
     /// 屏幕上剩的和亮着的那一颗就对不上，而没有别的东西会自己纠正它。
     void ensureStateFilterVisible();
 
-    /// 按 `m_selectedPaths` 把状态栏 + 那条操作条重摆一遍：条上那句「已选择 N 个文件」、
+    /// 按 `m_selectedPaths` 把状态栏 + 那条操作条重摆一遍：条上那句「已选 N 项」、
     /// 七颗按钮各自灰不灰、以及那条**露不露**（没选中任何一条就收起来）。
     ///
     /// NOTE: 灰化规则：
@@ -1283,7 +1283,7 @@ private:
     /// ⚠ `X.jar` 与 `X.jar.disabled` 同时在场时身份撞上 —— 那种情况**一条都不替用户
     /// 选**（见 `m_pendingIdentityMigration` 和 `rebuildRows()` 里那两份准账）。
     /// 重列之后**只认屏幕上真摆出来的那些行**（`syncSelectedPaths()` 一句从列表里现问
-    /// 一遍）：选择永远只含看得见的条目，"已选择 3 个文件"说的就是那 3 个能看见的。筛一下
+    /// 一遍）：选择永远只含看得见的条目，"已选 3 项"说的就是那 3 个能看见的。筛一下
     /// 搜索就掉出几条，是对的行为（和"全选/反选只作用于当前筛出来的"同一个口径）。
     QSet<QString> m_selectedPaths;
 

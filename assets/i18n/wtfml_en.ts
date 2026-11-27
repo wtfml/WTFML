@@ -11603,10 +11603,6 @@ Use a different instance name to keep the existing progress. To resume that impo
             <translation>Select all filtered items.</translation>
         </message>
         <message>
-            <source>已选择 %1 个文件</source>
-            <translation>%1 files selected</translation>
-        </message>
-        <message>
             <source>更新</source>
             <translation>Update</translation>
         </message>

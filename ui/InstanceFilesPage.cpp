@@ -441,8 +441,8 @@ InstanceFilesPage::InstanceFilesPage(QWidget *parent) : QWidget(parent) {
         m_selectionCount->setText(selectionCountText(0));
         // 这一格**要多少给多少**：这一条**不进布局、宽度是
         // repositionSelectionBar() 现算的**，窗口窄的时候得压得住 —— 而承接压缩的该是
-        // 那七颗按钮（它们少几个像素也就是边距窄一点），不是这句「已选择 N 个文件」
-        // （它被压了就是少一个字，屏幕上是「已选择 2 个文」，而且 Qt **不给 QLabel
+        // 那七颗按钮（它们少几个像素也就是边距窄一点），不是这句「已选 N 项」
+        // （它被压了就是少一个字，屏幕上是「已选 2 」，而且 Qt **不给 QLabel
         // 省略号**，看着像写错了）。`Fixed` 就是"按 sizeHint 给，不多也不少"。
         // NOTE: 七颗的 `minimumWidth` 已经在下面那一段放到 0 了（不给就压不动）。
         m_selectionCount->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
@@ -456,7 +456,7 @@ InstanceFilesPage::InstanceFilesPage(QWidget *parent) : QWidget(parent) {
             // 「窄窗口下这一条怎么让位」：给每一颗一个**按自己那两个字的
             // 宽度算出来的下限**（`QPushButton::minimumSizeHint()` 默认把 `padding: 6px`
             // 那 12 + 边框 2 也算进去，比这个还大 —— 七颗一加起来就顶得这一条比视口还宽，
-            // 于是布局开始按比例压，**被压掉的是最左边那句「已选择 N 个文件」**，屏幕上
+            // 于是布局开始按比例压，**被压掉的是最左边那句「已选 N 项」**，屏幕上
             // 看着像"字写错了"）。压到"刚好放得下这两个字"为止就有了下限，再窄也不会
             // 把字截掉，而多出来的那点宽度按 Qt 的规矩平分给七颗。
             button->setMinimumWidth(button->fontMetrics().horizontalAdvance(
