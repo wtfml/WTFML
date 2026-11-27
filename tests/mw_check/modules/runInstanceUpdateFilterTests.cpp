@@ -125,6 +125,29 @@ void runInstanceUpdateFilterTests() {
     api.curseForgeReply =
         QByteArrayLiteral("{\"data\":{\"exactMatches\":[],\"unmatchedFingerprints\":[]}}");
 
+    // T28.5 要真下一次新版：地址换成本机替身。先让它给错内容（sha1 对不上 = 更新失败）。
+    const QByteArray newJar = QByteArrayLiteral("T28-MOD-B-2.0");
+    QByteArray served = QByteArrayLiteral("T28-BROKEN!!!");
+    QTcpServer cdn;
+    check(cdn.listen(QHostAddress::LocalHost, 0), "T28.0 下载替身起来了");
+    QObject::connect(&cdn, &QTcpServer::newConnection, &cdn, [&cdn, &served] {
+        while (QTcpSocket *socket = cdn.nextPendingConnection()) {
+            socket->setParent(&cdn);
+            QObject::connect(socket, &QTcpSocket::readyRead, socket, [socket, &served] {
+                socket->readAll();
+                socket->write("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: " +
+                              QByteArray::number(served.size()) + "\r\n\r\n" + served);
+                socket->disconnectFromHost();
+            });
+        }
+    });
+    api.modrinthVersionFilesUpdateReply
+        .replace("https://cdn.modrinth.com/data/mod-b-2.0.jar",
+                 QStringLiteral("http://127.0.0.1:%1/b.jar").arg(cdn.serverPort()).toUtf8())
+        .replace("1111111111111111111111111111111111111111",
+                 QCryptographicHash::hash(newJar, QCryptographicHash::Sha1).toHex())
+        .replace("\"size\":10", "\"size\":" + QByteArray::number(newJar.size()));
+
     TokenStore::clear(TokenStore::microsoftKey());
     TokenStore::clear(TokenStore::minecraftKey());
     TokenStore::clear(TokenStore::accountsKey());
@@ -446,6 +469,59 @@ void runInstanceUpdateFilterTests() {
               QStringLiteral("%1 条 / 又见到「还没查过」=%2")
                   .arg(reopenRows)
                   .arg(int(reopenNotice)));
+
+        // ---------- ④ 选着「可更新」就地更新：开着的这一页当场跟上（#143） ----------
+        QMetaObject::invokeMethod(&w, "openInstanceSettings", Qt::DirectConnection,
+                                  Q_ARG(QString, idV));
+        QApplication::processEvents();
+        OverlayHost *host = currentPageOverlay();
+        QPointer<InstanceSettingsDialog> page =
+            host != nullptr ? host->findChild<InstanceSettingsDialog *>() : nullptr;
+        InstanceFilesPage *mods = nullptr;
+        if (page != nullptr) {
+            page->showPage(QStringLiteral("mod"));
+            mods = page->filesPage(QStringLiteral("mod"));
+        }
+        QPushButton *state =
+            mods != nullptr ? mods->stateButtonAt(InstanceFilesPage::StateFilter::Update) : nullptr;
+        check(state != nullptr && !state->isHidden(), "T28.5 更新前「可更新」那一颗露着");
+        if (state != nullptr) {
+            state->click();
+            // 页键给空串：跳过模组页那个差异预览框，下面走的仍是同一条下载 + 收尾。
+            const auto update = [&] {
+                emit page->fileBatchUpdateRequested(QString(), {mods->list()->item(0)
+                                                        ->data(InstanceFilesPage::pathRole())
+                                                        .toString()});
+            };
+            PromptAnswerer failure({0});
+            failure.start();
+            update();
+            pumpUntil([&failure] { return !failure.answered.isEmpty(); }, 20000);
+            failure.stop();
+            QApplication::processEvents();
+            check(!failure.answered.isEmpty() &&
+                      mods->stateFilter() == InstanceFilesPage::StateFilter::Update &&
+                      mods->list()->count() == 1 &&
+                      state->text() == InstanceFilesPage::stateFilterButtonText(
+                                           InstanceFilesPage::StateFilter::Update, 1),
+                  "T28.5 更新失败：那一条留在「可更新」，数量仍是 1", state->text());
+
+            served = newJar;
+            update();
+            const bool collapsed = pumpUntil([state] { return state->isHidden(); }, 20000);
+            check(collapsed && mods->stateFilter() == InstanceFilesPage::StateFilter::All &&
+                      mods->list()->count() == 3,
+                  "★★ T28.5 全部更新成功：开着的模组页收起「可更新」并切回「全部」（#143）",
+                  QStringLiteral("%1 / 列表 %2 条").arg(state->text()).arg(mods->list()->count()));
+        }
+        if (host != nullptr) {
+            host->closeOverlay();
+        }
+        // 收尾还排着「更新中心」那一页：等它开出来再收掉，别留给下一节。
+        PageCloser after;
+        after.start();
+        pumpUntil([] { return currentOverlay() == nullptr; }, 8000);
+        after.stop();
     }
 
     restoreSettings();

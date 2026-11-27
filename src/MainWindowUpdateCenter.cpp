@@ -27,6 +27,7 @@
 
 #include "..\ui\InlineMessage.hpp"
 #include "..\ui\InstanceFilesPage.hpp"
+#include "..\ui\InstanceSettingsDialog.hpp"
 #include "..\ui\MainWindowUI.hpp"
 #include "..\ui\UpdateCenterPage.hpp"
 #include "controllers/ActivityCenterController.hpp"
@@ -233,6 +234,12 @@ void MainWindow::finishUpdateBatch(bool success, const QString &errorMessage) {
             targets.remove(path);
         }
         m_instanceUpdateTargets.insert(run.instanceId, targets);
+        // 开着的实例页拿的是旧名单，摘完要重递（#143）；只递给这个实例自己那一页。
+        for (auto *dialog : findChildren<InstanceSettingsDialog *>()) {
+            if (dialog->instanceId() == run.instanceId) {
+                pushInstanceFileUpdates(dialog, run.instanceId);
+            }
+        }
     }
 
     const QString text = run.lines.isEmpty() ? errorMessage : run.lines.join(QLatin1Char('\n'));
