@@ -66,10 +66,12 @@ constexpr int kPlanListHeight = 132;
 constexpr int kDetailPageRole = Qt::UserRole;
 constexpr int kEditorSectionRole = Qt::UserRole + 1;
 
+int detailNavRowHeight(const QFont &font);
+
 QTreeWidgetItem *detailNavItem(const QString &text, bool topLevel = false) {
     auto *item = new QTreeWidgetItem({text});
     item->setToolTip(0, text);
-    item->setSizeHint(0, QSize(0, kDetailNavRowHeight));
+    item->setSizeHint(0, QSize(0, detailNavRowHeight(item->font(0))));
     if (topLevel) {
         QFont font = Theme::textFont(item->font(0), Theme::TextRole::Body);
         font.setBold(true);
