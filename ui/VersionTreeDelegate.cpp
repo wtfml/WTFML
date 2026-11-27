@@ -159,13 +159,13 @@ void VersionTreeDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
         painter->save();
         painter->setRenderHint(QPainter::Antialiasing, true);
         painter->setPen(Qt::NoPen);
-        painter->setBrush(Theme::rowHoverFill(option.palette.color(QPalette::Base)));
+        painter->setBrush(Theme::rowHoverFill(Theme::rowBase(option.palette)));
         painter->drawRoundedRect(QRectF(0, option.rect.top(), option.rect.right() + 1, option.rect.height())
                                      .adjusted(0, 1, 0, -1),
                                  Theme::controlRadius(), Theme::controlRadius());
         painter->restore();
     } else if (hoverable) {
-        const QColor hoverFill = Theme::rowHoverFill(option.palette.color(QPalette::Base));
+        const QColor hoverFill = Theme::rowHoverFill(Theme::rowBase(option.palette));
         if (m_navRow) {
             const QRectF hoverRect = QRectF(option.rect.adjusted(3, 2, -3, -2));
             painter->save();
@@ -385,9 +385,9 @@ void VersionTreeDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
         // —— 白字画在白底上等于没画，而这一格本来就是"要看服务器写了什么"。
         // 底色取的是**这一行真正铺的那一层**：选中时是 Highlight、平时是 Base。读的是
         // 传进来那个 `option`（上面只抹掉了 MouseOver 那一位，选中那一位原样还在）。
-        const QColor rowBg = (option.state & QStyle::State_Selected)
-                                 ? palette.color(QPalette::Highlight)
-                                 : palette.color(QPalette::Base);
+        // 要的是**屏幕上露出来**的那一层（半透明的 `Base` / `Highlight` 先叠到页面底上）：深色下 `Base` 是
+        // 7% 白，直接拿去判明暗会当成白底、把字压暗。
+        const QColor rowBg = Theme::shownRowBase(palette, (option.state & QStyle::State_Selected) != 0);
         int line = motdPieces.first().line;
         int lineY = y;
         int x = textRect.left();

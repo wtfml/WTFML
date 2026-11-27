@@ -5,9 +5,11 @@
 #include "TitleBar.hpp"
 #include "ItemViewContextMenu.hpp"
 #include "ListRowDelegate.hpp"
+#include "MotdText.hpp"
 #include <QMouseEvent>
 #include <QToolButton>
 #include <QSpinBox>
+#include <QTreeWidget>
 int UiThemeCheck(QApplication &app) {
 
         Anim::setEnabled(false);
@@ -116,6 +118,61 @@ int UiThemeCheck(QApplication &app) {
                        Theme::selectionFill(Qt::transparent) == Theme::selectionFill(Theme::tokens().page) &&
                        Theme::rowHoverFill(Qt::transparent) == Theme::rowHoverFill(Theme::tokens().page),
                    "透明底的列表按页面底判明暗，浅色下选中行是深字");
+            Theme::setSpec(savedSpec);
+        }
+        // #143 返工：真挂上那句样式表的树，Qt 给的 `Base` 是 NoBrush（颜色是不透明黑），上面手造的全透明测不到。
+        // 实例设置左栏原样：旧出厂主色 #087A68；浅色、深色下选中项的字对 `paintRowBlock` 那块选中底都要读得清，
+        // 半透明 `Base`（令牌 `input`）的普通列表也一起量。
+        {
+            const Theme::Spec savedSpec = Theme::current();
+            QTreeWidget nav;
+            nav.setStyleSheet(QStringLiteral("QTreeWidget { background: transparent; }"));
+            nav.ensurePolished();
+            expect(nav.palette().brush(QPalette::Base).style() == Qt::NoBrush &&
+                       Theme::rowBase(nav.palette()).alpha() == 0,
+                   "透明样式表的树 Base 是 NoBrush，rowBase 按全透明给");
+            for (const char *preset : {"emerald", "dark"}) {
+                Theme::Spec oldFactory = Theme::presetSpec(QLatin1String(preset));
+                oldFactory.accent = QColor(QStringLiteral("#087A68"));
+                Theme::setSpec(oldFactory);
+                const Theme::Tokens t = Theme::tokens();
+                const bool light = t.page.lightness() >= 128;
+                QColor fill = t.focus;
+                fill.setAlpha(light ? 30 : 34);  // 与 DesignDefaults::paintRowBlock 同一档
+                const QColor block = Glass::over(fill, t.page);
+                QPalette plain;
+                plain.setColor(QPalette::Base, t.input);
+                for (const QPalette &palette : {nav.palette(), plain}) {
+                    const QColor ink = Theme::selectionPalette(palette, true).color(QPalette::Text);
+                    expect(Glass::contrast(ink, block) >= 4.5 &&
+                               (light ? ink.lightness() < block.lightness() : ink.lightness() > block.lightness()),
+                           light ? "旧出厂主色 + 浅色：左栏选中项是比底深的字，对比度够"
+                                 : "旧出厂主色 + 深色：选中项是比底浅的字，对比度够");
+                }
+            }
+            // MOTD 按「露出来的底」重算字色：深色下半透明 `input` 底（7% 白）不能被当成白底把白字 / 黄字压暗；
+            // 浅色下白字照旧压暗。透明样式表的树（NoBrush）也按页面底算。
+            const QColor motdWhite(0xFF, 0xFF, 0xFF), motdYellow(0xFF, 0xFF, 0x55);
+            const auto sum = [](const QColor &c) { return c.red() + c.green() + c.blue(); };
+            for (const char *preset : {"emerald", "dark"}) {
+                Theme::setSpec(Theme::presetSpec(QLatin1String(preset)));
+                const Theme::Tokens t = Theme::tokens();
+                const bool light = t.page.lightness() >= 128;
+                QPalette plain;
+                plain.setColor(QPalette::Base, t.input);
+                for (const QPalette &palette : {nav.palette(), plain}) {
+                    const QColor shown = Theme::shownRowBase(palette);
+                    const QColor onWhite = MotdText::readableOn(motdWhite, shown);
+                    const QColor onYellow = MotdText::readableOn(motdYellow, shown);
+                    if (light)
+                        expect(shown.alpha() == 255 && sum(onWhite) < sum(motdWhite), "浅色主题：MOTD 白字在露出来的浅底上照旧压暗");
+                    else
+                        expect(shown.alpha() == 255 && shown.lightness() < 128 && sum(onWhite) >= sum(motdWhite) &&
+                                   sum(onYellow) >= sum(motdYellow) &&
+                                   Theme::shownRowBase(Theme::selectionPalette(palette, true), true).lightness() < 128,
+                               "深色主题：半透明 / 透明底（含选中那层半透明 Highlight）按露出来的深底算，MOTD 白字黄字不被压暗");
+                }
+            }
             Theme::setSpec(savedSpec);
         }
         // 主题显示名照着三张内置风景起；内部 id 与「配色」下拉的顺序不动（盘上存的是 id）。

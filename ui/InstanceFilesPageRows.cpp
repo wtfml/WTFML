@@ -189,7 +189,7 @@ public:
             const Theme::Tokens t = Theme::tokens();
             painter->setPen(Qt::NoPen);
             // 选中色和行尾按钮的底同一个出处（selectionFill），否则按钮会在行上留色块。
-            painter->setBrush(selected ? Theme::selectionFill(palette.color(QPalette::Base)) : t.hover);
+            painter->setBrush(selected ? Theme::selectionFill(Theme::rowBase(palette)) : t.hover);
             painter->drawRoundedRect(QRectF(g.row).adjusted(0, 1, 0, -1), Theme::controlRadius(),
                                      Theme::controlRadius());
         }

@@ -437,7 +437,10 @@ void runInstanceUpdateFilterTests() {
         bool reopenNotice = false;
         QTimer::singleShot(0, [&] {
             OverlayHost *host = currentPageOverlay();
-            auto *page = host != nullptr ? host->findChild<InstanceSettingsDialog *>() : nullptr;
+            InstanceSettingsDialog *page = nullptr;  // 只认没藏起来的那一页（理由见 ④ 的 openSettings）
+            if (host != nullptr)
+                for (auto *dialog : host->findChildren<InstanceSettingsDialog *>())
+                    if (!dialog->isHidden()) page = dialog;
             if (page == nullptr) {
                 return;
             }
@@ -471,19 +474,43 @@ void runInstanceUpdateFilterTests() {
                   .arg(int(reopenNotice)));
 
         // ---------- ④ 选着「可更新」就地更新：开着的这一页当场跟上（#143） ----------
-        QMetaObject::invokeMethod(&w, "openInstanceSettings", Qt::DirectConnection,
-                                  Q_ARG(QString, idV));
-        QApplication::processEvents();
+        // 收掉的实例页只是藏起来、等主人 deleteLater()（OverlayHost::releaseContent 那段），删掉之前仍挂在
+        // 这一层底下。测试代码在顶层直接收的页，processEvents() 不会替它跑 DeferredDelete，findChild 就会
+        // 拿到上一页（早已停在「模组」上，切页不会重查）。所以先清，再只认没藏起来的那一页。
+        const auto openSettings = [&w, &idV]() -> InstanceSettingsDialog * {
+            QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+            QMetaObject::invokeMethod(&w, "openInstanceSettings", Qt::DirectConnection,
+                                      Q_ARG(QString, idV));
+            QApplication::processEvents();
+            OverlayHost *open = currentPageOverlay();
+            if (open == nullptr) return nullptr;
+            for (auto *dialog : open->findChildren<InstanceSettingsDialog *>())
+                if (!dialog->isHidden()) return dialog;
+            return nullptr;
+        };
+        // 「那一趟检查跑完了」的信号：finishUpdateCheck() 把结果递到页上之后写的那行日志。新页一开就带着上一趟的
+        // 名单（「可更新(1)」立刻露着），光看那一颗分不出这一趟有没有收尾；不等它收尾就点更新，检查和批量更新会撞在一起。
+        const auto checksLogged = [] { return countOccurrences(messagesSnapshot(), QStringLiteral("更新检测（")); };
+        const int checksBefore = checksLogged();
+        QPointer<InstanceSettingsDialog> page = openSettings();
         OverlayHost *host = currentPageOverlay();
-        QPointer<InstanceSettingsDialog> page =
-            host != nullptr ? host->findChild<InstanceSettingsDialog *>() : nullptr;
         InstanceFilesPage *mods = nullptr;
         if (page != nullptr) {
-            page->showPage(QStringLiteral("mod"));
+            page->showPage(QStringLiteral("mod"));  // 新页从「概览」切进来 = 自动再查一遍
             mods = page->filesPage(QStringLiteral("mod"));
         }
         QPushButton *state =
             mods != nullptr ? mods->stateButtonAt(InstanceFilesPage::StateFilter::Update) : nullptr;
+        const bool settled =
+            state != nullptr && pumpUntil(
+                                    [&] {
+                                        return checksLogged() > checksBefore && !state->isHidden() &&
+                                               state->text() == InstanceFilesPage::stateFilterButtonText(
+                                                                    InstanceFilesPage::StateFilter::Update, 1);
+                                    },
+                                    20000);
+        check(settled, "T28.5 新开的模组页那一趟自动检查跑完，「可更新(1)」露着",
+              state != nullptr ? state->text() : QString());
         check(state != nullptr && !state->isHidden(), "T28.5 更新前「可更新」那一颗露着");
         if (state != nullptr) {
             state->click();
@@ -536,13 +563,6 @@ void runInstanceUpdateFilterTests() {
             }
             QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
             QApplication::processEvents();
-        };
-        const auto openSettings = [&w, &idV]() -> InstanceSettingsDialog * {
-            QMetaObject::invokeMethod(&w, "openInstanceSettings", Qt::DirectConnection,
-                                      Q_ARG(QString, idV));
-            QApplication::processEvents();
-            OverlayHost *open = currentPageOverlay();
-            return open != nullptr ? open->findChild<InstanceSettingsDialog *>() : nullptr;
         };
         const auto chipText = [](int count) {
             return InstanceFilesPage::stateFilterButtonText(InstanceFilesPage::StateFilter::Update,

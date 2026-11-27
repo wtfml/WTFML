@@ -2093,7 +2093,7 @@ QList<ToolboxPage::TextRun> ToolboxPage::textPreviewRuns() const {
 void ToolboxPage::applyTextPreviewColor(const QColor &color, const QString &code) {
     if (m_textPreview == nullptr) return;
     QTextCharFormat format;
-    format.setForeground(MotdText::readableOn(color, m_textPreview->palette().color(QPalette::Base)));
+    format.setForeground(MotdText::readableOn(color, Theme::shownRowBase(m_textPreview->palette())));
     format.setProperty(QTextFormat::UserProperty, code);
     m_textPreview->mergeCurrentCharFormat(format);
     m_textPreview->setFocus();
