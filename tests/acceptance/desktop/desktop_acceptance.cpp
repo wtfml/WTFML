@@ -4,6 +4,7 @@
 #include "Theme.hpp"
 #include "Animations.hpp"
 #include "util/AppPaths.hpp"
+#include "UiLanguage.hpp"
 #include "support/SettingsIsolation.hpp"
 #include <QApplication>
 #include <QCommandLineParser>
@@ -57,6 +58,8 @@ int main(int argc, char **argv) {
         font.setFamilies({QStringLiteral("Microsoft YaHei UI")});
         app.setFont(font);
     }
+    // 样张要英文界面时带 WTFML_SHOT_LANG=en（只装翻译，不写设置）。
+    if (qgetenv("WTFML_SHOT_LANG") == "en" && !UiLanguage::installTranslation(app, QStringLiteral("en"))) return 2;
     app.setOrganizationName("WTFML-desktop-acceptance");
     app.setApplicationName("isolated");
     QCommandLineParser parser;

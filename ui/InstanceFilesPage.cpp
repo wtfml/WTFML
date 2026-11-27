@@ -300,7 +300,6 @@ InstanceFilesPage::InstanceFilesPage(QWidget *parent) : QWidget(parent) {
         if (wantOn == item->data(disabledRole()).toBool()) requestToggle(item->data(pathRole()).toString());
     });
     connect(m_list, &QListWidget::itemSelectionChanged, this, [this] {
-        m_actionPanelDismissed = false;
         syncSelectedPaths();
         updateSelectionBar();
         updateInfoPanel();

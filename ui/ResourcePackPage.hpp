@@ -8,6 +8,7 @@ class QListWidget;
 class QLineEdit;
 class QLabel;
 class QPushButton;
+class QScrollArea;
 
 class ResourcePackPage final : public QWidget {
     Q_OBJECT
@@ -25,6 +26,8 @@ private:
     void updateButtons();
     void filter();
     void moveCurrent(int delta);
+    void fitLists();
+    QScrollArea *m_scroll = nullptr;
     QListWidget *m_available = nullptr;
     QListWidget *m_selected = nullptr;
     QLineEdit *m_search = nullptr;

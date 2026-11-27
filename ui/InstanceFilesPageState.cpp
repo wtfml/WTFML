@@ -40,9 +40,7 @@ void InstanceFilesPage::applyState() {
     // 靠它们把条件改回来，这时候把它们收掉是最糟的一刻。
     const bool filtersUseful = !unavailable && !m_empty;
     if (m_searchRow != nullptr) {
-        // The mod header also owns installation/maintenance actions, useful even
-        // before the first mod is installed.
-        m_searchRow->setVisible(filtersUseful || (m_actionPanelEnabled && !unavailable));
+        m_searchRow->setVisible(filtersUseful);
     }
     if (m_stateRow != nullptr) {
         const bool choice = stateFilterVisible(StateFilter::Enabled) ||
@@ -67,6 +65,8 @@ void InstanceFilesPage::applyState() {
     }
 
     m_pathRow->setVisible(!unavailable && !m_actionPanelEnabled);
+    // 模组页的常用操作（下载、打开文件夹）在目录还空着时也要能用。
+    if (m_actionPanelEnabled) m_selectionTools->setVisible(!unavailable);
     if (m_structureRows != nullptr) {
         m_structureRows->setVisible(!unavailable && !m_structureSources.isEmpty());
     }

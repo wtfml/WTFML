@@ -78,7 +78,7 @@ int UiResourcePacksCheck(QApplication &app) {
                 expect(token == original && exists, "selection carries original conflict token");
             });
         expect(available->count() == 1 && selected->item(0)->text() == QStringLiteral("Alpha"),
-               "two columns exclude active files from available, high priority first");
+               "two sections exclude active files from available, high priority first");
         available->setCurrentRow(0);
         enable->click();
         expect(requested == QStringList{"vanilla", "file/a.zip", "file/b.zip"}, "enable appends highest priority without file rename");
@@ -104,6 +104,36 @@ int UiResourcePacksCheck(QApplication &app) {
         const int before = requests;
         enable->click();
         expect(!enable->isEnabled() && requests == before, "read-only state blocks all selection changes");
+        {
+            // #136：「已启用」在上、「可用资源包」在下，两张表按行高摊开，整页只有外层一条竖滑条。
+            QList<ResourcePackPage::Pack> many;
+            QStringList active{"vanilla"};
+            for (int i = 0; i < 30; ++i) {
+                const QString id = QStringLiteral("file/p%1.zip").arg(i, 2, 10, QLatin1Char('0'));
+                many.append({id, QStringLiteral("Pack %1").arg(i), QString()});
+                if (i < 12) active.append(id);
+            }
+            page.setPacks(many, active, original, true);
+            page.resize(960, 620);
+            page.show();
+            app.processEvents();
+            int verticalBars = 0;
+            for (auto *bar : page.findChildren<QScrollBar *>())
+                if (bar->orientation() == Qt::Vertical && bar->isVisible()) ++verticalBars;
+            expect(selected->count() == 13 && available->count() == 18 &&
+                       selected->verticalScrollBar()->maximum() == 0 && available->verticalScrollBar()->maximum() == 0,
+                   "both pack lists fit their rows without inner scrolling");
+            expect(verticalBars <= 1 && selected->mapTo(&page, QPoint(0, selected->height())).y() <=
+                                            available->mapTo(&page, QPoint()).y(),
+                   "enabled section sits above available section with one vertical scrollbar");
+            available->setFocus();
+            available->setCurrentRow(0);
+            QKeyEvent enter(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
+            app.sendEvent(available, &enter);
+            expect(requested.size() == active.size() + 1 && requested.last() == QStringLiteral("file/p12.zip"),
+                   "Enter on an available pack enables it");
+            page.hide();
+        }
         if (app.arguments().contains(QStringLiteral("--resource-packs-preview"))) {
             page.setPacks(packs, {"vanilla", "file/a.zip"}, original, true);
             page.resize(820, 480);

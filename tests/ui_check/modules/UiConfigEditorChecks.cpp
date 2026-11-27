@@ -1150,7 +1150,7 @@ int UiConfigEditorChecks() {
             }
         }
 
-        // ---------- U11e 左边那一格「条目」：点一条跳过去 ----------
+        // ---------- U11e 「条目」大纲浮层：点一条跳过去（#136 起不再常驻左边） ----------
         {
             ConfigFileEditorPage editor;
             editor.show();
@@ -1167,15 +1167,30 @@ int UiConfigEditorChecks() {
                       editor.indexFilter() != nullptr,
                   "U11e 那一格的三个控件都按 objectName 找得回来");
             check(tree != nullptr && tree->topLevelItemCount() > 0,
-                  "★★ U11e 摆一份文件进去，树上就有条目了 —— 没有这一下，左边那一格永远是"
-                  "空的",
+                  "★★ U11e 摆一份文件进去，树上就有条目了 —— 没有这一下，大纲永远是空的",
                   QStringLiteral("%1 个顶层项").arg(tree != nullptr ? tree->topLevelItemCount() : -1));
             check(editor.indexEntryCount() == 2,
                   "★ U11e 认出来的**叶子**是两条（顶层项那个数不是条目数：树是按路径分了组"
                   "的，别拿它当条数）",
                   QStringLiteral("%1 条").arg(editor.indexEntryCount()));
-            check(editor.indexVisible() && editor.indexToggle()->isEnabled(),
-                  "★ U11e 认出东西来了 ⇒ 那一格露着、那颗「条目」点得动");
+            check(!editor.indexVisible() && editor.indexToggle()->isEnabled() &&
+                      editor.editor()->width() > editor.width() * 9 / 10,
+                  "★ U11e 认出东西来了 ⇒「条目」点得动；大纲平时收着，编辑框拿到全宽");
+            editor.indexToggle()->click();
+            QApplication::processEvents();
+            auto *outline = editor.window()->findChild<QWidget *>(QStringLiteral("configFileOutline"));
+            check(editor.indexVisible() && outline != nullptr && outline->isAncestorOf(tree) &&
+                      editor.focusWidget() == editor.indexFilter(),
+                  "★★ U11e 点「条目」⇒ 大纲浮层弹出，焦点落在搜索框上（直接打字筛）");
+            {
+                QKeyEvent esc(QEvent::KeyPress, Qt::Key_Escape, Qt::NoModifier);
+                QApplication::sendEvent(editor.indexFilter(), &esc);
+                QApplication::processEvents();
+                check(!editor.indexVisible() && editor.focusWidget() == editor.indexToggle(),
+                      "★★ U11e Esc ⇒ 大纲收起，焦点交回「条目」按钮");
+            }
+            editor.openIndex();
+            QApplication::processEvents();
 
             // ---- 点一条：编辑框里那一格值被选中 ----
             if (tree != nullptr && editor.indexEntryCount() == 2) {
@@ -1207,6 +1222,7 @@ int UiConfigEditorChecks() {
                     check(editor.indexTree() != nullptr &&
                               editor.focusWidget() != editor.indexTree(),
                           "U11e 前提：焦点**不在**索引那棵树上（不然上面那条是白过的）");
+                    check(!editor.indexVisible(), "★★ U11e 跳过去之后大纲浮层随之收起");
                 }
 
                 // 分组那一行没有值：点它**什么都不该发生**（不是"选到一段风马牛不相及的字"）。
@@ -1253,14 +1269,24 @@ int UiConfigEditorChecks() {
                       QStringLiteral("%1 条").arg(backAgain));
             }
 
-            // ---- 那颗「条目」：收起来 / 放出去 ----
+            // ---- 那颗「条目」：点开 / 再点收起；搜索框回车跳到第一条 ----
             {
-                editor.indexToggle()->setChecked(false);
+                editor.indexToggle()->click();
+                QApplication::processEvents();
+                check(editor.indexVisible(), "U11e 点「条目」放出来");
+                editor.indexToggle()->click();
                 check(!editor.indexVisible() && editor.indexEntryCount() == 2,
-                      "★ U11e 按下「条目」⇒ 那一格收起来（**条目并没有丢**：再放出来还在，"
+                      "★ U11e 再点「条目」⇒ 大纲收起来（**条目并没有丢**：再放出来还在，"
                       "不用重认）");
-                editor.indexToggle()->setChecked(true);
-                check(editor.indexVisible(), "U11e 再按一下放出来");
+                editor.openIndex();
+                editor.indexFilter()->setText(QStringLiteral("leaves"));
+                QKeyEvent enter(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
+                QApplication::sendEvent(editor.indexFilter(), &enter);
+                check(!editor.indexVisible() &&
+                          editor.editor()->textCursor().selectedText() == QStringLiteral("\"smart\""),
+                      "★ U11e 搜索框里回车 ⇒ 跳到筛出来的第一条并收起大纲",
+                      editor.editor()->textCursor().selectedText());
+                editor.indexFilter()->clear();
             }
 
             // ---- 没认出东西的那一份：那一格收着，那颗按钮**点不动** ----
@@ -1268,7 +1294,7 @@ int UiConfigEditorChecks() {
                 editor.setFile(QStringLiteral("D:/示例/lithium.properties"),
                                ConfigFileText::decode(QByteArrayLiteral("# 一堆注释\n")));
                 check(editor.indexEntryCount() == 0 && !editor.indexVisible(),
-                      "★★ U11e 整份都是注释 ⇒ 那一格收着（摆一棵空树在那里，用户只会以为"
+                      "★★ U11e 整份都是注释 ⇒ 大纲收着（摆一棵空树在那里，用户只会以为"
                       "界面坏了）");
                 check(!editor.indexToggle()->isEnabled(),
                       "★★ U11e 而且那颗「条目」**点不动**（不是「点了没反应」）—— 认不出"

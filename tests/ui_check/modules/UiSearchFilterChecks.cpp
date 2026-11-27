@@ -48,19 +48,20 @@ int UiSearchFilterChecks(InstanceSettingsDialog &dialog, const QString &modsDir)
               "★ U10P 开了批量的这一页上**那个下拉框和那个「显示」标签收着**（文字还是走"
               "唯一出处 stateLabelText() —— 没开批量的那几页照样看得到它）");
 
-        // Compact mod header: search/maintenance share a row, filters below,
-        // list below filters. The old dedicated directory toolbar is retired.
+        // 模组页头（#136 照 PCL）：搜索在最上面（筛选胶囊排得下就同排），常用操作一行在它下面、
+        // 列表正上方；旧的目录工具排收掉了。
         const int searchY = search != nullptr ? search->mapTo(page, QPoint(0, 0)).y() : -1;
         auto *headerMore = page->findChild<QPushButton *>(QStringLiteral("modHeaderMore"));
         const int stateY = state != nullptr ? state->mapTo(page, QPoint(0, 0)).y() : -1;
+        const int actionsY = headerMore != nullptr ? headerMore->mapTo(page, QPoint(0, 0)).y() : -1;
         const int listY = page->list()->mapTo(page, QPoint(0, 0)).y();
-        check(searchY >= 0 && searchY < stateY && stateY < listY && headerMore &&
-                  headerMore->isVisibleTo(page) && headerMore->parentWidget() == search->parentWidget() &&
-                  !page->refreshButton()->isVisibleTo(page),
-              "★★ U10P 搜索和维护菜单同排，筛选在下方，列表不被顶部工具覆盖",
-              QStringLiteral("搜索 y=%1 / 状态 y=%2 / 列表 y=%3")
+        check(searchY >= 0 && searchY <= stateY && stateY < actionsY && actionsY < listY && headerMore &&
+                  headerMore->isVisibleTo(page) && !page->refreshButton()->isVisibleTo(page),
+              "★★ U10P 搜索在上、常用操作一行在列表正上方，列表不被顶部工具覆盖",
+              QStringLiteral("搜索 y=%1 / 状态 y=%2 / 操作 y=%3 / 列表 y=%4")
                   .arg(searchY)
                   .arg(stateY)
+                  .arg(actionsY)
                   .arg(listY));
 
         // ---- U10P-2 那四颗：字（含条数）、顺序、默认档 ----

@@ -99,6 +99,7 @@ class ElidedLabel;
 class QComboBox;
 class QLabel;
 class QScrollArea;
+class QStackedWidget;
 class QLineEdit;
 class QListWidget;
 class QRubberBand;
@@ -1322,14 +1323,15 @@ private:
     /// **不进任何布局**（进了布局就变成"列表下面另起一行"，不是浮在列表上）—— 位置由
     /// repositionSelectionBar() 算（算出来的是 viewport 坐标系，摆的时候加 viewport->pos()）。
     QWidget *m_selectionBar = nullptr;
-    QScrollArea *m_actionScroll = nullptr;
     bool m_actionPanelEnabled = false;
-    bool m_actionPanelDismissed = false;
+    /// 模组页列表上方那一行（`setActionPanelEnabled`）：常用操作 / 批量操作两页原地切换，
+    /// 右边常驻「全选 / 反选」。
     QWidget *m_selectionTools = nullptr;
+    QStackedWidget *m_actionStack = nullptr;
+    /// 批量操作排不下文字时收成图标（悬停提示和读屏名仍是原字）。
+    bool m_actionCompact = false;
     QWidget *m_contentHost = nullptr;
-    QPushButton *m_selectionReopen = nullptr;
     QLabel *m_selectionSummary = nullptr;
-    QLabel *m_actionStatus = nullptr;
     QLabel *m_selectionCount = nullptr;
     /// 那七颗按钮，**下标就是 `static_cast<int>(SelectionAction)`**。
     QList<QPushButton *> m_selectionButtons;

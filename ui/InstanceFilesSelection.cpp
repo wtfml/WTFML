@@ -13,7 +13,9 @@
 #include <QClipboard>
 #include <QDesktopServices>
 #include <QFileInfo>
-#include <QGridLayout>
+#include <QStackedWidget>
+#include <QStyle>
+#include <QStyleOptionButton>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
@@ -83,6 +85,10 @@ QIcon panelActionIcon(int action, const QColor &color) {
         painter.drawRoundedRect(QRectF(3, 2, 12, 14), 1, 1);
         for (int y : {6, 9, 12}) { path.moveTo(6, y); path.lineTo(12, y); }
         break;
+    case 12:  // 清除选择
+        path.moveTo(4, 4); path.lineTo(14, 14);
+        path.moveTo(14, 4); path.lineTo(4, 14);
+        break;
     case 11:
         path.moveTo(3, 5); path.lineTo(15, 5);
         path.moveTo(12, 2); path.lineTo(15, 5); path.lineTo(12, 8);
@@ -120,98 +126,104 @@ private:
     int m_action;
 };
 
+/// 按钮带上 @p text 时有多宽（照 QPushButton::sizeHint 的算法，图标另加 4 像素间隔），不动按钮本身。
+int labeledButtonWidth(const QPushButton *button, const QString &text) {
+    QStyleOptionButton option;
+    option.initFrom(button);
+    option.text = text;
+    option.icon = button->icon();
+    option.iconSize = button->iconSize();
+    QSize content = button->fontMetrics().size(Qt::TextShowMnemonic, text);
+    if (!option.icon.isNull()) content.rwidth() += option.iconSize.width() + 4;
+    return button->style()->sizeFromContents(QStyle::CT_PushButton, &option, content, button).width();
+}
+
 }
 
 void InstanceFilesPage::setActionPanelEnabled(bool enabled) {
-    // Opt-in only: the other file-management pages retain their existing controls.
+    // Opt-in only: the other file-management pages retain the floating bar over the list.
     if (!enabled || m_actionPanelEnabled) return;
     m_actionPanelEnabled = true;
-    m_actionScroll = new Theme::GutterScrollArea(m_contentHost);
-    m_actionScroll->setObjectName(QStringLiteral("modActionScroll"));
-    m_actionScroll->setFrameShape(QFrame::NoFrame);
-    m_actionScroll->setWidgetResizable(true);
-    m_actionScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_actionScroll->setWidget(m_selectionBar);
-    m_actionScroll->hide();
-    delete m_selectionBar->layout();
-    auto *panel = new QVBoxLayout(m_selectionBar);
-    panel->setContentsMargins(12, 12, 12, 12);
-    panel->setSpacing(8);
-    auto *heading = new QHBoxLayout;
-    auto *title = new QLabel(tr("操作"), m_selectionBar);
-    QFont titleFont = title->font(); titleFont.setBold(true); titleFont = Theme::textFont(titleFont, Theme::TextRole::Heading);
-    title->setFont(titleFont);
-    heading->addWidget(title, 1);
-    auto *close = new QPushButton(QStringLiteral("×"), m_selectionBar);
-    close->setObjectName(QStringLiteral("modActionPanelClose"));
-    Theme::markButton(close, Theme::ButtonKind::Neutral);
-    close->setAccessibleName(tr("收起操作栏（保留选择）"));
-    close->setFixedWidth(32);
-    heading->addWidget(close);
-    panel->addLayout(heading);
-    panel->addWidget(m_selectionCount);
-    m_actionStatus = new QLabel(m_selectionBar);
-    panel->addWidget(m_actionStatus);
-    connect(close, &QPushButton::clicked, this, [this] {
-        m_actionPanelDismissed = true; updateSelectionBar();
-    });
-    auto *actions = new QGridLayout;
-    actions->setSpacing(8);
-    actions->setColumnStretch(0, 1);
+    // 照 PCL 把操作排在列表正上方一行：没选中时是常用操作，选中后原地换成批量操作条。
+    // 两页装在 QStackedWidget 里，换页走全仓统一的换页动效（DesignDefaults）；
+    // 整页只剩列表一条竖滑条（#136）。横向按 Ignored：这一行再长也不顶宽整页。
+    m_actionStack = new QStackedWidget(m_selectionTools);
+    m_actionStack->setObjectName(QStringLiteral("modActionStack"));
+    m_actionStack->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
 
-    panel->addLayout(actions);
-    auto *tools = new QHBoxLayout(m_selectionTools);
-    tools->setContentsMargins(0, 0, 0, 0);
-    m_selectionSummary = new QLabel(m_selectionTools);
-    tools->addWidget(m_selectionSummary);
-    m_selectionReopen = new QPushButton(m_selectionTools);
-    m_selectionReopen->setObjectName(QStringLiteral("modSelectedCount"));
-    Theme::markButton(m_selectionReopen, Theme::ButtonKind::Neutral);
-    tools->addWidget(m_selectionReopen);
-    connect(m_selectionReopen, &QPushButton::clicked, this, [this] {
-        m_actionPanelDismissed = false; updateSelectionBar();
-    });
-    tools->addStretch();
-    for (int i = 0; i < selectionActionCount(); ++i) {
-        auto action = static_cast<SelectionAction>(i);
-        auto *button = m_selectionButtons.at(i);
-        if (action == SelectionAction::SelectAll || action == SelectionAction::InvertAll ||
-            action == SelectionAction::ClearAll) {
-            tools->addWidget(button);
-            if (action == SelectionAction::ClearAll) button->setText(tr("清除选择"));
-        } else if (action == SelectionAction::Disable || action == SelectionAction::Enable) {
-            button->setText(action == SelectionAction::Enable ? tr("启用") : tr("禁用"));
-            actions->addWidget(button, action == SelectionAction::Enable ? 0 : 1, 0);
-        } else {
-            if (action == SelectionAction::Update) {
-                button->setText(tr("更新"));
-                actions->addWidget(button, 2, 0);
-            }
-            if (action == SelectionAction::Delete) {
-                button->setText(tr("删除"));
-                button->setIcon(VersionIcons::actionIcon(VersionIcons::Action::Delete));
-                actions->addWidget(button, 5, 0);
-            }
-        }
-    }
-    for (bool move : {false, true}) {
-        auto *transfer = new QPushButton(move ? tr("移动") : tr("复制"), m_selectionBar);
-        transfer->setToolTip(move ? tr("移动到其它实例") : tr("复制到其它实例"));
-        transfer->setAccessibleName(transfer->toolTip());
-        Theme::markButton(transfer, Theme::ButtonKind::Neutral);
-        actions->addWidget(transfer, move ? 4 : 3, 0);
-        connect(transfer, &QPushButton::clicked, this, [this, move] {
-            emit transferSelectionRequested(selectedPathList(), move);
+    auto *idle = new QWidget(m_actionStack);
+    idle->setObjectName(QStringLiteral("modIdleActions"));
+    auto *idleRow = new QHBoxLayout(idle);
+    idleRow->setContentsMargins(0, 0, 0, 0);
+    idleRow->setSpacing(8);
+    m_pathRow->layout()->removeWidget(m_download);
+    const bool downloadVisible = !m_download->isHidden();
+    idleRow->addWidget(m_download);
+    m_download->setVisible(downloadVisible);
+    m_pathRow->layout()->removeWidget(m_openFolder);
+    m_openFolder->setText(tr("打开文件夹"));
+    Theme::markButton(m_openFolder, Theme::ButtonKind::Neutral);
+    idleRow->addWidget(m_openFolder);
+    m_openFolder->show();
+    auto *headerMore = new QPushButton(tr("更多"), idle);
+    headerMore->setObjectName(QStringLiteral("modHeaderMore"));
+    Theme::markButton(headerMore, Theme::ButtonKind::Neutral);
+    idleRow->addWidget(headerMore);
+    connect(headerMore, &QPushButton::clicked, this, [this, headerMore] {
+        QMenu menu(this);
+        menu.addAction(VersionIcons::actionIcon(VersionIcons::Action::Refresh), tr("刷新列表"), m_refresh, &QPushButton::click);
+        auto *copy = menu.addAction(panelActionIcon(3, Theme::tokens().text), tr("复制文件夹路径"));
+        connect(copy, &QAction::triggered, this, [this] {
+            QApplication::clipboard()->setText(m_directory);
         });
+        menu.exec(headerMore->mapToGlobal(QPoint(0, headerMore->height())));
+    });
+    idleRow->addStretch(1);
+    m_selectionSummary = new QLabel(idle);
+    idleRow->addWidget(m_selectionSummary);
+
+    // 选中后那一页：「已选 N 项」+ 批量操作 + 「清除选择」。浮条那份底色不要了（它现在排在行里）。
+    m_selectionBar->setAutoFillBackground(false);
+    delete m_selectionBar->layout();
+    auto *bar = new QHBoxLayout(m_selectionBar);
+    bar->setContentsMargins(0, 0, 0, 0);
+    bar->setSpacing(8);
+    bar->addWidget(m_selectionCount);
+    const auto markAction = [](QPushButton *button, int icon) {
+        button->setProperty("actionLabel", button->text());
+        button->setIcon(QIcon(new PanelActionIconEngine(icon)));
+        button->setProperty("wtfmlModAction", true);
+        Theme::markButton(button, icon == 5 ? Theme::ButtonKind::Danger
+                                  : icon == 2 ? Theme::ButtonKind::Accent : Theme::ButtonKind::Neutral);
+        button->setAccessibleName(button->text());
+        button->setIconSize(QSize(18, 18));
+        button->setMinimumWidth(0);
+    };
+    const QList<QPair<SelectionAction, int>> batch = {
+        {SelectionAction::Enable, 0}, {SelectionAction::Disable, 1},
+        {SelectionAction::Update, 2}, {SelectionAction::Delete, 5}};
+    for (const auto &[action, icon] : batch) {
+        auto *button = selectionButtonAt(static_cast<int>(action));
+        markAction(button, icon);
+        bar->addWidget(button);
     }
     auto *more = new QPushButton(tr("更多"), m_selectionBar);
     more->setObjectName(QStringLiteral("modMoreActions"));
-    Theme::markButton(more, Theme::ButtonKind::Neutral);
-    actions->addWidget(more, 6, 0);
+    more->setToolTip(more->text());
+    markAction(more, 6);
+    bar->addWidget(more);
     connect(more, &QPushButton::clicked, this, [this, more] {
         const auto paths = selectedPathList();
         QMenu menu(this);
         const auto menuIcon = [](int action) { return panelActionIcon(action, Theme::tokens().text); };
+        for (bool move : {false, true}) {
+            auto *transfer = menu.addAction(menuIcon(move ? 4 : 3), move ? tr("移动到其它实例") : tr("复制到其它实例"));
+            transfer->setObjectName(move ? QStringLiteral("modMoveSelection") : QStringLiteral("modCopySelection"));
+            connect(transfer, &QAction::triggered, this, [this, paths, move] {
+                emit transferSelectionRequested(paths, move);
+            });
+        }
+        menu.addSeparator();
         auto *inspect = menu.addAction(menuIcon(7), tr("依赖与冲突"));
         inspect->setObjectName(QStringLiteral("modInspectDependencies"));
         inspect->setEnabled(!paths.isEmpty());
@@ -241,46 +253,27 @@ void InstanceFilesPage::setActionPanelEnabled(bool enabled) {
         });
         menu.exec(more->mapToGlobal(QPoint(0, more->height())));
     });
-    for (int row = 0; row < 7; ++row) {
-        auto *button = qobject_cast<QPushButton *>(actions->itemAtPosition(row, 0)->widget());
-        button->setProperty("actionLabel", button->text());
-        button->setProperty("wtfmlModAction", true);
-        Theme::markButton(button, row == 5 ? Theme::ButtonKind::Danger
-                               : row == 2 ? Theme::ButtonKind::Accent : Theme::ButtonKind::Neutral);
-        button->setAccessibleName(button->text());
-        button->setToolTip(button->text());
-        button->setIcon(QIcon(new PanelActionIconEngine(row)));
-        button->setIconSize(QSize(18, 18));
-    }
-    panel->addStretch();
+    bar->addStretch(1);
+    auto *clear = selectionButtonAt(static_cast<int>(SelectionAction::ClearAll));
+    clear->setText(tr("清除选择"));
+    markAction(clear, 12);
+    bar->addWidget(clear);
     m_selectionBar->setToolTip(tr("选择仅针对当前筛选结果。删除模组不清理配置。"));
-    // Search yields space to the frequently used folder action.
-    auto *header = qobject_cast<QHBoxLayout *>(m_searchRow->layout());
-    m_pathRow->layout()->removeWidget(m_download);
-    const bool downloadVisible = !m_download->isHidden();
-    header->addWidget(m_download);
-    m_download->setVisible(downloadVisible);
-    m_pathRow->layout()->removeWidget(m_openFolder);
-    m_openFolder->setText(tr("打开文件夹"));
-    Theme::markButton(m_openFolder, Theme::ButtonKind::Ghost);
-    header->addWidget(m_openFolder);
-    m_openFolder->show();
+
+    m_actionStack->addWidget(idle);
+    m_actionStack->addWidget(m_selectionBar);
+    auto *tools = new QHBoxLayout(m_selectionTools);
+    tools->setContentsMargins(0, 0, 0, 0);
+    tools->setSpacing(8);
+    tools->addWidget(m_actionStack, 1);
+    for (auto action : {SelectionAction::SelectAll, SelectionAction::InvertAll})
+        tools->addWidget(selectionButtonAt(static_cast<int>(action)));
+    // Esc 先清选择（批量条收回常用操作），没有选择时才交给外层去「返回」。
+    m_list->installEventFilter(this);
     m_search->setMinimumWidth(100);
-    auto *headerMore = new QPushButton(tr("更多"), m_searchRow);
-    headerMore->setObjectName(QStringLiteral("modHeaderMore"));
-    Theme::markButton(headerMore, Theme::ButtonKind::Ghost);
-    header->addWidget(headerMore);
-    connect(headerMore, &QPushButton::clicked, this, [this, headerMore] {
-        QMenu menu(this);
-        menu.addAction(VersionIcons::actionIcon(VersionIcons::Action::Refresh), tr("刷新列表"), m_refresh, &QPushButton::click);
-        auto *copy = menu.addAction(panelActionIcon(3, Theme::tokens().text), tr("复制文件夹路径"));
-        connect(copy, &QAction::triggered, this, [this] {
-            QApplication::clipboard()->setText(m_directory);
-        });
-        menu.exec(headerMore->mapToGlobal(QPoint(0, headerMore->height())));
-    });
     m_pathRow->hide();
     m_selectionTools->show();
+    applyState();
     updateSelectionBar();
 }
 
@@ -391,25 +384,16 @@ void InstanceFilesPage::updateSelectionBar() {
     }
     if (m_actionPanelEnabled) {
         const int count = m_selectedPaths.size();
-        if (count == 0) m_actionPanelDismissed = false;
         m_selectionSummary->setText(tr("共 %1 个模组").arg(m_list->count()));
-        m_selectionReopen->setText(tr("已选 %1 项").arg(count));
-        m_selectionReopen->setVisible(count > 0);
-        m_actionStatus->setText(tr("启用 %1  /  禁用 %2")
-            .arg(disableCount).arg(enableCount));
+        m_selectionCount->setText(tr("已选 %1 项").arg(count));
         setEnabled(SelectionAction::ClearAll, count > 0);
-        const bool targetVisible = show && !m_actionPanelDismissed;
-        // 先把右侧要让出的宽度摆好，再显示操作条：反过来的话列表会在显示之后
-        // 再变一次宽（横滚条跟着出现/消失），那条和里面的字看着就是被拽下去再弹回来。
-        if (targetVisible != !m_selectionBar->isHidden()) {
-            if (m_contentHost->layout() != nullptr) {
-                const int panelWidth = qMin(m_contentHost->width() >= 740 ? 156 : 56, m_contentHost->width());
-                m_contentHost->layout()->setContentsMargins(
-                    0, 0, targetVisible ? panelWidth + 12 : 0, 0);
-                m_contentHost->layout()->activate();
-            }
-            m_selectionBar->setVisible(targetVisible);
-            m_actionScroll->setVisible(targetVisible);
+        QWidget *target = show ? m_selectionBar : m_actionStack->widget(0);
+        if (m_actionStack->currentWidget() != target) {
+            // 焦点在要收起的那一页上（键盘点了「清除选择」「删除」）就交回列表，不丢到窗口上。
+            QWidget *focus = QApplication::focusWidget();
+            const bool refocus = focus != nullptr && m_actionStack->currentWidget()->isAncestorOf(focus);
+            m_actionStack->setCurrentWidget(target);
+            if (refocus) m_list->setFocus(Qt::OtherFocusReason);
         }
         repositionSelectionBar();
         return;
@@ -423,50 +407,33 @@ void InstanceFilesPage::updateSelectionBar() {
 
 void InstanceFilesPage::repositionSelectionBar() {
     if (m_actionPanelEnabled) {
-        // Share a row only when both groups fit at the current font/DPI.
-        // Narrow windows retain a separate selection row without wrapping controls.
-        // 按「这一排可能露出的全部胶囊 +「已选 N 项」」量，不按此刻露着的几颗：否则禁用第一项时
-        // 「启用 / 禁用」冒出来就换行，列表整体下跳，指针底下换成别的一行（连点开关会点错）。
-        // 宽度一定，排法就一定。
-        const int pillsWidth = possibleStatePillsWidth();
-        int toolsWidth = m_selectionTools->sizeHint().width();
-        if (m_selectionReopen->isHidden())
-            toolsWidth += m_selectionReopen->sizeHint().width() + m_selectionTools->layout()->spacing();
-        const int headerWidth = pillsWidth + toolsWidth + 24;
-        const bool inlineTools = m_contentHost->width() >= headerWidth;
-        if (inlineTools != (m_selectionTools->parentWidget() == m_stateRow)) {
-            if (inlineTools) {
-                layout()->removeWidget(m_selectionTools);
-                qobject_cast<QHBoxLayout *>(m_stateRow->layout())->addWidget(m_selectionTools);
-            } else {
-                m_stateRow->layout()->removeWidget(m_selectionTools);
-                auto *outer = qobject_cast<QVBoxLayout *>(layout());
-                outer->insertWidget(outer->indexOf(m_contentHost), m_selectionTools);
+        // 批量操作带字排得下就带字，排不下收成图标。按「带字时」的宽度判，和此刻是哪一档无关，
+        // 改字之后再排一轮也得出同一个结论，不会来回翻。
+        const int available = m_contentHost->width();
+        int trailing = 0;
+        for (auto action : {SelectionAction::SelectAll, SelectionAction::InvertAll})
+            trailing += m_selectionTools->layout()->spacing() + selectionButtonAt(static_cast<int>(action))->sizeHint().width();
+        const auto buttons = m_selectionBar->findChildren<QPushButton *>();
+        int labeled = m_selectionBar->sizeHint().width();
+        for (auto *button : buttons) {
+            const QVariant label = button->property("actionLabel");
+            if (label.isValid()) labeled += labeledButtonWidth(button, label.toString()) - button->sizeHint().width();
+        }
+        const bool compact = labeled + trailing > available;
+        if (compact != m_actionCompact) {
+            m_actionCompact = compact;
+            for (auto *button : buttons) {
+                const QVariant label = button->property("actionLabel");
+                if (!label.isValid()) continue;
+                button->setText(compact ? QString() : label.toString());
             }
-            m_selectionTools->show();
         }
-        const int panelWidth = qMin(m_contentHost->width() >= 740 ? 156 : 56, m_contentHost->width());
-        const bool compact = m_contentHost->width() < 740;
-        for (auto *button : m_selectionBar->findChildren<QPushButton *>()) {
-            if (!button->property("actionLabel").isValid()) continue;
-            const QString label = button->property("actionLabel").toString();
-            const QString text = compact ? QString() : label;
-            if (button->text() != text) button->setText(text);
-            button->setMinimumWidth(0);
-        }
-        m_selectionCount->setVisible(!compact);
-        m_actionStatus->setVisible(!compact);
-        const auto labels = m_selectionBar->findChildren<QLabel *>();
-        for (auto *label : labels) label->setVisible(!compact);
-        if (auto *panel = qobject_cast<QVBoxLayout *>(m_selectionBar->layout()))
-            panel->setContentsMargins(compact ? 4 : 12, 12, compact ? 4 : 12, 12);
-        const bool visible = !m_selectionBar->isHidden();
-        // 两种宽度都给列表让位，窄窗只收起按钮文字。
-        m_contentHost->layout()->setContentsMargins(0, 0,
-            visible ? panelWidth + 12 : 0, 0);
-        m_actionScroll->setGeometry(m_contentHost->width() - panelWidth, 0,
-                                    panelWidth, m_contentHost->height());
-        m_actionScroll->raise();
+        // 常用操作那一页窄了先收起「共 N 个模组」（筛选胶囊上已有同一个数）。
+        QWidget *idle = m_actionStack->widget(0);
+        int idleNeed = idle->sizeHint().width();
+        if (m_selectionSummary->isHidden())
+            idleNeed += m_selectionSummary->sizeHint().width() + idle->layout()->spacing();
+        m_selectionSummary->setVisible(idleNeed + trailing <= available);
         return;
     }
     if (m_selectionBar == nullptr || m_list == nullptr) {
@@ -508,7 +475,7 @@ int InstanceFilesPage::possibleStatePillsWidth() const {
 }
 
 bool InstanceFilesPage::placeCompactStateRow() {
-    if (!m_compactHeader || !m_batchMode || m_worldLayout) return false;
+    if (!(m_compactHeader || m_actionPanelEnabled) || !m_batchMode || m_worldLayout) return false;
     auto *search = qobject_cast<QHBoxLayout *>(m_searchRow->layout());
     auto *outer = qobject_cast<QVBoxLayout *>(layout());
     // 搜索框留出它自己 sizeHint 那么宽，剩下的装得下全部胶囊才同排（和模组页计数排同一判据）。

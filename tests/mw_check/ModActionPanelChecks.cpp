@@ -32,6 +32,7 @@
 #include <QScreen>
 #include <QDrag>
 #include <QMouseEvent>
+#include <QKeyEvent>
 #include <cstdio>
 
 int runModActionPanelChecks() {
@@ -188,24 +189,39 @@ int runModActionPanelChecks() {
     check(!page.findChild<QPushButton *>(QStringLiteral("modCheckSelectedUpdates")),
           "manual update check removed from action panel");
     check(list->selectedItems().size() == 2 && !panel->isHidden(), "multi-selection opens panel");
-    auto *actionScroll = page.findChild<QScrollArea *>(QStringLiteral("modActionScroll"));
-    check(actionScroll && actionScroll->width() == 156 && list->width() < 850,
-          "wide layout reserves panel space");
-    check(all->parentWidget()->parentWidget() != &page,
-          "wide header shares filter and selection tools row");
-    // 紧凑的模组页头把三件事并在一排里：「下载新模组」+「打开文件夹」+「更多…」。
-    // 「打开文件夹」是从原来那条路径排 / 「更多」菜单里**提上来**的（最常用的一颗不该藏在菜单里），
-    // 所以它在页头上露着、而且和「更多…」同一排 —— 路径排这一档在模组页整条是收起的。
+    // #136：操作排在列表正上方一行（照 PCL），不再有右侧那条竖着滚的操作栏。
+    // 整页只许列表自己一条竖滑条；选中后批量条原地顶替常用操作那一页。
+    const auto onlyListScrolls = [&page, list] {
+        for (auto *bar : page.findChildren<QScrollBar *>())
+            if (bar->orientation() == Qt::Vertical && bar->isVisible() && bar != list->verticalScrollBar()) return false;
+        return true;
+    };
+    auto *actionStack = page.findChild<QWidget *>(QStringLiteral("modActionStack"));
     auto *headerMore = page.findChild<QPushButton *>(QStringLiteral("modHeaderMore"));
     auto *headerFolder = page.openFolderButton();
-    check(page.downloadButton()->isVisible() && headerMore->isVisible()
-          && headerFolder->isVisible()
-          && headerFolder->parentWidget() == headerMore->parentWidget(),
-          "compact mod header pairs install, folder and maintenance actions");
-    page.findChild<QPushButton *>(QStringLiteral("modActionPanelClose"))->click();
-    check(panel->isHidden() && list->selectedItems().size() == 2, "close preserves selection");
-    page.findChild<QPushButton *>(QStringLiteral("modSelectedCount"))->click();
-    check(!panel->isHidden(), "selected count reopens panel");
+    check(actionStack && !page.findChild<QScrollArea *>(QStringLiteral("modActionScroll")) && onlyListScrolls() &&
+              list->width() > 850,
+          "action row leaves the list full width and the list is the only vertical scroller");
+    check(actionStack->mapTo(&page, QPoint(0, actionStack->height())).y() <= list->mapTo(&page, QPoint()).y() &&
+              panel->parentWidget() == actionStack && !headerMore->isVisible() && all->isVisible(),
+          "selection swaps the common actions for the batch bar in the row above the list");
+    // 「下载新模组」「打开文件夹」「更多」同在常用操作那一页。
+    check(page.downloadButton()->parentWidget() == headerMore->parentWidget() &&
+              headerFolder->parentWidget() == headerMore->parentWidget() && !headerFolder->text().isEmpty(),
+          "common action page pairs install, folder and maintenance actions");
+    {
+        list->setFocus();
+        QKeyEvent esc(QEvent::KeyPress, Qt::Key_Escape, Qt::NoModifier);
+        QApplication::sendEvent(list, &esc);
+        QApplication::processEvents();
+        check(esc.isAccepted() && list->selectedItems().isEmpty() && panel->isHidden() && headerMore->isVisible(),
+              "Esc clears the selection and brings the common actions back");
+        QKeyEvent second(QEvent::KeyPress, Qt::Key_Escape, Qt::NoModifier);
+        second.ignore();
+        QApplication::sendEvent(list, &second);
+        check(!second.isAccepted(), "Esc without a selection is left for the dialog to go back");
+        all->click(); QApplication::processEvents();
+    }
     int toggles = 0;
     QObject::connect(&page, &InstanceFilesPage::batchToggleRequested, &page,
         [&](const QStringList &paths, bool) { toggles += paths.size(); });
@@ -247,19 +263,24 @@ int runModActionPanelChecks() {
         Theme::apply(*qApp);
         QApplication::processEvents();
     }
+    check(!enable->text().isEmpty() && !enable->icon().isNull(), "wide batch bar shows icons with text labels");
     page.resize(560, 640); QApplication::processEvents();
-    check(page.width() == 560 && list->width() > 450 && actionScroll->width() == 56 && actionScroll->geometry().right() < page.width(), "narrow drawer does not force minimum width");
-    check(enable->text().isEmpty() && !enable->icon().isNull() && !enable->toolTip().isEmpty(),
-          "compact action rail uses labeled icons and preserves selection");
-    if (!preview.isEmpty()) page.grab().save(preview + QStringLiteral("/mods-narrow.png"));
-    page.resize(560, 420); QApplication::processEvents();
-    check(page.height() == 420 && (actionScroll->verticalScrollBar()->maximum() > 0 ||
-              panel->minimumSizeHint().height() <= actionScroll->viewport()->height()),
-          "short window either fits compact commands or makes them scrollable");
     auto *moreActions = page.findChild<QPushButton *>(QStringLiteral("modMoreActions"));
-    actionScroll->ensureWidgetVisible(moreActions); QApplication::processEvents();
-    check(actionScroll->viewport()->rect().contains(moreActions->mapTo(actionScroll->viewport(), moreActions->rect().center())),
-          "last action remains reachable in short window");
+    const auto insidePage = [&page](QWidget *w) {
+        return w->isVisible() && page.rect().contains(QRect(w->mapTo(&page, QPoint()), w->size()));
+    };
+    check(page.width() == 560 && list->width() > 450 && insidePage(moreActions) && insidePage(clear) &&
+              insidePage(invert),
+          "narrow batch bar does not force minimum width and keeps every action on screen");
+    if (!preview.isEmpty()) page.grab().save(preview + QStringLiteral("/mods-narrow.png"));
+    page.resize(440, 640); QApplication::processEvents();
+    check(enable->text().isEmpty() && !enable->icon().isNull() && !enable->toolTip().isEmpty() &&
+              !enable->accessibleName().isEmpty() && insidePage(moreActions) && insidePage(invert),
+          "too narrow for labels: batch bar falls back to icons with tooltips and accessible names");
+    page.resize(560, 640); QApplication::processEvents();
+    page.resize(560, 420); QApplication::processEvents();
+    check(page.height() == 420 && insidePage(moreActions) && onlyListScrolls(),
+          "short window keeps the action row and only the list scrolls");
     if (!preview.isEmpty()) page.grab().save(preview + QStringLiteral("/mods-short.png"));
     page.resize(560, 640); QApplication::processEvents();
     QFile::remove(renamed);
@@ -270,9 +291,11 @@ int runModActionPanelChecks() {
     page.setSearchText(QString()); all->click();
     clear->click();
     check(list->selectedItems().isEmpty() && panel->isHidden(), "clear selection closes panel");
-    // 第一次禁用一项时「启用 / 禁用」两颗胶囊冒出来：计数排换不换行、列表视口落在哪，都得和禁用前一样
-    // （否则列表整体下跳，指针底下换成另一行，连点开关会点错）。换行的临界宽度随字体浮动，
-    // 所以 400~1120 每 40 一档逐档扫，窄档计数排另起一行、宽档同排，两种都得稳。
+    check(page.downloadButton()->isVisible() && headerMore->isVisible() && headerFolder->isVisible(),
+          "clearing the selection restores install, folder and maintenance actions");
+    // 第一次禁用一项时「启用 / 禁用」两颗胶囊冒出来：操作行、列表视口落在哪，都得和禁用前一样
+    // （否则列表整体下跳，指针底下换成另一行，连点开关会点错）。胶囊排进搜索那一排还是另起一行
+    // 的临界宽度随字体浮动，所以 400~1120 每 40 一档逐档扫，两种都得稳。
     {
         QStringList moved;
         bool sawTwoRows = false, sawOneRow = false;
@@ -303,7 +326,10 @@ int runModActionPanelChecks() {
             if (!pillsShown || listY() != listBefore || toolsY() != toolsBefore)
                 moved << QStringLiteral("%1: list %2->%3 row %4->%5").arg(width).arg(listBefore).arg(listY())
                              .arg(toolsBefore).arg(toolsY());
-            (tools->parentWidget() == &stable ? sawTwoRows : sawOneRow) = true;
+            QWidget *stateRow = stable.findChild<QPushButton *>(InstanceFilesPage::stateButtonName(
+                InstanceFilesPage::StateFilter::Disabled))->parentWidget()->parentWidget();
+            (stateRow->parentWidget() == stable.findChild<QWidget *>(InstanceFilesPage::searchEditName())->parentWidget()
+                 ? sawOneRow : sawTwoRows) = true;
         }
         const QByteArray name = (QStringLiteral("first disable keeps list viewport and selection row in place "
             "at widths 400..1120 ") + moved.join(QStringLiteral("; "))).toUtf8();

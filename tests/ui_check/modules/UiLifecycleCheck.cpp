@@ -411,8 +411,8 @@ int UiLifecycleCheck(QApplication &app) {
                 if (key == QStringLiteral("schematic")) {
                     auto *page = dialog.filesPage(key);
                     list = page ? page->list() : nullptr;
-                    expect(page && !page->batchMode() && !page->findChild<QWidget *>(QStringLiteral("modActionScroll")),
-                           "schematics do not use the mod sidebar");
+                    expect(page && !page->batchMode() && !page->findChild<QWidget *>(QStringLiteral("modActionStack")),
+                           "schematics do not use the mod action row");
                 } else {
                     list = dialog.findChild<QListWidget *>(QStringLiteral("instanceLifecycleFiles_%1").arg(key));
                 }

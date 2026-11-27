@@ -15,13 +15,13 @@
  * 那份声明只存在于**游戏进程**里，启动器在外面拿不到。（ModMenu 自己唯一跟文件沾边的功能
  * 是 `modmenu.configsFolder` = 「打开配置文件夹」。）
  *
- * 【左边那一格「条目」：条目 ↔ 值的一一对应】
+ * 【「条目」大纲浮层：条目 ↔ 值的一一对应】
  *
  * 条目 ↔ 值能一一对应，而且不用外接库 —— 见 `ConfigEntries.hpp` 那一段（注释里
  * 常常就写着说明和 `#Range:`，而类型文件自己就说了）。这一格就是那份清单的落点：
  *
- * - 左边一棵树，**一行一个设置项**（分组 = 段 / 嵌套对象，行上是 `键 = 值`）；
- * - 点一条 → 右边编辑框里**那一格值的字节区间被选中**并滚到眼前（只选、不改）。
+ * - 顶上「条目」按钮点开一个大纲浮层，里面一棵可搜索的树，**一行一个设置项**（分组 = 段 / 嵌套对象，行上是 `键 = 值`）；
+ * - 点一条（或回车）→ 编辑框里**那一格值的字节区间被选中**并滚到眼前（只选、不改），浮层收起。
  *
  * NOTE: **它不是表单**，别往那个方向改。表单要的是"这一条是什么类型、范围多少、叫什么
  * 名字"（schema），而那份 schema 只活在模组自己的 Java 代码里 —— 启动器手上只有
@@ -53,11 +53,13 @@
 #pragma once
 
 #include <QByteArray>
+#include <QPointer>
 #include <QString>
 #include <QWidget>
 
 #include "ConfigFileText.hpp"
 
+class GlassPopover;
 class QLabel;
 class QLineEdit;
 class QPlainTextEdit;
@@ -71,6 +73,7 @@ class ConfigFileEditorPage : public QWidget {
 
 public:
     explicit ConfigFileEditorPage(QWidget *parent = nullptr);
+    ~ConfigFileEditorPage() override;
 
     /// 摆一份文件（点开一条时由 InstanceSettingsDialog 调）。
     ///
@@ -132,9 +135,11 @@ public:
     /// 改过就弹一句问，用户说"不保存"才走这儿再切回列表 —— **改过的东西不许悄悄没掉**。
     void discardChanges();
 
-    // ---------- 左边那一格「条目」----------
-    // / 左边那一格现在摆着没有（藏着的时候是"这份文件里没认出设置项"，或者用户把它收了）。
+    // ---------- 「条目」大纲浮层 ----------
+    /// 大纲浮层现在开着没有。
     bool indexVisible() const;
+    /// 点开「条目」大纲浮层（没认出条目时什么都不做）。
+    void openIndex();
     /// 重新认一遍、重摆那棵树。**改完字由那个延时器叫它**（见构造函数里那个 250 ms）。
     /// @return 认出来几条（**和树上摆着的条数不是一回事**：树是按路径分了组的）。
     int rebuildIndex();
@@ -225,7 +230,7 @@ private:
     void refreshNote();
     /// 按筛选框里那串字，把那棵树该露的露、该藏的藏（**父分组只要底下有中的就留着**）。
     void applyIndexFilter();
-    /// 左边那一格该露还是该收（用户那颗「条目」按下的状态 + 这份文件认没认出东西）。
+    /// 「条目」按钮能不能点（这份文件认没认出东西）；认不出时顺手收起浮层。
     void refreshIndexVisibility();
     /// 「还原上一次」那一颗该露不该露。**两个条件缺一不可**：这个文件留过备份、而且它现在
     /// 是可编辑的（只读的文件取回来也写不回去，摆一颗按不动的按钮只是噪音）。
@@ -241,11 +246,13 @@ private:
     QPushButton *m_save = nullptr;
 
     QWidget *m_indexPanel = nullptr;
+    /// 「条目」大纲浮层（第一次点开时建，挂在窗口底下）。
+    QPointer<GlassPopover> m_outline;
     QTreeWidget *m_index = nullptr;
     QLineEdit *m_indexFilter = nullptr;
     QPushButton *m_indexToggle = nullptr;
     QTimer *m_indexTimer = nullptr;  ///< 改字之后等手停下来再重认一遍（250 ms）
-    /// 这份文件现在认出来几条（0 ⇒ 左边那一格收起来）。
+    /// 这份文件现在认出来几条（0 ⇒「条目」按钮点不动）。
     int m_indexEntries = 0;
     /// 正在摆正文（`setFile()` / `discardChanges()` 里那一句）：这期间那台延时器不该响，
     /// 不然刚摆完就被自己叫起来重认一遍。
