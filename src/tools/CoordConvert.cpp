@@ -246,6 +246,10 @@ QString toTeleportCommand(const Position &position, Dimension dimension) {
     return command;
 }
 
+QString convertedTeleportCommand(Dimension from, Dimension to, const Position &position) {
+    return toTeleportCommand(convert(from, to, position), to);
+}
+
 QString positionText(const Position &position) {
     return QStringLiteral("%1 %2 %3")
         .arg(position.x, 0, 'f', 2)

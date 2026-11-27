@@ -97,7 +97,8 @@ private:
     // ---------- 坐标换算 ----------
     void convertCoordinates(int dimensionIndex, double x, double y, double z);
     void parseTeleport(const QString &text);
-    void makeTeleportCommand(int dimensionIndex, double x, double y, double z);
+    void makeTeleportCommand(int fromDimensionIndex, int toDimensionIndex, double x, double y,
+                             double z);
     // ---------- 服务器在线检测 ----------
     void checkServer(const QString &address);
     void cancelServerCheck();

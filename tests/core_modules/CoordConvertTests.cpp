@@ -172,5 +172,32 @@ void runCoordConvertTests() {
               "★ ZAB5 拼出去的那条能**原样读回来**（两边的写法是同一套）",
               CoordConvert::positionText(roundTrip.position));
     }
+
+    // ---------- ZAB6. 指定目标维度：先换算，再拼命令（#133） ----------
+    {
+        const CoordConvert::Position overworld{80.5, 63.0, -76.5};
+        const QString toNether =
+            CoordConvert::convertedTeleportCommand(Dimension::Overworld, Dimension::Nether, overworld);
+        check(toNether
+                  == QStringLiteral(
+                         "/execute in minecraft:the_nether run tp @s 10.06 63.00 -9.56"),
+              "ZAB6 主世界 → 下界：命令里的坐标是**除以 8 之后**的，维度也写成下界", toNether);
+        const QString toOverworld =
+            CoordConvert::convertedTeleportCommand(Dimension::Nether, Dimension::Overworld,
+                                                   CoordConvert::Position{-9.5, 70.0, 12.25});
+        check(toOverworld
+                  == QStringLiteral(
+                         "/execute in minecraft:overworld run tp @s -76.00 70.00 98.00"),
+              "ZAB6 下界 → 主世界：x、z 各乘 8", toOverworld);
+        const QString toSame =
+            CoordConvert::convertedTeleportCommand(Dimension::Overworld, Dimension::Overworld,
+                                                   overworld);
+        check(toSame == QStringLiteral("/execute in minecraft:overworld run tp @s 80.50 63.00 -76.50"),
+              "ZAB6 同维度不缩放，但命令里仍写明维度", toSame);
+        const QString toEnd = CoordConvert::convertedTeleportCommand(
+            Dimension::Overworld, Dimension::End, overworld);
+        check(toEnd == QStringLiteral("/execute in minecraft:the_end run tp @s 80.50 63.00 -76.50"),
+              "ZAB6 末地不参与 8:1：坐标原样，维度换成末地", toEnd);
+    }
 }
 
