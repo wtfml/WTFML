@@ -21663,7 +21663,7 @@ How to complete: Open the project page above, find the file matching the game ve
         </message>
         <message>
             <source>%1秒</source>
-            <translation>%1 second(s)</translation>
+            <translation>%1 s</translation>
         </message>
         <message>
             <source>%1像素</source>
