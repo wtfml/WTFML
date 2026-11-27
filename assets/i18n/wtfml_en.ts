@@ -3047,12 +3047,28 @@ Location: %4
             <translation>Qwen (DashScope)</translation>
         </message>
         <message>
+            <source>Kimi（Moonshot）</source>
+            <translation>Kimi (Moonshot)</translation>
+        </message>
+        <message>
+            <source>智谱 GLM</source>
+            <translation>Zhipu GLM</translation>
+        </message>
+        <message>
             <source>OpenRouter 的模型 id 带厂商前缀，例如 openai/gpt-4.1。</source>
             <translation>OpenRouter model IDs carry a vendor prefix, for example openai/gpt-4.1.</translation>
         </message>
         <message>
+            <source>Ollama（本机）</source>
+            <translation>Ollama (local)</translation>
+        </message>
+        <message>
             <source>本机 Ollama 默认不校验密钥；先 `ollama serve`，模型名用 `ollama list` 里的那个。</source>
             <translation>Local Ollama doesn't check keys by default; run `ollama serve` first and use a model name from `ollama list`.</translation>
+        </message>
+        <message>
+            <source>LM Studio（本机）</source>
+            <translation>LM Studio (local)</translation>
         </message>
         <message>
             <source>在 LM Studio 里先开 Local Server。</source>

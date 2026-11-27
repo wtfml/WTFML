@@ -3016,11 +3016,27 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>Kimi（Moonshot）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>智谱 GLM</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>OpenRouter 的模型 id 带厂商前缀，例如 openai/gpt-4.1。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>Ollama（本机）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>本机 Ollama 默认不校验密钥；先 `ollama serve`，模型名用 `ollama list` 里的那个。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>LM Studio（本机）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
