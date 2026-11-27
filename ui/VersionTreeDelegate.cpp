@@ -90,11 +90,6 @@ bool VersionTreeDelegate::helpEvent(QHelpEvent *event, QAbstractItemView *view,
 
 void VersionTreeDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
                                 const QModelIndex &index) const {
-    // 整行是控件（加载器的「显示全部 / 收起」）：不画兜底图标和底色。
-    if (const auto *view = qobject_cast<const QAbstractItemView *>(option.widget);
-        view != nullptr && view->indexWidget(index) != nullptr) {
-        return;
-    }
     QStyleOptionViewItem opt(option);
     initStyleOption(&opt, index);
     // 背景/选中/悬停那一层交给样式画，但**文字和图标先清掉** —— 这一行是"两行字 + 一个小图标"，
@@ -273,6 +268,12 @@ void VersionTreeDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
         mark = qvariant_cast<QPixmap>(decoration).scaled(iconSize, iconSize, Qt::KeepAspectRatio,
                                                          Qt::SmoothTransformation);
     }
+    // 加载器末行「显示全部 / 收起」：图标那一格画展开 / 收起箭头，文字用强调色。
+    const QVariant more = index.data(MainWindowUI::rowMoreRole());
+    if (more.isValid()) {
+        const QColor ink = Theme::tokens().primary;
+        mark = more.toBool() ? VersionIcons::chevronUp(iconSize, ink) : VersionIcons::chevron(true, iconSize, ink);
+    }
     if (mark.isNull() && !isChannel && !m_resourceRows) {
         mark = VersionIcons::grassBlock(iconSize);
     }
@@ -367,7 +368,7 @@ void VersionTreeDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
         mainFont.setBold(true);
     }
     painter->setFont(mainFont);
-    painter->setPen(palette.color(QPalette::WindowText));
+    painter->setPen(more.isValid() ? Theme::tokens().primary : palette.color(QPalette::WindowText));
     // 两行都要**先截成省略号再画**。`drawText(rect, 文字)` 在装不下时是**硬裁**：
     // 最后那个字被切掉半个、右边那一小截贴在图标上，看着像"字画坏了"，而不是"这里还有更多"。
     // 版本名和加载器名都能长过这一格（自定义名更长），资源表那几张也一样 ——
@@ -451,6 +452,20 @@ void VersionTreeDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
                                                   (index.flags() & Qt::ItemIsEnabled) ? Theme::tokens().primary : Theme::tokens().disabled));
     }
     painter->restore();
+
+    // 那一行的键盘焦点在盖着它的透明按钮上（Tab 到达）：框画在这里，和列表当前行标记同一个样子。
+    if (more.isValid() && view != nullptr) {
+        const QWidget *carrier = view->indexWidget(index);
+        if (carrier != nullptr && carrier->hasFocus() && carrier->property("wtfmlKeyboardFocus").toBool()) {
+            painter->save();
+            painter->setRenderHint(QPainter::Antialiasing, true);
+            painter->setPen(QPen(Theme::focusRingColor(option.palette), 2.0));
+            painter->setBrush(Qt::NoBrush);
+            const QRectF band(0, row.top(), view->viewport()->width(), row.height());
+            painter->drawRoundedRect(band.adjusted(2, 1, -2, -1), 8, 8);
+            painter->restore();
+        }
+    }
 
     // 行尾那格文字（体验反馈 8：右侧不再画 > / V 小箭头，tokens-r2 §6「收起 / 展开」）：
     // 能展开的行写「展开 / 收起」；叶子行若点进去有下一页（版本树进安装页、资源表下载），

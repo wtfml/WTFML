@@ -20,6 +20,7 @@
 #include "RowActivation.hpp"
 #include "AutoHeight.hpp"
 #include <QFocusEvent>
+#include <QKeyEvent>
 #include <QPointer>
 #include <QScrollBar>
 
@@ -665,24 +666,46 @@ void MainWindowUI::setupDownloadGamePage() {
 }
 
 namespace {
-/// 「显示全部」按钮拿到键盘焦点时，别停在悬浮的「安装」底下。
-class RevealOnTabFocus : public QObject {
+/// 盖在「显示全部 / 收起」那一行上的键盘焦点载体：自己什么都不画（行由 VersionTreeDelegate 画，
+/// 和版本行同一套），鼠标穿过去落到树上；Tab 能到达，空格 / 回车触发。
+class LoaderMoreButton : public QPushButton {
 public:
-    explicit RevealOnTabFocus(QWidget *target) : QObject(target) { target->installEventFilter(this); }
+    explicit LoaderMoreButton(QTreeWidgetItem *row) : m_row(row), m_tree(row->treeWidget()) {
+        setAttribute(Qt::WA_TransparentForMouseEvents);
+        setFocusPolicy(Qt::TabFocus);
+        installEventFilter(this);
+        m_tree->installEventFilter(this);
+    }
 
 protected:
+    void paintEvent(QPaintEvent *) override {}
     bool eventFilter(QObject *watched, QEvent *event) override {
-        if (event->type() == QEvent::FocusIn) {
+        if (watched == m_tree) {  // 方向键停在这一行时空格同样触发（回车走树的行激活）
+            if (event->type() == QEvent::KeyPress && static_cast<QKeyEvent *>(event)->key() == Qt::Key_Space &&
+                m_tree->currentItem() == m_row) {
+                click();
+                return true;
+            }
+            return false;
+        }
+        const auto type = event->type();
+        if (type == QEvent::FocusIn || type == QEvent::FocusOut || type == QEvent::DynamicPropertyChange) {
+            if (parentWidget() != nullptr) parentWidget()->update();  // 焦点框是代理画在视口上的
+        }
+        if (type == QEvent::FocusIn) {  // Tab 到这一行时别停在悬浮的「安装」底下
             const auto reason = static_cast<QFocusEvent *>(event)->reason();
-            auto *target = static_cast<QWidget *>(watched);
             if (reason == Qt::TabFocusReason || reason == Qt::BacktabFocusReason) {
-                QTimer::singleShot(0, target, [target] {
-                    AutoHeight::reveal(target, target->rect(), MainWindowUI::installFooterClearance());
+                QTimer::singleShot(0, this, [this] {
+                    AutoHeight::reveal(this, rect(), MainWindowUI::installFooterClearance());
                 });
             }
         }
         return false;
     }
+
+private:
+    QTreeWidgetItem *m_row;  // 行删掉时本控件跟着删（deleteLater），删之前它不再是当前行
+    QTreeWidget *m_tree;
 };
 }  // namespace
 
@@ -710,15 +733,14 @@ void MainWindowUI::foldLoaderVersions(QTreeWidgetItem *loader, int firstVersion)
     if (total <= loaderLatestVersions()) return;
     for (int i = firstVersion + loaderLatestVersions(); i < count; ++i) loader->child(i)->setHidden(true);
 
+    // 看起来就是列表里的一行（悬停 / 选中和版本行一样）；它不是版本号，点它由行激活处转给按钮。
     auto *row = new QTreeWidgetItem(loader);
-    row->setFlags(Qt::NoItemFlags);  // 不是版本号：点行、方向键都不认它，只认里面那颗按钮
-    auto *button = new QPushButton(loaderShowAllText(total));
+    row->setText(loaderTreeKeyColumn(), loaderShowAllText(total));
+    row->setData(loaderTreeKeyColumn(), rowMoreRole(), false);
+    auto *button = new LoaderMoreButton(row);
+    button->setText(loaderShowAllText(total));  // 不画出来，给读屏
     button->setObjectName(loaderMoreButtonName());
-    button->setCursor(Qt::PointingHandCursor);
-    button->setFocusPolicy(Qt::StrongFocus);
-    Theme::markButton(button, Theme::ButtonKind::Ghost);
     tree->setItemWidget(row, loaderTreeKeyColumn(), button);
-    new RevealOnTabFocus(button);
     for (const Qt::Key key : {Qt::Key_Return, Qt::Key_Enter}) {  // 空格是按钮自带的，回车不是
         auto *shortcut = new QShortcut(QKeySequence(key), button);
         shortcut->setContext(Qt::WidgetShortcut);
@@ -729,7 +751,10 @@ void MainWindowUI::foldLoaderVersions(QTreeWidgetItem *loader, int firstVersion)
         const int older = firstVersion + loaderLatestVersions();
         const bool showAll = loader->child(older)->isHidden();
         for (int i = older; i < loader->indexOfChild(row); ++i) loader->child(i)->setHidden(!showAll);
-        button->setText(showAll ? loaderShowLatestText() : loaderShowAllText(total));
+        const QString label = showAll ? loaderShowLatestText() : loaderShowAllText(total);
+        button->setText(label);
+        row->setText(loaderTreeKeyColumn(), label);
+        row->setData(loaderTreeKeyColumn(), rowMoreRole(), showAll);
         fitLoaderTree(tree);
         // 展开时页面原地不动（新版本就出现在眼前）；收起后这一行跳到上面去了，跟过去。
         if (showAll) return;

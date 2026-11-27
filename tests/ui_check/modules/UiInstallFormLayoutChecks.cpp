@@ -189,6 +189,12 @@ int UiInstallFormLayoutChecks(MainWindowUI &ui, QLineEdit * &installNameEdit, QL
                       (more->focusPolicy() & Qt::TabFocus),
                   "超过最新几个版本时只列最新的，末行是能用 Tab 到达的「显示全部」",
                   QString("行=%1 字=%2").arg(shownRows()).arg(more != nullptr ? more->text() : QString()));
+            QTreeWidgetItem *moreRow = row->child(row->childCount() - 1);
+            check(more != nullptr && moreRow->text(0) == more->text() &&
+                      moreRow->data(0, MainWindowUI::rowMoreRole()) == QVariant(false) &&
+                      (moreRow->flags() & Qt::ItemIsSelectable) &&
+                      more->testAttribute(Qt::WA_TransparentForMouseEvents),
+                  "那一行按列表行画：文字在行上、可悬停选中，按钮只管键盘焦点");
             const int foldedHeight = loaderTree->height();
             if (more != nullptr) more->click();
             check(more != nullptr && shownRows() == versions + 1 &&
