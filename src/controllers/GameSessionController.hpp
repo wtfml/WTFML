@@ -193,7 +193,8 @@ public:
     /// 把某一号会话的"启动事实"直接摆出来（真起一个游戏进程是验证工程做不到的事）。
     void seedSessionFacts(int sessionId, const QString &versionId, const QString &displayName,
                           int requiredJavaMajor, const QString &javaPath, int xmxMb, int xmsMb,
-                          const QString &loaderName, const QString &loaderVersion);
+                          const QString &loaderName, const QString &loaderVersion,
+                          qint64 startedAtMs = 0);
     /// 这一号会话是用户从启动器里主动停止的。
     void markUserStoppedForTest(int sessionId) { m_userStoppedSessions.insert(sessionId); }
 

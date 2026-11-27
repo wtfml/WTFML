@@ -79,18 +79,24 @@ struct Facts {
     /// NOTE: 这是**加载器自己说的那几句话**，不是我们按模组清单猜的 —— 退出这一刻去联网问
     /// 一遍每个模组的前置，用户只会看到启动器卡在那里（见 `hints()` 里那段）。
     bool sawMissingDependency = false;
+    /// 日志里有没有加载器报出的模组加载失败 / 冲突特征（`logShowsModLoadingFailure()` 认出来的）。
+    bool sawModLoadingFailure = false;
+    /// 本次运行有没有生成新的崩溃报告，或日志里直接打出了崩溃报告头（`logShowsCrashReport()` / `hasNewCrashReport()`）。
+    bool sawCrashReport = false;
     /// 日志里有没有玩家手动触发的调试崩溃（F3+C 的 `Manually triggered debug crash`）。
     bool sawManualDebugCrash = false;
     /// 这一趟到底有没有拿到游戏的输出（`显示游戏日志` 那个开关关着时是 false）。
     bool logCaptured = false;
 };
 
-/// 这次算不算"异常退出"：崩溃，或者非 0 退出码。以 0 正常退出的不算。
+/// 这次算不算"异常退出"：**全仓唯一的判据出处**。
+///
+/// 除了 `CrashExit` 与非 0 退出码，Forge / NeoForge 在模组缺失或加载失败、弹窗后被用户
+/// 关闭时也会以退出码 0 结束，或本轮生成了新的 `crash-reports/` / 崩溃日志特征；
+/// 这些事实汇总进 `Facts` 后统一由这里裁定。
 bool isAbnormal(const Facts &facts);
 
-/// 同上，手上有那两个值、还没攒成一份 `Facts` 的时候用（`onGameFinished()` 那一处就是：
-/// 那一刻手上只有退出码和 `QProcess::ExitStatus`）。**判据只有这一处**，上面那个重载
-/// 调的就是它。
+/// 只有退出码与 `CrashExit` 两个值时使用的简化判据（供只拿到进程退出状态的调用方或基础真值表使用）。
 inline bool isAbnormal(int exitCode, bool crashed) {
     return crashed || exitCode != 0;
 }
@@ -101,6 +107,17 @@ inline bool isAbnormal(int exitCode, bool crashed) {
 /// `Missing or unsupported mandatory dependencies`、Fabric 的 `requires ... which is missing`）。
 /// 放在这里而不是让调用方去 `contains()` 一个写死的词：那一句话的形状要能跟着一起被断言钉住。
 bool logShowsMissingDependency(const QString &logText);
+
+/// 日志里有没有 Forge / NeoForge / Fabric 模组加载失败或冲突的原文特征。
+bool logShowsModLoadingFailure(const QString &logText);
+
+/// 日志里有没有 Minecraft 崩溃报告头或 JVM 致命错误标志。
+bool logShowsCrashReport(const QString &logText);
+
+/// 检查 @p crashDirs 中有没有在 @p startedAtMs 之后新生成的崩溃报告（`crash-*.txt`）。
+///
+/// NOTE: `startedAtMs <= 0` 时直接返回 false，避免将历史旧崩溃报告误判为本次异常退出。
+bool hasNewCrashReport(const QStringList &crashDirs, qint64 startedAtMs);
 
 /// 日志里有没有 `OutOfMemoryError`。
 bool logShowsOutOfMemory(const QString &logText);

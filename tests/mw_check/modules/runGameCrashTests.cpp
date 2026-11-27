@@ -206,6 +206,85 @@ void runGameCrashTests() {
                   "★★ T34.6 进程输出有底账（和日志窗无关）⇒ 不再说「一行都没收到」",
                   added.errorSummary);
         }
+
+        // ---------- ⑦ #151：退出码 0，但本次日志有 Forge 加载失败特征 → 判为异常 ----------
+        const int forgeFailSession = 4247;
+        w.seedSessionFactsForTest(forgeFailSession, QStringLiteral("1.20.1-T34Forge失败"),
+                                  QStringLiteral("T34Forge加载失败"), 17, javaPath, 0, 0,
+                                  QStringLiteral("Forge"), QStringLiteral("47.3.0"));
+        QMetaObject::invokeMethod(
+            &w, "onProcessOutput", Qt::DirectConnection, Q_ARG(int, forgeFailSession),
+            Q_ARG(QString,
+                  QStringLiteral("[15:50:52] [main/ERROR]: Missing or unsupported mandatory dependencies:\n"
+                                 "net.minecraftforge.fml.ModLoadingException: Mod loading has failed\n")));
+        const QSet<quint64> beforeForgeFail = crashIds();
+        QMetaObject::invokeMethod(&w, "onGameFinished", Qt::DirectConnection,
+                                  Q_ARG(int, forgeFailSession), Q_ARG(int, 0),
+                                  Q_ARG(QProcess::ExitStatus, QProcess::NormalExit));
+        check(crashTasks().size() == baseline + 5,
+              "★★ T34.7 退出码 0 但日志含 Forge 加载失败特征 ⇒ 判为异常退出，补一项",
+              QString::number(crashTasks().size()));
+        if (crashTasks().size() == baseline + 5) {
+            const Tasks::TaskSnapshot added = newCrash(beforeForgeFail);
+            check(added.errorSummary.contains(QStringLiteral("模组加载失败并退出（退出码 0）"))
+                      && added.errorSummary.contains(QStringLiteral("缺少模组依赖")),
+                  "★ T34.7 摘要写明模组加载失败且退出码 0，并保留缺前置提示",
+                  added.errorSummary);
+        }
+
+        // ---------- ⑧ #151：退出码 0，只有早于本次启动的旧崩溃报告 → 判为正常退出 ----------
+        const QString reportInstance = QStringLiteral("1.20.1-T34崩溃目录");
+        const QString reportCrashDir =
+            AppPaths::versionDir(reportInstance) + QStringLiteral("/crash-reports");
+        QDir().mkpath(reportCrashDir);
+        const qint64 sessionStartMs = QDateTime::currentMSecsSinceEpoch();
+        const QString oldCrashPath =
+            reportCrashDir + QStringLiteral("/crash-2020-01-01_00.00.00-client.txt");
+        {
+            QFile f(oldCrashPath);
+            if (f.open(QIODevice::WriteOnly)) {
+                f.write("---- Minecraft Crash Report ----\n");
+                f.setFileTime(QDateTime::fromMSecsSinceEpoch(sessionStartMs - 60000),
+                                    QFileDevice::FileModificationTime);
+                f.close();
+            }
+        }
+        const int oldReportSession = 4248;
+        w.seedSessionFactsForTest(oldReportSession, reportInstance,
+                                  QStringLiteral("T34旧崩溃报告"), 17, javaPath, 0, 0,
+                                  QStringLiteral("Forge"), QStringLiteral("47.3.0"),
+                                  sessionStartMs);
+        QMetaObject::invokeMethod(&w, "onGameFinished", Qt::DirectConnection,
+                                  Q_ARG(int, oldReportSession), Q_ARG(int, 0),
+                                  Q_ARG(QProcess::ExitStatus, QProcess::NormalExit));
+        check(crashTasks().size() == baseline + 5,
+              "★★ T34.8 退出码 0 且只有早于本次启动的旧崩溃报告 ⇒ 判为正常退出，不补异常任务",
+              QString::number(crashTasks().size()));
+
+        // ---------- ⑨ #151：退出码 0，本次启动后新生成崩溃报告 → 判为异常 ----------
+        const QString newCrashPath =
+            reportCrashDir + QStringLiteral("/crash-2026-11-27_00.00.00-client.txt");
+        {
+            QFile f(newCrashPath);
+            if (f.open(QIODevice::WriteOnly)) {
+                f.write("---- Minecraft Crash Report ----\n");
+                f.setFileTime(QDateTime::fromMSecsSinceEpoch(sessionStartMs + 1000),
+                                    QFileDevice::FileModificationTime);
+                f.close();
+            }
+        }
+        const int newReportSession = 4249;
+        w.seedSessionFactsForTest(newReportSession, reportInstance,
+                                  QStringLiteral("T34新崩溃报告"), 17, javaPath, 0, 0,
+                                  QStringLiteral("Forge"), QStringLiteral("47.3.0"),
+                                  sessionStartMs);
+        QMetaObject::invokeMethod(&w, "onGameFinished", Qt::DirectConnection,
+                                  Q_ARG(int, newReportSession), Q_ARG(int, 0),
+                                  Q_ARG(QProcess::ExitStatus, QProcess::NormalExit));
+        check(crashTasks().size() == baseline + 6,
+              "★ T34.8b 退出码 0 但本次启动后新生成了崩溃报告 ⇒ 判为异常退出",
+              QString::number(crashTasks().size()));
+        QDir(AppPaths::versionDir(reportInstance)).removeRecursively();
     }
 
     TokenStore::clear(TokenStore::microsoftKey());

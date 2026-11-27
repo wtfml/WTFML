@@ -413,6 +413,16 @@ bool AgentLauncherHostImpl::crashFacts(const QString &instanceId,
     built.logCaptured = !logText.isEmpty();
     built.sawOutOfMemory = GameExitDiagnosis::logShowsOutOfMemory(logText);
     built.sawMissingDependency = GameExitDiagnosis::logShowsMissingDependency(logText);
+    built.sawModLoadingFailure = GameExitDiagnosis::logShowsModLoadingFailure(logText);
+    built.sawManualDebugCrash = GameExitDiagnosis::logShowsManualDebugCrash(logText);
+    QStringList crashDirs;
+    for (const AgentInstancePaths::Source &src : AgentInstancePaths::crashReportDirs(instanceId)) {
+        crashDirs.append(src.path);
+    }
+    built.sawCrashReport =
+        GameExitDiagnosis::logShowsCrashReport(logText)
+        || (latest.startedAt.isValid()
+            && GameExitDiagnosis::hasNewCrashReport(crashDirs, latest.startedAt.toMSecsSinceEpoch()));
     int errors = 0;
     for (const QString &line : logText.split(QLatin1Char('\n'))) {
         if (line.contains(QStringLiteral("ERROR")) || line.contains(QStringLiteral("FATAL"))) {

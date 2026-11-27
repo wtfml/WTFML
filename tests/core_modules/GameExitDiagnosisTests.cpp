@@ -34,6 +34,69 @@ void runGameExitDiagnosisTests() {
               == GameExitDiagnosis::isAbnormal(7, false),
           "★ ZP2 两个重载说的是同一条规则");
 
+    // #151：退出码 0，但本次有加载失败 / 缺前置 / 新崩溃报告特征 → 判为异常；只有旧崩溃报告 → 判为正常。
+    GameExitDiagnosis::Facts modFailZero;
+    modFailZero.exitCode = 0;
+    modFailZero.crashed = false;
+    modFailZero.sawModLoadingFailure = true;
+    check(GameExitDiagnosis::isAbnormal(modFailZero),
+          "★ ZP2 退出码 0 但日志有模组加载失败特征 → 判为异常");
+
+    GameExitDiagnosis::Facts missingDepZero;
+    missingDepZero.exitCode = 0;
+    missingDepZero.crashed = false;
+    missingDepZero.sawMissingDependency = true;
+    check(GameExitDiagnosis::isAbnormal(missingDepZero),
+          "★ ZP2 退出码 0 但日志有缺前置特征 → 判为异常");
+
+    QTemporaryDir crashDirTemp;
+    check(crashDirTemp.isValid(), "ZP2 临时崩溃目录建出来了");
+    if (crashDirTemp.isValid()) {
+        const QString crashDir = crashDirTemp.path();
+        const qint64 startedAtMs = QDateTime::currentMSecsSinceEpoch();
+        const QString oldReportPath =
+            crashDir + QStringLiteral("/crash-2020-01-01_00.00.00-client.txt");
+        QFile oldFile(oldReportPath);
+        check(oldFile.open(QIODevice::WriteOnly), "ZP2 写出旧崩溃报告夹具");
+        if (oldFile.isOpen()) {
+            oldFile.write("---- Minecraft Crash Report ----\n");
+            oldFile.setFileTime(QDateTime::fromMSecsSinceEpoch(startedAtMs - 60000),
+                                QFileDevice::FileModificationTime);
+            oldFile.close();
+        }
+        check(!GameExitDiagnosis::hasNewCrashReport({crashDir}, 0),
+              "★ ZP2 没有本次启动时刻时不认历史崩溃报告");
+        check(!GameExitDiagnosis::hasNewCrashReport({crashDir}, startedAtMs),
+              "★ ZP2 只有早于本次启动的旧崩溃报告 → 不算新生成");
+        GameExitDiagnosis::Facts oldOnlyFacts;
+        oldOnlyFacts.exitCode = 0;
+        oldOnlyFacts.crashed = false;
+        oldOnlyFacts.sawCrashReport =
+            GameExitDiagnosis::hasNewCrashReport({crashDir}, startedAtMs);
+        check(!GameExitDiagnosis::isAbnormal(oldOnlyFacts),
+              "★ ZP2 退出码 0 且只有旧崩溃报告 → 判为正常退出");
+
+        const QString newReportPath =
+            crashDir + QStringLiteral("/crash-2026-11-27_00.00.00-client.txt");
+        QFile newFile(newReportPath);
+        check(newFile.open(QIODevice::WriteOnly), "ZP2 写出新崩溃报告夹具");
+        if (newFile.isOpen()) {
+            newFile.write("---- Minecraft Crash Report ----\n");
+            newFile.setFileTime(QDateTime::fromMSecsSinceEpoch(startedAtMs + 1000),
+                                QFileDevice::FileModificationTime);
+            newFile.close();
+        }
+        check(GameExitDiagnosis::hasNewCrashReport({crashDir}, startedAtMs),
+              "★ ZP2 本次启动之后新生成的崩溃报告认得出");
+        GameExitDiagnosis::Facts newReportFacts;
+        newReportFacts.exitCode = 0;
+        newReportFacts.crashed = false;
+        newReportFacts.sawCrashReport =
+            GameExitDiagnosis::hasNewCrashReport({crashDir}, startedAtMs);
+        check(GameExitDiagnosis::isAbnormal(newReportFacts),
+              "★ ZP2 退出码 0 但本次生成了新崩溃报告 → 判为异常");
+    }
+
     section("ZP3. 一句概括");
     GameExitDiagnosis::Facts facts;
     facts.instanceName = QStringLiteral("我的整合包");
@@ -59,6 +122,14 @@ void runGameExitDiagnosisTests() {
     noName.instanceId.clear();
     check(GameExitDiagnosis::summary(noName) == QStringLiteral("游戏以非 0 退出码结束（3）。"),
           "★ ZP3 两个名字都没有时不留空引号", GameExitDiagnosis::summary(noName));
+    GameExitDiagnosis::Facts modFailSummary;
+    modFailSummary.instanceName = QStringLiteral("我的整合包");
+    modFailSummary.exitCode = 0;
+    modFailSummary.sawModLoadingFailure = true;
+    check(GameExitDiagnosis::summary(modFailSummary)
+              == QStringLiteral("「我的整合包」模组加载失败并退出（退出码 0）。"),
+          "★ ZP3 退出码 0 的模组加载失败不说成「非 0 退出码」",
+          GameExitDiagnosis::summary(modFailSummary));
 
     section("ZP4. 日志里那几句话认得出来");
     check(GameExitDiagnosis::logShowsOutOfMemory(
@@ -79,6 +150,31 @@ void runGameExitDiagnosisTests() {
           "ZP4 Fabric 那句");
     check(!GameExitDiagnosis::logShowsMissingDependency(QStringLiteral("Loaded 42 mods")),
           "★ ZP4 没说不许猜（认的是加载器自己那句原文，不是我们按清单猜）");
+    check(GameExitDiagnosis::logShowsModLoadingFailure(
+              QStringLiteral("net.minecraftforge.fml.ModLoadingException: Mod foo failed to load")),
+          "ZP4 Forge ModLoadingException");
+    check(GameExitDiagnosis::logShowsModLoadingFailure(
+              QStringLiteral("net.neoforged.fml.ModLoadingException: Mod bar has issues")),
+          "ZP4 NeoForge ModLoadingException");
+    check(GameExitDiagnosis::logShowsModLoadingFailure(
+              QStringLiteral("java.lang.Exception: Mod Loading has failed")),
+          "ZP4 Forge/NeoForge Mod loading has failed");
+    check(GameExitDiagnosis::logShowsModLoadingFailure(
+              QStringLiteral("Failed to complete lifecycle event LOAD_REGISTRIES, 1 errors found")),
+          "ZP4 Forge Failed to complete lifecycle event");
+    check(GameExitDiagnosis::logShowsModLoadingFailure(
+              QStringLiteral("net.fabricmc.loader.impl.discovery.ModResolutionException: Incompatible mod set")),
+          "ZP4 Fabric ModResolutionException");
+    check(!GameExitDiagnosis::logShowsModLoadingFailure(QStringLiteral("[Render thread/INFO]: Loaded 42 mods")),
+          "ZP4 正常启动日志不误判为模组加载失败");
+    check(GameExitDiagnosis::logShowsCrashReport(
+              QStringLiteral("---- Minecraft Crash Report ----\n// Who set us up the TNT?")),
+          "ZP4 日志里的崩溃报告头");
+    check(GameExitDiagnosis::logShowsCrashReport(
+              QStringLiteral("#@!@# Game crashed! Crash report saved to: #@!@# C:/mc/crash.txt")),
+          "ZP4 标准 Game crashed 提示");
+    check(!GameExitDiagnosis::logShowsCrashReport(QStringLiteral("[Render thread/INFO]: Stopping!")),
+          "ZP4 正常退出日志不误判为崩溃报告");
 
     section("ZP5. 提示那张表：每一条都指着某个字段");
     // ---------------------------------------------------------------------
@@ -158,6 +254,21 @@ void runGameExitDiagnosisTests() {
     check(!missingHints.first().contains(QStringLiteral("个"))
               || missingHints.first().contains(QStringLiteral("哪一个")),
           "ZP5 ④不编一个数出来");
+
+    GameExitDiagnosis::Facts modFailHint;
+    modFailHint.sawModLoadingFailure = true;
+    modFailHint.logCaptured = true;
+    const QStringList modFailHints = GameExitDiagnosis::hints(modFailHint);
+    check(modFailHints.size() == 1 && modFailHints.first().contains(QStringLiteral("模组加载失败")),
+          "★ ZP5 ④b 仅模组加载失败时给出对应提示", modFailHints.join(QStringLiteral(" | ")));
+
+    GameExitDiagnosis::Facts crashRepHint;
+    crashRepHint.sawCrashReport = true;
+    crashRepHint.logCaptured = true;
+    const QStringList crashRepHints = GameExitDiagnosis::hints(crashRepHint);
+    check(crashRepHints.size() == 1 && crashRepHints.first().contains(QStringLiteral("crash-reports")),
+          "★ ZP5 ④c 新生成崩溃报告时提示查看 crash-reports",
+          crashRepHints.join(QStringLiteral(" | ")));
 
     // ⓪ 手动调试崩溃（F3+C）：日志里那句原文认得出，提示要说清"不是游戏/模组坏了"。
     check(GameExitDiagnosis::logShowsManualDebugCrash(

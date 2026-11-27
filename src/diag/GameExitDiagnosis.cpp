@@ -8,7 +8,11 @@
  */
 
 #include "GameExitDiagnosis.hpp"
+#include <cstddef>
 #include <QCoreApplication>
+#include <QDateTime>
+#include <QDir>
+#include <QFileInfo>
 
 namespace {
 
@@ -59,31 +63,101 @@ bool isLoadFailure(int code) {
     return code == -1073741515 || code == -1073741511 || code == -1073741502;
 }
 
+template <size_t N>
+bool containsAny(const QString &text, const char *const (&needles)[N]) {
+    if (text.isEmpty()) {
+        return false;
+    }
+    for (const char *needle : needles) {
+        if (text.contains(QLatin1String(needle), Qt::CaseInsensitive)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 }  // namespace
 
 namespace GameExitDiagnosis {
 
 bool isAbnormal(const Facts &facts) {
-    return isAbnormal(facts.exitCode, facts.crashed);
+    return isAbnormal(facts.exitCode, facts.crashed)
+           || facts.sawMissingDependency
+           || facts.sawModLoadingFailure
+           || facts.sawOutOfMemory
+           || facts.sawCrashReport;
 }
 
 bool logShowsMissingDependency(const QString &logText) {
-    if (logText.isEmpty()) {
-        return false;
-    }
     // 三句**加载器自己打的**原文（大小写不敏感，因为有的加载器把整行大写）：
-    // Forge / NeoForge：`Missing or unsupported mandatory dependencies:`
-    // Fabric：`requires ... which is missing!`
-    // Fabric（另一种收尾）：`requires any version of ...`
+    // Forge / NeoForge：`Missing or unsupported mandatory dependencies:`（ModSorter.verifyDependencyVersions）
+    // Fabric：`requires ... which is missing!`（ModResolver）
+    // Fabric（另一种收尾）：`requires any version of ...`（ModResolver）
     // 认的是"它说了"，不是"我们按清单猜"—— 猜错了用户会去删一个没问题的模组。
     static const char *const kNeedles[] = {
         "missing or unsupported mandatory dependencies",
         "which is missing!",
         "requires any version of",
     };
-    for (const char *needle : kNeedles) {
-        if (logText.contains(QLatin1String(needle), Qt::CaseInsensitive)) {
-            return true;
+    return containsAny(logText, kNeedles);
+}
+
+bool logShowsModLoadingFailure(const QString &logText) {
+    // Forge / NeoForge / Fabric 模组加载失败或冲突时打出的原文特征（大小写不敏感）：
+    // - Forge / NeoForge：`ModLoadingException`（net.minecraftforge.fml.ModLoadingException / net.neoforged.fml.ModLoadingException）
+    // - Forge：`LoadingFailedException`（net.minecraftforge.fml.LoadingFailedException）
+    // - Forge / NeoForge：`Mod loading has failed`（CrashReportExtender.dumpModLoadingCrashReport）
+    // - Forge：`Mod loading error has occurred`（CrashReportExtender.dumpModLoadingCrashReport）
+    // - NeoForge：`Mod loading failures have occurred`（CrashReportExtender.dumpModLoadingCrashReport）
+    // - Forge：`Failed to complete lifecycle event`（ModLoader.dispatchAndHandleError）
+    // - NeoForge：`Failed to wait for future` / `Error during pre-loading phase`（ModLoader）
+    // - Fabric：`ModResolutionException` / `Some of your mods are incompatible with the game or each other!`（ModResolver）
+    static const char *const kNeedles[] = {
+        "ModLoadingException",
+        "LoadingFailedException",
+        "Mod loading has failed",
+        "Mod loading error has occurred",
+        "Mod loading failures have occurred",
+        "Failed to complete lifecycle event",
+        "Failed to wait for future",
+        "Error during pre-loading phase",
+        "ModResolutionException",
+        "Some of your mods are incompatible with the game or each other!",
+    };
+    return containsAny(logText, kNeedles);
+}
+
+bool logShowsCrashReport(const QString &logText) {
+    // Minecraft / JVM 原生崩溃输出到控制台的标志：
+    // - CrashReport.getFriendlyReport() / CrashReportExtender：`---- Minecraft Crash Report ----`
+    // - Minecraft.crash()：`#@!@# Game crashed! Crash report saved to:`
+    // - HotSpot JVM hs_err：`A fatal error has been detected by the Java Runtime Environment`
+    static const char *const kNeedles[] = {
+        "---- Minecraft Crash Report ----",
+        "#@!@# Game crashed! Crash report saved to:",
+        "A fatal error has been detected by the Java Runtime Environment",
+    };
+    return containsAny(logText, kNeedles);
+}
+
+bool hasNewCrashReport(const QStringList &crashDirs, qint64 startedAtMs) {
+    if (startedAtMs <= 0) {
+        return false;
+    }
+    for (const QString &dirPath : crashDirs) {
+        if (dirPath.isEmpty()) {
+            continue;
+        }
+        const QDir dir(dirPath);
+        if (!dir.exists()) {
+            continue;
+        }
+        const QFileInfoList entries =
+            dir.entryInfoList({QStringLiteral("crash-*.txt")}, QDir::Files, QDir::Time);
+        for (const QFileInfo &entry : entries) {
+            if (entry.lastModified().toMSecsSinceEpoch() >= startedAtMs) {
+                return true;
+            }
         }
     }
     return false;
@@ -122,6 +196,16 @@ QString summary(const Facts &facts) {
         return where.isEmpty() ? QCoreApplication::translate("GameExitDiagnosis", "游戏崩溃退出（%1）。").arg(exitDescription(facts.exitCode))
                                : QCoreApplication::translate("GameExitDiagnosis", "「%1」崩溃退出（%2）。")
                                      .arg(where, exitDescription(facts.exitCode));
+    }
+    if (facts.exitCode == 0) {
+        if (facts.sawModLoadingFailure || facts.sawMissingDependency) {
+            return where.isEmpty()
+                       ? QCoreApplication::translate("GameExitDiagnosis", "游戏模组加载失败并退出（退出码 0）。")
+                       : QCoreApplication::translate("GameExitDiagnosis", "「%1」模组加载失败并退出（退出码 0）。").arg(where);
+        }
+        return where.isEmpty()
+                   ? QCoreApplication::translate("GameExitDiagnosis", "游戏异常退出（退出码 %1）。").arg(exitDescription(facts.exitCode))
+                   : QCoreApplication::translate("GameExitDiagnosis", "「%1」异常退出（退出码 %2）。").arg(where, exitDescription(facts.exitCode));
     }
     return where.isEmpty()
                ? QCoreApplication::translate("GameExitDiagnosis", "游戏以非 0 退出码结束（%1）。").arg(exitDescription(facts.exitCode))
@@ -188,6 +272,16 @@ QStringList hints(const Facts &facts) {
     // 卡在那里。所以这里**不报个数**：我们手上确实没有那个数。
     if (facts.sawMissingDependency) {
         say(QCoreApplication::translate("GameExitDiagnosis", "日志显示缺少模组依赖。请在「文件」页选择「检查更新」，查看所需依赖。"));
+    }
+
+    // ④b 模组加载失败（未命中缺前置时单说，避免重复）。
+    if (facts.sawModLoadingFailure && !facts.sawMissingDependency) {
+        say(QCoreApplication::translate("GameExitDiagnosis", "日志显示模组加载失败。请检查模组版本、加载器或模组间冲突。"));
+    }
+
+    // ④c 本次运行新生成了崩溃报告，或日志中直接打印了崩溃报告头。
+    if (facts.sawCrashReport) {
+        say(QCoreApplication::translate("GameExitDiagnosis", "本次运行生成了新的崩溃报告，可在实例目录的 crash-reports 中查看。"));
     }
 
     // ⑤ 崩的方式。坏内存 / 坏栈 / 坏指令这一档，在**装了模组加载器**时才指向模组；原版也崩

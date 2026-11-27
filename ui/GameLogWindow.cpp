@@ -947,10 +947,11 @@ void GameLogWindow::refreshFilterButtonStyles() {
     m_lastSwitchOff = switchOffColor(palette);
 }
 
-void GameLogWindow::setExited(int exitCode, bool crashed) {
+void GameLogWindow::setExited(int exitCode, bool crashed, bool abnormalEvidence) {
     setStateBadge(crashed ? tr("游戏已崩溃退出，退出码：%1").arg(exitCode)
-                          : tr("游戏已退出，退出码：%1").arg(exitCode),
-                  crashed || exitCode != 0);
+                          : abnormalEvidence ? tr("游戏异常退出，退出码：%1").arg(exitCode)
+                                             : tr("游戏已退出，退出码：%1").arg(exitCode),
+                  crashed || exitCode != 0 || abnormalEvidence);
 }
 
 void GameLogWindow::setStateBadge(const QString &text, bool bad) {
@@ -1223,8 +1224,8 @@ QPoint GameLogWindow::placementFor(const QRect &launcherFrame, const QSize &wind
 // 退出去之后
 // ---------------------------------------------------------------------------
 
-bool GameLogWindow::autoCloseOnExit(int exitCode, bool crashed) {
-    return !crashed && exitCode == 0;
+bool GameLogWindow::autoCloseOnExit(int exitCode, bool crashed, bool abnormalEvidence) {
+    return !crashed && exitCode == 0 && !abnormalEvidence;
 }
 
 // ---------------------------------------------------------------------------
