@@ -685,6 +685,40 @@ ArchiveLayout detectArchiveLayout(const QStringList &entries) {
         layout.rootPrefix += QStringLiteral(".minecraft/");
     }
 
+    // 有些整合包不是“整个 .minecraft”，而是把某一个版本目录（`versions/<id>/`）
+    // 连同 mods/config 一起打包。这种包的根前缀是 `.minecraft/versions/<id>/`，
+    // 上面的“.minecraft 根上有 config/mods”判据看不到它，结果会被下面的
+    // pack.mcmeta 判成资源包。这里把唯一的版本目录当成游戏目录。
+    {
+        const QStringList versions = versionIdsFromEntries(entries, layout.rootPrefix);
+        if (versions.size() == 1) {
+            // versionIdsFromEntries() 给的是小写 id（判据用），但真正解压时前缀必须按
+            // 压缩包里的原始大小写截；从版本 JSON 的完整条目名反推那一层目录名。
+            const QString versionRoot = layout.rootPrefix + QStringLiteral("versions/")
+                                        + versions.first() + QLatin1Char('/');
+            const QString jsonEntry = findRelativeEntry(
+                entries, versionRoot, versions.first() + QStringLiteral(".json"));
+            const int jsonSlash = jsonEntry.lastIndexOf(QLatin1Char('/'));
+            const QString versionPrefix = jsonSlash < 0 ? versionRoot
+                                                        : jsonEntry.left(jsonSlash + 1);
+            const bool versionHasContent =
+                hasRelativeDir(entries, versionPrefix, QStringLiteral("config"))
+                || !findRelativeEntry(entries, versionPrefix, QStringLiteral("options.txt")).isEmpty()
+                || !findRelativeEntry(entries, versionPrefix, QStringLiteral("servers.dat")).isEmpty()
+                || hasRelativeDir(entries, versionPrefix, QStringLiteral("resourcepacks"))
+                || hasRelativeDir(entries, versionPrefix, QStringLiteral("shaderpacks"))
+                || hasRelativeDir(entries, versionPrefix, QStringLiteral("mods"));
+            if (!jsonEntry.isEmpty() && versionHasContent) {
+                layout.format = Format::GameFolder;
+                layout.rootPrefix = versionPrefix;
+                layout.gameDirPrefix = versionPrefix;
+                layout.versionJsonEntry = jsonEntry;
+                layout.detail = QObject::tr("含 .minecraft 版本目录");
+                return layout;
+            }
+        }
+    }
+
     // ④ 服务端包。**必须排在游戏目录前面**：服务端包里同样有 `mods/` 和 `config/`，
     // 按游戏目录认的话会把它当成客户端包导入。
     static const QStringList kServerMarkers = {

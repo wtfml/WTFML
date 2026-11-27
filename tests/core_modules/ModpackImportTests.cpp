@@ -64,6 +64,17 @@ void runModpackImportTests(const QString &sandbox) {
             check(!result.ok && !result.problem.isEmpty(),
                   "V0 自定义组件、重复组件、缺版本、多加载器安全拒绝", result.problem);
         }
+        const QStringList versionFolder{
+            QStringLiteral(".minecraft/versions/Cobblemon/Cobblemon.json"),
+            QStringLiteral(".minecraft/versions/Cobblemon/config/a.json"),
+            QStringLiteral(".minecraft/versions/Cobblemon/mods/a.jar")};
+        const auto versionFolderLayout = detectArchiveLayout(versionFolder);
+        check(versionFolderLayout.format == Format::GameFolder &&
+                  versionFolderLayout.gameDirPrefix == QStringLiteral(".minecraft/versions/Cobblemon/") &&
+                  versionFolderLayout.versionJsonEntry.endsWith(QStringLiteral("Cobblemon.json")),
+              "V0 只打包了一个 versions/<id>/ 目录的整合包认成游戏目录，不当资源包",
+              versionFolderLayout.detail);
+
         const auto wrapped = detectArchiveLayout({QStringLiteral("说明.txt"), QStringLiteral("pack.mrpack")});
         check(wrapped.format == Format::Wrapper && wrapped.innerPackEntry == QStringLiteral("pack.mrpack"),
               "V0 包装压缩包内的 mrpack 可识别");
