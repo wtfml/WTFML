@@ -1313,7 +1313,10 @@ void runInstanceFilesPagesTests() {
                 cleanOnOpen = !editor->isDirty();
 
                 indexCount = editor->indexEntryCount();
-                indexVisible = editor->indexVisible();
+                // #136：条目改成「条目」按钮点开的大纲浮层，平时收着。
+                indexVisible = !editor->indexVisible() && editor->indexToggle()->isEnabled();
+                editor->openIndex();
+                indexVisible = indexVisible && editor->indexVisible();
                 if (QTreeWidget *tree = editor->indexTree()) {
                     QTreeWidgetItem *leaf = nullptr;
                     std::function<void(QTreeWidgetItem *)> find = [&](QTreeWidgetItem *item) {
@@ -1441,8 +1444,8 @@ void runInstanceFilesPagesTests() {
             check(!w.findChild<InstanceSettingsDialog *>(),
                   "★★ T20.7 答了「丢掉改动」之后那一页才真的收掉");
             check(indexCount == 1 && indexVisible,
-                  "★★ T20.8 **盘上那份真配置**读进来之后，左边那一格认出了那一条"
-                  "（`quality`）并且露着 —— 认的要是拿手搓的正文，就验不到「真文件读出来"
+                  "★★ T20.8 **盘上那份真配置**读进来之后，大纲认出了那一条"
+                  "（`quality`）并且点「条目」能打开 —— 认的要是拿手搓的正文，就验不到「真文件读出来"
                   "认不认得出」这一趟",
                   QStringLiteral("认出 %1 条 / 露出=%2").arg(indexCount).arg(int(indexVisible)));
             check(indexPicked == QStringLiteral("1"),

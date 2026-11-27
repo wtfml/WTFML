@@ -49,6 +49,7 @@ GroupDialog::GroupDialog(const QList<Group> &groups, const QHash<QString, int> &
       m_memberCounts(memberCounts),
       m_defaultGroups(defaultGroups),
       m_defaultCounts(defaultCounts) {
+    setProperty("wtfmlSelfScrollingPage", true);
     setWindowTitle(windowTitle());
     resize(720, 480);
 

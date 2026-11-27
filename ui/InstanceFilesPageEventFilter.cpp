@@ -27,6 +27,7 @@
 
 #include <QEvent>
 #include <QListWidget>
+#include <QKeyEvent>
 #include <QMouseEvent>
 #include <QApplication>
 #include <QDrag>
@@ -39,6 +40,15 @@
 #include <QWidget>
 
 bool InstanceFilesPage::eventFilter(QObject *watched, QEvent *event) {
+    // 模组页：Esc 先清掉选择（批量操作条收回常用操作），没有选择时照常冒给外层去「返回」。
+    if (watched == m_list && event->type() == QEvent::KeyPress && m_actionPanelEnabled &&
+        !m_selectedPaths.isEmpty()) {
+        const auto *key = static_cast<QKeyEvent *>(event);
+        if (key->key() == Qt::Key_Escape && key->modifiers() == Qt::NoModifier) {
+            m_list->clearSelection();
+            return true;
+        }
+    }
     if (watched == m_contentHost && event->type() == QEvent::Resize) {
         repositionSelectionBar();
         if (placeCompactStateRow()) applyState();
@@ -354,7 +364,6 @@ void InstanceFilesPage::updateToggleBand(const QPoint &viewportPos, bool firstUp
             item->setSelected(!originallySelected);
         }
     }
-    m_actionPanelDismissed = false;
     syncSelectedPaths();
     updateSelectionBar();
     updateInfoPanel();

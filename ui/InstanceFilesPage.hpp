@@ -99,6 +99,7 @@ class ElidedLabel;
 class QComboBox;
 class QLabel;
 class QScrollArea;
+class QStackedWidget;
 class QLineEdit;
 class QListWidget;
 class QRubberBand;
@@ -1084,6 +1085,8 @@ private:
     /// 紧凑页头（资源包页）的状态胶囊：页宽装得下就排进搜索那一排，装不下单占一排。
     /// 排法只看页宽，胶囊出现或消失不改列表的纵向位置。挪了位置返回 true。
     bool placeCompactStateRow();
+    /// 列表之外每一行右边让出滑条那一列（Theme::scrollBarGutterInset），右缘对齐页眉按钮。
+    void alignFixedRows();
 
     /// 按路径取那一份"筛之前"的条目（`m_entries`）。找不到给 nullptr。
     const Entry *entryForPath(const QString &path) const;
@@ -1322,14 +1325,15 @@ private:
     /// **不进任何布局**（进了布局就变成"列表下面另起一行"，不是浮在列表上）—— 位置由
     /// repositionSelectionBar() 算（算出来的是 viewport 坐标系，摆的时候加 viewport->pos()）。
     QWidget *m_selectionBar = nullptr;
-    QScrollArea *m_actionScroll = nullptr;
     bool m_actionPanelEnabled = false;
-    bool m_actionPanelDismissed = false;
+    /// 模组页列表上方那一行（`setActionPanelEnabled`）：常用操作 / 批量操作两页原地切换，
+    /// 右边常驻「全选 / 反选」。
     QWidget *m_selectionTools = nullptr;
+    QStackedWidget *m_actionStack = nullptr;
+    /// 批量操作排不下文字时收成图标（悬停提示和读屏名仍是原字）。
+    bool m_actionCompact = false;
     QWidget *m_contentHost = nullptr;
-    QPushButton *m_selectionReopen = nullptr;
     QLabel *m_selectionSummary = nullptr;
-    QLabel *m_actionStatus = nullptr;
     QLabel *m_selectionCount = nullptr;
     /// 那七颗按钮，**下标就是 `static_cast<int>(SelectionAction)`**。
     QList<QPushButton *> m_selectionButtons;

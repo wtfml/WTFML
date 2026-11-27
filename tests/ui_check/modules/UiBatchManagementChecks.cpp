@@ -220,13 +220,10 @@ int UiBatchManagementChecks(const QString &instanceDisplayName, const QString &i
 
             // 模组页开了「操作面板」那一档（`setActionPanelEnabled(true)`）：
             // 七颗按钮一个都没少（`selectionActionCount()` 仍是 7，选择/灰化规则不变），
-            // 但**摆放换了地方**——
-            // / 更新 / 删除在右侧那块操作面板里（名字也换成了「更新选中项 / 删除选中项」）；
-            // / 全选 / 反选 / 清除选择在顶上那排工具里（面板外面）；
-            // / 启用 / 禁用并排显示在操作面板中
-            //   （两颗按钮各自按 `selectedTogglePaths()` 计算可用状态 —— 见 U10R）。
-            // 用户当初点名的并排顺序只在**没开面板**的那几页（资源包 / 数据包 / 光影）上
-            // 还是原样；面板这一档是后来照用户要求改的，不是顺序丢失。
+            // 但**摆放换了地方**（#136 照 PCL 排到列表上方一行）——
+            // / 启用 / 禁用 / 更新 / 删除 / 清除选择在选中后换出来的那条批量操作条里；
+            // / 全选 / 反选常驻在这一行右端（批量条外面）
+            //   （启用 / 禁用各自按 `selectedTogglePaths()` 计算可用状态 —— 见 U10R）。
             // 判据用 `isAncestorOf()` 而不是 `isVisibleTo()`：后者只顺着**自己**那条
             // 可见链往上走，走到给定控件为止 —— 给它的那个控件根本不是祖先时，它照样
             // 可能回 true（"看不见"这件事它答不出来）。
@@ -239,17 +236,16 @@ int UiBatchManagementChecks(const QString &instanceDisplayName, const QString &i
             check(InstanceFilesPage::selectionActionCount() == 7 &&
                       inPanel(buttonOf(InstanceFilesPage::SelectionAction::Update)) &&
                       inPanel(buttonOf(InstanceFilesPage::SelectionAction::Delete)),
-                  "★★ U10Q 开了操作面板：七颗都还在，「更新」「删除」在右侧面板里",
+                  "★★ U10Q 开了操作面板：七颗都还在，「更新」「删除」在批量操作条里",
                   QString::number(InstanceFilesPage::selectionActionCount()));
             check(buttonOf(InstanceFilesPage::SelectionAction::Enable) != nullptr &&
                       buttonOf(InstanceFilesPage::SelectionAction::Disable) != nullptr &&
                       inPanel(buttonOf(InstanceFilesPage::SelectionAction::Enable)) &&
                       inPanel(buttonOf(InstanceFilesPage::SelectionAction::Disable)) &&
+                      inPanel(buttonOf(InstanceFilesPage::SelectionAction::ClearAll)) &&
                       outOfPanel(buttonOf(InstanceFilesPage::SelectionAction::SelectAll)) &&
-                      outOfPanel(buttonOf(InstanceFilesPage::SelectionAction::InvertAll)) &&
-                      outOfPanel(buttonOf(InstanceFilesPage::SelectionAction::ClearAll)),
-                  "★★ U10Q 启用/禁用并排显示；全选/反选/清除选择在顶部工具行"
-                  "（都不再挤在面板里）");
+                      outOfPanel(buttonOf(InstanceFilesPage::SelectionAction::InvertAll)),
+                  "★★ U10Q 启用/禁用/清除选择在批量操作条里；全选/反选常驻在这一行右端");
             check(mods->findChild<QPushButton *>(QStringLiteral("modStateAction")) == nullptr,
                   "★★ U10Q 面板不再创建启用/禁用菜单");
 
@@ -400,7 +396,7 @@ int UiBatchManagementChecks(const QString &instanceDisplayName, const QString &i
             //
             // NOTE: 这一节**故意用光影页**，不用模组页。模组页开了「操作面板」那一档
             // （setActionPanelEnabled(true)，见下面的 U10R 那一批），操作条被换爹到
-            // 内容区里、还常驻着；而这一节要量的正是**没换爹**的那个形状 ——
+            // 列表上方那一行里；而这一节要量的正是**没换爹**的那个形状 ——
             // 「浮在列表下缘、挂 list 底下、滚轮搬不动」。光影页是同一套批量管理，
             // 没有面板那一档，正好是这条判据该落的地方。
             for (int i = 0; i < 60; ++i) {

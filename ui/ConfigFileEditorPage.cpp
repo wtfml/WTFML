@@ -6,6 +6,8 @@
  * （本文件里唯一一处自己画的控件），以及 Esc 那一颗得在这一层接住的原因。
  */
 #include "ConfigFileEditorPage.hpp"
+#include <QApplication>
+#include <QCloseEvent>
 #include <QCoreApplication>
 
 #include <QDir>
@@ -26,6 +28,7 @@
 #include <QTimer>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
+#include <QTreeWidgetItemIterator>
 #include <QVBoxLayout>
 
 #include <functional>
@@ -34,25 +37,84 @@
 #include "ConfigEntries.hpp"
 #include "Theme.hpp"   // 上面那四颗按钮的身份（一般性 = 黑字黑边）
 #include "ElidedLabel.hpp"
+#include "GlassPopover.hpp"
 
 namespace {
 
-/// 编辑框至少这么高。这一页是嵌在「实例设置」那层滚动区里的（见 .hpp），
-/// 而 `QPlainTextEdit` 自己那个 sizeHint 很小 —— 不顶一格的话，用户看到的是一条
-/// 三行高的缝，"编辑一个文件"这件事就没地方下手了。
-constexpr int kEditorMinHeight = 280;
+/// 编辑框至少露这么多行（按字体行高算）。`QPlainTextEdit` 自己那个 sizeHint 很小 ——
+/// 不顶一格的话，用户看到的是一条三行高的缝，"编辑一个文件"这件事就没地方下手了。
+constexpr int kEditorMinLines = 8;
 /// 行号那一列数字右边留的空白（数字和正文之间那一条缝）。
 constexpr int kGutterRightPad = 10;
 /// 行号槽至少这么宽（行数只有个位数的时候也不至于贴着边）。
 constexpr int kGutterMinWidth = 30;
-/// 左边「条目」那一格多宽。**固定宽**（不做可拖的分隔条）：这一格是"帮你找那一行"的
-/// 索引，不是主角，让它随窗口变宽变窄只会把右边那个真正在改的编辑框挤来挤去。
-constexpr int kIndexWidth = 240;
 /// 改完字之后等这么久再重认一遍。**手停下来才重算**：`textChanged` 是每敲一个字一发，
 /// 一份几万行的配置上"每敲一个字就扫全文 + 重建整棵树"是看得见的卡。
 constexpr int kIndexRebuildDelayMs = 250;
 
 class CodeEditor;
+
+/// 「条目」大纲浮层：搜索框 + 条目树，挂在「条目」按钮下面（磨砂玻璃那套 GlassPopover）。
+/// 常驻不删：条目树随正文重建，关掉只是藏起来；页面析构时一起删。
+class OutlinePopover final : public GlassPopover {
+public:
+    OutlinePopover(QWidget *anchor, QWidget *panel, QTreeWidget *tree, QWidget *editor)
+        : GlassPopover(anchor), m_panel(panel), m_tree(tree), m_editor(editor) {
+        setObjectName(QStringLiteral("configFileOutline"));
+        setAttribute(Qt::WA_DeleteOnClose, false);
+        auto *box = new QVBoxLayout(this);
+        box->setContentsMargins(10, 10, 10, 10);
+        box->addWidget(panel);
+        panel->show();
+    }
+
+protected:
+    void place() override {
+        QWidget *host = parentWidget();
+        if (host == nullptr || m_anchor == nullptr) return;
+        QWidget *page = m_anchor->parentWidget();
+        const QPoint a = m_anchor->mapTo(host, QPoint(0, m_anchor->height() + 6));
+        // 右缘对齐「条目」所在那一行的内容右缘，往左长；底边停在编辑框底边，不盖住下面的提示和「保存」。
+        const QLayout *row = page != nullptr && page->layout() != nullptr ? rowOf(page->layout(), m_anchor) : nullptr;
+        const int rowRight = row != nullptr ? row->geometry().right() - row->contentsMargins().right()
+                                            : m_anchor->geometry().right();
+        const int right = page->mapTo(host, QPoint(rowRight, 0)).x();
+        const int bottom = m_editor != nullptr ? m_editor->mapTo(host, QPoint(0, m_editor->height())).y()
+                                               : host->height() - 16;
+        // 宽：一行装得下常见的「键 = 值」；高：按行高把整棵树摊开，放不下就收到编辑框底边。
+        const int width = qMin(right + 1 - 8, qMax(sizeHint().width(), fontMetrics().averageCharWidth() * 56));
+        int rows = 0;
+        for (QTreeWidgetItemIterator it(m_tree, QTreeWidgetItemIterator::NotHidden); *it != nullptr; ++it) ++rows;
+        const int rowHeight = m_tree->sizeHintForRow(0) > 0 ? m_tree->sizeHintForRow(0) : fontMetrics().lineSpacing();
+        const QMargins m = layout()->contentsMargins();
+        const int wanted = m.top() + m.bottom() + m_panel->sizeHint().height() - m_tree->sizeHint().height()
+            + m_tree->header()->sizeHint().height() + (rows + 1) * rowHeight + 2 * m_tree->frameWidth();
+        const int top = a.y();
+        const int height = qMin(wanted, qMax(rowHeight * 4, bottom - top));
+        setGeometry(right + 1 - width, top, width, height);
+        raise();
+    }
+    void closeEvent(QCloseEvent *event) override {
+        // 焦点还在浮层里（Esc、点了外面）就交回「条目」按钮，键盘用户接着从原处走。
+        QWidget *focus = QApplication::focusWidget();
+        if (focus != nullptr && (focus == this || isAncestorOf(focus)) && m_anchor != nullptr)
+            m_anchor->setFocus(Qt::OtherFocusReason);
+        GlassPopover::closeEvent(event);
+    }
+
+private:
+    static const QLayout *rowOf(const QLayout *in, QWidget *widget) {
+        if (in->indexOf(widget) >= 0) return in;
+        for (int i = 0; i < in->count(); ++i)
+            if (const QLayout *child = in->itemAt(i)->layout())
+                if (const QLayout *found = rowOf(child, widget)) return found;
+        return nullptr;
+    }
+
+    QWidget *m_panel;
+    QTreeWidget *m_tree;
+    QPointer<QWidget> m_editor;
+};
 
 /// 行号槽那一格。**是一个真控件，不是画在编辑框上的** —— 它得自己占掉编辑框左侧那一条
 /// 视口宽度（`setViewportMargins`），正文才会从它右边开始、滚到哪儿都不重叠。
@@ -139,18 +201,37 @@ public:
         }
     }
 
+    /// 视口页：滑条常驻最右一列、输入面收在内容右缘以内（Theme::applyViewportScrollGutter），
+    /// 行号槽跟着输入面往里挪。
+    void useViewportGutter() {
+        Theme::applyViewportScrollGutter(this);
+        updateLineNumberAreaWidth(blockCount());
+    }
+
 protected:
     void resizeEvent(QResizeEvent *event) override {
         QPlainTextEdit::resizeEvent(event);
-        const QRect cr = contentsRect();
-        m_gutter->setGeometry(QRect(cr.left(), cr.top(), gutterWidth(), cr.height()));
+        placeGutter();
     }
 
 private:
+    /// 输入面相对外框的内缩：和 Theme::applyViewportScrollGutter 给视口留的那一圈同一组数。
+    QMargins surfaceInset() const {
+        return property("wtfmlViewportScrollGutter").toBool() ? QMargins(7, 5, Theme::contentToScrollBarGap() + 7, 5)
+                                                             : QMargins();
+    }
+
+    void placeGutter() {
+        const QRect cr = contentsRect().marginsRemoved(surfaceInset());
+        m_gutter->setGeometry(QRect(cr.left(), cr.top(), gutterWidth(), cr.height()));
+    }
+
     void updateLineNumberAreaWidth(int /*newBlockCount*/) {
         // 正文左边让出这么宽 —— `setViewportMargins` 说的就是"这一块是留给别人的"，
         // 于是正文从槽右边开始，滚到哪儿都不重叠。
-        setViewportMargins(gutterWidth(), 0, 0, 0);
+        const QMargins inset = surfaceInset();
+        setViewportMargins(inset.left() + gutterWidth(), inset.top(), inset.right(), inset.bottom());
+        placeGutter();
     }
 
     void updateLineNumberArea(const QRect &rect, int dy) {
@@ -201,7 +282,8 @@ ConfigFileEditorPage::ConfigFileEditorPage(QWidget *parent) : QWidget(parent) {
 
     // ---------- 上面一行：返回 + 这是哪个文件 + 打开文件夹 ----------
     auto *topRow = new QHBoxLayout;
-    topRow->setContentsMargins(0, 0, 0, 0);
+    // 只有编辑框滚动：上下两行右边让出滑条那一列，右缘对齐页眉按钮（#136）。
+    topRow->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
     topRow->setSpacing(8);
 
     // 这一颗是必须的：覆盖层那颗返回箭头顶上顶着的是**整个「实例设置」**（点一下这一趟
@@ -224,17 +306,19 @@ ConfigFileEditorPage::ConfigFileEditorPage(QWidget *parent) : QWidget(parent) {
     // setText / text 那两下，和 InstanceFilesPage::pathLabel() 同一条规矩：别把
     // ElidedLabel.hpp 拖进每一个用到这一页的地方）。所以在这儿转一次。
     static_cast<ElidedLabel *>(m_pathLabel)->setElideMode(Qt::ElideMiddle);
+    m_pathLabel->setMinimumWidth(1);  // 否则最小宽 = 整条路径宽，长路径把整页撑出窗外
     makeSecondary(m_pathLabel);
     topRow->addWidget(m_pathLabel, 1);
 
-    // 「条目」那一颗：左边那一格的开合（见 .hpp 那段）。它不是在切"看什么文件"，
-    // 而是在切"这一格里看什么" —— 所以和「返回」摆在一头，不跟文件那两颗挤在另一头。
+    // 「条目」那一颗：点开大纲浮层（见 .hpp 那段），再点一下收起。正文因此拿到全宽，
+    // 整页只剩编辑框自己一条竖滑条（#136）。
     m_indexToggle = new QPushButton(indexToggleText(), this);
     m_indexToggle->setObjectName(indexToggleName());
-    Theme::markButton(m_indexToggle, Theme::ButtonKind::Ghost);
-    m_indexToggle->setCheckable(true);
-    m_indexToggle->setChecked(true);
-    connect(m_indexToggle, &QPushButton::toggled, this, [this] { refreshIndexVisibility(); });
+    Theme::markButton(m_indexToggle, Theme::ButtonKind::Neutral);
+    connect(m_indexToggle, &QPushButton::clicked, this, [this] {
+        if (indexVisible()) m_outline->close();
+        else openIndex();
+    });
     topRow->addWidget(m_indexToggle);
 
     // 「还原上一次」：每存一次**之前**都会把盘上那一份原样留一份（见 ConfigFileText 那一
@@ -276,14 +360,10 @@ ConfigFileEditorPage::ConfigFileEditorPage(QWidget *parent) : QWidget(parent) {
     topRow->addWidget(m_openFolder);
     outer->addLayout(topRow);
 
-    // ---------- 中间：左边那一格「条目」+ 编辑框 ----------
-    auto *middle = new QHBoxLayout;
-    middle->setContentsMargins(0, 0, 0, 0);
-    middle->setSpacing(10);
-
+    // ---------- 「条目」大纲：先建在这一页底下藏着，第一次点开时搬进浮层 ----------
     m_indexPanel = new QWidget(this);
     m_indexPanel->setObjectName(indexPanelName());
-    m_indexPanel->setFixedWidth(kIndexWidth);
+    m_indexPanel->hide();
     auto *panelColumn = new QVBoxLayout(m_indexPanel);
     panelColumn->setContentsMargins(0, 0, 0, 0);
     panelColumn->setSpacing(6);
@@ -295,6 +375,15 @@ ConfigFileEditorPage::ConfigFileEditorPage(QWidget *parent) : QWidget(parent) {
     // 筛选**立刻**生效（不走那台 250 ms 的延时器）：它只是在树上藏几行，不改任何正文，
     // 也就没有"每敲一个字扫全文"那个代价。
     connect(m_indexFilter, &QLineEdit::textChanged, this, [this] { applyIndexFilter(); });
+    // 回车 = 跳到筛出来的第一条。
+    connect(m_indexFilter, &QLineEdit::returnPressed, this, [this] {
+        for (QTreeWidgetItemIterator it(m_index, QTreeWidgetItemIterator::NotHidden); *it != nullptr; ++it) {
+            if ((*it)->data(0, valueBeginRole()).isValid()) {
+                jumpToEntry(*it);
+                return;
+            }
+        }
+    });
     panelColumn->addWidget(m_indexFilter);
 
     m_index = new QTreeWidget(m_indexPanel);
@@ -313,17 +402,19 @@ ConfigFileEditorPage::ConfigFileEditorPage(QWidget *parent) : QWidget(parent) {
     // `jumpToEntry()` 自己会认出来）。
     connect(m_index, &QTreeWidget::itemClicked, this,
             [this](QTreeWidgetItem *item, int /*column*/) { jumpToEntry(item); });
+    connect(m_index, &QTreeWidget::itemActivated, this,
+            [this](QTreeWidgetItem *item, int /*column*/) { jumpToEntry(item); });
     panelColumn->addWidget(m_index, 1);
-    middle->addWidget(m_indexPanel);
     // 展开/折叠动画（规则见 ui/Animations.hpp）。
     Anim::animateExpansion(m_index);
 
-    m_editor = new CodeEditor(this);
+    auto *codeEditor = new CodeEditor(this);
+    m_editor = codeEditor;
     m_editor->setObjectName(editorName());
     m_editor->setPlaceholderText(tr("（此文件为空）"));
-    m_editor->setMinimumHeight(kEditorMinHeight);
-    middle->addWidget(m_editor, 1);
-    outer->addLayout(middle, 1);
+    m_editor->setMinimumHeight(m_editor->fontMetrics().lineSpacing() * kEditorMinLines);
+    codeEditor->useViewportGutter();
+    outer->addWidget(m_editor, 1);
 
     // 改字之后把索引重算一遍：**区间是拿正文算出来的，正文一动它就旧了**。
     // 延时 250 ms（见 kIndexRebuildDelayMs）—— 不延时的话，一次保存型的大改动
@@ -341,7 +432,7 @@ ConfigFileEditorPage::ConfigFileEditorPage(QWidget *parent) : QWidget(parent) {
 
     // ---------- 底下：一句话 + 保存 ----------
     auto *bottomRow = new QHBoxLayout;
-    bottomRow->setContentsMargins(0, 0, 0, 0);
+    bottomRow->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
     bottomRow->setSpacing(8);
 
     m_note = new QLabel(this);
@@ -689,15 +780,27 @@ void ConfigFileEditorPage::refreshIndexVisibility() {
         m_indexToggle->setEnabled(!empty);
         m_indexToggle->setToolTip(empty ? indexEmptyHint() : QString());
     }
-    const bool wanted = m_indexToggle != nullptr && m_indexToggle->isChecked() && !empty;
-    m_indexPanel->setVisible(wanted);
+    if (empty && indexVisible()) m_outline->close();
+}
+
+ConfigFileEditorPage::~ConfigFileEditorPage() {
+    // 浮层挂在窗口底下（不是这一页），页面没了它也得跟着走。
+    delete m_outline;
+}
+
+void ConfigFileEditorPage::openIndex() {
+    if (m_indexEntries <= 0 || m_indexToggle == nullptr) return;
+    if (m_outline == nullptr) m_outline = new OutlinePopover(m_indexToggle, m_indexPanel, m_index, m_editor);
+    m_outline->popUp();
+    m_indexFilter->setFocus(Qt::PopupFocusReason);
+    m_indexFilter->selectAll();
 }
 
 bool ConfigFileEditorPage::indexVisible() const {
     // 问的是 `isHidden()` 不是 `isVisible()`：这一页自己常常整个是藏着的（它是那个堆叠
     // 里被切出来的一格，off 的时候父控件就没有可见性），那时候 `isVisible()` 对**任何**
     // 子控件都回假 —— "这一格收起来了"这件事问的从来不是"它现在看不看得见"。
-    return m_indexPanel != nullptr && !m_indexPanel->isHidden();
+    return m_outline != nullptr && !m_outline->isHidden();
 }
 
 void ConfigFileEditorPage::jumpToEntry(QTreeWidgetItem *item) {
@@ -761,8 +864,9 @@ void ConfigFileEditorPage::jumpToEntry(QTreeWidgetItem *item) {
     m_editor->setTextCursor(cursor);
     // 滚到眼前（不是"滚到刚好露出来"——那一格常在屏幕最下沿，看着像没动）。
     m_editor->centerCursor();
-    // 焦点给编辑框：用户点索引那一格是为了接着改它，不是为了让索引亮着。
+    // 焦点给编辑框：用户点索引那一格是为了接着改它，不是为了让索引亮着。大纲浮层随之收起。
     m_editor->setFocus(Qt::OtherFocusReason);
+    if (indexVisible()) m_outline->close();
 }
 
 void ConfigFileEditorPage::keyPressEvent(QKeyEvent *event) {

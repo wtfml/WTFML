@@ -21,6 +21,11 @@
 #include "DownloadToolPanel.hpp"
 #include "InlineMessage.hpp"
 #include <QWizard>
+#include "ConfigFileEditorPage.hpp"
+#include "InstanceFilesPage.hpp"
+#include "ResourcePackPage.hpp"
+#include <QScrollBar>
+#include <QPlainTextEdit>
 #include "PresetModReview.hpp"
 #include "UpgradeHistoryDialog.hpp"
 #include "UpgradeReportDialog.hpp"
@@ -698,6 +703,12 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
             for (const char *kind : {"plain", "hidden", "menu"})
                 list.append({QStringLiteral("server-address-%1-%2-1280x800.png").arg(QLatin1String(kind), theme), theme, {1280, 800}, false, manage,
                              QStringLiteral("srv:") + QLatin1String(kind)});
+        // #136 批 3（FILTER=i136-）：模组页未选 / 已选、资源包启用与顺序、配置编辑器 / 大纲浮层，960×620。
+        // 英文那张另起一趟带 WTFML_SHOT_LANG=en。
+        for (const QString &theme : {QStringLiteral("emerald"), QStringLiteral("dark")})
+            for (const char *state : {"mod", "mod-sel", "pack", "cfg", "cfg-outline"})
+                list.append({QStringLiteral("i136-%1-%2-960x620.png").arg(QLatin1String(state), theme), theme, {960, 620}, false, manage,
+                             QStringLiteral("i136:") + QLatin1String(state)});
         // 只出名字含这段字的几张（逐页精修时不必每次跑满 56 张）。
         const QString only = qEnvironmentVariable("WTFML_DESIGN_SHOT_FILTER");
         if (!only.isEmpty())
@@ -923,6 +934,69 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                 }
                 QMetaObject::invokeMethod(&window, "openInstanceSettings", Q_ARG(QString, QStringLiteral("create")),
                                           Q_ARG(QString, shot.page.section(QLatin1Char(':'), 1)));
+            } else if (shot.page.startsWith(QStringLiteral("i136:"))) {
+                // 「机械动力 Create」里摆几个模组、资源包和一份配置，开对应页，再按样张走一步真操作。
+                const QString dir = AppPaths::versionDir(QStringLiteral("create"));
+                const auto touch = [](const QString &path, const QByteArray &bytes) {
+                    QDir().mkpath(QFileInfo(path).absolutePath());
+                    QFile file(path);
+                    if (file.open(QIODevice::WriteOnly)) file.write(bytes);
+                };
+                for (const char *name : {"create-1.20.1-0.5.1.f.jar", "jei-1.20.1-forge-15.3.0.4.jar", "sodium-fabric-0.6.0.jar.disabled",
+                                         "iris-1.8.1+1.20.1.jar", "lithium-fabric-0.11.2.jar", "modmenu-7.2.2.jar.disabled",
+                                         "cloth-config-11.1.118.jar", "appleskin-forge-2.5.1.jar", "jade-11.8.0.jar",
+                                         "farmers-delight-1.2.4.jar", "journeymap-5.9.18.jar", "waystones-14.1.3.jar"})
+                    touch(dir + QStringLiteral("/mods/") + QLatin1String(name), "stub");
+                QStringList active{QStringLiteral("\"vanilla\"")};
+                for (int i = 0; i < 9; ++i) {
+                    const QString pack = QStringLiteral("Faithful-32x-%1.zip").arg(i + 1);
+                    touch(dir + QStringLiteral("/resourcepacks/") + pack, "stub");
+                    if (i < 4) active.append(QStringLiteral("\"file/%1\"").arg(pack));
+                }
+                touch(dir + QStringLiteral("/options.txt"), "resourcePacks:[" + active.join(QLatin1Char(',')).toUtf8() + "]\n");
+                QString json = QStringLiteral("{\n");
+                for (const char *key : {"quality", "leaves", "clouds", "particles", "weather", "fog", "vignette", "entityShadows",
+                                        "mipmapLevels", "smoothLighting", "biomeBlend", "renderDistance", "simulationDistance",
+                                        "brightness", "fov", "guiScale", "vsync", "maxFps", "chunkBuilderThreads",
+                                        "alwaysDeferChunkUpdates", "useBlockFaceCulling", "useFogOcclusion",
+                                        "useEntityCulling", "animateOnlyVisibleTextures", "useNoErrorGLContext",
+                                        "useLargeBufferUploads", "useSodiumWorldRenderer", "showDebugHud"})
+                    json += QStringLiteral("  \"%1\": %2,\n").arg(QLatin1String(key), json.size() % 3 == 0 ? QStringLiteral("true")
+                                                                          : json.size() % 3 == 1 ? QString::number(json.size() % 97)
+                                                                                                 : QStringLiteral("\"fancy\""));
+                json += QStringLiteral("  \"version\": 4\n}\n");
+                touch(dir + QStringLiteral("/config/sodium-options.json"), json.toUtf8());
+                const QString state = shot.page.section(QLatin1Char(':'), 1);
+                const QString key = state.startsWith(QStringLiteral("mod")) ? QStringLiteral("mod")
+                                    : state == QStringLiteral("pack")       ? QStringLiteral("resourcepack")
+                                                                            : QStringLiteral("config");
+                QMetaObject::invokeMethod(&window, "openInstanceSettings", Q_ARG(QString, QStringLiteral("create")), Q_ARG(QString, key));
+                QTimer::singleShot(350, &window, [&window, state]() {
+                    // 上一张的设置页可能还没删掉：只认此刻露着的那一份。
+                    InstanceSettingsDialog *dialog = nullptr;
+                    for (auto *one : window.findChildren<InstanceSettingsDialog *>())
+                        if (one->isVisible()) dialog = one;
+                    if (dialog == nullptr) return;
+                    if (state == QStringLiteral("mod-sel")) {
+                        if (auto *files = dialog->filesPage(QStringLiteral("mod")); files != nullptr && files->list() != nullptr)
+                            for (int row = 0; row < 3 && row < files->list()->count(); ++row) files->list()->item(row)->setSelected(true);
+                    } else if (state == QStringLiteral("pack")) {
+                        if (auto *mode = dialog->findChild<QPushButton *>(QStringLiteral("resourcePackMode"))) mode->click();
+                    } else if (state.startsWith(QStringLiteral("cfg"))) {
+                        InstanceFilesPage *files = dialog->filesPage(QStringLiteral("config"));
+                        for (int row = 0; files != nullptr && files->list() != nullptr && row < files->list()->count(); ++row) {
+                            QListWidgetItem *item = files->list()->item(row);
+                            if (!item->data(InstanceFilesPage::pathRole()).toString().endsWith(QStringLiteral("sodium-options.json"))) continue;
+                            files->list()->setCurrentItem(item);
+                            QKeyEvent enter(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
+                            QApplication::sendEvent(files->list(), &enter);
+                        }
+                        if (state == QStringLiteral("cfg-outline"))
+                            QTimer::singleShot(200, &window, [editor = QPointer<ConfigFileEditorPage>(dialog->configFilePage())]() {
+                                if (editor != nullptr) editor->openIndex();
+                            });
+                    }
+                });
             } else if (!shot.page.isEmpty()) QMetaObject::invokeMethod(&window, "openInstanceSettings", Q_ARG(QString, QStringLiteral("create")), Q_ARG(QString, shot.page));
             else if (shot.tab == MainWindowUI::instancesTabIndex()) hoverInstanceRow(window);
         });
@@ -958,6 +1032,87 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                 const QString key = shot.page.section(QLatin1Char(':'), 1);
                 if (auto *all = window.findChild<QPushButton *>(QStringLiteral("instanceLifecycleBatchAll_%1").arg(key))) all->click();
                 for (int i = 0; i < 5; ++i) QApplication::processEvents();
+            }
+            if (shot.page.startsWith(QStringLiteral("i136:"))) {
+                // 数这一页自己露着几条竖滑条（不算外层那张实例设置的滚动区）。
+                QWidget *page = nullptr;
+                InstanceSettingsDialog *shown = nullptr;
+                for (auto *dialog : window.findChildren<InstanceSettingsDialog *>()) {
+                    if (!dialog->isVisible()) continue;
+                    shown = dialog;
+                    if (shot.page.startsWith(QStringLiteral("i136:mod"))) page = dialog->filesPage(QStringLiteral("mod"));
+                    else if (shot.page == QStringLiteral("i136:pack")) page = dialog->resourcePackPage();
+                    else page = dialog->configFilePage();
+                }
+                int bars = 0;
+                if (page != nullptr)
+                    for (auto *bar : page->findChildren<QScrollBar *>())
+                        if (bar->orientation() == Qt::Vertical && bar->isVisible()) ++bars;
+                std::fprintf(stdout, "I136 %s page=%s visible=%d verticalScrollBars=%d\n", qPrintable(shot.file),
+                             page != nullptr ? page->metaObject()->className() : "none", page != nullptr && page->isVisible(), bars);
+                // 审计（窗口坐标，右缘含该像素）：整张设置页露着的竖滑条 x 范围、不滚动行 / 滚动内容 / 页眉按钮的右缘。
+                const auto winX = [&window](const QWidget *w, int x) { return w->mapTo(&window, QPoint(x, 0)).x(); };
+                if (shown != nullptr && page != nullptr) {
+                    QString barText;
+                    int dialogBars = 0;
+                    for (auto *bar : shown->findChildren<QScrollBar *>()) {
+                        if (bar->orientation() != Qt::Vertical || !bar->isVisible()) continue;
+                        ++dialogBars;
+                        const QWidget *owner = bar->parentWidget() != nullptr ? bar->parentWidget()->parentWidget() : nullptr;
+                        barText += QStringLiteral(" %1[%2,%3)%4").arg(owner != nullptr ? owner->objectName() : QString())
+                                       .arg(winX(bar, 0)).arg(winX(bar, bar->width())).arg(bar->maximum() > 0 ? "*" : "");
+                    }
+                    const auto inScroll = [page](const QWidget *w) {
+                        for (const QWidget *p = w->parentWidget(); p != nullptr && p != page; p = p->parentWidget())
+                            if (auto *area = qobject_cast<QAbstractScrollArea *>(p->parentWidget()); area != nullptr && area->viewport() == p)
+                                return true;
+                        return false;
+                    };
+                    // 固定行按行分组（竖直范围相交的算同一行），每行取最右侧那个可见按钮 / 输入框的右缘，
+                    // 不量行容器：容器对齐了、里面的控件却可能又让了一次。
+                    int scrollRight = -1, headerRight = -1;
+                    struct Band { int top, bottom, right; };
+                    QList<Band> bands;
+                    for (auto *w : page->findChildren<QWidget *>()) {
+                        if (!w->isVisible() || !(qobject_cast<QAbstractButton *>(w) || qobject_cast<QLineEdit *>(w))) continue;
+                        if (qobject_cast<QLineEdit *>(w->parentWidget()) != nullptr) continue;  // 输入框里的清除钮
+                        const int right = winX(w, w->width()) - 1;
+                        if (inScroll(w)) { scrollRight = qMax(scrollRight, right); continue; }
+                        const int top = w->mapTo(&window, QPoint(0, 0)).y(), bottom = top + w->height();
+                        bool merged = false;
+                        for (Band &band : bands)
+                            if (top < band.bottom && bottom > band.top) {
+                                band = {qMin(band.top, top), qMax(band.bottom, bottom), qMax(band.right, right)};
+                                merged = true;
+                                break;
+                            }
+                        if (!merged) bands.append({top, bottom, right});
+                    }
+                    std::sort(bands.begin(), bands.end(), [](const Band &a, const Band &b) { return a.top < b.top; });
+                    QString fixedText;
+                    for (const Band &band : bands) fixedText += QStringLiteral(" y%1-%2=%3").arg(band.top).arg(band.bottom).arg(band.right);
+                    QString rowText;
+                    for (auto *view : page->findChildren<QAbstractItemView *>()) {
+                        if (!view->isVisible() || view->model() == nullptr || view->model()->rowCount() == 0) continue;
+                        const QRect cell = view->visualRect(view->model()->index(0, view->model()->columnCount() - 1));
+                        const int gap = view->property("wtfmlScrollContentGap").toInt();
+                        rowText += QStringLiteral(" %1=%2").arg(view->objectName()).arg(winX(view->viewport(), cell.right() + 1 - gap) - 1);
+                    }
+                    if (auto *header = shown->findChild<QWidget *>(QStringLiteral("instanceSettingsHeader")))
+                        for (auto *w : header->findChildren<QAbstractButton *>())
+                            if (w->isVisible()) headerRight = qMax(headerRight, winX(w, w->width()) - 1);
+                    std::fprintf(stdout, "AUDIT %s headerRight=%d fixedRows:%s scrollRight=%d rows:%s bars=%d:%s\n",
+                                 qPrintable(shot.file), headerRight, qPrintable(fixedText), scrollRight, qPrintable(rowText), dialogBars,
+                                 qPrintable(barText));
+                    if (auto *outline = window.findChild<QWidget *>(QStringLiteral("configFileOutline")); outline != nullptr && outline->isVisible()) {
+                        const QPoint tl = outline->mapTo(&window, QPoint(0, 0));
+                        const auto *editor = page->findChild<QPlainTextEdit *>();
+                        std::fprintf(stdout, "AUDIT %s outline x=[%d,%d) y=[%d,%d) editorBottom=%d\n", qPrintable(shot.file), tl.x(),
+                                     tl.x() + outline->width(), tl.y(), tl.y() + outline->height(),
+                                     editor != nullptr ? editor->mapTo(&window, QPoint(0, editor->height())).y() : -1);
+                    }
+                }
+                std::fflush(stdout);
             }
             QPixmap shotImage = wizard != nullptr ? wizard->grab() : log != nullptr ? log->grab() : window.grab();
             if (wizard != nullptr) wizard->hide();

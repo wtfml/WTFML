@@ -40,9 +40,7 @@ void InstanceFilesPage::applyState() {
     // 靠它们把条件改回来，这时候把它们收掉是最糟的一刻。
     const bool filtersUseful = !unavailable && !m_empty;
     if (m_searchRow != nullptr) {
-        // The mod header also owns installation/maintenance actions, useful even
-        // before the first mod is installed.
-        m_searchRow->setVisible(filtersUseful || (m_actionPanelEnabled && !unavailable));
+        m_searchRow->setVisible(filtersUseful);
     }
     if (m_stateRow != nullptr) {
         const bool choice = stateFilterVisible(StateFilter::Enabled) ||
@@ -51,6 +49,7 @@ void InstanceFilesPage::applyState() {
         // placeCompactStateRow）：按「此刻有没有可选的」显隐的话，查完更新「可更新」一冒出来列表就下跳。
         const bool reserved = m_batchMode && (m_canToggle || m_canFilterUpdates);
         placeCompactStateRow();
+        alignFixedRows();
         m_stateRow->setVisible(filtersUseful && !m_worldLayout && (!m_compactHeader || choice || reserved));
     }
     // 那一排里**下拉框和四颗按钮互相显隐**（见 .hpp 里 m_stateRow 那段）：
@@ -67,6 +66,8 @@ void InstanceFilesPage::applyState() {
     }
 
     m_pathRow->setVisible(!unavailable && !m_actionPanelEnabled);
+    // 模组页的常用操作（下载、打开文件夹）在目录还空着时也要能用。
+    if (m_actionPanelEnabled) m_selectionTools->setVisible(!unavailable);
     if (m_structureRows != nullptr) {
         m_structureRows->setVisible(!unavailable && !m_structureSources.isEmpty());
     }

@@ -1,5 +1,41 @@
 #include "Support.hpp"
+#include "AutoHeight.hpp"
+#include <qpa/qwindowsysteminterface.h>
 int UiAccountSkinChecks() {
+    {   // #136 AutoHeight：鼠标停在撑高的框 / 列表上滚轮，要带动外层那一条。
+        QScrollArea area;
+        auto *body = new QWidget;
+        auto *layout = new QVBoxLayout(body);
+        auto *edit = new QPlainTextEdit(body);
+        auto *list = new QListWidget(body);
+        for (int i = 0; i < 20; ++i) list->addItem(QString::number(i));
+        AutoHeight::install(edit, 40);
+        AutoHeight::install(list);
+        edit->setPlainText(QStringLiteral("a\n").repeated(20));
+        layout->addWidget(edit);
+        layout->addWidget(list);
+        area.setWidgetResizable(true);
+        area.setWidget(body);
+        area.resize(300, 200);
+        area.show();
+        for (int pass = 0; pass < 5; ++pass) QApplication::processEvents();
+        for (QAbstractScrollArea *inner : {static_cast<QAbstractScrollArea *>(edit),
+                                           static_cast<QAbstractScrollArea *>(list)}) {
+            area.verticalScrollBar()->setValue(inner->y());
+            for (int pass = 0; pass < 3; ++pass) QApplication::processEvents();
+            const int before = area.verticalScrollBar()->value();
+            // 走窗口系统那条路投递：sendEvent 造的滚轮不会向父控件冒泡。
+            const QPoint at = inner->viewport()->mapTo(&area, QPoint(8, 8));
+            QWindowSystemInterface::handleWheelEvent(
+                area.windowHandle(), QPointF(at), QPointF(area.mapToGlobal(at)), QPoint(), QPoint(0, -120));
+            QApplication::processEvents();
+            check(inner->verticalScrollBar()->maximum() == 0 && area.verticalScrollBar()->value() > before,
+                  "撑高的框里滚轮带动外层滚动区",
+                  QString("%1 内=%2 外=%3→%4").arg(QString::fromLatin1(inner->metaObject()->className()))
+                      .arg(inner->verticalScrollBar()->maximum()).arg(before)
+                      .arg(area.verticalScrollBar()->value()));
+        }
+    }
     {
         AccountSkinDialog dialog;
         dialog.show();
@@ -205,6 +241,25 @@ int UiAccountSkinChecks() {
                   accountList->item(0)->toolTip());
             check(accountList->item(1)->toolTip().isEmpty(),
                   "没有时间的账号不摆一个空 tooltip");
+
+            {   // #136：账号再多列表也随行数撑高，自己不滚（整页那一条滚）。
+                QList<AccountSkinDialog::AccountRow> many;
+                for (int i = 0; i < 8; ++i) {
+                    AccountSkinDialog::AccountRow one;
+                    one.uuid = QStringLiteral("uuid-many-%1").arg(i);
+                    one.name = QStringLiteral("Player%1").arg(i);
+                    one.offline = true;
+                    many.append(one);
+                }
+                dialog.setAccounts(many);
+                QApplication::processEvents();
+                check(accountList->height() >= 8 * accountList->sizeHintForRow(0) &&
+                          accountList->verticalScrollBarPolicy() == Qt::ScrollBarAlwaysOff,
+                      "八个账号全部露出、列表自己没有竖滚动条",
+                      QString("高=%1 行高=%2").arg(accountList->height()).arg(accountList->sizeHintForRow(0)));
+                dialog.setAccounts(rows);
+                QApplication::processEvents();
+            }
 
             // ---- X4 没有「当前」账号时选第一条 ----
             // 凭据被清掉了（比如删了当前账号）但列表还在，这时不能一行都不选 ——

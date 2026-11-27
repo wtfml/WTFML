@@ -54,6 +54,7 @@
 #include <QTextEdit>
 #include <QTimer>
 #include <QToolButton>
+#include <QVBoxLayout>
 #include <QWidget>
 
 /// 标题字体在 icons.qrc 里（静态库里的 qrc 没人引用会被链接器丢掉，见 ui/Glass.cpp 同一段）。
@@ -2646,6 +2647,9 @@ QString widgetStyleSheet() {
         " border: 3px solid transparent; border-radius: %1px; padding: 2px 4px; }"
         "QPlainTextEdit[wtfmlKeyboardFocus=\"true\"]:focus, QTextEdit[wtfmlKeyboardFocus=\"true\"]:focus"
         " { border-color: palette(highlight); }"
+        // 视口页里的多行文本框：滑条留在外框最右列，输入面由 applyViewportScrollGutter() 绘在内容右缘以内。
+        "QPlainTextEdit[wtfmlViewportScrollGutter=\"true\"], QTextEdit[wtfmlViewportScrollGutter=\"true\"]"
+        " { background-color: transparent; border: none; padding: 0px; }"
         // 下拉不再有「文字 + ∨」那颗箭头：整块可点（点框内任何位置都会弹），那一格宽度归零。
         "QComboBox::drop-down { width: 0px; border: none; }"
         // ★ 数字框的内容盒再低 3px：`QStyleSheetStyle` 给 `CT_SpinBox` 算尺寸时会在
@@ -3768,7 +3772,105 @@ private:
     bool m_running = false;
 };
 
+struct ScrollAreaMarginAccess : QAbstractScrollArea {
+    using QAbstractScrollArea::setViewportMargins;
+};
+
+class ViewportTextSurfacePainter : public QObject {
+public:
+    explicit ViewportTextSurfacePainter(QAbstractScrollArea *area)
+        : QObject(area), m_area(area) {
+        area->installEventFilter(this);
+    }
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override {
+        if (watched == m_area && event->type() == QEvent::Paint) {
+            QPainter painter(m_area);
+            painter.setRenderHint(QPainter::Antialiasing, true);
+            const QScrollBar *hBar = m_area->horizontalScrollBar();
+            const int bottomReserve = (hBar != nullptr && hBar->isVisible()) ? hBar->height() : 0;
+            const int surfaceW = qMax(0, m_area->width() - scrollBarGutterInset());
+            const int surfaceH = qMax(0, m_area->height() - bottomReserve);
+            const QRectF box = QRectF(0.0, 0.0, surfaceW, surfaceH).adjusted(3.0, 3.0, -3.0, -3.0);
+            if (box.width() > 0.0 && box.height() > 0.0) {
+                const QPalette appPal = QApplication::palette();
+                const qreal radius = controlRadius();
+                painter.setPen(Qt::NoPen);
+                painter.setBrush(appPal.color(QPalette::Base));
+                painter.drawRoundedRect(box, radius, radius);
+                if (m_area->hasFocus() && m_area->property("wtfmlKeyboardFocus").toBool()) {
+                    QPen ring(appPal.color(QPalette::Highlight), 3.0);
+                    painter.setPen(ring);
+                    painter.setBrush(Qt::NoBrush);
+                    painter.drawRoundedRect(box.adjusted(-1.5, -1.5, 1.5, 1.5), radius, radius);
+                }
+            }
+            return true;
+        }
+        return QObject::eventFilter(watched, event);
+    }
+
+private:
+    QAbstractScrollArea *m_area = nullptr;
+};
+
 }  // namespace
+
+void alignToScrollGutter(QLayout *layout) {
+    if (layout == nullptr) return;
+    QMargins margins = layout->contentsMargins();
+    margins.setRight(scrollBarGutterInset());
+    layout->setContentsMargins(margins);
+}
+
+void addScrollGutterAligned(QVBoxLayout *parent, QWidget *widget, Qt::Alignment alignment) {
+    if (parent == nullptr || widget == nullptr) return;
+    auto *row = new QHBoxLayout;
+    row->setContentsMargins(0, 0, scrollBarGutterInset(), 0);
+    row->setSpacing(0);
+    row->addWidget(widget, 0, alignment);
+    parent->addLayout(row);
+}
+
+void addScrollGutterAligned(QVBoxLayout *parent, QLayout *child) {
+    if (parent == nullptr || child == nullptr) return;
+    alignToScrollGutter(child);
+    parent->addLayout(child);
+}
+
+void applyViewportScrollGutter(QAbstractScrollArea *view) {
+    if (view == nullptr) return;
+    view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    view->setProperty("wtfmlScrollContentGap", contentToScrollBarGap());
+    if (QScrollBar *bar = view->verticalScrollBar()) {
+        const auto syncIdle = [bar] {
+            const bool idle = bar->maximum() <= bar->minimum();
+            if (bar->property("wtfmlIdle").isValid() && bar->property("wtfmlIdle").toBool() == idle) {
+                return;
+            }
+            bar->setProperty("wtfmlIdle", idle);
+            bar->style()->unpolish(bar);
+            bar->style()->polish(bar);
+            bar->update();
+        };
+        if (!view->property("wtfmlViewportScrollGutterWired").toBool()) {
+            view->setProperty("wtfmlViewportScrollGutterWired", true);
+            QObject::connect(bar, &QScrollBar::rangeChanged, view, syncIdle);
+        }
+        syncIdle();
+    }
+    if (qobject_cast<QPlainTextEdit *>(view) != nullptr || qobject_cast<QTextEdit *>(view) != nullptr) {
+        if (!view->property("wtfmlViewportScrollGutter").toBool()) {
+            view->setProperty("wtfmlViewportScrollGutter", true);
+            static_cast<ScrollAreaMarginAccess *>(view)->setViewportMargins(
+                7, 5, contentToScrollBarGap() + 7, 5);
+            new ViewportTextSurfacePainter(view);
+            view->style()->unpolish(view);
+            view->style()->polish(view);
+        }
+    }
+}
 
 void followImpl(QWidget *owner, std::function<void()> fn) {
     // parent 就是 owner ⇒ owner 没了这一条自己掉，不用谁来收。

@@ -48,6 +48,9 @@ constexpr int kFieldLabelWidth = 132;
 /// 表单那一行的**控件**占多宽（开关那档除外，它按 `ToggleSwitch::sizeHint()`）。
 /// 钉死是为了让右边那列小字**对成一竖** —— 每行控件的宽度不一样的话，小字的起点会一行一个样。
 constexpr int kFieldEditorWidth = 200;
+/// 覆盖层下页眉顶部留白与两栏间距（与实例设置共用第 3 档参数）。
+constexpr int kOuterTopMargin = 4;
+constexpr int kColumnSpacing = 20;
 
 /// 一行小字（说明 / 状态）。全仓"比正文浅一档"的取法只有这一种（从自己的调色板算，
 /// 不写死颜色）—— 和 `NewServerPage.cpp` / `ServerConsolePage.cpp` 那两个是同一套做法。
@@ -129,44 +132,55 @@ QString motdPreviewHtml(const QString &raw) {
     return html;
 }
 
-/// 往右栏那一叠里加一页。**每一页都活在一层滚动区里**（和实例设置那几页同一个形状）：
-/// 内容比视口高的时候自己能滚；换页动画抬的是视口（见构造末尾那条 `currentChanged`）。
-///
-/// @param objectName 里面那一页的名字（没名字就传空串 —— 表里一页一张，名字只能是噪音）。
-/// @return 那一页自己的竖排布局（往它里面加东西）。
+/// 往右栏那一叠里加一页表单页（套一层 GutterScrollArea，供概览/启动/常用/迁移/升级滚动）。
 QVBoxLayout *addSectionPage(QStackedWidget *stack, const QString &objectName) {
     auto *scroll = new Theme::GutterScrollArea(stack);
     scroll->setFrameShape(QFrame::NoFrame);
     scroll->setWidgetResizable(true);
+    scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     auto *page = new QWidget(scroll);
     if (!objectName.isEmpty()) {
         page->setObjectName(objectName);
     }
     auto *layout = new QVBoxLayout(page);
-    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setContentsMargins(0, 0, Theme::contentToScrollBarGap(), 0);
     layout->setSpacing(10);
     scroll->setWidget(page);
     stack->addWidget(scroll);
     return layout;
 }
 
+/// 往右栏那一叠里加一页视口型页面（不套外层 GutterScrollArea，供列表/树/编辑器/日志独占滚动条）。
+QVBoxLayout *addViewportSectionPage(QStackedWidget *stack, const QString &objectName) {
+    auto *page = new QWidget(stack);
+    if (!objectName.isEmpty()) {
+        page->setObjectName(objectName);
+    }
+    auto *layout = new QVBoxLayout(page);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(10);
+    stack->addWidget(page);
+    return layout;
+}
+
 }  // namespace
 
 ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
+    setProperty("wtfmlSelfScrollingPage", true);
     setObjectName(MainWindowUI::serverSettingsPageName());
     setWindowTitle(windowTitle());
     // 只影响"单独拿出来用"（验证工程那几处）：嵌进覆盖层时这一页拿的是内容区的整幅宽。
     resize(880, 620);
 
     auto *box = new QVBoxLayout(this);
-    box->setContentsMargins(12, 12, 12, 12);
+    box->setContentsMargins(0, kOuterTopMargin, 0, 12);
     box->setSpacing(10);
 
     // ---------- 顶上：哪一个服务端 + 它现在什么状态 ----------
     {
         auto *row = new QWidget(this);
         auto *layout = new QHBoxLayout(row);
-        layout->setContentsMargins(0, 0, 0, 0);
+        layout->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
         layout->setSpacing(8);
         m_titleLabel = new QLabel(row);
         m_titleLabel->setObjectName(MainWindowUI::serverSettingsTitleName());
@@ -198,7 +212,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
 
     // ---------- 两栏：左栏四页 + 右栏一个堆叠页 ----------
     auto *columns = new QHBoxLayout;
-    columns->setSpacing(12);
+    columns->setSpacing(kColumnSpacing);
 
     m_sectionList = new QTreeWidget(this);
     m_sectionList->setObjectName(MainWindowUI::serverSettingsSectionListName());
@@ -216,11 +230,13 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
     QFont navFont = m_sectionList->font();
     navFont = Theme::textFont(navFont, Theme::TextRole::Body);
     m_sectionList->setFont(navFont);
+    const int navRowHeight = qMax(30, QFontMetrics(navFont).height() + 10);
+    m_sectionList->setProperty("wtfmlMinRowHeight", navRowHeight);
     auto addEntry = [&](QTreeWidgetItem *parentItem, const QString &title, Section section, int kind = -1) {
         auto *item = parentItem ? new QTreeWidgetItem(parentItem, {title})
                                 : new QTreeWidgetItem(m_sectionList, {title});
         item->setData(0, Qt::UserRole, static_cast<int>(section));
-        item->setSizeHint(0, QSize(0, 34));
+        item->setSizeHint(0, QSize(0, navRowHeight));
         QFont font = navFont;
         font.setBold(parentItem == nullptr);
         item->setFont(0, font);
@@ -247,7 +263,9 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
     addEntry(maintenance, tr("原始文本"), Section::RawText);
     addEntry(maintenance, tr("迁移"), Section::Migration);
     addEntry(maintenance, tr("升级"), Section::Upgrade);
-    m_sectionList->expandAll();
+    worlds->setExpanded(true);
+    content->setExpanded(true);
+    maintenance->setExpanded(false);
     const int navWidth = InstanceSettingsDialog::fittedNavigationTreeWidth(m_sectionList);
     m_sectionList->setFixedWidth(navWidth);
     {
@@ -261,6 +279,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
     }
 
     m_stack = new QStackedWidget(this);
+    m_stack->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     m_stack->setObjectName(MainWindowUI::serverSettingsStackName());
     columns->addWidget(m_stack, 1);
     // 换页动效不用接：`QStackedWidget` 换页默认就有 `pageAppear()`（`ui/DesignDefaults.hpp`）。
@@ -277,10 +296,10 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
 
     // ---------- ② 原始文本 ----------
     {
-        auto *layout = addSectionPage(m_stack, QString());
+        auto *layout = addViewportSectionPage(m_stack, QString());
         m_rawNote = makeNoteLabel(nullptr, MainWindowUI::serverSettingsRawNoteText());
         m_rawNote->setObjectName(MainWindowUI::serverSettingsRawNoteName());
-        layout->addWidget(m_rawNote);
+        Theme::addScrollGutterAligned(layout, m_rawNote);
 
         m_rawEdit = new QPlainTextEdit();
         m_rawEdit->setObjectName(MainWindowUI::serverSettingsRawEditName());
@@ -300,6 +319,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
             refreshSaveBar();
             emit edited();
         });
+        Theme::applyViewportScrollGutter(m_rawEdit);
         layout->addWidget(m_rawEdit, 1);
     }
 
@@ -309,10 +329,10 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
     // 四颗按钮（加 / 启用禁用 / 打开文件夹 / 刷新）。**这一页不碰盘**：列目录、改名、拷
     // 文件全在 `MainWindow`（`ui/` 不许 include `src/`，判据在 `ServerContent` 那一层）。
     {
-        auto *layout = addSectionPage(m_stack, QString());
+        auto *layout = addViewportSectionPage(m_stack, QString());
         m_contentNote = makeNoteLabel(nullptr, QString());
         m_contentNote->setObjectName(MainWindowUI::serverSettingsContentNoteName());
-        layout->addWidget(m_contentNote);
+        Theme::addScrollGutterAligned(layout, m_contentNote);
 
         m_contentTree = new QTreeWidget();
         m_contentTree->setObjectName(MainWindowUI::serverSettingsContentTreeName());
@@ -328,6 +348,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
         m_contentTree->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
         connect(m_contentTree, &QTreeWidget::currentItemChanged, this,
                 [this](QTreeWidgetItem *, QTreeWidgetItem *) { refreshContentActions(); });
+        Theme::applyViewportScrollGutter(m_contentTree);
         layout->addWidget(m_contentTree, 1);
 
         {
@@ -378,13 +399,13 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
             connect(m_contentRefreshButton, &QPushButton::clicked, this,
                     &ServerSettingsPage::contentRefreshRequested);
             rowLayout->addWidget(m_contentRefreshButton);
-            layout->addWidget(row);
+            Theme::addScrollGutterAligned(layout, row);
         }
     }
 
     // ---------- ④ 世界备份 ----------
     {
-        auto *layout = addSectionPage(m_stack, QString());
+        auto *layout = addViewportSectionPage(m_stack, QString());
         auto *tools = new QHBoxLayout;
         tools->addStretch();
         m_worldSelector = new QComboBox;
@@ -399,7 +420,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
             emit worldChanged();
         });
         connect(m_activateWorld, &QPushButton::clicked, this, &ServerSettingsPage::activateWorldRequested);
-        layout->addLayout(tools);
+        Theme::addScrollGutterAligned(layout, tools);
         auto *tabs = new QTabWidget;
         m_worldEditor = new WorldSettingsPage;
         m_worldEditor->renameButton()->hide();
@@ -417,7 +438,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
         connect(m_worldEditor, &WorldSettingsPage::restoreBackupRequested, tabs, [tabs] { tabs->setCurrentIndex(1); });
         m_backupNote = makeNoteLabel(nullptr, QString());
         m_backupNote->setObjectName(MainWindowUI::serverSettingsBackupNoteName());
-        backupLayout->addWidget(m_backupNote);
+        Theme::addScrollGutterAligned(backupLayout, m_backupNote);
 
         m_backupList = new QTreeWidget();
         m_backupList->setObjectName(MainWindowUI::serverSettingsBackupListName());
@@ -439,6 +460,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
                         emit restoreBackupRequested(item->data(0, Qt::UserRole).toString());
                     }
                 });
+        Theme::applyViewportScrollGutter(m_backupList);
         backupLayout->addWidget(m_backupList, 1);
 
         auto *row = new QWidget();
@@ -490,7 +512,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
             }
         });
         rowLayout->addWidget(m_restoreButton);
-        backupLayout->addWidget(row);
+        Theme::addScrollGutterAligned(backupLayout, row);
     }
 
     // ---------- ⑤ 玩家名单 ----------
@@ -500,7 +522,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
     // JSON**（`ui/` 不许 include `src/`）—— 解析、UUID、写盘全在 `MainWindow` 那一边，
     // 这里只把 `PlayerRow` 摆出来、把"用户点了加/移除"报出去。
     {
-        auto *layout = addSectionPage(m_stack, QString());
+        auto *layout = addViewportSectionPage(m_stack, QString());
         auto *tools = new QHBoxLayout;
         tools->addStretch();
         m_playerSelector = new QComboBox;
@@ -510,14 +532,14 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
             m_playerSelector->addItem(MainWindowUI::serverSettingsPlayerListTitle(index));
         }
         tools->addWidget(m_playerSelector);
-        layout->addLayout(tools);
+        Theme::addScrollGutterAligned(layout, tools);
         connect(m_playerSelector, &QComboBox::currentIndexChanged, this, [this](int index) {
             setPlayerList(index);
             emit playerListChanged(index);
         });
         m_playerNote = makeNoteLabel(nullptr, QString());
         m_playerNote->setObjectName(MainWindowUI::serverSettingsPlayerNoteName());
-        layout->addWidget(m_playerNote);
+        Theme::addScrollGutterAligned(layout, m_playerNote);
 
         m_playerTree = new QTreeWidget();
         m_playerTree->setObjectName(MainWindowUI::serverSettingsPlayerTreeName());
@@ -533,6 +555,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
         m_playerTree->header()->setSectionResizeMode(2, QHeaderView::Stretch);
         connect(m_playerTree, &QTreeWidget::currentItemChanged, this,
                 [this](QTreeWidgetItem *, QTreeWidgetItem *) { refreshPlayerActions(); });
+        Theme::applyViewportScrollGutter(m_playerTree);
         layout->addWidget(m_playerTree, 1);
 
         {
@@ -574,13 +597,13 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
                 if (!name.isEmpty()) emit playerKickRequested(name);
             });
             rowLayout->addWidget(m_playerKickButton);
-            layout->addWidget(row);
+            Theme::addScrollGutterAligned(layout, row);
         }
     }
 
     // ---------- ⑥ 体检 ----------
     {
-        auto *layout = addSectionPage(m_stack, QString());
+        auto *layout = addViewportSectionPage(m_stack, QString());
         m_checkSummary = makeNoteLabel(nullptr, QString());
         m_checkSummary->setObjectName(MainWindowUI::serverSettingsCheckSummaryName());
         {
@@ -588,7 +611,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
             font.setBold(true);
             m_checkSummary->setFont(font);
         }
-        layout->addWidget(m_checkSummary);
+        Theme::addScrollGutterAligned(layout, m_checkSummary);
 
         m_checkList = new QTreeWidget();
         m_checkList->setObjectName(MainWindowUI::serverSettingsCheckListName());
@@ -600,6 +623,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
         m_checkList->setEditTriggers(QAbstractItemView::NoEditTriggers);
         m_checkList->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
         m_checkList->header()->setSectionResizeMode(1, QHeaderView::Stretch);
+        Theme::applyViewportScrollGutter(m_checkList);
         layout->addWidget(m_checkList, 1);
 
         auto *row = new QWidget();
@@ -620,7 +644,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
         m_recheckButton->setCursor(Qt::PointingHandCursor);
         connect(m_recheckButton, &QPushButton::clicked, this, &ServerSettingsPage::recheckRequested);
         rowLayout->addWidget(m_recheckButton, 0);
-        layout->addWidget(row);
+        Theme::addScrollGutterAligned(layout, row);
     }
 
     {
@@ -675,13 +699,14 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
         connect(m_launchMemory, &QSpinBox::valueChanged, this, &ServerSettingsPage::refreshSectionActions);
     }
     {
-        auto *layout = addSectionPage(m_stack, QStringLiteral("serverSettingsLogs"));
+        auto *layout = addViewportSectionPage(m_stack, QStringLiteral("serverSettingsLogs"));
         auto *refresh = new QPushButton(tr("刷新日志"));
-        layout->addWidget(refresh, 0, Qt::AlignRight);
+        Theme::addScrollGutterAligned(layout, refresh, Qt::AlignRight);
         connect(refresh, &QPushButton::clicked, this, &ServerSettingsPage::refreshLogRequested);
         m_log = new QPlainTextEdit;
         m_log->setReadOnly(true);
         m_log->setLineWrapMode(QPlainTextEdit::NoWrap);
+        Theme::applyViewportScrollGutter(m_log);
         layout->addWidget(m_log, 1);
     }
     {
@@ -723,7 +748,7 @@ ServerSettingsPage::ServerSettingsPage(QWidget *parent) : QDialog(parent) {
     {
         auto *row = new QWidget(this);
         auto *layout = new QHBoxLayout(row);
-        layout->setContentsMargins(0, 0, 0, 0);
+        layout->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
         layout->setSpacing(8);
         m_saveNote = makeMutedLabel(row, MainWindowUI::serverSettingsSaveNoteName());
         m_saveNote->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);

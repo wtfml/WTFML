@@ -213,6 +213,7 @@ inline QWidget *gameLog(const QString &text, bool filterEmpty) {
 inline QWidget *worldPage(MainWindow &w, bool open, bool confirm) {
     w.ui()->getTabWidget()->setCurrentIndex(MainWindowUI::instancesTabIndex());
     auto *host = new QDialog;
+    host->setProperty("wtfmlSelfScrollingPage", true);
     auto *layout = new QVBoxLayout(host);
     layout->setContentsMargins(0, 0, 0, 0);
     auto *page = new WorldSettingsPage(host);

@@ -70,10 +70,18 @@ private:
 /// NOTE: 和 `MainWindowUI` 里页面用的那圈边距是**同一个数**（kPageMargin = 9）——
 /// 覆盖层是一整个"页面"，留白和别的页面不一样的话，进设置再退出来会看着跳一下。
 constexpr int kOverlayPageMargin = 9;
-/// 整页那一档的左右留白：和主页、设置页正文左缘对齐（设计稿内容区左右 40）。
-constexpr int kOverlayPageSide = 40;
+/// 整页那一档的左右留白与顶部面包屑尺度（第 3 档；宽窗超过限宽时水平居中）。
+constexpr int kOverlayPageLeft = 16;
+constexpr int kOverlayPageRight = 12;
+constexpr int kOverlayPageTop = 2;
+constexpr int kOverlayBreadcrumbHeight = 30;
+constexpr int kOverlayBreadcrumbTop = 1;
+constexpr int kOverlayBreadcrumbBottom = 1;
+constexpr int kOverlayPageMaxWidth = 960;
 /// 「这一页收掉之后由主人 deleteLater()」那个属性名（见 OverlayHost::disposesOnCloseProperty()）。
 constexpr const char *kDisposesOnCloseProperty = "wtfmlOverlayDisposesOnClose";
+/// 自管理滚动的整页属性名（见 OverlayHost::selfScrollingPageProperty()）。
+constexpr const char *kSelfScrollingPageProperty = "wtfmlSelfScrollingPage";
 
 /// 卡片（整页里那张 / 小提示那张）那一块布的调色板：底出厂是 `Base`（用户单独改过就是那个）。
 QPalette cardChromePalette() {
@@ -144,7 +152,7 @@ OverlayHost::OverlayHost(QWidget *anchor, QWidget *parent) : QWidget(parent), m_
     m_pageLayout->setSpacing(0);
 
     const auto breadcrumb = makePageBreadcrumb(m_pageFrame);
-    breadcrumb.widget->layout()->setContentsMargins(kOverlayPageSide - 10, 6, kOverlayPageSide, 0);
+    m_breadcrumb = breadcrumb.widget;
     m_backButton = breadcrumb.back;
     m_backButton->setObjectName(overlayBackButtonName());
     m_backButton->setToolTip(tr("未保存的改动会丢失。"));
@@ -155,9 +163,8 @@ OverlayHost::OverlayHost(QWidget *anchor, QWidget *parent) : QWidget(parent), m_
     m_pageContent = new QWidget(m_pageFrame);
     m_pageContent->setObjectName(overlayPageContentName());
     m_pageContentLayout = new QVBoxLayout(m_pageContent);
-    // 留白和别的页面一样是那一圈 9 px（见 kOverlayPageMargin）。
-    m_pageContentLayout->setContentsMargins(kOverlayPageSide, 4, kOverlayPageSide, 0);
     m_pageContentLayout->setSpacing(0);
+    updatePageMargins();
 
     // 整页那一档外面套一层滚动区。**不是"以防万一"**：设置页是按它自己的尺寸设计的
     // （实例设置 820x560），而内容区多大是主窗口说了算 —— 窗口一小，页脚那排
@@ -482,6 +489,30 @@ void OverlayHost::setPageHeaderWidget(QWidget *widget) {
 
 const char *OverlayHost::disposesOnCloseProperty() { return kDisposesOnCloseProperty; }
 
+const char *OverlayHost::selfScrollingPageProperty() { return kSelfScrollingPageProperty; }
+
+void OverlayHost::updatePageMargins() {
+    int extra = 0;
+    if (m_pageFrame != nullptr) {
+        const int avail = m_pageFrame->width();
+        if (avail > kOverlayPageMaxWidth) {
+            extra = (avail - kOverlayPageMaxWidth) / 2;
+        }
+    }
+    const int left = kOverlayPageLeft + extra;
+    const int right = kOverlayPageRight + extra;
+    if (m_breadcrumb != nullptr) {
+        m_breadcrumb->setFixedHeight(kOverlayBreadcrumbHeight);
+        if (QLayout *bl = m_breadcrumb->layout()) {
+            bl->setContentsMargins(qMax(0, left - 10), kOverlayBreadcrumbTop, right,
+                                   kOverlayBreadcrumbBottom);
+        }
+    }
+    if (m_pageContentLayout != nullptr) {
+        m_pageContentLayout->setContentsMargins(left, kOverlayPageTop, right, 0);
+    }
+}
+
 void OverlayHost::releaseContent(QVBoxLayout *content) {
     if (content == nullptr) {
         return;
@@ -629,6 +660,9 @@ void OverlayHost::closeOverlay() {
         disconnect(m_pageWidgetFinished);
         m_pageWidget = nullptr;
         releaseContent(m_pageContentLayout);
+        if (m_pageScroll != nullptr) {
+            m_pageScroll->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+        }
         // 收页的钱花在哪一段：还回去（隐藏 + 换父容器）／藏这一层／底下那一页淡进来
         // （`pageAppear()` 要先照一张整窗快照）。超 10 ms 才记一行。
         const qint64 releaseMs = closeClock.restart();
@@ -775,6 +809,7 @@ void OverlayHost::relayout() {
     }
     if (m_pageFrame != nullptr) {
         m_pageFrame->setGeometry(rect());
+        updatePageMargins();
     }
     if (m_promptCard == nullptr) {
         return;
@@ -855,6 +890,11 @@ bool OverlayHost::showPage(QDialog *dialog, const QString &title, int ownerTab) 
         dialog->setParent(area, Qt::Widget);
 
     QElapsedTimer showSeg;
+    if (m_pageScroll != nullptr) {
+        const bool selfScrolling = dialog->property(kSelfScrollingPageProperty).toBool();
+        m_pageScroll->setVerticalScrollBarPolicy(selfScrolling ? Qt::ScrollBarAlwaysOff
+                                                               : Qt::ScrollBarAlwaysOn);
+    }
     area->layout()->addWidget(dialog);
     dialog->setVisible(true);
     relayout();
@@ -926,6 +966,11 @@ int OverlayHost::execEmbedded(QDialog *dialog, const QString &title, bool asPage
     QWidget *area = asPage ? openPage(title, ownerTab) : openPrompt(dismissOnOutsideClick);
     if (area == nullptr || area->layout() == nullptr) {
         return QDialog::Rejected;
+    }
+    if (asPage && m_pageScroll != nullptr) {
+        const bool selfScrolling = dialog->property(kSelfScrollingPageProperty).toBool();
+        m_pageScroll->setVerticalScrollBarPolicy(selfScrolling ? Qt::ScrollBarAlwaysOff
+                                                               : Qt::ScrollBarAlwaysOn);
     }
     area->layout()->addWidget(dialog);
     dialog->setVisible(true);

@@ -82,13 +82,11 @@ int UiInstanceOverridesChecks() {
             const auto stackOf = [](const Dlg &d) {
                 return d.findChild<QStackedWidget *>(Dlg::stackName());
             };
-            // NOTE: 剥法是**结构性的**（`scrollName()` 那层滚动区 + `widget()`），不是
-            // "按名字猜" —— 断言要能盯住"这一层真的在、而且里面装的真是那一页"。
-            // 页是**第一次切过去才建**的（见 InstanceSettingsDialog::ensurePage()）：堆叠页
-            // 那一格只是先占位的空位，所以认页一律按**名字**找，不按堆叠页里的下标。
+            // 页是**第一次切过去才建**的（见 InstanceSettingsDialog::ensurePage()）：表单页外层
+            // 套 `scrollName()`，列表/树/编辑器/日志页直接铺在 slot 里避免三层嵌套。认页一律按
+            // `panelName()` 找。
             const auto pageOf = [](const Dlg &d, const QString &key) -> QWidget * {
-                auto *scroll = d.findChild<QScrollArea *>(Dlg::scrollName(key));
-                return scroll != nullptr ? scroll->widget() : nullptr;
+                return d.findChild<QWidget *>(Dlg::panelName(key));
             };
             // 右栏现在露着的那一页的 objectName（键 → 页，`currentPageKey()` 是唯一出处）。
             const auto currentPanel = [&pageOf](const Dlg &d) {
@@ -357,16 +355,29 @@ int UiInstanceOverridesChecks() {
                 const QString shown = dialog.currentPageKey();
                 if (!shown.isEmpty() && !reachableKeys.contains(shown)) reachableKeys.append(shown);
             }
+            const QSet<QString> formScrollKeys = {
+                Dlg::overviewCategoryKey(), Dlg::launchCategoryKey(),
+                QStringLiteral("operationsmenu"), QStringLiteral("migration"),
+                QStringLiteral("upgrade")};
             QStringList builtPanels;
-            int scrollHit = 0;
+            int formScrollHit = 0;
+            int formScrollExpected = 0;
+            int viewportNoOuterScrollHit = 0;
+            int viewportExpected = 0;
             for (const QString &key : reachableKeys) {
                 QWidget *page = pageOf(dialog, key);
                 if (page == nullptr || page->objectName() != Dlg::panelName(key)) continue;
                 builtPanels.append(page->objectName());
                 auto *scroll = dialog.findChild<QScrollArea *>(Dlg::scrollName(key));
-                scrollHit += (scroll != nullptr && scroll->widget() == page && scroll->widgetResizable())
-                                 ? 1
-                                 : 0;
+                if (formScrollKeys.contains(key)) {
+                    ++formScrollExpected;
+                    formScrollHit += (scroll != nullptr && scroll->widget() == page && scroll->widgetResizable())
+                                         ? 1
+                                         : 0;
+                } else {
+                    ++viewportExpected;
+                    viewportNoOuterScrollHit += (scroll == nullptr) ? 1 : 0;
+                }
             }
             check(builtPanels.size() == reachableKeys.size() && !reachableKeys.isEmpty(),
                   "★ U0a 每一页（第一次切过去才建）都建得出来、objectName 与 panelName() 对得上",
@@ -385,15 +396,14 @@ int UiInstanceOverridesChecks() {
                   "★ U0a stackPageIndexOf() 与堆叠页的实际下标逐条一致",
                   QStringLiteral("对上 %1/%2").arg(indexHit).arg(expectedPanels.size()));
 
-            // 每一页外面套着**它自己那一层**滚动区，名字一一对上。
-            // 这一条钉的是一条布局约束：滚动区落在**每一页自己**身上，
-            // 不能「整页套一层」（那种套法会把左栏那条导航列一起包进去
-            // ⇒ 滚右栏的内容时左栏跟着滚走）。左栏不在任何一层里。
-            check(scrollHit == reachableKeys.size() && !reachableKeys.isEmpty(),
-                  "★ U0a 每一页外面套着**它自己那一层**滚动区（scrollName 与 panelName 一一"
-                  "对上、而且是 widgetResizable）—— 滚轮落在右栏就只滚右栏，那个「左边也"
-                  "跟着滚」的 bug 就是这一条在挡",
-                  QStringLiteral("对上 %1/%2 页").arg(scrollHit).arg(reachableKeys.size()));
+            // 表单页外面套着它自己那一层滚动区，列表/树/编辑器/日志页不套外层滚动区避免三层嵌套。
+            check(formScrollExpected > 0 && formScrollHit == formScrollExpected &&
+                      viewportExpected > 0 && viewportNoOuterScrollHit == viewportExpected,
+                  "★ U0a 表单页套独立滚动区（scrollName 与 panelName 一一对应），"
+                  "列表/树/编辑器/日志页走视口容器不套外层滚动区",
+                  QStringLiteral("表单 %1/%2、视口页无外层滚动 %3/%4")
+                      .arg(formScrollHit).arg(formScrollExpected)
+                      .arg(viewportNoOuterScrollHit).arg(viewportExpected));
 
             // 反过来：左栏**不在任何滚动区里**（装进去的话就又变回那一版了）。
             const auto insideScrollArea = [](const QWidget *widget) {

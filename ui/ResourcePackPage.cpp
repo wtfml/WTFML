@@ -6,6 +6,7 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QSet>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -24,48 +25,77 @@ ResourcePackPage::ResourcePackPage(QWidget *parent) : QWidget(parent) {
     refresh->setObjectName(QStringLiteral("resourcePackRefresh"));
     Theme::markButton(refresh, Theme::ButtonKind::Neutral);
     top->addWidget(refresh);
-    layout->addLayout(top);
-    auto *columns = new QHBoxLayout;
-    const auto addList = [this, columns](const QString &title, const QString &name) {
-        auto *column = new QVBoxLayout;
-        column->addWidget(new QLabel(title, this));
-        auto *list = new QListWidget(this);
+    Theme::addScrollGutterAligned(layout, top);
+    // 上下两段同在一个滚动区里：两张列表随内容撑高、不自己滚，整页只有这一条竖滑条（#136）。
+    m_scroll = new Theme::GutterScrollArea(this);
+    m_scroll->setObjectName(QStringLiteral("resourcePackScroll"));
+    m_scroll->setWidgetResizable(true);
+    m_scroll->setFrameShape(QFrame::NoFrame);
+    m_scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    auto *body = new QWidget(m_scroll);
+    auto *sections = new QVBoxLayout(body);
+    const auto addSection = [this, body, sections](const QString &title, const QString &name, QHBoxLayout *&header) {
+        header = new QHBoxLayout;
+        auto *label = new QLabel(title, body);
+        QFont font = label->font();
+        font.setBold(true);
+        label->setFont(font);
+        header->addWidget(label, 1);
+        sections->addLayout(header);
+        auto *list = new QListWidget(body);
         list->setObjectName(name);
         list->setFrameShape(QFrame::NoFrame);
         list->setSpacing(2);
         list->setSelectionMode(QAbstractItemView::SingleSelection);
-        column->addWidget(list, 1);
-        columns->addLayout(column, 1);
+        list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        list->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+        sections->addWidget(list);
+        // 列表行四周有 spacing 那一圈：标题行的按钮也让这么多，右缘和行底对齐。
+        header->setContentsMargins(0, 0, list->spacing(), 0);
+        // 键盘换行时把当前那一行滚进外层视野（列表自己不滚）。
+        connect(list, &QListWidget::currentItemChanged, this, [this, list](QListWidgetItem *item) {
+            if (item == nullptr || item->isHidden()) return;
+            const QRect rect = list->visualItemRect(item);
+            const QPoint center = list->viewport()->mapTo(m_scroll->widget(), rect.center());
+            m_scroll->ensureVisible(center.x(), center.y(), 0, rect.height() / 2 + list->spacing());
+        });
         return list;
     };
-    m_available = addList(tr("可用"), QStringLiteral("resourcePackAvailable"));
-    m_selected = addList(tr("已启用（上方优先覆盖）"), QStringLiteral("resourcePackSelected"));
+    QHBoxLayout *selectedHeader = nullptr;
+    QHBoxLayout *availableHeader = nullptr;
+    m_selected = addSection(tr("已启用（优先级从高到低）"), QStringLiteral("resourcePackSelected"), selectedHeader);
+    sections->addSpacing(8);
+    m_available = addSection(tr("可用资源包"), QStringLiteral("resourcePackAvailable"), availableHeader);
+    sections->addStretch(1);
+    // 滚动区里的内容右缘离滑条 contentToScrollBarGap()；列表行自带 spacing 那一圈，先扣掉。
+    sections->setContentsMargins(0, 0, Theme::contentToScrollBarGap() - m_selected->spacing(), 0);
+    m_scroll->setWidget(body);
     m_selected->setDragDropMode(QAbstractItemView::InternalMove);
     m_selected->setDefaultDropAction(Qt::MoveAction);
     m_selected->setDragDropOverwriteMode(false);
-    layout->addLayout(columns, 1);
-    auto *actions = new QHBoxLayout;
-    const auto button = [this, actions](const QString &text, const QString &name) {
+    layout->addWidget(m_scroll, 1);
+    const auto button = [this](QHBoxLayout *row, const QString &text, const QString &name) {
         auto *value = new QPushButton(text, this);
         value->setObjectName(name);
         Theme::markButton(value, Theme::ButtonKind::Neutral);
-        actions->addWidget(value);
+        row->addWidget(value);
         return value;
     };
-    m_enable = button(tr("启用 →"), QStringLiteral("resourcePackEnable"));
-    m_disable = button(tr("← 停用"), QStringLiteral("resourcePackDisable"));
-    actions->addStretch();
-    m_up = button(tr("提高优先级"), QStringLiteral("resourcePackUp"));
-    m_down = button(tr("降低优先级"), QStringLiteral("resourcePackDown"));
-    layout->addLayout(actions);
+    m_up = button(selectedHeader, tr("提高优先级"), QStringLiteral("resourcePackUp"));
+    m_down = button(selectedHeader, tr("降低优先级"), QStringLiteral("resourcePackDown"));
+    m_disable = button(selectedHeader, tr("停用"), QStringLiteral("resourcePackDisable"));
+    m_enable = button(availableHeader, tr("启用"), QStringLiteral("resourcePackEnable"));
     m_note = new QLabel(this);
     m_note->setObjectName(QStringLiteral("resourcePackNote"));
     m_note->setWordWrap(true);
-    layout->addWidget(m_note);
+    Theme::addScrollGutterAligned(layout, m_note);
     connect(refresh, &QPushButton::clicked, this, &ResourcePackPage::refreshRequested);
     connect(m_search, &QLineEdit::textChanged, this, [this] { filter(); });
     connect(m_available, &QListWidget::itemSelectionChanged, this, &ResourcePackPage::updateButtons);
     connect(m_selected, &QListWidget::itemSelectionChanged, this, &ResourcePackPage::updateButtons);
+    // 回车 / 双击可用的一项 = 启用它。
+    connect(m_available, &QListWidget::itemActivated, m_enable, &QPushButton::click);
     connect(m_enable, &QPushButton::clicked, this, [this] {
         if (!m_editable || !m_available->currentItem()) return;
         m_loading = true;
@@ -177,5 +207,20 @@ void ResourcePackPage::filter() {
             return haystack.contains(term, Qt::CaseInsensitive);
         }));
     }
+    fitLists();
     updateButtons();
+}
+void ResourcePackPage::fitLists() {
+    // 列表高度按排好版的最后一行现算（滑条交给外层）；空的一段留一行高，免得标题下面贴着下一段。
+    for (QListWidget *list : {m_selected, m_available}) {
+        list->ensurePolished();  // 还没显示时样式表的字体还没落上，量出来的行高偏矮
+        list->doItemsLayout();
+        list->scrollToTop();
+        const int spacing = list->spacing();
+        int bottom = 0;
+        for (int row = 0; row < list->count(); ++row)
+            if (!list->item(row)->isHidden()) bottom = qMax(bottom, list->visualItemRect(list->item(row)).bottom() + 1);
+        if (bottom == 0) bottom = (list->sizeHintForRow(0) > 0 ? list->sizeHintForRow(0) : list->fontMetrics().height() * 2) + spacing;
+        list->setFixedHeight(bottom + spacing + 2 * list->frameWidth());
+    }
 }

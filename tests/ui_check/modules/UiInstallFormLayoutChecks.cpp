@@ -161,34 +161,55 @@ int UiInstallFormLayoutChecks(MainWindowUI &ui, QLineEdit * &installNameEdit, QL
                   .arg(rInstall.right())
                   .arg(rPage.left())
                   .arg(rPage.right()));
-        // 展开一条加载器之后，「安装」**还得在页面上**：那棵树的高度是跟着"展开了几条"
-        // 长的（上限 loaderTreeMaxRows() 行），长到头会不会把按钮顶出这一页、或者让
-        // 名称框被压扁，光看代码看不出来 —— 得让树真长到最高再量一次。
+        // 展开一条加载器之后，「安装」**还得在页面上**：那棵树的高度跟着露出来的行数长
+        // （不封顶、自己不滚），长了之后会不会把按钮顶出这一页、或者让名称框被压扁，
+        // 光看代码看不出来 —— 得让树真长高再量一次。顺带验「显示全部 / 收起」那一行（#136）。
         //
         // NOTE: 底下那些是**临时**条目（用完就删回去）：这一节后面 E 段要验"开局五条
         // 底下都是空的"，留在这儿会让那条红。
         if (loaderTree != nullptr && loaderTree->topLevelItemCount() > 0) {
             QTreeWidgetItem *row = loaderTree->topLevelItem(0);
             const bool wasExpanded = row->isExpanded();
-            for (int i = 0; i < MainWindowUI::loaderTreeMaxRows() + 2; ++i) {
+            const int versions = 3 * MainWindowUI::loaderLatestVersions();
+            for (int i = 0; i < versions; ++i) {
                 auto *child = new QTreeWidgetItem(row);
                 child->setText(MainWindowUI::loaderTreeKeyColumn(),
                                QStringLiteral("47.%1.0").arg(i));
             }
+            MainWindowUI::foldLoaderVersions(row, 0);
             row->setExpanded(true);  // 展开 → 那棵树自己重算高度（挂在 expanded 上）
+            const auto shownRows = [row] {
+                int shown = 0;
+                for (int i = 0; i < row->childCount(); ++i) shown += row->child(i)->isHidden() ? 0 : 1;
+                return shown;
+            };
+            auto *more = loaderTree->findChild<QPushButton *>(MainWindowUI::loaderMoreButtonName());
+            check(more != nullptr && shownRows() == MainWindowUI::loaderLatestVersions() + 1 &&
+                      more->text() == MainWindowUI::loaderShowAllText(versions) &&
+                      (more->focusPolicy() & Qt::TabFocus),
+                  "超过最新几个版本时只列最新的，末行是能用 Tab 到达的「显示全部」",
+                  QString("行=%1 字=%2").arg(shownRows()).arg(more != nullptr ? more->text() : QString()));
+            QTreeWidgetItem *moreRow = row->child(row->childCount() - 1);
+            check(more != nullptr && moreRow->text(0) == more->text() &&
+                      moreRow->data(0, MainWindowUI::rowMoreRole()) == QVariant(false) &&
+                      (moreRow->flags() & Qt::ItemIsSelectable) &&
+                      more->testAttribute(Qt::WA_TransparentForMouseEvents),
+                  "那一行按列表行画：文字在行上、可悬停选中，按钮只管键盘焦点");
+            const int foldedHeight = loaderTree->height();
+            if (more != nullptr) more->click();
+            check(more != nullptr && shownRows() == versions + 1 &&
+                      more->text() == MainWindowUI::loaderShowLatestText() &&
+                      loaderTree->height() > foldedHeight,
+                  "点开后列出全部、末行变「收起」、树跟着长高",
+                  QString("行=%1 高=%2→%3").arg(shownRows()).arg(foldedHeight).arg(loaderTree->height()));
             // 树变高 → 内容布局 → 视口 → 滚动区，每一级 LayoutRequest 都是 post 的，要转几圈才传到头。
             for (int spin = 0; spin < 4; ++spin) QApplication::processEvents();
             const QRect rTreeFull = rectInPage(loaderTree);
             const QRect rInstallFull = rectInPage(installBtn);
-            check(!rTreeFull.isNull() &&
-                      rTreeFull.height() <=
-                          MainWindowUI::loaderTreeMaxRows() * MainWindowUI::versionTreeRowHeight() +
-                              2 * loaderTree->frameWidth() + 2,
-                  "展开很多版本之后，那棵树长到 loaderTreeMaxRows() 行就停（不出滚动条就白长了）",
-                  QString("树高=%1 上限=%2")
-                      .arg(rTreeFull.height())
-                      .arg(MainWindowUI::loaderTreeMaxRows() *
-                               MainWindowUI::versionTreeRowHeight()));
+            check(!rTreeFull.isNull() && rTreeFull.height() >= (versions + 2) * loaderTree->sizeHintForRow(0) &&
+                      loaderTree->verticalScrollBarPolicy() == Qt::ScrollBarAlwaysOff,
+                  "全部列出时树按行数撑开、自己没有竖滚动条（整页只靠安装页那一条）",
+                  QString("树高=%1 行高=%2").arg(rTreeFull.height()).arg(loaderTree->sizeHintForRow(0)));
             // （"遮挡"那条的**回归钉子**）：内容长到超过可视区之后，滚动区
             // 必须真有行程 —— 没有的话底下那几行还是"画不出来、也够不着"，正是用户
             // 报的那个症状。行程由内容最小高度算出来（不依赖窗口实际显示），offscreen

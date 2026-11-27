@@ -184,12 +184,13 @@ public:
         // ---------- 行底：选中 = 选中色淡底，悬停 = hover 淡底，都是内缩 1 px 的圆角块 ----------
         painter->save();
         painter->setRenderHint(QPainter::Antialiasing, true);
+        const RowGeometry g = m_page->layoutRow(option.rect, isDir);
         if (selected || hovered) {
             const Theme::Tokens t = Theme::tokens();
             painter->setPen(Qt::NoPen);
             // 选中色和行尾按钮的底同一个出处（selectionFill），否则按钮会在行上留色块。
             painter->setBrush(selected ? Theme::selectionFill(palette.color(QPalette::Base)) : t.hover);
-            painter->drawRoundedRect(QRectF(option.rect).adjusted(0, 1, 0, -1), Theme::controlRadius(),
+            painter->drawRoundedRect(QRectF(g.row).adjusted(0, 1, 0, -1), Theme::controlRadius(),
                                      Theme::controlRadius());
         }
 
@@ -199,8 +200,6 @@ public:
             const qreal progress = qBound<qreal>(0.0, m_page->m_fadeClock.elapsed() / qreal(Anim::rowAppearMs()), 1.0);
             painter->setOpacity(progress);
         }
-
-        const RowGeometry g = m_page->layoutRow(option.rect, isDir);
 
         // ---------- 行首图标：原样摆在那一格正中（缩放在存进条目之前就做完了） ----------
         if (!g.icon.isNull()) {
@@ -331,12 +330,14 @@ QSize InstanceFilesPage::actionButtonSize() const {
     return m_buttonProbe != nullptr ? m_buttonProbe->sizeHint() : QSize(28, 28);
 }
 
-InstanceFilesPage::RowGeometry InstanceFilesPage::layoutRow(const QRect &rowRect, bool isDir) const {
+InstanceFilesPage::RowGeometry InstanceFilesPage::layoutRow(const QRect &rowRectIn, bool isDir) const {
     // 照搬原来那套行控件的 QHBoxLayout（左右内边距 12、格间距 12）：固定大小的格子在行里
     // 竖直居中，名字那一列吃掉剩下的宽度。
     constexpr int kMargin = 12;
     constexpr int kSpacing = 12;
     RowGeometry g;
+    // 视口页滑条常驻：行右缘让出 wtfmlScrollContentGap（见 Theme::applyViewportScrollGutter）。
+    const QRect rowRect = rowRectIn.adjusted(0, 0, -m_list->property("wtfmlScrollContentGap").toInt(), 0);
     g.row = rowRect;
     const auto centered = [&rowRect](int x, const QSize &size) {
         return QRect(x, rowRect.y() + (rowRect.height() - size.height()) / 2, size.width(), size.height());

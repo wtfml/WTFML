@@ -4,6 +4,7 @@
  */
 
 #include "AccountSkinDialog.hpp"
+#include "AutoHeight.hpp"
 #include "ElidedLabel.hpp"
 #include "InputSizing.hpp"
 
@@ -344,6 +345,7 @@ AccountSkinDialog::AccountSkinDialog(QWidget *parent) : QDialog(parent) {
     m_accountList->setObjectName(accountListName());
     makeListTransparent(m_accountList);
     m_accountList->setItemDelegate(new AccountRowDelegate(m_accountList, &m_currentSkin));
+    AutoHeight::install(m_accountList);  // 账号多少就多高，由整页滚动
     m_accountList->viewport()->installEventFilter(this);
     left->addWidget(m_accountList);
     m_accountList->hide();  // 没有账号时不占位：标题下面直接接入口（见 setAccounts()）
@@ -789,9 +791,6 @@ void AccountSkinDialog::setAccounts(const QList<AccountRow> &rows) {
         }
         m_accountList->setCurrentRow(index);
     }
-    // 高度贴着行数（最多四行，再多就在框里滚）：列表不再有边框，空出一大块会像坏了。
-    const int shown = qBound(1, int(m_accountList->count()), 4);
-    m_accountList->setFixedHeight(shown * kAccountRowHeight + 2);
     refreshButtonStates();
     placeRowActions();  // 末尾会顺带摆「重新登录」
 }
