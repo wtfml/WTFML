@@ -69,7 +69,7 @@ QList<AgentCatalogProvider> providers() {
     {
         AgentCatalogProvider p;
         p.id = QStringLiteral("moonshot");
-        p.name = QStringLiteral("Kimi（Moonshot）");
+        p.name = QCoreApplication::translate("AgentProviderCatalog", "Kimi（Moonshot）");
         p.baseUrl = QStringLiteral("https://api.moonshot.cn/v1");
         p.models = {model(QStringLiteral("kimi-k2-0905-preview"), 262144, 16384),
                     model(QStringLiteral("moonshot-v1-128k"), 131072, 8192)};
@@ -78,7 +78,7 @@ QList<AgentCatalogProvider> providers() {
     {
         AgentCatalogProvider p;
         p.id = QStringLiteral("zhipu");
-        p.name = QStringLiteral("智谱 GLM");
+        p.name = QCoreApplication::translate("AgentProviderCatalog", "智谱 GLM");
         p.baseUrl = QStringLiteral("https://open.bigmodel.cn/api/paas/v4");
         p.models = {model(QStringLiteral("glm-4.6"), 204800, 16384),
                     model(QStringLiteral("glm-4-plus"), 131072, 4096),
@@ -108,7 +108,7 @@ QList<AgentCatalogProvider> providers() {
     {
         AgentCatalogProvider p;
         p.id = QStringLiteral("ollama");
-        p.name = QStringLiteral("Ollama（本机）");
+        p.name = QCoreApplication::translate("AgentProviderCatalog", "Ollama（本机）");
         p.baseUrl = QStringLiteral("http://127.0.0.1:11434/v1");
         p.authMode = QStringLiteral("none");
         p.deployment = QStringLiteral("local");
@@ -121,7 +121,7 @@ QList<AgentCatalogProvider> providers() {
     {
         AgentCatalogProvider p;
         p.id = QStringLiteral("lmstudio");
-        p.name = QStringLiteral("LM Studio（本机）");
+        p.name = QCoreApplication::translate("AgentProviderCatalog", "LM Studio（本机）");
         p.baseUrl = QStringLiteral("http://127.0.0.1:1234/v1");
         p.authMode = QStringLiteral("none");
         p.deployment = QStringLiteral("local");
@@ -200,8 +200,8 @@ QStringList validate() {
                              (url.startsWith(QLatin1String("http://127.0.0.1")) ||
                               url.startsWith(QLatin1String("http://localhost"))));
             if (!ok) {
-                problems.append(QStringLiteral("%1 的 baseUrl 形状不对：%2")
-                                    .arg(provider.id, url));  // i18n-ignore
+                problems.append(QStringLiteral("%1 的 baseUrl 形状不对：%2")  // i18n-ignore
+                                    .arg(provider.id, url));
             }
         }
         QSet<QString> modelIds;
@@ -211,20 +211,20 @@ QStringList validate() {
                 continue;
             }
             if (modelIds.contains(entry.id)) {
-                problems.append(QStringLiteral("%1 里模型 id 重复：%2")
-                                    .arg(provider.id, entry.id));  // i18n-ignore
+                problems.append(QStringLiteral("%1 里模型 id 重复：%2")  // i18n-ignore
+                                    .arg(provider.id, entry.id));
             }
             modelIds.insert(entry.id);
             if (entry.contextWindow != 0 &&
                 (entry.contextWindow < 1024 || entry.contextWindow > 20000000)) {
-                problems.append(QStringLiteral("%1/%2 的上下文上限不可信：%3")
+                problems.append(QStringLiteral("%1/%2 的上下文上限不可信：%3")  // i18n-ignore
                                     .arg(provider.id, entry.id)
-                                    .arg(entry.contextWindow));  // i18n-ignore
+                                    .arg(entry.contextWindow));
             }
             if (entry.maxOutput < 0 || (entry.contextWindow > 0 && entry.maxOutput > entry.contextWindow)) {
-                problems.append(QStringLiteral("%1/%2 的输出上限不合理：%3")
+                problems.append(QStringLiteral("%1/%2 的输出上限不合理：%3")  // i18n-ignore
                                     .arg(provider.id, entry.id)
-                                    .arg(entry.maxOutput));  // i18n-ignore
+                                    .arg(entry.maxOutput));
             }
         }
     }
