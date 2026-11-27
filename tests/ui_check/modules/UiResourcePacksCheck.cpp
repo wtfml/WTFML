@@ -1,4 +1,7 @@
 #include "Support.hpp"
+#include <QDragLeaveEvent>
+#include <QDragMoveEvent>
+#include <QMimeData>
 int UiResourcePacksCheck(QApplication &app) {
 
         const int fontId = QFontDatabase::addApplicationFont(QDir(qEnvironmentVariable("WINDIR")).filePath(QStringLiteral("Fonts/msyh.ttc")));
@@ -132,6 +135,28 @@ int UiResourcePacksCheck(QApplication &app) {
             app.sendEvent(available, &enter);
             expect(requested.size() == active.size() + 1 && requested.last() == QStringLiteral("file/p12.zip"),
                    "Enter on an available pack enables it");
+            // 拖动排序：光标停在外层视口下边缘时外层持续往下滚，离开列表就停。
+            auto *scroll = page.findChild<QScrollArea *>(QStringLiteral("resourcePackScroll"));
+            QScrollBar *bar = scroll->verticalScrollBar();
+            QStringList all{"vanilla"};
+            for (const auto &pack : many) all.append(pack.id);
+            page.setPacks(many, all, original, true);
+            app.processEvents();
+            bar->setValue(0);
+            const QPoint edge = selected->viewport()->mapFrom(scroll->viewport(), QPoint(20, scroll->viewport()->height() - 2));
+            QMimeData mime;
+            QDragMoveEvent move(edge, Qt::MoveAction, &mime, Qt::LeftButton, Qt::NoModifier);
+            app.sendEvent(selected->viewport(), &move);
+            QElapsedTimer clock;
+            clock.start();
+            while (bar->value() == 0 && clock.elapsed() < 2000) app.processEvents(QEventLoop::AllEvents, 20);
+            expect(bar->maximum() > 0 && bar->value() > 0, "dragging near the bottom edge scrolls the outer area");
+            QDragLeaveEvent leave;
+            app.sendEvent(selected->viewport(), &leave);
+            const int stopped = bar->value();
+            clock.restart();
+            while (clock.elapsed() < 100) app.processEvents(QEventLoop::AllEvents, 20);
+            expect(bar->value() == stopped, "leaving the list stops the outer scroll");
             page.hide();
         }
         if (app.arguments().contains(QStringLiteral("--resource-packs-preview"))) {
