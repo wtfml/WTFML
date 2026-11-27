@@ -826,6 +826,10 @@ MainWindow::MainWindow(QWidget *parent)
                 else if (m_presetController && m_presetController->ownsModTask(id)) m_presetController->pauseModDownload(id);
                 else if (m_toolboxController) m_toolboxController->pauseDownloadTask(id);
             },
+            // 「询问智能体」：和崩溃卡片上那一颗走同一条路（另起会话 / 崩溃急救 / 锁实例）。
+            [this](const QString &context, const QString &instanceId) {
+                askAgentAboutCrash(context, instanceId);
+            },
             [this](const QString &key) {
                 // 会话已删除时 openTaskSession() 自己弹「会话不存在」，详情页留着。
                 if (m_agentController == nullptr || !m_agentController->openTaskSession(key.toULongLong())) return;

@@ -65,6 +65,7 @@ QWidget *fieldWithNote(QWidget *parent, QWidget *field, QLabel *note, QWidget *t
 }  // namespace
 
 AgentSettingsPage::AgentSettingsPage(QWidget *parent) : QDialog(parent) {
+    setProperty("wtfmlSelfScrollingPage", true);
     setObjectName(QStringLiteral("agentSettingsPage"));
     setWindowTitle(QCoreApplication::translate("AgentSettingsPage", "API 与模型设置"));
     setModal(true);

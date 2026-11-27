@@ -349,6 +349,8 @@ TaskCenter::Item ActivityCenterController::item(const Tasks::TaskSnapshot &task,
     result.capabilities.exportReport = task.capabilities.canExportReport
                                        && crashRecordAvailable;
     result.capabilities.openCrashDir = task.capabilities.canOpenCrashDir;
+    // 「询问智能体」要的是同一份东西：有那笔崩溃记录才拿得到实例与退出码。
+    result.capabilities.askAgent = result.capabilities.exportReport;
     result.capabilities.openAgentSession = task.capabilities.canOpenAgentSession;
     // 「为什么没有取消」：账本那边明写的优先；「这一类本来允许取消、只是这一段停不得」
     // （加载器安装器在跑、整合包解压…）由这里补一句通用说法 —— 那是执行器的临时状态，

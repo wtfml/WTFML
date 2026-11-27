@@ -151,6 +151,22 @@ void TaskDetailController::action(const QString &key, TaskDetailPage::Action act
     case TaskDetailPage::Action::OpenCrashDir:
         m_crash->openReportsDirectory();
         break;
+    case TaskDetailPage::Action::AskAgent: {
+        // 和崩溃卡片上「使用智能体询问」走同一条路：另起一条崩溃急救会话、锁这次崩的实例。
+        // 先把这一页收起来（那一路要在智能体页上弹 Auto-safe 问话，覆盖层得空出来），
+        // 排到下一轮再叫 —— `evict()` 是请求，同一次调用里就开新东西会撞在还没让开的那一层上。
+        const CrashReportController::AgentHandoff handoff = m_crash->agentHandoff(key);
+        if (!handoff.available || !m_host.askAgent) {
+            log(tr("这次退出没有留下可交给智能体的记录。"));
+            break;
+        }
+        if (m_overlay != nullptr && m_page != nullptr) m_overlay->evict();
+        const auto ask = m_host.askAgent;
+        const QString context = handoff.context;
+        const QString instanceId = handoff.instanceId;
+        QTimer::singleShot(0, this, [ask, context, instanceId] { ask(context, instanceId); });
+        return;  // 页已经收了，下面那一遍重摆没有对象
+    }
     case TaskDetailPage::Action::OpenAgentSession: {
         TaskCenter::Item fresh;
         if (fillItem(key, &fresh) && fresh.capabilities.openAgentSession && m_host.openAgentSession) {

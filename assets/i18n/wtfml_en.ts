@@ -19090,6 +19090,10 @@ You can still remove online players with "Kick…"; output appears in the consol
             <translation>Sign out</translation>
         </message>
         <message>
+            <source>询问智能体</source>
+            <translation>Ask the agent</translation>
+        </message>
+        <message>
             <source>%1 的微软账号外观（含披风）</source>
             <translation>%1's Microsoft skin (with cape)</translation>
         </message>
@@ -30707,6 +30711,10 @@ Close the app using the port, or change the port in General.</translation>
         <message>
             <source>无法打开任务详情页：界面已被另一页占用。</source>
             <translation>Can't open task details while another page is open.</translation>
+        </message>
+        <message>
+            <source>这次退出没有留下可交给智能体的记录。</source>
+            <translation>This exit left no record to hand to the agent.</translation>
         </message>
         <message>
             <source>日志窗口已关闭</source>

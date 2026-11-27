@@ -482,3 +482,5 @@ set_property(TEST ${WTFML_UI_TESTS} APPEND PROPERTY LABELS ci-ui)
 
 
 
+# 账号页那一节要从窗口系统投递滚轮（qpa/qwindowsysteminterface.h）。
+target_link_libraries(ui_legacy_cases PRIVATE Qt6::GuiPrivate)

@@ -218,11 +218,20 @@ public:
     static QString loaderTreeName() { return QStringLiteral("loaderTree"); }
     /// 每一条身份存在第几列。只有一列（和版本树同一个约定）。
     static int loaderTreeKeyColumn() { return 0; }
-    /// 这棵树最高长到几行：五条加载器都收起来时是 5 行，展开其中一条之后按
-    /// "5 + 那条的版本数"往上长，长到这么多行就停（再多就出滚动条）。
-    /// 太小的话展开一条只能看见两三个版本，太大（比如整页铺满）会让「安装」按钮被推到
-    /// 窗口最底下 —— 「安装」键做得大一点、摆在右侧居中，它得一直在看得见的地方。
-    static int loaderTreeMaxRows() { return 10; }
+    /// 展开一条加载器默认只列最新的这么多个版本，其余收在末行「显示全部 %1 个版本」后面。
+    static int loaderLatestVersions() { return 5; }
+    /// 安装页内容底部留给悬浮「安装」按钮的高度。
+    static int installFooterClearance() { return qMax(48, installButtonMinHeight()) + 40; }
+    static QString loaderShowAllText(int total) {
+        return QCoreApplication::translate("MainWindowUI", "显示全部 %1 个版本").arg(total);
+    }
+    static QString loaderShowLatestText() { return QCoreApplication::translate("MainWindowUI", "收起"); }
+    static QString loaderMoreButtonName() { return QStringLiteral("loaderMoreVersions"); }
+    /// 树高 = 现在露着的行数 × 行高。树自己不滚，整页只靠 installScroll 那一条。
+    static void fitLoaderTree(QTreeWidget *tree);
+    /// @p loader 底下从第 @p firstVersion 个子条目起是版本号（新到旧）：超过
+    /// loaderLatestVersions() 个就藏起旧的，末尾加一行带按钮的「显示全部 / 收起」。
+    static void foldLoaderVersions(QTreeWidgetItem *loader, int firstVersion);
     /// 选中了某个加载器时，**其余那几个加载器**那条上写的话（「与【已选中的加载器
     /// 名称】不兼容」）。
     ///
@@ -487,7 +496,10 @@ public:
     /// rowSubTextRole() 上面那段"撞号的表现是屏幕上多出一笔"）。
     static int serverNameRole() { return Qt::UserRole + 16; }
     // NOTE: `Qt::UserRole + 17` 已被行内加载态占用：`LoadingState::rowLoadingRole()`
-    // （ui/LoadingState.hpp，VersionTreeDelegate 认它画点 / 出错 + 重试）。新角色从 +18 起。
+    // （ui/LoadingState.hpp，VersionTreeDelegate 认它画点 / 出错 + 重试）。新角色从 +19 起。
+    /// 加载器末行「显示全部 / 收起」：挂着这一格的行由 VersionTreeDelegate 画成强调色文字 +
+    /// 展开 / 收起箭头；值为 true = 现在已全部列出。
+    static int rowMoreRole() { return Qt::UserRole + 18; }
 
     /// 「服务器列表」那一页的行高：比版本树那个常数**高一档**（多出来的那一档正好是
     /// 第二行小字的高度）。
@@ -2308,6 +2320,7 @@ public:
     static QString taskDetailTargetName() { return QStringLiteral("taskDetailTarget"); }
     static QString taskDetailReportName() { return QStringLiteral("taskDetailReport"); }
     static QString taskDetailCrashDirName() { return QStringLiteral("taskDetailCrashDir"); }
+    static QString taskDetailAskAgentName() { return QStringLiteral("taskDetailAskAgent"); }
     static QString taskDetailCopyName() { return QStringLiteral("taskDetailCopy"); }
     static QString taskDetailCloseName() { return QStringLiteral("taskDetailClose"); }
 
@@ -2322,6 +2335,7 @@ public:
     static QString taskDetailTargetText() { return QCoreApplication::translate("MainWindowUI", "打开目标位置"); }
     static QString taskDetailReportText() { return QCoreApplication::translate("MainWindowUI", "导出错误报告"); }
     static QString taskDetailCrashDirText() { return QCoreApplication::translate("MainWindowUI", "打开崩溃报告目录"); }
+    static QString taskDetailAskAgentText() { return QCoreApplication::translate("MainWindowUI", "询问智能体"); }
     static QString taskDetailCopyText() { return QCoreApplication::translate("MainWindowUI", "复制摘要"); }
     static QString taskDetailCloseText() { return QCoreApplication::translate("MainWindowUI", "关闭"); }
 

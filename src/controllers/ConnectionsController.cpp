@@ -518,6 +518,11 @@ void ConnectionsController::setup() {
         if (item == nullptr) {
             return;
         }
+        // 末行「显示全部 / 收起」：不是版本号，转给盖在它上面的那颗按钮。
+        if (auto *more = qobject_cast<QAbstractButton *>(item->treeWidget()->itemWidget(item, 0))) {
+            more->click();
+            return;
+        }
         // 灰的那几条（选中某个加载器之后其余几条、"正在获取…"/"列表没取到"那两个占位）
         // **不是能点的东西**：点它什么都不该发生。放在最前面是因为"点不动"这件事对
         // 顶层和子条目是同一个道理。

@@ -182,6 +182,9 @@ TaskDetailPage::TaskDetailPage(QWidget *parent) : QDialog(parent) {
     m_crashDirButton = makeActionButton(MainWindowUI::taskDetailCrashDirText(),
                                         Action::OpenCrashDir,
                                         MainWindowUI::taskDetailCrashDirName());
+    // 「询问智能体」和崩溃卡片上那一颗是同一件事（另起一条崩溃急救会话）。
+    m_askAgentButton = makeActionButton(MainWindowUI::taskDetailAskAgentText(), Action::AskAgent,
+                                        MainWindowUI::taskDetailAskAgentName());
     m_sessionButton = makeActionButton(tr("查看会话"), Action::OpenAgentSession,
                                        QStringLiteral("taskDetailAgentSession"));
     m_copyButton = makeActionButton(MainWindowUI::taskDetailCopyText(), Action::CopySummary,
@@ -190,8 +193,9 @@ TaskDetailPage::TaskDetailPage(QWidget *parent) : QDialog(parent) {
                                    MainWindowUI::taskDetailLogName());
     m_targetButton = makeActionButton(MainWindowUI::taskDetailTargetText(), Action::OpenTarget,
                                       MainWindowUI::taskDetailTargetName());
-    for (QPushButton *b : {m_retryButton, m_reportButton, m_recoverButton, m_repairButton,
-                           m_pauseButton, m_cancelButton, m_crashDirButton, m_sessionButton,
+    for (QPushButton *b : {m_retryButton, m_reportButton, m_askAgentButton, m_recoverButton,
+                           m_repairButton, m_pauseButton, m_cancelButton, m_crashDirButton,
+                           m_sessionButton,
                            m_copyButton, m_logButton, m_targetButton}) {
         actions->addWidget(b);
     }
@@ -363,6 +367,7 @@ void TaskDetailPage::rebuild() {
     m_pauseButton->setVisible(m_item.capabilities.pause);
     m_reportButton->setVisible(m_item.capabilities.exportReport);
     m_crashDirButton->setVisible(m_item.capabilities.openCrashDir);
+    m_askAgentButton->setVisible(m_item.capabilities.askAgent);
     m_sessionButton->setVisible(m_item.capabilities.openAgentSession);
     // 「复制摘要」永远在（它不需要任何能力位 —— 摘要就是这一页上那几行字，任何时候都抄得走）。
     m_copyButton->setVisible(!m_key.isEmpty());
@@ -371,8 +376,8 @@ void TaskDetailPage::rebuild() {
     QPushButton *primary = nullptr;
     QList<QPushButton *> secondaries;
     for (QPushButton *b : {m_cancelButton, m_pauseButton, m_sessionButton, m_retryButton, m_reportButton,
-                           m_recoverButton, m_repairButton, m_crashDirButton, m_logButton, m_targetButton,
-                           m_copyButton}) {
+                           m_askAgentButton, m_recoverButton, m_repairButton, m_crashDirButton, m_logButton,
+                           m_targetButton, m_copyButton}) {
         if (b->isHidden()) continue;
         const bool candidate = b == m_retryButton || b == m_reportButton || b == m_recoverButton || b == m_repairButton;
         if (primary == nullptr && candidate) primary = b;

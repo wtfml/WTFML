@@ -37,11 +37,11 @@ int UiUpgradeHistoryChecks(QApplication &app) {
     check(empty != nullptr && empty->isHidden(), "UG8 有记录时那句空态收起来");
 
     auto *detail = dialog.findChild<QLabel *>(UpgradeHistoryDialog::detailName());
-    check(detail != nullptr && detail->text().contains(QStringLiteral("快照：没有")),
+    check(detail != nullptr && detail->text().contains(QStringLiteral("快照：无")),
           "UG8 没有快照的记录明说「没有」（不冒充可恢复）",
           detail != nullptr ? detail->text() : QString());
     check(detail != nullptr && detail->text().contains(QStringLiteral("t-9"))
-              && detail->text().contains(QStringLiteral("原实例"))
+              && detail->text().contains(QStringLiteral("源实例"))
               && detail->text().contains(QStringLiteral("复制 12")),
           "UG8 选中之后下面显示事务号、来源与复制计数",
           detail != nullptr ? detail->text() : QString());

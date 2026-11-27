@@ -51,6 +51,7 @@ QPushButton *makeRowChip(QWidget *parent, const QString &text, const QString &ob
 }  // namespace
 
 UpdateCenterPage::UpdateCenterPage(QWidget *parent) : QDialog(parent) {
+    setProperty("wtfmlSelfScrollingPage", true);
     setObjectName(MainWindowUI::updateCenterPageName());
     setWindowTitle(windowTitle());
     // 只影响"单独拿出来用"（验证工程那几处）：嵌进覆盖层时这一页拿的是内容区的整幅宽。

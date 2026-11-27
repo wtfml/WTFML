@@ -283,6 +283,8 @@ int main(int argc, char *argv[]) {
     // 集成验证会故意制造崩溃，但不会去点那张给人看的崩溃卡片。
     qputenv("WTFML_SUPPRESS_CRASH_DIALOG", QByteArrayLiteral("1"));
     app.setProperty("wtfml.suppressCrashDialog", true);
+    // 崩溃卡片/任务中心上的「询问智能体」会弹一句要不要开 Auto-safe：验证里同样不等人点。
+    app.setProperty("wtfml.suppressAgentPrompt", true);
     AppPaths::setMinecraftDir(QString());
     const QDir root(processSandbox.path());
     const QString settingsDir = root.filePath(QStringLiteral("check-settings"));

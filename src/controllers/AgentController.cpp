@@ -739,7 +739,7 @@ bool AgentController::askAboutCrash(const QString &context, const QString &insta
     m_page->composer()->setPlainText(prompt);
     m_page->composer()->setFocus(Qt::OtherFocusReason);
     onSend(prompt);
-    if (!m_suppressAutoSafeOffer) offerAutoSafeForCrash();
+    offerAutoSafeForCrash();
     return true;
 }
 
@@ -779,6 +779,12 @@ void AgentController::lockCrashInstance(const QString &instanceId) {
 
 void AgentController::offerAutoSafeForCrash() {
     if (m_page == nullptr || m_overlay == nullptr) return;
+    // 验证工程会主动制造崩溃并点这条入口；那里只量会话/模式/实例，不等人点卡片。
+    if (qEnvironmentVariableIntValue("WTFML_SUPPRESS_AGENT_PROMPT") == 1
+        || (QCoreApplication::instance() != nullptr
+            && QCoreApplication::instance()->property("wtfml.suppressAgentPrompt").toBool())) {
+        return;
+    }
     const QString skill = m_workflow.skill().id;
     if (skill != QStringLiteral("crash-rescue") && skill != QStringLiteral("mods")) return;
     if (m_autoSafe.enabled() || m_session.meta.instanceLock.id.isEmpty()) return;

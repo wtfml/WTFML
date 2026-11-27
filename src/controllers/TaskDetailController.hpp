@@ -50,6 +50,10 @@ public:
         /// 「继续未完成操作」：主窗口按报告钥匙把那趟文件操作接着做完。
         std::function<void(const QString &)> recoverOperation;
         std::function<void(const QString &)> pauseTask;
+        /// 「询问智能体」：把这次崩溃的摘要与实例交给智能体页（主窗口那条
+        /// `askAgentAboutCrash()`）。页那一层在调它之前会先把这一页收起来 —— 那一路要
+        /// 在智能体页上弹 Auto-safe 问话，覆盖层得空出来。
+        std::function<void(const QString &context, const QString &instanceId)> askAgent;
         /// 「查看会话」：切到智能体页并打开发起这一项的会话。
         std::function<void(const QString &)> openAgentSession;
     };

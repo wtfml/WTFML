@@ -22,6 +22,7 @@
 #include "MainWindowUI.hpp"
 #include "OverlayHost.hpp"
 #include "PresetEditorPage.hpp"
+#include "AutoHeight.hpp"
 #include "Theme.hpp"
 #include "VersionIcons.hpp"
 
@@ -57,10 +58,9 @@ namespace {
 /// 单独开出来时的大小（内嵌到覆盖层里时由那一层给整个内容区，见 OverlayHost）。
 constexpr int kDialogWidth = 980;
 constexpr int kDialogHeight = 640;
-/// 段表 / 计划表的高度：三四行可见，再多就滚。
+/// 段表 / 计划表的最小高度（给空态和加载态留位置）；内容更多就撑高，由右侧分页滚动。
 constexpr int kSectionListHeight = 118;
 constexpr int kPlanListHeight = 132;
-constexpr int kDetailNavRowHeight = 32;
 constexpr int kDetailPageRole = Qt::UserRole;
 constexpr int kEditorSectionRole = Qt::UserRole + 1;
 /// 预设行上那三个数据槽（外面喂进来的值，页面里只用不翻）。
@@ -73,6 +73,8 @@ constexpr int kRoleBroken = Qt::UserRole + 21;
 constexpr int kRoleDefault = Qt::UserRole + 22;
 /// 搜索用的一份"名字 + 说明"（原先那个代理模型上的过滤串，现在直接挂在这一格上）。
 constexpr int kRoleSearchText = Qt::UserRole + 23;
+/// 详情左栏行高：跟着字体走，九项在默认窗口一屏装下。
+int detailNavRowHeight(const QFont &font) { return QFontMetrics(font).height() + 11; }
 static_assert(kRoleBroken == PresetManagePage::rowBrokenRole(),
               "rowBrokenRole() 是给外面认行用的那把钥匙，两边不许各写各的");  // i18n-ignore
 
@@ -317,7 +319,7 @@ void PresetManagePage::buildDetailLayer() {
     for (const QString &text : {QCoreApplication::translate("PresetManagePage", "概览"), QCoreApplication::translate("PresetManagePage", "从实例提取"),
                                 QCoreApplication::translate("PresetManagePage", "应用到实例")}) {
         auto *item = new QListWidgetItem(text, m_detailNav);
-        item->setSizeHint(QSize(0, kDetailNavRowHeight));
+        item->setSizeHint(QSize(0, detailNavRowHeight(navFont)));
         item->setData(kDetailPageRole, pageIndex++);
     }
     m_detailNav->setCurrentRow(0);
@@ -405,7 +407,7 @@ void PresetManagePage::enableEditorTabs() {
     titles[0] = QCoreApplication::translate("PresetManagePage", "基本设置");
     for (int section = 0; section < titles.size(); ++section) {
         auto *item = new QListWidgetItem(titles.at(section));
-        item->setSizeHint(QSize(0, kDetailNavRowHeight));
+        item->setSizeHint(QSize(0, detailNavRowHeight(m_detailNav->font())));
         item->setData(kEditorSectionRole, section);
         m_detailNav->insertItem(section + 1, item);
     }
@@ -467,12 +469,11 @@ QWidget *PresetManagePage::buildPresetContentSection(QWidget *parent) {
     m_sectionList->setObjectName(sectionListName());
     m_sectionList->setSelectionMode(QAbstractItemView::NoSelection);
     m_sectionList->setFocusPolicy(Qt::NoFocus);
-    m_sectionList->setFixedHeight(kSectionListHeight);
     // 不套第二个白框、也不带自己的外框：这一份的段就摊在页面底色上
     // （实例设置页那一页的勾选组也没有白底）。
     m_sectionList->setFrameShape(QFrame::NoFrame);
     m_sectionList->setStyleSheet(QStringLiteral("QListWidget{background:transparent;border:none;}"));
-    m_sectionList->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    AutoHeight::install(m_sectionList, kSectionListHeight);  // 随段数撑开，由右侧分页那一条滚动
     card->addWidget(m_sectionList);
 
     // 这一份的增删改：**对选中那一份做什么**，所以长在这一份的页上（不是列表底下
@@ -753,7 +754,7 @@ QWidget *PresetManagePage::buildApplySection(QWidget *parent) {
     m_planList->setObjectName(planListName());
     m_planList->setSelectionMode(QAbstractItemView::NoSelection);
     m_planList->setFocusPolicy(Qt::NoFocus);
-    m_planList->setFixedHeight(kPlanListHeight);
+    AutoHeight::install(m_planList, kPlanListHeight);  // 下限给加载态留位置
     card->addWidget(m_planList);
 
     m_planHint = new QLabel(section);

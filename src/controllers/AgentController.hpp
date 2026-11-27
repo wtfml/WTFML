@@ -102,12 +102,6 @@ public:
     /// @param instanceId 崩的那个实例（可为空：空则按主页当前实例、第一次实例工具调用时锁定）。
     bool askAboutCrash(const QString &context, const QString &instanceId = QString());
 
-    /// 测试专用：走 askAboutCrash 的会话/模式/实例那一段，但不弹 Auto-safe 问话。
-    void askAboutCrashForTest(const QString &context, const QString &instanceId) {
-        m_suppressAutoSafeOffer = true;
-        askAboutCrash(context, instanceId);
-        m_suppressAutoSafeOffer = false;
-    }
 
     /// 测试专用：不经过设置页直接摆一份可用的 profile/key。
     void applyProfileForTest(const AgentProviderProfile &profile, const QString &apiKey);
@@ -232,6 +226,4 @@ private:
     bool m_settingsOpenQueued = false;  // 让位后排了下一轮重开 API 设置页
     bool m_shuttingDown = false;
     QString m_autoNoticeShownFor;
-    /// 测试专用：askAboutCrash 不弹 Auto-safe 问话（mw_check 在模态框里会卡住）。
-    bool m_suppressAutoSafeOffer = false;
 };

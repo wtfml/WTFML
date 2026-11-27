@@ -58,6 +58,7 @@ public:
         CopySummary,  ///< 「复制摘要」：把这一项的摘要（含错因）放进剪贴板。
         ExportReport, ///< 「导出错误报告」：把这一趟的事实 + 日志写成一份能发出去的文本。
         OpenCrashDir, ///< 「打开崩溃报告目录」：在文件管理器里打开 `crash-reports/`。
+        AskAgent,    ///< 「询问智能体」：把这次崩溃交给智能体页的崩溃急救会话。
         RepairImport, ///< 打开未完成整合包的本地补齐报告。
         Recover,      ///< 「继续未完成操作」：接着做完那份报告里还没做完的文件操作。
         Pause,
@@ -121,6 +122,7 @@ private:
     QPushButton *m_targetButton = nullptr;
     QPushButton *m_reportButton = nullptr;
     QPushButton *m_crashDirButton = nullptr;
+    QPushButton *m_askAgentButton = nullptr;
     QPushButton *m_sessionButton = nullptr;
     QPushButton *m_copyButton = nullptr;
     QPushButton *m_repairButton = nullptr;

@@ -182,6 +182,7 @@ using ResourceDetail::Header;
 using ResourceDetail::Row;
 
 ResourceDetailPage::ResourceDetailPage(QWidget *parent) : QDialog(parent) {
+    setProperty("wtfmlSelfScrollingPage", true);
     setWindowTitle(tr("资源详情"));
     // 这一页自己要收键盘：那颗「显示快照版」还配着一个裸 Alt（见 keyPressEvent），
     // 而**嵌进覆盖层的时候焦点不在这一页身上** —— `openPage()` 把焦点给了页眉那颗返回

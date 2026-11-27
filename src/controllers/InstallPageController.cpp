@@ -342,6 +342,7 @@ void InstallPageController::fillLoaderVersionItems(int loaderIndex,
             chosenItem = child;
         }
     }
+    MainWindowUI::foldLoaderVersions(item, includeChannels ? 2 : 0);
     // 光标放回"现在钉着的那一条"—— 展开之后一眼看到的就是它。没挑过（空串）时摆在
     // **默认会走的那一档**上：稳定档（它灰了就是最新档），和安装那条路的默认值一致。
     // **这不改选中状态**：选中是 m_selectedLoader 的事，这里只是画光标。
@@ -358,7 +359,7 @@ void InstallPageController::fillLoaderVersionItems(int loaderIndex,
     QTreeWidget *tree = m_owner.m_ui->getLoaderTree();
     // chosenItem 可能是空指针（"这一版一个能装的都没有"那次：连那两档都没有，底下只剩一条
     // 灰的）。那种情况下这一列本来就没有"现在钉着的那一条"可指 —— 什么都不做。
-    if (tree != nullptr && wasExpanded && chosenItem != nullptr) {
+    if (tree != nullptr && wasExpanded && chosenItem != nullptr && !chosenItem->isHidden()) {
         tree->setCurrentItem(chosenItem);
     }
     // 列表是灌在**已经展开**的那一条底下的：条目换了一批，那棵树的高度得跟着重算

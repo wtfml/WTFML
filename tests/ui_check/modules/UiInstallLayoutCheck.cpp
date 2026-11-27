@@ -119,11 +119,13 @@ int UiInstallLayoutCheck(QApplication &app) {
             // Nested layouts post their own LayoutRequest events; one pass only
             // updates the inner tree, not necessarily the outer scroll range.
             for (int pass = 0; pass < 5; ++pass) app.processEvents();
-            expect(tree->verticalScrollBar()->maximum() > 0, "expanded loader list exercises a real scrollbar");
+            expect(tree->verticalScrollBar()->maximum() == 0 && !tree->verticalScrollBar()->isVisible() &&
+                       scroll->verticalScrollBar()->maximum() > 0,
+                   "expanded loader list grows and only the page scrolls");
             expect(tree->viewport()->width() == stableWidth &&
                        VersionTreeDelegate::clearRect(tree->visualItemRect(row)).x() == clearBefore.x() &&
                        VersionTreeDelegate::arrowRect(tree->visualItemRect(row)).x() == arrowBefore.x(),
-                   "scrollbar appearance preserves text width and arrow/clear positions");
+                   "expansion preserves text width and arrow/clear positions");
             scroll->verticalScrollBar()->setValue(scroll->verticalScrollBar()->maximum());
             QTreeWidgetItem *lastVisibleItem = tree->topLevelItem(MainWindowUI::modLoaderNoneIndex());
             tree->scrollToItem(lastVisibleItem);
