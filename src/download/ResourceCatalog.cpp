@@ -1870,6 +1870,9 @@ static QList<VersionEntry> parseCurseForgeDocument(const QJsonDocument &document
     out.reserve(array.size());
     for (const QJsonValue &item : array) {
         const QJsonObject object = item.toObject();
+        if (object.value(QStringLiteral("isServerPack")).toBool()) {
+            continue;
+        }
         VersionEntry entry;
         // 那边**一条就是一个文件**（不是"一个版本里带几个文件"）：每条有自己的 id、文件名
         // 和自己的 `gameVersions`。所以一条直接变成一个 VersionEntry、`files` 里只有它自己

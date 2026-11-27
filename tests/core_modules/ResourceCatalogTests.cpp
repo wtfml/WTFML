@@ -1726,6 +1726,12 @@ void runResourceCatalogTests() {
                   blocked.first().primaryFile()->url.isEmpty() &&
                   !blocked.first().primaryFile()->unavailableNote.isEmpty(),
               "Z7h 平台明确不可用时不构造下载地址");
+        const auto clientVersions = ResourceCatalog::parseVersions(R"({"data":[
+            {"id":8448927,"fileName":"server.zip","isServerPack":true,"isAvailable":false},
+            {"id":8448903,"fileName":"client.zip","isServerPack":false,"isAvailable":true}
+        ]})");
+        check(clientVersions.size() == 1 && clientVersions.first().id == QStringLiteral("8448903"),
+              "Z7h CurseForge 客户端版本列表过滤服务端包");
         // md5 那条**不能**当 sha1 用（algo 2 是 md5）。上面那份夹具两条都有，读对了才是
         // 40 位；这一份只有 md5，读出来必须是空的（不然下载校验会一路失败）。
         check(locked.size() == 1 && locked.first().primaryFile() != nullptr &&
