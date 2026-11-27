@@ -47,7 +47,15 @@
 
 ## 5. API 与网络安全
 
-### 5.1 Provider 兼容子集
+### 5.1 Provider 与模型
+
+设置页先选**厂商**（内置目录 `ui/AgentProviderCatalog`：OpenAI、DeepSeek、通义千问、Kimi、智谱、SiliconFlow、OpenRouter、Ollama、LM Studio、自定义），选完自动填接口地址与认证方式；模型是一颗**可编辑下拉**，「拉取模型列表」走 `GET /models`（复用已有客户端，新增 `AgentModelClient::listModels()`），401/网络/该服务不支持时回落到目录里的内置清单。选中模型后按目录填上下文上限与输出上限。
+
+厂商目录只是界面侧的默认值，不参与策略判定：URL 仍过 `AgentProviderAdapters::validateBaseUrl()`，密钥仍只走 `AgentSecretStore`。订阅制/plan 类入口（OAuth）暂不支持。手调参数（上下文长度、单次最多输出、温度、等待超时、协议适配）收在设置页「高级」里，默认收起。
+
+思考强度是一颗循环胶囊（`off / low / medium / high`，写进 `profile.reasoningEffort`），只在目录标了 `supportsReasoning` 的模型上出现；发送时映射成 `reasoning_effort`，`off` 或不支持时整条不发。
+
+### 5.2 Provider 兼容子集
 
 `POST <base>/chat/completions`；支持 `messages`、`tools`、`tool_choice:auto`、流式 SSE 与非流式 JSON；解析 `delta.content`、`reasoning_content`、`tool_calls`、`finish_reason`、`usage`、`data: [DONE]`。适配项只允许枚举：
 
@@ -63,11 +71,11 @@
 
 工具线上名必须匹配 `^[A-Za-z0-9_-]+$`；内部 `fs.read` 映射为 `fs_read`。错误分类：`NoConfiguration / Unauthorized / RateLimited / Quota / Network / Protocol / ContextOverflow / ToolError / EgressApprovalRequired / EgressBlocked / ApprovalDenied / Cancelled / Internal`；401/403/配额不重试，首字节前网络/429/5xx 最多 2 次（1 s / 4 s，尊重 Retry-After），流开始后失败保留部分文本不自动重发。
 
-### 5.2 凭据
+### 5.3 凭据
 
 API Key 只落 Windows 凭据管理器（`WTFML/Agent/<profileId>`），主路径失败用 DPAPI 后备（QSettings 里的密文）；两条都失败拒绝保存并保留旧值。界面默认星号遮挡、不回显；Key 不进日志、会话、错误、导出或 URL。
 
-### 5.3 网络边界
+### 5.4 网络边界
 
 Base URL 只接受 `https://`；loopback `http://` 需显式勾选并持续提示；拒绝 userinfo、片段、查询串。不跟随重定向、不忽略 TLS 错误；响应 16 MB、SSE 单行 1 MB。
 
@@ -148,9 +156,11 @@ agent/
 
 保守估算 token（CJK 1、ASCII 0.3、其它 1），预算 = `contextWindow − maxOutput − 512`；优先级：系统提示 → 工具 schema → 环境快照 → 最近完整轮次 → 工具结果摘要 → 更早摘要 → 省略标记；永远保留最后一条用户消息与进行中的 assistant/tool 配对。
 
-### 7.3 压缩与摘要
+### 7.3 上下文预算、裁剪与自动另起一段
 
-确定性裁剪并插入「（更早的 N 条消息已省略）」；不做 LLM 摘要；原文仍在会话文件里。
+预算 = 模型上下文上限 − 预留输出 − 512；上限取所选模型在 `ui/AgentProviderCatalog` 里的真实值（选模型时自动填，手改可覆盖）。历史从最新往回装，超预算就裁掉最旧的一段并在原位置插「（更早的 N 条消息已省略）」；assistant/tool 配对不拆开。
+
+每轮发出去之前把用量报给控制器（`AgentLoop::contextBudgetUpdated`，0–100）。**上一轮用掉 ≥ 90% 时，下一次发送另起一条会话**，并在正文前缀带上一段的一句话要点（会话标题 + 最后三条你说的话 + 用过的工具名去重，`carryOverSummary()`）。这里不做 LLM 压缩，原文仍在会话文件里。
 
 ### 7.4 消息转换
 

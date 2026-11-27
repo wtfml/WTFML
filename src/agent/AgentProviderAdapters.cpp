@@ -176,6 +176,10 @@ QJsonObject buildRequest(const AgentProviderProfile &profile, const QList<Agent:
     if (profile.sendTemperature) {
         payload.insert(QStringLiteral("temperature"), profile.temperature);
     }
+    // 思考强度：空串 = 不发（模型不支持时界面那边就不给这个选项）。
+    if (!profile.reasoningEffort.isEmpty() && profile.reasoningEffort != QLatin1String("off")) {
+        payload.insert(QStringLiteral("reasoning_effort"), profile.reasoningEffort);
+    }
     if (!tools.isEmpty()) {
         payload.insert(QStringLiteral("tools"), tools);
         if (profile.sendToolChoice) {

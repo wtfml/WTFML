@@ -91,6 +91,8 @@ signals:
     void turnFinished(const Agent::Message &message);
     void turnFailed(const Agent::Error &error);
     void usageUpdated(const Agent::Usage &usage);
+    /// 这一轮发出去的那份上下文用掉几分满（0–100）。控制器按 ≥90 另起一段对话。
+    void contextBudgetUpdated(int usedPercent, int estimatedTokens);
     void messageAdded(const Agent::Message &message);
     void toolCallStarted(const Agent::ToolCall &call);
     void toolCallFinished(const Agent::ToolCall &call, const AgentToolResult &result);

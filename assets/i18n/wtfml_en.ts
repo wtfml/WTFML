@@ -845,8 +845,30 @@ You can repair without it too; every write then needs a separate Allow click.</t
             <translation>Confirm each step</translation>
         </message>
         <message>
+            <source>上一段对话：%1</source>
+            <translation>Earlier chat: %1</translation>
+        </message>
+        <message>
+            <source>当时问过：</source>
+            <translation>You asked: </translation>
+        </message>
+        <message>
+            <source>已经用过：</source>
+            <translation>Tools already used: </translation>
+        </message>
+        <message>
+            <source>下面接着这一段继续（上下文太长，已经另起一段对话）：
+%1</source>
+            <translation>Continuing from the previous chat (its context was full, so a new chat was started):
+%1</translation>
+        </message>
+        <message>
             <source>当前模式的提示词不可用，请重启启动器后再试。</source>
             <translation>The prompt for the current mode isn't available; restart the launcher and try again.</translation>
+        </message>
+        <message>
+            <source>上一段对话已经接近模型上限，已另起一段。</source>
+            <translation>The previous chat was close to the model limit, so a new chat was started.</translation>
         </message>
         <message>
             <source>本会话已锁定实例：%1</source>
@@ -995,6 +1017,22 @@ This server runs with your Windows user privileges and can access local files an
             <translation>MCP servers</translation>
         </message>
         <message>
+            <source>不发送</source>
+            <translation>Don't send</translation>
+        </message>
+        <message>
+            <source>低</source>
+            <translation>Low</translation>
+        </message>
+        <message>
+            <source>中</source>
+            <translation>Medium</translation>
+        </message>
+        <message>
+            <source>高</source>
+            <translation>High</translation>
+        </message>
+        <message>
             <source>先停止当前回复再切换模式。</source>
             <translation>Stop the current response before switching modes.</translation>
         </message>
@@ -1065,6 +1103,22 @@ This server runs with your Windows user privileges and can access local files an
         <message>
             <source>正在测试连接…</source>
             <translation>Testing connection…</translation>
+        </message>
+        <message>
+            <source>先填 API Key（或保存过）才能拉模型列表。</source>
+            <translation>Enter an API key (or save one) before listing models.</translation>
+        </message>
+        <message>
+            <source>先填接口地址。</source>
+            <translation>Enter the API base URL first.</translation>
+        </message>
+        <message>
+            <source>正在拉取模型列表…</source>
+            <translation>Listing models…</translation>
+        </message>
+        <message>
+            <source>（已用内置清单）</source>
+            <translation> (using the built-in list)</translation>
         </message>
         <message>
             <source>删除模型配置</source>
@@ -2820,6 +2874,14 @@ Location: %4
             <translation>One approval covers a whole transaction: the approved plan runs without step-by-step prompts. It stays in effect as long as it's on, and an audit is written when the transaction ends.</translation>
         </message>
         <message>
+            <source>思考强度</source>
+            <translation>Thinking effort</translation>
+        </message>
+        <message>
+            <source>思考：%1</source>
+            <translation>Thinking: %1</translation>
+        </message>
+        <message>
             <source>Enter 发送 · Shift+Enter 换行</source>
             <translation>Enter to send · Shift+Enter for new line</translation>
         </message>
@@ -2870,6 +2932,10 @@ Location: %4
         <message>
             <source>取消固定</source>
             <translation>Unpin</translation>
+        </message>
+        <message>
+            <source>点一下换下一档（发给支持推理的模型）</source>
+            <translation>Click to cycle (sent only to models that support reasoning)</translation>
         </message>
         <message>
             <source>开始对话</source>
@@ -2960,6 +3026,33 @@ Location: %4
         <message>
             <source>模型 ID 不能为空。</source>
             <translation>Model ID can't be empty.</translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentProviderCatalog</name>
+        <message>
+            <source>通义千问（DashScope）</source>
+            <translation>Qwen (DashScope)</translation>
+        </message>
+        <message>
+            <source>OpenRouter 的模型 id 带厂商前缀，例如 openai/gpt-4.1。</source>
+            <translation>OpenRouter model IDs carry a vendor prefix, for example openai/gpt-4.1.</translation>
+        </message>
+        <message>
+            <source>本机 Ollama 默认不校验密钥；先 `ollama serve`，模型名用 `ollama list` 里的那个。</source>
+            <translation>Local Ollama doesn't check keys by default; run `ollama serve` first and use a model name from `ollama list`.</translation>
+        </message>
+        <message>
+            <source>在 LM Studio 里先开 Local Server。</source>
+            <translation>Start Local Server in LM Studio first.</translation>
+        </message>
+        <message>
+            <source>自定义（OpenAI 兼容）</source>
+            <translation>Custom (OpenAI-compatible)</translation>
+        </message>
+        <message>
+            <source>自建端点或上面没列的服务：自己填接口地址与模型 id。</source>
+            <translation>Self-hosted endpoints or services not listed above: fill in the base URL and model ID yourself.</translation>
         </message>
     </context>
     <context>
@@ -3233,6 +3326,10 @@ Location: %4
             <translation>Invalid auth header mode value.</translation>
         </message>
         <message>
+            <source>思考强度不是允许的枚举值。</source>
+            <translation>Thinking level isn't an allowed value.</translation>
+        </message>
+        <message>
             <source>max_tokens 字段名不是允许的枚举值。</source>
             <translation>Invalid max_tokens field name value.</translation>
         </message>
@@ -3292,18 +3389,6 @@ Location: %4
             <translation>Model service</translation>
         </message>
         <message>
-            <source>OpenAI 兼容接口</source>
-            <translation>OpenAI-compatible API</translation>
-        </message>
-        <message>
-            <source>服务类型</source>
-            <translation>Service type</translation>
-        </message>
-        <message>
-            <source>DeepSeek、通义、Kimi、Ollama 等大多数服务都提供这种接口。</source>
-            <translation>Supported by most providers, including DeepSeek, Qwen, Kimi, and Ollama.</translation>
-        </message>
-        <message>
             <source>默认模型服务</source>
             <translation>Default model service</translation>
         </message>
@@ -3326,14 +3411,6 @@ Location: %4
         <message>
             <source>模型</source>
             <translation>Model</translation>
-        </message>
-        <message>
-            <source>服务商文档中的模型 ID，区分大小写。</source>
-            <translation>Exact model ID from your provider's docs (case-sensitive).</translation>
-        </message>
-        <message>
-            <source>模型单次可读取的最大 token 数，按服务商文档填写；超出上限时服务商将拒绝请求。</source>
-            <translation>Maximum tokens the model can read at once per provider docs; setting too high will be rejected.</translation>
         </message>
         <message>
             <source>单条回答的最大 token 数。</source>
@@ -3448,6 +3525,46 @@ Location: %4
             <translation>Connection</translation>
         </message>
         <message>
+            <source>厂商</source>
+            <translation>Provider</translation>
+        </message>
+        <message>
+            <source>选一家就把接口地址填好，模型可以下拉挑；上面没有的服务选「自定义」，自己填地址与模型 id。</source>
+            <translation>Pick one to fill in the base URL and pick a model from the list; choose Custom for anything not listed.</translation>
+        </message>
+        <message>
+            <source>拉取模型列表</source>
+            <translation>List models</translation>
+        </message>
+        <message>
+            <source>下拉里是这个厂商的常见模型；也可以直接手填，区分大小写。</source>
+            <translation>The list shows this provider's common models; you can also type one in — IDs are case-sensitive.</translation>
+        </message>
+        <message>
+            <source>不发送</source>
+            <translation>Don't send</translation>
+        </message>
+        <message>
+            <source>低</source>
+            <translation>Low</translation>
+        </message>
+        <message>
+            <source>中</source>
+            <translation>Medium</translation>
+        </message>
+        <message>
+            <source>高</source>
+            <translation>High</translation>
+        </message>
+        <message>
+            <source>思考强度</source>
+            <translation>Thinking effort</translation>
+        </message>
+        <message>
+            <source>发给支持推理的模型（如 o3、o4-mini、deepseek-reasoner）；别的模型选「不发送」。</source>
+            <translation>Sent to models that support reasoning (o3, o4-mini, deepseek-reasoner); choose Don't send for others.</translation>
+        </message>
+        <message>
             <source>云端服务</source>
             <translation>Cloud</translation>
         </message>
@@ -3494,6 +3611,14 @@ Location: %4
         <message>
             <source>默认关闭。开启后可执行固定诊断命令（java -version、ping、nslookup、netstat -ano 等），每次均须确认；不开放任意命令。</source>
             <translation>Disabled by default. Allows running fixed diagnostic commands (such as java -version, ping, nslookup, netstat -ano), each requiring confirmation; arbitrary commands aren't allowed.</translation>
+        </message>
+        <message>
+            <source>上下文与采样</source>
+            <translation>Context and sampling</translation>
+        </message>
+        <message>
+            <source>选完模型会按该模型的上限填好；手改会覆盖它。</source>
+            <translation>Filled in from the model's limit once you pick one; editing it overrides that.</translation>
         </message>
         <message>
             <source>协议适配</source>
@@ -3594,6 +3719,22 @@ Location: %4
         <message>
             <source>发送输入的文字，以及关联实例的日志末尾、最新崩溃报告和版本信息。发送前移除账号信息。读取配置及其他文件前须确认。</source>
             <translation>Sends text you type along with the linked instance's log tail, latest crash report, and version info (account info is stripped). Reading configs or other files requires approval.</translation>
+        </message>
+        <message>
+            <source>上下文上限 %1 token；这个模型支持思考强度。</source>
+            <translation>Context limit %1 tokens; this model supports thinking effort.</translation>
+        </message>
+        <message>
+            <source>上下文上限 %1 token。</source>
+            <translation>Context limit %1 tokens.</translation>
+        </message>
+        <message>
+            <source>没有拉到模型列表，已用内置清单。</source>
+            <translation>Couldn't list models; using the built-in list.</translation>
+        </message>
+        <message>
+            <source>已从服务端拉到 %1 个模型。</source>
+            <translation>Listed %1 models from the server.</translation>
         </message>
     </context>
     <context>
@@ -21193,6 +21334,22 @@ How to complete: Open the project page above, find the file matching the game ve
         <message>
             <source>无可用 API Key，需先在设置中配置。</source>
             <translation>No usable API key; configure one in Settings first.</translation>
+        </message>
+        <message>
+            <source>没有可用的 API Key，无法列出模型。</source>
+            <translation>No API key available; can't list models.</translation>
+        </message>
+        <message>
+            <source>列出模型失败（HTTP %1）。</source>
+            <translation>Listing models failed (HTTP %1).</translation>
+        </message>
+        <message>
+            <source>服务端没有返回任何模型。</source>
+            <translation>The server returned no models.</translation>
+        </message>
+        <message>
+            <source>已列出 %1 个模型。</source>
+            <translation>Listed %1 models.</translation>
         </message>
         <message>
             <source>模型响应超过 16 MB 上限，已中止。</source>

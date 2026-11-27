@@ -7,6 +7,7 @@
 #include <QCoreApplication>
 #include "InputSizing.hpp"
 
+#include "AgentProviderCatalog.hpp"
 #include "AgentSecretEdit.hpp"
 #include "SettingsPageParts.hpp"
 #include "Theme.hpp"
@@ -111,11 +112,20 @@ AgentSettingsPage::AgentSettingsPage(QWidget *parent) : QDialog(parent) {
 
     // ---------- 模型服务 ----------
     SettingsGroup *service = addGroup(QCoreApplication::translate("AgentSettingsPage", "模型服务"));
+    // ---------- 模型服务：先选厂商，地址/模型/上限跟着填好 ----------
+    // 「服务类型」那一格原来只有一个「OpenAI 兼容接口」，等于让用户手抄 baseUrl 和模型 id。
+    // 现在这里是内置厂商目录（`AgentProviderCatalog`）：选一家就把地址填好，模型下拉从
+    // `GET /models` 拉，拉不到用表里的清单兜底；选哪个模型就照着目录填上下文上限。
+    // 手填地址/模型 id 仍然可以 —— 选「自定义（OpenAI 兼容）」就是那条路，字段也留在原处。
     m_provider = new QComboBox(content);
     m_provider->setObjectName(QStringLiteral("agentProviderCombo"));
-    m_provider->addItem(QCoreApplication::translate("AgentSettingsPage", "OpenAI 兼容接口"), QStringLiteral("openai-compatible"));
-    row(service, QCoreApplication::translate("AgentSettingsPage", "服务类型"), m_provider, Placement::Column, QString(),
-        QCoreApplication::translate("AgentSettingsPage", "DeepSeek、通义、Kimi、Ollama 等大多数服务都提供这种接口。"));
+    for (const AgentCatalogProvider &provider : AgentProviderCatalog::providers()) {
+        m_provider->addItem(provider.name, provider.id);
+    }
+    row(service, QCoreApplication::translate("AgentSettingsPage", "厂商"), m_provider, Placement::Column, QString(),
+        QCoreApplication::translate("AgentSettingsPage",
+                                    "选一家就把接口地址填好，模型可以下拉挑；"
+                                    "上面没有的服务选「自定义」，自己填地址与模型 id。"));
 
     m_name = new QLineEdit(content);
     m_name->setObjectName(QStringLiteral("agentProfileNameEdit"));
@@ -131,12 +141,40 @@ AgentSettingsPage::AgentSettingsPage(QWidget *parent) : QDialog(parent) {
     m_urlPreview->setTextInteractionFlags(Qt::TextSelectableByMouse);
     row(service, QCoreApplication::translate("AgentSettingsPage", "接口地址"), fieldWithNote(content, m_baseUrl, m_urlPreview), Placement::Wide);
 
-    m_model = new QLineEdit(content);
-    m_model->setObjectName(QStringLiteral("agentModelEdit"));
-    m_model->setPlaceholderText(QCoreApplication::translate("AgentSettingsPage", "例如 deepseek-chat"));
-    InputSizing::shortValue(m_model, 40);  // 模型 ID 如 deepseek-chat、claude-sonnet-4-5-20250929
-    row(service, QCoreApplication::translate("AgentSettingsPage", "模型"), m_model, Placement::Column, QString(),
-        QCoreApplication::translate("AgentSettingsPage", "服务商文档中的模型 ID，区分大小写。"));
+    m_modelCombo = new QComboBox(content);
+    m_modelCombo->setObjectName(QStringLiteral("agentModelCombo"));
+    m_modelCombo->setEditable(true);  // 允许手填：自定义端点与清单里没有的新模型
+    m_modelCombo->setInsertPolicy(QComboBox::NoInsert);
+    m_modelCombo->lineEdit()->setObjectName(QStringLiteral("agentModelEdit"));
+    m_modelCombo->lineEdit()->setPlaceholderText(
+        QCoreApplication::translate("AgentSettingsPage", "例如 deepseek-chat"));
+    InputSizing::shortValue(m_modelCombo, 40);
+    m_refreshModels = new QPushButton(QCoreApplication::translate("AgentSettingsPage", "拉取模型列表"), content);
+    m_refreshModels->setObjectName(QStringLiteral("agentRefreshModelsButton"));
+    m_refreshModels->setCursor(Qt::PointingHandCursor);
+    Theme::markButton(m_refreshModels, Theme::ButtonKind::Ghost);
+    m_modelNote = captionLabel(content, QStringLiteral("agentModelListNote"));
+    m_catalogNote = captionLabel(content, QStringLiteral("agentCatalogNote"));
+    {
+        auto *modelRow = new QWidget(content);
+        modelRow->setObjectName(QStringLiteral("agentModelRow"));
+        auto *layout = new QVBoxLayout(modelRow);
+        layout->setContentsMargins(0, 0, 0, 0);
+        layout->setSpacing(4);
+        auto *comboLine = new QHBoxLayout;
+        comboLine->setContentsMargins(0, 0, 0, 0);
+        comboLine->setSpacing(8);
+        comboLine->addWidget(m_modelCombo, 1);
+        comboLine->addWidget(m_refreshModels, 0);
+        layout->addLayout(comboLine);
+        layout->addWidget(m_modelNote);
+        layout->addWidget(m_catalogNote);
+        row(service, QCoreApplication::translate("AgentSettingsPage", "模型"), modelRow, Placement::Column, QString(),
+            QCoreApplication::translate("AgentSettingsPage",
+                                        "下拉里是这个厂商的常见模型；也可以直接手填，区分大小写。"));
+    }
+    m_modelNote->hide();
+    m_catalogNote->hide();
 
     // API Key 和地址、模型同组：三样都是从服务商那里抄来的。
     m_secret = new AgentSecretEdit(content);
@@ -150,44 +188,22 @@ AgentSettingsPage::AgentSettingsPage(QWidget *parent) : QDialog(parent) {
     row(service, QStringLiteral("API Key"), fieldWithNote(content, m_secret, m_storage, m_clearKeyButton),
         Placement::Wide);
 
-    // ---------- 生成 ----------
+    // ---------- 生成：只留「思考强度」 ----------
+    // 上下文长度 / 单次最多输出 / 温度 / 等待超时 都挪进了「高级」：它们有合理默认值，
+    // 而且选完模型之后上下文与输出上限已经由目录填好了 —— 摆在第一屏只会让人以为必须填。
     SettingsGroup *generation = addGroup(QCoreApplication::translate("AgentSettingsPage", "生成"));
-    // 这一组四个数字框同宽（按上下文长度上限 10000000 的 8 位钉），左右沿都对齐。
-    constexpr int kGenerationDigits = 8;
-    m_contextWindow = new QSpinBox(content);
-    InputSizing::shortValue(m_contextWindow, kGenerationDigits);
-    m_contextWindow->setObjectName(QStringLiteral("agentContextWindowSpin"));
-    m_contextWindow->setRange(1024, 10000000);
-    m_contextWindow->setSingleStep(1024);
-    m_contextWindow->setValue(32768);
-    row(generation, QCoreApplication::translate("AgentSettingsPage", "上下文长度"), m_contextWindow, Placement::Natural, QString(),
-        QCoreApplication::translate("AgentSettingsPage", "模型单次可读取的最大 token 数，按服务商文档填写；"
-                                                         "超出上限时服务商将拒绝请求。"));
-
-    m_maxOutput = new QSpinBox(content);
-    InputSizing::shortValue(m_maxOutput, kGenerationDigits);
-    m_maxOutput->setObjectName(QStringLiteral("agentMaxOutputSpin"));
-    m_maxOutput->setRange(1, 1000000);
-    m_maxOutput->setValue(4096);
-    row(generation, QCoreApplication::translate("AgentSettingsPage", "单次最多输出"), m_maxOutput, Placement::Natural, QString(),
-        QCoreApplication::translate("AgentSettingsPage", "单条回答的最大 token 数。"));
-
-    m_temperature = new QDoubleSpinBox(content);
-    InputSizing::shortValue(m_temperature, kGenerationDigits);
-    m_temperature->setObjectName(QStringLiteral("agentTemperatureSpin"));
-    m_temperature->setRange(0.0, 2.0);
-    m_temperature->setSingleStep(0.1);
-    m_temperature->setValue(0.7);
-    row(generation, QCoreApplication::translate("AgentSettingsPage", "温度"), m_temperature, Placement::Natural, QString(),
-        QCoreApplication::translate("AgentSettingsPage", "越低回答越稳定，越高越发散。排查问题建议 0.3~0.7。"));
-
-    m_timeout = new QSpinBox(content);
-    InputSizing::shortValue(m_timeout, kGenerationDigits);
-    m_timeout->setObjectName(QStringLiteral("agentTimeoutSpin"));
-    m_timeout->setRange(5, 600);
-    m_timeout->setValue(120);
-    m_timeout->setSuffix(QCoreApplication::translate("AgentSettingsPage", " 秒"));
-    row(generation, QCoreApplication::translate("AgentSettingsPage", "等待超时"), m_timeout, Placement::Natural);
+    m_reasoningEffort = new QComboBox(content);
+    m_reasoningEffort->setObjectName(QStringLiteral("agentReasoningEffortCombo"));
+    m_reasoningEffort->addItem(QCoreApplication::translate("AgentSettingsPage", "不发送"),
+                               QString());
+    m_reasoningEffort->addItem(QCoreApplication::translate("AgentSettingsPage", "低"), QStringLiteral("low"));
+    m_reasoningEffort->addItem(QCoreApplication::translate("AgentSettingsPage", "中"), QStringLiteral("medium"));
+    m_reasoningEffort->addItem(QCoreApplication::translate("AgentSettingsPage", "高"), QStringLiteral("high"));
+    row(generation, QCoreApplication::translate("AgentSettingsPage", "思考强度"), m_reasoningEffort,
+        Placement::Column, QString(),
+        QCoreApplication::translate("AgentSettingsPage",
+                                    "发给支持推理的模型（如 o3、o4-mini、deepseek-reasoner）；"
+                                    "别的模型选「不发送」。"));
 
     // ---------- 连接 ----------
     SettingsGroup *connection = addGroup(QCoreApplication::translate("AgentSettingsPage", "连接"));
@@ -234,6 +250,47 @@ AgentSettingsPage::AgentSettingsPage(QWidget *parent) : QDialog(parent) {
                                     "不保存日志原文，也不额外外发。"));
 
     form->addWidget(m_advanced);
+    // ---------- 高级：手调参数（一般不用动） ----------
+    {
+        SettingsGroup *tuning =
+            new SettingsGroup(QCoreApplication::translate("AgentSettingsPage", "上下文与采样"), m_advanced);
+        m_advanced->bodyLayout()->addWidget(tuning);
+        constexpr int kGenerationDigits = 8;
+        m_contextWindow = new QSpinBox(content);
+        InputSizing::shortValue(m_contextWindow, kGenerationDigits);
+        m_contextWindow->setObjectName(QStringLiteral("agentContextWindowSpin"));
+        m_contextWindow->setRange(1024, 10000000);
+        m_contextWindow->setSingleStep(1024);
+        m_contextWindow->setValue(32768);
+        row(tuning, QCoreApplication::translate("AgentSettingsPage", "上下文长度"), m_contextWindow,
+            Placement::Natural, QString(),
+            QCoreApplication::translate("AgentSettingsPage",
+                                        "选完模型会按该模型的上限填好；手改会覆盖它。"));
+        m_maxOutput = new QSpinBox(content);
+        InputSizing::shortValue(m_maxOutput, kGenerationDigits);
+        m_maxOutput->setObjectName(QStringLiteral("agentMaxOutputSpin"));
+        m_maxOutput->setRange(1, 1000000);
+        m_maxOutput->setValue(4096);
+        row(tuning, QCoreApplication::translate("AgentSettingsPage", "单次最多输出"), m_maxOutput,
+            Placement::Natural, QString(),
+            QCoreApplication::translate("AgentSettingsPage", "单条回答的最大 token 数。"));
+        m_temperature = new QDoubleSpinBox(content);
+        InputSizing::shortValue(m_temperature, kGenerationDigits);
+        m_temperature->setObjectName(QStringLiteral("agentTemperatureSpin"));
+        m_temperature->setRange(0.0, 2.0);
+        m_temperature->setSingleStep(0.1);
+        m_temperature->setValue(0.7);
+        row(tuning, QCoreApplication::translate("AgentSettingsPage", "温度"), m_temperature,
+            Placement::Natural, QString(),
+            QCoreApplication::translate("AgentSettingsPage", "越低回答越稳定，越高越发散。排查问题建议 0.3~0.7。"));
+        m_timeout = new QSpinBox(content);
+        InputSizing::shortValue(m_timeout, kGenerationDigits);
+        m_timeout->setObjectName(QStringLiteral("agentTimeoutSpin"));
+        m_timeout->setRange(5, 600);
+        m_timeout->setValue(120);
+        m_timeout->setSuffix(QCoreApplication::translate("AgentSettingsPage", " 秒"));
+        row(tuning, QCoreApplication::translate("AgentSettingsPage", "等待超时"), m_timeout, Placement::Natural);
+    }
     auto *protocol = new SettingsGroup(QCoreApplication::translate("AgentSettingsPage", "协议适配"), m_advanced);
     m_advanced->bodyLayout()->addWidget(protocol);
     m_authMode = new QComboBox(content);
@@ -322,6 +379,23 @@ AgentSettingsPage::AgentSettingsPage(QWidget *parent) : QDialog(parent) {
 
     connect(m_baseUrl, &QLineEdit::textChanged, this, [this] { updateUrlPreview(); });
     connect(m_strict, &QAbstractButton::toggled, this, [this] { updatePrivacyText(); });
+    // 厂商 / 模型联动：换厂商就填地址、换清单；换模型就照目录填上下文与输出上限。
+    connect(m_provider, &QComboBox::currentIndexChanged, this, [this](int) {
+        if (m_applyingCatalog) return;
+        m_availableModels.clear();
+        applyProviderDefaults(m_provider->currentData().toString(), true);
+    });
+    connect(m_modelCombo, &QComboBox::currentTextChanged, this,
+            [this](const QString &text) { applyModelDefaults(text); });
+    connect(m_refreshModels, &QPushButton::clicked, this, &AgentSettingsPage::modelsRequested);
+    // 手改了地址：不再认这一家的清单，让用户自己拉或自己填。
+    connect(m_baseUrl, &QLineEdit::editingFinished, this, [this] {
+        const AgentCatalogProvider matched = AgentProviderCatalog::matchBaseUrl(m_baseUrl->text());
+        if (matched.id.isEmpty() || matched.id == m_provider->currentData().toString()) return;
+        m_applyingCatalog = true;
+        m_provider->setCurrentIndex(qMax(0, m_provider->findData(matched.id)));
+        m_applyingCatalog = false;
+    });
     connect(m_save, &QPushButton::clicked, this, &AgentSettingsPage::saveRequested);
     connect(m_test, &QPushButton::clicked, this, &AgentSettingsPage::testRequested);
     connect(m_mcp, &QPushButton::clicked, this, &AgentSettingsPage::mcpSettingsRequested);
@@ -391,11 +465,21 @@ void AgentSettingsPage::setProfile(const AgentView::ProviderDraft &profile, bool
     m_profileId = profile.id;
     m_name->setText(profile.name);
     m_baseUrl->setText(profile.baseUrl);
-    m_model->setText(profile.model);
+    m_modelCombo->setCurrentText(profile.model);
     m_contextWindow->setValue(profile.contextWindow);
     m_maxOutput->setValue(profile.maxOutput);
     m_temperature->setValue(profile.temperature);
     m_timeout->setValue(profile.timeoutSec);
+    {
+        // 老配置没有 providerId：按地址反查，查得到就顺手把厂商选上（模型下拉也就有清单了）。
+        QString providerId = profile.providerId;
+        if (providerId.isEmpty()) providerId = AgentProviderCatalog::matchBaseUrl(profile.baseUrl).id;
+        m_applyingCatalog = true;
+        m_provider->setCurrentIndex(qMax(0, m_provider->findData(providerId)));
+        m_applyingCatalog = false;
+        refreshModelCombo();
+    }
+    m_reasoningEffort->setCurrentIndex(qMax(0, m_reasoningEffort->findData(profile.reasoningEffort)));
     m_deployment->setCurrentIndex(qMax(0, m_deployment->findData(profile.deployment)));
     m_localHttp->setChecked(profile.localHttpAllowed);
     m_authMode->setCurrentIndex(qMax(0, m_authMode->findData(profile.authMode)));
@@ -430,11 +514,13 @@ AgentView::ProviderDraft AgentSettingsPage::profile() const {
     profile.name = m_name->text().trimmed().isEmpty() ? QCoreApplication::translate("AgentSettingsPage", "默认模型服务")
                                                       : m_name->text().trimmed();
     profile.baseUrl = m_baseUrl->text().trimmed();
-    profile.model = m_model->text().trimmed();
+    profile.model = m_modelCombo->currentText().trimmed();
     profile.contextWindow = m_contextWindow->value();
     profile.maxOutput = m_maxOutput->value();
     profile.temperature = m_temperature->value();
     profile.timeoutSec = m_timeout->value();
+    profile.providerId = m_provider->currentData().toString();
+    profile.reasoningEffort = m_reasoningEffort->currentData().toString();
     profile.deployment = m_deployment->currentData().toString();
     profile.localHttpAllowed = m_localHttp->isChecked();
     profile.authMode = m_authMode->currentData().toString();
@@ -448,6 +534,94 @@ AgentView::ProviderDraft AgentSettingsPage::profile() const {
 }
 
 QString AgentSettingsPage::apiKey() const { return m_secret->text().trimmed(); }
+
+void AgentSettingsPage::applyProviderDefaults(const QString &providerId, bool fillUrl) {
+    const AgentCatalogProvider provider = AgentProviderCatalog::find(providerId);
+    if (provider.id.isEmpty()) return;
+    m_applyingCatalog = true;
+    if (fillUrl && !provider.baseUrl.isEmpty()) m_baseUrl->setText(provider.baseUrl);
+    m_authMode->setCurrentIndex(qMax(0, m_authMode->findData(provider.authMode)));
+    m_deployment->setCurrentIndex(qMax(0, m_deployment->findData(provider.deployment)));
+    m_localHttp->setChecked(provider.localHttpAllowed);
+    m_applyingCatalog = false;
+    m_catalogNote->setText(provider.note);
+    m_catalogNote->setVisible(!provider.note.isEmpty());
+    refreshModelCombo();
+    updateUrlPreview();
+}
+
+void AgentSettingsPage::refreshModelCombo() {
+    const QString providerId = m_provider->currentData().toString();
+    const QString previous = m_modelCombo->currentText();
+    m_applyingCatalog = true;
+    m_modelCombo->clear();
+    QStringList ids;
+    if (!m_availableModels.isEmpty()) {
+        ids = m_availableModels;
+    } else {
+        for (const AgentCatalogModel &model : AgentProviderCatalog::find(providerId).models) {
+            ids.append(model.id);
+        }
+    }
+    for (const QString &id : ids) {
+        const AgentCatalogModel entry = AgentProviderCatalog::findModel(providerId, id);
+        const QString label = entry.name.isEmpty()
+                                  ? (entry.contextWindow > 0
+                                         ? QStringLiteral("%1 · %2K").arg(id, QString::number(
+                                                                              entry.contextWindow / 1024))
+                                         : id)
+                                  : QStringLiteral("%1 · %2").arg(entry.name, id);
+        m_modelCombo->addItem(label, id);
+    }
+    m_modelCombo->setCurrentText(previous);
+    m_applyingCatalog = false;
+}
+
+void AgentSettingsPage::applyModelDefaults(const QString &modelId) {
+    if (m_applyingCatalog || modelId.trimmed().isEmpty()) return;
+    const QString providerId = m_provider->currentData().toString();
+    AgentCatalogModel entry = AgentProviderCatalog::findModel(providerId, modelId);
+    if (entry.id.isEmpty()) entry = AgentProviderCatalog::findModelAnywhere(modelId);
+    if (entry.id.isEmpty()) return;
+    // 上下文与输出上限照目录填（这就是「顶满模型上限」那一条）；用户手改过的值不再被覆盖
+    // 直到他换一个模型。
+    if (entry.contextWindow > 0) m_contextWindow->setValue(entry.contextWindow);
+    if (entry.maxOutput > 0) m_maxOutput->setValue(entry.maxOutput);
+    if (!entry.supportsReasoning && m_reasoningEffort->currentData().toString().isEmpty() == false) {
+        // 换了不支持推理的模型：回到「不发送」，免得服务端拒请求。
+        m_reasoningEffort->setCurrentIndex(0);
+    }
+    m_modelNote->setText(
+        entry.supportsReasoning
+            ? QCoreApplication::translate("AgentSettingsPage",
+                                          "上下文上限 %1 token；这个模型支持思考强度。")
+                  .arg(entry.contextWindow)
+            : QCoreApplication::translate("AgentSettingsPage", "上下文上限 %1 token。")
+                  .arg(entry.contextWindow));
+    m_modelNote->setVisible(entry.contextWindow > 0);
+}
+
+void AgentSettingsPage::setAvailableModels(const QStringList &models) {
+    m_availableModels = models;
+    refreshModelCombo();
+    if (models.isEmpty()) {
+        setModelsNote(QCoreApplication::translate("AgentSettingsPage", "没有拉到模型列表，已用内置清单。"),
+                      false);
+    } else {
+        setModelsNote(QCoreApplication::translate("AgentSettingsPage", "已从服务端拉到 %1 个模型。")
+                          .arg(models.size()),
+                      false);
+    }
+}
+
+void AgentSettingsPage::setModelsNote(const QString &text, bool error) {
+    m_modelNote->setText(text);
+    QPalette pal = palette();
+    pal.setColor(QPalette::WindowText,
+                 error ? Theme::dangerColor(palette()) : palette().color(QPalette::PlaceholderText));
+    m_modelNote->setPalette(pal);
+    m_modelNote->setVisible(!text.isEmpty());
+}
 
 void AgentSettingsPage::setStatus(const QString &text, bool error) {
     m_status->setText(text);

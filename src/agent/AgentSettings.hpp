@@ -25,6 +25,10 @@ struct AgentProviderProfile {
     int timeoutSec = 120;
     /// cloud / local。本地只影响外发说明，不改变 URL 校验。
     QString deployment = QStringLiteral("cloud");
+    /// 内置厂商目录里的 id（`AgentProviderCatalog`）；空 = 用户选了「自定义」或从旧配置读上来。
+    QString providerId;
+    /// 思考强度：off / low / medium / high。空 = 不发送（模型不支持时也留空）。
+    QString reasoningEffort;
     /// bearer / api-key-header / none。none 只用于本地服务。
     QString authMode = QStringLiteral("bearer");
     bool stream = true;

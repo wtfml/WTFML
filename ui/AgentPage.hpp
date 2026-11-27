@@ -71,6 +71,10 @@ public:
     void setSkills(const QList<AgentView::SkillOption> &skills, const QString &currentId);
     /// 工作流的阶段/计划进度那一行（空串收起）。
     void setWorkflowStatus(const QString &text);
+    /// 「思考强度」那颗循环胶囊：空 = 当前模型不支持（整颗收起来）。
+    /// @param levels 可选的档位（值, 显示名），第一项是"不发送"那一档。
+    void setReasoningLevels(const QList<QPair<QString, QString>> &levels, const QString &current);
+    QString reasoningLevel() const;
     /// Auto-safe 开关（S5.7）：只在崩溃急救/模组维护显示；打开后由控制器授权事务。
     void setAutoSafeVisible(bool visible);
     void setAutoSafeEnabled(bool enabled);
@@ -121,6 +125,8 @@ signals:
     void skillChosen(const QString &skillId);
     /// 点了 Auto-safe 开关。
     void autoSafeToggled(bool enabled);
+    /// 用户点了「思考强度」，换了下一档（走一轮：off → low → medium → high → off）。
+    void reasoningLevelChosen(const QString &level);
 
 private:
     /// 强制回到底部并恢复"跟随最新"（切会话、发消息、Ctrl+End）。
@@ -176,6 +182,9 @@ private:
     QWidget *m_skillBar = nullptr;
     QHBoxLayout *m_skillLayout = nullptr;
     QLabel *m_workflowStatus = nullptr;
+    QPushButton *m_reasoningChip = nullptr;
+    QList<QPair<QString, QString>> m_reasoningLevels;
+    int m_reasoningIndex = 0;
     QPushButton *m_autoSafeButton = nullptr;
     AgentComposer *m_composer = nullptr;
     QLabel *m_keyHint = nullptr;

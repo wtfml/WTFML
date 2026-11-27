@@ -51,6 +51,10 @@ public:
     /// P2 修复病例库开关（默认关闭）。
     void setRepairCases(bool enabled);
     bool repairCases() const;
+    /// 厂商目录里拉到的模型 id（`GET /models` 的结果）；空 = 用内置清单。
+    void setAvailableModels(const QStringList &models);
+    /// 列模型的结果（一句人话，写在下拉下面）。
+    void setModelsNote(const QString &text, bool error = false);
 
 signals:
     void saveRequested();
@@ -59,6 +63,10 @@ signals:
     void mcpSettingsRequested();
     void clearKeyRequestedSignal();
     void deleteProfileRequested();
+    /// 「换一批模型」：让控制器拿当前填的地址与 key 去 `GET /models`。
+    void modelsRequested();
+    /// 选了模型/厂商，设置页已经把上下文上限与输出上限照着目录改过了。
+    void modelSelected(const QString &modelId);
 
 private:
     void updateUrlPreview();
@@ -66,6 +74,16 @@ private:
     void updatePrivacyText();
 
     QComboBox *m_provider = nullptr;
+    QComboBox *m_modelCombo = nullptr;
+    QComboBox *m_reasoningEffort = nullptr;
+    QLabel *m_modelNote = nullptr;
+    QLabel *m_catalogNote = nullptr;
+    QPushButton *m_refreshModels = nullptr;
+    QStringList m_availableModels;
+    bool m_applyingCatalog = false;
+    void applyProviderDefaults(const QString &providerId, bool fillUrl);
+    void applyModelDefaults(const QString &modelId);
+    void refreshModelCombo();
     QLineEdit *m_name = nullptr;
     QLineEdit *m_baseUrl = nullptr;
     QLineEdit *m_model = nullptr;

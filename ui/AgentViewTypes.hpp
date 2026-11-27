@@ -83,6 +83,10 @@ struct ProviderDraft {
     double temperature = 0.7;
     int timeoutSec = 120;
     QString deployment = QStringLiteral("cloud");
+    /// 内置厂商目录里的 id（空 = 自定义）。
+    QString providerId;
+    /// 思考强度：off / low / medium / high；空 = 不发。
+    QString reasoningEffort;
     QString authMode = QStringLiteral("bearer");
     bool stream = true;
     QString maxTokensField = QStringLiteral("max_tokens");

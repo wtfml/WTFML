@@ -189,6 +189,7 @@ void AgentLoop::beginRequest(bool isRetry) {
     const QList<Agent::Message> context = AgentContextBuilder::build(
         m_history, systemPrompt, m_config.profile.contextWindow,
         m_config.profile.maxOutput, &report);
+    emit contextBudgetUpdated(report.usedPercent, report.estimatedTokens);
     if (context.isEmpty() && m_history.constLast().role == Agent::Role::User) {
         Agent::Error error;
         error.kind = Agent::ErrorKind::ContextOverflow;

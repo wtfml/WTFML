@@ -11,6 +11,7 @@
 #include "AgentMessageView.hpp"
 #include "AgentMcpPage.hpp"
 #include "AgentPage.hpp"
+#include "AgentProviderCatalog.hpp"
 #include "AgentSecretEdit.hpp"
 #include "AgentApprovalCard.hpp"
 #include "AgentSettingsPage.hpp"
@@ -658,6 +659,88 @@ int UiAgentCheck() {
         check(diagnose != nullptr, "智能体 UI：设置页有诊断命令开关");
         check(settingsPage.diagnoseCommands(), "智能体 UI：诊断命令开关状态能读回");
         settingsPage.close();
+    }
+    {
+        AgentSettingsPage settingsPage;
+        QApplication::processEvents();
+        check(settingsPage.findChild<QPushButton *>(QStringLiteral("agentSettingsMcpButton")) !=
+                  nullptr,
+              "智能体 UI：API 设置页有「MCP 服务器…」入口");
+    }
+    // 厂商目录：选一家就填好地址、模型下拉有清单、选模型就照目录填上下文上限；
+    // 手调参数（上下文/输出/温度/超时）收在「高级」里。
+    {
+        check(AgentProviderCatalog::validate().isEmpty(),
+              "智能体 UI：内置厂商目录自检通过", AgentProviderCatalog::validate().join(QStringLiteral("; ")));
+        AgentSettingsPage settingsPage;
+        settingsPage.show();
+        QApplication::processEvents();
+        auto *provider = settingsPage.findChild<QComboBox *>(QStringLiteral("agentProviderCombo"));
+        auto *modelCombo = settingsPage.findChild<QComboBox *>(QStringLiteral("agentModelCombo"));
+        auto *baseUrl = settingsPage.findChild<QLineEdit *>(QStringLiteral("agentBaseUrlEdit"));
+        auto *contextWindow =
+            settingsPage.findChild<QSpinBox *>(QStringLiteral("agentContextWindowSpin"));
+        check(provider != nullptr && modelCombo != nullptr && modelCombo->isEditable(),
+              "智能体 UI：有厂商下拉和可编辑的模型下拉");
+        const int deepseek = provider != nullptr ? provider->findData(QStringLiteral("deepseek")) : -1;
+        check(deepseek >= 0 && baseUrl != nullptr, "智能体 UI：厂商下拉里有 DeepSeek");
+        if (deepseek >= 0) {
+            provider->setCurrentIndex(deepseek);
+            QApplication::processEvents();
+            check(baseUrl != nullptr && baseUrl->text() == QStringLiteral("https://api.deepseek.com/v1"),
+                  "智能体 UI：选厂商自动填接口地址", baseUrl != nullptr ? baseUrl->text() : QString());
+            check(modelCombo != nullptr && modelCombo->count() >= 2,
+                  "智能体 UI：模型下拉用内置清单兜底",
+                  QString::number(modelCombo != nullptr ? modelCombo->count() : -1));
+            modelCombo->setCurrentText(QStringLiteral("deepseek-reasoner"));
+            QApplication::processEvents();
+            check(contextWindow != nullptr && contextWindow->value() == 65536,
+                  "智能体 UI：选模型按目录填上下文上限",
+                  QString::number(contextWindow != nullptr ? contextWindow->value() : -1));
+            const AgentView::ProviderDraft draft = settingsPage.profile();
+            check(draft.model == QStringLiteral("deepseek-reasoner") &&
+                      draft.providerId == QStringLiteral("deepseek"),
+                  "智能体 UI：模型与厂商都读得回来", draft.model + QStringLiteral(" / ") + draft.providerId);
+        }
+        // 手调参数默认收在高级里：那颗框本身在，但展开位是关着的，而四个数字框在它里面。
+        auto *advanced = settingsPage.findChild<SettingsParts::ExpandSection *>(
+            QStringLiteral("agentAdvancedGroup"));
+        check(advanced != nullptr && !advanced->expanded(),
+              "智能体 UI：上下文/输出/温度/超时在「高级」里，默认收起");
+        bool tuningInsideAdvanced = contextWindow != nullptr && advanced != nullptr;
+        for (QWidget *w = contextWindow; tuningInsideAdvanced && w != nullptr;
+             w = w->parentWidget()) {
+            if (w == advanced) break;
+            if (w->parentWidget() == nullptr) tuningInsideAdvanced = false;
+        }
+        check(tuningInsideAdvanced, "智能体 UI：上下文长度那颗框确实在「高级」里面");
+        // 思考强度：目录里会推理的模型才有那三档。
+        settingsPage.setAvailableModels({});
+        settingsPage.close();
+    }
+    {
+        // 聊天页那颗「思考强度」胶囊：支持推理的模型给多档，不支持就只有"不发送"（收起）。
+        page->setReasoningLevels({{QString(), QStringLiteral("不发送")},
+                                  {QStringLiteral("low"), QStringLiteral("低")},
+                                  {QStringLiteral("medium"), QStringLiteral("中")},
+                                  {QStringLiteral("high"), QStringLiteral("高")}},
+                                 QStringLiteral("medium"));
+        QApplication::processEvents();
+        auto *chip = page->findChild<QPushButton *>(QStringLiteral("agentReasoningChip"));
+        check(chip != nullptr && !chip->isHidden() && page->reasoningLevel() == QStringLiteral("medium"),
+              "智能体 UI：思考强度胶囊显示当前档位",
+              chip != nullptr ? chip->text() : QString());
+        QString chosen;
+        QObject::connect(page, &AgentPage::reasoningLevelChosen, page,
+                         [&chosen](const QString &level) { chosen = level; });
+        if (chip != nullptr) chip->click();
+        QApplication::processEvents();
+        check(chosen == QStringLiteral("high") && page->reasoningLevel() == QStringLiteral("high"),
+              "智能体 UI：点一下换下一档", chosen);
+        page->setReasoningLevels({{QString(), QStringLiteral("不发送")}}, QString());
+        QApplication::processEvents();
+        check(chip != nullptr && chip->isHidden(),
+              "智能体 UI：模型不支持推理时这颗胶囊收起");
     }
     {
         AgentSettingsPage settingsPage;
