@@ -259,6 +259,7 @@ bool AgentApprovalCard::eventFilter(QObject *watched, QEvent *event) {
 
 void AgentApprovalCard::paintEvent(QPaintEvent *) {
     QColor tint = Theme::tokens().warnSoft;
-    tint.setAlpha(Theme::isDark() ? 60 : 150);
+    // 浅色的 warnSoft 是棕色，透明度给高了整张卡发重（#136 批 4）；两档都约为 token 原透明度的 1.6 倍。
+    tint.setAlpha(Theme::isDark() ? 60 : 48);
     paintAgentSoftPanel(this, 12, tint);
 }

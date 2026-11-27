@@ -84,7 +84,8 @@ public:
     }
     void paint(QPainter *p, const QStyleOptionViewItem &option, const QModelIndex &index) const override {
         const Theme::Tokens t = Theme::tokens();
-        const QRect r = option.rect;
+        // 行右缘离滑条留 contentToScrollBarGap()，和上面搜索框右缘对齐（#136 批 4）。
+        const QRect r = option.rect.adjusted(0, 0, -Theme::contentToScrollBarGap(), 0);
         p->save();
         p->setRenderHint(QPainter::Antialiasing);
         if (index.data(kGroupHeaderRole).toBool()) {
@@ -854,7 +855,7 @@ AgentPage::AgentPage(QWidget *parent)
         tint();
         Theme::follow(m_search, tint);
     }
-    sideLayout->addWidget(m_search);
+    Theme::addScrollGutterAligned(sideLayout, m_search);
     sideLayout->addSpacing(4);
 
     m_sessionList = new QListWidget(m_sidebar);
@@ -868,6 +869,7 @@ AgentPage::AgentPage(QWidget *parent)
     m_sessionList->setItemDelegate(new SessionDelegate(m_sessionList));
     m_sessionList->setStyleSheet(QStringLiteral("QListWidget { background: transparent; border: none; outline: none; }"));
     m_sessionList->viewport()->setAutoFillBackground(false);
+    Theme::applyViewportScrollGutter(m_sessionList);
     sideLayout->addWidget(m_sessionList, 1);
     m_sidebar->hide();
     if (qApp != nullptr) qApp->installEventFilter(this);
@@ -1654,8 +1656,8 @@ void AgentPage::beginListRename(QListWidgetItem *item) {
     const QString id = item->data(Qt::UserRole).toString();
     if (!m_metaById.contains(id)) return;
     m_sessionList->scrollToItem(item);
-    // 盖在那一行上：左右各收 2、上下各收 4，正好落在行底色的圆角里。
-    const QRect cell = m_sessionList->visualItemRect(item).adjusted(2, 4, -2, -4);
+    // 盖在那一行上：左右各收 2、上下各收 4，正好落在行底色的圆角里（行底色右缘已让出滑条间距）。
+    const QRect cell = m_sessionList->visualItemRect(item).adjusted(2, 4, -2 - Theme::contentToScrollBarGap(), -4);
     // 输入框底色是半透明的：编辑时这一行的标题和时间先不画，免得字从框底下透上来。
     item->setData(kEditingRole, true);
     auto *edit = new InlineRenameEdit(
