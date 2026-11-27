@@ -627,8 +627,11 @@ void runInstanceUpdateFilterTests() {
             if (reply == &api.modrinthReply) {  // 这一份认的是「盘上这个文件」，sha1 得换成丙的
                 QJsonArray files = entry.value(QStringLiteral("files")).toArray();
                 QJsonObject file = files.at(0).toObject();
-                file.insert(QStringLiteral("hashes"),
-                            QJsonObject{{QStringLiteral("sha1"), otherSha1}});
+                // 只换 sha1、留着 sha512：反查那一层只收两样哈希都有的文件（parseModrinthVersionFiles，
+                // 真接口两样总是一起给）。整个换成只有 sha1 的对象，丙在反查这一步就被跳过、根本进不了判定。
+                QJsonObject hashes = file.value(QStringLiteral("hashes")).toObject();
+                hashes.insert(QStringLiteral("sha1"), otherSha1);
+                file.insert(QStringLiteral("hashes"), hashes);
                 files.replace(0, file);
                 entry.insert(QStringLiteral("files"), files);
             }
@@ -644,6 +647,12 @@ void runInstanceUpdateFilterTests() {
             state = mods->stateButtonAt(InstanceFilesPage::StateFilter::Update);
             const bool two = pumpUntil(
                 [&] { return !state->isHidden() && state->text() == chipText(2); }, 20000);
+            bool askedForOther = false;  // 反查那一发（POST …/version_files）的正文里有没有丙的 sha1
+            for (int i = 0; i < api.requests.size() && i < api.bodies.size(); ++i)
+                if (api.requests.at(i).endsWith(QStringLiteral("/version_files HTTP/1.1")) &&
+                    api.bodies.at(i).contains(otherSha1.toUtf8()))
+                    askedForOther = true;
+            check(askedForOther, "T28.6 重查时反查那一发带上了模组丙的 sha1");
             check(two, "T28.6 重查之后两条可更新", updateDiag());
             if (two) {
                 state->click();
