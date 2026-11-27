@@ -8482,11 +8482,11 @@ Files already moved can be restored from the Recycle Bin.</translation>
         </message>
         <message>
             <source>日志显示模组加载失败。请检查模组版本、加载器或模组间冲突。</source>
-            <translation>Log shows mod loading failed. Check mod versions, the mod loader, or mod conflicts.</translation>
+            <translation>Log shows mod loading failed. Check mod versions, the loader, or mod conflicts.</translation>
         </message>
         <message>
             <source>本次运行生成了新的崩溃报告，可在实例目录的 crash-reports 中查看。</source>
-            <translation>A new crash report was generated for this run; check crash-reports in the instance folder.</translation>
+            <translation>This run generated a new crash report. Check crash-reports in the instance folder.</translation>
         </message>
         <message>
             <source>游戏出现内存访问错误（%1）。请检查设备驱动和安全软件是否影响游戏进程。</source>
