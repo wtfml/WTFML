@@ -60,7 +60,8 @@ constexpr int kTooltipDelayMs = 500;    // 停 500ms 才出
 constexpr int kTooltipWakeMs = 1000;    // 收起后 1 秒内换到相邻控件：不等，立刻出
 constexpr int kTooltipMaxTextWidth = 420;  // 正文最宽 420：到了就换行，字少时框跟着变窄（框高只随行数走）
 constexpr QPoint kTooltipCursorOffset(14, 22);  // 落在鼠标右下方，错开指针本身
-constexpr int kRowHeight = 34;          // 下拉项高
+constexpr int kRowHeight = 30;          // 下拉项高：照 PCL 那种紧凑（它 26），本仓正文 14px 留够点中的余地
+constexpr int kPopupGap = 4;            // 弹层顶边离框底边多远（挂在框正下方，不盖框）
 constexpr int kItemTextInset = 12;      // 项里文字左右各让出多少（paint 里 box 缩 4 + 文字缩 8）
 constexpr int kMaxVisibleItems = 8;     // 最多露 8 项，超出在弹层里滚
 constexpr int kSearchAfterItems = 15;   // 超过这么多项，顶部加搜索框
@@ -115,13 +116,14 @@ void applyTransientBackdrop(QWidget *popup) {
 // 淡入（+ 位移）：`Anim::enabled()` 关着时直接落到位
 // ---------------------------------------------------------------------------
 
-void fadeIn(QWidget *widget, int ms, int risePixels) {
+/// @return 位移那一条动画（没有位移 / 动效关着时为空），调用方要知道"还在滑"时用。
+QPropertyAnimation *fadeIn(QWidget *widget, int ms, int risePixels) {
     if (widget == nullptr) {
-        return;
+        return nullptr;
     }
     if (!Anim::enabled()) {
         widget->setWindowOpacity(1.0);
-        return;
+        return nullptr;
     }
     const QPoint target = widget->pos();
     widget->setWindowOpacity(0.0);
@@ -131,15 +133,17 @@ void fadeIn(QWidget *widget, int ms, int risePixels) {
     fade->setEndValue(1.0);
     fade->setEasingCurve(QEasingCurve::OutCubic);
     fade->start(QAbstractAnimation::DeleteWhenStopped);
-    if (risePixels != 0) {
-        widget->move(target + QPoint(0, risePixels));
-        auto *slide = new QPropertyAnimation(widget, "pos", widget);
-        slide->setDuration(ms);
-        slide->setStartValue(widget->pos());
-        slide->setEndValue(target);
-        slide->setEasingCurve(QEasingCurve::OutCubic);
-        slide->start(QAbstractAnimation::DeleteWhenStopped);
+    if (risePixels == 0) {
+        return nullptr;
     }
+    widget->move(target + QPoint(0, risePixels));
+    auto *slide = new QPropertyAnimation(widget, "pos", widget);
+    slide->setDuration(ms);
+    slide->setStartValue(widget->pos());
+    slide->setEndValue(target);
+    slide->setEasingCurve(QEasingCurve::OutCubic);
+    slide->start(QAbstractAnimation::DeleteWhenStopped);
+    return slide;
 }
 
 // ---------------------------------------------------------------------------
@@ -439,12 +443,15 @@ private:
 };
 
 // ---------------------------------------------------------------------------
-// 下拉弹层的项：34 高、悬停淡底、选中 = 强调淡底 + 强调字（不画勾不画条）
+// 下拉弹层的项：30 高；当前值 = 强调淡底 + 强调字，悬停 / 键盘停在的那一项 = 更淡一档的强调底
+// （PCL 同款两档：当前项和"手指着的"那一项一眼分得开）。不画勾不画条。
 // ---------------------------------------------------------------------------
 
 class PopupItemDelegate : public QStyledItemDelegate {
 public:
-    explicit PopupItemDelegate(QObject *parent) : QStyledItemDelegate(parent) {}
+    /// @p combo 给了就按它的 currentIndex 认"当前值"；补全列表那种没有当前值的不给，选中那一行就是当前。
+    explicit PopupItemDelegate(QObject *parent, QComboBox *combo = nullptr)
+        : QStyledItemDelegate(parent), m_combo(combo) {}
 
     QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override {
         const QFontMetrics metrics(Theme::textFont(option.font, Theme::TextRole::Body));
@@ -457,23 +464,30 @@ public:
         const Theme::Tokens tokens = Theme::tokens();
         painter->save();
         painter->setRenderHint(QPainter::Antialiasing, true);
-        const QRect box = option.rect.adjusted(4, 3, -4, -3);  // 项之间留 6px
+        const QRect box = option.rect.adjusted(4, 1, -4, -1);  // 项之间留 2px：紧凑，但两块高亮不粘成一条
         const bool selected = (option.state & QStyle::State_Selected) != 0;
         const bool hover = (option.state & QStyle::State_MouseOver) != 0;
+        // ★ 下拉弹层里 Qt 让"选中"跟着鼠标 / ↑↓ 走，所以 State_Selected 是"指着的那一项"，
+        // 不是下拉框现在的值 —— 当前值要问下拉框自己。
+        const bool current = m_combo.isNull() ? selected : index.row() == m_combo->currentIndex();
+        const bool pointed = m_combo.isNull() ? hover : (selected || hover);
         painter->setPen(Qt::NoPen);
-        if (selected) {
+        if (current) {
             painter->setBrush(tokens.selected);
-            painter->drawRoundedRect(box, 8, 8);
-        } else if (hover) {
-            painter->setBrush(tokens.hover);
-            painter->drawRoundedRect(box, 8, 8);
+            painter->drawRoundedRect(box, 6, 6);
+        } else if (pointed) {
+            painter->setBrush(tokens.accentSoft2);
+            painter->drawRoundedRect(box, 6, 6);
         }
         painter->setFont(Theme::textFont(option.font, Theme::TextRole::Body));
-        painter->setPen(selected ? option.palette.color(QPalette::Link) : tokens.text);
+        painter->setPen(current ? option.palette.color(QPalette::Link) : tokens.text);
         painter->drawText(box.adjusted(8, 0, -8, 0), Qt::AlignLeft | Qt::AlignVCenter,
                           index.data(Qt::DisplayRole).toString());
         painter->restore();
     }
+
+private:
+    QPointer<QComboBox> m_combo;
 };
 
 /// 弹层上下那 16px 的渐隐：项滚到边上时淡进那层玻璃，不硬切。
@@ -517,6 +531,11 @@ public:
     }
 
     bool eventFilter(QObject *watched, QEvent *event) override {
+        if (watched == m_combo.data() && event->type() == QEvent::Paint) {
+            static_cast<QObject *>(m_combo.data())->event(event);  // 先照常画完，细边压在最上面
+            paintOutline();
+            return true;
+        }
         if (watched == m_view) {
             if (event->type() == QEvent::Show) {
                 decoratePopup();
@@ -533,16 +552,19 @@ public:
             // Qt 每次弹出都会把那两块重新摆出来，而且在 show 之后还要再跑一趟
             // `updateScrollers()`：当场藏一次不够，排到下一拍再藏一次。
             hideScrollers();
+            if (Anim::enabled()) {
+                m_popup->setWindowOpacity(0.0);  // 摆到位、起动效之前别在 Qt 摆的位置上闪一帧
+            }
+            m_combo->update();  // 框换展开态（细边转强调色）
             QTimer::singleShot(0, this, [this] {
                 if (m_popup.isNull() || !m_popup->isVisible()) return;
                 hideScrollers();
                 fitPopup();
-                const QScreen *screen = m_combo->screen();
-                const int rise = screen != nullptr
-                    ? qBound(0, screen->availableGeometry().bottom() - m_popup->frameGeometry().bottom(), 4)
-                    : 4;
-                fadeIn(m_popup.data(), kPopupFadeMs, rise);
+                // 从框下沿往下滑出来（翻到上方时从框上沿往上），同时淡入。
+                m_slide = fadeIn(m_popup.data(), kPopupFadeMs, m_above ? kPopupGap : -kPopupGap);
             });
+        } else if (event->type() == QEvent::Hide) {
+            m_combo->update();
         } else if (event->type() == QEvent::Paint) {
             // 先铺那一层磨砂玻璃，再让弹层自己把项画上去（容器自身被样式表清成透明）。
             QPainter painter(m_popup.data());
@@ -575,8 +597,8 @@ private:
                 layout->setContentsMargins(kPopupPadding, kPopupPadding, kPopupPadding, kPopupPadding);
                 layout->setSpacing(0);
             }
-            // ★ 限高只能钉在**视图**上：`QComboBox::setMaxVisibleItems()` 在 Fusion + 样式表
-            // 这一支上不管用（弹层是"按整张表撑开"的，45 项就是整屏 —— 用户报的就是这个）。
+            // ★ 限高钉在**视图**上：Fusion 原来那种"当前项盖在框上"的弹法下 `setMaxVisibleItems()`
+            // 不管用（45 项就是整屏）。#337 起样式已改成挂在框下方，这里照旧钉死，不依赖 Qt 那一支。
             // 弹层容器按视图的尺寸算，所以把视图按住就等于弹层按住。
             m_view->setMaximumHeight(kMaxVisibleItems * kRowHeight + 2);
             ensureThumb();
@@ -669,9 +691,15 @@ private:
             return layout->sizeHint().height() + 2 * (frame != nullptr ? frame->frameWidth() : 0);
         };
         int height = totalHeight();
-        // 屏幕放不下：只收视图那一截，弹层本身不许越出可用区。
+        // 挂在框正下方（PCL / HMCL / XMCL 都是这样）：顶边 = 框底 + kPopupGap，左缘对齐框左缘。
+        // 下面放不下、上面更宽裕才翻到框上方；两边都放不下就挑大的那边、收视图那一截。
+        const QRect anchor(m_combo->mapToGlobal(QPoint(0, 0)), m_combo->size());
+        m_above = false;
         if (available.isValid()) {
-            const int allowed = qMax(kRowHeight, available.height());
+            const int roomBelow = available.bottom() - anchor.bottom() - kPopupGap;
+            const int roomAbove = anchor.top() - available.top() - kPopupGap;
+            m_above = height > roomBelow && roomAbove > roomBelow;
+            const int allowed = qMax(kRowHeight, m_above ? roomAbove : roomBelow);
             if (height > allowed && rows > 1) {
                 const int viewHeight = qMax(kRowHeight, m_view->height() - (height - allowed));
                 m_view->setFixedHeight(viewHeight);
@@ -681,7 +709,7 @@ private:
         // 宽度：弹层是 Qt 按**外面那个下拉框**的宽摆的（它不看项有多宽），而项的文字左右
         // 各让出 12px、弹层自己还有 6px 内边距 —— 一行放不下的时候就切字（不带省略号）。
         // 这里按最宽那一项把弹层撑开，屏幕放不下才收。
-        int width = m_popup->width();
+        int width = qMax(m_popup->width(), anchor.width());  // 至少和框一样宽
         const int widestItem = m_view->sizeHintForColumn(0);
         if (widestItem > 0) {
             const auto *frame = qobject_cast<QFrame *>(m_popup.data());
@@ -694,15 +722,39 @@ private:
         if (m_popup->height() != height || m_popup->width() != width) {
             m_popup->resize(width, height);
         }
-        if (available.isValid()) {
-            const QRect frame = m_popup->frameGeometry();
-            const int left = qBound(available.left(), frame.left(),
-                                    qMax(available.left(), available.right() - frame.width() + 1));
-            const int top = qBound(available.top(), frame.top(),
-                                   qMax(available.top(), available.bottom() - frame.height() + 1));
-            if (frame.topLeft() != QPoint(left, top)) m_popup->move(left, top);
+        // 滑入那 150ms 里别把它拽回终点（动画自己会落到这里算的那个位置）。
+        const bool sliding = !m_slide.isNull() && m_slide->state() == QAbstractAnimation::Running;
+        if (available.isValid() && !sliding) {
+            // 比框宽的部分向右撑；右边出屏才整块往左让。
+            const int left = qBound(available.left(), anchor.left(),
+                                    qMax(available.left(), available.right() - width + 1));
+            const int wantTop = m_above ? anchor.top() - kPopupGap - height : anchor.bottom() + 1 + kPopupGap;
+            const int top = qBound(available.top(), wantTop, qMax(available.top(), available.bottom() - height + 1));
+            if (m_popup->frameGeometry().topLeft() != QPoint(left, top)) m_popup->move(left, top);
         }
         m_fitting = false;
+    }
+
+    /// 收起态和输入框分开的那一笔：一圈 1px 细边（输入框不描线）。悬停加深一档，展开着换强调色
+    /// （PCL 同款三档：常态 / 悬停 / 展开）。禁用不画（禁用那一档本来就不描线）。
+    /// 画在最外那 1px 上：3px 透明边那条键盘焦点环槽不动，盒子不长大。
+    void paintOutline() {
+        if (m_combo.isNull() || !m_combo->isEnabled()) {
+            return;
+        }
+        const Theme::Tokens tokens = Theme::tokens();
+        QColor ink = tokens.stroke;
+        if (!m_popup.isNull() && m_popup->isVisible()) {
+            ink = tokens.focus;
+        } else if (m_combo->underMouse()) {
+            ink.setAlphaF(qMin(1.0f, ink.alphaF() * 2));
+        }
+        QPainter painter(m_combo.data());
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        painter.setPen(QPen(ink, 1));
+        painter.setBrush(Qt::NoBrush);
+        const qreal radius = Theme::controlRadius() - 0.5;
+        painter.drawRoundedRect(QRectF(m_combo->rect()).adjusted(0.5, 0.5, -0.5, -0.5), radius, radius);
     }
 
     void ensureFades() {
@@ -797,6 +849,8 @@ private:
     QPointer<QAbstractItemView> m_view;
     QPointer<QWidget> m_popup;
     bool m_fitting = false;  ///< 正在按项数摆高：`resize()` 会回灌 Resize 事件，别自己套自己
+    bool m_above = false;    ///< 这一次翻到了框上方（下方放不下）
+    QPointer<QPropertyAnimation> m_slide;
     QPointer<QScrollBar> m_thumbBar;
     QPointer<QGraphicsOpacityEffect> m_thumbEffect;
     QPointer<QLineEdit> m_search;
@@ -834,7 +888,7 @@ protected:
         // 这个代理类在匿名命名空间里（没有 Q_OBJECT，moc 认不到），认它靠挂在身上的属性。
         auto *delegate = view->itemDelegate();
         if (delegate == nullptr || !delegate->property("wtfmlPopupDelegate").toBool()) {
-            auto *popupDelegate = new PopupItemDelegate(view);
+            auto *popupDelegate = new PopupItemDelegate(view, combo);
             popupDelegate->setProperty("wtfmlPopupDelegate", true);
             view->setItemDelegate(popupDelegate);
         }
@@ -854,6 +908,7 @@ protected:
         }
         auto *decorator = new ComboDecorator(combo, view);
         view->installEventFilter(decorator);
+        combo->installEventFilter(decorator);  // 收起态那圈细边
         return false;
     }
 };
@@ -1018,6 +1073,9 @@ bool Popups::isTextButton(const QWidget *widget) {
 }
 
 void Popups::install(QApplication &app) {
+    // Qt 自己那套"下拉卷帘"（系统开着组合框动画时）会先抓一张不透明截图卷出来，和我们的
+    // 半透明弹层 + 滑入淡入打架：关掉，动效只走 ComboDecorator 那一份。
+    QApplication::setEffectEnabled(Qt::UI_AnimateCombo, false);
     if (app.findChild<QObject *>(QStringLiteral("wtfmlTooltipDriver")) == nullptr) {
         new TooltipDriver(app);
     }

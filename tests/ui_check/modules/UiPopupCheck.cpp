@@ -16,11 +16,13 @@
 #include <QMenu>
 #include <QScreen>
 #include <QScrollBar>
+#include <QStyle>
 #include <QFrame>
 #include <QVBoxLayout>
 
 namespace {
-constexpr int kPopupRowHeight = 34;
+constexpr int kPopupRowHeight = 30;  // Popups.cpp kRowHeight
+constexpr int kPopupGap = 4;         // Popups.cpp kPopupGap：弹层顶边离框底边
 }
 
 namespace {
@@ -268,18 +270,33 @@ int UiPopupCheck(QApplication &app) {
                "下拉弹层是透明底的独立窗口（磨砂才透得出来）");
         expect(view != nullptr && view->itemDelegate() != nullptr &&
                    view->itemDelegate()->property("wtfmlPopupDelegate").toBool(),
-               "下拉那一列换成了自绘代理（项高 34 / 悬停淡底 / 选中强调淡底）");
+               "下拉那一列换成了自绘代理（项高 30 / 悬停淡底 / 当前项强调淡底）");
         if (view != nullptr) {
             const QRect rowRect = view->visualRect(view->model()->index(0, 0));
-            expect(rowRect.height() == 34, "项高 34",
+            expect(rowRect.height() == kPopupRowHeight, "项高 30（照 PCL 收紧）",
                    QStringLiteral("量到 %1").arg(rowRect.height()));
         }
-        expect(popup != nullptr && popup->height() <= 34 * 8 + 12 + 4,
+        expect(popup != nullptr && popup->height() <= kPopupRowHeight * 8 + 12 + 4,
                "弹层高度压在 8 项以内",
                QStringLiteral("%1 px").arg(popup != nullptr ? popup->height() : -1));
         expect(popup != nullptr &&
                    popup->findChild<QLineEdit *>(QStringLiteral("wtfmlPopupSearch")) == nullptr,
                "短列表（5 项）没有搜索框");
+        // #337：弹层**挂在框正下方**（不是 Fusion 那种当前项对齐、整张表盖在框上）。
+        if (popup != nullptr) {
+            const QRect frame = popup->frameGeometry();
+            const QPoint comboBottomLeft = shortCombo->mapToGlobal(QPoint(0, shortCombo->height()));
+            // ±1：`wtfml.popups-scale`（1.25 倍）下逻辑坐标来回换算会差一像素。
+            expect(qAbs(frame.top() - (comboBottomLeft.y() + kPopupGap)) <= 1 &&
+                       qAbs(frame.left() - comboBottomLeft.x()) <= 1 &&
+                       frame.width() >= shortCombo->width(),
+                   "弹层顶边 = 框底边 + 4、左缘对齐框左缘、宽度不小于框宽（不盖住框）",
+                   QStringLiteral("弹层 (%1,%2) 宽 %3 / 框底左 (%4,%5) 宽 %6")
+                       .arg(frame.left()).arg(frame.top()).arg(frame.width())
+                       .arg(comboBottomLeft.x()).arg(comboBottomLeft.y()).arg(shortCombo->width()));
+        }
+        expect(shortCombo->style()->styleHint(QStyle::SH_ComboBox_Popup, nullptr, shortCombo) == 0,
+               "样式不再要求「当前项盖在框上」那种弹法（SH_ComboBox_Popup = 0）");
         // 5 项装得下：这里**不该**有滚动（以前弹层矮一截，靠"内容溢出"才意外滚得起来）。
         const int shortScrollMax = view != nullptr ? view->verticalScrollBar()->maximum() : 0;
         expect(view != nullptr && shortScrollMax == 0, "5 项装得下就不滚（滚动上限 0）",
@@ -362,6 +379,30 @@ int UiPopupCheck(QApplication &app) {
         edgeCombo->hidePopup();
         QApplication::processEvents();
 
+        // 框贴在屏幕底边：下面放不下 ⇒ 翻到框**上方**，弹层底边 = 框顶边 − 4，仍不盖框。
+        QWidget bottomHost;
+        auto *bottomCombo = makeCombo(&bottomHost, 6);
+        bottomCombo->setFixedWidth(160);
+        bottomHost.resize(160, 40);
+        bottomHost.move(screenArea.left() + 40, screenArea.bottom() - bottomHost.height() + 1);
+        bottomHost.show();
+        QApplication::processEvents();
+        bottomCombo->showPopup();
+        QApplication::processEvents();
+        if (QWidget *bottomPopup = bottomCombo->view() != nullptr ? bottomCombo->view()->window() : nullptr) {
+            const QRect frame = bottomPopup->frameGeometry();
+            const QPoint comboTopLeft = bottomCombo->mapToGlobal(QPoint(0, 0));
+            expect(qAbs(frame.bottom() + 1 + kPopupGap - comboTopLeft.y()) <= 1 &&
+                       qAbs(frame.left() - comboTopLeft.x()) <= 1,
+                   "下方放不下才翻到框上方：弹层底边 = 框顶边 − 4、左缘对齐",
+                   QStringLiteral("弹层 %1..%2 / 框顶 %3 / 左 %4 vs %5")
+                       .arg(frame.top()).arg(frame.bottom()).arg(comboTopLeft.y())
+                       .arg(frame.left()).arg(comboTopLeft.x()));
+        }
+        bottomCombo->hidePopup();
+        bottomHost.hide();
+        QApplication::processEvents();
+
         // 长列表：顶上多一条搜索框，键入只留匹配项。
         longCombo->showPopup();
         QApplication::processEvents();
@@ -377,7 +418,7 @@ int UiPopupCheck(QApplication &app) {
         expect(longView != nullptr && longScrollMax > 0,
                "内容超出 8 项时弹层里能滚（滚轮 / 拖动 / 键盘）",
                QStringLiteral("45 项滚动上限 %1").arg(longScrollMax));
-        // 限高按**项数**算：8 项 × 34 + 内边距，再给顶上那条搜索框留出自己那一截。
+        // 限高按**项数**算：8 项 × 30 + 内边距，再给顶上那条搜索框留出自己那一截。
         const int longHeight = longPopup != nullptr ? longPopup->height() : -1;
         const int designHeight = kPopupRowHeight * 8 + 12;  // 项 8 个 + 上下内边距 6
         expect(longHeight <= designHeight + 48,
@@ -407,8 +448,8 @@ int UiPopupCheck(QApplication &app) {
     // ---------- ③b 弹层高度**恰好**装下露出来的那几项（2 / 4 / 8 / 45 项） ----------
     // 用户报的是「最后一项被裁掉一截」：125% 下弹层比「项数 × 项高」少 15 物理像素
     // （= 12 逻辑像素），末项下沿压在底部渐隐上。这里量的就是那条线：
-    // ① 弹层高度 ≥ 可见项数 × 34 + 上下内边距（有搜索框再加它那一截）；
-    // ② 视图高度 ≥ 可见项数 × 34；
+    // ① 弹层高度 ≥ 可见项数 × 项高 + 上下内边距（有搜索框再加它那一截）；
+    // ② 视图高度 ≥ 可见项数 × 项高；
     // ③ 凡是露在视口里的行都**整行**在里面，不许有半行。
     // 同一段在两个 CTest 条目里跑：`wtfml.popups`（本机 100%）和 `wtfml.popups-scale`
     // （`QT_SCALE_FACTOR=1.25`）—— 用户那台就是这个缩放。
@@ -478,9 +519,9 @@ int UiPopupCheck(QApplication &app) {
                     .arg(dpr);
                    (qobject_cast<QFrame *>(popup) ? qobject_cast<QFrame *>(popup)->frameWidth() : -1), view ? view->maximumHeight() : -1,
             expect(popup != nullptr && popup->height() >= needPopup,
-                   "弹层高度装得下露出来的项（项高 34 × 可见项数 + 内边距）", measured);
+                   "弹层高度装得下露出来的项（项高 30 × 可见项数 + 内边距）", measured);
             expect(view != nullptr && view->height() >= needView,
-                   "视图高度装得下露出来的项（每一行都有 34）", measured);
+                   "视图高度装得下露出来的项（每一行都有 30）", measured);
             expect(view != nullptr && clipped == 0 && fullyVisible >= rows,
                    "露在视口里的行都是整行（末项不被裁、不被底部渐隐盖住）",
                    QStringLiteral("%1 项：整行 %2 行 / 被裁 %3 行 / 视口 %4")
@@ -548,6 +589,20 @@ int UiPopupCheck(QApplication &app) {
                QStringLiteral("芯 %1 / 边 %2 / 差 %3")
                    .arg(fill.name(), edge.name())
                    .arg(colorDistance(edge, fill)));
+        // #337：可用的下拉框外圈有一圈 1px 细边（和不描线的输入框分开），禁用那一档才不画。
+        auto *live = new QComboBox(&host);
+        live->addItem(QStringLiteral("填充"));
+        column->addWidget(live);
+        QApplication::processEvents();
+        // 垫在页面底上量（底和细边都是半透明的，不垫的话深色那档两者同为白、只差 alpha）。
+        const QImage liveShot = captureWidgetOn(live, Theme::tokens().page);
+        const QColor liveFill = liveShot.pixelColor(liveShot.width() / 2, liveShot.height() / 2);
+        const QColor liveEdge = liveShot.pixelColor(liveShot.width() / 2, 0);
+        expect(colorDistance(liveEdge, liveFill) > 12,
+               "可用下拉框最外一圈有细边（收起态和输入框分得开）",
+               QStringLiteral("芯 %1 / 顶边 %2 / 差 %3")
+                   .arg(liveFill.name(), liveEdge.name())
+                   .arg(colorDistance(liveEdge, liveFill)));
         host.hide();
         QApplication::processEvents();
     }

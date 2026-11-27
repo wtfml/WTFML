@@ -65,6 +65,7 @@
 #include <QPainter>
 #include <QPushButton>
 #include <QSlider>
+#include <QStackedWidget>
 #include <QTabWidget>
 #include <QTimer>
 #include <QTreeWidget>
@@ -788,6 +789,12 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                                                 std::pair{"4-in-mid", MainWindowUI::settingsTabIndex()}, std::pair{"5-home-back", home}})
                     list.append({QStringLiteral("r68-%1-%2x%3-%4.png").arg(theme).arg(size.width()).arg(size.height()).arg(QLatin1String(step)),
                                  theme, size, false, tab, QStringLiteral("r68:") + QLatin1String(step)});
+        // #337 下拉框改版：设置页「分配方式」收起 / 展开（当前项「手动分配」+ 指着另一项「自动分配」）
+        // × 三主题，960×620 和改版前那张对得上（FILTER=i337- 只出这一组）。
+        for (const char *state : {"closed", "open"})
+            for (const QString &theme : {QStringLiteral("dark"), QStringLiteral("emerald"), QStringLiteral("ocean")})
+                list.append({QStringLiteral("i337-combo-%1-%2-960x620.png").arg(QLatin1String(state), theme), theme, {960, 620},
+                             false, MainWindowUI::settingsTabIndex(), QStringLiteral("i337:") + QLatin1String(state)});
         // 设置页三主题（去硬描边那轮逐页自检用）。
         for (const QString &theme : {QStringLiteral("dark"), QStringLiteral("emerald"), QStringLiteral("ocean")})
             list.append({QStringLiteral("settings-%1.png").arg(theme), theme, {1280, 800}, false, MainWindowUI::settingsTabIndex()});
@@ -1363,6 +1370,15 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                 });
                 window.simulateModpackImportFinishedForTest(
                     id, QStringLiteral("整合包「All the Mods 9」已导入，实例列表中名称为「All the Mods 9 - ATM9」。"));
+            } else if (shot.page.startsWith(QStringLiteral("i337:"))) {
+                // 「分配方式」那只下拉框：切到它所在的那一类设置，当前值钉成「手动分配」，展开那张再弹开。
+                if (auto *combo = window.findChild<QComboBox *>(MainWindowUI::memoryModeComboName())) {
+                    QStackedWidget *stack = window.ui()->getSettingsCategoryStack();
+                    for (QWidget *w = combo; w != nullptr && stack != nullptr; w = w->parentWidget())
+                        if (w->parentWidget() == stack) { stack->setCurrentWidget(w); break; }
+                    combo->setCurrentIndex(1);
+                    if (shot.page == QStringLiteral("i337:open")) combo->showPopup();
+                }
             } else if (!shot.page.isEmpty()) QMetaObject::invokeMethod(&window, "openInstanceSettings", Q_ARG(QString, QStringLiteral("create")), Q_ARG(QString, shot.page));
             else if (shot.tab == MainWindowUI::instancesTabIndex()) hoverInstanceRow(window);
         });
@@ -1542,7 +1558,27 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                              shown != nullptr && shown->currentPageKey() == InstanceSettingsDialog::overviewCategoryKey());
                 std::fflush(stdout);
             }
+            QComboBox *openCombo = nullptr;  // #337 展开那张：弹层是 Qt::Popup，下面合成进图
+            if (shot.page == QStringLiteral("i337:open")) {
+                openCombo = window.findChild<QComboBox *>(MainWindowUI::memoryModeComboName());
+                if (openCombo != nullptr && openCombo->view() != nullptr) {
+                    // 指着另一项（下拉弹层里"选中"跟着指针走）：当前值「手动分配」和"指着的"那一项两档同框。
+                    openCombo->view()->setCurrentIndex(openCombo->model()->index(0, openCombo->modelColumn()));
+                    for (int i = 0; i < 5; ++i) QApplication::processEvents();
+                }
+            }
             QPixmap shotImage = wizard != nullptr ? wizard->grab() : log != nullptr ? log->grab() : window.grab();
+            if (openCombo != nullptr && openCombo->view() != nullptr && openCombo->view()->window()->isVisible()) {
+                QWidget *popup = openCombo->view()->window();
+                QPainter painter(&shotImage);
+                painter.drawPixmap(window.mapFromGlobal(popup->mapToGlobal(QPoint(0, 0))), popup->grab());
+                painter.end();
+                std::fprintf(stdout, "I337 %s combo=%d,%d %dx%d popup=%d,%d %dx%d\n", qPrintable(shot.file),
+                             openCombo->mapToGlobal(QPoint(0, 0)).x(), openCombo->mapToGlobal(QPoint(0, 0)).y(),
+                             openCombo->width(), openCombo->height(), popup->x(), popup->y(), popup->width(), popup->height());
+                std::fflush(stdout);
+                openCombo->hidePopup();
+            }
             if (wizard != nullptr) wizard->hide();
             if (shot.page.startsWith(QStringLiteral("edge"))) {
                 // 真屏抓：widget.grab() 只有客户区的方角，看不到 DWM 圆角、系统边和窗外的衔接。

@@ -1038,6 +1038,17 @@ public:
         return QGuiApplication::palette().color(QPalette::Active, QPalette::Highlight);
     }
 
+    /// 下拉框弹层**挂在框正下方**，不是 Fusion 那种"当前项对齐、整张表盖在框上"（Fusion 对不可编辑的
+    /// 下拉框回 true —— 用户说"不像下拉框、难操作"的主因，`setMaxVisibleItems()` 也因它失效）。
+    /// 具体落点（贴框下沿、左缘对齐、放不下才翻上去）由 `Popups.cpp` 的 ComboDecorator 摆。
+    int styleHint(StyleHint hint, const QStyleOption *option, const QWidget *widget,
+                  QStyleHintReturn *returnData) const override
+    {
+        if (hint == SH_ComboBox_Popup)
+            return 0;
+        return QProxyStyle::styleHint(hint, option, widget, returnData);
+    }
+
     /// 数字框右边那一列上下箭头：Fusion 拿 `Button` 色现算按钮底时用 `setHsv()` 把 alpha 抹成
     /// 255，我们那档半透明白（subtle）就变成一整列不透明的白块（深色主题下最扎眼的一条硬边）。
     /// 这里先把 `Button` 换成「页面底 + 半透明白」合成后的不透明色，按钮底就和框里那片同色。
@@ -2646,7 +2657,8 @@ QString widgetStyleSheet() {
         // 鼠标焦点：底提亮一档，四边仍是透明（**不画线**）。
         "QLineEdit:focus, QComboBox:focus, QAbstractSpinBox:focus, QComboBox:on"
         " { background-color: palette(shadow); border-color: transparent; }"
-        "QComboBox:on { background-color: palette(midlight); }"
+        // 下拉展开着：框换强调淡底（和弹层里当前那一项同一档），细边换强调色（Popups.cpp 画）。
+        "QComboBox:on { background-color: palette(highlight); }"
         // 键盘焦点（只有 Tab / Backtab 到达才算）：3px 淡环。`highlight` = 选中淡底，
         // 就是「强调色压在本程序底上」那一档，三套预设加换主题色都跟着走。
         "QLineEdit[wtfmlKeyboardFocus=\"true\"]:focus,"

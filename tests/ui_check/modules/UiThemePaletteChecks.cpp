@@ -1484,9 +1484,12 @@ int UiThemePaletteChecks(QApplication &app, QTabWidget * &tabs, QFrame * &bar) {
                   "★★ W13 下拉框：框里面是 `Base` 那一档、字是调色板 `Text` 那一支（和输入框同一组颜色）",
                   QStringLiteral("底色 %1")
                       .arg(dominantColor(comboShot, plainCombo->rect()).name()));
+            // #337：下拉框收起时要和输入框分得开 —— 底色同一族，但外圈多一道 `Dark`（stroke）那一档的
+            // 1px 细边（Popups.cpp ComboDecorator::paintOutline）。量法同上：最后一行数 `Dark` 像素，
+            // 输入框那边是"几乎没有"，下拉框这边要"大半行都是"（两头圆角那一截不算）。
             const int comboBorderHits = bottomLineHits(comboShot, plainCombo->rect());
-            check(comboBorderHits <= plainCombo->width() / 10 && bottomIsFill(comboShot, plainCombo->rect()),
-                  "★★ W13 下拉框默认也没有底线（判据和阈值跟输入框一模一样）",
+            check(comboBorderHits >= plainCombo->width() / 2,
+                  "★★ #337 下拉框外圈有一道 1px 细边（输入框没有）—— 收起时两者分得开",
                   QStringLiteral("最后一行 %1 个 `Dark` 像素（输入框 %2 个 / 宽度 %3）")
                       .arg(comboBorderHits)
                       .arg(editBorderHits)
