@@ -64,6 +64,7 @@
 #include <QAbstractTextDocumentLayout>
 #include <QResizeEvent>
 #include <QShowEvent>
+#include <QTextBlock>
 #include <QWheelEvent>
 #include <QtMath>
 #include <memory>
@@ -166,12 +167,23 @@ public:
     }
 
     void syncHeight() {
-        const QAbstractTextDocumentLayout *docLayout = document() ? document()->documentLayout() : nullptr;
-        const int lines = docLayout ? qMax(1, qCeil(docLayout->documentSize().height())) : 1;
-        const int lineSpacing = qMax(1, fontMetrics().lineSpacing());
-        const int docMargin = document() ? qCeil(document()->documentMargin() * 2.0) : 0;
+        QTextDocument *doc = document();
+        qreal textHeight = 0.0;
+        if (doc != nullptr) {
+            for (QTextBlock block = doc->begin(); block.isValid(); block = block.next()) {
+                const QRectF geom = blockBoundingGeometry(block);
+                textHeight += geom.height() > 0.0 ? geom.height()
+                                                  : qreal(qMax(1, fontMetrics().lineSpacing()));
+            }
+        }
+        if (textHeight <= 0.0) {
+            textHeight = qreal(qMax(1, fontMetrics().lineSpacing()));
+        }
+        const int docMargin = doc != nullptr ? qCeil(doc->documentMargin() * 2.0) : 0;
         const QMargins margins = contentsMargins();
-        const int target = lines * lineSpacing + docMargin + 2 * frameWidth() + margins.top() + margins.bottom() + 4;
+        const int chrome = qMax(margins.top() + margins.bottom(),
+                                rect().height() - contentsRect().height());
+        const int target = qCeil(textHeight) + docMargin + chrome;
         if (minimumHeight() != target || maximumHeight() != target) {
             setFixedHeight(target);
             updateGeometry();
@@ -268,7 +280,11 @@ void InstanceSettingsDialog::addLifecycleBatchActions(const QString &key, QListW
     Theme::markButton(remove, Theme::ButtonKind::Danger);
     auto *count = new QLabel(toolbar);
     rows->addWidget(count, 0, 3);
-    layout->addWidget(toolbar);
+    if (qobject_cast<InstanceFilesPage *>(layout->parentWidget()) != nullptr) {
+        layout->addWidget(toolbar);
+    } else {
+        Theme::addScrollGutterAligned(layout, toolbar);
+    }
 
     if (lifecycleBatchWorlds(key)) {
         move->hide();
@@ -389,22 +405,27 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
             // 这几页的内容已经并进去了（见上面那句），只留一个空壳占位。
             return;
         }
+        const auto addStaticWidget = [layout, scrollFormPage](QWidget *widget,
+                                                              Qt::Alignment alignment = Qt::Alignment()) {
+            if (scrollFormPage) layout->addWidget(widget, 0, alignment);
+            else Theme::addScrollGutterAligned(layout, widget, alignment);
+        };
         auto *title = new QLabel(pageText(key), page);
         QFont font = title->font();
         font.setBold(true);
         font = Theme::textFont(font, Theme::TextRole::Heading);
         title->setFont(font);
-        layout->addWidget(title);
-        const auto hint = [layout, page](const QString &text) {
+        addStaticWidget(title);
+        const auto hint = [addStaticWidget, page](const QString &text) {
             auto *label = new QLabel(text, page);
             label->setWordWrap(true);
-            layout->addWidget(label);
+            addStaticWidget(label);
         };
-        const auto action = [layout, page, this](const QString &text, const std::function<void()> &callback) {
+        const auto action = [addStaticWidget, page, this](const QString &text, const std::function<void()> &callback) {
             auto *button = new QPushButton(text, page);
             Theme::markButton(button, Theme::ButtonKind::Neutral);
             connect(button, &QPushButton::clicked, this, callback);
-            layout->addWidget(button, 0, Qt::AlignLeft);
+            addStaticWidget(button, Qt::AlignLeft);
             return button;
         };
         int commandWidth = 160;
@@ -414,13 +435,13 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
             if (auto *button = findChild<QPushButton *>(name))
                 commandWidth = qMax(commandWidth, button->fontMetrics().horizontalAdvance(button->text()) + 32);
         }
-        const auto buttonRow = [page, layout, commandWidth](const QList<QPushButton *> &buttons) {
+        const auto buttonRow = [page, addStaticWidget, commandWidth](const QList<QPushButton *> &buttons) {
             auto *rowHost = new QWidget(page);
             rowHost->setObjectName(QStringLiteral("instanceMaintenanceActionRow"));
             // 每颗都是 commandWidth，排不下就折行（缩窄会裁掉英文长标签）。
             auto *row = new FlowLayout(8, 8);
             rowHost->setLayout(row);
-            layout->addWidget(rowHost);
+            addStaticWidget(rowHost);
             for (auto *button : buttons) {
                 if (!button) continue;
                 if (auto *previous = button->parentWidget(); previous && previous != page && previous != rowHost)
@@ -496,10 +517,10 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
             search->setObjectName(QStringLiteral("instanceLifecycleSearch_%1").arg(key));
             search->setPlaceholderText(tr("搜索文件名或路径（空格分隔多个关键词）"));
             search->setClearButtonEnabled(true);
-            layout->addWidget(search);
+            addStaticWidget(search);
             auto *result = new QLabel(page);
             result->setObjectName(QStringLiteral("instanceLifecycleResult_%1").arg(key));
-            layout->addWidget(result);
+            addStaticWidget(result);
             auto *list = new LifecycleFileList(page);
             // 行高一致（每行都是"文件名 + 换行 + 时间 / 大小"两行字，截图那一页还都带同一尺寸的图标）
             // ⇒ 让控件别再一行一问样式和字形：设计盘点里「日志」页那 97 ms 的重画全花在
@@ -522,6 +543,7 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
                 list->setMinimumHeight(96);
                 list->setCompactHeight(112);
             }
+            Theme::applyViewportScrollGutter(list);
             layout->addWidget(list, 1);
             m_lifecycleLists.insert(key, list);
             if (key == QStringLiteral("replay") || key == QStringLiteral("structure")
@@ -537,7 +559,7 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
                                      infoPalette.color(QPalette::PlaceholderText));
                 info->setPalette(infoPalette);
                 info->setVisible(false);
-                layout->addWidget(info);
+                addStaticWidget(info);
                 m_lifecycleInfo.insert(key, info);
                 auto *timer = new QTimer(info);
                 timer->setSingleShot(true);
@@ -578,6 +600,7 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
             auto *list = new QListWidget(page);
             list->setObjectName(QStringLiteral("instanceWorldBackupList"));
             m_lifecycleLists.insert(key, list);
+            Theme::applyViewportScrollGutter(list);
             layout->addWidget(list, 1);
             action(tr("刷新世界列表"), [this, key]() { refreshLifecycleFiles(key); });
             action(tr("创建世界备份"), [this, list]() {
@@ -603,6 +626,7 @@ void InstanceSettingsDialog::buildLifecyclePage(const QString &key) {
             m_diagnosisReport->setReadOnly(true);
             m_diagnosisReport->setPlainText(diagnosisPendingText());
             m_diagnosisReport->setLineWrapMode(QPlainTextEdit::WidgetWidth);
+            Theme::applyViewportScrollGutter(m_diagnosisReport);
             layout->addWidget(m_diagnosisReport, 1);
         } else if (key == QStringLiteral("migration") || key == QStringLiteral("upgrade")) {
             // 「迁移」和「升级」共用一套控件：目标 → 计划正文 → 可勾选的范围表 → 动手那一颗。

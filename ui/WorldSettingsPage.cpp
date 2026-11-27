@@ -184,8 +184,7 @@ WorldSettingsPage::WorldSettingsPage(QWidget *parent) : QWidget(parent) {
 
     auto *content = new QWidget(m_scroll);
     auto *root = new QVBoxLayout(content);
-    constexpr int kContentToScrollBarGap = 10;
-    root->setContentsMargins(0, 0, kContentToScrollBarGap, 0);
+    root->setContentsMargins(0, 0, Theme::contentToScrollBarGap(), 0);
     root->setSpacing(8);
 
     // 页眉的「返回 / 世界设置：<世界名>」在覆盖层上（`OverlayHost`），这一页自己不再画

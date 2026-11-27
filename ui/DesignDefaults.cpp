@@ -137,7 +137,13 @@ QSize RowDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelInde
                               ? option.widget->property("wtfmlMinRowHeight").toInt()
                               : 0;
     const int floorHeight = customMin > 0 ? customMin : minRowHeight();
-    return QSize(size.width() + 2 * extraTextPad(option.widget), qMax(size.height(), floorHeight));
+    const int scrollGap = option.widget != nullptr
+                              ? option.widget->property("wtfmlScrollContentGap").toInt()
+                              : 0;
+    const bool lastColumn = index.model() != nullptr
+                            && index.column() == index.model()->columnCount(index.parent()) - 1;
+    const int rightGap = (scrollGap > 0 && lastColumn) ? scrollGap : 0;
+    return QSize(size.width() + 2 * extraTextPad(option.widget) + rightGap, qMax(size.height(), floorHeight));
 }
 
 void RowDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
@@ -148,6 +154,12 @@ void RowDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, c
     bool roundLeft = true, roundRight = true;
     edges(opt, index, &roundLeft, &roundRight);
     const bool tile = iconMode(opt);
+    const int scrollGap = opt.widget != nullptr
+                              ? opt.widget->property("wtfmlScrollContentGap").toInt()
+                              : 0;
+    if (scrollGap > 0 && (roundRight || tile) && opt.rect.width() > scrollGap) {
+        opt.rect.adjust(0, 0, -scrollGap, 0);
+    }
     paintRowBlock(painter, opt.rect, selected, hovered, roundLeft || tile, roundRight || tile);
     // 底已经画好了：样式那边只印内容（不铺选中底、不画焦点框），墨按这块底换。
     opt.state &= ~(QStyle::State_Selected | QStyle::State_MouseOver | QStyle::State_HasFocus);
@@ -175,6 +187,11 @@ void alignHeaderLabel(QStyleOptionHeader *option, const QWidget *header) {
     const auto *tree = qobject_cast<const QTreeView *>(view);
     if (tree != nullptr && tree->rootIsDecorated() && headerView->visualIndex(option->section) == 0)
         option->rect.setLeft(option->rect.left() + tree->indentation());
+    const int scrollGap = view->property("wtfmlScrollContentGap").toInt();
+    if (scrollGap > 0 && headerView->visualIndex(option->section) == headerView->count() - 1
+        && option->rect.width() > scrollGap) {
+        option->rect.adjust(0, 0, -scrollGap, 0);
+    }
 }
 
 bool isRowDelegate(const QAbstractItemDelegate *delegate) {

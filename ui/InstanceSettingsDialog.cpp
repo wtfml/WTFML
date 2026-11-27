@@ -113,8 +113,6 @@ constexpr int kNavListExtraWidth = 28;
 constexpr int kColumnSpacing = 20;
 /// 覆盖层下页眉顶部留白（配合 OverlayHost 面包屑实现窗顶→页眉 76 px、面包屑底→页眉 7 px）。
 constexpr int kOuterTopMargin = 4;
-/// 右栏内容右缘与滚动条之间的布局间隙（第 3 档：布局 10 + 把手边距 1 = 11 px）。
-constexpr int kContentToScrollBarGap = 10;
 /// 单独拿出来用时的初始大小。宽是"一列导航 + 一块还放得下两列表格的内容"量出来的
 /// （见 .cpp 构造函数里那句 NOTE：嵌进覆盖层时这个数不作数）。
 constexpr int kDialogWidth = 820;
@@ -206,7 +204,7 @@ InstanceSettingsDialog::InstanceSettingsDialog(const QString &instanceName,
     header->setObjectName(QStringLiteral("instanceSettingsHeader"));
     auto *headerLine = identity.line;
     // 页眉右缘扣除滚动条宽度与内容间距，与下方内容控件右缘对齐。
-    headerLine->setContentsMargins(4, 0, kContentToScrollBarGap + Theme::scrollBarThickness(), 4);
+    headerLine->setContentsMargins(4, 0, Theme::scrollBarGutterInset(), 4);
     m_headerIcon = identity.icon;
     m_headerIcon->setObjectName(QStringLiteral("instanceHeaderIcon"));
     m_headerIcon->setScaledContents(true);
@@ -219,7 +217,11 @@ InstanceSettingsDialog::InstanceSettingsDialog(const QString &instanceName,
     auto *folder = new QToolButton(header);
     folder->setObjectName(QStringLiteral("instanceHeaderFolder"));
     folder->setAutoRaise(true);
-    folder->setIcon(VersionIcons::line(QStringLiteral("folder"), 18, Theme::tokens().text));
+    const auto updateFolderIcon = [folder] {
+        folder->setIcon(VersionIcons::line(QStringLiteral("folder"), 18, Theme::tokens().text));
+    };
+    updateFolderIcon();
+    Theme::follow(folder, updateFolderIcon);
     folder->setIconSize(QSize(18, 18));
     folder->setToolTip(tr("打开实例目录"));
     connect(folder, &QToolButton::clicked, this, [this]() { emit openInstanceFolderRequested(m_instanceDir); });
@@ -606,7 +608,7 @@ QWidget *InstanceSettingsDialog::addPage(const QString &key) {
     auto *page = new QWidget(scroll);
     page->setObjectName(panelName(key));
     auto *layout = new QVBoxLayout(page);
-    layout->setContentsMargins(0, 0, kContentToScrollBarGap, 0);
+    layout->setContentsMargins(0, 0, Theme::contentToScrollBarGap(), 0);
     layout->setSpacing(10);
     scroll->setWidget(page);
     auto *slotLayout = new QVBoxLayout(slot);
