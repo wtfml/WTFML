@@ -771,7 +771,6 @@ void paintBeamPreview(QLabel *preview, const QList<QColor> &segments) {
 // 目录页：自适应网格 + 一格
 // ---------------------------------------------------------------------------
 
-constexpr int kSidePadding = 28;      ///< 页面左右留白（和设置页同一档）
 constexpr int kHeaderBleed = 8;       ///< 页头比内容两侧各多出的宽度（面包屑按钮的内边距）
 constexpr int kCellMinWidth = 240;    ///< 目录格最小列宽
 constexpr int kCellHeight = 64;
@@ -1330,7 +1329,7 @@ ToolboxPage::ToolboxPage(QWidget *parent) : QWidget(parent) {
     m_tools = tools();
 
     auto *box = new QVBoxLayout(this);
-    box->setContentsMargins(0, 0, 0, 0);
+    box->setContentsMargins(0, 0, Theme::pageInsetRight(), 0);  // 滑条外缘 → 窗口右缘
     box->setSpacing(0);
     box->addWidget(buildHeader());
 
@@ -1351,10 +1350,10 @@ QWidget *ToolboxPage::buildHeader() {
     header->setObjectName(QStringLiteral("toolboxHeader"));
     auto *outer = new QHBoxLayout(header);
     // 页头两侧各比内容多出 8px：面包屑按钮自带 8px 内边距，这样按钮上的字和内容左缘对齐；
-    // 目录页的标题与「记住输入」自己补回这 8px。左缘、上沿走一级页统一落点（Theme::pageTitleInset*）。
+    // 目录页的标题与「记住输入」自己补回这 8px。左缘、上沿走一级页统一落点（Theme::pageInsetLeft / pageTitleInsetTop）。
     // 内容区右边常留一条滚动条的位置（GutterScrollArea），页头也让出来，这样两者右缘对得上。
-    outer->setContentsMargins(Theme::pageTitleInsetLeft() - kHeaderBleed, Theme::pageTitleInsetTop(),
-                              kSidePadding - kHeaderBleed + Theme::scrollBarThickness(), 14);
+    outer->setContentsMargins(Theme::pageInsetLeft() - kHeaderBleed, Theme::pageTitleInsetTop(),
+                              Theme::scrollBarGutterInset() - kHeaderBleed, 14);
     m_headerInner = new QWidget(header);
     m_headerInner->setMaximumWidth(kCatalogMaxWidth + 2 * kHeaderBleed);
     m_headerInner->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
@@ -1430,7 +1429,7 @@ QWidget *ToolboxPage::buildCatalog() {
     scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     auto *holder = new QWidget(scroll);
     auto *row = new QHBoxLayout(holder);
-    row->setContentsMargins(Theme::pageTitleInsetLeft(), 4, kSidePadding, 40);
+    row->setContentsMargins(Theme::pageInsetLeft(), 4, Theme::contentToScrollBarGap(), 40);
     row->setSpacing(0);
     m_catalogBody = new QWidget(holder);
     m_catalogBody->setMaximumWidth(kCatalogMaxWidth);
@@ -1489,7 +1488,7 @@ QWidget *ToolboxPage::ensureTool(Tool tool) {
     scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     auto *holder = new QWidget(scroll);
     auto *row = new QHBoxLayout(holder);
-    row->setContentsMargins(Theme::pageTitleInsetLeft(), 0, kSidePadding, 40);
+    row->setContentsMargins(Theme::pageInsetLeft(), 0, Theme::contentToScrollBarGap(), 40);
     row->setSpacing(0);
     panel->setParent(holder);
     panel->setMaximumWidth(kToolMaxWidth);

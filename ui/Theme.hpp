@@ -585,11 +585,12 @@ constexpr int primaryActionHeight() { return 36; }
 constexpr int primaryButtonPadX() { return 20; }
 constexpr int primaryButtonMinWidth() { return 88; }
 
-/// 一级页（管理 / 下载 / 设置 / 工具箱目录 / 工具页）标题的统一落点：
-/// 标题字左缘离内容区左边、标题行上沿离内容区上边各多远。**唯一出处**，各页的页头外边距
-/// 从这两个数推出来，换页时标题不跳。
-/// = 页面外边距（`MainWindowUI::pageMargin()` 20）+ 正文面内边距 18 / 页头上沿 2。
-constexpr int pageTitleInsetLeft() { return 38; }
+/// 整页的左右边距（第 3 档，#136）—— 覆盖层与主标签页（管理 / 下载 / 设置 / 智能体 / 工具箱）
+/// 的**唯一出处**，换页时内容不跳。右边这一个是「滑条外缘 → 窗口右缘」；不滚动的控件
+/// 要和滚动内容右缘对齐，再让出 `scrollBarGutterInset()`。
+constexpr int pageInsetLeft() { return 16; }
+constexpr int pageInsetRight() { return 12; }
+/// 一级页标题行上沿离内容区上边多远。
 constexpr int pageTitleInsetTop() { return 22; }
 
 /// 这一位是**图标按钮**（齿轮 / 底栏面板上那几颗 / 详情页顶上的 chip）：它按自己钉死的

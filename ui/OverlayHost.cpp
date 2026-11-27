@@ -73,9 +73,7 @@ private:
 /// NOTE: 和 `MainWindowUI` 里页面用的那圈边距是**同一个数**（kPageMargin = 9）——
 /// 覆盖层是一整个"页面"，留白和别的页面不一样的话，进设置再退出来会看着跳一下。
 constexpr int kOverlayPageMargin = 9;
-/// 整页那一档的左右留白与顶部面包屑尺度（第 3 档；宽窗超过限宽时水平居中）。
-constexpr int kOverlayPageLeft = 16;
-constexpr int kOverlayPageRight = 12;
+/// 整页那一档的顶部面包屑尺度（第 3 档；左右留白见 Theme::pageInsetLeft/Right，宽窗超过限宽时水平居中）。
 constexpr int kOverlayPageTop = 2;
 constexpr int kOverlayBreadcrumbHeight = 30;
 constexpr int kOverlayBreadcrumbTop = 1;
@@ -502,8 +500,8 @@ void OverlayHost::updatePageMargins() {
             extra = (avail - kOverlayPageMaxWidth) / 2;
         }
     }
-    const int left = kOverlayPageLeft + extra;
-    const int right = kOverlayPageRight + extra;
+    const int left = Theme::pageInsetLeft() + extra;
+    const int right = Theme::pageInsetRight() + extra;
     if (m_breadcrumb != nullptr) {
         m_breadcrumb->setFixedHeight(kOverlayBreadcrumbHeight);
         if (QLayout *bl = m_breadcrumb->layout()) {

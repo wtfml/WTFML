@@ -842,6 +842,16 @@ int UiAgentCheck() {
             check(closedBars == 1,
                   "智能体 UI（#136）：抽屉关闭时整页竖滑条为 1 条",
                   QStringLiteral("%1x%2 closedBars=%3").arg(size.width()).arg(size.height()).arg(closedBars));
+            const auto rightOf = [page](const char *name) {
+                const auto *widget = page->findChild<QWidget *>(QString::fromLatin1(name));
+                return widget != nullptr ? widget->mapTo(page, QPoint(widget->width(), 0)).x() : -1;
+            };
+            const int headerRight = rightOf("agentChatHeader");
+            check(headerRight > 0 && headerRight == rightOf("agentMessageHost") && headerRight == rightOf("agentComposerRow"),
+                  "智能体 UI（#136）：页眉、对话列、输入岛右缘对齐",
+                  QStringLiteral("%1x%2 header=%3 column=%4 composer=%5")
+                      .arg(size.width()).arg(size.height()).arg(headerRight)
+                      .arg(rightOf("agentMessageHost")).arg(rightOf("agentComposerRow")));
             page->openSessionDrawer();
             for (int i = 0; i < 4; ++i) QApplication::processEvents();
             const int openBars = countPageBars();

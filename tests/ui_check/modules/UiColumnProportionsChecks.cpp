@@ -48,8 +48,9 @@ int UiColumnProportionsChecks(QComboBox * &installed, QPushButton * &startBtn, Q
             // UI 7b：实例页、下载页的左栏收起（文件夹进页头浮层、分类改页头 chip），右栏单独铺满。
             if (!left->isVisibleTo(page)) {
                 check((key == QStringLiteral("instance") || key == QStringLiteral("download")) &&
-                          right->x() == page->width() - (right->x() + right->width()),
-                      QStringLiteral("%1 页：左栏收起，右栏单独铺满（左右页边距相等）").arg(key),
+                          right->x() == Theme::pageInsetLeft() &&
+                          page->width() - (right->x() + right->width()) == Theme::pageInsetRight(),
+                      QStringLiteral("%1 页：左栏收起，右栏单独铺满（左右页边距走整页那一档）").arg(key),
                       QString("%1 vs %2").arg(right->x()).arg(page->width() - right->x() - right->width()));
                 continue;
             }

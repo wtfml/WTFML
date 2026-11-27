@@ -203,7 +203,7 @@ QWidget *MainWindowUI::setupDownloadPage() {
         chipRow->setObjectName(downloadCategoryChipsName());
         {
             auto *row = new QHBoxLayout(chipRow);
-            row->setContentsMargins(0, 0, 0, 0);
+            row->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
             row->setSpacing(8);
             downloadBackButton->setParent(chipRow);
             downloadBackButton->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
@@ -307,7 +307,7 @@ void MainWindowUI::setupDownloadGamePage() {
     // 改用户的输入；而"找到 0 个"必须有个地方说，不然筛出来一片空白像坏了。
     QWidget *versionFilterBar = new QWidget(treePage);
     auto *versionFilterLayout = new QHBoxLayout(versionFilterBar);
-    versionFilterLayout->setContentsMargins(0, 0, 0, 0);
+    versionFilterLayout->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
     versionFilterLayout->setSpacing(10);
     versionFilterEdit = new QLineEdit(versionFilterBar);
     versionFilterEdit->setObjectName(versionFilterEditName());
@@ -383,7 +383,7 @@ void MainWindowUI::setupDownloadGamePage() {
     // 这里关掉的只是装饰格：分类从 x=0 起画，子条目照样缩进 indent 那么多。
     versionTree->setRootIsDecorated(false);
     versionTree->setColumnCount(1);
-    stabilizeDownloadTree(versionTree);
+    reserveTreeScrollGap(versionTree);
     // 每一行长什么样（草方块 + 版本号 + 下面那行发布时间 + 最右边的 >/V）全在这个代理里。
     // 条目还是普通 QTreeWidgetItem（身份、展开状态、点击那条路一个都没变）。
     versionTree->setItemDelegate(new VersionTreeDelegate(versionTree));
@@ -455,7 +455,7 @@ void MainWindowUI::setupDownloadGamePage() {
     installContentLayout->addWidget(installScroll, 0, 0);
     installLayout->addWidget(installContent, 1);
     // The floating action must not cover the last selectable row at the scroll limit.
-    installBodyLayout->setContentsMargins(0, 0, 0, installFooterClearance());
+    installBodyLayout->setContentsMargins(0, 0, Theme::contentToScrollBarGap(), installFooterClearance());
 
     // 版本名称：实例的目录名（`versions/<这个名字>`）。默认名和名字不合法那句原因，
     // 都在 InstallPageController::updateInstallNameState() 一处刷（界面这边不持有
@@ -652,7 +652,7 @@ void MainWindowUI::setupDownloadGamePage() {
     auto *installFooter = new QFrame(installContent);
     installFooter->setObjectName(installFooterName());
     auto *footerLayout = new QHBoxLayout(installFooter);
-    footerLayout->setContentsMargins(0, 12, 0, 0);
+    footerLayout->setContentsMargins(0, 12, Theme::scrollBarGutterInset(), 0);  // 和内容同一条中线
     footerLayout->setSpacing(kFilterRowSpacing);
     footerLayout->addWidget(installButton);
     installContentLayout->addWidget(installFooter, 0, 0, Qt::AlignHCenter | Qt::AlignBottom);
@@ -811,7 +811,7 @@ void MainWindowUI::setupDownloadServerPage() {
     // 这一行留给"筛出来的结果"（和「游戏」那一页同一个位置、同一句话法）。
     auto *filterBar = new QWidget(listPage);
     auto *filterLayout = new QHBoxLayout(filterBar);
-    filterLayout->setContentsMargins(0, 0, 0, 0);
+    filterLayout->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
     filterLayout->setSpacing(10);
     auto *search = new QLineEdit(filterBar);
     search->setObjectName(QStringLiteral("serverVersionFilter"));
@@ -834,7 +834,7 @@ void MainWindowUI::setupDownloadServerPage() {
     versions->setRootIsDecorated(false);
     versions->setColumnCount(1);
     versions->setUniformRowHeights(true);
-    stabilizeDownloadTree(versions);
+    reserveTreeScrollGap(versions);
     versions->setItemDelegate(new VersionTreeDelegate(versions, true));
     versions->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     // 悬停那一行的加深底色要它（另一半在代理里那个 `&& hovered`）。
@@ -1039,7 +1039,7 @@ void MainWindowUI::setupDownloadResourcePages() {
         // 要占满剩下的宽度才好打字。
         QWidget *filterRow = new QWidget(page);
         auto *filterLayout = new QVBoxLayout(filterRow);
-        filterLayout->setContentsMargins(0, 0, 0, 0);
+        filterLayout->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
         filterLayout->setSpacing(kFilterRowSpacing);
         auto *filterTop = new QHBoxLayout;
         filterTop->setSpacing(kFilterRowSpacing);
@@ -1177,7 +1177,7 @@ void MainWindowUI::setupDownloadResourcePages() {
         tree->setUniformRowHeights(true);
         tree->setRootIsDecorated(false);
         tree->setColumnCount(1);
-        stabilizeDownloadTree(tree);
+        reserveTreeScrollGap(tree);
         auto *resourceDelegate = new VersionTreeDelegate(tree, /*leafArrow=*/true, resourceTreeIconSize());
         resourceDelegate->setLeafVerb(QCoreApplication::translate("MainWindowUI", "下载"));  // 第三层点一下就是下它
         resourceDelegate->setResourceRows(true);

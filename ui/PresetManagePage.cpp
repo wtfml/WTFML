@@ -147,6 +147,7 @@ void PresetManagePage::buildUi() {
     m_statusLabel->setWordWrap(true);
     m_statusLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     m_statusLabel->hide();
+    m_statusLabel->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
     outer->addWidget(m_statusLabel);
 }
 
@@ -164,7 +165,7 @@ void PresetManagePage::buildListLayer() {
     auto *filterBox = new QWidget(m_listLayer);
     filterBox->setObjectName(QStringLiteral("presetFilterRow"));
     auto *filterLayout = new QHBoxLayout(filterBox);
-    filterLayout->setContentsMargins(0, 0, 0, 0);
+    filterLayout->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
     filterLayout->setSpacing(kFilterRowSpacing);
 
     auto *chipRow = new QWidget(filterBox);
@@ -193,6 +194,7 @@ void PresetManagePage::buildListLayer() {
     // 纯说明**不许**参与横向度量（折行 QLabel 报出来的 sizeHint 是"整句排成一行"的宽度）。
     m_noMatchLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     m_noMatchLabel->setVisible(false);
+    m_noMatchLabel->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
     layout->addWidget(m_noMatchLabel);
 
     // 一张**按类别分组**的列表：组头是类别名（粗体 + 右端箭头，和实例页 / 服务端页
@@ -217,6 +219,7 @@ void PresetManagePage::buildListLayer() {
     listDelegate->setInlineRowActions(false);
     m_presetList->setItemDelegate(listDelegate);
     Anim::animateExpansion(m_presetList);
+    reserveTreeScrollGap(m_presetList);
     layout->addWidget(m_presetList, 1);
     connect(m_presetList, &QTreeWidget::currentItemChanged, this,
             &PresetManagePage::onCurrentPresetChanged);
@@ -241,7 +244,7 @@ void PresetManagePage::buildListLayer() {
     m_newButton->setAutoDefault(false);
     m_newButton->setToolTip(QCoreApplication::translate("PresetManagePage", "创建空预设；创建后可在编辑页填写内容。"));
     Theme::markButton(m_newButton, Theme::ButtonKind::Accent);
-    layout->addWidget(m_newButton);
+    Theme::addScrollGutterAligned(layout, m_newButton);
     connect(m_newButton, &QPushButton::clicked, this, [this] {
         emit createRequested(m_newCategoryCombo->currentData().toString());
     });
@@ -263,7 +266,7 @@ void PresetManagePage::buildDetailLayer() {
     breadcrumb.title->setText(tr("预设详情"));
     m_backButton = breadcrumb.back;
     m_backButton->setObjectName(QStringLiteral("presetBackButton"));
-    layout->addWidget(breadcrumb.widget);
+    Theme::addScrollGutterAligned(layout, breadcrumb.widget);
 
     auto *body = new QVBoxLayout;
     body->setContentsMargins(0, 16, 0, 0);
@@ -277,7 +280,7 @@ void PresetManagePage::buildDetailLayer() {
     m_detailTitle->setObjectName(QStringLiteral("presetDetailTitle"));
     m_presetMeta = identity.meta;
     m_presetMeta->setObjectName(QStringLiteral("presetMetaLabel"));
-    body->addWidget(identity.widget);
+    Theme::addScrollGutterAligned(body, identity.widget);
 
     // 单独打开时保存名称和说明。内嵌到实例管理时由详情左栏提供编辑入口。
     m_saveDetailsButton = new QPushButton(QCoreApplication::translate("PresetManagePage", "保存"), identity.widget);
@@ -341,7 +344,7 @@ void PresetManagePage::buildDetailLayer() {
         scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         auto *body = new QWidget(scroll);
         auto *bodyLayout = new QVBoxLayout(body);
-        bodyLayout->setContentsMargins(0, 0, 0, 18);
+        bodyLayout->setContentsMargins(0, 0, Theme::contentToScrollBarGap(), 18);
         bodyLayout->setSpacing(18);
         fill(bodyLayout);
         scroll->setWidget(body);
@@ -416,6 +419,7 @@ void PresetManagePage::enableEditorTabs() {
 
 void PresetManagePage::embedEditor(PresetEditorPage *editor) {
     m_embeddedEditor = editor;
+    editor->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);  // 内嵌编辑器没有整页滚动区（表格自己滚）
     m_detailPages->addWidget(editor);
     m_detailPages->setCurrentWidget(editor);
     m_applyButton->hide();

@@ -828,6 +828,11 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                                      .arg(size.height()),
                                  theme, size, false, agent,
                                  QStringLiteral("i136a:") + QLatin1String(state)});
+        // #136 收尾（FILTER=i136-tab-）：管理 / 下载 / 设置三个主标签页的左右边距与右缘，960×620。
+        for (const auto &[page, tab] : {std::pair{"manage", manage}, std::pair{"download", download},
+                                        std::pair{"settings", MainWindowUI::settingsTabIndex()}})
+            list.append({QStringLiteral("i136-tab-%1-emerald-960x620.png").arg(QLatin1String(page)), QStringLiteral("emerald"),
+                         {960, 620}, false, tab});
         // #141（FILTER=i141-）：崩溃 → 询问智能体 → Auto-safe 询问框，框背后智能体还在流式输出。
         list.append({QStringLiteral("i141-autosafe-ask-emerald-960x620.png"), QStringLiteral("emerald"), {960, 620}, false, home,
                      QStringLiteral("i141")});

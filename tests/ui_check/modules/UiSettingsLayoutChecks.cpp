@@ -538,9 +538,9 @@ int UiSettingsLayoutChecks(MainWindowUI &ui, QTabWidget * &tabs) {
                 }
                 // 非空判据：表单真的铺开了（宽窗 = 720 上限；窄窗 = 可视宽减两侧留白），不是缩成内容那么窄。
                 auto *formWidget = scroll->findChild<QWidget *>(MainWindowUI::settingsFormName(keys.at(i)));
-                const int expectForm = qMin(MainWindowUI::settingsFormMaxWidth(), viewportWidth - 56);
+                const int expectForm = qMin(MainWindowUI::settingsFormMaxWidth(), viewportWidth - Theme::pageInsetLeft() - Theme::contentToScrollBarGap());
                 check(formWidget != nullptr && qAbs(formWidget->width() - expectForm) <= 2,
-                      QStringLiteral("%1×%2「%3」页：表单宽 = min(720, 可视宽 − 56)")
+                      QStringLiteral("%1×%2「%3」页：表单宽 = min(720, 可视宽 − 左边距 − 滑条间隙)")
                           .arg(size.width()).arg(size.height()).arg(keys.at(i)),
                       QStringLiteral("表单 %1，期望 %2，可视 %3")
                           .arg(formWidget != nullptr ? formWidget->width() : -1).arg(expectForm).arg(viewportWidth));

@@ -267,7 +267,7 @@ NewServerPage::NewServerPage(QWidget *parent) : QDialog(parent) {
     auto *footer = new QFrame(content);
     footer->setObjectName(QStringLiteral("newServerFooter"));
     auto *footerLayout = new QHBoxLayout(footer);
-    footerLayout->setContentsMargins(0, 12, 0, 0);
+    footerLayout->setContentsMargins(0, 12, Theme::scrollBarGutterInset(), 0);
     footerLayout->addWidget(m_createButton);
     contentLayout->addWidget(footer, 0, 0, Qt::AlignHCenter | Qt::AlignBottom);
     footer->raise();

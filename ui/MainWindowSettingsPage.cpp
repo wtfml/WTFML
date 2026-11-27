@@ -98,8 +98,6 @@ struct SettingsPanel {
     QVBoxLayout *layout = nullptr;
 };
 
-constexpr int kSidePadding = 28;
-
 /// 往堆叠页加一栏：一层滚动区（滚动条走现有动效），里面一块最宽 720、在窗口里居中的表单。
 /// 加进去的顺序就是页签的顺序。
 SettingsPanel addSettingsPanel(QStackedWidget *stack, const QString &key) {
@@ -113,7 +111,7 @@ SettingsPanel addSettingsPanel(QStackedWidget *stack, const QString &key) {
     auto *holder = new QWidget(panel.scroll);
     holder->setObjectName(QStringLiteral("settingsHolder-") + key);
     auto *holderLayout = new QHBoxLayout(holder);
-    holderLayout->setContentsMargins(Theme::pageTitleInsetLeft(), 4, kSidePadding, 40);
+    holderLayout->setContentsMargins(Theme::pageInsetLeft(), 4, Theme::contentToScrollBarGap(), 40);
     panel.form = new QWidget(holder);
     panel.form->setObjectName(MainWindowUI::settingsFormName(key));
     panel.form->setMaximumWidth(MainWindowUI::settingsFormMaxWidth());
@@ -195,16 +193,16 @@ QPushButton *textButton(const QString &text, QWidget *parent) {
 
 void MainWindowUI::setupSettingsPage(QWidget *page) {
     auto *pageLayout = new QVBoxLayout(page);
-    pageLayout->setContentsMargins(0, 0, 0, 0);
+    pageLayout->setContentsMargins(0, 0, Theme::pageInsetRight(), 0);  // 滑条外缘 → 窗口右缘
     pageLayout->setSpacing(0);
 
     // ---- 页头：标题「设置」 + 4 个分段页签 + 右侧搜索（最宽 720，和表单同宽、同样居中） ----
     auto *header = new QWidget(page);
     header->setObjectName(pageHeaderName(QStringLiteral("settings")));
     auto *headerOuter = new QHBoxLayout(header);
-    // 右边多让出滚动条那一格：表单在视口里居中，视口比页窄这一格，页头这样才和表单对齐。
-    headerOuter->setContentsMargins(Theme::pageTitleInsetLeft(), Theme::pageTitleInsetTop(),
-                                    kSidePadding + Theme::scrollBarThickness(), 14);
+    // 右边让出间隙 + 滚动条：表单在视口里居中，页头这样才和表单对齐。
+    headerOuter->setContentsMargins(Theme::pageInsetLeft(), Theme::pageTitleInsetTop(),
+                                    Theme::scrollBarGutterInset(), 14);
     auto *headInner = new QWidget(header);
     headInner->setMaximumWidth(settingsFormMaxWidth());
     headInner->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
