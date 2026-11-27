@@ -348,6 +348,81 @@ int UiTaskCenterChecks(QMainWindow &window, MainWindowUI &ui, QTabWidget * &tabs
         check(watch.isNull() || !watch->isVisible(), "I2b 点在面板外面就收起");
         QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
     }
+    {
+        // ---------- #149 任务中心叠在覆盖页之上时，点击详情里的执行步骤不能把任务中心关掉 ----------
+        ui.setTaskCenterContent(
+            []() {
+                QList<TaskCenter::Item> items;
+                TaskCenter::Item running;
+                running.key = QStringLiteral("i149");
+                running.title = QStringLiteral("安装整合包 ATM9");
+                running.detail = QStringLiteral("已下载 128 / 342 个文件");
+                running.percent = 37;
+                running.state = TaskCenter::State::Running;
+                running.steps << TaskCenter::Step{QStringLiteral("读取整合包清单"), TaskCenter::StepState::Done, QString(), 100}
+                              << TaskCenter::Step{QStringLiteral("下载整合包文件"), TaskCenter::StepState::Running,
+                                                  QStringLiteral("128 / 342"), 37};
+                items << running;
+                return items;
+            },
+            nullptr);
+        QWidget *underPage = ui.overlay() != nullptr
+                                 ? ui.overlay()->openPage(QStringLiteral("资源详情"))
+                                 : nullptr;
+        QApplication::processEvents();
+        check(underPage != nullptr && ui.overlay()->pageOpen(),
+              "#149 前提：覆盖层先开着一页（任务中心会作为全尺寸提示层叠在上面）");
+        if (underPage != nullptr) {
+            int promptDismissals = 0;
+            const QMetaObject::Connection spy = QObject::connect(
+                ui.overlay(), &OverlayHost::promptDismissed, ui.overlay(),
+                [&promptDismissals] { ++promptDismissals; });
+            ui.openTaskCenterPanel();
+            QApplication::processEvents();
+            QWidget *workspace = window.findChild<QWidget *>(QStringLiteral("taskCenterPromptWorkspace"));
+            check(workspace != nullptr && workspace->isVisible() && ui.overlay()->promptOpen(),
+                  "#149 任务中心作为全尺寸提示层叠在覆盖页之上打开");
+            if (workspace != nullptr) {
+                if (QWidget *row0 = workspace->findChild<QWidget *>(MainWindowUI::taskCenterPanelRowName(0))) {
+                    const QPoint rowLocal = row0->rect().center();
+                    QMouseEvent openDetail(QEvent::MouseButtonPress, QPointF(rowLocal),
+                                           row0->mapToGlobal(QPointF(rowLocal)), Qt::LeftButton,
+                                           Qt::LeftButton, Qt::NoModifier);
+                    QApplication::sendEvent(row0, &openDetail);
+                    QApplication::processEvents();
+                }
+                QWidget *stepLabel = workspace->findChild<QWidget *>(QStringLiteral("taskCenterFlowStepName_0"));
+                QWidget *stepRow = workspace->findChild<QWidget *>(QStringLiteral("taskCenterFlowStep_0"));
+                check(stepLabel != nullptr && stepLabel->isVisible() && stepRow != nullptr && stepRow->isVisible(),
+                      "#149 详情页展示出执行流程步骤");
+                if (stepLabel != nullptr) {
+                    const QPoint stepLocal = stepLabel->rect().center();
+                    QMouseEvent clickStep(QEvent::MouseButtonPress, QPointF(stepLocal),
+                                          stepLabel->mapToGlobal(QPointF(stepLocal)), Qt::LeftButton,
+                                          Qt::LeftButton, Qt::NoModifier);
+                    QApplication::sendEvent(stepLabel, &clickStep);
+                    QApplication::processEvents();
+                    check(promptDismissals == 0 && ui.overlay()->promptOpen() && workspace->isVisible(),
+                          "★ #149 点击任务中心详情中的步骤，不触发外部点击关闭，任务中心保持打开",
+                          QStringLiteral("dismiss=%1 promptOpen=%2 visible=%3")
+                              .arg(promptDismissals)
+                              .arg(ui.overlay()->promptOpen())
+                              .arg(workspace->isVisible()));
+                }
+                // 同时验证：非全尺寸提示卡片内点标签不会误关，点卡片外仍能正常关闭。
+                ui.overlay()->dismiss();
+                QApplication::processEvents();
+                QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+                check(promptDismissals == 1 && ui.overlay()->pageOpen(),
+                      "#149 主动关闭任务中心后回到原本的覆盖页");
+            }
+            QObject::disconnect(spy);
+            ui.overlay()->closeOverlay();
+            QApplication::processEvents();
+            QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        }
+        ui.setTaskCenterContent(nullptr, nullptr);
+    }
  return 0;
 }
 

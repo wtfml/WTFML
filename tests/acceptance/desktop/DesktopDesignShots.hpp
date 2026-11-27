@@ -10,6 +10,7 @@
 #include "MainWindowUI.hpp"
 #include "MainWindowPageLayout.hpp"
 #include "OverlayHost.hpp"
+#include "TaskCenterPanel.hpp"
 #include "TaskProgressBar.hpp"
 #include "Theme.hpp"
 #include "TitleBar.hpp"
@@ -43,6 +44,7 @@
 #include <QFile>
 #include <QJsonDocument>
 #include <QKeyEvent>
+#include <QMouseEvent>
 #include <QStyle>
 #include <QComboBox>
 #include <QGridLayout>
@@ -709,6 +711,10 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
             for (const char *state : {"mod", "mod-sel", "pack", "cfg", "cfg-outline"})
                 list.append({QStringLiteral("i136-%1-%2-960x620.png").arg(QLatin1String(state), theme), theme, {960, 620}, false, manage,
                              QStringLiteral("i136:") + QLatin1String(state)});
+        // #149（FILTER=i149-）：覆盖页之上打开任务中心、进入详情并点击执行步骤后任务中心保持打开。
+        for (const QString &theme : {QStringLiteral("emerald"), QStringLiteral("dark")})
+            list.append({QStringLiteral("i149-task-center-step-click-%1-960x620.png").arg(theme), theme, {960, 620}, false, manage,
+                         QStringLiteral("i149:step-click")});
         // 只出名字含这段字的几张（逐页精修时不必每次跑满 56 张）。
         const QString only = qEnvironmentVariable("WTFML_DESIGN_SHOT_FILTER");
         if (!only.isEmpty())
@@ -997,6 +1003,56 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                             });
                     }
                 });
+            } else if (shot.page.startsWith(QStringLiteral("i149:"))) {
+                // 在已打开的覆盖页（实例概览）之上打开任务中心，点开任务详情并点击执行流程中的步骤。
+                window.ui()->setTaskCenterContent(
+                    []() {
+                        QList<TaskCenter::Item> items;
+                        TaskCenter::Item running;
+                        running.key = QStringLiteral("i149-modpack");
+                        running.title = QStringLiteral("安装整合包 All the Mods 9");
+                        running.detail = QStringLiteral("正在下载模组 128 / 342");
+                        running.percent = 37;
+                        running.state = TaskCenter::State::Running;
+                        running.steps << TaskCenter::Step{QStringLiteral("读取整合包清单"), TaskCenter::StepState::Done, QString(), 100}
+                                      << TaskCenter::Step{QStringLiteral("安装加载器 Forge"), TaskCenter::StepState::Done, QString(), 100}
+                                      << TaskCenter::Step{QStringLiteral("下载整合包文件"), TaskCenter::StepState::Running,
+                                                          QStringLiteral("128 / 342"), 37}
+                                      << TaskCenter::Step{QStringLiteral("解压覆盖文件"), TaskCenter::StepState::Pending, QString(), -1};
+                        items << running;
+                        return items;
+                    },
+                    nullptr);
+                QMetaObject::invokeMethod(&window, "openInstanceSettings", Q_ARG(QString, QStringLiteral("create")),
+                                          Q_ARG(QString, QStringLiteral("overview")));
+                QTimer::singleShot(250, &window, [&window]() {
+                    window.ui()->openTaskCenterPanel();
+                });
+                QTimer::singleShot(450, &window, [&window, shot]() {
+                    QWidget *workspace = window.findChild<QWidget *>(QStringLiteral("taskCenterPromptWorkspace"));
+                    if (workspace == nullptr) return;
+                    if (QWidget *row0 = workspace->findChild<QWidget *>(MainWindowUI::taskCenterPanelRowName(0))) {
+                        const QPoint rowLocal = row0->rect().center();
+                        QMouseEvent openDetail(QEvent::MouseButtonPress, QPointF(rowLocal),
+                                               row0->mapToGlobal(QPointF(rowLocal)), Qt::LeftButton,
+                                               Qt::LeftButton, Qt::NoModifier);
+                        QApplication::sendEvent(row0, &openDetail);
+                        QApplication::processEvents();
+                    }
+                    QWidget *step = workspace->findChild<QWidget *>(QStringLiteral("taskCenterFlowStepName_0"));
+                    if (step != nullptr) {
+                        const QPoint local = step->rect().center();
+                        QMouseEvent clickStep(QEvent::MouseButtonPress, QPointF(local),
+                                              step->mapToGlobal(QPointF(local)), Qt::LeftButton,
+                                              Qt::LeftButton, Qt::NoModifier);
+                        QApplication::sendEvent(step, &clickStep);
+                        QApplication::processEvents();
+                    }
+                    std::fprintf(stdout, "I149 %s promptOpen=%d workspaceVisible=%d stepVisible=%d\n",
+                                 qPrintable(shot.file), window.ui()->overlay()->promptOpen(),
+                                 workspace->isVisible(), step != nullptr && step->isVisible());
+                    std::fflush(stdout);
+                });
             } else if (!shot.page.isEmpty()) QMetaObject::invokeMethod(&window, "openInstanceSettings", Q_ARG(QString, QStringLiteral("create")), Q_ARG(QString, shot.page));
             else if (shot.tab == MainWindowUI::instancesTabIndex()) hoverInstanceRow(window);
         });
@@ -1150,7 +1206,9 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                                       {"height", window.height()}, {"dpr", window.devicePixelRatioF()},
                                       {"maxWidth", window.maximumWidth()}, {"screenWidth", window.screen()->availableGeometry().width()},
                                       {"state", int(window.windowState())}});
-            if (!shot.page.isEmpty()) window.ui()->overlay()->closeOverlay();
+            if (!shot.page.isEmpty()) {
+                while (window.ui()->overlay()->isOpen()) window.ui()->overlay()->closeOverlay();
+            }
             if (shot.page.startsWith(QStringLiteral("toolbox"))) window.ui()->getTabWidget()->setCurrentIndex(MainWindowUI::homeTabIndex());
             QTimer::singleShot(shot.page.isEmpty() ? 0 : 300, &window, step);
         });
