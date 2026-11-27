@@ -11333,10 +11333,6 @@ Minecraft %2 / %3 %4</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>已选择 %1 个文件</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>更新</source>
             <translation type="unfinished"></translation>
         </message>

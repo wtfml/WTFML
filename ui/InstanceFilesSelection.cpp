@@ -385,7 +385,6 @@ void InstanceFilesPage::updateSelectionBar() {
     if (m_actionPanelEnabled) {
         const int count = m_selectedPaths.size();
         m_selectionSummary->setText(tr("共 %1 个模组").arg(m_list->count()));
-        m_selectionCount->setText(tr("已选 %1 项").arg(count));
         setEnabled(SelectionAction::ClearAll, count > 0);
         QWidget *target = show ? m_selectionBar : m_actionStack->widget(0);
         if (m_actionStack->currentWidget() != target) {

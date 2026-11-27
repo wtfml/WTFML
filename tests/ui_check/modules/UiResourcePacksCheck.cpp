@@ -146,13 +146,16 @@ int UiResourcePacksCheck(QApplication &app) {
             const QPoint edge = selected->viewport()->mapFrom(scroll->viewport(), QPoint(20, scroll->viewport()->height() - 2));
             QMimeData mime;
             QDragMoveEvent move(edge, Qt::MoveAction, &mime, Qt::LeftButton, Qt::NoModifier);
-            app.sendEvent(selected->viewport(), &move);
+            // 直接交给页面装在视口上的过滤器：QApplication::notify 只把 DragMove / DragLeave 送给
+            // QDragManager 记下的当前目标，没有真拖动时它是空的，sendEvent 发出去谁都收不到；
+            // 而 InternalMove 列表又只认自己发起的拖动，补一发 DragEnter 也立不起这个目标。
+            page.eventFilter(selected->viewport(), &move);
             QElapsedTimer clock;
             clock.start();
             while (bar->value() == 0 && clock.elapsed() < 2000) app.processEvents(QEventLoop::AllEvents, 20);
             expect(bar->maximum() > 0 && bar->value() > 0, "dragging near the bottom edge scrolls the outer area");
             QDragLeaveEvent leave;
-            app.sendEvent(selected->viewport(), &leave);
+            page.eventFilter(selected->viewport(), &leave);
             const int stopped = bar->value();
             clock.restart();
             while (clock.elapsed() < 100) app.processEvents(QEventLoop::AllEvents, 20);
