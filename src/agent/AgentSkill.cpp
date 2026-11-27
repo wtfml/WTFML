@@ -119,7 +119,7 @@ AgentSkill make(const QString &id, const QString &name, const QString &descripti
     skill.readOnly = readOnly;
     skill.requiresPlan = requiresPlan;
     skill.completionCriteria = completion;
-    skill.maxSteps = 20;
+    skill.maxSteps = 0;  // 不限制计划步数：修复类模式要能一次列完几十个模组的动作
     skill.version = 1;
     return skill;
 }

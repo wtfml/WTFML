@@ -90,6 +90,7 @@ ${REPO_ROOT}/ui/InstanceSettingsSignature.cpp
                                 ${REPO_ROOT}/ui/AgentPage.cpp
                                 ${REPO_ROOT}/ui/AgentSecretEdit.cpp
                                 ${REPO_ROOT}/ui/AgentSettingsPage.cpp
+                                ${REPO_ROOT}/ui/AgentProviderCatalog.cpp
                                 ${REPO_ROOT}/ui/AgentToolCard.cpp
                                 ${REPO_ROOT}/ui/AgentApprovalCard.cpp
                                 ${REPO_ROOT}/ui/AgentMcpPage.cpp

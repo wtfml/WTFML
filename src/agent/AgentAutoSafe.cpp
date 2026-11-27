@@ -92,10 +92,10 @@ void Authorizer::enable(const QString &instanceId, const QString &sessionId,
     m_verification = QJsonObject{};
     m_notes.clear();
     m_finishedAudit = QJsonObject{};
-    m_limits.maxMinutes = qBound(1, limits.maxMinutes, 60);
-    m_limits.maxLaunches = qBound(1, limits.maxLaunches, 40);
+    m_limits.maxMinutes = qMax(0, limits.maxMinutes);
+    m_limits.maxLaunches = qMax(0, limits.maxLaunches);
     m_startedAt = now;
-    m_expiresAt = now.addSecs(m_limits.maxMinutes * 60);
+    m_expiresAt = QDateTime();  // 不再有时效
 }
 
 void Authorizer::disable(const QDateTime &now, const QString &reason) {
@@ -105,7 +105,22 @@ void Authorizer::disable(const QDateTime &now, const QString &reason) {
 }
 
 bool Authorizer::expired(const QDateTime &now) const {
-    return m_enabled && now >= m_expiresAt;
+    Q_UNUSED(now);
+    // 开多久都算有效（2026-11-27 产品确认：去掉 60 分钟上限）。
+    return false;
+}
+
+bool Authorizer::revalidate(const QString &sessionId, const QString &instanceId) {
+    if (!m_enabled) return false;
+    if (!m_sessionId.isEmpty() && m_sessionId != sessionId) {
+        disable(QDateTime::currentDateTimeUtc(), QStringLiteral("session-changed"));  // i18n-ignore
+        return false;
+    }
+    if (!m_instanceId.isEmpty() && m_instanceId != instanceId) {
+        disable(QDateTime::currentDateTimeUtc(), QStringLiteral("instance-changed"));  // i18n-ignore
+        return false;
+    }
+    return true;
 }
 
 bool Authorizer::matchesInstance(const QString &instanceId) const {
@@ -154,6 +169,7 @@ void Authorizer::noteVerification(const QJsonObject &verification) {
 
 Decision Authorizer::authorize(const Agent::ToolCall &call, const QDateTime &now,
                                QString *reason, int *launchCount) const {
+    Q_UNUSED(now);  // 不再按时效判定；保留这个参数是为了以后要加别的时效条件时不改签名
     if (launchCount != nullptr) *launchCount = 0;
     const auto require = [reason](const QString &text) {
         if (reason != nullptr) *reason = text;
@@ -164,7 +180,6 @@ Decision Authorizer::authorize(const Agent::ToolCall &call, const QDateTime &now
         return Decision::Deny;
     };
     if (!m_enabled) return require(tr("Auto-safe 没有开启"));
-    if (expired(now)) return require(tr("Auto-safe 已过期（%1 分钟）").arg(m_limits.maxMinutes));
     const QString tool = AgentToolRegistry::internalName(call.name);
     const QString workspaceId = argumentText(call, "workspaceId");
 
@@ -220,11 +235,8 @@ Decision Authorizer::authorize(const Agent::ToolCall &call, const QDateTime &now
     }
     if (tool == QStringLiteral("instance.testLaunch") || tool == QStringLiteral("repair.verify") ||
         tool == QStringLiteral("mods.bisect")) {
-        const int count = launchCountOf(call);
-        if (m_launches + count > m_limits.maxLaunches) {
-            return require(tr("启动次数超出事务授权（%1 次）").arg(m_limits.maxLaunches));
-        }
-        if (launchCount != nullptr) *launchCount = count;
+        // 不再限启动次数（2026-11-27 产品确认）；次数只拿去写审计。
+        if (launchCount != nullptr) *launchCount = launchCountOf(call);
         return Decision::Allow;
     }
     if (tool == QStringLiteral("repair.begin") || tool == QStringLiteral("repair.finish") ||
@@ -263,8 +275,7 @@ QJsonObject Authorizer::scopeJson() const {
         {QStringLiteral("repairScopes"), QJsonArray::fromStringList(m_scopes)},
         {QStringLiteral("maxMinutes"), m_limits.maxMinutes},
         {QStringLiteral("maxLaunches"), m_limits.maxLaunches},
-        {QStringLiteral("startedAt"), m_startedAt.toString(Qt::ISODate)},
-        {QStringLiteral("expiresAt"), m_expiresAt.toString(Qt::ISODate)}};
+        {QStringLiteral("startedAt"), m_startedAt.toString(Qt::ISODate)}};
 }
 
 QJsonObject Authorizer::audit() const {

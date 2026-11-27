@@ -462,10 +462,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>Auto-safe 已过期（%1 分钟）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>这个设置键能改变游戏用哪段代码，Auto-safe 不放行：%1</source>
             <translation type="unfinished"></translation>
         </message>
@@ -511,10 +507,6 @@
         </message>
         <message>
             <source>这个操作不在 Auto-safe 范围（会动原实例或共享库）</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>启动次数超出事务授权（%1 次）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -741,6 +733,14 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>打开后，计划一旦批准就按计划执行到事务结束：计划内的写盘和测试启动不再逐步弹审批。
+
+开着就一直有效；验证失败自动回滚；事务结束写审计。java.path、args.extraJvm、saves/ 和跨工作区写入无论如何都会被拒绝。
+
+不打开也可以修，只是每一步写盘都要你点一次「允许」。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>检测到疑似凭据（%1），已在本机遮挡后再发送。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -827,14 +827,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>打开后，计划一旦批准就按计划执行到事务结束：计划内的写盘和测试启动不再逐步弹审批。
-
-最长 60 分钟或 20 次启动；验证失败自动回滚；事务结束写审计。java.path、args.extraJvm、saves/ 和跨工作区写入无论如何都会被拒绝。
-
-不打开也可以修，只是每一步写盘都要你点一次「允许」。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>打开 Auto-safe</source>
             <translation type="unfinished"></translation>
         </message>
@@ -843,7 +835,28 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>上一段对话：%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>当时问过：</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已经用过：</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>下面接着这一段继续（上下文太长，已经另起一段对话）：
+%1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>当前模式的提示词不可用，请重启启动器后再试。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>上一段对话已经接近模型上限，已另起一段。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -986,6 +999,22 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>不发送</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>低</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>中</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>高</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>先停止当前回复再切换模式。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -1003,14 +1032,6 @@
         </message>
         <message>
             <source>先锁定一个实例，再打开 Auto-safe。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>Auto-safe 已打开：提交并批准计划后，计划内的写入/启动不再逐步确认；最长 60 分钟或 20 次启动，事务结束写审计。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>Auto-safe：%1，剩余启动 %2 次</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -1042,6 +1063,14 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>Auto-safe 已打开：提交并批准计划后，计划内的写入/启动不再逐步确认。开着就一直有效，事务结束写审计。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Auto-safe：%1，已启动 %2 次</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>API 与模型设置</source>
             <translation type="unfinished"></translation>
         </message>
@@ -1055,6 +1084,22 @@
         </message>
         <message>
             <source>正在测试连接…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>先填 API Key（或保存过）才能拉模型列表。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>先填接口地址。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>正在拉取模型列表…</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>（已用内置清单）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -1970,6 +2015,10 @@
             <source>超过最大工具步数，已停止。</source>
             <translation type="unfinished"></translation>
         </message>
+        <message>
+            <source>与上一次调用参数相同，已复用上次结果（没有重新执行）。</source>
+            <translation type="unfinished"></translation>
+        </message>
     </context>
     <context>
         <name>AgentMcpPage</name>
@@ -2152,7 +2201,23 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>点一下折叠或展开思考过程</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>重试</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>思考过程（已折叠 · %1 字）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>点一下折叠思考过程</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>点一下展开思考过程</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2786,7 +2851,15 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>一次批准一个事务：按已批准计划执行，不再逐步确认；最长 60 分钟或 20 次启动，结束写审计。</source>
+            <source>一次批准一个事务：按已批准计划执行，不再逐步确认。开着就一直有效，事务结束写审计。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>思考强度</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>思考：%1</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2839,6 +2912,10 @@
         </message>
         <message>
             <source>取消固定</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>点一下换下一档（发给支持推理的模型）</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -2929,6 +3006,33 @@
         </message>
         <message>
             <source>模型 ID 不能为空。</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentProviderCatalog</name>
+        <message>
+            <source>通义千问（DashScope）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>OpenRouter 的模型 id 带厂商前缀，例如 openai/gpt-4.1。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>本机 Ollama 默认不校验密钥；先 `ollama serve`，模型名用 `ollama list` 里的那个。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>在 LM Studio 里先开 Local Server。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>自定义（OpenAI 兼容）</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>自建端点或上面没列的服务：自己填接口地址与模型 id。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -3202,6 +3306,10 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>思考强度不是允许的枚举值。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>max_tokens 字段名不是允许的枚举值。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -3261,18 +3369,6 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>OpenAI 兼容接口</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>服务类型</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>DeepSeek、通义、Kimi、Ollama 等大多数服务都提供这种接口。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
             <source>默认模型服务</source>
             <translation type="unfinished"></translation>
         </message>
@@ -3294,14 +3390,6 @@
         </message>
         <message>
             <source>模型</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>服务商文档中的模型 ID，区分大小写。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>模型单次可读取的最大 token 数，按服务商文档填写；超出上限时服务商将拒绝请求。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -3417,6 +3505,46 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>厂商</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>选一家就把接口地址填好，模型可以下拉挑；上面没有的服务选「自定义」，自己填地址与模型 id。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>拉取模型列表</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>下拉里是这个厂商的常见模型；也可以直接手填，区分大小写。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>不发送</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>低</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>中</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>高</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>思考强度</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>发给支持推理的模型（如 o3、o4-mini、deepseek-reasoner）；别的模型选「不发送」。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>云端服务</source>
             <translation type="unfinished"></translation>
         </message>
@@ -3462,6 +3590,14 @@
         </message>
         <message>
             <source>默认关闭。开启后可执行固定诊断命令（java -version、ping、nslookup、netstat -ano 等），每次均须确认；不开放任意命令。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>上下文与采样</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>选完模型会按该模型的上限填好；手改会覆盖它。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -3562,6 +3698,22 @@
         </message>
         <message>
             <source>发送输入的文字，以及关联实例的日志末尾、最新崩溃报告和版本信息。发送前移除账号信息。读取配置及其他文件前须确认。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>上下文上限 %1 token；这个模型支持思考强度。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>上下文上限 %1 token。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>没有拉到模型列表，已用内置清单。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已从服务端拉到 %1 个模型。</source>
             <translation type="unfinished"></translation>
         </message>
     </context>
@@ -20720,6 +20872,22 @@ SHA-256：%2
         <name>OpenAiCompatibleClient</name>
         <message>
             <source>无可用 API Key，需先在设置中配置。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>没有可用的 API Key，无法列出模型。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>列出模型失败（HTTP %1）。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>服务端没有返回任何模型。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已列出 %1 个模型。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>

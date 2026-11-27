@@ -25,7 +25,13 @@ public:
     QList<AgentToolEngine *> engines() const { return m_engines; }
     void setWorkflow(AgentWorkflow *workflow) { m_workflow = workflow; }
     /// Auto-safe 事务授权（D12）：授权范围内的写/启动工具不再逐次弹审批。
+    /// 每次工具调用前会拿这三个值调一次 `Authorizer::revalidate()` —— 会话/实例被换掉就
+    /// 当场关掉，不会拿着旧授权继续跑。
     void setAutoSafe(AgentAutoSafe::Authorizer *authorizer) { m_autoSafe = authorizer; }
+    void setAutoSafeContext(const QString &sessionId, const QString &instanceId) {
+        m_autoSafeSessionId = sessionId;
+        m_autoSafeInstanceId = instanceId;
+    }
 
     QJsonArray schemas() const override;
     AgentToolResult invoke(const Agent::ToolCall &call) override;
@@ -56,6 +62,8 @@ private:
     QList<AgentToolEngine *> m_engines;
     AgentWorkflow *m_workflow = nullptr;
     AgentAutoSafe::Authorizer *m_autoSafe = nullptr;
+    QString m_autoSafeSessionId;
+    QString m_autoSafeInstanceId;
     QHash<QString, AgentToolEngine *> m_approvalOwner;
     QHash<QString, Agent::ToolCall> m_approvalCalls;
     AgentToolSink m_sink;

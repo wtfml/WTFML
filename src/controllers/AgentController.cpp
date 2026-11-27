@@ -111,6 +111,8 @@ AgentView::ProviderDraft viewProfile(const AgentProviderProfile &profile) {
     draft.temperature = profile.temperature;
     draft.timeoutSec = profile.timeoutSec;
     draft.deployment = profile.deployment;
+    draft.providerId = profile.providerId;
+    draft.reasoningEffort = profile.reasoningEffort;
     draft.authMode = profile.authMode;
     draft.stream = profile.stream;
     draft.maxTokensField = profile.maxTokensField;
@@ -133,6 +135,8 @@ AgentProviderProfile coreProfile(const AgentView::ProviderDraft &draft) {
     profile.temperature = draft.temperature;
     profile.timeoutSec = draft.timeoutSec;
     profile.deployment = draft.deployment;
+    profile.providerId = draft.providerId;
+    profile.reasoningEffort = draft.reasoningEffort;
     profile.authMode = draft.authMode;
     profile.stream = draft.stream;
     profile.maxTokensField = draft.maxTokensField;
@@ -236,6 +240,7 @@ AgentController::AgentController(AgentPage *page, OverlayHost *overlay, QObject 
     m_compositeEngine->setWorkflow(&m_workflow);
     // Stage 5.7：Auto-safe 事务授权（默认关闭，不随会话记忆）。
     m_compositeEngine->setAutoSafe(&m_autoSafe);
+    syncAutoSafeContext();
     m_loop->setToolEngine(m_compositeEngine);
     m_saveTimer = new QTimer(this);
     m_saveTimer->setSingleShot(true);
@@ -377,6 +382,16 @@ void AgentController::wirePage() {
     connect(m_page, &AgentPage::sessionExportRequested, this, &AgentController::onExport);
     connect(m_page, &AgentPage::skillChosen, this, &AgentController::onSkillChosen);
     connect(m_page, &AgentPage::autoSafeToggled, this, &AgentController::onAutoSafeToggled);
+    connect(m_page, &AgentPage::reasoningLevelChosen, this, [this](const QString &level) {
+        m_profile.reasoningEffort = level;
+        AgentSettings::saveProfile(m_profile, nullptr);
+        applySkillToLoop();
+    });
+    connect(m_loop, &AgentLoop::contextBudgetUpdated, this,
+            [this](int usedPercent, int estimatedTokens) {
+                m_lastContextPercent = usedPercent;
+                m_lastContextTokens = estimatedTokens;
+            });
     connect(m_loop, &AgentLoop::toolCallFinished, this,
             [this](const Agent::ToolCall &call, const AgentToolResult &result) {
                 if (m_page != nullptr) m_page->setWorkflowStatus(m_workflow.statusLine());
@@ -579,6 +594,8 @@ void AgentController::selectSession(const QString &sessionId) {
     disableAutoSafe(QStringLiteral("切换会话"));  // i18n-ignore
     m_workflow.setSkill(usableSkill(m_session.meta.skill));
     m_taskLedger->onWorkflowReset();
+    m_lastContextPercent = 0;
+    m_pendingCarryOver.clear();
     refreshSkillUi();
 }
 
@@ -794,7 +811,7 @@ void AgentController::offerAutoSafeForCrash() {
         QCoreApplication::translate(
             "AgentController",
             "打开后，计划一旦批准就按计划执行到事务结束：计划内的写盘和测试启动不再逐步弹审批。\n\n"
-            "最长 60 分钟或 20 次启动；验证失败自动回滚；事务结束写审计。"
+            "开着就一直有效；验证失败自动回滚；事务结束写审计。"
             "java.path、args.extraJvm、saves/ 和跨工作区写入无论如何都会被拒绝。\n\n"
             "不打开也可以修，只是每一步写盘都要你点一次「允许」。"),
         QStringList{QCoreApplication::translate("AgentController", "打开 Auto-safe"),
@@ -802,6 +819,44 @@ void AgentController::offerAutoSafeForCrash() {
         1 /* 默认落在「逐步确认」：这是 D12 的默认关 */, -1);
     if (choice != 0) return;
     enableAutoSafeForCurrentSession();
+}
+
+QString AgentController::carryOverSummary() const {
+    if (m_session.messages.isEmpty()) return {};
+    QStringList parts;
+    const QString title = m_session.meta.title.trimmed();
+    if (!title.isEmpty()) {
+        parts.append(QCoreApplication::translate("AgentController", "上一段对话：%1").arg(title));
+    }
+    // 最后三条你说的话（截短）：比整段历史短得多，又能说明当时在做什么。
+    QStringList userLines;
+    for (int i = m_session.messages.size() - 1; i >= 0 && userLines.size() < 3; --i) {
+        const Agent::Message &message = m_session.messages.at(i);
+        if (message.role != Agent::Role::User) continue;
+        const QString text = message.content.simplified();
+        if (text.isEmpty()) continue;
+        userLines.prepend(text.left(120));
+    }
+    if (!userLines.isEmpty()) {
+        parts.append(QCoreApplication::translate("AgentController", "当时问过：")
+                     + userLines.join(QStringLiteral(" / ")));
+    }
+    // 用过的工具名去重：说明"已经查过什么"，新会话不用从头再来。
+    QStringList tools;
+    for (const Agent::Message &message : m_session.messages) {
+        if (message.role != Agent::Role::Tool || message.toolName.isEmpty()) continue;
+        const QString name = AgentToolRegistry::internalName(message.toolName);
+        if (!tools.contains(name)) tools.append(name);
+        if (tools.size() >= 12) break;
+    }
+    if (!tools.isEmpty()) {
+        parts.append(QCoreApplication::translate("AgentController", "已经用过：")
+                     + tools.join(QStringLiteral(", ")));
+    }
+    if (parts.isEmpty()) return {};
+    return QCoreApplication::translate("AgentController",
+                                       "下面接着这一段继续（上下文太长，已经另起一段对话）：\n%1")
+        .arg(parts.join(QLatin1Char('\n')));
 }
 
 void AgentController::onSend(const QString &text) {
@@ -834,8 +889,24 @@ void AgentController::onSend(const QString &text) {
         m_session = created;
     }
 
+    // 上一轮已经把上下文顶满了（≥ 90%）：另起一段对话，把上一段要点带成一句前缀。
+    // 这就是 ChatGPT 网页版那个手感 —— 话题太长就自然切开，不用人手动按「新对话」。
+    if (m_lastContextPercent >= kAutoNewSessionPercent && !m_session.messages.isEmpty()) {
+        const QString carry = carryOverSummary();
+        if (!ensureBlankSession()) return;
+        m_pendingCarryOver = carry;
+        if (m_page != nullptr) {
+            m_page->showNotice(QCoreApplication::translate(
+                "AgentController", "上一段对话已经接近模型上限，已另起一段。"));
+        }
+    }
+    QString textForSend = trimmed;
+    if (!m_pendingCarryOver.isEmpty()) {
+        textForSend = m_pendingCarryOver + QStringLiteral("\n\n") + trimmed;
+        m_pendingCarryOver.clear();
+    }
     removeTrailingFailedAssistant();
-    const AgentRedaction::Result redacted = AgentRedaction::redact(trimmed);
+    const AgentRedaction::Result redacted = AgentRedaction::redact(textForSend);
     if (redacted.containsCredentials()) {
         if (m_page != nullptr) {
             m_page->showNotice(QCoreApplication::translate("AgentController", "检测到疑似凭据（%1），已在本机遮挡后再发送。")
@@ -1115,6 +1186,8 @@ AgentInstanceInfo AgentController::lockedInstance() const {
 }
 
 void AgentController::updateInstanceChip() {
+    // 会话或实例刚变过：把这两个值同步给 Auto-safe 的复核（换一个就失效）。
+    syncAutoSafeContext();
     if (m_page == nullptr) return;
     const AgentInstanceLock &lock = m_session.meta.instanceLock;
     m_page->setInstanceChip(AgentInstanceLocks::chipText(lock, lock.isValid() ? lockedInstance() : homeInstance()),
@@ -1479,7 +1552,23 @@ void AgentController::refreshSkillUi() {
         options.append(AgentView::SkillOption{skill.id, skill.name, skill.description});
     }
     m_page->setSkills(options, m_workflow.skill().id);
+    refreshReasoningUi();
     refreshAutoSafeUi();
+}
+
+void AgentController::refreshReasoningUi() {
+    if (m_page == nullptr) return;
+    QList<QPair<QString, QString>> levels;
+    levels.append({QString(), QCoreApplication::translate("AgentController", "不发送")});
+    // 只有当前模型支持推理时才给那三档 —— 别的模型发了会被服务端拒。
+    AgentCatalogModel entry = AgentProviderCatalog::findModel(m_profile.providerId, m_profile.model);
+    if (entry.id.isEmpty()) entry = AgentProviderCatalog::findModelAnywhere(m_profile.model);
+    if (entry.supportsReasoning) {
+        levels.append({QStringLiteral("low"), QCoreApplication::translate("AgentController", "低")});
+        levels.append({QStringLiteral("medium"), QCoreApplication::translate("AgentController", "中")});
+        levels.append({QStringLiteral("high"), QCoreApplication::translate("AgentController", "高")});
+    }
+    m_page->setReasoningLevels(levels, m_profile.reasoningEffort);
 }
 
 void AgentController::onSkillChosen(const QString &skillId) {
@@ -1544,13 +1633,19 @@ bool AgentController::enableAutoSafeForCurrentSession() {
     m_autoSafe.enable(instanceId, m_session.meta.id, QDateTime::currentDateTimeUtc());
     m_autoSafeUserOn = true;
     m_repairTools->setAutoSafe(true);
+    syncAutoSafeContext();
     m_page->setAutoSafeEnabled(true);
     refreshAutoSafeUi();
     m_page->showNotice(
         QCoreApplication::translate("AgentController",
-                                    "Auto-safe 已打开：提交并批准计划后，计划内的写入/启动不再逐步确认；"  // i18n-ignore
-                                    "最长 60 分钟或 20 次启动，事务结束写审计。"));  // i18n-ignore
+                                    "Auto-safe 已打开：提交并批准计划后，计划内的写入/启动不再逐步确认。"  // i18n-ignore
+                                    "开着就一直有效，事务结束写审计。"));  // i18n-ignore
     return true;
+}
+
+void AgentController::syncAutoSafeContext() {
+    if (m_compositeEngine == nullptr) return;
+    m_compositeEngine->setAutoSafeContext(m_session.meta.id, m_session.meta.instanceLock.id);
 }
 
 void AgentController::disableAutoSafe(const QString &reason) {
@@ -1558,6 +1653,7 @@ void AgentController::disableAutoSafe(const QString &reason) {
     m_autoSafe.disable(QDateTime::currentDateTimeUtc(), reason);
     m_autoSafeUserOn = false;
     if (m_repairTools != nullptr) m_repairTools->setAutoSafe(false);
+    syncAutoSafeContext();
     if (m_page != nullptr) m_page->setAutoSafeEnabled(false);
 }
 
@@ -1572,14 +1668,12 @@ void AgentController::refreshAutoSafeUi() {
         return;
     }
     if (!m_autoSafe.enabled()) return;
-    const int remaining = m_autoSafe.remainingLaunches();
     const QString tx = m_autoSafe.transactionId();
     m_page->setWorkflowStatus(
-        QCoreApplication::translate("AgentController",
-                                    "Auto-safe：%1，剩余启动 %2 次")  // i18n-ignore
+        QCoreApplication::translate("AgentController", "Auto-safe：%1，已启动 %2 次")  // i18n-ignore
             .arg(tx.isEmpty() ? QCoreApplication::translate("AgentController", "等待事务")
                               : tx,
-                 QString::number(remaining)));
+                 QString::number(m_autoSafe.launchesUsed())));
 }
 
 void AgentController::onSessionApproval() {
@@ -1807,6 +1901,50 @@ void AgentController::onSettingsTest() {
     request.localHttpAllowed = profile.localHttpAllowed;
     request.timeoutSec = profile.timeoutSec;
     m_client->testConnection(request);
+}
+
+void AgentController::onSettingsModelsRequested() {
+    AgentSettingsPage *page = m_settingsPage;
+    if (page == nullptr) return;
+    const AgentView::ProviderDraft draft = page->profile();
+    QString key = page->apiKey();
+    if (key.isEmpty()) key = AgentSecretStore::read(m_profile.id).secret;
+    if (key.isEmpty() && draft.authMode != QLatin1String("none")) {
+        page->setModelsNote(QCoreApplication::translate(
+                                "AgentController", "先填 API Key（或保存过）才能拉模型列表。"),
+                            true);
+        return;
+    }
+    if (draft.baseUrl.trimmed().isEmpty()) {
+        page->setModelsNote(QCoreApplication::translate("AgentController", "先填接口地址。"), true);
+        return;
+    }
+    const QString requestId = QStringLiteral("models-") +
+                              QUuid::createUuid().toString(QUuid::WithoutBraces);
+    page->setModelsNote(QCoreApplication::translate("AgentController", "正在拉取模型列表…"), false);
+    connect(m_client, &AgentModelClient::modelsListed, page,
+            [page, requestId](const QString &id, bool ok, const QStringList &models,
+                              const QString &summary) {
+                if (id != requestId) return;
+                if (!ok) {
+                    // 拉不到不算错：回落到内置清单，界面写一句就够。
+                    page->setModelsNote(summary + QCoreApplication::translate(
+                                                      "AgentController", "（已用内置清单）"),
+                                        false);
+                    page->setAvailableModels({});
+                    return;
+                }
+                page->setAvailableModels(models);
+            },
+            Qt::SingleShotConnection);
+    Agent::ModelRequest request;
+    request.requestId = requestId;
+    request.baseUrl = draft.baseUrl;
+    request.apiKey = key;
+    request.authMode = draft.authMode;
+    request.localHttpAllowed = draft.localHttpAllowed;
+    request.timeoutSec = draft.timeoutSec;
+    m_client->listModels(request);
 }
 
 void AgentController::onSettingsDeleteProfile() {

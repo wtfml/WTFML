@@ -7,6 +7,8 @@
 
 #include "../../ui/UiLanguage.hpp"
 
+#include <cmath>
+
 namespace {
 
 bool isCjk(uint ucs4) {
@@ -39,6 +41,16 @@ int AgentContextBuilder::reservedOutputTokens(int maxOutput) {
     return qMax(1, maxOutput);
 }
 
+int AgentContextBuilder::budgetFor(int contextWindow, int maxOutput) {
+    return qMax(0, contextWindow - reservedOutputTokens(maxOutput) - 512);
+}
+
+int AgentContextBuilder::usedPercent(int usedTokens, int contextWindow, int maxOutput) {
+    const int budget = budgetFor(contextWindow, maxOutput);
+    if (budget <= 0) return 100;
+    return qBound(0, int(std::ceil(usedTokens * 100.0 / budget)), 100);
+}
+
 QString AgentContextBuilder::omissionMarker(int omittedCount) {
     return QStringLiteral("(Earlier %1 message(s) omitted)").arg(qMax(0, omittedCount));  // i18n-ignore
 }
@@ -61,7 +73,7 @@ QList<Agent::Message> AgentContextBuilder::build(const QList<Agent::Message> &hi
                                                  const QString &systemPrompt, int contextWindow,
                                                  int maxOutput, AgentContextReport *report) {
     AgentContextReport result;
-    result.budgetTokens = qMax(0, contextWindow - reservedOutputTokens(maxOutput) - 512);
+    result.budgetTokens = budgetFor(contextWindow, maxOutput);
     QList<Agent::Message> picked;
     if (history.isEmpty()) {
         if (report != nullptr) *report = result;
@@ -105,6 +117,7 @@ QList<Agent::Message> AgentContextBuilder::build(const QList<Agent::Message> &hi
     }
     result.messageCount = picked.size();
     result.estimatedTokens = int(used + 0.999);
+    result.usedPercent = usedPercent(result.estimatedTokens, contextWindow, maxOutput);
     if (report != nullptr) *report = result;
     return picked;
 }

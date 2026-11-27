@@ -19,6 +19,7 @@
 
 #include <QList>
 #include <QObject>
+#include <QPair>
 #include <QString>
 
 class QTimer;
@@ -35,10 +36,11 @@ public:
         QString apiKey;
         QString systemPrompt;
         int maxRetry = 2;
-        /// 单个回合最多几轮工具（模型 → 工具 → 模型算一轮）。
-        int maxToolSteps = 8;
-        /// 单个会话累计最多几次工具调用；0 = 不设上限。跨回合累计，切会话时由控制器写入。
-        int maxSessionToolCalls = 40;
+        /// 单个回合最多几轮工具（模型 → 工具 → 模型算一轮）。**0 = 不设上限**（默认）。
+        int maxToolSteps = 0;
+        /// 单个会话累计最多几次工具调用；**0 = 不设上限**（默认）。跨回合累计，切会话时由
+        /// 控制器写入 —— 计数留着给审计和界面看，不再拦调用。
+        int maxSessionToolCalls = 0;
         QList<int> retryDelaysMs{1000, 4000};
     };
 
@@ -69,9 +71,14 @@ public:
     State state() const { return m_state; }
     Agent::Message assistantMessage() const { return m_assistant; }
 
-    /// 切会话时写入这个会话已经用掉的工具调用次数（会话累计上限用）。
+    /// 切会话时写入这个会话已经用掉的工具调用次数（只用于显示与审计，不再拦调用）。
     void setSessionToolCalls(int used);
     int sessionToolCalls() const { return m_sessionToolCalls; }
+
+    /// 同一工具 + 完全相同的参数在 @ref kRepeatReuseWindow 次内成功返回过，就复用那一次的结果：
+    /// 不消耗 API 往返，模型卡在同一处反复试时也不会把钱花在同一个洞上。
+    /// **这不是次数限制**：窗口内的不同参数、或超过窗口再调，都照常执行。
+    static constexpr int kRepeatReuseWindow = 3;
 
     /// 测试专用：把退避压成 0，避免单测等 1s/4s。
     void setRetryDelaysForTest(const QList<int> &delays);
@@ -84,6 +91,8 @@ signals:
     void turnFinished(const Agent::Message &message);
     void turnFailed(const Agent::Error &error);
     void usageUpdated(const Agent::Usage &usage);
+    /// 这一轮发出去的那份上下文用掉几分满（0–100）。控制器按 ≥90 另起一段对话。
+    void contextBudgetUpdated(int usedPercent, int estimatedTokens);
     void messageAdded(const Agent::Message &message);
     void toolCallStarted(const Agent::ToolCall &call);
     void toolCallFinished(const Agent::ToolCall &call, const AgentToolResult &result);
@@ -98,7 +107,12 @@ private:
     void deliverFailure(const Agent::Error &error);
     void appendAssistantToHistory();
     void processToolCalls();
-    void handleToolOutcome(const Agent::ToolCall &call, const AgentToolResult &result);
+    void handleToolOutcome(const Agent::ToolCall &call, const AgentToolResult &result,
+                           bool recordForReuse = true);
+    /// 上面那次工具调用的签名（工具名 + 规范化参数）在最近几次里有没有成功过；有就把结果
+    /// 抄一份回来，summary 标一句「重复调用，已复用上次结果」。
+    bool reuseRepeatedResult(const Agent::ToolCall &call);
+    static QString callSignature(const Agent::ToolCall &call);
     void invalidateRequest();
     /// 异步工具（MCP）的最终结果从这里回来；generation 或状态不对就丢弃。
     void onAsyncToolDone(const Agent::ToolCall &call, const AgentToolResult &result);
@@ -117,6 +131,8 @@ private:
     int m_generation = 0;
     int m_toolSteps = 0;
     int m_sessionToolCalls = 0;
+    /// 最近几次成功返回的调用签名与结果（只留 `kRepeatReuseWindow` 条，先进先出）。
+    QList<QPair<QString, AgentToolResult>> m_recentResults;
     int m_nextToolCall = 0;
     QList<Agent::ToolCall> m_toolQueue;
     QString m_approvalId;

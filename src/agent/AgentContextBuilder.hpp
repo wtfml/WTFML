@@ -19,6 +19,8 @@ struct AgentContextReport {
     int omittedMessages = 0;
     bool truncated = false;
     int messageCount = 0;
+    /// 预算用掉了百分之几（0–100）。控制器按它决定"该另起一段对话了"。
+    int usedPercent = 0;
 };
 
 class AgentContextBuilder {
@@ -26,6 +28,10 @@ public:
     static int estimateTokens(const QString &text);
     static QString omissionMarker(int omittedCount);
     static int reservedOutputTokens(int maxOutput);
+    /// 这个窗口下还剩多少给历史用（= 上下文 - 预留输出 - 512）。
+    static int budgetFor(int contextWindow, int maxOutput);
+    /// 上面那个预算用掉 @p usedTokens 算是几分满（0–100，向上取整）。
+    static int usedPercent(int usedTokens, int contextWindow, int maxOutput);
     /// 运行期读取当前实际加载的界面语言名（不缓存，切换后下一轮生效）。
     static QString interfaceLanguageName();
     static QString runtimeContextLine();

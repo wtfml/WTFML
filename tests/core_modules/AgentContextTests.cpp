@@ -80,6 +80,41 @@ void runAgentContextTests() {
           "上下文：最后一条 user 即使超预算也保留（交给上层报 ContextOverflow）");
 
     {
+        // 「顶满模型上限」：128K 窗口下，70k token 量级的历史不该被截掉；预算按真实窗口算。
+        QList<Agent::Message> big;
+        for (int i = 0; i < 40; ++i) {
+            Agent::Message message;
+            message.id = QStringLiteral("big%1").arg(i);
+            message.role = i % 2 == 0 ? Agent::Role::User : Agent::Role::Assistant;
+            message.content = QString(6000, QLatin1Char('a')) + QString::number(i);
+            message.status = Agent::MessageStatus::Complete;
+            big.append(message);
+        }
+        AgentContextReport window128k;
+        const QList<Agent::Message> kept128 = AgentContextBuilder::build(
+            big, QStringLiteral("system"), 131072, 8192, &window128k);
+        check(!window128k.truncated && kept128.size() == big.size(),
+              "上下文：128K 窗口装得下约 70k token 的历史（不截断）",
+              QString("%1/%2").arg(window128k.estimatedTokens).arg(window128k.budgetTokens));
+        check(window128k.usedPercent > 30 && window128k.usedPercent < 90,
+              "上下文：128K 窗口下这一份只用掉三到九成",
+              QString::number(window128k.usedPercent));
+
+        // 同一个 32K 默认窗口装不下：截断，且占比报得出来（控制器据此另起一段）。
+        AgentContextReport window32k;
+        AgentContextBuilder::build(big, QStringLiteral("system"), 32768, 4096, &window32k);
+        check(window32k.truncated && window32k.usedPercent >= 90,
+              "上下文：32K 窗口下会截断并把占比报到 90% 以上",
+              QString::number(window32k.usedPercent));
+        check(AgentContextBuilder::budgetFor(131072, 8192) ==
+                  131072 - 8192 - 512,
+              "上下文：预算 = 窗口 - 预留输出 - 512");
+        check(AgentContextBuilder::usedPercent(0, 131072, 8192) == 0 &&
+                  AgentContextBuilder::usedPercent(131072, 131072, 8192) == 100,
+              "上下文：占比在 0–100 之间");
+    }
+
+    {
         check(AgentContextBuilder::interfaceLanguageName() == QStringLiteral("Simplified Chinese"),
               "上下文：未装英文翻译时界面语言为 Simplified Chinese");
         check(AgentContextBuilder::withRuntimeContext(QStringLiteral("sys")) ==

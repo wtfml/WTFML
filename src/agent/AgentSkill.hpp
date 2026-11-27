@@ -33,7 +33,8 @@ struct AgentSkill {
     /// 完成这条工作流至少要碰过的工具（缺了 `workflow.finish` 就拒绝）。
     QStringList requiredTools;
     bool readOnly = true;
-    int maxSteps = 20;
+    /// 一份计划最多几步。**0 = 不限制**（修复类模式默认这样：模组多的整合包要逐个改）。
+    int maxSteps = 0;
     /// 必须先 `workflow.submitPlan` 并通过计划审批，才能调写类工具。
     bool requiresPlan = false;
     QString completionCriteria;

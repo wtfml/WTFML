@@ -8,8 +8,10 @@
 #include "AgentMarkdown.hpp"
 #include "Theme.hpp"
 
+#include <QEvent>
 #include <QFont>
 #include <QHBoxLayout>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
 #include <QTextDocument>
@@ -58,9 +60,15 @@ AgentMessageView::AgentMessageView(const AgentView::Message &message, QWidget *p
     m_reasoning->setTextInteractionFlags(Qt::TextSelectableByMouse);
     m_reasoning->setForegroundRole(QPalette::PlaceholderText);
     m_reasoning->hide();
+    // 点思考正文就折叠 / 展开（和 pi 那个手感一样）：光标变手形，悬停提示写清点一下会怎样。
+    // 拖选文字不算点击 —— 按下与松开隔得太远就不动那一位（见 eventFilter）。
+    m_reasoning->setCursor(Qt::PointingHandCursor);
+    m_reasoning->setToolTip(tr("点一下折叠或展开思考过程"));
+    m_reasoning->installEventFilter(this);
     layout->addWidget(m_reasoning);
     connect(m_reasoningToggle, &QToolButton::toggled, this, [this](bool checked) {
         m_reasoning->setVisible(checked);
+        refreshReasoningToggle();
     });
 
     m_body = new QLabel(this);
@@ -95,6 +103,42 @@ void AgentMessageView::setMessage(const AgentView::Message &message) {
     refresh();
 }
 
+void AgentMessageView::refreshReasoningToggle() {
+    if (m_reasoningToggle == nullptr) return;
+    const bool expanded = m_reasoningToggle->isChecked();
+    const int chars = m_message.reasoning.size();
+    // 收起时把长度写进那行按钮里：折叠之后仍然看得出"这里有这么一段、有多长"。
+    m_reasoningToggle->setText(expanded || chars == 0
+                                   ? tr("思考过程")
+                                   : tr("思考过程（已折叠 · %1 字）").arg(chars));
+    m_reasoningToggle->setToolTip(expanded ? tr("点一下折叠思考过程") : tr("点一下展开思考过程"));
+}
+
+bool AgentMessageView::eventFilter(QObject *watched, QEvent *event) {
+    if (watched == m_reasoning && m_reasoningToggle != nullptr) {
+        if (event->type() == QEvent::MouseButtonPress) {
+            auto *press = static_cast<QMouseEvent *>(event);
+            if (press->button() == Qt::LeftButton) {
+                m_reasoningPressed = true;
+                m_reasoningPressPos = press->pos();
+            }
+        } else if (event->type() == QEvent::MouseButtonRelease) {
+            auto *release = static_cast<QMouseEvent *>(event);
+            const bool wasPress = m_reasoningPressed;
+            m_reasoningPressed = false;
+            // 挪开超过 4 px 当成拖选文字，不折叠（否则选字永远选不完）。
+            if (wasPress && release->button() == Qt::LeftButton &&
+                (release->pos() - m_reasoningPressPos).manhattanLength() <= 4) {
+                m_reasoningToggle->toggle();
+                return true;
+            }
+        } else if (event->type() == QEvent::Hide) {
+            m_reasoningPressed = false;
+        }
+    }
+    return QWidget::eventFilter(watched, event);
+}
+
 void AgentMessageView::refresh() {
     const bool user = m_message.user;
     m_role->setText(user ? tr("你") : tr("助手"));
@@ -111,6 +155,7 @@ void AgentMessageView::refresh() {
     m_reasoningToggle->setVisible(hasReasoning);
     m_reasoning->setText(AgentMarkdown::toHtml(m_message.reasoning));
     if (!hasReasoning) m_reasoning->hide();
+    refreshReasoningToggle();
 
     QString status;
     switch (m_message.status) {

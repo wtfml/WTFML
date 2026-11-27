@@ -176,6 +176,11 @@ QString AgentCompositeToolEngine::gate(const QString &internalName) const {
 }
 
 AgentToolResult AgentCompositeToolEngine::invoke(const Agent::ToolCall &call) {
+    // Auto-safe 实时复核：每次工具调用前先确认这面授权还落在同一条会话、同一个实例上。
+    // 换会话 / 换实例当场失效，下一次写工具照旧要逐次审批 —— 不再只在开关那一刻判一次。
+    if (m_autoSafe != nullptr && m_autoSafe->enabled()) {
+        m_autoSafe->revalidate(m_autoSafeSessionId, m_autoSafeInstanceId);
+    }
     Agent::ToolCall routed = call;
     routed.name = AgentToolRegistry::internalName(call.name);
     AgentToolEngine *engine = findEngine(routed.name);

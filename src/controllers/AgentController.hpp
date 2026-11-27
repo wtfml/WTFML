@@ -30,6 +30,7 @@
 #include "agent/AgentTypes.hpp"
 #include "controllers/AgentTaskLedger.hpp"
 
+#include "AgentProviderCatalog.hpp"
 #include "AgentViewTypes.hpp"
 
 #include <QObject>
@@ -135,10 +136,15 @@ private:
     void openSettings();
     void onSettingsSave();
     void onSettingsTest();
+    /// 「拉取模型列表」：拿当前填的地址与 key 走 `GET /models`，结果回填设置页的模型下拉。
+    void onSettingsModelsRequested();
     void onSettingsDeleteProfile();
     void onNewSession();
     /// 切到一条没内容的会话（当前这条空着就继续用它）；在飞请求先停、内容保留。
     bool ensureBlankSession();
+    /// 上一段对话的一句话要点（标题 + 最后几条你说的话 + 用到的工具名去重）。
+    /// 不做模型压缩 —— 只把手上已有的结构化信息拼起来（§7.3 里明确先不做 LLM 摘要）。
+    QString carryOverSummary() const;
     /// 这次崩的实例：锁成会话实例（不在当前游戏目录就不锁，留给首次实例工具调用）。
     void lockCrashInstance(const QString &instanceId);
     QString crashInstanceLabel(const QString &instanceId) const;
@@ -146,6 +152,8 @@ private:
     void offerAutoSafeForCrash();
     /// 按当前模式/已锁实例打开 Auto-safe；不具备条件时复位开关并提示。
     bool enableAutoSafeForCurrentSession();
+    /// 把当前会话与锁定实例告诉复合引擎：Auto-safe 每次工具调用前拿它俩复核，换了一个就失效。
+    void syncAutoSafeContext();
     void onSend(const QString &text);
     void onStop();
     void onRetry(const QString &messageId);
@@ -179,6 +187,8 @@ private:
     /// 把当前模式的系统提示与工具闸同步给 Loop（切模式、换会话、发消息前都走它）。
     void applySkillToLoop();
     void refreshSkillUi();
+    /// 「思考强度」那颗胶囊：当前模型支持推理时才给 low/medium/high 三档。
+    void refreshReasoningUi();
     AgentToolContext toolContext(QString *problem);
     void updateInstanceChip();
     void showToolCardsFromHistory();
@@ -226,4 +236,11 @@ private:
     bool m_settingsOpenQueued = false;  // 让位后排了下一轮重开 API 设置页
     bool m_shuttingDown = false;
     QString m_autoNoticeShownFor;
+    /// 上一轮发出去的那份上下文用掉几分满（0–100）；≥ `kAutoNewSessionPercent` 时下一次发送自动另起一段。
+    int m_lastContextPercent = 0;
+    int m_lastContextTokens = 0;
+    /// 下一句要带上的上一段要点（自动另起的那一轮用一次就清）。
+    QString m_pendingCarryOver;
+    /// 顶到这里就另起一段：90% 是常见的"再聊一轮就溢出"的位置。
+    static constexpr int kAutoNewSessionPercent = 90;
 };

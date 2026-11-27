@@ -21,6 +21,8 @@ QJsonObject AgentProviderProfile::toJson() const {
         {QStringLiteral("temperature"), temperature},
         {QStringLiteral("timeoutSec"), timeoutSec},
         {QStringLiteral("deployment"), deployment},
+        {QStringLiteral("providerId"), providerId},
+        {QStringLiteral("reasoningEffort"), reasoningEffort},
         {QStringLiteral("authMode"), authMode},
         {QStringLiteral("stream"), stream},
         {QStringLiteral("maxTokensField"), maxTokensField},
@@ -46,6 +48,8 @@ AgentProviderProfile AgentProviderProfile::fromJson(const QJsonObject &object) {
     profile.temperature = object.value(QStringLiteral("temperature")).toDouble(0.7);
     profile.timeoutSec = object.value(QStringLiteral("timeoutSec")).toInt(120);
     profile.deployment = object.value(QStringLiteral("deployment")).toString(QStringLiteral("cloud"));
+    profile.providerId = object.value(QStringLiteral("providerId")).toString();
+    profile.reasoningEffort = object.value(QStringLiteral("reasoningEffort")).toString();
     profile.authMode = object.value(QStringLiteral("authMode")).toString(QStringLiteral("bearer"));
     profile.stream = object.value(QStringLiteral("stream")).toBool(true);
     profile.maxTokensField =
@@ -79,6 +83,11 @@ bool AgentProviderProfile::validateEnumFields(QString *problem) const {
     if (authMode != QLatin1String("bearer") && authMode != QLatin1String("api-key-header") &&
         authMode != QLatin1String("none")) {
         return reject(QCoreApplication::translate("AgentSettings", "认证头模式不是允许的枚举值。"));
+    }
+    if (!reasoningEffort.isEmpty() && reasoningEffort != QLatin1String("off") &&
+        reasoningEffort != QLatin1String("low") && reasoningEffort != QLatin1String("medium") &&
+        reasoningEffort != QLatin1String("high")) {
+        return reject(QCoreApplication::translate("AgentSettings", "思考强度不是允许的枚举值。"));
     }
     if (maxTokensField != QLatin1String("max_tokens") &&
         maxTokensField != QLatin1String("max_completion_tokens")) {
