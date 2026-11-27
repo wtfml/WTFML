@@ -31,6 +31,8 @@
 #include <QScrollBar>
 #include <QPlainTextEdit>
 #include "PresetModReview.hpp"
+#include "PresetEditorPage.hpp"
+#include "PresetManagePage.hpp"
 #include "UpgradeHistoryDialog.hpp"
 #include "UpgradeReportDialog.hpp"
 #include "ToggleSwitch.hpp"
@@ -833,6 +835,11 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                                         std::pair{"settings", MainWindowUI::settingsTabIndex()}})
             list.append({QStringLiteral("i136-tab-%1-emerald-960x620.png").arg(QLatin1String(page)), QStringLiteral("emerald"),
                          {960, 620}, false, tab});
+        // 下载安装页的加载器树行右缘、预设内嵌编辑器游戏选项表的滑条列（同一个 FILTER=i136-）。
+        list.append({QStringLiteral("i136-install-emerald-960x620.png"), QStringLiteral("emerald"), {960, 620}, false, download,
+                     QStringLiteral("i136p:install")});
+        list.append({QStringLiteral("i136-preset-options-emerald-960x620.png"), QStringLiteral("emerald"), {960, 620}, false, manage,
+                     QStringLiteral("i136p:preset")});
         // #141（FILTER=i141-）：崩溃 → 询问智能体 → Auto-safe 询问框，框背后智能体还在流式输出。
         list.append({QStringLiteral("i141-autosafe-ask-emerald-960x620.png"), QStringLiteral("emerald"), {960, 620}, false, home,
                      QStringLiteral("i141")});
@@ -994,6 +1001,26 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
             } else if (shot.page.startsWith(QStringLiteral("r2:agent-"))) {
                 if (auto *page = window.findChild<AgentPage *>()) seedAgent(*page, shot.page.section(QLatin1Char('-'), 1));
             } else if (shot.page.startsWith(QStringLiteral("r2:"))) {
+            } else if (shot.page == QStringLiteral("i136p:install")) {
+                window.ui()->getGameStack()->setCurrentIndex(MainWindowUI::downloadGameInstallIndex());
+            } else if (shot.page == QStringLiteral("i136p:preset")) {
+                window.ui()->setInstanceMode(MainWindowUI::InstanceMode::Preset);
+                // 等控制器把（隔离目录里的空）列表灌完，再摆一份演示预设并嵌进编辑器。
+                QTimer::singleShot(200, &window, [&window]() {
+                    auto *page = window.findChild<PresetManagePage *>();
+                    auto *list = page ? page->findChild<QTreeWidget *>(PresetManagePage::presetListName()) : nullptr;
+                    if (list == nullptr) return;
+                    PresetManagePage::PresetItem item;
+                    item.id = QStringLiteral("shot");
+                    item.name = QStringLiteral("日常配置");
+                    page->setPresets({item}, {}, item.id);
+                    if (list->currentItem() == nullptr) return;
+                    emit list->itemClicked(list->currentItem(), 0);
+                    auto *editor = new PresetEditorPage(QJsonObject{{"id", item.id}, {"name", item.name}}, page,
+                                                        PresetEditorPage::Presentation::Embedded);
+                    editor->selectSection(1);
+                    page->embedEditor(editor);
+                });
             } else if (shot.page == QStringLiteral("final:expand")) {
                 // 展开态：版本树头一个有孩子的频道展开、选中它下面头一条（看「收起」字与选中淡底）。
                 QTreeWidget *tree = window.ui()->getVersionTree();

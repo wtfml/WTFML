@@ -278,6 +278,15 @@ public:
                      const QModelIndex &index) override {
         return !index.data(kFiltered).toBool() && DesignDefaults::RowDelegate::editorEvent(event, model, option, index);
     }
+    // 表格挂了滑条列让位时，挨着滑条那一格里的控件也停在同一条右缘（#136）。
+    void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const override {
+        DesignDefaults::RowDelegate::updateEditorGeometry(editor, option, index);
+        const auto *view = qobject_cast<const QAbstractScrollArea *>(option.widget);
+        const int gap = view ? view->property("wtfmlScrollContentGap").toInt() : 0;
+        if (gap <= 0) return;
+        const int over = editor->geometry().right() + 1 - (view->viewport()->width() - gap);
+        if (over > 0) editor->setGeometry(editor->geometry().adjusted(0, 0, -over, 0));
+    }
     QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override {
         const auto *spec = PresetOptionCatalog::find(index.siblingAtColumn(index.column() - 1).data().toString());
         if (index.column() % 2 == 1 && spec) {

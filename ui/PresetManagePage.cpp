@@ -419,7 +419,6 @@ void PresetManagePage::enableEditorTabs() {
 
 void PresetManagePage::embedEditor(PresetEditorPage *editor) {
     m_embeddedEditor = editor;
-    editor->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);  // 内嵌编辑器没有整页滚动区（表格自己滚）
     m_detailPages->addWidget(editor);
     m_detailPages->setCurrentWidget(editor);
     m_applyButton->hide();
