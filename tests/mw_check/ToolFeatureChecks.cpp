@@ -341,6 +341,42 @@ int runToolFeatureChecks() {
         expect(QGuiApplication::clipboard()->text() == tp,
                "copy-tp puts the generated command back on the clipboard");
     }
+    // ---- 坐标换算：生成 tp 命令时按目标维度换算（UI 问题 #133） ----
+    {
+        ToolboxPage tpPage;
+        tpPage.showTool(ToolboxPage::Tool::Coord);
+        tpPage.setDimensionChoices({QStringLiteral("主世界"), QStringLiteral("下界"),
+                                    QStringLiteral("末地")});
+        tpPage.setCoordinates(0, 80.5, 63.0, -76.5);
+        auto *targetCombo = tpPage.findChild<QComboBox *>(QStringLiteral("coordTpDimension"));
+        expect(targetCombo != nullptr && targetCombo->count() == 3
+                   && targetCombo->currentIndex() == 1,
+               "coord tool defaults the tp target to the converted dimension (overworld -> nether)");
+        int fromIndex = -1;
+        int toIndex = -1;
+        double gotX = 0.0;
+        double gotY = 0.0;
+        double gotZ = 0.0;
+        QObject::connect(&tpPage, &ToolboxPage::teleportCommandRequested, &tpPage,
+                         [&](int from, int to, double x, double y, double z) {
+                             fromIndex = from;
+                             toIndex = to;
+                             gotX = x;
+                             gotY = y;
+                             gotZ = z;
+                         });
+        auto *make = tpPage.findChild<QPushButton *>(QStringLiteral("coordMakeTp"));
+        if (make != nullptr) make->click();
+        expect(fromIndex == 0 && toIndex == 1 && gotX == 80.5 && gotY == 63.0 && gotZ == -76.5,
+               "make-tp hands over both dimensions and the unconverted coordinates");
+        if (targetCombo != nullptr) targetCombo->setCurrentIndex(2);
+        if (make != nullptr) make->click();
+        expect(fromIndex == 0 && toIndex == 2, "the target dimension picker reaches the command");
+        if (targetCombo != nullptr) targetCombo->setCurrentIndex(1);
+        tpPage.setCoordinates(1, 10.0, 64.0, -9.5);
+        expect(targetCombo != nullptr && targetCombo->currentIndex() == 0,
+               "changing the source dimension moves the tp target off the same dimension");
+    }
     ToolboxPage equipmentPage;
     equipmentPage.showTool(ToolboxPage::Tool::Trim);
     const QStringList armorNames{"皮革","锁链","铁","金","钻石","下界合金","海龟壳"};

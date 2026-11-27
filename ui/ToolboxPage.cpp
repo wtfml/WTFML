@@ -2214,6 +2214,12 @@ QWidget *ToolboxPage::buildCoordPanel() {
     auto *commandRow = new QHBoxLayout;
     commandRow->setContentsMargins(0, 6, 0, 0);
     commandRow->setSpacing(6);
+    auto *targetLabel = makeMutedLabel(result.card);
+    targetLabel->setText(QCoreApplication::translate("ToolboxPage", "目标维度"));
+    targetLabel->setWordWrap(false);
+    m_tpDimension = new QComboBox(result.card);
+    m_tpDimension->setObjectName(QStringLiteral("coordTpDimension"));
+    m_tpDimension->setMinimumWidth(110);
     m_tpCommand = new QLineEdit(result.card);
     m_tpCommand->setObjectName(QStringLiteral("coordTpCommand"));
     m_tpCommand->setReadOnly(true);
@@ -2225,6 +2231,8 @@ QWidget *ToolboxPage::buildCoordPanel() {
     Theme::markButton(makeCommand, Theme::ButtonKind::Ghost);
     auto *copyCommand = makeGlyphButton(result.card, QStringLiteral("coordCopyTp"), Glyph::Copy,
                                         QCoreApplication::translate("ToolboxPage", "复制 tp 命令"));
+    commandRow->addWidget(targetLabel);
+    commandRow->addWidget(m_tpDimension);
     commandRow->addWidget(m_tpCommand, 1);
     commandRow->addWidget(makeCommand);
     commandRow->addWidget(copyCommand);
@@ -2247,11 +2255,25 @@ QWidget *ToolboxPage::buildCoordPanel() {
                                  m_coordY->value(), m_coordZ->value());
     });
     connect(makeCommand, &QPushButton::clicked, this, [this]() {
-        emit teleportCommandRequested(m_coordDimension->currentIndex(), m_coordX->value(),
+        emit teleportCommandRequested(m_coordDimension->currentIndex(),
+                                      m_tpDimension->currentIndex(), m_coordX->value(),
                                       m_coordY->value(), m_coordZ->value());
     });
     connect(copyCommand, &QPushButton::clicked, this,
             [this]() { copyToClipboard(m_tpCommand->text()); });
+    // 换源维度时，若目标维度正好跟成了同一维，自动挪到另一个（用户自己选的同维度不动）。
+    connect(m_coordDimension, &QComboBox::currentIndexChanged, this, [this](int index) {
+        if (m_tpDimension == nullptr || m_tpDimension->count() == 0
+            || m_tpDimension->currentIndex() != index) {
+            return;
+        }
+        for (int candidate = 0; candidate < m_tpDimension->count(); ++candidate) {
+            if (candidate != index) {
+                m_tpDimension->setCurrentIndex(candidate);
+                return;
+            }
+        }
+    });
     return panel;
 }
 
@@ -2260,10 +2282,35 @@ void ToolboxPage::setDimensionChoices(const QStringList &names) {
         return;
     }
     const int previous = m_coordDimension->currentIndex();
-    m_coordDimension->clear();
-    m_coordDimension->addItems(names);
-    if (previous >= 0 && previous < m_coordDimension->count()) {
-        m_coordDimension->setCurrentIndex(previous);
+    const int previousTarget = m_tpDimension != nullptr ? m_tpDimension->currentIndex() : -1;
+    {
+        // 灌表时的 -1/0/旧值几次跳变不该触发「目标维度自动挪位」。
+        const QSignalBlocker blocker(m_coordDimension);
+        m_coordDimension->clear();
+        m_coordDimension->addItems(names);
+        if (previous >= 0 && previous < m_coordDimension->count()) {
+            m_coordDimension->setCurrentIndex(previous);
+        }
+    }
+    if (m_tpDimension == nullptr) {
+        return;
+    }
+    m_tpDimension->clear();
+    m_tpDimension->addItems(names);
+    if (previousTarget >= 0 && previousTarget < m_tpDimension->count()) {
+        m_tpDimension->setCurrentIndex(previousTarget);
+        return;
+    }
+    // 第一次灌表：默认挑一个与源维度不同的目标（主世界 → 下界，下界 → 主世界）。
+    const int source = m_coordDimension->currentIndex();
+    for (int candidate = 0; candidate < m_tpDimension->count(); ++candidate) {
+        if (candidate != source) {
+            m_tpDimension->setCurrentIndex(candidate);
+            return;
+        }
+    }
+    if (m_tpDimension->count() > 0) {
+        m_tpDimension->setCurrentIndex(0);
     }
 }
 

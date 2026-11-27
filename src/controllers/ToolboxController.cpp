@@ -192,8 +192,8 @@ void ToolboxController::ensurePage() {
     connect(m_page, &ToolboxPage::teleportParseRequested, this,
             [this](const QString &text) { parseTeleport(text); });
     connect(m_page, &ToolboxPage::teleportCommandRequested, this,
-            [this](int dimension, double x, double y, double z) {
-                makeTeleportCommand(dimension, x, y, z);
+            [this](int fromDimension, int toDimension, double x, double y, double z) {
+                makeTeleportCommand(fromDimension, toDimension, x, y, z);
             });
     connect(m_page, &ToolboxPage::serverCheckRequested, this,
             [this](const QString &address) { checkServer(address); });
@@ -711,11 +711,14 @@ void ToolboxController::parseTeleport(const QString &text) {
                        parsed.position.z);
 }
 
-void ToolboxController::makeTeleportCommand(int dimensionIndex, double x, double y, double z) {
-    const auto dimension = CoordConvert::Dimension(dimensionAt(dimensionIndex));
-    const QString command =
-        CoordConvert::toTeleportCommand(CoordConvert::Position{x, y, z}, dimension);
-    m_page->setTeleportCommand(command);
+void ToolboxController::makeTeleportCommand(int fromDimensionIndex, int toDimensionIndex, double x,
+                                            double y, double z) {
+    const auto from = CoordConvert::Dimension(dimensionAt(fromDimensionIndex));
+    // 目标那一格还没灌表时退回源维度：至少给出一条能跑的 `/tp`。
+    const auto to = toDimensionIndex >= 0 ? CoordConvert::Dimension(dimensionAt(toDimensionIndex))
+                                          : from;
+    m_page->setTeleportCommand(
+        CoordConvert::convertedTeleportCommand(from, to, CoordConvert::Position{x, y, z}));
 }
 
 // ---------------------------------------------------------------------------

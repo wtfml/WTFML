@@ -120,6 +120,11 @@ struct ParsedTp {
 ParsedTp parseTeleportCommand(const QString &text);
 /// 把坐标拼成一条能粘回聊天栏的 `/tp` 命令（三个数保留两位小数）。
 QString toTeleportCommand(const Position &position, Dimension dimension);
+/// 先把 @p position 从 @p from 换到 @p to，再拼成一条带 `execute in <to>` 的 `/tp`。
+///
+/// 同维度与末地那一头不按 8:1 换算（见 `convert()`），命令里的维度仍写 @p to ——
+/// 用户选的是"要去哪个维度"，坐标该不该缩放由这两条规则自己决定。
+QString convertedTeleportCommand(Dimension from, Dimension to, const Position &position);
 /// 坐标怎么显示：`123.45 64.00 -78.90`（两位小数）。
 QString positionText(const Position &position);
 
