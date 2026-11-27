@@ -87,19 +87,9 @@ public:
         /// 从实例进来时那个实例的**原样**游戏版本（`1.20.1`，空 = 没有预选）。顶排 chip 预选到它
         /// 的大版本（`1.20`），下面只把细版本正好是它的那几组展开，其余组默认收起。
         QString preselectedGameVersion;
-        /// 开页时接口给的那一串**声明过的游戏版本**（`Hit::gameVersions`，旧的在前）。
-        ///
-        /// 留着它只为一件事：勾「显示快照版」那一下要把 chip 那一排整个换一份，而那时候
-        /// 手上只有这一份声明表（`Hit` 存在 m_resourceHits 里，但那一份会被后面的重搜
-        /// 换掉，而这一页还开着）。
-        QStringList declaredGameVersions;
         /// **全量**那份版本清单（chip 只是从它里面筛）。
         QList<ResourceCatalog::VersionEntry> versions;
-        /// 那份清单**回来过**了（哪怕回来的是空的）。
-        ///
-        /// 为什么要单记这一位："还没回来"和"这个资源一个版本都没发过"都表现为 versions
-        /// 是空的，而这两件事在界面上是**两句不一样的话**（「正在读取版本列表…」和
-        /// 「这个资源一个版本都没发过」）。靠 versions.isEmpty() 分不开。
+        /// 成功取得清单，清单允许为空。
         bool loaded = false;
         /// chip 那一排和版本列表中间那一行说的是"哪几条前置"。
         ///
@@ -137,6 +127,7 @@ public:
     void onChipChanged(const QString &gameVersion);
     /// 详情页上方那个「显示快照版」勾选框被拨了。
     void onShowSnapshotsChanged(bool showSnapshots);
+    void setVersions(const QList<ResourceCatalog::VersionEntry> &versions, const QString &problem);
     /// 按当下这颗 chip 从**全量**那份清单里筛出来、分组、摆进页面（空的那一对也走它）。
     void fillGroups();
     /// 详情页那一发"前置叫什么"回来了。
@@ -154,9 +145,8 @@ public:
     const State &state() const { return m_state; }
 
 private:
-    /// 把那一排 chip 摆成「这一份声明表 + 这一档（折 / 不折）」该有的样子。
-    void applyChips(const QStringList &declaredGameVersions, bool showSnapshots,
-                    const QString &wanted);
+    void refreshVersions();
+    void applyChips();
     /// 摆 chip 与版本列表中间那一行（"这一版要装的前置"）。
     void updateDependencies();
 

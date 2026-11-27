@@ -1,4 +1,5 @@
 #include "Support.hpp"
+#include "LoadingState.hpp"
 void runResourceDetailPageTests() {
     FakeResourceApi api;
     check(api.start(), "ZJ0 本地假接口起来了");
@@ -12,12 +13,9 @@ void runResourceDetailPageTests() {
         "{\"id\":2981874,\"name\":\"第二个模组\",\"slug\":\"second\","
         "\"summary\":\"另一句简介\",\"downloadCount\":12,"
         "\"authors\":[{\"name\":\"someone\"}],\"categories\":[{\"name\":\"Storage\"}],"
-        // 第二行**故意多声明一条快照**（`1.21.2-pre1`）：ZJ9 那一节要在这条线上量
-        // 「显示快照版」那颗勾选框（不勾 ⇒ 折成一颗 1.21.2、勾上 ⇒ 它自己一颗）——
-        // 第一行那条线上没有快照，量不了这件事。两份接口清单都从这一份假接口来，
-        // 所以下面那三条版本（filesBody）两行看到的是同一份。
+        // 第二行的搜索索引含有文件清单里没有的 1.30，也缺少清单里的 1.20.1。
         "\"latestFilesIndexes\":[{\"gameVersion\":\"1.21.1\",\"modLoader\":1},"
-        "{\"gameVersion\":\"1.21.2-pre1\",\"modLoader\":1}]}],"
+        "{\"gameVersion\":\"1.30\",\"modLoader\":1}]}],"
         "\"pagination\":{\"index\":0,\"pageSize\":20,\"resultCount\":2,\"totalCount\":2}}");
     // 三条版本。**id 刻意和行号不一样**（5100007 这种）：钥匙要是拿行号当 id，点第三行
     // 就会认成第一版，而那个错一个字都不报（见第 ⑤ 条）。
@@ -280,7 +278,11 @@ void runResourceDetailPageTests() {
                   "ZJ4 头卡那颗按钮跟着这一行的来源走（这一行是 CurseForge 搜出来的）",
                   page->openButtonText());
 
-            // 中间那一排 chip：「全部」+ 这一行声明过的两个游戏版本。
+            const bool loaded = pumpUntil([page] { return page->versionRowCount() == 3; }, 10000);
+            check(loaded, "ZJ4 版本清单回来了并摆上了（三条）",
+                  QString::number(page->versionRowCount()));
+
+            // 中间那一排 chip 同步使用版本清单声明的游戏版本。
             const QList<QPushButton *> chips = page->chips();
             QStringList chipKeys;
             for (int i = 0; i < chips.size(); ++i) {
@@ -300,13 +302,9 @@ void runResourceDetailPageTests() {
                                                QStringLiteral("1.20")}) &&
                       page->currentChip().isEmpty(),
                   "★ ZJ4 顶排是「全部」+ 这一行声明过的两个**大版本**（1.21、1.20，不是 1.21.1 "
-                  "这种细版本），而且停在「全部」上（这两档是**搜索响应里就带着的**，为它不用多发一条请求）",
+                  "这种细版本），而且停在「全部」上",
                   chipKeys.join(QStringLiteral("|")));
 
-            // 版本清单：开页那一发回来之后才有东西。
-            const bool loaded = pumpUntil([page] { return page->versionRowCount() == 3; }, 10000);
-            check(loaded, "ZJ4 版本清单回来了并摆上了（三条）",
-                  QString::number(page->versionRowCount()));
             saveDetailShot(QStringLiteral("detail-all"));
             check(page->placeholderText().isEmpty(),
                   "ZJ4 回来之后那句「正在读版本列表…」撤掉了（留着的话用户会以为一直在读）",
@@ -476,6 +474,7 @@ void runResourceDetailPageTests() {
         // 而且一切都正常地跑着 —— 界面上没有人会报警。
         QString secondTitle;
         int secondChips = -1;
+        api.filesStatus = 503;
         QTimer watchdog7;  // 同上：停得掉的那种
         watchdog7.setSingleShot(true);
         watchdog7.setInterval(12000);
@@ -513,7 +512,26 @@ void runResourceDetailPageTests() {
             }
             ResourceDetailPage *page = w.findChild<ResourceDetailPage *>();
             secondTitle = page == nullptr ? QString() : page->titleText();
-            secondChips = page == nullptr ? -1 : page->chips().size();
+            if (page != nullptr) {
+                const auto errorLayer = [page] { return LoadingState::overlay(page->versionList()); };
+                const bool failed = pumpUntil([&] {
+                    return errorLayer() && errorLayer()->property("state").toString() == QStringLiteral("error");
+                }, 10000);
+                auto *snapshots = page->findChild<QCheckBox *>(ResourceDetailPage::showSnapshotsCheckBoxName());
+                if (snapshots) snapshots->click();
+                auto *retry = page->findChild<QPushButton *>(LoadingState::retryButtonName());
+                check(failed && snapshots && snapshots->isChecked() && errorLayer() &&
+                          errorLayer()->property("state").toString() == QStringLiteral("error") &&
+                          errorLayer()->accessibleName().contains(QStringLiteral("503")) &&
+                          page->chips().size() == 1 && retry && retry->isVisible(),
+                      "ZJ7 版本请求失败后切换快照仍显示 HTTP 503 和重试入口");
+                if (snapshots) snapshots->click();
+                api.filesStatus = 200;
+                if (retry) retry->click();
+                const bool retried = pumpUntil([page] { return page->versionRowCount() == 3; }, 10000);
+                check(retried, "ZJ7 重试重新请求版本清单");
+                secondChips = page->chips().size();
+            }
 
             // ---- ZJ9. 这一页上方那颗「显示快照版」勾选框（端到端） ----
             //
@@ -566,9 +584,8 @@ void runResourceDetailPageTests() {
                                        page->modSettingsButton()->isVisible()
                                    ? QStringLiteral("是")
                                    : QStringLiteral("不是")));
-                check(chipKeys() == QStringList({QString(), QStringLiteral("1.21")}),
-                      "★ ZJ9 不勾时顶排是「全部」+ 1.21（`1.21.1` 和 `1.21.2-pre1` 同属 1.21 这一组，"
-                      "快照不单独占一颗）",
+                check(chipKeys() == QStringList({QString(), QStringLiteral("1.21"), QStringLiteral("1.20")}),
+                      "★ ZJ9 重试后用实际版本清单生成 1.21 和 1.20 两颗筛选项",
                       chipKeys().join(QStringLiteral("|")));
                 // 版本清单：这一页开的那一发回来之后才有东西。
                 const bool loaded =
@@ -592,7 +609,7 @@ void runResourceDetailPageTests() {
                 }
                 QApplication::processEvents();
                 check(box != nullptr && box->isChecked() &&
-                          chipKeys() == QStringList({QString(), QStringLiteral("1.21")}) &&
+                           chipKeys() == QStringList({QString(), QStringLiteral("1.21"), QStringLiteral("1.20")}) &&
                           page->currentChip() == QStringLiteral("1.21") &&
                           page->versionRowCount() == 2,
                       "★★ ZJ9 勾上之后顶排还是 1.21（快照归入所属大版本），按着的还是 1.21、"
@@ -610,7 +627,7 @@ void runResourceDetailPageTests() {
                 }
                 QApplication::processEvents();
                 check(box != nullptr && !box->isChecked() &&
-                          chipKeys() == QStringList({QString(), QStringLiteral("1.21")}) &&
+                           chipKeys() == QStringList({QString(), QStringLiteral("1.21"), QStringLiteral("1.20")}) &&
                           page->currentChip() == QStringLiteral("1.21") &&
                           page->versionRowCount() == 2,
                       "ZJ9 再拨回去，按着的还是 1.21",
@@ -644,6 +661,7 @@ void runResourceDetailPageTests() {
                     }
                 }
                 QApplication::processEvents();
+                const int chipsBeforeNavigation = page->chips().size();
                 check(page->currentChip() == QStringLiteral("1.21") &&
                           page->versionRowCount() == 2,
                       "ZJ10 前提：站到「1.21」那一颗上（这一档有两条）",
@@ -693,7 +711,7 @@ void runResourceDetailPageTests() {
                               .arg(navTabs->currentIndex())
                               .arg(overlay->parked()));
                     check(page->currentChip() == QStringLiteral("1.21") &&
-                              page->versionRowCount() == 2 && page->chips().size() == 2,
+                              page->versionRowCount() == 2 && page->chips().size() == chipsBeforeNavigation,
                           "★ ZJ10 回来时那一页的状态一样不少（chip 还是按着的那一颗、列表还是"
                           "那两条、那一排还是折过的那一份 —— 一个请求都不发）",
                           QStringLiteral("chip 「%1」/ %2 条")
@@ -757,8 +775,8 @@ void runResourceDetailPageTests() {
             QApplication::processEvents();
         }
         watchdog7.stop();
-        check(secondTitle == QStringLiteral("第二个模组") && secondChips == 2,
-              "ZJ7 点第二行开的是第二行那一页（名字对得上，顶排是「全部」+ 它声明的 1.21 一个大版本"
+        check(secondTitle == QStringLiteral("第二个模组") && secondChips == 3,
+              "ZJ7 点第二行开的是第二行那一页（名字对得上，顶排按实际清单显示两个大版本"
               "—— 1.21.1 和 1.21.2-pre1 同属 1.21；第一行那页是 3 颗，认错行就会是 3）",
               secondTitle + QStringLiteral(" / chip ")
                   + QString::number(secondChips));

@@ -72,11 +72,7 @@ void ResourcePageController::setup() {
             });
 }
 
-void ResourcePageController::applyChips(const QStringList &declaredGameVersions,
-                                        bool showSnapshots, const QString &wanted) {
-    if (m_page == nullptr) {
-        return;
-    }
+void ResourcePageController::applyChips() {
     // 第一颗是「全部」（key 空串 = 不筛）。其余每一颗的 key **和文字是同一串** ——
     // 这一排上没有"显示名"这回事（游戏版本号本身就是用户在界面上要找的那个东西）。
     // 顶排摆的是**大版本组**（1.21、1.20……，最后一个「其他」），点一个 = 按这个大版本筛，
@@ -85,14 +81,46 @@ void ResourcePageController::applyChips(const QStringList &declaredGameVersions,
     ResourceDetail::Chip all;
     all.text = tr("全部");
     chips.append(all);
+    QStringList gameVersions;
+    for (const auto &entry : m_state.versions) {
+        gameVersions.append(entry.gameVersions);
+    }
+    gameVersions.removeDuplicates();
     for (const QString &series :
-         ResourceCatalog::gameVersionSeriesChoices(declaredGameVersions, showSnapshots)) {
+         ResourceCatalog::gameVersionSeriesChoices(ResourceCatalog::gameVersionsOldestFirst(gameVersions),
+                                                    m_state.showSnapshots)) {
         ResourceDetail::Chip chip;
         chip.key = series;
         chip.text = series == ResourceCatalog::otherSeriesKey() ? tr("其他") : series;
         chips.append(chip);
     }
-    m_page->setChips(chips, wanted);
+    m_page->setChips(chips, m_state.chip);
+    if (m_state.loaded) {
+        m_state.chip = m_page->currentChip();
+    }
+}
+
+void ResourcePageController::refreshVersions() {
+    m_state.loaded = false;
+    m_page->setLoading(tr("正在读取版本列表…"));
+    m_owner.m_resourceStore->fetchVersions(m_state.requestKey, m_state.projectId, m_state.source,
+                                          QString());
+}
+
+void ResourcePageController::setVersions(const QList<ResourceCatalog::VersionEntry> &versions,
+                                         const QString &problem) {
+    if (!problem.isEmpty()) {
+        m_page->setFailed(problem, [this] {
+            if (m_state.open) {
+                refreshVersions();
+            }
+        });
+        return;
+    }
+    m_state.versions = versions;
+    m_state.loaded = true;
+    applyChips();
+    fillGroups();
 }
 
 bool ResourcePageController::open(const QString &iconKey, const QString &kindKey,
@@ -156,14 +184,6 @@ bool ResourcePageController::open(const QString &iconKey, const QString &kindKey
     header.nameToCopy = hit->title;
     page->setHeader(header);
 
-    // 中间那一排游戏版本 chip：**搜索响应里本来就带着**"这个资源支持哪些游戏版本"
-    // （`Hit::gameVersions`，顺序由 gameVersionChoices 统一成新的在前），所以开页这一下
-    // 不用为它多发一条请求 —— 勾「显示快照版」那一下也一样，重算用的是存下来的这一份。
-    //
-    // NOTE: 这一份**声明表要留着**（不止是拿来摆一次 chip）：勾选框一拨，chip 那一排整个
-    // 换一份（折 / 不折是两份不一样的表），那时候手上只有开页时存下来的它。
-    m_state.declaredGameVersions = hit->gameVersions;
-
     // ---------- 从某个实例进来的那一次：预选到**那个实例的**版本 / 加载器----------
     //
     // 从某个实例点进来时，三件事一起落到这儿：版本预选到当前实例对应的那个、
@@ -182,7 +202,6 @@ bool ResourcePageController::open(const QString &iconKey, const QString &kindKey
     // 会一个字都比不上，症状是"排在前面"永久不生效而屏幕上一点异常都没有。
     m_state.instanceId = instanceId;
     m_state.preferredLoader.clear();
-    QString wantedChip;
     m_state.preselectedGameVersion.clear();
     if (!instanceId.isEmpty()) {
         m_state.preferredLoader = loaderGroupKey(
@@ -192,26 +211,19 @@ bool ResourcePageController::open(const QString &iconKey, const QString &kindKey
         m_state.preselectedGameVersion = m_owner.m_versionManager->instanceGameVersion(instanceId);
         const QString series =
             ResourceCatalog::gameVersionSeriesOf(m_state.preselectedGameVersion);
-        wantedChip = series.isEmpty() && !m_state.preselectedGameVersion.isEmpty()
+        m_state.chip = series.isEmpty() && !m_state.preselectedGameVersion.isEmpty()
                          ? ResourceCatalog::otherSeriesKey()
                          : series;
     }
     m_state.showSnapshots = ResourceCatalog::isSnapshotGameVersion(m_state.preselectedGameVersion);
     page->setShowSnapshots(m_state.showSnapshots);
-    applyChips(hit->gameVersions, m_state.showSnapshots, wantedChip);
-    // 按着的是哪一颗**以页面为准**（和 onResourcePageShowSnapshotsChanged 里那一句逐字
-    // 同一个理由）：上一步要是把"表里没有的那个 key"纠正成了「全部」，两位得说的是同一
-    // 件事。**这一句不能省** —— `m_state.chip` 就是 `fillGroups()`
-    // 拿来筛的那一份，光把 chip 按下去而这一位还空着，症状是"那一颗亮着、底下却列着
-    // 全部版本"（看着像筛没生效）。
-    m_state.chip = m_page->currentChip();
+    applyChips();
 
     // 详情页复用，按本次来路更新「模组设置」入口。上面已按实例版本预选过滤条件。
     page->setModSettingsSlot(from == DetailSource::InstanceFiles && kind == ResourceCatalog::Kind::Mod);
     // 图标是异步来的：先清掉上一次那一张（不然会留着上一个资源的图标，比空着糟），
     // 那一格的位置照旧留着，图回来时整张卡不会往左跳一下。
     page->setIcon(QPixmap());
-    page->setLoading(tr("正在读取版本列表…"));
     // 中间那一行也**每次开页清一次**（同上：这一页是建一次留着的，不清就留着上一个
     // 资源的"要装的前置"，而那一行看着像是这个资源的）。
     m_state.dependencies.clear();
@@ -224,8 +236,7 @@ bool ResourcePageController::open(const QString &iconKey, const QString &kindKey
     // 版本列表（整份，不筛）。答复落在 onResourceVersionsFinished 里，判据是
     // `m_state.requestKey` —— 和树那条路按行重算钥匙的做法不同：那一页没有
     // 条目可查（它自己那份清单是空的），所以这儿直接比钥匙。
-    m_owner.m_resourceStore->fetchVersions(m_state.requestKey, hit->projectId, hit->source,
-                                   QString());
+    refreshVersions();
 
     // **最后**才开页：摆上去就返回，收页之后才走下面那条钩子。
     // NOTE: 上面发出去的两条请求都是异步的，答复在开页之后落地 —— 所以"先发请求、
@@ -259,7 +270,7 @@ bool ResourcePageController::open(const QString &iconKey, const QString &kindKey
 }
 
 void ResourcePageController::onChipChanged(const QString &gameVersion) {
-    if (!m_state.open) {
+    if (!m_state.open || !m_state.loaded) {
         return;
     }
     m_state.chip = gameVersion;
@@ -277,26 +288,14 @@ void ResourcePageController::onShowSnapshotsChanged(bool showSnapshots) {
         return;
     }
     m_state.showSnapshots = showSnapshots;
-    // chip 那一排整个换一份（折与不折是两份不一样的表）。顶排的 key 是大版本，26.2-rc1 和
-    // 26.2 同属 `26.2`，所以按着的那一颗原样保留；那一组在另一档里没有了（只声明过周快照的
-    // 「其他」）就由 setChips 纠正成「全部」。
-    applyChips(m_state.declaredGameVersions, showSnapshots, m_state.chip);
-    // 按着的是哪一颗**以页面为准**：换算出来的那一颗要是表里没有（对不上），`setChips`
-    // 会把它纠正成「全部」，这儿跟着抄回来 —— 两个状态各说各的才是真出问题的地方。
-    m_state.chip = m_page->currentChip();
-    // setChips **不发** chipChanged（它不是"用户点了"那一发）—— 所以这一句得自己来，
-    // 它就是「更改以后自动刷新版本列表」。
-    fillGroups();
+    if (m_state.loaded) {
+        applyChips();
+        fillGroups();
+    }
 }
 
 void ResourcePageController::fillGroups() {
-    if (!m_state.open || m_page == nullptr) {
-        return;
-    }
-    // 还没回来：chip 是在这一页上点的，而版本列表可能还在路上（用户手快）。
-    // **不能**在这儿说"这一档没有版本" —— 那是在替一份还没到的数据回答。
-    if (!m_state.loaded) {
-        m_page->setLoading(tr("正在读取版本列表…"));
+    if (!m_state.open || m_page == nullptr || !m_state.loaded) {
         return;
     }
     // 这一页当下摆在**最上面那一版**（= 用户一眼看到、最可能点的那一条）。下面那一段
