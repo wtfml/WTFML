@@ -345,6 +345,8 @@ void InstanceSettingsDialog::setupLaunchPage(const GlobalValues &global, const Q
         // 折叠行：整行一颗按钮，右边「展开 / 收起」，不放 ▸ 方框钮（8 号反馈）。
         m_advancedToggle = Theme::makeFoldRow(this, advancedToggleText());
         m_advancedToggle->setObjectName(advancedToggleName());
+        // 和设置页「高级」同一套卡片外观（见 SettingsPageParts::ExpandSection）。
+        m_advancedToggle->setProperty("wtfmlFoldCard", true);
         m_advancedToggle->setChecked(false);
         // 默认折叠。里面几项都是"改错了游戏直接起不来"的东西，一打开对话框就摆在
         // 眼前等于诱导用户去动它。

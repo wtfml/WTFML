@@ -517,6 +517,8 @@ ExpandSection::ExpandSection(const QString &title, QWidget *parent) : QWidget(pa
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     auto *header = Theme::makeFoldRow(this, title);
+    // 「高级」这一行单独做成卡片：透明折叠行在长设置页里太像普通正文，用户找不到入口。
+    header->setProperty("wtfmlFoldCard", true);
     // 标题靠左（应用级样式表没写 text-align）。设置页另有一圈同样的样式兜它自己那几颗折叠行；
     // 这里写上，设置页以外用 ExpandSection 的页面（API 与模型设置）也不会把「高级」摆到正中。
     header->setStyleSheet(QStringLiteral(
