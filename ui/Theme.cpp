@@ -1335,6 +1335,15 @@ QColor rowBase(const QPalette &palette) {
     return brush.style() == Qt::NoBrush ? QColor(Qt::transparent) : brush.color();
 }
 
+QColor shownRowBase(const QPalette &palette, bool selected) {
+    const QColor base = shownBase(rowBase(palette));
+    if (!selected) return base;
+    const QColor top = palette.color(QPalette::Highlight);
+    const qreal a = top.alphaF();
+    const auto over = [a](int t, int u) { return qRound(t * a + u * (1 - a)); };
+    return QColor(over(top.red(), base.red()), over(top.green(), base.green()), over(top.blue(), base.blue()));
+}
+
 QColor rowHoverFill(const QColor &base) {
     if (current().presetId != QLatin1String("system") && current().accent == tokens().primary)
         return tokens().hover;

@@ -365,6 +365,9 @@ constexpr int selectionAccentPercent() { return 20; }
 /// 挂了 `background: transparent` 样式表的列表，Qt 把 `Base` 设成 `NoBrush`（`QRenderRule::configurePalette`
 /// 的 embedded 分支），它的颜色是**不透明黑** —— 直接读就把浅色界面当成黑底（#143 左栏白字）。这时按全透明给。
 QColor rowBase(const QPalette &palette);
+/// 这一行在屏幕上**真正露出来**的底（不透明）：`rowBase()` 叠到页面底上；@p selected 时再把 `Highlight`（可能半透明）叠上去。
+/// 按底色重算字色对比度的地方用它（MOTD 的 `readableOn()`），别拿半透明的 `Base` 直接判明暗 —— 深色下 7% 白会被当成白底。
+QColor shownRowBase(const QPalette &palette, bool selected = false);
 
 /// 选中那一行的底。入参是**这一行自己的底色**（`rowBase(option.palette)`）；半透明 / 全透明的
 /// 先叠到页面底上再算。不传 = 白底（默认那身浅色主题上所有表的底色都是白）。

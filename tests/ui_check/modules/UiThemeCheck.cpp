@@ -5,6 +5,7 @@
 #include "TitleBar.hpp"
 #include "ItemViewContextMenu.hpp"
 #include "ListRowDelegate.hpp"
+#include "MotdText.hpp"
 #include <QMouseEvent>
 #include <QToolButton>
 #include <QSpinBox>
@@ -147,6 +148,29 @@ int UiThemeCheck(QApplication &app) {
                                (light ? ink.lightness() < block.lightness() : ink.lightness() > block.lightness()),
                            light ? "旧出厂主色 + 浅色：左栏选中项是比底深的字，对比度够"
                                  : "旧出厂主色 + 深色：选中项是比底浅的字，对比度够");
+                }
+            }
+            // MOTD 按「露出来的底」重算字色：深色下半透明 `input` 底（7% 白）不能被当成白底把白字 / 黄字压暗；
+            // 浅色下白字照旧压暗。透明样式表的树（NoBrush）也按页面底算。
+            const QColor motdWhite(0xFF, 0xFF, 0xFF), motdYellow(0xFF, 0xFF, 0x55);
+            const auto sum = [](const QColor &c) { return c.red() + c.green() + c.blue(); };
+            for (const char *preset : {"emerald", "dark"}) {
+                Theme::setSpec(Theme::presetSpec(QLatin1String(preset)));
+                const Theme::Tokens t = Theme::tokens();
+                const bool light = t.page.lightness() >= 128;
+                QPalette plain;
+                plain.setColor(QPalette::Base, t.input);
+                for (const QPalette &palette : {nav.palette(), plain}) {
+                    const QColor shown = Theme::shownRowBase(palette);
+                    const QColor onWhite = MotdText::readableOn(motdWhite, shown);
+                    const QColor onYellow = MotdText::readableOn(motdYellow, shown);
+                    if (light)
+                        expect(shown.alpha() == 255 && sum(onWhite) < sum(motdWhite), "浅色主题：MOTD 白字在露出来的浅底上照旧压暗");
+                    else
+                        expect(shown.alpha() == 255 && shown.lightness() < 128 && sum(onWhite) >= sum(motdWhite) &&
+                                   sum(onYellow) >= sum(motdYellow) &&
+                                   Theme::shownRowBase(Theme::selectionPalette(palette, true), true).lightness() < 128,
+                               "深色主题：半透明 / 透明底（含选中那层半透明 Highlight）按露出来的深底算，MOTD 白字黄字不被压暗");
                 }
             }
             Theme::setSpec(savedSpec);
