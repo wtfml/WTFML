@@ -7766,6 +7766,10 @@ Instance is ready; preset partially applied:
             <translation>Download canceled or task expired</translation>
         </message>
         <message>
+            <source>下载节点 %1 在 %2 秒内未返回数据。</source>
+            <translation>Download node %1 returned no data within %2 s.</translation>
+        </message>
+        <message>
             <source>下载尚未结束，请稍后继续。</source>
             <translation>Download isn't finished; continue later.</translation>
         </message>
@@ -15954,10 +15958,6 @@ Incompatible files may prevent the game from launching. Install anyway?</transla
         <message>
             <source>此游戏版本暂无可下载的版本。</source>
             <translation>No downloads available for this game version.</translation>
-        </message>
-        <message>
-            <source>正在读取版本列表…</source>
-            <translation>Loading version list…</translation>
         </message>
         <message>
             <source>尚未获取此版本的下载信息。请折叠后重新展开上方的游戏版本，然后重试。</source>
@@ -27606,6 +27606,10 @@ Handle that record or mark it checked before swapping folders.</translation>
             <translation>This is a PCL-packaged modpack (contains %1)</translation>
         </message>
         <message>
+            <source>含 .minecraft 版本目录</source>
+            <translation>Contains a .minecraft version directory</translation>
+        </message>
+        <message>
             <source>此为服务端包（含 %1）</source>
             <translation>This is a server pack (contains %1)</translation>
         </message>
@@ -32407,6 +32411,10 @@ Close the app using the port, or change the port in General.</translation>
         <message>
             <source>换算结果</source>
             <translation>Results</translation>
+        </message>
+        <message>
+            <source>目标维度</source>
+            <translation>Target dimension</translation>
         </message>
         <message>
             <source>生成 tp 命令</source>

@@ -7653,6 +7653,10 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>下载节点 %1 在 %2 秒内未返回数据。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>下载尚未结束，请稍后继续。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -15600,10 +15604,6 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>此游戏版本暂无可下载的版本。</source>
-            <translation type="unfinished"></translation>
-        </message>
-        <message>
-            <source>正在读取版本列表…</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -27050,6 +27050,10 @@ Minecraft %2 / %3
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>含 .minecraft 版本目录</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>此为服务端包（含 %1）</source>
             <translation type="unfinished"></translation>
         </message>
@@ -31808,6 +31812,10 @@ CurseForge API Key 无效或已过期，请重新配置。</source>
         </message>
         <message>
             <source>换算结果</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>目标维度</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
