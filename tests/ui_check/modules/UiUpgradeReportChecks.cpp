@@ -27,7 +27,7 @@ int UiUpgradeReportChecks(QApplication &app) {
           "UG7 默认不画「正常兼容」那一组（折起来）",
           tree != nullptr ? QString::number(tree->topLevelItemCount()) : QString());
     auto *summary = dialog.findChild<QLabel *>(UpgradeReportDialog::summaryName());
-    check(summary != nullptr && summary->text().contains(QStringLiteral("还有 2 项")),
+    check(summary != nullptr && summary->text().contains(QStringLiteral("尚有 2 项")),
           "UG7 摘要说出必要项里还有几项没处理",
           summary != nullptr ? summary->text() : QString());
 
