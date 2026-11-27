@@ -1313,7 +1313,14 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                     }
                 });
                 QTimer::singleShot(450, &window, [&window, shot]() {
-                    QWidget *workspace = window.findChild<QWidget *>(QStringLiteral("taskCenterPromptWorkspace"));
+                    // 上一张停放过的 workspace 可能尚未销毁：只取当前可见的那一份。
+                    QWidget *workspace = nullptr;
+                    for (QWidget *candidate : window.findChildren<QWidget *>(QStringLiteral("taskCenterPromptWorkspace"))) {
+                        if (candidate->isVisible()) {
+                            workspace = candidate;
+                            break;
+                        }
+                    }
                     if (workspace == nullptr) return;
                     if (QWidget *row0 = workspace->findChild<QWidget *>(MainWindowUI::taskCenterPanelRowName(0))) {
                         const QPoint rowLocal = row0->rect().center();
@@ -1582,6 +1589,11 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                 window.ui()->overlay()->dismiss();  // 走提示自己的 reject，嵌套循环随即退出
             } else if (!shot.page.isEmpty()) {
                 while (window.ui()->overlay()->isOpen()) window.ui()->overlay()->closeOverlay();
+            }
+            if (shot.page.startsWith(QStringLiteral("i149:"))) {
+                for (QWidget *candidate : window.findChildren<QWidget *>(QStringLiteral("taskCenterPromptWorkspace"))) {
+                    candidate->deleteLater();
+                }
             }
             if (shot.page.startsWith(QStringLiteral("i150:"))) {
                 QDir(AppPaths::versionDir(QStringLiteral("i150-atm9"))).removeRecursively();
