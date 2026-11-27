@@ -2679,6 +2679,19 @@ QString widgetStyleSheet() {
         "QPushButton[wtfmlFoldRow=\"true\"]:checked { background-color: transparent; color: palette(window-text); }"
         "QPushButton[wtfmlFoldRow=\"true\"]:hover:enabled { background-color: palette(light); }"
         "QPushButton[wtfmlFoldRow=\"true\"]:pressed:enabled { background-color: palette(midlight); }"
+        // 「高级」这种主折叠入口再包一层卡片：浅底 + 细边框 + 强调色标题，和普通设置行区分开。
+        "QPushButton[wtfmlFoldRow=\"true\"][wtfmlFoldCard=\"true\"] {"
+        " background-color: palette(base); border: 1px solid palette(mid); border-radius: 10px;"
+        " color: palette(link); padding-left: 14px; padding-right: 14px; font-weight: 600;"
+        " min-height: 42px; max-height: 42px; }"
+        "QPushButton[wtfmlFoldRow=\"true\"][wtfmlFoldCard=\"true\"]:checked {"
+        " background-color: palette(base); color: palette(link); }"
+        "QPushButton[wtfmlFoldRow=\"true\"][wtfmlFoldCard=\"true\"]:hover:enabled {"
+        " background-color: palette(light); }"
+        "QPushButton[wtfmlFoldRow=\"true\"][wtfmlFoldCard=\"true\"]:pressed:enabled {"
+        " background-color: palette(midlight); }"
+        "QPushButton[wtfmlFoldRow=\"true\"][wtfmlFoldCard=\"true\"] QLabel {"
+        " background-color: transparent; color: palette(link); font-weight: 400; }"
         // 弹层里那根滚动条是 S2 那条 3px 细条：常态不显（`ComboDecorator` 用透明度动效
         // 让它只在滚动时露出来），所以这里只钉宽度、圆角和墨色，不画槽底。
         "QComboBox QAbstractItemView QScrollBar:vertical { width: 3px; background: transparent;"

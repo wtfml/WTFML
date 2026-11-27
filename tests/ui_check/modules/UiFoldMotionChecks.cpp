@@ -173,6 +173,8 @@ int UiFoldMotionChecks(QApplication &app) {
                     check(false, QStringLiteral("%1 页有「高级」折叠").arg(key));
                     continue;
                 }
+                check(section->header()->property("wtfmlFoldCard").toBool(),
+                      QStringLiteral("%1 页「高级」是卡片式折叠行（不再是一条透明正文）").arg(key));
                 for (const bool atBottom : {false, true}) {
                     scroll->verticalScrollBar()->setValue(atBottom ? scroll->verticalScrollBar()->maximum() : 0);
                     wait(20);
@@ -246,6 +248,8 @@ int UiFoldMotionChecks(QApplication &app) {
         auto *toggle = dialog.findChild<QWidget *>(InstanceSettingsDialog::advancedToggleName());
         auto *body = dialog.findChild<QWidget *>(InstanceSettingsDialog::advancedBoxName());
         check(toggle != nullptr && body != nullptr, QStringLiteral("实例设置·启动：有折叠行和折叠体"));
+        check(toggle != nullptr && toggle->property("wtfmlFoldCard").toBool(),
+              QStringLiteral("实例设置·启动「高级选项」也是卡片式折叠行"));
         if (toggle != nullptr && body != nullptr)
             checkFold(QStringLiteral("实例设置·启动·高级选项"), toggle, body, nullptr, dump);
     }
