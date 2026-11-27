@@ -504,6 +504,7 @@ RestoreResult restore(const Snapshot &snapshot, const QString &instanceDir) {
             continue;
         }
         ++result.restored;
+        result.restoredSha1.insert(entry.relativePath, entry.sha1);
     }
     return result;
 }

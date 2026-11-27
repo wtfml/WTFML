@@ -210,6 +210,19 @@ int UiSearchFilterChecks(InstanceSettingsDialog &dialog, const QString &modsDir)
                   itemPath(page, 0) == modsDir + QStringLiteral("/sodium.jar"),
               "★ U10P 点上去「可更新」只剩查出来有新版本的那几条",
               QStringLiteral("%1 条").arg(page->list()->count()));
+        // 批量更新部分失败（#143）：两条可更新、成了一条 ⇒ 仍停在「可更新」，数量是失败条数。
+        dialog.setFileUpdates({modsDir + QStringLiteral("/sodium.jar"),
+                               modsDir + QStringLiteral("/iris-1.6.5.jar")}, true);
+        const int updatableBefore = page->list()->count();
+        dialog.setFileUpdates({modsDir + QStringLiteral("/sodium.jar")}, true);
+        check(updatableBefore == 2 &&
+                  page->stateFilter() == InstanceFilesPage::StateFilter::Update &&
+                  page->list()->count() == 1 &&
+                  stateButton(InstanceFilesPage::StateFilter::Update)->text() ==
+                      InstanceFilesPage::stateFilterButtonText(
+                          InstanceFilesPage::StateFilter::Update, 1),
+              "★★ U10P 停在「可更新」时名单减到一条：仍停在这一档，数量跟着减（#143）",
+              QStringLiteral("%1 → %2 条").arg(updatableBefore).arg(page->list()->count()));
         // 「一条都不剩」再喂一遍：那一颗**缩回去**，而条件必须**退回「全部」** ——
         // 留着的话屏幕上是一条都不剩的列表，而四颗里没有任何一颗亮着。
         dialog.setFileUpdates({}, true);

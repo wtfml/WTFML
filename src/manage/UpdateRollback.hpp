@@ -40,6 +40,7 @@
 #pragma once
 
 #include <QDateTime>
+#include <QHash>
 #include <QList>
 #include <QString>
 #include <QStringList>
@@ -156,6 +157,7 @@ struct RestoreResult {
     int removed = 0;    ///< 删掉几个（更新新添的、当时不在的那些）
     int failed = 0;     ///< 几个没能动
     QStringList problems;  ///< 逐条原因（去过重）
+    QHash<QString, QString> restoredSha1;  ///< 放回成功的：相对路径 → 内容 sha1
     bool ok() const { return failed == 0; }
 };
 

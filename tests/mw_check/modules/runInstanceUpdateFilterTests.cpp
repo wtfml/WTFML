@@ -125,6 +125,29 @@ void runInstanceUpdateFilterTests() {
     api.curseForgeReply =
         QByteArrayLiteral("{\"data\":{\"exactMatches\":[],\"unmatchedFingerprints\":[]}}");
 
+    // T28.5 要真下一次新版：地址换成本机替身。先让它给错内容（sha1 对不上 = 更新失败）。
+    const QByteArray newJar = QByteArrayLiteral("T28-MOD-B-2.0");
+    QByteArray served = QByteArrayLiteral("T28-BROKEN!!!");
+    QTcpServer cdn;
+    check(cdn.listen(QHostAddress::LocalHost, 0), "T28.0 下载替身起来了");
+    QObject::connect(&cdn, &QTcpServer::newConnection, &cdn, [&cdn, &served] {
+        while (QTcpSocket *socket = cdn.nextPendingConnection()) {
+            socket->setParent(&cdn);
+            QObject::connect(socket, &QTcpSocket::readyRead, socket, [socket, &served] {
+                socket->readAll();
+                socket->write("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: " +
+                              QByteArray::number(served.size()) + "\r\n\r\n" + served);
+                socket->disconnectFromHost();
+            });
+        }
+    });
+    api.modrinthVersionFilesUpdateReply
+        .replace("https://cdn.modrinth.com/data/mod-b-2.0.jar",
+                 QStringLiteral("http://127.0.0.1:%1/b.jar").arg(cdn.serverPort()).toUtf8())
+        .replace("1111111111111111111111111111111111111111",
+                 QCryptographicHash::hash(newJar, QCryptographicHash::Sha1).toHex())
+        .replace("\"size\":10", "\"size\":" + QByteArray::number(newJar.size()));
+
     TokenStore::clear(TokenStore::microsoftKey());
     TokenStore::clear(TokenStore::minecraftKey());
     TokenStore::clear(TokenStore::accountsKey());
@@ -446,6 +469,185 @@ void runInstanceUpdateFilterTests() {
               QStringLiteral("%1 条 / 又见到「还没查过」=%2")
                   .arg(reopenRows)
                   .arg(int(reopenNotice)));
+
+        // ---------- ④ 选着「可更新」就地更新：开着的这一页当场跟上（#143） ----------
+        QMetaObject::invokeMethod(&w, "openInstanceSettings", Qt::DirectConnection,
+                                  Q_ARG(QString, idV));
+        QApplication::processEvents();
+        OverlayHost *host = currentPageOverlay();
+        QPointer<InstanceSettingsDialog> page =
+            host != nullptr ? host->findChild<InstanceSettingsDialog *>() : nullptr;
+        InstanceFilesPage *mods = nullptr;
+        if (page != nullptr) {
+            page->showPage(QStringLiteral("mod"));
+            mods = page->filesPage(QStringLiteral("mod"));
+        }
+        QPushButton *state =
+            mods != nullptr ? mods->stateButtonAt(InstanceFilesPage::StateFilter::Update) : nullptr;
+        check(state != nullptr && !state->isHidden(), "T28.5 更新前「可更新」那一颗露着");
+        if (state != nullptr) {
+            state->click();
+            // 页键给空串：跳过模组页那个差异预览框，下面走的仍是同一条下载 + 收尾。
+            const auto update = [&] {
+                emit page->fileBatchUpdateRequested(QString(), {mods->list()->item(0)
+                                                        ->data(InstanceFilesPage::pathRole())
+                                                        .toString()});
+            };
+            PromptAnswerer failure({0});
+            failure.start();
+            update();
+            pumpUntil([&failure] { return !failure.answered.isEmpty(); }, 20000);
+            failure.stop();
+            QApplication::processEvents();
+            check(!failure.answered.isEmpty() &&
+                      mods->stateFilter() == InstanceFilesPage::StateFilter::Update &&
+                      mods->list()->count() == 1 &&
+                      state->text() == InstanceFilesPage::stateFilterButtonText(
+                                           InstanceFilesPage::StateFilter::Update, 1),
+                  "T28.5 更新失败：那一条留在「可更新」，数量仍是 1", state->text());
+
+            served = newJar;
+            update();
+            const bool collapsed = pumpUntil([state] { return state->isHidden(); }, 20000);
+            check(collapsed && mods->stateFilter() == InstanceFilesPage::StateFilter::All &&
+                      mods->list()->count() == 3,
+                  "★★ T28.5 全部更新成功：开着的模组页收起「可更新」并切回「全部」（#143）",
+                  QStringLiteral("%1 / 列表 %2 条").arg(state->text()).arg(mods->list()->count()));
+        }
+        if (host != nullptr) {
+            host->closeOverlay();
+        }
+        // 失败、成功两批收尾各排了一页「更新中心」：等两页都开出来收掉，别留给下一段。
+        PageCloser after;
+        after.start();
+        pumpUntil([&after] { return after.seen.size() >= 2; }, 8000);
+        pumpUntil([] { return currentOverlay() == nullptr; }, 8000);
+        after.stop();
+
+        // ---------- ⑤ 换成功的结论记「已是最新」：忽略别的不带回它，撤销才带回（#143） ----------
+        const auto closePage = [] {
+            if (OverlayHost *open = currentPageOverlay()) {
+                if (auto *back =
+                        open->findChild<QPushButton *>(OverlayHost::overlayBackButtonName())) {
+                    back->click();
+                } else {
+                    open->closeOverlay();
+                }
+            }
+            QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+            QApplication::processEvents();
+        };
+        const auto openSettings = [&w, &idV]() -> InstanceSettingsDialog * {
+            QMetaObject::invokeMethod(&w, "openInstanceSettings", Qt::DirectConnection,
+                                      Q_ARG(QString, idV));
+            QApplication::processEvents();
+            OverlayHost *open = currentPageOverlay();
+            return open != nullptr ? open->findChild<InstanceSettingsDialog *>() : nullptr;
+        };
+        const auto chipText = [](int count) {
+            return InstanceFilesPage::stateFilterButtonText(InstanceFilesPage::StateFilter::Update,
+                                                            count);
+        };
+        const auto centre = [&w]() -> UpdateCenterPage * {
+            auto *found = w.findChild<UpdateCenterPage *>(MainWindowUI::updateCenterPageName());
+            return found != nullptr && found->isVisible() ? found : nullptr;
+        };
+
+        // 第二个可更新的模组：模组乙换回旧内容，再添一个模组丙，两条一起重查。
+        writeFileAt(modJar, QByteArrayLiteral("T28-MOD-B"));
+        const QString otherJar = dirV + QStringLiteral("/mods/模组丙.jar");
+        writeFileAt(otherJar, QByteArrayLiteral("T28-MOD-C"));
+        const QString otherSha1 = QString::fromLatin1(
+            QCryptographicHash::hash(QByteArrayLiteral("T28-MOD-C"), QCryptographicHash::Sha1)
+                .toHex());
+        // 两份答复都是「sha1 → 版本对象」：把模组乙那一项照抄一份挂到丙的 sha1 底下。
+        for (QByteArray *reply : {&api.modrinthReply, &api.modrinthVersionFilesUpdateReply}) {
+            QJsonObject byHash = QJsonDocument::fromJson(*reply).object();
+            QJsonObject entry = byHash.value(hMod.sha1).toObject();
+            if (reply == &api.modrinthReply) {  // 这一份认的是「盘上这个文件」，sha1 得换成丙的
+                QJsonArray files = entry.value(QStringLiteral("files")).toArray();
+                QJsonObject file = files.at(0).toObject();
+                file.insert(QStringLiteral("hashes"),
+                            QJsonObject{{QStringLiteral("sha1"), otherSha1}});
+                files.replace(0, file);
+                entry.insert(QStringLiteral("files"), files);
+            }
+            byHash.insert(otherSha1, entry);
+            *reply = QJsonDocument(byHash).toJson(QJsonDocument::Compact);
+        }
+
+        page = openSettings();
+        check(page != nullptr, "T28.6 实例设置开得出来");
+        if (page != nullptr) {
+            page->showPage(QStringLiteral("mod"));  // 切进模组页 = 自动再查一遍
+            mods = page->filesPage(QStringLiteral("mod"));
+            state = mods->stateButtonAt(InstanceFilesPage::StateFilter::Update);
+            const bool two = pumpUntil(
+                [&] { return !state->isHidden() && state->text() == chipText(2); }, 20000);
+            check(two, "T28.6 重查之后两条可更新", state->text());
+            if (two) {
+                state->click();
+                QString modPath;
+                QString otherPath;
+                for (int row = 0; row < mods->list()->count(); ++row) {
+                    const QString path =
+                        mods->list()->item(row)->data(InstanceFilesPage::pathRole()).toString();
+                    (path.endsWith(QStringLiteral("模组乙.jar")) ? modPath : otherPath) = path;
+                }
+                emit page->fileBatchUpdateRequested(QString(), {modPath});
+                check(pumpUntil([&] { return state->text() == chipText(1); }, 20000),
+                      "T28.6 只更新模组乙：还剩丙一条", state->text());
+                closePage();  // 收掉实例页，排着的「更新中心」开出来
+
+                const bool centreShown = pumpUntil([&] { return centre() != nullptr; }, 8000);
+                check(centreShown, "T28.6 收尾那一页「更新中心」开出来了");
+                if (centreShown) {
+                    emit centre()->ignoreToggled(otherPath, true);
+                    closePage();
+                    // 只建页、不切页（`filesPage()`）：切进去会重查，把要量的结论盖掉。
+                    page = openSettings();
+                    mods = page->filesPage(QStringLiteral("mod"));
+                    state = mods->stateButtonAt(InstanceFilesPage::StateFilter::Update);
+                    check(state->isHidden(),
+                          "★★ T28.6 更新成功后忽略另一条：已更新的那条不回到「可更新」（#143）",
+                          state->text());
+
+                    emit page->updateCenterRequested();
+                    QPushButton *undo = nullptr;
+                    pumpUntil(
+                        [&] {
+                            OverlayHost *open = currentPageOverlay();
+                            if (centre() == nullptr || open == nullptr) return false;
+                            undo = newestByObjectName<QPushButton>(
+                                open, MainWindowUI::updateCenterUndoName());
+                            return undo != nullptr && !undo->isHidden();
+                        },
+                        8000);
+                    check(undo != nullptr && !undo->isHidden(), "T28.7 「撤销上一次更新」露着");
+                    if (undo != nullptr && !undo->isHidden()) {
+                        PromptAnswerer confirm({0});
+                        confirm.start();
+                        undo->click();
+                        confirm.stop();
+                        closePage();
+                        page = openSettings();
+                        mods = page->filesPage(QStringLiteral("mod"));
+                        state = mods->stateButtonAt(InstanceFilesPage::StateFilter::Update);
+                        const bool shown = !state->isHidden() && state->text() == chipText(1);
+                        if (shown) state->click();
+                        check(shown && mods->list()->count() == 1 &&
+                                  mods->list()
+                                          ->item(0)
+                                          ->data(InstanceFilesPage::pathRole())
+                                          .toString() == modPath &&
+                                  readBytesAt(modJar) == QByteArrayLiteral("T28-MOD-B"),
+                              "★★ T28.7 撤销之后模组乙回到「可更新」（丙仍忽略着）（#143）",
+                              state->text());
+                    }
+                }
+            }
+            closePage();
+        }
     }
 
     restoreSettings();

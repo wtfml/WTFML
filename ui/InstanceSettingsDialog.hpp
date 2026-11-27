@@ -1546,6 +1546,8 @@ public:
     /// 而磁盘上还是老名字 —— 下一次动任何一个开关都会拿这一个不存在的名字去写 meta）。
     /// 它顺手把导出脚本那个默认文件名用的 `m_instanceId` 一起换掉。
     void setInstanceName(const QString &name);
+    /// 这一页现在说的是哪个实例（目录名）。
+    QString instanceId() const { return m_instanceId; }
 
     /// 档位下拉框里那两项的文字。**这两句是产品文案**，验证工程按它们核对而不是自己拼。
     static QString followText() { return QCoreApplication::translate("InstanceSettingsDialog", "跟随全局"); }

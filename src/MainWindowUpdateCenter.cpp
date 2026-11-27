@@ -27,6 +27,7 @@
 
 #include "..\ui\InlineMessage.hpp"
 #include "..\ui\InstanceFilesPage.hpp"
+#include "..\ui\InstanceSettingsDialog.hpp"
 #include "..\ui\MainWindowUI.hpp"
 #include "..\ui\UpdateCenterPage.hpp"
 #include "controllers/ActivityCenterController.hpp"
@@ -213,26 +214,36 @@ void MainWindow::finishUpdateBatch(bool success, const QString &errorMessage) {
     }
 
     if (!run.succeeded.isEmpty()) {
-        // 换掉的这几条从「可更新」名单里摘掉（不摘的话文件管理页上那几行还标着"可更新"，
-        // 而它们刚被换成了最新那一版 —— 再点一次「更新」会白下一遍）。
-        // NOTE: 只摘**这一批真换成功的**那几条；失败的留在名单里（那一行仍然是对的）。
-        const QStringList outdated = m_instanceOutdatedPaths.value(run.instanceId);
-        if (!outdated.isEmpty()) {
-            QStringList keep;
-            for (const QString &path : outdated) {
-                if (!run.succeeded.contains(path)) {
-                    keep.append(path);
-                }
-            }
-            m_instanceOutdatedPaths.insert(run.instanceId, keep);
-        }
-        // 那一份"换成哪一版"的账也一起摘（同一次动，见 m_instanceUpdateTargets 那段）。
+        // **真换成功的**那几条结论记「已是最新」（#143）：只从名单里摘的话，忽略 / 固定一动
+        // 就按旧结论把它们算回「可更新」。失败的结论不动。
         QHash<QString, ResourceCatalog::VersionEntry> targets =
             m_instanceUpdateTargets.value(run.instanceId);
+        const auto checked = m_instanceUpdateResults.find(run.instanceId);
+        if (checked != m_instanceUpdateResults.end()) {
+            for (ModDependencies::UpdateVerdict &verdict : checked->verdicts) {
+                if (!run.succeeded.contains(verdict.item.path)) continue;
+                const ResourceCatalog::VersionEntry target = targets.value(verdict.item.path);
+                const ResourceCatalog::FileEntry *file = target.primaryFile();
+                if (file == nullptr) continue;
+                verdict.item.currentVersion = verdict.currentVersion;  // 撤销时要退回的那一版
+                verdict.item.sha1 = file->sha1.toLower();
+                verdict.currentVersion = target;
+                verdict.state = ModDependencies::UpdateState::UpToDate;
+                verdict.newerCount = 0;
+            }
+        }
+        // 那一份"换成哪一版"的账也一起摘（同一次动，见 m_instanceUpdateTargets 那段）。
         for (const QString &path : run.succeeded) {
             targets.remove(path);
         }
         m_instanceUpdateTargets.insert(run.instanceId, targets);
+        rebuildInstanceOutdatedPaths(run.instanceId);
+        // 开着的实例页拿的是旧名单，摘完要重递（#143）；只递给这个实例自己那一页。
+        for (auto *dialog : findChildren<InstanceSettingsDialog *>()) {
+            if (dialog->instanceId() == run.instanceId) {
+                pushInstanceFileUpdates(dialog, run.instanceId);
+            }
+        }
     }
 
     const QString text = run.lines.isEmpty() ? errorMessage : run.lines.join(QLatin1Char('\n'));

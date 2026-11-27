@@ -78,6 +78,46 @@ int UiThemeCheck(QApplication &app) {
             expect(Glass::enabled() == (Glass::effectiveMode() != Glass::Mode::Solid),
                    "撤掉测试用的系统标志之后回到现读系统（判据一致）");
         }
+        // #143：换过出厂主色之后的一次性迁移。
+        {
+            app.setApplicationName(QStringLiteral("ThemeAccentCheck"));  // 单独一份配置文件
+            const auto loadAccent = [](const char *preset, const char *accent) {
+                QSettings disk;
+                disk.setValue(QStringLiteral("Theme/Preset"), QLatin1String(preset));
+                disk.setValue(QStringLiteral("Theme/Accent"), QLatin1String(accent));
+                disk.sync();
+                return Theme::load().accent.rgba();
+            };
+            const QRgb oldEmerald = 0xff087a68;
+            const QRgb factory = Theme::tokens(QStringLiteral("emerald")).primary.rgba();
+            QSettings().clear();
+            expect(loadAccent("emerald", "#087a68") == factory &&
+                       QColor::fromString(QSettings().value(QStringLiteral("Theme/Accent")).toString())
+                               .rgba() == factory,
+                   "冰川碧湖存着旧出厂主色：读回来是现在的默认主色，盘上也改写了");
+            expect(loadAccent("emerald", "#ff087a68") == oldEmerald, "只迁一次：迁过之后再选回旧色就保留");
+            QSettings().clear();
+            expect(loadAccent("emerald", "#ff336699") == 0xff336699, "自己挑的别的颜色不动");
+            QSettings().clear();
+            expect(loadAccent("ocean", "#ff087a68") == oldEmerald, "别的预设存着这个值（不是它的旧出厂值）不动");
+            QSettings().clear();
+            app.setApplicationName(QStringLiteral("ThemeCheck"));
+        }
+        // #143：挂 `background: transparent` 的列表（实例设置左栏）`Base` 是全透明黑，
+        // 自定义主题色下浅色界面的选中行仍须是深字。
+        {
+            const Theme::Spec savedSpec = Theme::current();
+            Theme::Spec custom = Theme::presetSpec(QStringLiteral("emerald"));
+            custom.accent = QColor(QStringLiteral("#336699"));
+            Theme::setSpec(custom);
+            QPalette seeThrough;
+            seeThrough.setColor(QPalette::Base, Qt::transparent);
+            expect(Theme::selectionPalette(seeThrough, true).color(QPalette::Text).lightness() < 128 &&
+                       Theme::selectionFill(Qt::transparent) == Theme::selectionFill(Theme::tokens().page) &&
+                       Theme::rowHoverFill(Qt::transparent) == Theme::rowHoverFill(Theme::tokens().page),
+                   "透明底的列表按页面底判明暗，浅色下选中行是深字");
+            Theme::setSpec(savedSpec);
+        }
         // 主题显示名照着三张内置风景起；内部 id 与「配色」下拉的顺序不动（盘上存的是 id）。
         expect(Theme::presetName(QStringLiteral("dark")) == QStringLiteral("暮色雪山") &&
                    Theme::presetName(QStringLiteral("emerald")) == QStringLiteral("冰川碧湖") &&
