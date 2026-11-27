@@ -9,6 +9,7 @@ class QLineEdit;
 class QLabel;
 class QPushButton;
 class QScrollArea;
+class QTimer;
 
 class ResourcePackPage final : public QWidget {
     Q_OBJECT
@@ -18,6 +19,8 @@ public:
     void setPacks(const QList<Pack> &packs, const QStringList &selected,
                   const QByteArray &options, bool exists, const QString &problem = {});
     QStringList selectedIds() const;
+    /// 只装在「已启用」列表的视口上：拖到外层视口上下边缘时滚外层。
+    bool eventFilter(QObject *watched, QEvent *event) override;
 signals:
     void refreshRequested();
     void selectionRequested(const QStringList &ids, const QByteArray &expected, bool expectedExists);
@@ -28,6 +31,8 @@ private:
     void moveCurrent(int delta);
     void fitLists();
     QScrollArea *m_scroll = nullptr;
+    QTimer *m_dragScroll = nullptr;
+    int m_dragStep = 0;  // 每一拍滚多少像素，负数向上
     QListWidget *m_available = nullptr;
     QListWidget *m_selected = nullptr;
     QLineEdit *m_search = nullptr;

@@ -1,12 +1,14 @@
 #include "ResourcePackPage.hpp"
 #include "Theme.hpp"
 #include <QAbstractItemModel>
+#include <QDragMoveEvent>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QScrollBar>
 #include <QSet>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -74,6 +76,22 @@ ResourcePackPage::ResourcePackPage(QWidget *parent) : QWidget(parent) {
     m_selected->setDragDropMode(QAbstractItemView::InternalMove);
     m_selected->setDefaultDropAction(Qt::MoveAction);
     m_selected->setDragDropOverwriteMode(false);
+    // 列表整张摊开、自己不滚，Qt 自带的拖动自动滚不起作用：拖到外层视口边缘时由这里滚外层。
+    m_dragScroll = new QTimer(this);
+    m_dragScroll->setInterval(16);
+    connect(m_dragScroll, &QTimer::timeout, this, [this] {
+        // 只滚到列表在这个方向上的那一端露出来：光标停着不动时不一定再有拖动事件，
+        // 不收住就会一路滚过列表、进到下面那一段。
+        const int top = m_selected->mapTo(m_scroll->viewport(), QPoint()).y();
+        const int hidden = m_dragStep > 0 ? top + m_selected->height() - m_scroll->viewport()->height() : -top;
+        if (hidden <= 0) {
+            m_dragScroll->stop();
+            return;
+        }
+        QScrollBar *bar = m_scroll->verticalScrollBar();
+        bar->setValue(bar->value() + qBound(-hidden, m_dragStep, hidden));
+    });
+    m_selected->viewport()->installEventFilter(this);
     layout->addWidget(m_scroll, 1);
     const auto button = [this](QHBoxLayout *row, const QString &text, const QString &name) {
         auto *value = new QPushButton(text, this);
@@ -126,6 +144,27 @@ ResourcePackPage::ResourcePackPage(QWidget *parent) : QWidget(parent) {
         QTimer::singleShot(0, this, [this] { m_pending = false; submit(); });
     });
     updateButtons();
+}
+
+bool ResourcePackPage::eventFilter(QObject *watched, QEvent *event) {
+    if (event->type() == QEvent::DragMove) {
+        const auto *move = static_cast<QDragMoveEvent *>(event);
+        const int y = static_cast<QWidget *>(watched)->mapTo(m_scroll->viewport(), move->position().toPoint()).y();
+        const int margin = m_selected->autoScrollMargin() * 2;
+        const int up = margin - y;
+        const int down = y - (m_scroll->viewport()->height() - margin);
+        const int depth = qMin(qMax(up, down), margin);
+        if (depth > 0) {
+            // 越靠边越快。
+            m_dragStep = (up > down ? -1 : 1) * (1 + depth / 3);
+            if (!m_dragScroll->isActive()) m_dragScroll->start();
+        } else {
+            m_dragScroll->stop();
+        }
+    } else if (event->type() == QEvent::DragLeave || event->type() == QEvent::Drop) {
+        m_dragScroll->stop();  // 松手、按 Esc 取消、拖出列表都走这两种事件
+    }
+    return QWidget::eventFilter(watched, event);
 }
 
 void ResourcePackPage::setPacks(const QList<Pack> &packs, const QStringList &selected,
