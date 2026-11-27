@@ -977,8 +977,54 @@ QString accentSettingKey(const char *field) {
  * 【下拉框那颗 `∨` 已经不画了】原来这里挂了个 `ComboChevronPainter` 在 `::drop-down`
  * 那一格里补一个 V（7b 的规格）。8 号反馈之后那条规格撤了：`::drop-down` 宽度写 0，
  * 整块可点，右上角不再有任何箭头，那个过滤器连同它画的 V 一起删掉。
+ *
+ * 【下拉框外圈那道 1px 细边】（#337）由下面的 `ComboOutlinePainter` 在下拉框画完之后补，
+ * `polish()` 挂上 —— 画在控件自己的绘制路径里，屏幕上和 `render()` 抓图是同一笔。
  */
 namespace {
+
+/// #337：收起态和输入框（同一族底色、不描线）分开的那一笔 —— 最外 1px 一圈细边。
+/// 悬停加深一档、展开着换强调色（PCL 同款三档），禁用不画（禁用那一档本来就不描线）。
+/// 不用 QSS 的 border 画：那 3px 透明边是键盘焦点环的槽，再加 1px 盒子就长大了。
+/// 细边落在那圈透明边上（QSS 的底只铺到边框中线），所以屏幕上它是叠在页面底上的。
+class ComboOutlinePainter : public QObject
+{
+public:
+    using QObject::QObject;
+
+    bool eventFilter(QObject *obj, QEvent *event) override
+    {
+        auto *combo = qobject_cast<QComboBox *>(obj);
+        if (combo == nullptr || event->type() != QEvent::Paint) return false;
+        static_cast<QObject *>(combo)->event(event);  // 先让它照常画完（QObject::event 是公开的）
+        if (!combo->isEnabled()) return true;
+        const Tokens t = tokens();
+        QColor ink = t.stroke;
+        // 展开着 = 弹层容器（下拉框的直接子对象、自成一个顶层窗）正显示着；不调 view()，免得替没弹过的框造出容器。
+        bool open = false;
+        for (const QWidget *child : combo->findChildren<QWidget *>(QString(), Qt::FindDirectChildrenOnly)) {
+            if (child->isWindow() && child->isVisible()) open = true;
+        }
+        if (open) {
+            ink = t.focus;
+        } else if (combo->underMouse()) {
+            ink.setAlphaF(qMin(1.0f, ink.alphaF() * 2));
+        }
+        QPainter painter(combo);
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        painter.setPen(QPen(ink, 1));
+        painter.setBrush(Qt::NoBrush);
+        const qreal radius = controlRadius() - 0.5;
+        painter.drawRoundedRect(QRectF(combo->rect()).adjusted(0.5, 0.5, -0.5, -0.5), radius, radius);
+        return true;
+    }
+};
+
+ComboOutlinePainter *comboOutlinePainter()
+{
+    static auto *painter = new ComboOutlinePainter(qApp);
+    return painter;
+}
 
 }  // namespace
 
@@ -994,6 +1040,10 @@ public:
         QProxyStyle::polish(w);
         // 设计系统默认生效（列表代理 / 视口透明 / 栈换页 / 文本框去框），见 DesignDefaults.hpp。
         DesignDefaults::apply(w);
+        if (qobject_cast<QComboBox *>(w) != nullptr) {
+            w->removeEventFilter(comboOutlinePainter());  // polish 会反复来，别装两份；重装也让它排在最前
+            w->installEventFilter(comboOutlinePainter());
+        }
         auto *button = qobject_cast<QPushButton *>(w);
         if (button == nullptr || button->testAttribute(Qt::WA_SetFont)) return;
         QFont font = button->font();
@@ -2657,7 +2707,7 @@ QString widgetStyleSheet() {
         // 鼠标焦点：底提亮一档，四边仍是透明（**不画线**）。
         "QLineEdit:focus, QComboBox:focus, QAbstractSpinBox:focus, QComboBox:on"
         " { background-color: palette(shadow); border-color: transparent; }"
-        // 下拉展开着：框换强调淡底（和弹层里当前那一项同一档），细边换强调色（Popups.cpp 画）。
+        // 下拉展开着：框换强调淡底（和弹层里当前那一项同一档），细边换强调色（ComboOutlinePainter 画）。
         "QComboBox:on { background-color: palette(highlight); }"
         // 键盘焦点（只有 Tab / Backtab 到达才算）：3px 淡环。`highlight` = 选中淡底，
         // 就是「强调色压在本程序底上」那一档，三套预设加换主题色都跟着走。

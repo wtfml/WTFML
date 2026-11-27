@@ -595,14 +595,16 @@ int UiPopupCheck(QApplication &app) {
         column->addWidget(live);
         QApplication::processEvents();
         // 垫在页面底上量（底和细边都是半透明的，不垫的话深色那档两者同为白、只差 alpha）。
-        const QImage liveShot = captureWidgetOn(live, Theme::tokens().page);
-        const QColor liveFill = liveShot.pixelColor(liveShot.width() / 2, liveShot.height() / 2);
+        // 顶边那一行在 QSS 3px 透明边的最外侧，底只铺到边框中线 ⇒ 那一行底下是页面底：
+        // 有细边 = 「stroke 叠在页面底上」那一色；没画边就是页面底本身（所以不拿芯的底色比，那样没边也过）。
+        const QColor page = Theme::tokens().page;
+        const QImage liveShot = captureWidgetOn(live, page);
         const QColor liveEdge = liveShot.pixelColor(liveShot.width() / 2, 0);
-        expect(colorDistance(liveEdge, liveFill) > 12,
+        const QColor edgeInk = overOpaque(Theme::tokens().stroke, page);
+        expect(colorDistance(liveEdge, edgeInk) <= 12 && colorDistance(edgeInk, page) > 24,
                "可用下拉框最外一圈有细边（收起态和输入框分得开）",
-               QStringLiteral("芯 %1 / 顶边 %2 / 差 %3")
-                   .arg(liveFill.name(), liveEdge.name())
-                   .arg(colorDistance(liveEdge, liveFill)));
+               QStringLiteral("顶边 %1 该是 %2（页面底 %3）")
+                   .arg(liveEdge.name(), edgeInk.name(), page.name()));
         host.hide();
         QApplication::processEvents();
     }

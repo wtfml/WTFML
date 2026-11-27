@@ -531,11 +531,6 @@ public:
     }
 
     bool eventFilter(QObject *watched, QEvent *event) override {
-        if (watched == m_combo.data() && event->type() == QEvent::Paint) {
-            static_cast<QObject *>(m_combo.data())->event(event);  // 先照常画完，细边压在最上面
-            paintOutline();
-            return true;
-        }
         if (watched == m_view) {
             if (event->type() == QEvent::Show) {
                 decoratePopup();
@@ -555,7 +550,7 @@ public:
             if (Anim::enabled()) {
                 m_popup->setWindowOpacity(0.0);  // 摆到位、起动效之前别在 Qt 摆的位置上闪一帧
             }
-            m_combo->update();  // 框换展开态（细边转强调色）
+            m_combo->update();  // 框换展开态（细边转强调色，Theme.cpp ComboOutlinePainter 画）
             QTimer::singleShot(0, this, [this] {
                 if (m_popup.isNull() || !m_popup->isVisible()) return;
                 hideScrollers();
@@ -735,28 +730,6 @@ private:
         m_fitting = false;
     }
 
-    /// 收起态和输入框分开的那一笔：一圈 1px 细边（输入框不描线）。悬停加深一档，展开着换强调色
-    /// （PCL 同款三档：常态 / 悬停 / 展开）。禁用不画（禁用那一档本来就不描线）。
-    /// 画在最外那 1px 上：3px 透明边那条键盘焦点环槽不动，盒子不长大。
-    void paintOutline() {
-        if (m_combo.isNull() || !m_combo->isEnabled()) {
-            return;
-        }
-        const Theme::Tokens tokens = Theme::tokens();
-        QColor ink = tokens.stroke;
-        if (!m_popup.isNull() && m_popup->isVisible()) {
-            ink = tokens.focus;
-        } else if (m_combo->underMouse()) {
-            ink.setAlphaF(qMin(1.0f, ink.alphaF() * 2));
-        }
-        QPainter painter(m_combo.data());
-        painter.setRenderHint(QPainter::Antialiasing, true);
-        painter.setPen(QPen(ink, 1));
-        painter.setBrush(Qt::NoBrush);
-        const qreal radius = Theme::controlRadius() - 0.5;
-        painter.drawRoundedRect(QRectF(m_combo->rect()).adjusted(0.5, 0.5, -0.5, -0.5), radius, radius);
-    }
-
     void ensureFades() {
         if (m_fadeTop == nullptr) {
             m_fadeTop = new EdgeFade(m_popup.data(), true);
@@ -908,7 +881,6 @@ protected:
         }
         auto *decorator = new ComboDecorator(combo, view);
         view->installEventFilter(decorator);
-        combo->installEventFilter(decorator);  // 收起态那圈细边
         return false;
     }
 };

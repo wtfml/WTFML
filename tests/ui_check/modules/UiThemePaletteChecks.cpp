@@ -1485,15 +1485,26 @@ int UiThemePaletteChecks(QApplication &app, QTabWidget * &tabs, QFrame * &bar) {
                   QStringLiteral("底色 %1")
                       .arg(dominantColor(comboShot, plainCombo->rect()).name()));
             // #337：下拉框收起时要和输入框分得开 —— 底色同一族，但外圈多一道 `Dark`（stroke）那一档的
-            // 1px 细边（Popups.cpp ComboDecorator::paintOutline）。量法同上：最后一行数 `Dark` 像素，
-            // 输入框那边是"几乎没有"，下拉框这边要"大半行都是"（两头圆角那一截不算）。
-            const int comboBorderHits = bottomLineHits(comboShot, plainCombo->rect());
-            check(comboBorderHits >= plainCombo->width() / 2,
+            // 1px 细边（Theme.cpp ComboOutlinePainter）。细边落在 QSS 那圈 3px 透明边的最外一行上，
+            // 而 QSS 的底只铺到边框中线（QRenderRule::borderClip）—— 最后一行底下是**页面底**，不是
+            // `Base`：所以按「stroke 叠在页面底上」量。两边同一把尺子：下拉框要大半行都是（两头圆角
+            // 那一截不算），输入框那一行要几乎没有；再要这档色离页面底够远，没画边时这条才过不了。
+            const QColor comboOutline = overOpaque(inputBorderToken, formBase);
+            const auto outlineHits = [&countColorIn, &comboOutline](const QImage &image, const QRect &area) {
+                return countColorIn(image, QRect(area.left(), area.bottom(), area.width(), 1), comboOutline, 12);
+            };
+            const int comboBorderHits = outlineHits(comboShot, plainCombo->rect());
+            const int editOutlineHits = outlineHits(editShot, searchEdit->rect());
+            check(comboBorderHits >= plainCombo->width() / 2 &&
+                      editOutlineHits <= searchEdit->width() / 10 &&
+                      colorDistance(comboOutline, formBase) > 24,
                   "★★ #337 下拉框外圈有一道 1px 细边（输入框没有）—— 收起时两者分得开",
-                  QStringLiteral("最后一行 %1 个 `Dark` 像素（输入框 %2 个 / 宽度 %3）")
+                  QStringLiteral("最后一行细边色 %1 个（输入框 %2 个 / 宽度 %3）/ 细边 %4 离页面底 %5")
                       .arg(comboBorderHits)
-                      .arg(editBorderHits)
-                      .arg(plainCombo->width()));
+                      .arg(editOutlineHits)
+                      .arg(plainCombo->width())
+                      .arg(comboOutline.name())
+                      .arg(colorDistance(comboOutline, formBase)));
             formHost.hide();
 
             // 数字框 / 下拉框里面**也**有一颗 QLineEdit（`QAbstractSpinBox` 的编辑区、
