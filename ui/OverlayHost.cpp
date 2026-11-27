@@ -1218,8 +1218,15 @@ void OverlayHost::paintEvent(QPaintEvent *event) {
 }
 
 void OverlayHost::mousePressEvent(QMouseEvent *event) {
-    // 落在"这一层自己"身上的按下 = 点了卡片外面（卡片是子控件，点在它上面根本到不了这儿）。
+    // 卡片内的非交互子控件（如任务步骤行、标签、空白区）默认忽略鼠标按下，Qt 会把事件
+    // 一路冒泡到本层；只有落点确实在卡片之外时才算点外部关闭。
     if (m_mode == Mode::Prompt && m_dismissOnOutsideClick) {
+        if (m_promptFullSize ||
+            (m_promptCard != nullptr && m_promptCard->isVisible() &&
+             m_promptCard->geometry().contains(event->position().toPoint()))) {
+            event->accept();
+            return;
+        }
         emit promptDismissed();
         event->accept();
         return;

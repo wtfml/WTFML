@@ -14,6 +14,7 @@
 #include "MainWindowUI.hpp"
 #include "MainWindowPageLayout.hpp"
 #include "OverlayHost.hpp"
+#include "TaskCenterPanel.hpp"
 #include "TaskProgressBar.hpp"
 #include "Theme.hpp"
 #include "TitleBar.hpp"
@@ -49,6 +50,7 @@
 #include <QFile>
 #include <QJsonDocument>
 #include <QKeyEvent>
+#include <QMouseEvent>
 #include <QStyle>
 #include <QComboBox>
 #include <QGridLayout>
@@ -856,6 +858,14 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
         // #141（FILTER=i141-）：崩溃 → 询问智能体 → Auto-safe 询问框，框背后智能体还在流式输出。
         list.append({QStringLiteral("i141-autosafe-ask-emerald-960x620.png"), QStringLiteral("emerald"), {960, 620}, false, home,
                      QStringLiteral("i141")});
+        // #149（FILTER=i149-）：覆盖页之上打开任务中心、进入详情并点击执行步骤后任务中心保持打开。
+        for (const QString &theme : {QStringLiteral("emerald"), QStringLiteral("dark")})
+            list.append({QStringLiteral("i149-task-center-step-click-%1-960x620.png").arg(theme), theme, {960, 620}, false, manage,
+                         QStringLiteral("i149:step-click")});
+        // #150（FILTER=i150-）：整合包安装完成弹窗点「查看实例」后跳转到新装实例的实例概览页。
+        for (const QString &theme : {QStringLiteral("emerald"), QStringLiteral("dark")})
+            list.append({QStringLiteral("i150-view-instance-overview-%1-1280x800.png").arg(theme), theme, {1280, 800}, false, download,
+                         QStringLiteral("i150:view-instance")});
         // 只出名字含这段字的几张（逐页精修时不必每次跑满 56 张）。
         const QString only = qEnvironmentVariable("WTFML_DESIGN_SHOT_FILTER");
         if (!only.isEmpty())
@@ -1259,6 +1269,75 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                     files->selectionButtonAt(static_cast<int>(InstanceFilesPage::SelectionAction::SelectAll))->click();
                     if (updated) dialog->setFileUpdates({}, true);  // 全部更新成功：收尾递来的就是空名单
                 });
+            } else if (shot.page.startsWith(QStringLiteral("i149:"))) {
+                // 在已打开的覆盖页（实例概览）之上打开任务中心，点开任务详情并点击执行流程中的步骤。
+                window.ui()->setTaskCenterContent(
+                    []() {
+                        QList<TaskCenter::Item> items;
+                        TaskCenter::Item running;
+                        running.key = QStringLiteral("i149-modpack");
+                        running.title = QStringLiteral("安装整合包 All the Mods 9");
+                        running.detail = QStringLiteral("正在下载模组 128 / 342");
+                        running.percent = 37;
+                        running.state = TaskCenter::State::Running;
+                        running.steps << TaskCenter::Step{QStringLiteral("读取整合包清单"), TaskCenter::StepState::Done, QString(), 100}
+                                      << TaskCenter::Step{QStringLiteral("安装加载器 Forge"), TaskCenter::StepState::Done, QString(), 100}
+                                      << TaskCenter::Step{QStringLiteral("下载整合包文件"), TaskCenter::StepState::Running,
+                                                          QStringLiteral("128 / 342"), 37}
+                                      << TaskCenter::Step{QStringLiteral("解压覆盖文件"), TaskCenter::StepState::Pending, QString(), -1};
+                        items << running;
+                        return items;
+                    },
+                    nullptr);
+                QMetaObject::invokeMethod(&window, "openInstanceSettings", Q_ARG(QString, QStringLiteral("create")),
+                                          Q_ARG(QString, QStringLiteral("overview")));
+                QTimer::singleShot(250, &window, [&window]() {
+                    window.ui()->openTaskCenterPanel();
+                });
+                QTimer::singleShot(450, &window, [&window, shot]() {
+                    QWidget *workspace = window.findChild<QWidget *>(QStringLiteral("taskCenterPromptWorkspace"));
+                    if (workspace == nullptr) return;
+                    if (QWidget *row0 = workspace->findChild<QWidget *>(MainWindowUI::taskCenterPanelRowName(0))) {
+                        const QPoint rowLocal = row0->rect().center();
+                        QMouseEvent openDetail(QEvent::MouseButtonPress, QPointF(rowLocal),
+                                               row0->mapToGlobal(QPointF(rowLocal)), Qt::LeftButton,
+                                               Qt::LeftButton, Qt::NoModifier);
+                        QApplication::sendEvent(row0, &openDetail);
+                        QApplication::processEvents();
+                    }
+                    QWidget *step = workspace->findChild<QWidget *>(QStringLiteral("taskCenterFlowStepName_0"));
+                    if (step != nullptr) {
+                        const QPoint local = step->rect().center();
+                        QMouseEvent clickStep(QEvent::MouseButtonPress, QPointF(local),
+                                              step->mapToGlobal(QPointF(local)), Qt::LeftButton,
+                                              Qt::LeftButton, Qt::NoModifier);
+                        QApplication::sendEvent(step, &clickStep);
+                        QApplication::processEvents();
+                    }
+                    std::fprintf(stdout, "I149 %s promptOpen=%d workspaceVisible=%d stepVisible=%d\n",
+                                 qPrintable(shot.file), window.ui()->overlay()->promptOpen(),
+                                 workspace->isVisible(), step != nullptr && step->isVisible());
+                    std::fflush(stdout);
+                });
+            } else if (shot.page.startsWith(QStringLiteral("i150:"))) {
+                // 在隔离目录里落地一份新导入的整合包实例，走真实导入收尾弹窗并点「查看实例」。
+                const QString id = QStringLiteral("i150-atm9");
+                const QString dir = AppPaths::versionDir(id);
+                QDir().mkpath(dir);
+                if (QFile jar(dir + QLatin1Char('/') + id + QStringLiteral(".jar")); jar.open(QIODevice::WriteOnly))
+                    jar.write("stub");
+                if (QFile json(dir + QLatin1Char('/') + id + QStringLiteral(".json")); json.open(QIODevice::WriteOnly))
+                    json.write("{\"id\":\"i150-atm9\",\"type\":\"release\"}");
+                if (QFile meta(dir + QStringLiteral("/wtfml.meta")); meta.open(QIODevice::WriteOnly))
+                    meta.write("{\"name\":\"All the Mods 9 - ATM9\",\"realVersion\":\"1.20.1\","
+                               "\"loaderName\":\"Forge\",\"loaderVersion\":\"47.3.0\"}");
+                QTimer::singleShot(120, &window, [&window]() {
+                    if (auto *box = window.ui()->overlay()->findChild<InlineMessageBox *>()) {
+                        if (QPushButton *view = box->buttonAt(0)) view->click();
+                    }
+                });
+                window.simulateModpackImportFinishedForTest(
+                    id, QStringLiteral("整合包「All the Mods 9」已导入，实例列表中名称为「All the Mods 9 - ATM9」。"));
             } else if (!shot.page.isEmpty()) QMetaObject::invokeMethod(&window, "openInstanceSettings", Q_ARG(QString, QStringLiteral("create")), Q_ARG(QString, shot.page));
             else if (shot.tab == MainWindowUI::instancesTabIndex()) hoverInstanceRow(window);
         });
@@ -1429,6 +1508,15 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                 }
                 std::fflush(stdout);
             }
+            if (shot.page.startsWith(QStringLiteral("i150:"))) {
+                InstanceSettingsDialog *shown = nullptr;
+                for (auto *dialog : window.findChildren<InstanceSettingsDialog *>())
+                    if (dialog->isVisible()) { shown = dialog; break; }
+                std::fprintf(stdout, "I150 %s tab=%d pageOpen=%d overview=%d\n", qPrintable(shot.file),
+                             window.ui()->getTabWidget()->currentIndex(), window.ui()->overlay()->pageOpen(),
+                             shown != nullptr && shown->currentPageKey() == InstanceSettingsDialog::overviewCategoryKey());
+                std::fflush(stdout);
+            }
             QPixmap shotImage = wizard != nullptr ? wizard->grab() : log != nullptr ? log->grab() : window.grab();
             if (wizard != nullptr) wizard->hide();
             if (shot.page.startsWith(QStringLiteral("edge"))) {
@@ -1475,7 +1563,11 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                 window.agentController()->cancelForTest();
                 window.ui()->overlay()->dismiss();  // 走提示自己的 reject，嵌套循环随即退出
             } else if (!shot.page.isEmpty()) {
-                window.ui()->overlay()->closeOverlay();
+                while (window.ui()->overlay()->isOpen()) window.ui()->overlay()->closeOverlay();
+            }
+            if (shot.page.startsWith(QStringLiteral("i150:"))) {
+                QDir(AppPaths::versionDir(QStringLiteral("i150-atm9"))).removeRecursively();
+                window.refreshInstalledVersionsForTest();
             }
             if (shot.page.startsWith(QStringLiteral("toolbox"))) window.ui()->getTabWidget()->setCurrentIndex(MainWindowUI::homeTabIndex());
             QTimer::singleShot(shot.page.isEmpty() ? 0 : 300, &window, step);

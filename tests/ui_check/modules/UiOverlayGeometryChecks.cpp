@@ -670,6 +670,18 @@ int UiOverlayGeometryChecks(QMainWindow &window, MainWindowUI &ui, QTabWidget * 
                     area->layout()->addWidget(&warning);
                     QApplication::processEvents();
                 }
+                // 点卡片里面的正文标签：非交互子控件会把按下事件冒泡到 OverlayHost，不能被误判为点外面。
+                if (QWidget *card = overlay->promptCardWidget()) {
+                    const QPoint insideLocal = card->rect().center();
+                    QMouseEvent insidePress(QEvent::MouseButtonPress, QPointF(insideLocal),
+                                            card->mapToGlobal(QPointF(insideLocal)), Qt::LeftButton,
+                                            Qt::LeftButton, Qt::NoModifier);
+                    QApplication::sendEvent(card, &insidePress);
+                    QApplication::processEvents();
+                    check(promptDismissals == 0 && overlay->promptOpen(),
+                          "★ #149 点提示卡片内部（非交互区）不会误发 promptDismissed",
+                          QStringLiteral("发了 %1 次").arg(promptDismissals));
+                }
                 // 点框外面 —— 用户报的那一下。
                 QMouseEvent outsidePress(QEvent::MouseButtonPress, QPointF(4, 4), QPointF(4, 4),
                                          Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);

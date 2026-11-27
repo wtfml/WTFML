@@ -13,6 +13,7 @@
 #include <QCoreApplication>
 
 #include "InlineMessage.hpp"
+#include "InstanceSettingsDialog.hpp"
 #include "MainWindow.hpp"
 #include "MainWindowUI.hpp"
 #include "OverlayHost.hpp"
@@ -25,6 +26,7 @@
 #include "manage/VersionManager.hpp"
 
 #include <QPointer>
+#include <QScrollBar>
 #include <QTabWidget>
 #include <QTimer>
 #include <QTreeWidget>
@@ -252,16 +254,30 @@ void DownloadCompletionController::onFinished(const QString &versionId, bool suc
                 if (weakOwner.isNull()) {
                     return;
                 }
-                QComboBox *targetCombo = weakOwner->m_ui->getInstalledVersionCombo();
-                const auto applySelection = [weakOwner, targetCombo, versionId]() {
-                    if (const int index = targetCombo->findData(versionId); index >= 0) {
-                        targetCombo->setCurrentIndex(index);
+                const auto applySelection = [weakOwner, versionId]() {
+                    QComboBox *targetCombo = weakOwner->m_ui->getInstalledVersionCombo();
+                    if (targetCombo != nullptr && targetCombo->findData(versionId) < 0) {
+                        weakOwner->refreshInstalledVersions();
+                    }
+                    if (targetCombo != nullptr) {
+                        if (const int index = targetCombo->findData(versionId); index >= 0) {
+                            targetCombo->setCurrentIndex(index);
+                        }
                     }
                     weakOwner->updateStartButtonText();
                     if (QTreeWidget *tree = weakOwner->m_ui->getInstanceList()) {
                         MainWindowViewData::syncTreeToCombo(targetCombo, tree);
                         if (QTreeWidgetItem *current = tree->currentItem()) {
+                            if (QTreeWidgetItem *parent = current->parent()) {
+                                parent->setExpanded(true);
+                            }
+                            if (tree->isVisible()) {
+                                tree->doItemsLayout();
+                            }
                             tree->scrollToItem(current);
+                            if (QScrollBar *bar = tree->verticalScrollBar()) {
+                                MainWindowViewData::restoreTreeScroll(tree, bar->value());
+                            }
                         }
                     }
                 };
@@ -271,10 +287,13 @@ void DownloadCompletionController::onFinished(const QString &versionId, bool suc
                     {MainWindow::tr("查看实例"), MainWindow::tr("立即启动"), MainWindow::tr("确定")},
                     0, -1);
                 if (action == 0) {
-                    applySelection();
+                    // 先切到「实例」选项卡再选实例并开概览：既让实例设置页归属实例选项卡，
+                    // 也让底下的实例树同步滚动并锁定到新实例（不被 TreeScrollRestorer 拉回旧位置）。
                     if (QTabWidget *tabs = weakOwner->m_ui->getTabWidget()) {
                         tabs->setCurrentIndex(MainWindowUI::instancesTabIndex());
                     }
+                    applySelection();
+                    weakOwner->openInstanceSettings(versionId, InstanceSettingsDialog::overviewCategoryKey());
                 } else if (action == 1) {
                     applySelection();
                     if (QTabWidget *tabs = weakOwner->m_ui->getTabWidget()) {
@@ -448,4 +467,10 @@ void DownloadCompletionController::onFinished(const QString &versionId, bool suc
         InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("下载失败"),
                              MainWindow::tr("版本 %1 有文件未能下载完成。\n\n%2").arg(versionId, errorMessage));
     }
+}
+
+void MainWindow::simulateModpackImportFinishedForTest(const QString &versionId,
+                                                      const QString &message) {
+    m_installOccupancy.setBatch(InstallOccupancy::Batch::Import, versionId);
+    m_downloadCompletion->onFinished(versionId, true, message);
 }
