@@ -383,7 +383,9 @@ signals:
     // ---- 坐标换算 ----
     void coordinateRequested(int dimensionIndex, double x, double y, double z);
     void teleportParseRequested(const QString &text);
-    void teleportCommandRequested(int dimensionIndex, double x, double y, double z);
+    /// @p fromDimensionIndex 是坐标所在的维度，@p toDimensionIndex 是 tp 要去的那一维。
+    void teleportCommandRequested(int fromDimensionIndex, int toDimensionIndex, double x, double y,
+                                  double z);
     // ---- 服务器在线检测 ----
     void serverCheckRequested(const QString &address);
     void serverCheckCancelRequested();
@@ -466,6 +468,7 @@ private:
 
     // 三、坐标换算
     QComboBox *m_coordDimension = nullptr;
+    QComboBox *m_tpDimension = nullptr;
     QDoubleSpinBox *m_coordX = nullptr;
     QDoubleSpinBox *m_coordY = nullptr;
     QDoubleSpinBox *m_coordZ = nullptr;
