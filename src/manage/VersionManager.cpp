@@ -574,14 +574,25 @@ bool VersionManager::retryDownload(QString *problem) {
     }
     m_currentVersionDownloading = batch.id;
 
+    QHash<QString, QStringList> modpackUrls;
+    if (batch.modpack.phase == ModpackInstall::Phase::DownloadingFiles) {
+        const QDir instanceDir(AppPaths::versionDir(batch.modpack.instanceId));
+        for (const auto &file : batch.modpack.pack.files) {
+            modpackUrls.insert(instanceDir.filePath(file.path), ModpackImport::preferredUrlOrder(file.urls));
+        }
+    }
     beginOwnBatch();
     for (const DownloadManager::FailedJob &job : batch.jobs) {
         // 校验档一律用 SizeAndSha1：失败的那几个在盘上根本不存在，这个档位只影响
         // fileAlreadyValid() 那一次问话，而那一次必然回 false。真正的判据（sha1 / 字节数）
         // 在收尾那一步，和档位无关（见 onDownloadReplyFinished）。
-        downloadManager->downloadFile(job.url, job.destinationPath, job.expectedSha1,
-                                       job.expectedSize, VerifyMode::SizeAndSha1,
-                                       job.officialUrl);
+        // 清单文件的新一轮重试从原来源重新连接，仍可按需切换备用地址。
+        const auto urls = modpackUrls.constFind(job.destinationPath);
+        const bool fromManifest = urls != modpackUrls.cend() && !urls->isEmpty();
+        downloadManager->downloadFile(fromManifest ? urls->first() : job.url,
+                                        job.destinationPath, job.expectedSha1,
+                                        job.expectedSize, VerifyMode::SizeAndSha1,
+                                        fromManifest ? urls->value(1) : job.officialUrl);
     }
     endOwnBatch();
     qInfo() << "Retrying" << batch.jobs.size() << "failed download(s).";
@@ -2260,7 +2271,15 @@ void VersionManager::onAllDownloadsFinished(bool success) {
         }
     } else {
         // 失败清单只列前 10 项，剩下的折成一行 —— 5000 个 asset 全列出来没人看。
-        const QStringList shown = stats.failedPaths.mid(0, 10);
+        QStringList shown = stats.failedPaths.mid(0, 10);
+        if (m_modpackInstall.phase == ModpackInstall::Phase::DownloadingFiles) {
+            for (const auto &job : downloadManager->failedJobs()) {
+                const auto index = shown.indexOf(job.destinationPath);
+                if (index >= 0 && !job.reason.isEmpty()) {
+                    shown[index] = QStringLiteral("%1 — %2").arg(job.destinationPath, job.reason);
+                }
+            }
+        }
         QString list = shown.join(QLatin1Char('\n'));
         if (stats.failedPaths.size() > shown.size()) {
             list += QLatin1Char('\n') +

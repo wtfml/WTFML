@@ -313,12 +313,7 @@ QWidget *promptCardWidget() const { return m_promptCard; }
     /// 同上，但按"提示"摆（中间 + 四周变暗）。
     int execPrompt(QDialog *dialog, bool dismissOnOutsideClick = false);
 
-    /// 已经有一条提示开着的时候，把这一条**纯报信的**提示先排着。
-    ///
-    /// 只有"一颗按钮都没给"的那一档（`InlineMessage::warning()` / `information()` /
-    /// `critical()`）能走这儿：它们不向调用方要答案，晚一步弹出来不改变任何人的语义。
-    /// 要人回答的提示（`question()` / `getText()` / 带按钮的 `ask()`）**仍然不叠** ——
-    /// 排队会让调用方从"阻塞到用户答"变成"立刻拿到一个空答案"，那是另一回事。
+    /// 当前提示关闭后执行回调。需要用户作答时，排队的是打开提示并处理答案的整个回调。
     ///
     /// 上一条提示收掉、调用栈退出去之后（下一轮事件循环）才摆下一条；多条按入队顺序。
     ///

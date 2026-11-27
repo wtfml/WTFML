@@ -33,6 +33,7 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QPointer>
 #include <QSaveFile>
 #include <QSet>
 #include <QListWidget>
@@ -710,6 +711,12 @@ bool ImportController::resolveInstallerJavaForPack(const ModpackImport::Pack &pa
 void ImportController::importModpackOneClick(const QString &zipPath,
                                              const QString &confirmedInstanceName,
                                              Tasks::TaskId taskId, bool allowRename, const QString &coverCacheId) {
+    if (taskId != Tasks::invalidTaskId() && m_owner->m_activityCenter) {
+        const auto task = m_owner->m_activityCenter->tasks()->snapshot(taskId);
+        if (task.id != taskId || Tasks::isTerminalState(task.state)) {
+            return;
+        }
+    }
     // 同 importModpackFromFile() 那两道闸（m_downloadInFlight / m_importFlow），见那里。
     if (m_owner->m_downloadInFlight) {
         const QString reason = tr("已有下载或导入任务正在进行，请待其结束后再试。");
@@ -725,6 +732,31 @@ void ImportController::importModpackOneClick(const QString &zipPath,
                                .arg(QFileInfo(zipPath).fileName()));
         finishAbortedImportTask(taskId, false, reason);
         InlineMessage::information(m_owner->m_ui->overlay(), tr("当前正忙"), reason);
+        return;
+    }
+    const auto deferWhilePromptOpen = [&] {
+        auto *overlay = m_owner->m_ui->overlay();
+        const QPointer<ImportController> guard(this);
+        const bool queued = overlay && overlay->queueNotification(
+            [guard, zipPath, confirmedInstanceName, taskId, allowRename, coverCacheId] {
+                if (!guard) return;
+                const auto releaseFolder = qScopeGuard([guard] {
+                    if (guard) guard->m_owner->endFolderSwitchHold();
+                });
+                if (taskId != Tasks::invalidTaskId() && guard->m_owner->m_activityCenter) {
+                    guard->m_owner->m_activityCenter->tasks()->setWaitingUser(taskId, false);
+                }
+                guard->importModpackOneClick(zipPath, confirmedInstanceName, taskId, allowRename, coverCacheId);
+            });
+        if (queued) {
+            m_owner->beginFolderSwitchHold();
+            if (taskId != Tasks::invalidTaskId() && m_owner->m_activityCenter) {
+                m_owner->m_activityCenter->tasks()->setWaitingUser(taskId, true);
+            }
+        }
+        return queued;
+    };
+    if (deferWhilePromptOpen()) {
         return;
     }
     const FlowGuard flowGuard(m_importFlow);
@@ -743,6 +775,9 @@ void ImportController::importModpackOneClick(const QString &zipPath,
     if (!resolveCurseForgeManifestIfNeeded(&prepared.pack, prepared.layout.format,
                                            QFileInfo(prepared.effectiveZip).fileName(), &problem)) {
         finishAbortedImportTask(taskId, false, problem);
+        return;
+    }
+    if (deferWhilePromptOpen()) {
         return;
     }
 

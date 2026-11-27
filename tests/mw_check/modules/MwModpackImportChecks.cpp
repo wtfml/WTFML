@@ -608,6 +608,22 @@ int MwModpackImportChecks(const QDir &versionsDir, MainWindow &window, GlobalJav
                 check(g_modalTitle == QStringLiteral("更换名称") && !g_modalWasWarning,
                       "AA14 指纹冲突时不直接报错失败，而是弹命名框让用户换名",
                       g_modalTitle + QStringLiteral(" / ") + g_modalText);
+
+                auto *overlay = window.ui()->overlay();
+                const bool occupied = overlay->openPrompt() != nullptr;
+                check(occupied, "AA14 名称冲突排队前已有提示");
+                if (occupied) {
+                    g_modalTitle.clear();
+                    const bool invokedQueued = QMetaObject::invokeMethod(
+                        &window, "importModpackOneClick", Qt::DirectConnection,
+                        Q_ARG(QString, mrpackPath), Q_ARG(QString, kMismatchId));
+                    check(invokedQueued && overlay->promptOpen() && g_modalTitle.isEmpty(),
+                          "AA14 已有提示时暂缓导入");
+                    dismissNextPrompt();
+                    overlay->closeOverlay();
+                    check(pumpUntil([] { return g_modalTitle == QStringLiteral("更换名称"); }, 2000),
+                          "AA14 原提示关闭后显示更换名称");
+                }
             }
 
             unpinGlobalJava();
