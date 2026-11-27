@@ -710,7 +710,8 @@ bool ImportController::resolveInstallerJavaForPack(const ModpackImport::Pack &pa
 
 void ImportController::importModpackOneClick(const QString &zipPath,
                                              const QString &confirmedInstanceName,
-                                             Tasks::TaskId taskId, bool allowRename, const QString &coverCacheId) {
+                                             Tasks::TaskId taskId, bool allowRename, const QString &coverCacheId,
+                                             const QString &packTitle) {
     if (taskId != Tasks::invalidTaskId() && m_owner->m_activityCenter) {
         const auto task = m_owner->m_activityCenter->tasks()->snapshot(taskId);
         if (task.id != taskId || Tasks::isTerminalState(task.state)) {
@@ -738,7 +739,7 @@ void ImportController::importModpackOneClick(const QString &zipPath,
         auto *overlay = m_owner->m_ui->overlay();
         const QPointer<ImportController> guard(this);
         const bool queued = overlay && overlay->queueNotification(
-            [guard, zipPath, confirmedInstanceName, taskId, allowRename, coverCacheId] {
+            [guard, zipPath, confirmedInstanceName, taskId, allowRename, coverCacheId, packTitle] {
                 if (!guard) return;
                 const auto releaseFolder = qScopeGuard([guard] {
                     if (guard) guard->m_owner->endFolderSwitchHold();
@@ -746,7 +747,8 @@ void ImportController::importModpackOneClick(const QString &zipPath,
                 if (taskId != Tasks::invalidTaskId() && guard->m_owner->m_activityCenter) {
                     guard->m_owner->m_activityCenter->tasks()->setWaitingUser(taskId, false);
                 }
-                guard->importModpackOneClick(zipPath, confirmedInstanceName, taskId, allowRename, coverCacheId);
+                guard->importModpackOneClick(zipPath, confirmedInstanceName, taskId, allowRename, coverCacheId,
+                                             packTitle);
             });
         if (queued) {
             m_owner->beginFolderSwitchHold();
@@ -779,6 +781,9 @@ void ImportController::importModpackOneClick(const QString &zipPath,
     }
     if (deferWhilePromptOpen()) {
         return;
+    }
+    if (!packTitle.trimmed().isEmpty()) {
+        prepared.pack.name = packTitle.trimmed();
     }
 
     QString name = confirmedInstanceName.trimmed();

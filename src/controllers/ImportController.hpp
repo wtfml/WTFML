@@ -16,7 +16,8 @@ public:
     void openImportReport(const QString &instanceId);
     void importModpackFromFile(const QString &zipPath, const QString &namePrefill);
     void importModpackOneClick(const QString &zipPath, const QString &confirmedInstanceName,
-                               Tasks::TaskId taskId, bool allowRename = true, const QString &coverCacheId = {});
+                               Tasks::TaskId taskId, bool allowRename = true, const QString &coverCacheId = {},
+                               const QString &packTitle = {});
     bool applyModpackImport(const QString &zipPath, const QString &instanceName, const QByteArray &manifestJson, ModpackImport::Format format);
     bool installLocalResourceFile(const QString &versionId, ResourceCatalog::Kind kind, const QString &path, QString *problemOut);
     /// 这一批同类文件里用户按了「取消」：剩下的不再逐个问，直接停。

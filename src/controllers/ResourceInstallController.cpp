@@ -749,8 +749,8 @@ void ResourceInstallController::installNow(ResourceCatalog::Kind kind, const QSt
     if (!modpackPath.isEmpty()) {
         const auto hit = owner.m_resourceHits.constFind(projectIconId);
         if (hit != owner.m_resourceHits.cend()) owner.m_resourceStore->requestIcon(hit.value());
-        owner.m_pendingModpackImports.insert(label, {modpackPath, confirmedName, task, AppPaths::minecraftDir(),
-                                                     projectIconId});
+        owner.m_pendingModpackImports.insert(
+            label, {modpackPath, confirmedName, task, AppPaths::minecraftDir(), projectIconId, displayTitle});
     }
     const bool started =
         owner.m_versionManager->downloadResourceFiles(destinationDir, instanceId, label, files);

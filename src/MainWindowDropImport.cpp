@@ -50,8 +50,9 @@ void MainWindow::importModpackFromFile(const QString &zipPath, const QString &na
 
 void MainWindow::importModpackOneClick(const QString &zipPath,
                                        const QString &confirmedInstanceName,
-                                       Tasks::TaskId taskId, const QString &coverCacheId) {
-    m_importController->importModpackOneClick(zipPath, confirmedInstanceName, taskId, true, coverCacheId);
+                                       Tasks::TaskId taskId, const QString &coverCacheId,
+                                       const QString &packTitle) {
+    m_importController->importModpackOneClick(zipPath, confirmedInstanceName, taskId, true, coverCacheId, packTitle);
 }
 
 bool MainWindow::applyModpackImport(const QString &zipPath, const QString &instanceName,

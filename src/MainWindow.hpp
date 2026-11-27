@@ -1205,7 +1205,8 @@ private slots:
     /// 下载页整合包一键安装入口：整合包压缩包已在缓存目录就绪、实例名也已在点击时确认，
     /// 直接沿用现有的 @p taskId 推进任务中心步骤并进入导入。
     void importModpackOneClick(const QString &zipPath, const QString &confirmedInstanceName,
-                               Tasks::TaskId taskId = Tasks::invalidTaskId(), const QString &coverCacheId = {});
+                               Tasks::TaskId taskId = Tasks::invalidTaskId(), const QString &coverCacheId = {},
+                               const QString &packTitle = {});
 
     void markOneClickModpack(const QString &instanceId) { m_oneClickModpackIds.insert(instanceId); }
     bool takeOneClickModpack(const QString &instanceId) { return m_oneClickModpackIds.remove(instanceId); }
@@ -2940,6 +2941,7 @@ private:
         Tasks::TaskId taskId = Tasks::invalidTaskId();
         QString gameRoot;
         QString coverCacheId;
+        QString packTitle;
     };
     QHash<QString, PendingModpackImport> m_pendingModpackImports;
     QSet<QString> m_oneClickModpackIds;

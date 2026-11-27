@@ -21,7 +21,8 @@ QJsonObject MainWindow::snapshotDownloadContinuation() const {
     const auto pending = m_pendingModpackImports.constFind(m_downloadTaskLedger->resourceLabel());
     if (pending != m_pendingModpackImports.cend() && pending->taskId == m_downloadTaskLedger->task()) {
         return {{"kind", "modpack"}, {"root", pending->gameRoot}, {"instance", pending->instanceName},
-                {"archive", QFileInfo(pending->path).absoluteFilePath()}, {"coverCacheId", pending->coverCacheId}};
+                {"archive", QFileInfo(pending->path).absoluteFilePath()}, {"coverCacheId", pending->coverCacheId},
+                {"packTitle", pending->packTitle}};
     }
     auto intent = m_versionManager->downloadContinuation();
     if (intent.isEmpty() || intent.value("kind") == "modpack") return intent;
@@ -74,8 +75,10 @@ bool MainWindow::continueDownloadInstallation(Tasks::TaskId id, const QJsonObjec
         m_activityCenter->tasks()->setSteps(id, steps);
         beginFolderSwitchHold();
         const QString coverCacheId = intent.value("coverCacheId").toString();
-        QTimer::singleShot(0, this, [this, archive, instance, id, coverCacheId] {
-            m_importController->importModpackOneClick(archive, instance, id, /*allowRename=*/false, coverCacheId);
+        const QString packTitle = intent.value("packTitle").toString();
+        QTimer::singleShot(0, this, [this, archive, instance, id, coverCacheId, packTitle] {
+            m_importController->importModpackOneClick(archive, instance, id, /*allowRename=*/false, coverCacheId,
+                                                      packTitle);
             endFolderSwitchHold();
         });
         return true;

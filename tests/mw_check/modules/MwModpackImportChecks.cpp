@@ -640,6 +640,140 @@ int MwModpackImportChecks(const QDir &versionsDir, MainWindow &window, GlobalJav
                                                               QDir::NoDotAndDotDot).size()));
     }
     {
+        // ---- #145 AA18 资源页一键装整合包时完成提示使用资源页项目名 ----
+        auto *vm = window.findChild<VersionManager *>();
+        auto *imports = window.findChild<ImportController *>();
+        auto *activity = window.findChild<ActivityCenterController *>();
+        check(vm != nullptr && imports != nullptr && activity != nullptr,
+              "AA18 前提：VersionManager / ImportController / ActivityCenterController 都找得到");
+        if (vm != nullptr && imports != nullptr && activity != nullptr) {
+            QTemporaryDir packDir;
+            const QString root = packDir.path();
+            const QByteArray clientBytes = QByteArrayLiteral("sodium-plus-client");
+            const QByteArray modBytes = QByteArrayLiteral("sodium-plus-mod");
+            const auto sha1Hex = [](const QByteArray &bytes) {
+                return QString::fromLatin1(
+                    QCryptographicHash::hash(bytes, QCryptographicHash::Sha1).toHex());
+            };
+            writeFileAt(root + QStringLiteral("/client.bin"), clientBytes);
+            writeFileAt(root + QStringLiteral("/mod.bin"), modBytes);
+            const QString baseUrl = QUrl::fromLocalFile(root + QStringLiteral("/base.json")).toString();
+            const QString clientUrl = QUrl::fromLocalFile(root + QStringLiteral("/client.bin")).toString();
+            const QString modUrl = QUrl::fromLocalFile(root + QStringLiteral("/mod.bin")).toString();
+            const QJsonObject baseJson{
+                {QStringLiteral("id"), QStringLiteral("1.99.145")},
+                {QStringLiteral("type"), QStringLiteral("release")},
+                {QStringLiteral("mainClass"), QStringLiteral("net.minecraft.client.main.Main")},
+                {QStringLiteral("libraries"), QJsonArray{}},
+                {QStringLiteral("downloads"),
+                 QJsonObject{{QStringLiteral("client"),
+                              QJsonObject{{QStringLiteral("url"), clientUrl},
+                                          {QStringLiteral("sha1"), sha1Hex(clientBytes)},
+                                          {QStringLiteral("size"), clientBytes.size()}}}}}};
+            writeFileAt(root + QStringLiteral("/base.json"), QJsonDocument(baseJson).toJson());
+            const QString indexPath = root + QStringLiteral("/index.json");
+            writeFileAt(indexPath,
+                        QJsonDocument(QJsonObject{
+                                          {QStringLiteral("versions"),
+                                           QJsonArray{QJsonObject{{QStringLiteral("id"), QStringLiteral("1.99.145")},
+                                                                  {QStringLiteral("type"), QStringLiteral("release")},
+                                                                  {QStringLiteral("url"), baseUrl}}}}})
+                            .toJson());
+            const QByteArray manifestBytes = QByteArrayLiteral(R"({
+                "formatVersion": 1,
+                "game": "minecraft",
+                "versionId": "2.4.8",
+                "name": "2.4.8",
+                "dependencies": {"minecraft": "1.99.145"},
+                "files": [{"path": "mods/sodium-plus.jar",
+                           "hashes": {"sha1": "__SHA1__"},
+                           "downloads": ["__URL__"],
+                           "fileSize": __SIZE__}]
+            })")
+                                                 .replace("__SHA1__", sha1Hex(modBytes).toUtf8())
+                                                 .replace("__URL__", modUrl.toUtf8())
+                                                 .replace("__SIZE__", QByteArray::number(modBytes.size()));
+            const QString manifestPath = root + QStringLiteral("/modrinth.index.json");
+            const QString mrpackPath = root + QStringLiteral("/sodium-plus.mrpack");
+            writeFileAt(manifestPath, manifestBytes);
+            QString zipErr;
+            const bool zipped = ZipUtil::createZip(
+                mrpackPath, {{QStringLiteral("modrinth.index.json"), manifestPath}}, &zipErr);
+            check(zipped, "AA18 前提：测试用 .mrpack 打出来了", zipErr);
+
+            const bool prevMirror = vm->downloads()->useMirror();
+            vm->setUseMirror(false);
+            vm->setVersionManifestUrlOverride(QUrl::fromLocalFile(indexPath).toString());
+
+            bool manifestReady = false;
+            QEventLoop manifestLoop;
+            const auto manifestConn = QObject::connect(
+                vm, &VersionManager::versionsFetched, &manifestLoop,
+                [&](const QStringList &versions) {
+                    if (versions.contains(QStringLiteral("1.99.145"))) manifestReady = true;
+                    manifestLoop.quit();
+                });
+            QTimer::singleShot(3000, &manifestLoop, &QEventLoop::quit);
+            vm->fetchAvailableVersions();
+            manifestLoop.exec();
+            QObject::disconnect(manifestConn);
+            check(manifestReady, "AA18 前提：本地原版清单 1.99.145 已载入");
+
+            const QString kPackInstanceId = QStringLiteral("Sodium Plus-26.3-Fabric");
+            if (zipped && manifestReady) {
+                const Tasks::TaskId taskId = activity->begin(
+                    Tasks::TaskKind::Import, QStringLiteral("安装整合包 %1").arg(kPackInstanceId),
+                    kPackInstanceId);
+                bool finished = false;
+                bool finishedOk = false;
+                QString finishedMsg;
+                const auto finishConn = QObject::connect(
+                    vm, &VersionManager::versionDownloadFinished, &window,
+                    [&](const QString &id, bool ok, const QString &message) {
+                        if (id != kPackInstanceId) return;
+                        finished = true;
+                        finishedOk = ok;
+                        finishedMsg = message;
+                    });
+
+                g_modalTitle.clear();
+                g_modalText.clear();
+                dismissNextPrompt();
+                imports->importModpackOneClick(mrpackPath, kPackInstanceId, taskId, true, QString(),
+                                               QStringLiteral("Sodium Plus"));
+
+                QElapsedTimer waitClock;
+                waitClock.start();
+                while ((!finished || g_modalTitle.isEmpty()) && waitClock.elapsed() < 10000) {
+                    QApplication::processEvents(QEventLoop::AllEvents, 20);
+                }
+                QObject::disconnect(finishConn);
+
+                check(finished && finishedOk &&
+                          finishedMsg.contains(QStringLiteral("Sodium Plus")) &&
+                          !finishedMsg.contains(QStringLiteral("整合包「2.4.8」")),
+                      "#145 AA18 清单 name 为 2.4.8 时，完成消息显示资源页项目名「Sodium Plus」而非「2.4.8」",
+                      finishedMsg);
+                check(g_modalTitle == QStringLiteral("整合包已安装") &&
+                          g_modalText.contains(QStringLiteral("Sodium Plus")) &&
+                          !g_modalText.contains(QStringLiteral("整合包「2.4.8」")),
+                      "#145 AA18 完成弹窗正文显示「Sodium Plus」而非「整合包「2.4.8」」",
+                      g_modalTitle + QStringLiteral(" / ") + g_modalText);
+            }
+
+            if (OverlayHost *overlay = window.ui()->overlay()) {
+                while (overlay->isOpen()) overlay->closeOverlay();
+            }
+            vm->setVersionManifestUrlOverride(QString());
+            vm->setUseMirror(prevMirror);
+            QApplication::processEvents();
+            QDir(versionsDir.filePath(kPackInstanceId)).removeRecursively();
+            QDir(versionsDir.filePath(QStringLiteral("1.99.145"))).removeRecursively();
+            window.refreshInstalledVersionsForTest();
+            QApplication::processEvents();
+        }
+    }
+    {
         // ---- #150 整合包安装完成后点「查看实例」：跳到新装实例的实例概览页 ----
         const QString kImportedId = QStringLiteral("i150-atm9-pack");
         const QString kDisplayName = QStringLiteral("All the Mods 9 - Test");

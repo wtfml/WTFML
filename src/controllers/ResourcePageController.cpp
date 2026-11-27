@@ -539,7 +539,8 @@ void ResourcePageController::onDownloadFinished(const QString &label, bool succe
         // deferXxxStep 是同一个理由）。
         m_owner.beginFolderSwitchHold();
         QTimer::singleShot(0, this, [this, pending, activeTask] {
-            m_owner.importModpackOneClick(pending.path, pending.instanceName, activeTask, pending.coverCacheId);
+            m_owner.importModpackOneClick(pending.path, pending.instanceName, activeTask, pending.coverCacheId,
+                                          pending.packTitle);
             m_owner.endFolderSwitchHold();
         });
         return;

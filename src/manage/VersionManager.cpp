@@ -88,6 +88,7 @@ QJsonObject VersionManager::downloadContinuation() const {
         intent.insert("instance", m_modpackInstall.instanceId);
         intent.insert("archive", QFileInfo(m_modpackInstall.zipPath).absoluteFilePath());
         intent.insert("coverCacheId", m_modpackInstall.pack.coverCacheId);
+        intent.insert("packTitle", m_modpackInstall.pack.name);
         intent.insert("archiveSize", QString::number(m_modpackInstall.archiveSize));
         intent.insert("archiveModifiedMs", QString::number(m_modpackInstall.archiveModifiedMs));
         if (m_modpackInstall.phase == ModpackInstall::Phase::DownloadingFiles) {
