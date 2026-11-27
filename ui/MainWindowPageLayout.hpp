@@ -212,6 +212,8 @@ struct InlineRow {
 };
 
 void stabilizeDownloadTree(QTreeWidget *tree);
+/// 主标签页上单列的树：滑条常驻，行右缘离滑条左缘 Theme::contentToScrollBarGap()（#136）。
+void reserveTreeScrollGap(QTreeWidget *tree);
 
 void markSurface(QWidget *widget, const QString &value);
 

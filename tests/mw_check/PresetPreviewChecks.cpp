@@ -16,6 +16,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QTreeWidget>
+#include <QTableWidget>
 #include <QTreeWidgetItem>
 #include <QDialog>
 #include <QEventLoop>
@@ -311,6 +312,10 @@ int runPresetPreviewChecks() {
                           !inlineEditor->isWindow() && sections->currentIndex() == 1 &&
                           !inlineEditor->findChild<QListWidget *>("presetEditorNavigation"),
                       "Game Options tab shows its editor on the right without a second sidebar or window");
+                QApplication::processEvents();
+                auto *optionTable = sections ? sections->currentWidget()->findChild<QTableWidget *>() : nullptr;
+                check(optionTable && optionTable->mapTo(detailPages, QPoint(optionTable->width(), 0)).x() == detailPages->width(),
+                      "inline editor table reaches the page edge so its scrollbar shares the common column");
                 tabs->setCurrentRow(3);
                 check(sections && sections->currentIndex() == 2 && visibleEditor() == inlineEditor,
                       "Keys tab reuses the same editor document");

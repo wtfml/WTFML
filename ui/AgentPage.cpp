@@ -482,7 +482,9 @@ AgentPage::AgentPage(QWidget *parent)
     chat->setMinimumWidth(0);
     chat->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     auto *chatLayout = new QVBoxLayout(chat);
-    chatLayout->setContentsMargins(24, 12, 20, 20);
+    // 第 3 档（#136）：对话滑条外缘离窗口右缘 pageInsetRight()；页眉 / 技能行 / 输入岛让出滑条列，
+    // 和对话列在同一条通道里居中限宽 kColumnMax，右缘对齐。
+    chatLayout->setContentsMargins(Theme::pageInsetLeft(), 12, Theme::pageInsetRight(), 20);
     chatLayout->setSpacing(0);
 
     // 顶上一行：会话列表 · 新建对话 · 标题 · 警示胶囊 · 实例 · ⋯ · ⚙（高 36）
@@ -490,6 +492,8 @@ AgentPage::AgentPage(QWidget *parent)
     m_header = header;
     header->setObjectName(QStringLiteral("agentChatHeader"));
     header->setFixedHeight(36);
+    header->setMaximumWidth(kColumnMax);
+    header->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     auto *headerLayout = new QHBoxLayout(header);
     headerLayout->setContentsMargins(0, 0, 0, 0);
     headerLayout->setSpacing(6);
@@ -577,7 +581,7 @@ AgentPage::AgentPage(QWidget *parent)
     m_settingsButton = iconButton(header, QStringLiteral("agentApiSettingsButton"), QStringLiteral("gear"),
                                   QCoreApplication::translate("AgentPage", "API 设置"), 36, 19);
     headerLayout->addWidget(m_settingsButton);
-    chatLayout->addWidget(header);
+    Theme::addScrollGutterAligned(chatLayout, header);
 
     // ⋯ 菜单（建一次、反复弹：加密开关这颗要常在，测试也按 objectName 找它）。
     {
@@ -628,7 +632,7 @@ AgentPage::AgentPage(QWidget *parent)
     }
 
     // ---------- 对话流 ----------
-    m_scroll = new QScrollArea(chat);
+    m_scroll = new Theme::GutterScrollArea(chat);  // 滑条常驻，对话列不因它出没而左右跳
     m_scroll->setObjectName(QStringLiteral("agentMessageScroll"));
     m_scroll->setWidgetResizable(true);
     m_scroll->setFrameShape(QFrame::NoFrame);
@@ -636,7 +640,7 @@ AgentPage::AgentPage(QWidget *parent)
     auto *host = new QWidget(m_scroll);
     host->setObjectName(QStringLiteral("agentStreamHost"));
     auto *hostRow = new QHBoxLayout(host);
-    hostRow->setContentsMargins(0, 18, 0, 18);
+    hostRow->setContentsMargins(0, 18, Theme::contentToScrollBarGap(), 18);
     m_messageHost = new QWidget(host);
     m_messageHost->setObjectName(QStringLiteral("agentMessageHost"));
     m_messageHost->setMaximumWidth(kColumnMax);
@@ -763,7 +767,7 @@ AgentPage::AgentPage(QWidget *parent)
     m_autoSafeButton->hide();
     {
         auto *skillLine = new QHBoxLayout;
-        skillLine->setContentsMargins(0, 0, 0, 0);
+        skillLine->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
         auto *skillColumn = new QVBoxLayout;
         skillColumn->setContentsMargins(0, 0, 0, 0);
         skillColumn->setSpacing(2);
@@ -816,7 +820,7 @@ AgentPage::AgentPage(QWidget *parent)
     composerLayout->addLayout(composerBar);
     // 和消息列同一个摆法：横向一行里只放它，超过 760 时由横排居中（带对齐的格子只按 sizeHint 给宽）。
     auto *composerLine = new QHBoxLayout;
-    composerLine->setContentsMargins(0, 0, 0, 0);
+    composerLine->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
     composerLine->addWidget(composerRow);
     chatLayout->addLayout(composerLine);
     // 岛宽跟对话列一起走：不到 760 时撑满，超过时居中定宽。
@@ -1548,9 +1552,11 @@ AgentMessageView *AgentPage::viewFor(const QString &messageId) {
 
 void AgentPage::resizeEvent(QResizeEvent *event) {
     ThemeBackground::resizeEvent(event);
-    const int pad = event->size().width() < 700 ? 16 : 0;
-    if (auto *chatLayout = qobject_cast<QVBoxLayout *>(m_scroll->parentWidget()->layout()))
-        chatLayout->setContentsMargins(pad ? 16 : 24, 12, pad ? 16 : 20, pad ? 16 : 20);
+    if (auto *chatLayout = qobject_cast<QVBoxLayout *>(m_scroll->parentWidget()->layout())) {
+        QMargins margins = chatLayout->contentsMargins();
+        margins.setBottom(event->size().width() < 700 ? 16 : 20);
+        chatLayout->setContentsMargins(margins);
+    }
     placeSessionDrawer();
 }
 

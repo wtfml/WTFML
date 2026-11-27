@@ -37,7 +37,10 @@ namespace {
 
 /// 把控件"现在长什么样"抓成一张图 —— **不用 `grab()`**。
 QPixmap snapshot(QWidget *widget) {
-    QPixmap pixmap(widget->size());
+    // 按屏幕缩放拍：提示开着时露在外面的只有这张图，1x 的图放大了会发糊。
+    const qreal dpr = widget->devicePixelRatioF();
+    QPixmap pixmap(widget->size() * dpr);
+    pixmap.setDevicePixelRatio(dpr);
     pixmap.fill(Qt::transparent);
     QPainter painter(&pixmap);
     // 只画控件自己和子控件，**不铺窗口底色**（默认的 DrawWindowBackground 会先刷一整块
@@ -70,9 +73,7 @@ private:
 /// NOTE: 和 `MainWindowUI` 里页面用的那圈边距是**同一个数**（kPageMargin = 9）——
 /// 覆盖层是一整个"页面"，留白和别的页面不一样的话，进设置再退出来会看着跳一下。
 constexpr int kOverlayPageMargin = 9;
-/// 整页那一档的左右留白与顶部面包屑尺度（第 3 档；宽窗超过限宽时水平居中）。
-constexpr int kOverlayPageLeft = 16;
-constexpr int kOverlayPageRight = 12;
+/// 整页那一档的顶部面包屑尺度（第 3 档；左右留白见 Theme::pageInsetLeft/Right，宽窗超过限宽时水平居中）。
 constexpr int kOverlayPageTop = 2;
 constexpr int kOverlayBreadcrumbHeight = 30;
 constexpr int kOverlayBreadcrumbTop = 1;
@@ -499,8 +500,8 @@ void OverlayHost::updatePageMargins() {
             extra = (avail - kOverlayPageMaxWidth) / 2;
         }
     }
-    const int left = kOverlayPageLeft + extra;
-    const int right = kOverlayPageRight + extra;
+    const int left = Theme::pageInsetLeft() + extra;
+    const int right = Theme::pageInsetRight() + extra;
     if (m_breadcrumb != nullptr) {
         m_breadcrumb->setFixedHeight(kOverlayBreadcrumbHeight);
         if (QLayout *bl = m_breadcrumb->layout()) {
@@ -594,6 +595,8 @@ QWidget *OverlayHost::openPrompt(bool dismissOnOutsideClick, bool fullSize) {
     // 换页过渡还在半路时先收到终点：底图要的是那一页本来的样子，不是半透明的中间帧。
     Anim::finishPageAppear(m_pageFrame);
     Anim::finishPageAppear(m_anchor);
+    // 调用方可能刚往页面里塞了东西就来弹框：先把排队的布局请求送完，别拍到摆了一半的样子。
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::LayoutRequest);
     m_backdrop = captureBackdrop();
 
     m_mode = Mode::Prompt;
@@ -1189,9 +1192,10 @@ void OverlayHost::paintEvent(QPaintEvent *event) {
     // 提示：先铺底图（开之前拍下来的那一层），再压一层半透明黑。用户要的是"四周变暗"，
     // 不是"四周消失"。
     // 没拍到底图时什么都不铺：父控件那张整窗磨砂本来就画在下面。
-    // 叠在整页上：底图是那一页（不带底），下面露着的却是选项卡那一页 —— 先铺整页那块底，
-    // 不然两页叠着画（体验反馈2 第 2 条）。
-    if (promptOverShownPage()) paintBase();
+    // 底图不带底（透明处会漏），而下面那一页只是被按住、照样在画 —— 它在提示开着的期间还会变
+    // （智能体流式追加卡片，#141），不先铺整窗那块底盖住它，就是新旧两帧叠着画。
+    // 叠在整页上时下面露着的是选项卡那一页，同一招（体验反馈2 第 2 条）。
+    if (promptOverShownPage() || !m_backdrop.isNull()) paintBase();
     if (!m_backdrop.isNull()) {
         painter.drawPixmap(rect(), m_backdrop);
     }

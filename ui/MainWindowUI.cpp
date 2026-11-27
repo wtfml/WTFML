@@ -1950,7 +1950,7 @@ QWidget *MainWindowUI::setupInstancePage() {
         instanceFilterRow->setObjectName(instanceFilterRowName());
         {
             auto *row = new QHBoxLayout(instanceFilterRow);
-            row->setContentsMargins(0, 0, 0, 0);
+            row->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
             row->setSpacing(kFilterRowSpacing);
             instanceSearchEdit = makeListFilterSearch(instanceFilterRow, instanceSearchName(),
                                                         instanceSearchPlaceholder());
@@ -1993,6 +1993,7 @@ QWidget *MainWindowUI::setupInstancePage() {
         // sizeHint 是"整句排成一行"的宽度）。
         instanceNoMatchLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
         instanceNoMatchLabel->setVisible(false);
+        instanceNoMatchLabel->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
         clientLayout->addWidget(instanceNoMatchLabel);
         // 空文件夹那一句：同一个位置、同一档次要色，只是说的是另一件事（见 instanceEmptyText()）。
         // 设计稿 manage-empty：插画（不画虚线圈）+ 大标题 + 一句引导 + 一颗主操作，整块居中；
@@ -2001,7 +2002,7 @@ QWidget *MainWindowUI::setupInstancePage() {
         emptyState->setObjectName(instanceEmptyStateName());
         emptyState->setVisible(false);
         auto *emptyLayout = new QVBoxLayout(emptyState);
-        emptyLayout->setContentsMargins(0, 0, 0, 40);
+        emptyLayout->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 40);
         emptyLayout->setSpacing(10);
         emptyLayout->addStretch(1);
         auto *emptyArt = new QLabel(emptyState);
@@ -2089,6 +2090,7 @@ QWidget *MainWindowUI::setupInstancePage() {
         // 展开/折叠动画：组行那一按，子条目是**滑**出来的。交给 Qt 自己
         // （`QTreeView::setAnimated`），规矩见 ui/Animations.hpp。
         Anim::animateExpansion(instanceList);
+        reserveTreeScrollGap(instanceList);
         clientLayout->addWidget(instanceList, 1);
 
         // ---------- 顶部模式切换 + 服务端那一页 ----------
@@ -2156,7 +2158,7 @@ QWidget *MainWindowUI::setupInstancePage() {
         auto *serverFilterRow = new QWidget(serverPage);
         serverFilterRow->setObjectName(serverFilterRowName());
         auto *serverFilters = new QHBoxLayout(serverFilterRow);
-        serverFilters->setContentsMargins(0, 0, 0, 0);
+        serverFilters->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
         serverFilters->setSpacing(kFilterRowSpacing);
         const QStringList serverFilterTexts{
             instanceFilterText(InstanceFilterButton::Vanilla),
@@ -2186,6 +2188,7 @@ QWidget *MainWindowUI::setupInstancePage() {
         serverEmptyLabel->setWordWrap(true);
         serverEmptyLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
         serverEmptyLabel->setVisible(false);
+        serverEmptyLabel->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
         serverLayout->addWidget(serverEmptyLabel);
 
         serverList = new QTreeWidget(serverPage);
@@ -2210,7 +2213,8 @@ QWidget *MainWindowUI::setupInstancePage() {
         newServerButton->setObjectName(newServerButtonName());
         // 造一个新东西出来 = 这一页的主操作，走主题色那一档（和左栏「添加文件夹…」同一档）。
         Theme::markButton(newServerButton, Theme::ButtonKind::Accent);
-        serverLayout->addWidget(newServerButton);
+        Theme::addScrollGutterAligned(serverLayout, newServerButton);
+        reserveTreeScrollGap(serverList);
 
         instanceModeStack->addWidget(serverPage);  // 第 1 页 = 服务端
 
@@ -2288,11 +2292,14 @@ void MainWindowUI::setPresetDetailVisible(bool visible) {
     if (auto *modes = page->findChild<QWidget *>(instanceModeRowName()))
         modes->setVisible(!detail);
 
+    // 只收放上边距，左右仍是整页那一档。
     auto *workspace = instanceModeStack->parentWidget()->layout();
-    workspace->setContentsMargins(kSurfacePadding, detail ? 0 : kSurfacePadding,
-                                  kSurfacePadding, kSurfacePadding);
-    page->layout()->setContentsMargins(kPageMargin, detail ? 0 : kPageMargin,
-                                       kPageMargin, kPageMargin);
+    QMargins margins = workspace->contentsMargins();
+    margins.setTop(detail ? 0 : kSurfacePadding);
+    workspace->setContentsMargins(margins);
+    margins = page->layout()->contentsMargins();
+    margins.setTop(detail ? 0 : kPageMargin);
+    page->layout()->setContentsMargins(margins);
 }
 
 void MainWindowUI::setServerFormIntro(const QString &text) {

@@ -3,6 +3,9 @@
 // 只截图，不登录、不联网、不启动游戏；实例和账号是写在隔离目录里的夹具。
 #include "AgentApprovalCard.hpp"
 #include "AgentPage.hpp"
+#include "agent/AgentModelClient.hpp"
+#include "agent/AgentSettings.hpp"
+#include "controllers/AgentController.hpp"
 #include "Animations.hpp"
 #include "Glass.hpp"
 #include "GlassPopover.hpp"
@@ -28,6 +31,8 @@
 #include <QScrollBar>
 #include <QPlainTextEdit>
 #include "PresetModReview.hpp"
+#include "PresetEditorPage.hpp"
+#include "PresetManagePage.hpp"
 #include "UpgradeHistoryDialog.hpp"
 #include "UpgradeReportDialog.hpp"
 #include "ToggleSwitch.hpp"
@@ -486,6 +491,21 @@ inline void fillToolboxSample(ToolboxPage &page, const QString &key) {
     }
 }
 
+/// #141 的假模型：一直流式吐字、从不收尾，让询问框背后的页面持续在变。
+class StreamingAgentClient final : public AgentModelClient {
+public:
+    using AgentModelClient::AgentModelClient;
+    void start(const Agent::ModelRequest &request) override {
+        auto *timer = new QTimer(this);
+        QObject::connect(timer, &QTimer::timeout, this, [this, id = request.requestId] {
+            emit textDelta(id, QStringLiteral("正在查看崩溃日志，随后给出修复计划。\n\n"));
+        });
+        timer->start(120);
+    }
+    void cancel(const QString &) override { qDeleteAll(findChildren<QTimer *>()); }
+    void testConnection(const Agent::ModelRequest &) override {}
+};
+
 /// r2 智能体页对照（设计稿 r2/png/agent-A-*）：直接往页上灌会话 / 消息 / 状态，不经控制器、不发请求。
 /// @p state：chat / empty / noapi / sys / menu / inst。
 inline void seedAgent(AgentPage &page, const QString &state) {
@@ -823,6 +843,19 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
         for (const QString &theme : {QStringLiteral("emerald"), QStringLiteral("dark")})
             list.append({QStringLiteral("i143-nav-mods-%1-960x620.png").arg(theme), theme, {960, 620}, false, manage,
                          QStringLiteral("i143:nav-mods")});
+        // #136 收尾（FILTER=i136-tab-）：管理 / 下载 / 设置三个主标签页的左右边距与右缘，960×620。
+        for (const auto &[page, tab] : {std::pair{"manage", manage}, std::pair{"download", download},
+                                        std::pair{"settings", MainWindowUI::settingsTabIndex()}})
+            list.append({QStringLiteral("i136-tab-%1-emerald-960x620.png").arg(QLatin1String(page)), QStringLiteral("emerald"),
+                         {960, 620}, false, tab});
+        // 下载安装页的加载器树行右缘、预设内嵌编辑器游戏选项表的滑条列（同一个 FILTER=i136-）。
+        list.append({QStringLiteral("i136-install-emerald-960x620.png"), QStringLiteral("emerald"), {960, 620}, false, download,
+                     QStringLiteral("i136p:install")});
+        list.append({QStringLiteral("i136-preset-options-emerald-960x620.png"), QStringLiteral("emerald"), {960, 620}, false, manage,
+                     QStringLiteral("i136p:preset")});
+        // #141（FILTER=i141-）：崩溃 → 询问智能体 → Auto-safe 询问框，框背后智能体还在流式输出。
+        list.append({QStringLiteral("i141-autosafe-ask-emerald-960x620.png"), QStringLiteral("emerald"), {960, 620}, false, home,
+                     QStringLiteral("i141")});
         // 只出名字含这段字的几张（逐页精修时不必每次跑满 56 张）。
         const QString only = qEnvironmentVariable("WTFML_DESIGN_SHOT_FILTER");
         if (!only.isEmpty())
@@ -981,6 +1014,26 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
             } else if (shot.page.startsWith(QStringLiteral("r2:agent-"))) {
                 if (auto *page = window.findChild<AgentPage *>()) seedAgent(*page, shot.page.section(QLatin1Char('-'), 1));
             } else if (shot.page.startsWith(QStringLiteral("r2:"))) {
+            } else if (shot.page == QStringLiteral("i136p:install")) {
+                window.ui()->getGameStack()->setCurrentIndex(MainWindowUI::downloadGameInstallIndex());
+            } else if (shot.page == QStringLiteral("i136p:preset")) {
+                window.ui()->setInstanceMode(MainWindowUI::InstanceMode::Preset);
+                // 等控制器把（隔离目录里的空）列表灌完，再摆一份演示预设并嵌进编辑器。
+                QTimer::singleShot(200, &window, [&window]() {
+                    auto *page = window.findChild<PresetManagePage *>();
+                    auto *list = page ? page->findChild<QTreeWidget *>(PresetManagePage::presetListName()) : nullptr;
+                    if (list == nullptr) return;
+                    PresetManagePage::PresetItem item;
+                    item.id = QStringLiteral("shot");
+                    item.name = QStringLiteral("日常配置");
+                    page->setPresets({item}, {}, item.id);
+                    if (list->currentItem() == nullptr) return;
+                    emit list->itemClicked(list->currentItem(), 0);
+                    auto *editor = new PresetEditorPage(QJsonObject{{"id", item.id}, {"name", item.name}}, page,
+                                                        PresetEditorPage::Presentation::Embedded);
+                    editor->selectSection(1);
+                    page->embedEditor(editor);
+                });
             } else if (shot.page == QStringLiteral("final:expand")) {
                 // 展开态：版本树头一个有孩子的频道展开、选中它下面头一条（看「收起」字与选中淡底）。
                 QTreeWidget *tree = window.ui()->getVersionTree();
@@ -1052,6 +1105,26 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                 if (auto *page = window.findChild<AgentPage *>()) {
                     seedAgentBatch4(*page, shot.page.section(QLatin1Char(':'), 1));
                 }
+            } else if (shot.page == QStringLiteral("i141")) {
+                // askAboutCrash 卡在询问框的嵌套事件循环里，排到下一拍调。步骤同 MainWindow::askAgentAboutCrash。
+                QTimer::singleShot(0, &window, [&window]() {
+                    AgentController *controller = window.agentController();
+                    controller->setModelClientForTest(new StreamingAgentClient(&window));
+                    AgentProviderProfile profile;
+                    profile.id = QStringLiteral("shot");
+                    profile.name = QStringLiteral("示例服务");
+                    profile.baseUrl = QStringLiteral("https://api.example.com/v1");
+                    profile.model = QStringLiteral("example-model");
+                    controller->applyProfileForTest(profile, QStringLiteral("sk-example"));
+                    // 临时放开那一问，问完恢复。
+                    const QVariant suppressed = qApp->property("wtfml.suppressAgentPrompt");
+                    qunsetenv("WTFML_SUPPRESS_AGENT_PROMPT");
+                    qApp->setProperty("wtfml.suppressAgentPrompt", false);
+                    window.ui()->getTabWidget()->setCurrentIndex(MainWindowUI::agentTabIndex());
+                    controller->askAboutCrash(QStringLiteral("实例：机械动力 Create\n退出码：0xC0000005（内存访问冲突）"),
+                                              QStringLiteral("create"));
+                    qApp->setProperty("wtfml.suppressAgentPrompt", suppressed);
+                });
             } else if (shot.page.startsWith(QStringLiteral("i136:"))) {
                 // 「机械动力 Create」里摆几个模组、资源包和一份配置，开对应页，再按样张走一步真操作。
                 const QString dir = AppPaths::versionDir(QStringLiteral("create"));
@@ -1396,7 +1469,14 @@ inline void run(QApplication &app, MainWindow &window, const QString &root) {
                 // 先让提示走「取消」（什么都不删），等它那层事件循环退出，再收底下的设置页。
                 window.ui()->overlay()->evict();
                 QTimer::singleShot(150, &window, [&window] { window.ui()->overlay()->closeOverlay(); });
-            } else if (!shot.page.isEmpty()) window.ui()->overlay()->closeOverlay();
+            } else if (shot.page == QStringLiteral("i141")) {
+                std::fprintf(stdout, "I141 %s promptOpen=%d\n", qPrintable(shot.file), window.ui()->overlay()->promptOpen());
+                std::fflush(stdout);
+                window.agentController()->cancelForTest();
+                window.ui()->overlay()->dismiss();  // 走提示自己的 reject，嵌套循环随即退出
+            } else if (!shot.page.isEmpty()) {
+                window.ui()->overlay()->closeOverlay();
+            }
             if (shot.page.startsWith(QStringLiteral("toolbox"))) window.ui()->getTabWidget()->setCurrentIndex(MainWindowUI::homeTabIndex());
             QTimer::singleShot(shot.page.isEmpty() ? 0 : 300, &window, step);
         });

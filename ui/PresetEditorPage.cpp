@@ -61,6 +61,29 @@ void embed(QDialog *dialog) {
         if (!label->text().isEmpty())
             label->hide();
 }
+/// 内嵌时外层不滚：表格直通页面右缘（滑条和别的页同一列），同页其余各行让出滑条列（#136）。
+void alignEmbeddedPage(QWidget *page) {
+    auto *layout = qobject_cast<QBoxLayout *>(page->layout());
+    if (!layout) return;
+    auto *table = page->findChild<QTableWidget *>();
+    QMargins margins = layout->contentsMargins();
+    margins.setRight(table ? 0 : Theme::scrollBarGutterInset());
+    layout->setContentsMargins(margins);
+    if (!table) return;
+    Theme::applyViewportScrollGutter(table);
+    for (int i = 0; i < layout->count(); ++i) {
+        QLayoutItem *item = layout->itemAt(i);
+        if (QLayout *row = item->layout()) {
+            Theme::alignToScrollGutter(row);
+        } else if (QWidget *widget = item->widget(); widget && widget != table) {
+            layout->removeWidget(widget);
+            auto *row = new QHBoxLayout;
+            row->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
+            row->addWidget(widget);
+            layout->insertLayout(i, row);
+        }
+    }
+}
 } // namespace
 QStringList PresetEditorPage::sectionTitles() {
     return {
@@ -95,6 +118,8 @@ PresetEditorPage::PresetEditorPage(const QJsonObject &document, QWidget *parent,
     if (presentation == Presentation::Embedded) {
         actions = new QHBoxLayout;
         right->addLayout(actions);
+        Theme::alignToScrollGutter(actions);
+        m_problem->setContentsMargins(0, 0, Theme::scrollBarGutterInset(), 0);
     } else {
         auto *left = new QWidget(this);
         left->setFixedWidth(204);
@@ -320,6 +345,8 @@ void PresetEditorPage::rebuildPages(const QJsonObject &state) {
         layout->addLayout(actions);
         m_pages->addWidget(page);
     }
+    if (!m_navigation)  // 没有自带左栏 = 内嵌在预设详情里
+        for (int i = 0; i < m_pages->count(); ++i) alignEmbeddedPage(m_pages->widget(i));
 }
 void PresetEditorPage::addPack(const QString &part) {
     QString world;

@@ -107,6 +107,37 @@ void stabilizeDownloadTree(QTreeWidget *tree) {
     syncIdle();
 }
 
+namespace {
+/// 视口一变宽就把那唯一一列改成「视口宽 − 间隙」。
+class TreeGutterColumn : public QObject {
+public:
+    explicit TreeGutterColumn(QTreeWidget *tree) : QObject(tree->viewport()), m_tree(tree) {
+        tree->viewport()->installEventFilter(this);
+    }
+
+protected:
+    bool eventFilter(QObject *, QEvent *event) override {
+        if (event->type() == QEvent::Resize || event->type() == QEvent::Show) {
+            const int width = m_tree->viewport()->width() - Theme::contentToScrollBarGap();
+            if (width > 0) m_tree->header()->resizeSection(0, width);
+        }
+        return false;
+    }
+
+private:
+    QTreeWidget *m_tree;
+};
+}  // namespace
+
+// 行是各家代理按行矩形画和点的，QTreeView 又会自己改视口边距 ⇒ 让位只能落在列宽上：
+// 画行、命中、visualItemRect 一起收，代理一个都不用改。
+void reserveTreeScrollGap(QTreeWidget *tree) {
+    stabilizeDownloadTree(tree);
+    tree->header()->setStretchLastSection(false);
+    tree->header()->setSectionResizeMode(0, QHeaderView::Fixed);
+    new TreeGutterColumn(tree);
+}
+
 /// 给 @p widget 挂一个"面"（`wtfmlSurface`）。名字与值都从 Theme 那一组**唯一出处**来，
 /// 这里只是把 `const char *` 那一下收成一行（属性名要 `QByteArray` 活得比这一次调用长）。
 void markSurface(QWidget *widget, const QString &value) {
@@ -206,10 +237,11 @@ void styleSidebarList(QListWidget *list) {
  */
 TwoColumns buildTwoColumnPage(QWidget *page, const QString &tab) {
     auto *row = new QHBoxLayout(page);
-    row->setContentsMargins(kPageMargin, kPageMargin, kPageMargin, kPageMargin);
-    row->setSpacing(kColumnSpacing);
-
     const bool home = tab == QLatin1String("home");
+    // 主页的左右边距由它自己改（见 setupHomePage）；另几页走整页那一档。
+    row->setContentsMargins(home ? kPageMargin : Theme::pageInsetLeft(), kPageMargin,
+                            home ? kPageMargin : Theme::pageInsetRight(), kPageMargin);
+    row->setSpacing(kColumnSpacing);
 
     // 栏本身是个控件（不是裸布局），为的是验证工程能按 objectName 找回来量几何。
     // 自定义背景图铺在**整页那一层**（`Theme::Part::PageBackground`，见 MainWindowUI.cpp），
@@ -263,9 +295,9 @@ TwoColumns buildTwoColumnPage(QWidget *page, const QString &tab) {
         auto *header = new QWidget(columns.right.widget);
         header->setObjectName(MainWindowUI::pageHeaderName(tab));
         auto *headerLayout = new QVBoxLayout(header);
-        // 左缘 / 上沿取一级页统一落点（页面外边距已在外层留过，这里只补差）
-        headerLayout->setContentsMargins(Theme::pageTitleInsetLeft() - kPageMargin, Theme::pageTitleInsetTop() - kPageMargin,
-                                         kSurfacePadding, 0);
+        // 上沿取一级页统一落点（页面外边距已在外层留过，这里只补差）；右缘和滚动内容右缘对齐。
+        headerLayout->setContentsMargins(0, Theme::pageTitleInsetTop() - kPageMargin,
+                                         Theme::scrollBarGutterInset(), 0);
         headerLayout->setSpacing(kHeaderSpacing);
 
         auto *titleRow = new QHBoxLayout;
@@ -298,8 +330,8 @@ TwoColumns buildTwoColumnPage(QWidget *page, const QString &tab) {
         auto *workspace = new QFrame(columns.right.widget);
         markSurface(workspace, Theme::workspaceSurfaceValue());
         auto *workspaceLayout = new QVBoxLayout(workspace);
-        workspaceLayout->setContentsMargins(kSurfacePadding, kSurfacePadding, kSurfacePadding,
-                                            kSurfacePadding);
+        // 左右不再留：边距由页面那一层给；右边要让主列表的滑条一直贴到 pageInsetRight()。
+        workspaceLayout->setContentsMargins(0, kSurfacePadding, 0, kSurfacePadding);
         workspaceLayout->setSpacing(10);
         columns.right.surface = workspace;
 
@@ -658,7 +690,7 @@ QScrollArea *makePageScroll(QWidget *parent, int bottomMargin, QVBoxLayout **bod
     scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     auto *body = new QWidget(scroll);
     auto *bodyLayout = new QVBoxLayout(body);
-    bodyLayout->setContentsMargins(0, 0, 0, bottomMargin);
+    bodyLayout->setContentsMargins(0, 0, Theme::contentToScrollBarGap(), bottomMargin);
     scroll->setWidget(body);
     if (bodyOut != nullptr) {
         *bodyOut = bodyLayout;
