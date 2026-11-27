@@ -617,6 +617,32 @@ void runInstanceUpdateFilterTests() {
                      parts.join(QStringLiteral("，")),
                      verdicts.isEmpty() ? QStringLiteral("（没有检测日志）") : verdicts.join(QStringLiteral("；")));
         };
+        // 更新中心那一页每一行露出来的字（名字、文件名、状态都在行里的标签上）：撤销前后各读一次，失败时附上。
+        const auto centreRows = [&w]() {
+            QStringList rows;
+            for (int index = 0; index < 64; ++index) {
+                auto *row = w.findChild<QWidget *>(MainWindowUI::updateCenterRowName(index));
+                if (row == nullptr) break;
+                QStringList texts;
+                for (const QLabel *label : row->findChildren<QLabel *>())
+                    if (!label->text().isEmpty()) texts.append(label->text());
+                rows.append(texts.join(QStringLiteral("/")));
+            }
+            return rows.isEmpty() ? QStringLiteral("（没有行）") : rows.join(QStringLiteral("；"));
+        };
+        // 只建页不切页时，模组页不是当前页：setDirectory() 只记一笔「待重列」，一行都不列（InstanceFilesPage::setDirectory），
+        // 「可更新」的数是「名单 ∩ 列出来的行」，于是恒为 0。量之前手动 refresh()：只列目录，不会触发重查。
+        const auto listRows = [&]() {
+            mods->refresh();
+            bool hasMod = false;
+            bool hasOther = false;
+            for (int row = 0; row < mods->list()->count(); ++row) {
+                const QString path = mods->list()->item(row)->data(InstanceFilesPage::pathRole()).toString();
+                hasMod = hasMod || path.endsWith(QStringLiteral("/mods/模组乙.jar"));
+                hasOther = hasOther || path.endsWith(QStringLiteral("/mods/模组丙.jar"));
+            }
+            return hasMod && hasOther;
+        };
         const QString otherSha1 = QString::fromLatin1(
             QCryptographicHash::hash(QByteArrayLiteral("T28-MOD-C"), QCryptographicHash::Sha1)
                 .toHex());
@@ -677,9 +703,10 @@ void runInstanceUpdateFilterTests() {
                     page = openSettings();
                     mods = page->filesPage(QStringLiteral("mod"));
                     state = mods->stateButtonAt(InstanceFilesPage::StateFilter::Update);
-                    check(state->isHidden(),
+                    const bool listed = listRows();
+                    check(listed && state->isHidden(),
                           "★★ T28.6 更新成功后忽略另一条：已更新的那条不回到「可更新」（#143）",
-                          state->text());
+                          QStringLiteral("乙丙两行都列出来了=%1 | %2").arg(int(listed)).arg(updateDiag()));
 
                     emit page->updateCenterRequested();
                     QPushButton *undo = nullptr;
@@ -694,14 +721,20 @@ void runInstanceUpdateFilterTests() {
                         8000);
                     check(undo != nullptr && !undo->isHidden(), "T28.7 「撤销上一次更新」露着");
                     if (undo != nullptr && !undo->isHidden()) {
+                        const QString centreBefore = centreRows();
                         PromptAnswerer confirm({0});
                         confirm.start();
                         undo->click();
                         confirm.stop();
+                        const QString centreAfter = centreRows();
                         closePage();
                         page = openSettings();
                         mods = page->filesPage(QStringLiteral("mod"));
                         state = mods->stateButtonAt(InstanceFilesPage::StateFilter::Update);
+                        const bool listed = listRows();
+                        const QString diag = QStringLiteral("乙丙两行都列出来了=%1 | %2 | 更新中心撤销前：%3 | 撤销后：%4")
+                                                 .arg(int(listed))
+                                                 .arg(updateDiag(), centreBefore, centreAfter);
                         const bool shown = !state->isHidden() && state->text() == chipText(1);
                         if (shown) state->click();
                         check(shown && mods->list()->count() == 1 &&
@@ -711,7 +744,7 @@ void runInstanceUpdateFilterTests() {
                                           .toString() == modPath &&
                                   readBytesAt(modJar) == QByteArrayLiteral("T28-MOD-B"),
                               "★★ T28.7 撤销之后模组乙回到「可更新」（丙仍忽略着）（#143）",
-                              state->text());
+                              diag);
                     }
                 }
             }
