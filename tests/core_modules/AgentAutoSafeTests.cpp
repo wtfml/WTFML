@@ -102,11 +102,11 @@ void runAgentAutoSafeTests() {
         check(authorizer.enabled() && authorizer.matchesInstance(QStringLiteral("inst-1")) &&
                   !authorizer.matchesInstance(QStringLiteral("inst-2")),
               "Auto-safe：只对开启时的实例生效");
-        check(authorizer.deadline() == baseTime().addSecs(60 * 60),
-              "Auto-safe：默认 60 分钟到期", authorizer.deadline().toString(Qt::ISODate));
-        check(!authorizer.expired(baseTime().addSecs(59 * 60)) &&
-                  authorizer.expired(baseTime().addSecs(61 * 60)),
-              "Auto-safe：到期时间按 60 分钟判");
+        // 2026-11-27：去掉时效 —— 开多久都算有效，没有到期这一说。
+        check(!authorizer.deadline().isValid(),
+              "Auto-safe：没有到期时间", authorizer.deadline().toString(Qt::ISODate));
+        check(!authorizer.expired(baseTime().addDays(30)),
+              "Auto-safe：开一个月也不过期");
 
         const QList<AgentPlanStep> steps{
             stepFor(QStringLiteral("mods.setEnabled"),
@@ -200,9 +200,8 @@ void runAgentAutoSafeTests() {
                   AgentAutoSafe::Decision::Allow,
               "Auto-safe：事务提交/回滚包含在授权里");
 
-        // 启动次数：上限 4（把 limits 调小方便测）。
-        authorizer.enable(QStringLiteral("inst-1"), QStringLiteral("session-1"), baseTime(),
-                          AgentAutoSafe::Limits{60, 4});
+        // 启动次数：2026-11-27 起不再限次；次数只进审计。
+        authorizer.enable(QStringLiteral("inst-1"), QStringLiteral("session-1"), baseTime());
         authorizer.bindPlan(steps);
         authorizer.bindTransaction(QStringLiteral("tx-1"), QStringLiteral("ws-1"));
         check(decide(callFor(QStringLiteral("instance.testLaunch"),
@@ -211,17 +210,31 @@ void runAgentAutoSafeTests() {
               "Auto-safe：启动放行并记次数", QString::number(launches));
         AgentToolResult ok;
         ok.status = AgentToolResult::Status::Ok;
-        authorizer.record(callFor(QStringLiteral("instance.testLaunch")), ok, 2, now);
-        check(authorizer.launchesUsed() == 2 && authorizer.remainingLaunches() == 2,
-              "Auto-safe：启动次数记账", QString::number(authorizer.launchesUsed()));
-        check(decide(callFor(QStringLiteral("instance.testLaunch"),
-                             {{QStringLiteral("repeat"), 1}})) ==
-                  AgentAutoSafe::Decision::Allow,
-              "Auto-safe：预算内还能再启动");
+        for (int i = 0; i < 40; ++i) {
+            authorizer.record(callFor(QStringLiteral("instance.testLaunch")), ok, 2, now);
+        }
+        check(authorizer.launchesUsed() == 80,
+              "Auto-safe：启动次数照样记账", QString::number(authorizer.launchesUsed()));
         check(decide(callFor(QStringLiteral("instance.testLaunch"),
                              {{QStringLiteral("repeat"), 3}})) ==
-                  AgentAutoSafe::Decision::RequireApproval,
-              "Auto-safe：超出启动预算退回逐次确认", reason);
+                  AgentAutoSafe::Decision::Allow,
+              "Auto-safe：启动 80 次之后照样放行（不再有次数上限）", reason);
+
+        // 实时复核：会话 / 实例换掉就当场失效。
+        check(authorizer.revalidate(QStringLiteral("session-1"), QStringLiteral("inst-1")) &&
+                  authorizer.enabled(),
+              "Auto-safe 复核：会话与实例都对得上就继续有效");
+        check(!authorizer.revalidate(QStringLiteral("session-2"), QStringLiteral("inst-1")) &&
+                  !authorizer.enabled(),
+              "Auto-safe 复核：换了会话当场失效");
+        authorizer.enable(QStringLiteral("inst-1"), QStringLiteral("session-1"), baseTime());
+        check(!authorizer.revalidate(QStringLiteral("session-1"), QStringLiteral("inst-2")) &&
+                  !authorizer.enabled(),
+              "Auto-safe 复核：换了实例当场失效");
+        authorizer.enable(QStringLiteral("inst-1"), QStringLiteral("session-1"), baseTime());
+        authorizer.disable(baseTime(), QStringLiteral("用户关闭"));
+        check(!authorizer.revalidate(QStringLiteral("session-1"), QStringLiteral("inst-1")),
+              "Auto-safe 复核：手动关掉之后不复活");
     }
 
     // ---------------------------------------------------------------- 审计落盘
@@ -313,6 +326,7 @@ void runAgentAutoSafeTests() {
         composite.addEngine(&engine);
         composite.setWorkflow(&workflow);
         composite.setAutoSafe(&authorizer);
+        composite.setAutoSafeContext(QStringLiteral("session-1"), QStringLiteral("inst-1"));
 
         // 计划里没有 args.extraJvm：硬禁止（不消耗计划步骤）。
         AgentToolResult result = composite.invoke(callFor(
@@ -379,5 +393,49 @@ void runAgentAutoSafeTests() {
         check(result.data.contains(QStringLiteral("autoSafeAudit")),
               "Auto-safe：事务结束把审计挂进结果");
         check(!authorizer.enabled(), "Auto-safe：事务结束后授权失效");
+    }
+
+    // ---------------------------------------------------------------- 复合层每次调用前复核
+    // 会话/实例换掉之后，复合引擎在**下一次**工具调用前就把授权关掉，不再替用户点允许。
+    {
+        AgentAutoSafe::Authorizer authorizer;
+        authorizer.enable(QStringLiteral("inst-1"), QStringLiteral("session-1"),
+                          QDateTime::currentDateTimeUtc());
+        authorizer.bindPlan({stepFor(QStringLiteral("settings.set"),
+                                     {{QStringLiteral("key"), QStringLiteral("memory.xmx")}})});
+        authorizer.bindTransaction(QStringLiteral("tx-live"), QStringLiteral("ws-1"));
+
+        AgentWorkflow workflow;
+        workflow.setSkill(AgentSkillRegistry::find(QStringLiteral("mods")));
+        QString planProblem;
+        // 计划必须有至少一个修复步 + 一个只读验证步（本地校验，见 AgentWorkflow）。
+        AgentPlanStep verifyStep = stepFor(QStringLiteral("logs.tail"), {});
+        verifyStep.verify = true;
+        check(workflow.submitPlan(
+                  QStringLiteral("改内存"),
+                  {stepFor(QStringLiteral("settings.set"),
+                           {{QStringLiteral("key"), QStringLiteral("memory.xmx")},
+                            {QStringLiteral("value"), QStringLiteral("6144")}}),
+                   verifyStep},
+                  &planProblem),
+              "Auto-safe 复核：计划提交成功", planProblem);
+        workflow.approvePlan(true);
+
+        FakeWriteEngine engine;
+        AgentCompositeToolEngine composite;
+        composite.addEngine(&engine);
+        composite.setWorkflow(&workflow);
+        composite.setAutoSafe(&authorizer);
+        composite.setAutoSafeContext(QStringLiteral("session-2"), QStringLiteral("inst-1"));
+
+        const AgentToolResult result = composite.invoke(callFor(
+            QStringLiteral("settings.set"),
+            {{QStringLiteral("key"), QStringLiteral("memory.xmx")},
+             {QStringLiteral("value"), QStringLiteral("6144")}}));
+        check(result.status == AgentToolResult::Status::ApprovalRequired,
+              "Auto-safe 复核：会话对不上时不替用户点允许", result.summary);
+        check(!authorizer.enabled(), "Auto-safe 复核：对不上就当场关掉");
+        check(engine.resolveCalls == 0, "Auto-safe 复核：一次都没有自动批准");
+        composite.cancelPending();
     }
 }

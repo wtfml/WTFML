@@ -450,6 +450,57 @@ int UiAgentCheck() {
                       QString::number(bar->value()));
             }
 
+            // 点思考正文就折叠 / 展开（不用非得去点那一行「思考过程」）。
+            // 认准**同一条消息**上的那一对按钮与正文：`findChildren` 的顺序不保证。
+            // 按消息 id 认那一块：`findChild` 会命中窗外的/已被清掉的那一条，拿错了就测不准。
+            AgentMessageView *target = nullptr;
+            for (AgentMessageView *view : page->findChildren<AgentMessageView *>()) {
+                if (view->messageId() == many.first().id) target = view;
+            }
+            auto *reasoning = target != nullptr
+                                  ? target->findChild<QLabel *>(QStringLiteral("agentReasoningLabel"))
+                                  : nullptr;
+            QToolButton *reasoningToggle =
+                target != nullptr ? target->findChild<QToolButton *>(
+                                        QStringLiteral("agentReasoningToggle"))
+                                  : nullptr;
+            if (reasoning != nullptr && reasoningToggle != nullptr) {
+                reasoningToggle->setChecked(true);
+                QApplication::processEvents();
+                check(reasoning->isVisible(), "智能体 UI：展开后思考正文在");
+                const QPoint center = reasoning->rect().center();
+                const QPointF global(reasoning->mapToGlobal(center));
+                QMouseEvent press(QEvent::MouseButtonPress, QPointF(center), global,
+                                  Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                QMouseEvent release(QEvent::MouseButtonRelease, QPointF(center), global,
+                                    Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+                QApplication::sendEvent(reasoning, &press);
+                QApplication::sendEvent(reasoning, &release);
+                QApplication::processEvents();
+                check(!reasoningToggle->isChecked() && !reasoning->isVisible(),
+                      "智能体 UI：点一下思考正文就折叠");
+                check(reasoningToggle->text().contains(QStringLiteral("已折叠")),
+                      "智能体 UI：折叠后按钮上写清有多长", reasoningToggle->text());
+                // 再点一下展开回去。
+                QApplication::sendEvent(reasoning, &press);
+                QApplication::sendEvent(reasoning, &release);
+                QApplication::processEvents();
+                check(reasoningToggle->isChecked(), "智能体 UI：再点一下展开回去");
+                // 拖选文字（按下与松开隔得远）不算点击。
+                const QPoint far = center + QPoint(60, 0);
+                QMouseEvent press2(QEvent::MouseButtonPress, QPointF(center), global,
+                                   Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                QMouseEvent release2(QEvent::MouseButtonRelease, QPointF(far),
+                                     QPointF(reasoning->mapToGlobal(far)), Qt::LeftButton,
+                                     Qt::NoButton, Qt::NoModifier);
+                QApplication::sendEvent(reasoning, &press2);
+                QApplication::sendEvent(reasoning, &release2);
+                QApplication::processEvents();
+                check(reasoningToggle->isChecked(), "智能体 UI：拖选思考文字不会把它折叠掉");
+                reasoningToggle->setChecked(false);
+                QApplication::processEvents();
+            }
+
             // Ctrl+End 回到底部，之后的新内容继续跟随。
             QKeyEvent endKey(QEvent::KeyPress, Qt::Key_End, Qt::ControlModifier);
             QApplication::sendEvent(scroll->viewport(), &endKey);

@@ -236,6 +236,7 @@ AgentController::AgentController(AgentPage *page, OverlayHost *overlay, QObject 
     m_compositeEngine->setWorkflow(&m_workflow);
     // Stage 5.7：Auto-safe 事务授权（默认关闭，不随会话记忆）。
     m_compositeEngine->setAutoSafe(&m_autoSafe);
+    syncAutoSafeContext();
     m_loop->setToolEngine(m_compositeEngine);
     m_saveTimer = new QTimer(this);
     m_saveTimer->setSingleShot(true);
@@ -794,7 +795,7 @@ void AgentController::offerAutoSafeForCrash() {
         QCoreApplication::translate(
             "AgentController",
             "打开后，计划一旦批准就按计划执行到事务结束：计划内的写盘和测试启动不再逐步弹审批。\n\n"
-            "最长 60 分钟或 20 次启动；验证失败自动回滚；事务结束写审计。"
+            "开着就一直有效；验证失败自动回滚；事务结束写审计。"
             "java.path、args.extraJvm、saves/ 和跨工作区写入无论如何都会被拒绝。\n\n"
             "不打开也可以修，只是每一步写盘都要你点一次「允许」。"),
         QStringList{QCoreApplication::translate("AgentController", "打开 Auto-safe"),
@@ -1115,6 +1116,8 @@ AgentInstanceInfo AgentController::lockedInstance() const {
 }
 
 void AgentController::updateInstanceChip() {
+    // 会话或实例刚变过：把这两个值同步给 Auto-safe 的复核（换一个就失效）。
+    syncAutoSafeContext();
     if (m_page == nullptr) return;
     const AgentInstanceLock &lock = m_session.meta.instanceLock;
     m_page->setInstanceChip(AgentInstanceLocks::chipText(lock, lock.isValid() ? lockedInstance() : homeInstance()),
@@ -1544,13 +1547,19 @@ bool AgentController::enableAutoSafeForCurrentSession() {
     m_autoSafe.enable(instanceId, m_session.meta.id, QDateTime::currentDateTimeUtc());
     m_autoSafeUserOn = true;
     m_repairTools->setAutoSafe(true);
+    syncAutoSafeContext();
     m_page->setAutoSafeEnabled(true);
     refreshAutoSafeUi();
     m_page->showNotice(
         QCoreApplication::translate("AgentController",
-                                    "Auto-safe 已打开：提交并批准计划后，计划内的写入/启动不再逐步确认；"  // i18n-ignore
-                                    "最长 60 分钟或 20 次启动，事务结束写审计。"));  // i18n-ignore
+                                    "Auto-safe 已打开：提交并批准计划后，计划内的写入/启动不再逐步确认。"  // i18n-ignore
+                                    "开着就一直有效，事务结束写审计。"));  // i18n-ignore
     return true;
+}
+
+void AgentController::syncAutoSafeContext() {
+    if (m_compositeEngine == nullptr) return;
+    m_compositeEngine->setAutoSafeContext(m_session.meta.id, m_session.meta.instanceLock.id);
 }
 
 void AgentController::disableAutoSafe(const QString &reason) {
@@ -1558,6 +1567,7 @@ void AgentController::disableAutoSafe(const QString &reason) {
     m_autoSafe.disable(QDateTime::currentDateTimeUtc(), reason);
     m_autoSafeUserOn = false;
     if (m_repairTools != nullptr) m_repairTools->setAutoSafe(false);
+    syncAutoSafeContext();
     if (m_page != nullptr) m_page->setAutoSafeEnabled(false);
 }
 
@@ -1572,14 +1582,12 @@ void AgentController::refreshAutoSafeUi() {
         return;
     }
     if (!m_autoSafe.enabled()) return;
-    const int remaining = m_autoSafe.remainingLaunches();
     const QString tx = m_autoSafe.transactionId();
     m_page->setWorkflowStatus(
-        QCoreApplication::translate("AgentController",
-                                    "Auto-safe：%1，剩余启动 %2 次")  // i18n-ignore
+        QCoreApplication::translate("AgentController", "Auto-safe：%1，已启动 %2 次")  // i18n-ignore
             .arg(tx.isEmpty() ? QCoreApplication::translate("AgentController", "等待事务")
                               : tx,
-                 QString::number(remaining)));
+                 QString::number(m_autoSafe.launchesUsed())));
 }
 
 void AgentController::onSessionApproval() {

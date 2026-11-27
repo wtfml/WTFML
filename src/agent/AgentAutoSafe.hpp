@@ -6,11 +6,12 @@
  * 边界（D5 的例外，只在这个窗口里成立）：
  * - 只作用于当前锁定实例和它的事务工作区；范围来自已批准计划（工具、文件、设置键、模组、
  *   项目号）与 `repair.begin` 返回的事务/工作区；
- * - 到期（默认 60 分钟）或用满启动次数（默认 20）就退回逐次确认，不静默续期；
+ * - **开着就一直有效**：没有时长上限，也没有启动次数上限（2026-11-27 产品确认，D12 改口）。
+ *   失效只有这几条：用户手动关、换模式、换会话、关窗、事务结束、实时复核失败；
+ * - 计划审批始终要过：Auto-safe 跳的是「计划内每一步再点一次允许」，不是跳过计划；
  * - 硬禁止不随授权放开：`java.path` / `args.extraJvm`、`saves/` 下的文件、删除、`backup.restore`、
  *   `instance.repairCore`、范围外的工作区写入；
- * - 默认关闭、不随会话记忆；关窗/换模式/换会话即失效；每次事务结束写审计（范围、实际操作、
- *   验证、回滚与结果）。
+ * - 默认关闭、不随会话记忆；每次事务结束写审计（范围、实际操作、验证、回滚与结果）。
  *
  * 这一层是纯记帐 + 判定：不执行工具、不读盘（审计落盘除外），时间由调用方传入。
  */
@@ -32,8 +33,9 @@ namespace AgentAutoSafe {
 enum class Decision { Allow, RequireApproval, Deny };
 
 struct Limits {
-    int maxMinutes = 60;   ///< 1–60
-    int maxLaunches = 20;  ///< 1–40
+    /// 现在**不再限制**时长与启动次数（2026-11-27 产品确认）；两个字段留着只为审计旧事务。
+    int maxMinutes = 0;   ///< 0 = 不限
+    int maxLaunches = 0;  ///< 0 = 不限
 };
 
 class Authorizer {
@@ -43,11 +45,17 @@ public:
     /// @param reason 写进审计（用户关闭 / 换模式 / 换会话 / 过期 / 事务结束）。
     void disable(const QDateTime &now, const QString &reason = QString());
     bool enabled() const { return m_enabled; }
+    /// 永远 false：不再有时效。保留这个函数是因为审计与界面还按「有没有到期」取一句话。
     bool expired(const QDateTime &now) const;
     bool matchesInstance(const QString &instanceId) const;
     QDateTime deadline() const { return m_expiresAt; }
+    /// @returns 复核结果：开着、会话与实例都对得上。false = 当场失效（调用方要把它关掉）。
+    /// 每次工具调用前调一次 —— 这比「只在打开那一刻判一次」结实，会话/实例被换掉时不会
+    /// 拿着旧授权继续跑。
+    bool revalidate(const QString &sessionId, const QString &instanceId);
     QString transactionId() const { return m_transactionId; }
     QString workspaceId() const { return m_workspaceId; }
+    /// 本次事务共启动了几次（只给审计与界面看，不参与判定）。
     int launchesUsed() const { return m_launches; }
     int maxLaunches() const { return m_limits.maxLaunches; }
     int remainingLaunches() const { return qMax(0, m_limits.maxLaunches - m_launches); }

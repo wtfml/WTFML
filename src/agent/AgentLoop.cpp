@@ -10,8 +10,11 @@
 
 #include <QDateTime>
 #include <QJsonDocument>
+#include <QJsonObject>
 #include <QTimer>
 #include <QUuid>
+
+#include <utility>
 
 AgentLoop::AgentLoop(AgentModelClient *client, QObject *parent)
     : QObject(parent), m_client(client) {
@@ -332,6 +335,11 @@ void AgentLoop::processToolCalls() {
             return;
         }
         const Agent::ToolCall call = m_toolQueue.at(m_nextToolCall);
+        // 同一工具 + 完全相同的参数刚成功过：复用那一次的结果，不再花一次往返。
+        if (reuseRepeatedResult(call)) {
+            ++m_nextToolCall;
+            continue;
+        }
         emit toolCallStarted(call);
         if (m_toolEngine == nullptr) {
             AgentToolResult result;
@@ -364,7 +372,7 @@ void AgentLoop::processToolCalls() {
     m_toolQueue.clear();
     m_nextToolCall = 0;
     m_toolSteps += 1;
-    if (m_toolSteps > m_config.maxToolSteps) {
+    if (m_config.maxToolSteps > 0 && m_toolSteps > m_config.maxToolSteps) {
         Agent::Error error;
         error.kind = Agent::ErrorKind::ToolError;
         error.message = tr("超过最大工具步数，已停止。");
@@ -375,7 +383,8 @@ void AgentLoop::processToolCalls() {
     beginRequest(false);
 }
 
-void AgentLoop::handleToolOutcome(const Agent::ToolCall &call, const AgentToolResult &result) {
+void AgentLoop::handleToolOutcome(const Agent::ToolCall &call, const AgentToolResult &result,
+                                  bool recordForReuse) {
     Agent::Message toolMessage;
     toolMessage.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     toolMessage.role = Agent::Role::Tool;
@@ -394,8 +403,39 @@ void AgentLoop::handleToolOutcome(const Agent::ToolCall &call, const AgentToolRe
     toolMessage.content = QString::fromUtf8(QJsonDocument(body).toJson(QJsonDocument::Compact));
     m_history.append(toolMessage);
     m_sessionToolCalls += 1;
+    // 记住这次结果：同一签名短时间内再来直接复用（`reuseRepeatedResult`）。只记成功的 ——
+    // 失败的那一次往往就是模型想重试的理由。
+    if (recordForReuse && result.status == AgentToolResult::Status::Ok) {
+        m_recentResults.append({callSignature(call), result});
+        while (m_recentResults.size() > kRepeatReuseWindow) m_recentResults.removeFirst();
+    }
     emit messageAdded(toolMessage);
     emit toolCallFinished(call, result);
+}
+
+QString AgentLoop::callSignature(const Agent::ToolCall &call) {
+    // 参数按键排序后序列化：同一份参数换一个键顺序不算「不同调用」。
+    QJsonObject sorted;
+    const QStringList keys = call.arguments.keys();
+    QStringList ordered = keys;
+    ordered.sort();
+    for (const QString &key : std::as_const(ordered)) sorted.insert(key, call.arguments.value(key));
+    return AgentToolRegistry::internalName(call.name) + QLatin1Char('\n') +
+           QString::fromUtf8(QJsonDocument(sorted).toJson(QJsonDocument::Compact));
+}
+
+bool AgentLoop::reuseRepeatedResult(const Agent::ToolCall &call) {
+    const QString signature = callSignature(call);
+    for (const auto &entry : std::as_const(m_recentResults)) {
+        if (entry.first != signature) continue;
+        AgentToolResult reused = entry.second;
+        reused.summary = tr("与上一次调用参数相同，已复用上次结果（没有重新执行）。") +
+                         (reused.summary.isEmpty() ? QString() : QLatin1Char('\n') + reused.summary);
+        reused.data.insert(QStringLiteral("reusedRepeat"), true);
+        handleToolOutcome(call, reused, false);  // 复用的不再入窗口，否则会无限续期
+        return true;
+    }
+    return false;
 }
 
 void AgentLoop::resolveSessionApproval() {

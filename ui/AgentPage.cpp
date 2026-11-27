@@ -725,8 +725,8 @@ AgentPage::AgentPage(QWidget *parent)
     m_autoSafeButton->setCursor(Qt::PointingHandCursor);
     m_autoSafeButton->setToolTip(
         QCoreApplication::translate("AgentPage",
-                                    "一次批准一个事务：按已批准计划执行，不再逐步确认；"  // i18n-ignore
-                                    "最长 60 分钟或 20 次启动，结束写审计。"));  // i18n-ignore
+                                    "一次批准一个事务：按已批准计划执行，不再逐步确认。"  // i18n-ignore
+                                    "开着就一直有效，事务结束写审计。"));  // i18n-ignore
     m_autoSafeButton->setAccessibleName(QStringLiteral("Auto-safe"));
     Theme::markButton(m_autoSafeButton, Theme::ButtonKind::Ghost);
     connect(m_autoSafeButton, &QPushButton::toggled, this,

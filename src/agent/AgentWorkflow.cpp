@@ -93,7 +93,7 @@ bool AgentWorkflow::submitPlan(const QString &goal, const QList<AgentPlanStep> &
     if (goal.trimmed().isEmpty()) return fail(QCoreApplication::translate("AgentWorkflow", "计划缺少目标（goal）。"));
     if (goal.size() > kMaxGoalLength) return fail(QCoreApplication::translate("AgentWorkflow", "计划目标过长（上限 500 字）。"));
     if (steps.isEmpty()) return fail(QCoreApplication::translate("AgentWorkflow", "计划未包含任何步骤。"));
-    if (steps.size() > m_skill.maxSteps) {
+    if (m_skill.maxSteps > 0 && steps.size() > m_skill.maxSteps) {
         return fail(QCoreApplication::translate("AgentWorkflow", "计划步数超过上限（%1）。").arg(m_skill.maxSteps));
     }
     bool hasVerify = false;

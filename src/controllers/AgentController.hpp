@@ -146,6 +146,8 @@ private:
     void offerAutoSafeForCrash();
     /// 按当前模式/已锁实例打开 Auto-safe；不具备条件时复位开关并提示。
     bool enableAutoSafeForCurrentSession();
+    /// 把当前会话与锁定实例告诉复合引擎：Auto-safe 每次工具调用前拿它俩复核，换了一个就失效。
+    void syncAutoSafeContext();
     void onSend(const QString &text);
     void onStop();
     void onRetry(const QString &messageId);

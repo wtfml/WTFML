@@ -466,10 +466,6 @@ Select "Sign out" to try again.</translation>
             <translation>Auto-safe isn't enabled</translation>
         </message>
         <message>
-            <source>Auto-safe 已过期（%1 分钟）</source>
-            <translation>Auto-safe expired (%1 min)</translation>
-        </message>
-        <message>
             <source>这个设置键能改变游戏用哪段代码，Auto-safe 不放行：%1</source>
             <translation>Setting key can alter code execution; blocked by Auto-safe: %1</translation>
         </message>
@@ -516,10 +512,6 @@ Select "Sign out" to try again.</translation>
         <message>
             <source>这个操作不在 Auto-safe 范围（会动原实例或共享库）</source>
             <translation>Action isn't covered by Auto-safe (modifies original instance or shared libraries)</translation>
-        </message>
-        <message>
-            <source>启动次数超出事务授权（%1 次）</source>
-            <translation>Launch count exceeds transaction authorization (%1 launches)</translation>
         </message>
         <message>
             <source>工具 %1 不在 Auto-safe 的授权类型里</source>
@@ -745,6 +737,18 @@ Select "Sign out" to try again.</translation>
             <translation>Previous pending approval expired; request and confirm it again.</translation>
         </message>
         <message>
+            <source>打开后，计划一旦批准就按计划执行到事务结束：计划内的写盘和测试启动不再逐步弹审批。
+
+开着就一直有效；验证失败自动回滚；事务结束写审计。java.path、args.extraJvm、saves/ 和跨工作区写入无论如何都会被拒绝。
+
+不打开也可以修，只是每一步写盘都要你点一次「允许」。</source>
+            <translation>Once it's on, an approved plan runs to the end of the transaction: planned writes and test launches stop asking for approval step by step.
+
+It stays in effect as long as it's on; failed verification rolls back automatically; an audit is written when the transaction ends. java.path, args.extraJvm, saves/, and writes outside the workspace are always refused.
+
+You can repair without it too; every write then needs a separate Allow click.</translation>
+        </message>
+        <message>
             <source>检测到疑似凭据（%1），已在本机遮挡后再发送。</source>
             <translation>Suspected credentials (%1) detected and masked locally before sending.</translation>
         </message>
@@ -831,18 +835,6 @@ Select "Sign out" to try again.</translation>
         <message>
             <source>要不要打开 Auto-safe</source>
             <translation>Turn on Auto-safe?</translation>
-        </message>
-        <message>
-            <source>打开后，计划一旦批准就按计划执行到事务结束：计划内的写盘和测试启动不再逐步弹审批。
-
-最长 60 分钟或 20 次启动；验证失败自动回滚；事务结束写审计。java.path、args.extraJvm、saves/ 和跨工作区写入无论如何都会被拒绝。
-
-不打开也可以修，只是每一步写盘都要你点一次「允许」。</source>
-            <translation>Once enabled, an approved plan runs until the transaction ends: planned writes and test launches won't ask for approval step by step.
-
-Up to 60 minutes or 20 launches; failed verification rolls back automatically; an audit log is written when the transaction ends. java.path, args.extraJvm, saves/, and writes outside the workspace are always blocked.
-
-You can still repair without it; you'll just need to click "Allow" for each write.</translation>
         </message>
         <message>
             <source>打开 Auto-safe</source>
@@ -1023,14 +1015,6 @@ This server runs with your Windows user privileges and can access local files an
             <translation>Lock an instance before enabling Auto-safe.</translation>
         </message>
         <message>
-            <source>Auto-safe 已打开：提交并批准计划后，计划内的写入/启动不再逐步确认；最长 60 分钟或 20 次启动，事务结束写审计。</source>
-            <translation>Auto-safe enabled: once a plan is submitted and approved, planned writes and launches run without per-step prompts (up to 60 min or 20 launches); an audit log is written when the transaction ends.</translation>
-        </message>
-        <message>
-            <source>Auto-safe：%1，剩余启动 %2 次</source>
-            <translation>Auto-safe: %1, %2 launches left</translation>
-        </message>
-        <message>
             <source>等待事务</source>
             <translation>Waiting for transaction</translation>
         </message>
@@ -1057,6 +1041,14 @@ This server runs with your Windows user privileges and can access local files an
         <message>
             <source>模式「%1」不可用，请重启启动器后再试。</source>
             <translation>Mode "%1" isn't available; restart the launcher and try again.</translation>
+        </message>
+        <message>
+            <source>Auto-safe 已打开：提交并批准计划后，计划内的写入/启动不再逐步确认。开着就一直有效，事务结束写审计。</source>
+            <translation>Auto-safe enabled: once a plan is submitted and approved, planned writes and launches run without per-step approval. It stays in effect as long as it's on; an audit is written when the transaction ends.</translation>
+        </message>
+        <message>
+            <source>Auto-safe：%1，已启动 %2 次</source>
+            <translation>Auto-safe: %1, %2 launches so far</translation>
         </message>
         <message>
             <source>API 与模型设置</source>
@@ -1992,6 +1984,10 @@ Location: %4
             <source>超过最大工具步数，已停止。</source>
             <translation>Stopped after reaching maximum tool steps.</translation>
         </message>
+        <message>
+            <source>与上一次调用参数相同，已复用上次结果（没有重新执行）。</source>
+            <translation>Same arguments as the previous call; reused that result instead of running again.</translation>
+        </message>
     </context>
     <context>
         <name>AgentMcpPage</name>
@@ -2174,8 +2170,24 @@ Location: %4
             <translation>Reasoning</translation>
         </message>
         <message>
+            <source>点一下折叠或展开思考过程</source>
+            <translation>Click to collapse or expand the thinking</translation>
+        </message>
+        <message>
             <source>重试</source>
             <translation>Retry</translation>
+        </message>
+        <message>
+            <source>思考过程（已折叠 · %1 字）</source>
+            <translation>Thinking (collapsed · %1 chars)</translation>
+        </message>
+        <message>
+            <source>点一下折叠思考过程</source>
+            <translation>Click to collapse the thinking</translation>
+        </message>
+        <message>
+            <source>点一下展开思考过程</source>
+            <translation>Click to expand the thinking</translation>
         </message>
         <message>
             <source>你</source>
@@ -2804,8 +2816,8 @@ Location: %4
             <translation>Ctrl+End jumps to latest message</translation>
         </message>
         <message>
-            <source>一次批准一个事务：按已批准计划执行，不再逐步确认；最长 60 分钟或 20 次启动，结束写审计。</source>
-            <translation>Approve one transaction at a time: planned actions run without per-step prompts (up to 60 min or 20 launches); an audit log is written on completion.</translation>
+            <source>一次批准一个事务：按已批准计划执行，不再逐步确认。开着就一直有效，事务结束写审计。</source>
+            <translation>One approval covers a whole transaction: the approved plan runs without step-by-step prompts. It stays in effect as long as it's on, and an audit is written when the transaction ends.</translation>
         </message>
         <message>
             <source>Enter 发送 · Shift+Enter 换行</source>
