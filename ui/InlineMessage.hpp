@@ -32,6 +32,8 @@ class QLabel;
 class QLineEdit;
 class QListWidget;
 class QPushButton;
+class QResizeEvent;
+class QScrollArea;
 class OverlayHost;
 
 /// 这一句话是哪一类。只影响**标题的颜色**（见 .cpp 里那段 NOTE）。
@@ -198,6 +200,17 @@ public:
      */
     QLabel *setLink(const QString &text, const QString &url);
 
+    /// 换掉正文文字并按当前宽度重算正文区高度（用于勾选框切换时动态更新说明）。
+    void setBodyText(const QString &text);
+
+    /**
+     * @brief 让卡片宽高按覆盖层内容区比例随窗口缩放，并保留四周留白。
+     *
+     * 未调用时卡片仍走默认固定宽度 `OverlayHost::promptWidth()`，不影响其他提示弹窗。
+     */
+    void setResponsiveSize(double widthRatio, double heightRatio, int minWidth, int maxWidth,
+                           int minHeight, int maxHeight, int margin = 32);
+
     /// 换掉标题左边图标块里的图标（底色仍按 kind）。弹框说的是某样东西时用它，
     /// 和 JavaMismatchDialog 的 java 图标同一个做法；空串 = 退回按 kind 取。
     void setHeaderIcon(const QString &icon);
@@ -258,8 +271,10 @@ protected:
      * @brief 摆上去之后把光标放回输入那一格（只有 `setLineEdit()` 插过的那一档有事做）。
      */
     void showEvent(QShowEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
 
 private:
+    void updateTextScrollGeometry();
     /**
      * @brief 按**屏幕上看到的顺序**（先上后下、同一行先左后右）把这一窗里的 Tab 顺序重排一遍。
      *
@@ -276,7 +291,9 @@ private:
     MessageKind m_kind = MessageKind::Information;
     QLabel *m_titleLabel = nullptr;
     QHBoxLayout *m_header = nullptr;
+    QScrollArea *m_textScroll = nullptr;
     QLabel *m_textLabel = nullptr;
+    bool m_responsiveSize = false;
     QLineEdit *m_lineEdit = nullptr;
     QListWidget *m_list = nullptr;
     QLabel *m_noteLabel = nullptr;

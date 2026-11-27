@@ -201,6 +201,14 @@ bool TaskManager::pause(TaskId id) {
     return true;
 }
 
+bool TaskManager::setWaitingUser(TaskId id, bool waiting) {
+    auto *task = find(id);
+    if (!task || task->state != (waiting ? TaskState::Running : TaskState::WaitingUser)) return false;
+    task->state = waiting ? TaskState::WaitingUser : TaskState::Running;
+    touch(id, true);
+    return true;
+}
+
 bool TaskManager::queueRecovery(TaskId id) {
     auto *task = find(id);
     if (!task || !task->capabilities.canRecover ||

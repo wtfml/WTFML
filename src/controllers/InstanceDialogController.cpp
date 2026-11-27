@@ -26,6 +26,7 @@
 #include <QtConcurrent/QtConcurrentRun>
 #include <QProgressBar>
 #include <QPlainTextEdit>
+#include <QCheckBox>
 #include <QLabel>
 #include <QPushButton>
 #include <QVBoxLayout>
@@ -1902,6 +1903,13 @@ void InstanceDialogController::open(const QString &versionId, const QString &pag
                             if (!hit.projectId.isEmpty()) recognizedActive.append(hit);
                         }
                     }
+                    const ModDependencies::Target instanceTarget =
+                        m_owner->dependencyTargetFor(contextId, ResourceCatalog::Source::Modrinth);
+                    const QString instanceLoaderDisplay = MainWindowViewData::instanceLoaderName(
+                        m_owner->m_versionManager->displayParts(contextId),
+                        m_owner->m_versionManager, nullptr);
+                    const QString instanceLoader =
+                        instanceLoaderDisplay.isEmpty() ? instanceTarget.loader : instanceLoaderDisplay;
                     for (const auto &path : executable) {
                         const auto entry = byPath.value(path);
                         QHash<QString, QString> plannedVersions, projectNames;
@@ -1922,23 +1930,39 @@ void InstanceDialogController::open(const QString &versionId, const QString &pag
                                 plannedVersions.insert(planned.item.projectId, targets.value(plannedPath).id);
                         }
                         const auto version = targets.value(path);
-                        names.append(tr("%1\n%2\n目标文件：%3\n加载器：%4 / 游戏：%5")
+                        names.append(tr("%1\n%2\n目标文件：%3\n%4")
                             .arg(QFileInfo(path).fileName(), ModDependencies::updateDifferenceText(
                                 entry.currentVersion, version, plannedVersions, projectNames),
-                                version.primaryFile()->filename, version.loaders.join(QStringLiteral(" / ")),
-                                version.gameVersions.join(QStringLiteral(" / "))));
+                                version.primaryFile()->filename,
+                                ModDependencies::updateCompatibilityLine(
+                                    version, instanceLoader, instanceTarget.gameVersion)));
                     }
+                    const QString uncheckedLeadText =
+                        tr("将更新 %1 项。下方列出依赖变化与需确认项，更新不会自动补装或删除模组。本预览不代表完整的依赖检查，也不保证游戏能正常启动。")
+                            .arg(executable.size());
+                    const QString checkedLeadText =
+                        tr("将更新 %1 项。更新完成后将检查并补装缺失的必装前置，不会删除现有模组。本预览不代表完整的依赖检查，也不保证游戏能正常启动。")
+                            .arg(executable.size());
                     InlineMessageBox preview(MessageKind::Question, tr("模组更新差异"),
-                        tr("将更新 %1 项。请查看依赖变化与需确认项；不会自动补装或删除依赖。").arg(executable.size()),
-                        {tr("确认更新"), tr("取消")}, 1, 0);
+                        uncheckedLeadText, {tr("确认更新"), tr("取消")}, 0, -1);
+                    preview.setResponsiveSize(0.74, 0.80, 580, 960, 440, 760);
                     auto *text = new QPlainTextEdit;
                     text->setObjectName(QStringLiteral("modUpdateDifferenceText"));
                     text->setReadOnly(true);
+                    text->setLineWrapMode(QPlainTextEdit::WidgetWidth);
+                    text->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
                     text->setPlainText(names.join(QStringLiteral("\n\n────────────────\n\n")));
-                    text->setMinimumHeight(180); text->setMaximumHeight(300);
+                    text->setMinimumHeight(180);
                     preview.setContent(text);
+                    if (QCheckBox *checkNewDeps = preview.setCheckBox(tr("检查新增依赖并补全"))) {
+                        connect(checkNewDeps, &QCheckBox::toggled, &preview,
+                                [&preview, uncheckedLeadText, checkedLeadText](bool checked) {
+                                    preview.setBodyText(checked ? checkedLeadText : uncheckedLeadText);
+                                });
+                    }
                     m_owner->m_ui->overlay()->execPrompt(&preview);
                     if (preview.clickedIndex() != 0) return;
+                    const bool checkNewDependencies = preview.checkBoxChecked();
                     if (targetId != contextId) return;
                     if (m_owner->installingVersionIds().contains(contextId) ||
                         (m_owner->m_launcherManager && m_owner->m_launcherManager->isVersionRunning(contextId))) {
@@ -1953,7 +1977,7 @@ void InstanceDialogController::open(const QString &versionId, const QString &pag
                                 tr("检测结果或本地文件在确认期间发生变化，请重新查看清单。")); return;
                         }
                     }
-                    m_owner->updateInstanceFiles(contextId, pageKey, executable);
+                    m_owner->updateInstanceFiles(contextId, pageKey, executable, checkNewDependencies);
                     return;
                 }
                 // `targetId` **按引用**（和上面那批 lambda 同一个理由，见 refreshInstanceDirs

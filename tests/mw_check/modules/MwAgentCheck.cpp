@@ -14,6 +14,9 @@
 #include "util/AppPaths.hpp"
 #include "agent/AgentSessionStore.hpp"
 #include "controllers/AgentController.hpp"
+#include "controllers/ActivityCenterController.hpp"
+#include "controllers/TaskDetailController.hpp"
+#include "tasks/TaskManager.hpp"
 #include "controllers/AgentLauncherHostImpl.hpp"
 #include "controllers/CrashReportController.hpp"
 #include "controllers/TaskDetailController.hpp"
@@ -250,6 +253,33 @@ int MwAgentChecks(QApplication &app) {
         }
         check(hasToolMessage, "真窗口：工具结果进了会话正文");
 
+        // #130：智能体任务走任务中心的「取消」与「查看会话」。
+        auto *activity = window.findChild<ActivityCenterController *>();
+        auto *detail = window.findChild<TaskDetailController *>();
+        check(activity != nullptr && detail != nullptr, "#130 任务中心控制器在");
+        Tasks::TaskId agentTask = Tasks::invalidTaskId();
+        if (activity != nullptr && detail != nullptr) {
+            Agent::ToolCall backupCall;
+            backupCall.id = QStringLiteral("mw-130-a");
+            backupCall.name = QStringLiteral("backup.create");
+            controller->taskLedger()->onToolStarted(backupCall);
+            agentTask = controller->taskLedger()->standaloneTask();
+            check(activity->tasks()->snapshot(agentTask).state == Tasks::TaskState::Running,
+                  "#130 智能体备份进了任务中心");
+            detail->open(QString::number(agentTask));
+            QCoreApplication::processEvents();
+            auto *cancel = window.findChild<QPushButton *>(MainWindowUI::taskDetailCancelName());
+            check(cancel != nullptr && !cancel->isHidden(), "#130 详情页对智能体任务露「取消」");
+            if (cancel != nullptr && !cancel->isHidden()) cancel->click();
+            QCoreApplication::processEvents();
+            check(activity->tasks()->snapshot(agentTask).state == Tasks::TaskState::Cancelled &&
+                      activity->tasks()->snapshot(agentTask).detail == QStringLiteral("已在任务中心取消。"),
+                  "#130 任务中心「取消」分派到智能体，任务已取消",
+                  activity->tasks()->snapshot(agentTask).detail);
+            if (auto *close = window.findChild<QPushButton *>(MainWindowUI::taskDetailCloseName())) close->click();
+            QCoreApplication::processEvents();
+        }
+
         // 待审批时取消并删除：不执行工具，删除先取消。
         fake.toolCallNext = true;
         fake.toolRounds = 0;
@@ -261,6 +291,47 @@ int MwAgentChecks(QApplication &app) {
         AgentSession gone;
         check(!controller->sessionStore()->load(toDelete, &gone, nullptr),
               "真窗口：删除后会话不可读回");
+        if (activity != nullptr && detail != nullptr && agentTask != Tasks::invalidTaskId()) {
+            tabs->setCurrentIndex(0);
+            QCoreApplication::processEvents();
+            detail->open(QString::number(agentTask));
+            QCoreApplication::processEvents();
+            auto *open = window.findChild<QPushButton *>(QStringLiteral("taskDetailAgentSession"));
+            check(open != nullptr, "#130 详情页有「查看会话」");
+            g_modalTitle.clear();
+            g_modalText.clear();
+            dismissNextPrompt();
+            if (open != nullptr) open->click();
+            QCoreApplication::processEvents();
+            check(g_modalTitle == QStringLiteral("会话不存在") && g_modalText == QStringLiteral("该会话已删除。") &&
+                      tabs->currentIndex() == 0,
+                  "#130 会话已删除 → 提示「会话不存在」，不切页", g_modalTitle + QStringLiteral(" / ") + g_modalText);
+            if (auto *close = window.findChild<QPushButton *>(MainWindowUI::taskDetailCloseName())) close->click();
+            QCoreApplication::processEvents();
+
+            emit page->newSessionRequested();  // 删掉当前会话后没有会话：先开一个，任务才有会话可回
+            QCoreApplication::processEvents();
+            Agent::ToolCall verifyCall;
+            verifyCall.id = QStringLiteral("mw-130-b");
+            verifyCall.name = QStringLiteral("mods.verifyFiles");
+            controller->taskLedger()->onToolStarted(verifyCall);
+            const Tasks::TaskId live = controller->taskLedger()->standaloneTask();
+            controller->taskLedger()->onToolFinished(verifyCall, AgentToolResult{});
+            detail->open(QString::number(live));
+            QCoreApplication::processEvents();
+            if (open != nullptr) open->click();
+            QCoreApplication::processEvents();
+            check(tabs->currentIndex() == MainWindowUI::agentTabIndex() && !window.ui()->overlay()->isOpen(),
+                  "#130 会话还在 → 收起详情页并切到智能体页",
+                  QStringLiteral("tab=%1 overlay=%2 session=%3 current=%4 offered=%5")
+                      .arg(tabs->currentIndex())
+                      .arg(window.ui()->overlay()->isOpen())
+                      .arg(controller->taskLedger()->sessionFor(live), controller->currentSessionId())
+                      .arg(open != nullptr && !open->isHidden()));
+            if (window.ui()->overlay()->isOpen()) window.ui()->overlay()->dismiss();
+            tabs->setCurrentIndex(0);  // 后面几节按「从主页开始」写的
+            QCoreApplication::processEvents();
+        }
         QDir(root).removeRecursively();
     }
 

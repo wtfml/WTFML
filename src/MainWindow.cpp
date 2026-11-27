@@ -395,6 +395,8 @@ MainWindow::MainWindow(QWidget *parent)
     // 这一层负责把它们的信号翻成 begin() / setProgress() / succeed()（不把任务中心
     // 做成第二套业务逻辑）。
     m_activityCenter = new ActivityCenterController(this);
+    // #130：智能体控制器建得比任务中心早，账本在这里补接。
+    if (m_agentController != nullptr) m_agentController->setTaskManager(m_activityCenter->tasks());
     m_serverSettingsController = new ServerSettingsController(m_serverWorkspace);
     // 「服务端设置」那一页：页对象 + 现在说的是谁 + 能不能改 + 端口那一次的结论全在这一层
     // （构造里就建，页面仍然懒建 —— 理由同上面 `m_resourcePage` 那段）。
@@ -827,6 +829,12 @@ MainWindow::MainWindow(QWidget *parent)
             // 「询问智能体」：和崩溃卡片上那一颗走同一条路（另起会话 / 崩溃急救 / 锁实例）。
             [this](const QString &context, const QString &instanceId) {
                 askAgentAboutCrash(context, instanceId);
+            },
+            [this](const QString &key) {
+                // 会话已删除时 openTaskSession() 自己弹「会话不存在」，详情页留着。
+                if (m_agentController == nullptr || !m_agentController->openTaskSession(key.toULongLong())) return;
+                m_ui->overlay()->dismiss();
+                m_ui->getTabWidget()->setCurrentIndex(MainWindowUI::agentTabIndex());
             }},
         this);
     connect(m_serverWorkspace, &ServerWorkspaceController::message, this,

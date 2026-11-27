@@ -28,6 +28,7 @@
 #include "agent/AgentSessionStore.hpp"
 #include "agent/AgentSettings.hpp"
 #include "agent/AgentTypes.hpp"
+#include "controllers/AgentTaskLedger.hpp"
 
 #include "AgentViewTypes.hpp"
 
@@ -61,6 +62,15 @@ public:
     AgentPage *page() const { return m_page; }
     AgentSessionStore *sessionStore() { return &m_store; }
     AgentLoop *loop() { return m_loop; }
+    /// #130：智能体操作记进任务中心。任务中心晚于本控制器建，由 MainWindow 事后接上。
+    void setTaskManager(Tasks::TaskManager *tasks) { m_taskLedger->setTaskManager(tasks); }
+    AgentTaskLedger *taskLedger() { return m_taskLedger; }
+    bool ownsTask(Tasks::TaskId id) const { return m_taskLedger->owns(id); }
+    bool canCancelTask(Tasks::TaskId id) const { return m_taskLedger->canCancel(id); }
+    /// 任务中心「取消」：收掉这一项并停下当前回复；计划任务另把工作流标为失败。
+    bool cancelTask(Tasks::TaskId id);
+    /// 任务中心「查看会话」：会话还在 → 打开它并回 true；已删除 → 弹「会话不存在」并回 false。
+    bool openTaskSession(Tasks::TaskId id);
     AgentFileToolEngine *toolEngine() { return m_toolEngine; }
     AgentCompositeToolEngine *compositeEngine() { return m_compositeEngine; }
     AgentWorkflow *workflow() { return &m_workflow; }
@@ -208,6 +218,7 @@ private:
     AgentModelClient *m_client = nullptr;
     AgentModelClient *m_ownedClient = nullptr;
     AgentLoop *m_loop = nullptr;
+    AgentTaskLedger *m_taskLedger = nullptr;
     QPointer<AgentSettingsPage> m_settingsPage;
     QTimer *m_saveTimer = nullptr;
     bool m_configured = false;

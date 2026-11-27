@@ -493,6 +493,17 @@ protected:
     }
 };
 
+/// 轨底任务卡那颗按钮：尺寸跟里面的布局（进度环 + 两行字）走。QPushButton 的 sizeHint 只算自己那行字，
+/// 而样式表里的 `min-height` 每次 polish 都会把最小高冲回 0（鼠标点中时焦点可见性那一路就地 polish，
+/// 换主题也 polish），之前靠布局写进去的最小高跟着丢，按钮被压回一行字高、环被裁成半截（#131）。
+/// 布局给的尺寸放在 sizeHint 里，polish 冲不掉。
+class TaskSummaryButton final : public QPushButton {
+public:
+    using QPushButton::QPushButton;
+    QSize sizeHint() const override { return layout() ? layout()->totalSizeHint() : QPushButton::sizeHint(); }
+    QSize minimumSizeHint() const override { return layout() ? layout()->totalMinimumSize() : QPushButton::minimumSizeHint(); }
+};
+
 /// 轨底「运行状态」那颗按钮。展开轨里是整格（状态方块 + 两行字，装在 `runStateText` 里）；
 /// 图标轨里（宽度 < 80，判据和工具箱那颗一致）文字收起，只画一枚运行图标和进程数徽标。
 /// 两种样子只看**此刻的宽度**，所以轨在 64 和 208 之间做宽度动画时，交接是连续的、没有切换那一帧。
@@ -1329,7 +1340,7 @@ void MainWindowUI::setupBottomBar(QWidget *parent) {
     // 这一格**也是一整颗按钮**（整块可点击），做法跟两头那两颗一样：
     // 悬停高亮走 applyBottomBarButtonStyle()、整格都是一个点击区。
     // 宽度**不钉**（两头那两颗才钉）—— 中间这格本来就是"吃掉富余宽度"的那一份。
-    taskSummaryButton = new QPushButton(bottomBar);
+    taskSummaryButton = new TaskSummaryButton(bottomBar);
     taskSummaryButton->setObjectName(taskSummaryButtonName());
     // 竖直方向铺满，理由同另外两颗（QPushButton 默认 Fixed，会让这一格只有一行字那么高）。
     taskSummaryButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -1341,9 +1352,7 @@ void MainWindowUI::setupBottomBar(QWidget *parent) {
     // 设计稿：左边 28 的进度环，右边两行（任务名 13 / 「还有 N 项」+ 百分比 12）。
     auto *taskCard = new QHBoxLayout(taskSummaryButton);
     taskCard->setContentsMargins(10, 8, 10, 8);
-    // QPushButton 的 sizeHint 只算自己那行字（22 高），里面这套布局不算进去 ⇒ 导航轨底部
-    // 只给它 22，环和两行字被裁成半截。让按钮的最小尺寸跟着这套布局走。
-    taskCard->setSizeConstraint(QLayout::SetMinimumSize);
+    // 按钮的尺寸跟着这套布局走，见 TaskSummaryButton。
     taskCard->setSpacing(10);
     // 两行字装在一个透明格子里：导航轨折成图标轨时整格收起，只剩那枚环。
     auto *taskTextBox = new QWidget(taskSummaryButton);

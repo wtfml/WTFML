@@ -353,6 +353,8 @@ void DownloadCompletionController::onFinished(const QString &versionId, bool suc
     // 用户点的是"检查"，那就报"检查完"。
     if (wasRepairing) {
         const QString displayName = m_owner.instanceDisplayName(versionId);
+        const bool quiet = m_owner.m_agentRepairQuietId == versionId;
+        if (quiet) m_owner.m_agentRepairQuietId.clear();
         if (success) {
             m_owner.appendLog(TextMarks::done(tr("实例「%1」的文件校验完成：%2").arg(displayName, errorMessage)));
             // 补全期间它被滤出了"能启动的实例"（installingVersionIds() 里有它），回来之后
@@ -365,14 +367,14 @@ void DownloadCompletionController::onFinished(const QString &versionId, bool suc
                 }
             }
             m_owner.updateStartButtonText();
-            InlineMessage::information(m_owner.m_ui->overlay(), MainWindow::tr("检查完成"),
+            if (!quiet) InlineMessage::information(m_owner.m_ui->overlay(), MainWindow::tr("检查完成"),
                                        MainWindow::tr("实例「%1」的文件已齐全。\n\n%2")
                                            .arg(displayName, errorMessage));
         } else if (userCancelled) {
             m_owner.appendLog(TextMarks::failed(tr("实例「%1」的文件校验已由用户取消。").arg(displayName)));
         } else {
             m_owner.appendLog(TextMarks::failed(tr("实例「%1」的文件未补齐：%2").arg(displayName, errorMessage)));
-            InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("文件未补齐"),
+            if (!quiet) InlineMessage::warning(m_owner.m_ui->overlay(), MainWindow::tr("文件未补齐"),
                                    MainWindow::tr("未能获取实例「%1」的部分文件。\n\n%2")
                                        .arg(displayName, errorMessage));
         }

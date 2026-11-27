@@ -981,6 +981,49 @@ return runVersionManagerFetchFail(app);
               "（解码侧只有一个开关，混搭编码无论取哪边都是错的）");
     }
 
+    section("C3b. IPv6（#138）：不替 JVM 关掉 IPv6，json 自己声明的那条照传");
+    // -----------------------------------------------------------------
+    // 曾经无条件加 -Djava.net.preferIPv4Stack=true：JVM 就完全不用 IPv6，DNS 里只有 AAAA
+    // 的服务器必然连不上。Java 默认 preferIPv6Addresses=false，双栈时本来就先试 IPv4，
+    // 那一条只砍掉了 IPv6。反过来，version.json 自己声明的 -Djava.net.prefer*（NeoForge
+    // 26.2 就写着 =system）要原样传，我们不加也不覆盖。
+    {
+        const auto countPrefer = [](const QStringList &list) {
+            int n = 0;
+            for (const QString &item : list) {
+                if (item.startsWith(QStringLiteral("-Djava.net.prefer"))) {
+                    ++n;
+                }
+            }
+            return n;
+        };
+        for (const QString &v : versions) {
+            GlobalJavaSettings s;
+            const QStringList args = launcher.generateJvmArguments(
+                QString(), v, QStringLiteral("1"), jsons[v], s, true, 21);
+            check(countPrefer(args) == 0,
+                  QString("%1: 默认命令行里没有 -Djava.net.prefer*（不替 JVM 关 IPv6）").arg(v));
+        }
+
+        // 真数据：NeoForge 26.2 的 profile 原样写着 -Djava.net.preferIPv6Addresses=system
+        //（tests/meta/neoforge-26.2.0.88.json:18）。合并父版本之后它必须还在命令行上。
+        const QJsonObject neoforgeJson = loadJson(metaDir + "/neoforge-26.2.0.88.json");
+        const QJsonObject vanilla262 = loadJson(metaDir + "/26.2.json");
+        check(!neoforgeJson.isEmpty() && !vanilla262.isEmpty(),
+              "C3b 两份真数据都读到了（neoforge-26.2.0.88 + 26.2）");
+        if (!neoforgeJson.isEmpty() && !vanilla262.isEmpty()) {
+            const QJsonObject merged = VersionInheritance::merge(neoforgeJson, vanilla262);
+            GlobalJavaSettings s;
+            const QStringList args = launcher.generateJvmArguments(
+                QString(), QStringLiteral("neoforge-26.2.0.88"), QStringLiteral("1"), merged, s,
+                true, 25);
+            check(args.contains(QStringLiteral("-Djava.net.preferIPv6Addresses=system")),
+                  "★★ C3b version.json 声明的 -Djava.net.preferIPv6Addresses=system 原样保留");
+            check(!args.contains(QStringLiteral("-Djava.net.preferIPv4Stack=true")),
+                  "C3b 版本 json 声明了 preferIPv6Addresses 时也不再叠一条关 IPv6 的");
+        }
+    }
+
     section("C4. --gameDir / --assetsDir 是绝对路径（两个分支都要）");
     // -----------------------------------------------------------------
     // --gameDir / --assetsDir 是绝对路径，不依赖 cwd —— 所以这里既断言"是绝对的"，

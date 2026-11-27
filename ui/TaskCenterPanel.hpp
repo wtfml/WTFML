@@ -78,6 +78,8 @@ struct Capabilities {
     bool openCrashDir = false;
     /// 「询问智能体」：和上面两颗同一份判据（手里有这次崩溃的会话事实）。
     bool askAgent = false;
+    /// 「查看会话」：这一项是智能体发起的（账本那边记着会话号，且会话还在）。
+    bool openAgentSession = false;
     bool repairImport = false;
     /// 「继续未完成操作」：这一项留下了一份可续的文件操作报告（见 `OperationReport`）。
     bool recover = false;

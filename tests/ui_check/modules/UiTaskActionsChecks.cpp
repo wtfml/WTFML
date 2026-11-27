@@ -235,6 +235,31 @@ int UiTaskActionsChecks(QMainWindow &window, MainWindowUI &ui) {
               "I6 没有步骤的任务写一句「这一项没有分步。」（不留一块空白）",
               noSteps != nullptr ? noSteps->text() : QStringLiteral("<没找到>"));
 
+        // #130：智能体发起的那一项。「查看会话」只跟着能力位露，点了把「哪一项」带出去。
+        auto *sessionButton = page.findChild<QPushButton *>(QStringLiteral("taskDetailAgentSession"));
+        check(sessionButton != nullptr && !page.offers(sessionButton),
+              "I7 普通任务没有「查看会话」");
+        TaskCenter::Item agent;
+        agent.key = QStringLiteral("54");
+        agent.title = QStringLiteral("智能体：修改启动器设置");
+        agent.detail = QStringLiteral("等待确认");
+        agent.state = TaskCenter::State::WaitingUser;
+        agent.percent = -1;
+        agent.capabilities.cancel = true;
+        agent.capabilities.openAgentSession = true;
+        page.setTask(agent);
+        QApplication::processEvents();
+        check(sessionButton != nullptr && page.offers(sessionButton) && sessionButton->text() == QStringLiteral("查看会话"),
+              "I7 智能体任务露出「查看会话」", sessionButton != nullptr ? sessionButton->text() : QStringLiteral("<没找到>"));
+        check(cancelPageButton != nullptr && page.offers(cancelPageButton), "I7 等待确认时也能取消");
+        if (sessionButton != nullptr) {
+            sessionButton->click();
+            QApplication::processEvents();
+            check(seenKey == QStringLiteral("54")
+                      && seenAction == static_cast<int>(TaskDetailPage::Action::OpenAgentSession),
+                  "I7 点「查看会话」把这一项带出去", QStringLiteral("key=%1 action=%2").arg(seenKey).arg(seenAction));
+        }
+
         page.close();
         QApplication::processEvents();
     }

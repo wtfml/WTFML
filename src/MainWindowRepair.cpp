@@ -74,6 +74,7 @@ void MainWindow::repairInstanceFiles(const QString &versionId) {
     appendLog(tr("正在校验「%1」的文件，跳过已存在的文件…").arg(instanceDisplayName(versionId)));
     // 顺序：**先记名字再置忙**。setDownloadUiBusy() 里那句 refreshInstalledVersions() 读的
     // 就是这个判据（正在补全的实例不该出现在启动列表里），反过来的话它漏得出那一次刷新。
+    m_agentRepairQuietId.clear();  // 用户自己点的这一趟照常弹结果
     m_installOccupancy.setBatch(InstallOccupancy::Batch::Repair, versionId);
     setDownloadUiBusy(true);
     m_versionManager->repairVersionFiles(versionId, flagged);

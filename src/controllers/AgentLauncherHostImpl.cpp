@@ -247,7 +247,8 @@ bool AgentLauncherHostImpl::repairCoreFiles(const QString &instanceId,
         if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "主窗口未接入。");  // i18n-ignore
         return false;
     }
-    if (m_owner->m_versionManager->downloads()->isBusy()) {
+    if (m_owner->m_versionManager->downloads()->isBusy() || m_owner->m_downloadInFlight ||
+        m_owner->m_versionManager->isDownloading() || m_owner->m_installOccupancy.modifying(instanceId)) {
         if (problem != nullptr) *problem = QCoreApplication::translate("AgentLauncherHostImpl", "已有下载任务正在进行，请等待其结束后再修复。");
         return false;
     }
@@ -271,6 +272,11 @@ bool AgentLauncherHostImpl::repairCoreFiles(const QString &instanceId,
                 state->completion(outcome);
             }
         });
+    // #130：和实例页「补全文件」走同一条忙态（MainWindowRepair）：进任务中心记「校验并补全」、
+    // 实例被标成占用；结束提示由工具卡给，不再弹「检查完成」框（见 DownloadCompletionController）。
+    m_owner->m_agentRepairQuietId = instanceId;
+    m_owner->m_installOccupancy.setBatch(InstallOccupancy::Batch::Repair, instanceId);
+    m_owner->setDownloadUiBusy(true);
     m_owner->m_versionManager->repairVersionFiles(instanceId, flaggedPaths);
     return true;
 }

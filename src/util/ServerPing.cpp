@@ -417,6 +417,37 @@ SrvOutcome lookupSrv(const QString &host, int budgetMs) {
     return outcome;
 }
 
+/// DNS 里这台主机**有没有 AAAA**（只用来给「未找到主机」定性，阻塞、最多 @p budgetMs）。
+///
+/// 为什么不能拿 QHostInfo / QTcpSocket 的结果来判断：Qt 6.10 在 Windows 上解析主机名时
+/// 给 getaddrinfo 带的是 `AI_ADDRCONFIG`（qhostinfo.cpp 里 `hints.ai_flags = Q_ADDRCONFIG`，
+/// 失败只在 `EAI_BADFLAGS` 时重试一次不带标志），而 AI_ADDRCONFIG 的语义是"本机没配某个
+/// 地址族就不要返回那个族的地址"。本机只有 IPv4 时，**只有 AAAA 的域名**因此解析出零个
+/// 地址，Qt 报 `HostNotFoundError` —— 和"域名根本不存在"一模一样。QDnsLookup 发的是 DNS
+/// 报文本身，不过这一层，能答出"域名存在、地址是 AAAA"。
+bool hostHasIpv6Address(const QString &host, int budgetMs) {
+    QDnsLookup lookup(QDnsLookup::AAAA, host);
+    QEventLoop loop;
+    QTimer deadline;
+    deadline.setSingleShot(true);
+    QObject::connect(&lookup, &QDnsLookup::finished, &loop, &QEventLoop::quit);
+    QObject::connect(&deadline, &QTimer::timeout, &loop, &QEventLoop::quit);
+    deadline.start(qMax(1, budgetMs));
+    lookup.lookup();
+    if (!lookup.isFinished()) {
+        loop.exec();
+    }
+    if (lookup.error() != QDnsLookup::NoError) {
+        return false;
+    }
+    for (const QDnsHostAddressRecord &record : lookup.hostAddressRecords()) {
+        if (!record.value().isNull()) {
+            return true;
+        }
+    }
+    return false;
+}
+
 }  // namespace
 
 Resolution resolve(const QString &text, int budgetMs) {
@@ -475,18 +506,20 @@ QString kindName(Kind kind) {
         return QCoreApplication::translate("ServerPing", "连接中断");
     case Kind::Protocol:
         return QCoreApplication::translate("ServerPing", "服务器响应格式无效");
+    case Kind::NoIpv6Network:
+        return QCoreApplication::translate("ServerPing", "无 IPv6 网络");
     case Kind::Other:
         return QCoreApplication::translate("ServerPing", "其余");
     }
     return QCoreApplication::translate("ServerPing", "其余");
 }
 
-Kind kindForSocketError(int socketError) {
+Kind kindForSocketError(int socketError, bool hostHasIpv6Addresses) {
     switch (static_cast<QAbstractSocket::SocketError>(socketError)) {
     case QAbstractSocket::ConnectionRefusedError:
         return Kind::Refused;
     case QAbstractSocket::HostNotFoundError:
-        return Kind::HostNotFound;
+        return hostHasIpv6Addresses ? Kind::NoIpv6Network : Kind::HostNotFound;
     case QAbstractSocket::SocketTimeoutError:
     case QAbstractSocket::NetworkError:
         return Kind::Unreachable;
@@ -646,12 +679,18 @@ QByteArray decodeFavicon(const QString &dataUrl) {
     return QByteArray::fromBase64(dataUrl.mid(prefix.size()).toLatin1());
 }
 
-QString connectionErrorText(int socketError) {
+QString connectionErrorText(int socketError, bool hostHasIpv6Addresses) {
     switch (static_cast<QAbstractSocket::SocketError>(socketError)) {
     case QAbstractSocket::ConnectionRefusedError:
         return QCoreApplication::translate("ServerPing", "连接被拒绝");
     case QAbstractSocket::HostNotFoundError:
-        return QCoreApplication::translate("ServerPing", "未找到主机");
+        // 域名查得到 AAAA、只是本机没有 IPv6 网络时，Qt 也报 HostNotFoundError（理由见
+        // hostHasIpv6Address 那段）。这时说「未找到主机」是在骗人 —— 那台服务器换一台有
+        // IPv6 的机器就连得上。
+        return hostHasIpv6Addresses
+            ? QCoreApplication::translate(
+                  "ServerPing", "该服务器只有 IPv6 地址，本机当前没有可用的 IPv6 网络。")
+            : QCoreApplication::translate("ServerPing", "未找到主机");
     case QAbstractSocket::SocketTimeoutError:
     case QAbstractSocket::NetworkError:
         return QCoreApplication::translate("ServerPing", "连接超时");
@@ -701,8 +740,14 @@ Status ping(const QString &address) {
 
     socket.connectToHost(resolved.connectHost, static_cast<quint16>(resolved.connectPort));
     if (!socket.waitForConnected(left())) {
-        status.kind = kindForSocketError(socket.error());
-        status.error = connectionErrorText(socket.error());
+        // 「未找到主机」有两种，靠 socket 错误分不开（理由见 hostHasIpv6Address 那段）：
+        // 域名真的不存在，和域名只有 AAAA、而本机没有 IPv6 网络。后者补查一次 AAAA 就能认出来，
+        // 然后换成「本机没有 IPv6 网络」那句，别把锅甩给域名。
+        const bool hostHasIpv6Addresses =
+            socket.error() == QAbstractSocket::HostNotFoundError
+            && hostHasIpv6Address(resolved.connectHost, left());
+        status.kind = kindForSocketError(socket.error(), hostHasIpv6Addresses);
+        status.error = connectionErrorText(socket.error(), hostHasIpv6Addresses);
         status.timedOut = isTimeoutError(socket.error());
         return status;
     }

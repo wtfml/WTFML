@@ -178,6 +178,19 @@ agent/
 
 MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，结果通过 `AgentToolSink` 回来，Loop 保持"执行中"继续等，不阻塞 UI、不开嵌套事件循环；取消或换代后迟到的结果丢弃。
 
+### 8.6 任务中心（#130）
+
+`AgentTaskLedger`（`src/controllers/`，由 `AgentController` 持有）把会改实例、要等确认或耗时的工具调用记进任务中心，每次事件都按工作流和 Loop 的现状重推，不另存状态机。
+
+- 不记：只读工具（实例/日志/崩溃/模组清单/设置读/Java/备份列表/修复状态/文件读）、联网、MCP、固定诊断命令。
+- 开始就记：`instance.integrity`、`mods.verifyFiles`（Integrity）、`backup.create/restore`（Backup）、`mods.installFix`（Download）、`mods.analyzeCompatibility`、`instance.testLaunch`、`mods.bisect`（Other；测试启动不记成 Launch）。
+- 弹确认才记：`fs.write`、`mods.setEnabled`、`settings.set`。Auto-safe 自动放行不弹确认，不记。
+- 计划任务：`workflow.submitPlan` 获批时建「智能体修复计划：实例」，详情是目标，步骤是计划步骤（理由截 60 字，空理由用工具名）；计划内的步骤（含 Auto-safe 放行的）只推进这一项，不另记。
+- 状态：等确认 → 等待用户「等待确认」；执行 → 进行中；回合结束而计划未完 → 等待用户「等待在会话中继续」；拒绝 → 已取消（「已拒绝，未修改任何内容。」/「已拒绝第 N 步，计划未继续。」）；停止或离开智能体页 → 已取消；工作流失败 → 失败（带原因）；`workflow.finish` → 已完成；换会话 / 换模式 → 已取消「计划已作废。」。
+- 任务中心「取消」：停掉当前回复；计划任务另把工作流标为失败（「已在任务中心取消。」）。`repair.finish` 写回期间不能取消。不回滚未提交的修复事务，详情写「修复事务未提交，原实例未改动。」。
+- 「查看会话」：切到智能体页并打开发起它的会话；会话已删除时提示「会话不存在」。任务号 → 会话号只记在内存里，重启后历史任务不带这颗按钮。
+- `instance.repairCore` 不另记：和实例页「补全文件」走同一条忙态（任务中心「校验并补全 实例」、实例标为占用），结束不弹「检查完成」框，结果由工具卡说明。
+
 ## 9. 工具
 
 ### 9.1 工具接口

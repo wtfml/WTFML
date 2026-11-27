@@ -583,6 +583,26 @@ void runTaskLedgerTests() {
               "AM3 已中断那一件**没有**结束时间戳（不许编一个「刚刚完成」出来）");
     }
 
+    section("AM3w. TaskManager：运行中 ⇄ 等待用户（#130 智能体等确认）");
+    {
+        Tasks::TaskManager manager;
+        const Tasks::TaskId id = manager.begin(Tasks::TaskKind::Other, QStringLiteral("智能体：修改启动器设置"));
+        check(!manager.setWaitingUser(id, false), "AM3w 运行中再「离开等待」什么都不做");
+        check(manager.setWaitingUser(id, true) && manager.snapshot(id).state == Tasks::TaskState::WaitingUser,
+              "AM3w 运行中 → 等待用户");
+        check(!manager.setWaitingUser(id, true), "AM3w 已在等待时再进一次回 false");
+        check(Tasks::summaryPriority(manager.snapshot(id), false) == 0, "AM3w 等待用户在折叠摘要里排第一档");
+        check(manager.setWaitingUser(id, false) && manager.snapshot(id).state == Tasks::TaskState::Running,
+              "AM3w 等待用户 → 运行中");
+        manager.setWaitingUser(id, true);
+        check(manager.cancel(id), "AM3w 等待中可以直接取消收尾");
+        check(!manager.setWaitingUser(id, false) && !manager.setWaitingUser(id, true) &&
+                  manager.snapshot(id).state == Tasks::TaskState::Cancelled,
+              "AM3w 终态之后进出等待一律拒绝");
+        const Tasks::TaskId queued = manager.begin(Tasks::TaskKind::Other, QStringLiteral("排队"), {}, {}, {}, true);
+        check(!manager.setWaitingUser(queued, true), "AM3w 排队中的任务不能直接进等待");
+    }
+
     section("AM4. markInterrupted / clearFinished / 启动器级固定落点");
     {
         // markInterrupted：只动非终态那几件；终态一个字节都不碰。

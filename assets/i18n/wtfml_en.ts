@@ -820,7 +820,7 @@ Select "Sign out" to try again.</translation>
             <source>「%1」刚刚异常退出。按崩溃急救流程直接开工：先取崩溃快照和日志证据，再提交修复计划，批准后在工作区里改、隔离启动验证、提交或回滚；能自己做的不要只给我人工步骤。全部做完再汇报结论、回退方式和未解决项。
 
 %2</source>
-            <translation>%1 just exited abnormally. Start working through Crash rescue right away: pull the crash snapshot and log evidence first, then submit a repair plan; after approval, edit in the workspace, verify with an isolated launch, then commit or roll back. Do whatever you can yourself instead of handing me manual steps. When everything is done, report the conclusion, how to roll back, and what's still unresolved.
+            <translation>"%1" just exited abnormally. Follow the Crash rescue workflow right away: gather the crash snapshot and log evidence first, then submit a repair plan; after approval, edit in the workspace, verify with an isolated launch, and commit or roll back. Do whatever you can yourself instead of giving me manual steps. When everything is done, report the conclusion, how to roll back, and any unresolved items.
 
 %2</translation>
         </message>
@@ -838,11 +838,11 @@ Select "Sign out" to try again.</translation>
 最长 60 分钟或 20 次启动；验证失败自动回滚；事务结束写审计。java.path、args.extraJvm、saves/ 和跨工作区写入无论如何都会被拒绝。
 
 不打开也可以修，只是每一步写盘都要你点一次「允许」。</source>
-            <translation>Once it's on, an approved plan runs to the end of the transaction: planned writes and test launches stop asking for approval step by step.
+            <translation>Once enabled, an approved plan runs until the transaction ends: planned writes and test launches won't ask for approval step by step.
 
-Up to 60 minutes or 20 launches; failed verification rolls back automatically; an audit is written when the transaction ends. java.path, args.extraJvm, saves/, and writes outside the workspace are always refused.
+Up to 60 minutes or 20 launches; failed verification rolls back automatically; an audit log is written when the transaction ends. java.path, args.extraJvm, saves/, and writes outside the workspace are always blocked.
 
-You can repair without it too; every write then needs a separate Allow click.</translation>
+You can still repair without it; you'll just need to click "Allow" for each write.</translation>
         </message>
         <message>
             <source>打开 Auto-safe</source>
@@ -1035,6 +1035,14 @@ This server runs with your Windows user privileges and can access local files an
             <translation>Waiting for transaction</translation>
         </message>
         <message>
+            <source>会话不存在</source>
+            <translation>Chat not found</translation>
+        </message>
+        <message>
+            <source>该会话已删除。</source>
+            <translation>This chat has been deleted.</translation>
+        </message>
+        <message>
             <source>SearXNG 地址须为 http/https。</source>
             <translation>SearXNG URL must use http or https.</translation>
         </message>
@@ -1166,11 +1174,11 @@ This server runs with your Windows user privileges and can access local files an
         </message>
         <message>
             <source>写入前会先备份，可在实例设置「备份与操作」页的「从快照恢复…」中还原。</source>
-            <translation type="unfinished"></translation>
+            <translation>Backed up before writing; restore via "Restore from snapshot…" on the "Backup and actions" tab in instance settings.</translation>
         </message>
         <message>
             <source>写入修复工作区，不另行备份。</source>
-            <translation type="unfinished"></translation>
+            <translation>Writes to the repair workspace without an extra backup.</translation>
         </message>
         <message>
             <source>artifact 不存在或不可读。</source>
@@ -1194,11 +1202,11 @@ This server runs with your Windows user privileges and can access local files an
         </message>
         <message>
             <source>已写入工作区：%1 → %2 字节，已校验。</source>
-            <translation type="unfinished"></translation>
+            <translation>Written to workspace: %1 → %2 bytes (verified).</translation>
         </message>
         <message>
             <source>写入成功：%1 → %2 字节，已校验。</source>
-            <translation type="unfinished"></translation>
+            <translation>Written: %1 → %2 bytes (verified).</translation>
         </message>
         <message>
             <source>写入成功：%1 → %2 字节，已备份并校验。</source>
@@ -1417,15 +1425,15 @@ This server runs with your Windows user privileges and can access local files an
         </message>
         <message>
             <source>找不到该备份。</source>
-            <translation type="unfinished">Backup not found.</translation>
+            <translation>Backup not found.</translation>
         </message>
         <message>
             <source>备份元数据缺少实例 ID，已拒绝还原。</source>
-            <translation type="unfinished"></translation>
+            <translation>Backup metadata is missing an instance ID; restore blocked.</translation>
         </message>
         <message>
             <source>实例正在运行或正被其他操作占用，已拒绝还原。请等待结束后再试。</source>
-            <translation type="unfinished"></translation>
+            <translation>Instance is running or busy with another operation; restore blocked. Wait for it to finish and try again.</translation>
         </message>
         <message>
             <source>实例目录不存在。</source>
@@ -1864,7 +1872,7 @@ Location: %4
         </message>
         <message>
             <source>备份保存在启动器备份目录，删除会话不影响备份。</source>
-            <translation type="unfinished"></translation>
+            <translation>Saved in the launcher backup folder; deleting the chat won't affect the backup.</translation>
         </message>
         <message>
             <source>修复事务进行中，不能直接恢复备份。请先提交或回滚事务。</source>
@@ -1876,11 +1884,11 @@ Location: %4
         </message>
         <message>
             <source>该备份由启动器管理，请在实例设置「备份与操作」页的「从快照恢复…」中还原。</source>
-            <translation type="unfinished"></translation>
+            <translation>This backup is managed by the launcher. Restore it via "Restore from snapshot…" on the "Backup and actions" tab in instance settings.</translation>
         </message>
         <message>
             <source>该备份不属于当前锁定的实例，已拒绝还原。</source>
-            <translation type="unfinished"></translation>
+            <translation>This backup doesn't belong to the currently locked instance; restore blocked.</translation>
         </message>
         <message>
             <source>恢复备份：%1（%2）</source>
@@ -2474,7 +2482,7 @@ Location: %4
         </message>
         <message>
             <source>先把文件下载到暂存目录并校验大小与 SHA-1，全部通过后才复制进工作区 mods/。会补齐版本声明的必需前置，任何一步失败都不改工作区，也不碰原实例。</source>
-            <translation>Files are downloaded to a staging folder and verified for size and SHA-1; only after everything passes are they copied into the workspace mods/. Mandatory dependencies declared by the version are fetched too. If any step fails, the workspace stays untouched and the original instance is never modified.</translation>
+            <translation>Files are downloaded to a staging folder and verified for size and SHA-1; only after everything passes are they copied into the workspace mods/. Required dependencies declared by the version are installed too. If any step fails, the workspace stays untouched and the original instance is never modified.</translation>
         </message>
         <message>
             <source>先把文件下载到暂存目录并校验大小与 SHA-1，全部通过后才复制进工作区 mods/。任何一步失败都不改工作区，也不碰原实例。</source>
@@ -3628,6 +3636,97 @@ Location: %4
         <message>
             <source>SSE 行缓冲超过 1 MB，已中止。</source>
             <translation>SSE line buffer exceeded 1 MB; aborted.</translation>
+        </message>
+    </context>
+    <context>
+        <name>AgentTaskLedger</name>
+        <message>
+            <source>智能体：检查「%1」的文件</source>
+            <translation>Agent: Check files for "%1"</translation>
+        </message>
+        <message>
+            <source>智能体：校验「%1」的模组文件</source>
+            <translation>Agent: Verify mod files for "%1"</translation>
+        </message>
+        <message>
+            <source>智能体：分析「%1」的模组兼容性</source>
+            <translation>Agent: Analyze mod compatibility for "%1"</translation>
+        </message>
+        <message>
+            <source>智能体：备份「%1」</source>
+            <translation>Agent: Back up "%1"</translation>
+        </message>
+        <message>
+            <source>智能体：还原「%1」的备份</source>
+            <translation>Agent: Restore backup for "%1"</translation>
+        </message>
+        <message>
+            <source>智能体：修改「%1」中的 %2</source>
+            <translation>Agent: Edit %2 in "%1"</translation>
+        </message>
+        <message>
+            <source>智能体：启用模组 %1</source>
+            <translation>Agent: Enable mod %1</translation>
+        </message>
+        <message>
+            <source>智能体：禁用模组 %1</source>
+            <translation>Agent: Disable mod %1</translation>
+        </message>
+        <message>
+            <source>智能体：修改启动器设置</source>
+            <translation>Agent: Update launcher settings</translation>
+        </message>
+        <message>
+            <source>智能体：下载修复模组</source>
+            <translation>Agent: Download repair mod</translation>
+        </message>
+        <message>
+            <source>智能体：测试启动「%1」</source>
+            <translation>Agent: Test launch "%1"</translation>
+        </message>
+        <message>
+            <source>智能体：二分定位「%1」的问题模组</source>
+            <translation>Agent: Bisect faulty mod in "%1"</translation>
+        </message>
+        <message>
+            <source>智能体修复计划：%1</source>
+            <translation>Agent repair plan: %1</translation>
+        </message>
+        <message>
+            <source>计划已作废。</source>
+            <translation>Plan invalidated.</translation>
+        </message>
+        <message>
+            <source>正在写回实例文件，完成后才能取消。</source>
+            <translation>Writing instance files; can't cancel until finished.</translation>
+        </message>
+        <message>
+            <source>等待确认</source>
+            <translation>Awaiting confirmation</translation>
+        </message>
+        <message>
+            <source>已拒绝，未修改任何内容。</source>
+            <translation>Denied; nothing changed.</translation>
+        </message>
+        <message>
+            <source>已拒绝第 %1 步，计划未继续。</source>
+            <translation>Step %1 denied; plan stopped.</translation>
+        </message>
+        <message>
+            <source>等待在会话中继续</source>
+            <translation>Waiting to continue in chat</translation>
+        </message>
+        <message>
+            <source>已离开智能体页或已停止，操作未继续。</source>
+            <translation>Left the Agent page or stopped; operation didn't continue.</translation>
+        </message>
+        <message>
+            <source>已在任务中心取消。</source>
+            <translation>Canceled in Task center.</translation>
+        </message>
+        <message>
+            <source>修复事务未提交，原实例未改动。</source>
+            <translation>Repair transaction wasn't committed; original instance wasn't modified.</translation>
         </message>
     </context>
     <context>
@@ -5448,31 +5547,31 @@ Backup folder: %2</translation>
         </message>
         <message>
             <source>%1 等 %2 个文件</source>
-            <translation type="unfinished"></translation>
+            <translation>%1, %2 files total</translation>
         </message>
         <message>
             <source>智能体写入前备份：%1（%2，%3）</source>
-            <translation type="unfinished"></translation>
+            <translation>Agent pre-write backup: %1 (%2, %3)</translation>
         </message>
         <message>
             <source>%1 个文件</source>
-            <translation type="unfinished">%1 files</translation>
+            <translation>%1 files</translation>
         </message>
         <message>
             <source>智能体写入前备份：「%1」%2（%3）</source>
-            <translation type="unfinished"></translation>
+            <translation>Agent pre-write backup: "%1", %2 (%3)</translation>
         </message>
         <message>
             <source>智能体还原前备份：%1（%2，%3）</source>
-            <translation type="unfinished"></translation>
+            <translation>Agent pre-restore backup: %1 (%2, %3)</translation>
         </message>
         <message>
             <source>、</source>
-            <translation type="unfinished">, </translation>
+            <translation>, </translation>
         </message>
         <message>
             <source>智能体备份：%1（%2 个文件，%3，%4）</source>
-            <translation type="unfinished"></translation>
+            <translation>Agent backup: %1 (%2 files, %3, %4)</translation>
         </message>
         <message>
             <source>%1（日志异常）</source>
@@ -5587,22 +5686,28 @@ Redownloadable assets and libraries are skipped by default.</translation>
 
 待还原备份：
 %3</source>
-            <translation type="unfinished"></translation>
+            <translation>This will undo changes made by this chat to %2 files in "%1" and restore them to their state before the chat's first write. Other files stay unchanged, and the current contents of these files will be backed up first.
+
+Backup to restore:
+%3</translation>
         </message>
         <message>
             <source>将用备份覆盖「%1」中的 %2 个文件。其他文件不变，备份后新增的文件也将保留。还原前会先备份这些文件的当前内容。
 
 待还原备份：
 %3</source>
-            <translation type="unfinished"></translation>
+            <translation>This will overwrite %2 files in "%1" with this backup. Other files stay unchanged, and files added after the backup are kept. The current contents of these files will be backed up first.
+
+Backup to restore:
+%3</translation>
         </message>
         <message>
             <source>还原智能体备份</source>
-            <translation type="unfinished"></translation>
+            <translation>Restore agent backup</translation>
         </message>
         <message>
             <source>还原「%1」的智能体备份</source>
-            <translation type="unfinished"></translation>
+            <translation>Restore agent backup for "%1"</translation>
         </message>
         <message>
             <source>从快照恢复</source>
@@ -5652,19 +5757,19 @@ Snapshot to restore:
         </message>
         <message>
             <source>读取备份</source>
-            <translation type="unfinished"></translation>
+            <translation>Read backup</translation>
         </message>
         <message>
             <source>备份当前文件</source>
-            <translation type="unfinished"></translation>
+            <translation>Back up current files</translation>
         </message>
         <message>
             <source>写回文件</source>
-            <translation type="unfinished"></translation>
+            <translation>Write files</translation>
         </message>
         <message>
             <source>核对文件</source>
-            <translation type="unfinished"></translation>
+            <translation>Verify files</translation>
         </message>
         <message>
             <source>共 %1 个文件，%2</source>
@@ -10286,22 +10391,8 @@ Target instance: "%1".</translation>
             <translation>Instance no longer exists</translation>
         </message>
         <message>
-            <source>%1
-%2
-目标文件：%3
-加载器：%4 / 游戏：%5</source>
-            <translation>%1
-%2
-Target file: %3
-Loader: %4 / Game: %5</translation>
-        </message>
-        <message>
             <source>模组更新差异</source>
             <translation>Mod update differences</translation>
-        </message>
-        <message>
-            <source>将更新 %1 项。请查看依赖变化与需确认项；不会自动补装或删除依赖。</source>
-            <translation>%1 items will be updated. Review dependency changes and items needing confirmation; dependencies won't be automatically installed or removed.</translation>
         </message>
         <message>
             <source>确认更新</source>
@@ -10384,6 +10475,28 @@ Versions won't be adapted, existing files won't be overwritten, and configs won'
         <message>
             <source>所选项无可安装的更新，请先检查更新。</source>
             <translation>No installable updates for selected items. Check for updates first.</translation>
+        </message>
+        <message>
+            <source>%1
+%2
+目标文件：%3
+%4</source>
+            <translation>%1
+%2
+Target file: %3
+%4</translation>
+        </message>
+        <message>
+            <source>将更新 %1 项。下方列出依赖变化与需确认项，更新不会自动补装或删除模组。本预览不代表完整的依赖检查，也不保证游戏能正常启动。</source>
+            <translation>%1 items will be updated. Dependency changes and items that need confirmation are listed below; updating won't install or remove mods automatically. This preview isn't a full dependency check and doesn't guarantee the game will launch.</translation>
+        </message>
+        <message>
+            <source>将更新 %1 项。更新完成后将检查并补装缺失的必装前置，不会删除现有模组。本预览不代表完整的依赖检查，也不保证游戏能正常启动。</source>
+            <translation>%1 items will be updated. After updating, the launcher will check for and install missing required dependencies; existing mods won't be removed. This preview isn't a full dependency check and doesn't guarantee the game will launch.</translation>
+        </message>
+        <message>
+            <source>检查新增依赖并补全</source>
+            <translation>Check and install new dependencies</translation>
         </message>
         <message>
             <source>暂时无法更新</source>
@@ -15558,8 +15671,24 @@ Incompatible files may prevent the game from launching. Install anyway?</transla
             <translation>Unavailable right now</translation>
         </message>
         <message>
+            <source>本次更新的模组未发现缺失的新增必装前置。</source>
+            <translation>No missing new required dependencies found for the updated mods.</translation>
+        </message>
+        <message>
+            <source>正在自动补全 %1 个新增必装前置：%2。</source>
+            <translation>Automatically installing %1 new required dependencies: %2.</translation>
+        </message>
+        <message>
+            <source>、</source>
+            <translation>, </translation>
+        </message>
+        <message>
             <source>已有下载或安装任务正在进行，请等待其结束后再下载此项。</source>
             <translation>A download or installation is already in progress. Wait for it to finish before downloading this.</translation>
+        </message>
+        <message>
+            <source>补全「%1」的 %2 个前置模组</source>
+            <translation>Install %2 dependencies for "%1"</translation>
         </message>
         <message>
             <source>「%1」上次未安装完成，将继续安装，已下载的文件不再重复下载。</source>
@@ -17868,6 +17997,10 @@ You can undo the last update in "Update center".</translation>
             <translation>Background image</translation>
         </message>
         <message>
+            <source>启动器窗口大小</source>
+            <translation>Launcher window size</translation>
+        </message>
+        <message>
             <source>启动时按上次关闭时的大小打开。</source>
             <translation>Reopens at the size used when last closed.</translation>
         </message>
@@ -19849,10 +19982,6 @@ File ID: %1</translation>
             <translation>No changes to declared dependencies.</translation>
         </message>
         <message>
-            <source>移除声明不删除现有模组；此预览不是完整依赖求解或启动兼容保证。</source>
-            <translation>Removed declarations don't delete existing mods; this preview isn't a full dependency solver or launch guarantee.</translation>
-        </message>
-        <message>
             <source>选中 %1 项 / 已识别启用文件 %2 项 / 未识别启用文件 %3 项</source>
             <translation>%1 selected / %2 recognized enabled / %3 unrecognized enabled</translation>
         </message>
@@ -19969,6 +20098,46 @@ Download them together?</translation>
         <message>
             <source>需确认：%1 未在%2中找到，不代表确定未安装。此步骤不会自动补装依赖。</source>
             <translation>Needs review: %1 wasn't found in %2, which doesn't mean it isn't installed. Dependencies aren't installed automatically here.</translation>
+        </message>
+        <message>
+            <source>%1 等 %2 项</source>
+            <translation>%1, %2 total</translation>
+        </message>
+        <message>
+            <source>兼容本实例（%1 · %2）</source>
+            <translation>Compatible with this instance (%1 · %2)</translation>
+        </message>
+        <message>
+            <source>加载器：未注明</source>
+            <translation>Loader: not specified</translation>
+        </message>
+        <message>
+            <source>加载器：支持 %1</source>
+            <translation>Loader: supports %1</translation>
+        </message>
+        <message>
+            <source>加载器：未注明支持 %1（声明：%2）</source>
+            <translation>Loader: %1 not listed (declared: %2)</translation>
+        </message>
+        <message>
+            <source>加载器：%1</source>
+            <translation>Loader: %1</translation>
+        </message>
+        <message>
+            <source>游戏版本：未注明</source>
+            <translation>Game version: not specified</translation>
+        </message>
+        <message>
+            <source>游戏版本：支持 %1</source>
+            <translation>Game version: supports %1</translation>
+        </message>
+        <message>
+            <source>游戏版本：未列出 %1（声明：%2）</source>
+            <translation>Game version: %1 not listed (declared: %2)</translation>
+        </message>
+        <message>
+            <source>游戏版本：%1</source>
+            <translation>Game version: %1</translation>
         </message>
         <message>
             <source>当前版本或依赖资料未知。可先检查更新，再回来查看；未知不代表没有依赖。</source>
@@ -26265,7 +26434,7 @@ Previous folder before restore is at: %1</translation>
         </message>
         <message>
             <source>未找到备份元数据（%1）。</source>
-            <translation type="unfinished"></translation>
+            <translation>Backup metadata (%1) not found.</translation>
         </message>
         <message>
             <source>读取备份清单</source>
@@ -26383,71 +26552,71 @@ Restore canceled; existing files were kept.</translation>
         </message>
         <message>
             <source>备份中的路径无效：%1</source>
-            <translation type="unfinished">Invalid path in backup: %1</translation>
+            <translation>Invalid path in backup: %1</translation>
         </message>
         <message>
             <source>没有可备份的文件。</source>
-            <translation type="unfinished">No files to back up.</translation>
+            <translation>No files to back up.</translation>
         </message>
         <message>
             <source>备份目录已存在，未覆盖：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Backup folder already exists; not overwritten: %1</translation>
         </message>
         <message>
             <source>无法写入备份目录：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Can't write to backup folder: %1</translation>
         </message>
         <message>
             <source>不是文件备份。</source>
-            <translation type="unfinished"></translation>
+            <translation>Not a file backup.</translation>
         </message>
         <message>
             <source>备份内容已损坏或被修改：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Backup content is corrupted or modified: %1</translation>
         </message>
         <message>
             <source>备份中没有文件。</source>
-            <translation type="unfinished"></translation>
+            <translation>No files in backup.</translation>
         </message>
         <message>
             <source>实例目录不存在或为链接，已拒绝还原：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Instance folder doesn't exist or is a link; restore blocked: %1</translation>
         </message>
         <message>
             <source>备份中的路径无效或目标含链接，已拒绝还原：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Invalid path in backup or target contains links; restore blocked: %1</translation>
         </message>
         <message>
             <source>磁盘空间不足，未还原任何文件。</source>
-            <translation type="unfinished"></translation>
+            <translation>Not enough disk space; no files restored.</translation>
         </message>
         <message>
             <source>还原已取消，未改动任何文件。</source>
-            <translation type="unfinished"></translation>
+            <translation>Restore canceled; no files modified.</translation>
         </message>
         <message>
             <source>无法读取当前文件，已中止还原：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Can't read current file; restore aborted: %1</translation>
         </message>
         <message>
             <source>无法备份当前文件，已中止还原：%1</source>
-            <translation type="unfinished"></translation>
+            <translation>Can't back up current file; restore aborted: %1</translation>
         </message>
         <message>
             <source>已回滚到还原前的内容。</source>
-            <translation type="unfinished"></translation>
+            <translation> Rolled back to pre-restore contents.</translation>
         </message>
         <message>
             <source>部分文件未能回滚，请从还原前的备份手动还原：%1</source>
-            <translation type="unfinished"></translation>
+            <translation> Some files couldn't be rolled back; restore manually from the pre-restore backup: %1</translation>
         </message>
         <message>
             <source>无法写回 %1。</source>
-            <translation type="unfinished"></translation>
+            <translation>Can't write %1.</translation>
         </message>
         <message>
             <source>写回后有 %1 个文件校验未通过。</source>
-            <translation type="unfinished"></translation>
+            <translation>%1 files failed verification after writing.</translation>
         </message>
         <message>
             <source>无法识别游戏目录，未替换任何文件。</source>
@@ -29140,12 +29309,20 @@ Close the app using the port, or change the port in General.</translation>
             <translation>Invalid server response</translation>
         </message>
         <message>
+            <source>无 IPv6 网络</source>
+            <translation>No IPv6 network</translation>
+        </message>
+        <message>
             <source>其余</source>
             <translation>Other</translation>
         </message>
         <message>
             <source>连接被拒绝</source>
             <translation>Connection refused</translation>
+        </message>
+        <message>
+            <source>该服务器只有 IPv6 地址，本机当前没有可用的 IPv6 网络。</source>
+            <translation>This server only has IPv6 addresses, and no IPv6 network is available on this device.</translation>
         </message>
         <message>
             <source>连接超时</source>
@@ -30581,6 +30758,10 @@ Close the app using the port, or change the port in General.</translation>
         <message>
             <source>暂停下载</source>
             <translation>Pause download</translation>
+        </message>
+        <message>
+            <source>查看会话</source>
+            <translation>View chat</translation>
         </message>
         <message>
             <source>任务详情</source>

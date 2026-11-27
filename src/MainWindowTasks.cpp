@@ -26,6 +26,7 @@
 #include "..\ui\InlineMessage.hpp"
 #include "..\ui\InstanceFilesPage.hpp"
 #include "controllers/ActivityCenterController.hpp"
+#include "controllers/AgentController.hpp"
 #include "controllers/BackupController.hpp"
 #include "controllers/CrashReportController.hpp"
 #include "controllers/DownloadBatchController.hpp"
@@ -144,6 +145,10 @@ bool MainWindow::cancelWouldWork(const Tasks::TaskSnapshot &task) const {
         return m_launchController != nullptr && m_launchController->isStarting();
     }
     if (m_modTransferCancels.contains(task.id)) return true;
+    // 智能体发起的那几项：停当前回复（`repair.finish` 写回那一段点不动）。和 `cancelTaskFromDetail()` 同口径。
+    if (m_agentController != nullptr && m_agentController->ownsTask(task.id)) {
+        return m_agentController->canCancelTask(task.id);
+    }
     // ⓪ 「实例更新」父任务：准备核心那一段可以取消（文件事务那一段由流程自己
     // 把能力位关掉，这里也问同一份入口）。
     if (m_updateFlowTask != Tasks::invalidTaskId() && task.id == m_updateFlowTask
@@ -325,6 +330,10 @@ void MainWindow::cancelTaskFromDetail(const QString &key) {
     }
     if (transferParsed && m_modTransferCancels.contains(transferId)) {
         m_modTransferCancels.value(transferId)();
+        return;
+    }
+    if (transferParsed && m_agentController != nullptr && m_agentController->ownsTask(transferId)) {
+        m_agentController->cancelTask(transferId);
         return;
     }
     // ③ 后台导入世界 / 原地升级 / 回滚：和 `cancelWouldWork()` 里那一问同口径 ——

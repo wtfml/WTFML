@@ -162,6 +162,18 @@ QList<Lookup> missingRequiredDependencies(const ResourceCatalog::VersionEntry &v
                                           const QSet<QString> &installedKeys,
                                           const Target &target);
 
+/// 一条已更新模组的旧版与新版信息，用于计算更新后新增的缺失必装前置。
+struct UpdatedVersionPair {
+    ResourceCatalog::VersionEntry previous;
+    ResourceCatalog::VersionEntry target;
+};
+
+/// 计算一批更新后的版本新声明的必装前置里，目标实例还缺哪几个。
+/// 复用 requiredDependenciesOf() 与 missingRequiredDependencies()，同项目自动去重。
+QList<Lookup> missingNewRequiredDependencies(const QList<UpdatedVersionPair> &updates,
+                                             const QSet<QString> &installedKeys,
+                                             const Target &target);
+
 /// 挑出来的一个前置：哪一版、下哪个文件。
 struct Resolved {
     ResourceCatalog::Dependency dependency;
@@ -302,6 +314,11 @@ QString updateDifferenceText(const ResourceCatalog::VersionEntry &current,
                              const ResourceCatalog::VersionEntry &target,
                              const QHash<QString, QString> &plannedVersions = {},
                              const QHash<QString, QString> &projectNames = {});
+
+/// 生成单行兼容摘要：加载器与游戏版本均匹配时合写一行，否则分别说明。
+QString updateCompatibilityLine(const ResourceCatalog::VersionEntry &version,
+                                const QString &instanceLoader,
+                                const QString &instanceGameVersion);
 
 /**
  * @brief 拿"这个资源问回来的版本列表"判盘上这一条是不是最新的。

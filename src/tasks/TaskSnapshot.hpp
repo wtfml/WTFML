@@ -102,6 +102,8 @@ struct TaskCapabilities {
     bool canExportReport = false;
     /// 「打开崩溃报告目录」。同样只有游戏异常退出那一项为真。
     bool canOpenCrashDir = false;
+    /// 「查看会话」：智能体发起的任务，跳回发起它的会话。只在本次运行内有效（不落盘）。
+    bool canOpenAgentSession = false;
 };
 
 /// 一项任务在**某一刻**的样子。

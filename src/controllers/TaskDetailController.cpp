@@ -167,6 +167,14 @@ void TaskDetailController::action(const QString &key, TaskDetailPage::Action act
         QTimer::singleShot(0, this, [ask, context, instanceId] { ask(context, instanceId); });
         return;  // 页已经收了，下面那一遍重摆没有对象
     }
+    case TaskDetailPage::Action::OpenAgentSession: {
+        TaskCenter::Item fresh;
+        if (fillItem(key, &fresh) && fresh.capabilities.openAgentSession && m_host.openAgentSession) {
+            m_host.openAgentSession(key);
+            return;  // 页已让给智能体页（或弹了「会话不存在」），不再重摆这一页。
+        }
+        break;
+    }
     }
     // 取消 / 重试都会让账本立刻动起来（终态信号是同步发的），这一页上那几行跟着重摆一遍
     // —— 不重摆的话用户看到的还是"正在进行"，而底下那一批已经收尾了。
