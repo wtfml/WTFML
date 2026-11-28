@@ -29,6 +29,12 @@ bool DownloadManager::deferCheckpointContinuation(bool refreshSources) {
     m_checkpoint.reset(); // Retain the receipt; only an explicit second action may run the installer.
     return saved;
 }
+bool DownloadManager::releaseCheckpoint() {
+    if (!m_checkpoint) return false;
+    const bool saved = m_checkpoint->save();
+    m_checkpoint.reset(); // 只放锁：文件留给「继续未完成操作」，不 emit（理由见 hpp）
+    return saved;
+}
 void DownloadManager::forgetCheckpoint() {
     if (m_checkpoint) m_checkpoint->discard();
     m_checkpoint.reset();

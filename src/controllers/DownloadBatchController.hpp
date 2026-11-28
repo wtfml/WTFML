@@ -11,7 +11,12 @@ class ActivityCenterController;
 class DownloadManager;
 
 // Connects file checkpoints to the activity ledger. It never reconstructs a Java process.
+//
+// NOTE: `Q_OBJECT` 是为了 `tr()`。没有它的话 `tr` 落到 `QObject::tr`，译文上下文是
+// "QObject"，而 `assets/i18n/*.ts` 里这些条目在 "DownloadBatchController" 下 ——
+// 英文界面里会一直显示源文。
 class DownloadBatchController final : public QObject {
+    Q_OBJECT
 public:
     DownloadBatchController(ActivityCenterController *activity, DownloadManager *downloads,
         std::function<Tasks::TaskId()> activeTask, QObject *parent = nullptr);
@@ -20,7 +25,9 @@ public:
     bool owns(Tasks::TaskId id) const;
     bool canCancel(Tasks::TaskId id) const;
     bool pause(Tasks::TaskId id);
-    bool resume(Tasks::TaskId id);
+    /// 继续这一项（暂停中的批次 / 失败的批次）。@param problemOut 拒绝时回填原因 ——
+    /// 界面拿它说一句，否则用户看到的只是"按钮没反应"。
+    bool resume(Tasks::TaskId id, QString *problemOut = nullptr);
     bool cancel(Tasks::TaskId id);
     void shutdown();
     bool isRestoring() const { return (m_restoring && m_current != Tasks::invalidTaskId()) || m_verifying != Tasks::invalidTaskId(); }

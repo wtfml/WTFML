@@ -622,6 +622,17 @@ public:
     /// @return 落盘成功与否。调用方据此决定"没补上"要不要让这一批按普通下载收尾。
     bool updateCheckpointContext(const QJsonObject &context);
     bool deferCheckpointContinuation(bool refreshSources = false);
+    /// 这一批**失败**收尾时把恢复记录从下载器手里放下：落一次盘、松开锁，文件留着。
+    ///
+    /// 失败的批次留着记录是给「继续未完成操作」用的，但那份记录连同它的 `QLockFile`
+    /// 一直挂在这里的话，同一次会话里 `DownloadCheckpoint::load()` 拿不到锁 —— 按钮看着
+    /// 在、按下去什么都不会发生（`DownloadBatchController::resume()` 在 load 那一步静默
+    /// 返回 false）。成功的收尾走 `forgetCheckpoint()`（连文件一起删）。
+    ///
+    /// NOTE: 不发 `checkpointChanged()`：收尾那一头正靠 `m_current` / `m_records` 给出
+    /// 恢复入口，此时一发，`DownloadBatchController::sync()` 会把"记录路径空了"读成
+    /// "没有可恢复的东西"，当场把入口摘掉。
+    bool releaseCheckpoint();
     void forgetCheckpoint();
     void setCommitGuard(std::function<QString()> guard) { m_commitGuard = std::move(guard); }
 

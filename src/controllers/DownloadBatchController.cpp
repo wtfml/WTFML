@@ -156,25 +156,45 @@ bool DownloadBatchController::pause(Tasks::TaskId id) {
     m_activity->tasks()->setDetail(id, tr("已暂停文件下载。已保存完整分段；继续前会检查目标变化，安装器和提交阶段不可暂停。"));
     return true;
 }
-bool DownloadBatchController::resume(Tasks::TaskId id) {
-    if (m_stopping || !owns(id) || m_verifying != Tasks::invalidTaskId()) return false;
+bool DownloadBatchController::resume(Tasks::TaskId id, QString *problemOut) {
+    // 拒绝时把原因交出去："按下去一点反应都没有"和"说清为什么现在不能继续"是两回事，
+    // 而这条路上有好几个"现在不行"的早退（下载器忙、别的文件操作在跑、记录读不回来）。
+    const auto refuse = [problemOut](const QString &reason) {
+        if (problemOut != nullptr) *problemOut = reason;
+        return false;
+    };
+    if (m_stopping || !owns(id)) {
+        return refuse(tr("这一项已经不在可继续的状态。"));
+    }
+    if (m_verifying != Tasks::invalidTaskId()) {
+        return refuse(tr("这一项正在校验，请稍候再继续。"));
+    }
     const bool live = id == m_current && m_downloads->batchPaused();
-    if (!live && m_downloads->isBusy()) return false;
+    if (!live && m_downloads->isBusy()) {
+        return refuse(tr("已有下载或安装任务正在进行，请待其结束后再继续。"));
+    }
     if (!live && m_restoreAllowed && !m_restoreAllowed()) {
-        m_activity->tasks()->setDetail(id, tr("有游戏、启动或文件操作正在进行，请结束后再继续文件恢复。")); return false;
+        const QString reason = tr("有游戏、启动或文件操作正在进行，请结束后再继续文件恢复。");
+        m_activity->tasks()->setDetail(id, reason);
+        return refuse(reason);
     }
     QString problem;
     DownloadCheckpoint receipt;
-    if (!live && !receipt.load(m_records.value(id))) return false;
+    if (!live && !receipt.load(m_records.value(id))) {
+        return refuse(tr("恢复记录暂时读不出来（可能被另一处占用或已损坏），请稍后重试。"));
+    }
     const auto entries = live ? m_downloads->m_checkpoint->files : receipt.files;
     QSet<QString> roots;
     for (const auto &entry : entries) roots.insert(WriteDirectoryGuard::rootFor(QFileInfo(entry.path).absolutePath()));
     for (const auto &root : roots) if (!WriteDirectoryGuard::acquire(root, &problem)) {
-        m_activity->tasks()->setRecovery(id, QFileInfo(m_records.value(id)).fileName(), false, problem); return false;
+        m_activity->tasks()->setRecovery(id, QFileInfo(m_records.value(id)).fileName(), false, problem);
+        return refuse(problem);
     }
     if (!live && receipt.context.value("phase") == "continue-install") {
-        if (!m_continue) return false;
-        if (!m_activity->tasks()->queueRecovery(id) || !m_activity->tasks()->startQueued(id)) return false;
+        if (!m_continue) return refuse(tr("这一项不需要继续安装。"));
+        if (!m_activity->tasks()->queueRecovery(id) || !m_activity->tasks()->startQueued(id)) {
+            return refuse(tr("这一项已经不在可继续的状态。"));
+        }
         m_activity->tasks()->setDetail(id, tr("正在校验恢复文件；完成后才继续安装。"));
         auto capabilities = m_activity->tasks()->snapshot(id).capabilities;
         capabilities.canPause = false;
@@ -224,7 +244,9 @@ bool DownloadBatchController::resume(Tasks::TaskId id) {
         return true;
 
     }
-    if (!m_activity->tasks()->queueRecovery(id) || !m_activity->tasks()->startQueued(id)) return false;
+    if (!m_activity->tasks()->queueRecovery(id) || !m_activity->tasks()->startQueued(id)) {
+        return refuse(tr("这一项已经不在可继续的状态。"));
+    }
     m_activity->tasks()->setDetail(id, tr("正在后台校验下载目标；完成后才恢复文件下载。"));
     auto caps = m_activity->tasks()->snapshot(id).capabilities;
     caps.canPause = false; caps.canCancel = true; caps.cancelBlockedReason.clear();
@@ -298,7 +320,13 @@ void DownloadBatchController::complete(bool success) {
     if (success) {
         m_downloads->forgetCheckpoint(); m_records.remove(id);
         m_activity->tasks()->setRecovery(id, {}, false);
-    } else m_activity->tasks()->setRecovery(id, QFileInfo(m_records.value(id)).fileName(), true);
+    } else {
+        // 记录留给「继续未完成操作」，但锁**必须放掉**：同一次会话里那颗按钮要靠
+        // `resume()` 重新 load 这份记录，而 load() 拿不到下载器攥着的锁时只静默返回
+        // false（按钮看着在，按下去一点反应都没有）。
+        m_downloads->releaseCheckpoint();
+        m_activity->tasks()->setRecovery(id, QFileInfo(m_records.value(id)).fileName(), true);
+    }
     m_current = Tasks::invalidTaskId(); m_restoring = false;
 }
 bool DownloadBatchController::cancel(Tasks::TaskId id) {

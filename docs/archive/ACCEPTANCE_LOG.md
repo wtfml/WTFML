@@ -331,3 +331,4 @@ python tools/acceptance_directory_boundary.py --exe <WTFMinecraftLauncher.exe> -
 2026-11-28｜排查 #162，修复取消测试启动后旧准备回调影响新任务，以及进程退出前销毁 `QProcess`｜修复前取消后立即重启可在 `QFutureWatcher::result()` 处触发 `0xC0000005`，修复后取消重启 15/15、启停模组后游戏替身自行退出 20/20、自动结束 20/20，自动结束无 `QProcess` 析构警告｜原报告的任务栏缩略图发黑未复现，待原实例和现场日志核对。
 
 2026-11-28｜排查 #163 的测试启动进程、相邻模型请求、重复计划与 Auto-safe｜`core-agent` 1600/1600、`main-window-agent` 144/144。Windows 游戏替身在修复前留下子进程，改为创建进程时加入 Job Object 后，子进程创建可见窗口并随测试结束退出 10/10｜相邻请求的前缀和缓存统计用本地 HTTP 夹具验证，原整合包和服务商实际缓存命中率待复验。
+2026-11-28｜核对下载失败后「继续未完成操作」没反应与日志里反复出现的版本 json 读取失败｜失败批次收尾时下载器不再攥着恢复记录（修前 `resume()` 在 `DownloadCheckpoint::load()` 处因锁被占返回 false，新用例先红后绿），拒绝时给出原因；父版本缺失的那份 json 每次会话只读一遍、只告警一遍，父版本装好后下一次询问即可见。`mw_check_high_speed_download`、`verify_instances` 新增回归，core-downloads、core-install、core-instances、network、window、workspace、presets、mods 共 13 项通过｜未复跑真机 26.4-pre-2-Fabric 安装（缺当时那条网络失败），英文译文按新增条目补齐。

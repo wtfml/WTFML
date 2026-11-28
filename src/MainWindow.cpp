@@ -812,7 +812,17 @@ MainWindow::MainWindow(QWidget *parent)
                 if (ok && m_downloadBatches && m_downloadBatches->owns(id)) {
                     const auto task = m_activityCenter->tasks()->snapshot(id);
                     if (task.kind == Tasks::TaskKind::Import && retryWouldWork(task)) retryTaskFromDetail(key);
-                    else m_downloadBatches->resume(id);
+                    else {
+                        // 拒绝时**说出来**：这条路上"现在不行"的原因不止一种（下载器忙、
+                        // 别的文件操作在跑、恢复记录读不回来），而屏幕上只写一句"没反应"
+                        // 的话，用户只能反复点同一颗按钮。
+                        QString problem;
+                        if (!m_downloadBatches->resume(id, &problem)) {
+                            InlineMessage::information(
+                                m_ui->overlay(), tr("暂时无法继续"),
+                                problem.isEmpty() ? tr("请稍后重试。") : problem);
+                        }
+                    }
                     return;
                 }
                 if (ok && m_presetController && m_presetController->ownsModTask(id)) { m_presetController->resumeModDownload(id); return; }

@@ -77,6 +77,9 @@ int runDownloadBatchChecks(QApplication &app) {
     int requests = 0;
     std::function<void()> beforeResponse;
     bool holdSecond = true;
+    // `/missing` 一开始回 404（确定失败、不会被自动重试），把这个打开之后照常回正文 ——
+    // 「失败之后同一次会话里继续」那一条要用它把第二批做成成功的。
+    bool serveMissing = false;
     QObject::connect(&server, &QTcpServer::newConnection, &server, [&] {
         while (server.hasPendingConnections()) {
             auto *socket = server.nextPendingConnection();
@@ -85,10 +88,14 @@ int runDownloadBatchChecks(QApplication &app) {
                 if (!input.contains("\r\n\r\n") || socket->property("sent").toBool()) return;
                 socket->setProperty("sent", true); ++requests;
                 if (beforeResponse) { auto action = std::move(beforeResponse); beforeResponse = {}; action(); }
+                const auto path = input.split(' ').value(1);
+                if (path.startsWith("/missing") && !serveMissing) {
+                    socket->write("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+                    socket->disconnectFromHost(); return;
+                }
                 if (input.split(' ').value(1).startsWith("/hold") && holdSecond) {
                     socket->write("HTTP/1.1 200 OK\r\nContent-Length: " + QByteArray::number(payload.size()) + "\r\n\r\nc"); return;
                 }
-                const auto path = input.split(' ').value(1);
                 const auto body = path.startsWith("/named-meta") ? namedMetadata : path.startsWith("/named-manifest") ? namedManifest : payload;
                 socket->write("HTTP/1.1 200 OK\r\nContent-Length: " + QByteArray::number(body.size()) + "\r\nConnection: close\r\n\r\n");
                 socket->write(body); socket->disconnectFromHost();
@@ -694,6 +701,53 @@ int runDownloadBatchChecks(QApplication &app) {
         expect(wait([&] { return activity.tasks()->snapshot(id).state == Tasks::TaskState::Succeeded; }) && read(target) == payload,
             "resumed replacement publishes verified full body");
         tool.shutdown();
+    }
+    {
+        // 失败收尾之后，**同一次会话**里的「继续未完成操作」要读得回恢复记录。
+        // NOTE: 记录连同它的 QLockFile 原本一直挂在下载器手里，`DownloadCheckpoint::load()`
+        // 因此拿不到锁 —— `resume()` 一声不响返回 false，界面上那颗按钮就成了"按了没反应"。
+        const auto root = fixture.filePath("failed-then-continue"); QDir().mkpath(root);
+        ActivityCenterController activity; activity.tasks()->setHistoryPath(root + "/tasks.json");
+        const auto id = activity.begin(Tasks::TaskKind::Install, QStringLiteral("失败后继续"));
+        DownloadManager downloads; downloads.setSegmentedDownloadEnabled(false);
+        // 真实链路里执行器的终态（`versionDownloadFinished`）排在 `onAllDownloadsFinished` 的
+        // 同一摞信号里，**先于**批次的收尾入账（任务先成终态、批次再记恢复入口）。
+        // 这里用同一顺序搭出那个现场。
+        QObject::connect(&downloads, &DownloadManager::allDownloadsFinished, &downloads,
+            [&](bool ok) { if (!ok) activity.finish(id, false, QStringLiteral("模拟下载失败"), false); });
+        DownloadBatchController batches(&activity, &downloads, [&] { return id; });
+        int continued = 0;
+        batches.setContinuation([&] { return QJsonObject{{"kind", "failed-then-continue"}}; },
+            [&](Tasks::TaskId task, const QJsonObject &) {
+                ++continued; activity.finish(task, true, {}, false); return true;
+            });
+        const auto target = root + "/file.bin";
+        serveMissing = false;
+        downloads.beginBatch();
+        downloads.downloadFile(QString(url).replace("/file?", "/missing?"), target, {}, -1);
+        downloads.endBatch();
+        expect(wait([&] { return !downloads.isBusy(); })
+                   && activity.tasks()->snapshot(id).state == Tasks::TaskState::Failed,
+               "a failed download batch records the failure");
+        expect(batches.owns(id) && activity.tasks()->snapshot(id).capabilities.canRecover,
+               "the failed batch keeps its recovery entry and offers continue");
+        serveMissing = true;
+        QString continueProblem;
+        const bool resumed = batches.resume(id, &continueProblem);
+        if (!resumed) printf("batch: same-session resume refused: %s\n", qPrintable(continueProblem));
+        expect(resumed, "the same session can reload the receipt a failed batch left behind");
+        expect(wait([&] { return !batches.isRestoring(); }) && continued == 0 && read(target) == payload,
+               "continuing a failed batch refills only the recorded files");
+        expect(activity.tasks()->snapshot(id).state == Tasks::TaskState::Paused
+                   && activity.tasks()->snapshot(id).capabilities.canRecover,
+               "the refilled operation waits for an explicit second click before continuing");
+        continueProblem.clear();
+        const bool continuedAgain = batches.resume(id, &continueProblem);
+        if (!continuedAgain) printf("batch: second continue refused: %s\n", qPrintable(continueProblem));
+        expect(continuedAgain && wait([&] { return continued == 1; }),
+               "the second click continues the original operation exactly once");
+        expect(activity.tasks()->snapshot(id).state == Tasks::TaskState::Succeeded && !batches.owns(id),
+               "the continued operation finishes and retires its receipt");
     }
     return failures;
 }
