@@ -1295,6 +1295,10 @@ void VersionManager::clearVersionJsonCache() {
     // 而这里丢一次的成本只是下次读一遍那几个 json（几毫秒）。
     versionJsons.clear();
     mergedVersionJsons.clear();
+    // 这两张"读不出来"的表跟着一起丢：它们记的是**这一份目录**里的状态（同一条理由 ——
+    // 换文件夹之后同名版本是另一样东西，旧路径也不一定还在）。
+    m_unreadableVersionJsons.clear();
+    m_reportedInheritance.clear();
     // 元数据缓存按**完整路径**做键，换文件夹本来就不会串；这里一起丢掉是为了别让
     // 上一份目录的那几百格留在表里（那些路径在接下来的会话里不会再被读到）。
     m_metaCache.clear();
@@ -1313,8 +1317,35 @@ QJsonObject VersionManager::rawVersionJson(const QString &versionId) const {
     // 里面的 json 还叫老名字，硬拼会读不到，表现就是"实例认出来了、启动却说
     // 版本信息缺失"。认出来和还能启动是两件事。
     const QString jsonPath = InstanceFiles::jsonPath(versionId);
+
+    // 上一次问的时候它就不在 / 读不动（见 `m_unreadableVersionJsons`）：先比一下"还是
+    // 那一份吗"。还是一样就直接给空 —— 不重读、也不再刷一条同样的警告（日志里同一行刷
+    // 十几遍是用户报过来的真问题）；一变就往下走，当没这回事。
+    const QFileInfo jsonInfo(jsonPath);
+    const bool jsonExists = jsonInfo.exists();
+    const qint64 jsonSize = jsonExists ? jsonInfo.size() : -1;
+    const qint64 jsonModifiedMs = jsonExists
+        ? jsonInfo.fileTime(QFileDevice::FileModificationTime).toMSecsSinceEpoch()
+        : 0;
+    const auto rememberUnreadable = [&] {
+        m_unreadableVersionJsons.insert(jsonPath, UnreadableJsonEntry{jsonSize, jsonModifiedMs});
+        // 和 m_metaCache 同一个上界：数据目录来回切时旧路径会留在表里，过了这个数就整表
+        // 丢掉重来（这里没有"热"可言，按 LRU 记账不划算）。
+        if (m_unreadableVersionJsons.size() > kMaxMetaCacheEntries) {
+            m_unreadableVersionJsons.clear();
+            m_unreadableVersionJsons.insert(jsonPath,
+                                            UnreadableJsonEntry{jsonSize, jsonModifiedMs});
+        }
+    };
+    const auto previous = m_unreadableVersionJsons.constFind(jsonPath);
+    if (previous != m_unreadableVersionJsons.constEnd()
+        && previous->size == jsonSize && previous->modifiedMs == jsonModifiedMs) {
+        return QJsonObject();
+    }
+
     QFile jsonFile(jsonPath);
-    if (!jsonFile.exists() || !jsonFile.open(QIODevice::ReadOnly)) {
+    if (!jsonExists || !jsonFile.open(QIODevice::ReadOnly)) {
+        rememberUnreadable();
         qWarning() << "Version JSON not found on disk:" << jsonPath;
         return QJsonObject();
     }
@@ -1323,10 +1354,12 @@ QJsonObject VersionManager::rawVersionJson(const QString &versionId) const {
     const QJsonDocument doc = QJsonDocument::fromJson(jsonFile.readAll(), &parseError);
     jsonFile.close();
     if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
+        rememberUnreadable();
         qWarning() << "Failed to parse" << jsonPath << ":" << parseError.errorString();
         return QJsonObject();
     }
 
+    m_unreadableVersionJsons.remove(jsonPath);
     // 填回缓存，同一次会话里不再重复读盘
     versionJsons[versionId] = doc.object();
     return doc.object();
@@ -1367,8 +1400,14 @@ QJsonObject VersionManager::getVersionJson(const QString &versionId) const {
 
         const QJsonObject parent = rawVersionJson(parentId);
         if (parent.isEmpty()) {
-            qWarning() << "Version" << versionId << "inherits from" << parentId
-                       << "which is not installed — cannot merge";
+            // 一次会话只说一次：父版本没装时这里每刷新一轮实例都会走到，而日志里
+            // 同一句刷十几遍只是噪声（根因是"父版本没装"，它不会因为重复而更清楚）。
+            const QString reportKey = versionId + QLatin1Char('\n') + parentId;
+            if (!m_reportedInheritance.contains(reportKey)) {
+                m_reportedInheritance.insert(reportKey);
+                qWarning() << "Version" << versionId << "inherits from" << parentId
+                           << "which is not installed — cannot merge";
+            }
             break;
         }
         merged = VersionInheritance::merge(merged, parent);

@@ -10,6 +10,7 @@
 #include <QJsonObject>
 #include <QFuture>
 #include <QObject>
+#include <QSet>
 #include <QStringList>
 
 #include <functional>
@@ -1944,6 +1945,25 @@ private:
         mutable QString type;               ///< json 自己写的 "type"（可能是空串）
     };
     mutable QMap<QString, MergedJsonEntry> mergedVersionJsons;
+    /// **读不出来**的版本 json（文件不在 / 打不开 / 解析不过）：键是完整路径，值是那一次
+    /// 看到的那一份（在不在、字节数、修改时刻）。
+    ///
+    /// 为什么要有它：实例树每重灌一次就对每个薄 json 实例问几遍合并结果；父版本没装时
+    /// 那一问会重读一次父版本的 json、再落一条 qWarning，于是日志里同一行刷十几遍，
+    /// 真正的线索反被淹掉（`rawVersionJson()` 早就说了"取不到不缓存" —— 这里不缓存内容，
+    /// 只记"上一次看的时候它是什么样"）。下一次先比在不在 / 字节数 / 修改时刻：一模一样
+    /// 就当场给空、既不重读也不重复告警；盘上那份一变（比如用户把父版本装上了）就一定
+    /// 不相等，照旧重新读。
+    ///
+    /// 跟着 `clearVersionJsonCache()` 一起清（换 .minecraft 那一条）。
+    struct UnreadableJsonEntry {
+        qint64 size = -1;
+        qint64 modifiedMs = 0;
+    };
+    mutable QHash<QString, UnreadableJsonEntry> m_unreadableVersionJsons;
+    /// 已经说过一次的"继承链断了"（`versionId + '\n' + parentId`）。同一条理由：那个循环
+    /// 在父版本没装时每次问都会走到，日志里同一句刷十几遍没有额外信息。
+    mutable QSet<QString> m_reportedInheritance;
     /// 取合并 json 那一格（缓存里没有就先取一次；取不到 / 继承链没走完 ⇒ nullptr）。
     /// 只在 instanceTraits() 用得上；`getVersionJson()` 不给指针是因为调用方要的是内容。
     const MergedJsonEntry *mergedJsonEntry(const QString &versionId) const;

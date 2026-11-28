@@ -1,5 +1,17 @@
 #include "Support.hpp"
 
+namespace {
+/// 数 `rawVersionJson()` 那句"文件不在"的告警（QQ7 那一条用）。
+/// NOTE: 处理器必须是**自由函数**（QtMessageHandler 就是个函数指针，带捕获的 lambda
+/// 换不过去），所以计数放在文件作用域。
+int g_missingJsonWarnings = 0;
+void countMissingJsonWarnings(QtMsgType, const QMessageLogContext &, const QString &message) {
+    if (message.contains(QLatin1String("Version JSON not found on disk"))) {
+        ++g_missingJsonWarnings;
+    }
+}
+}  // namespace
+
 // ---------------------------------------------------------------------------
 // P. 实例特征（加载器 + 版本类型）：一次问清楚，缓存跟着 json 缓存走
 //
@@ -164,6 +176,40 @@ int runInstanceTraitsTests(const QString &sandbox) {
               "QQ5 换过来的版本号也对（只切第一个横杠）", traits.loaderVersion);
     }
 
+    // ---- QQ7：父版本没装时，那份不存在的 json 一次会话里只读一遍、只告警一遍 ----
+    //
+    // 真机日志里 "Version JSON not found on disk" 刷了十几遍（实例树每重灌一次就重问一遍
+    // 同一个父版本）。判据：三连问只落一条告警，不重读；父版本装上去之后下一问就看得见。
+    const QString orphanId = QStringLiteral("QQ-没父版本");
+    const QString orphanParentId = QStringLiteral("QQ-压根没装的父版本");
+    writeJson(orphanId, QByteArray("{\"id\":\"QQ-没父版本\",\"inheritsFrom\":\"")
+                          + orphanParentId.toUtf8() + "\"}");
+    {
+        g_missingJsonWarnings = 0;
+        const QtMessageHandler previous = qInstallMessageHandler(countMissingJsonWarnings);
+        for (int round = 0; round < 3; ++round) {
+            const VersionManager::InstanceTraits traits = vm.instanceTraits(orphanId);
+            check(traits.loaderName.isEmpty(),
+                  QStringLiteral("QQ7 父版本没装时问不出加载器（第 %1 轮）").arg(round + 1));
+        }
+        qInstallMessageHandler(previous);
+        check(g_missingJsonWarnings == 1,
+              "QQ7 不存在的那份版本 json 只告警一次（不是每轮刷新一次）",
+              QString::number(g_missingJsonWarnings));
+    }
+    // 盘上那份一变（这里是父版本装上了）就一定重读 —— "读不到就不缓存"那条规矩不能被
+    // 这一层记的"上次没有"吃掉。
+    writeJson(orphanParentId, R"({"id":"QQ-压根没装的父版本","type":"release",
+        "libraries":[{"name":"net.fabricmc:fabric-loader:0.16.14"}]})");
+    {
+        const VersionManager::InstanceTraits traits = vm.instanceTraits(orphanId);
+        check(traits.loaderName == QStringLiteral("Fabric")
+                  && traits.loaderVersion == QStringLiteral("0.16.14"),
+              "QQ7 父版本装好之后下一问就看得见（不留在「上次没有」上）",
+              traits.loaderName + "/" + traits.loaderVersion);
+        check(traits.type == QStringLiteral("release"), "QQ7 类型也跟着继承上来", traits.type);
+    }
+
     // ---- 走之前把自己造的目录删干净 ----
     // NOTE: sandbox 是所有实例测试共用的。薄 json 那个目录（有 inheritsFrom、没有顶层
     // jar）在 installedVersions() 里会被当成"上一次没导完的整合包"报一条告警 —— 留着它，
@@ -171,7 +217,7 @@ int runInstanceTraitsTests(const QString &sandbox) {
     // 挡法，只能由造它的人自己收拾（并且回头看一眼删掉没有）。
     QStringList leftovers;
     for (const QString &id :
-         {fabricId, parentId, thinId, vanillaId, metaId, swapId}) {
+         {fabricId, parentId, thinId, vanillaId, metaId, swapId, orphanId, orphanParentId}) {
         QDir(AppPaths::versionDir(id)).removeRecursively();
         if (QDir(AppPaths::versionDir(id)).exists()) {
             leftovers.append(id);
