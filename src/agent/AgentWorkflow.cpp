@@ -167,8 +167,7 @@ QString AgentWorkflow::planPreview() const {
         }
         ++index;
     }
-    text += QCoreApplication::translate("AgentWorkflow", "注意：批准计划不等于批准所有写入，每个写步骤仍需单独审批。");
-    return text;
+    return text.trimmed();
 }
 
 void AgentWorkflow::approvePlan(bool approved) {

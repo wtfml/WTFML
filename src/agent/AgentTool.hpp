@@ -78,6 +78,7 @@ public:
     virtual bool handles(const QString &internalName) const = 0;
     /// 只有会回 `Pending` 的引擎需要接这条线；同步引擎忽略。
     virtual void setCompletionSink(AgentToolSink sink) { Q_UNUSED(sink); }
+    virtual bool allowsResultReuse(const Agent::ToolCall &) const { return true; }
 };
 
 class AgentToolRegistry {

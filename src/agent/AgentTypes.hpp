@@ -86,6 +86,8 @@ struct Message {
     /// 错误卡片上的用户可读说明；成功消息为空。
     QString errorText;
     ErrorKind errorKind = ErrorKind::None;
+    /// 发给模型的本轮快照。随用户消息保存，后续发送沿用同一份前缀。
+    QString modelContext;
 
     bool empty() const { return id.isEmpty(); }
 
@@ -99,6 +101,9 @@ struct Message {
                                                 : QString()}};
         if (!reasoning.isEmpty()) {
             object.insert(QStringLiteral("reasoning"), reasoning);
+        }
+        if (!modelContext.isEmpty()) {
+            object.insert(QStringLiteral("modelContext"), modelContext);
         }
         if (!toolCalls.isEmpty()) {
             QJsonArray calls;
@@ -126,6 +131,7 @@ struct Message {
         message.role = roleFromKey(object.value(QStringLiteral("role")).toString());
         message.content = object.value(QStringLiteral("content")).toString();
         message.reasoning = object.value(QStringLiteral("reasoning")).toString();
+        message.modelContext = object.value(QStringLiteral("modelContext")).toString();
         message.status = statusFromKey(object.value(QStringLiteral("status")).toString());
         message.createdAt =
             QDateTime::fromString(object.value(QStringLiteral("createdAt")).toString(),
@@ -145,19 +151,25 @@ struct Usage {
     int promptTokens = 0;
     int completionTokens = 0;
     bool estimated = false;
+    int cachedPromptTokens = -1;  ///< -1 表示服务商未返回缓存统计。
 
     bool isValid() const { return promptTokens > 0 || completionTokens > 0; }
 
     QJsonObject toJson() const {
-        return QJsonObject{{QStringLiteral("promptTokens"), promptTokens},
+        QJsonObject object{{QStringLiteral("promptTokens"), promptTokens},
                            {QStringLiteral("completionTokens"), completionTokens},
                            {QStringLiteral("estimated"), estimated}};
+        if (cachedPromptTokens >= 0) {
+            object.insert(QStringLiteral("cachedPromptTokens"), cachedPromptTokens);
+        }
+        return object;
     }
     static Usage fromJson(const QJsonObject &object) {
         Usage usage;
         usage.promptTokens = object.value(QStringLiteral("promptTokens")).toInt();
         usage.completionTokens = object.value(QStringLiteral("completionTokens")).toInt();
         usage.estimated = object.value(QStringLiteral("estimated")).toBool();
+        usage.cachedPromptTokens = object.value(QStringLiteral("cachedPromptTokens")).toInt(-1);
         return usage;
     }
 };

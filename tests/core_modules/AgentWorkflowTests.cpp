@@ -265,6 +265,13 @@ void runAgentWorkflowTests() {
     check(workflow.evidenceIds().contains(QStringLiteral("E9")), "工作流：执行结果进证据账");
     check(workflow.statusJson().value(QStringLiteral("executedSteps")).toInt() == 1,
           "工作流：执行步数推进");
+    Agent::ToolCall resubmitted = submit;
+    resubmitted.arguments.insert(QStringLiteral("goal"), QStringLiteral("复核冲突模组"));
+    const AgentToolResult repeated = composite.invoke(resubmitted);
+    check(repeated.status == AgentToolResult::Status::Ok &&
+              repeated.data.value(QStringLiteral("reusedRepeat")).toBool() &&
+              workflow.planApproved() && workflow.nextStepIndex() == 1 && fileEngine.calls == 1,
+          "#163 重复提交同一计划时保留已批准的进度");
 
     // ---------- 顺序闸：不能跳步 ----------
     gated = composite.invoke(callFor(QStringLiteral("mods.setEnabled"),

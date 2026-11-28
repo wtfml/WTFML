@@ -49,11 +49,11 @@ public:
                 reply.message.status = Agent::MessageStatus::Complete;
                 Agent::ToolCall call;
                 call.id = QStringLiteral("call-1");
-                call.name = QStringLiteral("fs.list");
+                call.name = toolName;
                 // 每轮换一个路径：默认同一个参数会被 `AgentLoop` 的去重（kRepeatReuseWindow）
                 // 直接复用，测不到"不设限"那一条。
                 call.arguments = QJsonObject{
-                    {QStringLiteral("path"), QStringLiteral("dir-%1").arg(toolRounds)}};
+                    {QStringLiteral("path"), QStringLiteral("dir-%1").arg(repeatArguments ? 1 : toolRounds)}};
                 reply.message.toolCalls.append(call);
                 emit finished(request.requestId, reply);
             });
@@ -91,6 +91,8 @@ public:
     /// 连续发几轮工具调用（默认 1 = 老行为：只发一次，之后收尾）。
     int toolRoundLimit = 1;
     bool useTools = false;
+    bool repeatArguments = false;
+    QString toolName = QStringLiteral("fs.list");
     QList<int> behaviours;
     QList<Agent::ModelRequest> requests;
     QStringList cancelled;
@@ -494,9 +496,11 @@ void runAgentLoopTests() {
               QString::number(loop.sessionToolCalls()));
     }
     {
-        // 同一工具 + 同一参数重复调用：第二次直接复用上次结果，不再走一次往返。
+        // 同一轮反复要求同一份只读结果：只执行一次，连续复用时收尾。
         FakeModelClient client;
         client.useTools = true;
+        client.repeatArguments = true;
+        client.toolRoundLimit = 10;
         FakeToolEngine firstEngine;
         AgentLoop loop(&client);
         loop.setToolEngine(&firstEngine);
@@ -510,21 +514,12 @@ void runAgentLoopTests() {
         check(waitFor([&] { return loop.state() == AgentLoop::State::AwaitingApproval; }),
               "Loop 去重：第一次调用照常审批");
         loop.resolveApproval(true);
-        check(waitFor([&] { return loop.state() == AgentLoop::State::Completed; }),
-              "Loop 去重：第一次调用完成");
-
-        // 模型再发一次**完全一样**的调用：不去问执行器，直接抄上次的结果。
-        client.toolRounds = 0;
-        FakeToolEngine secondEngine;
-        loop.setToolEngine(&secondEngine);
-        loop.setHistory({user(QStringLiteral("再查一次同一个目录"))});
-        loop.start();
-        check(waitFor([&] { return loop.state() == AgentLoop::State::Completed ||
-                                    loop.state() == AgentLoop::State::AwaitingApproval; }),
-              "Loop 去重：第二次请求回来了");
-        check(secondEngine.invokeCount == 0,
-              "Loop 去重：同参数同工具第二次没有真正执行",
-              QString::number(secondEngine.invokeCount));
+        check(waitFor([&] { return loop.state() == AgentLoop::State::Failed; }),
+              "#163 连续只重复读同一份结果时停止循环");
+        check(firstEngine.invokeCount == 1 && client.starts == AgentLoop::kRepeatReuseWindow + 1,
+              "#163 同参数只读工具只执行一次", QString::number(firstEngine.invokeCount));
+        check(loop.assistantMessage().toolCalls.isEmpty(),
+              "#163 循环停止时的错误消息没有待执行工具");
         bool sawReuse = false;
         for (const Agent::Message &message : loop.history()) {
             if (message.role == Agent::Role::Tool &&
@@ -533,6 +528,38 @@ void runAgentLoopTests() {
             }
         }
         check(sawReuse, "Loop 去重：结果里标了 reusedRepeat");
+        client.toolRounds = 0;
+        loop.setHistory({user(QStringLiteral("重新检查目录"))});
+        loop.start();
+        check(waitFor([&] { return loop.state() == AgentLoop::State::AwaitingApproval; }) &&
+                  firstEngine.invokeCount == 2,
+              "#163 新一轮显式检查会重新执行工具");
+        loop.cancel();
+    }
+    {
+        FakeModelClient client;
+        client.useTools = true;
+        client.repeatArguments = true;
+        client.toolRoundLimit = 2;
+        client.toolName = QStringLiteral("instance.testLaunch");
+        FakeToolEngine engine;
+        AgentLoop loop(&client);
+        loop.setToolEngine(&engine);
+        AgentLoop::Config config;
+        config.profile.baseUrl = QStringLiteral("https://api.example.com/v1");
+        config.profile.model = QStringLiteral("m");
+        config.apiKey = QStringLiteral("k");
+        loop.setConfig(config);
+        loop.setHistory({user(QStringLiteral("启动验证两次"))});
+        loop.start();
+        const auto waiting = [&] { return loop.state() == AgentLoop::State::AwaitingApproval; };
+        check(waitFor(waiting), "#163 第一次测试启动进入审批");
+        loop.resolveApproval(true);
+        check(waitFor(waiting) && engine.invokeCount == 2,
+              "#163 同参数测试启动仍走第二次实际调用");
+        loop.resolveApproval(true);
+        check(waitFor([&] { return loop.state() == AgentLoop::State::Completed; }) && engine.resolvedCount == 2,
+              "#163 测试启动的两次独立结果均来自执行器");
     }
     {
         FakeModelClient client;

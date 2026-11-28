@@ -88,4 +88,15 @@ void runAgentProviderAdapterTests() {
     check(messages.at(2).toObject().value(QStringLiteral("reasoning_content")).toString() ==
               QStringLiteral("think"),
           "adapter：reasoning 按 send-back 回传");
+
+    profile.baseUrl = QStringLiteral("https://api.openai.com/v1");
+    profile.stream = true;
+    const auto openAi = AgentProviderAdapters::buildRequest(profile, {user}, {}, {});
+    check(openAi.value(QStringLiteral("stream_options")).toObject()
+              .value(QStringLiteral("include_usage")).toBool(),
+          "#163 OpenAI 流式请求要求返回用量");
+    profile.baseUrl = QStringLiteral("https://api.example.com/v1");
+    check(!AgentProviderAdapters::buildRequest(profile, {user}, {}, {})
+              .contains(QStringLiteral("stream_options")),
+          "#163 兼容端点保留原有流式请求选项");
 }

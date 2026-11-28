@@ -34,6 +34,7 @@ public:
     }
 
     QJsonArray schemas() const override;
+    bool allowsResultReuse(const Agent::ToolCall &call) const override;
     AgentToolResult invoke(const Agent::ToolCall &call) override;
     AgentToolResult resolveApproval(const QString &approvalId, bool approved) override;
     AgentToolResult resolveSessionApproval(const QString &approvalId) override;

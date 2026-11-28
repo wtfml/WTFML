@@ -146,6 +146,9 @@ void AgentLoop::start() {
     m_toolSteps = 0;
     m_nextToolCall = 0;
     m_toolQueue.clear();
+    m_recentResults.clear();
+    m_reusedToolRounds = 0;
+    m_invokedToolThisRound = false;
     m_approvalId.clear();
     m_cancelled = false;
     m_lastError = {};
@@ -170,6 +173,9 @@ void AgentLoop::retry() {
     m_toolSteps = 0;
     m_nextToolCall = 0;
     m_toolQueue.clear();
+    m_recentResults.clear();
+    m_reusedToolRounds = 0;
+    m_invokedToolThisRound = false;
     m_approvalId.clear();
     m_cancelled = false;
     m_lastError = {};
@@ -301,6 +307,7 @@ void AgentLoop::handleFailed(const QString &requestId, const Agent::Error &error
 void AgentLoop::deliverFailure(const Agent::Error &error) {
     m_lastError = error;
     m_assistantAppended = false;
+    m_assistant = {};
     m_assistant.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     m_assistant.role = Agent::Role::Assistant;
     m_assistant.status = Agent::MessageStatus::Error;
@@ -336,11 +343,13 @@ void AgentLoop::processToolCalls() {
             return;
         }
         const Agent::ToolCall call = m_toolQueue.at(m_nextToolCall);
-        // 同一工具 + 完全相同的参数刚成功过：复用那一次的结果，不再花一次往返。
-        if (reuseRepeatedResult(call)) {
+        const bool reusable = canReuseResult(call);
+        if (reusable && m_toolEngine != nullptr && m_toolEngine->allowsResultReuse(call) &&
+            reuseRepeatedResult(call)) {
             ++m_nextToolCall;
             continue;
         }
+        if (!reusable) m_recentResults.clear();
         emit toolCallStarted(call);
         if (m_toolEngine == nullptr) {
             AgentToolResult result;
@@ -372,6 +381,15 @@ void AgentLoop::processToolCalls() {
     }
     m_toolQueue.clear();
     m_nextToolCall = 0;
+    m_reusedToolRounds = m_invokedToolThisRound ? 0 : m_reusedToolRounds + 1;
+    m_invokedToolThisRound = false;
+    if (m_reusedToolRounds >= kRepeatReuseWindow) {
+        Agent::Error error;
+        error.kind = Agent::ErrorKind::ToolError;
+        error.message = tr("智能体因重复调用已停止。可基于现有结果继续提问。");
+        deliverFailure(error);
+        return;
+    }
     m_toolSteps += 1;
     if (m_config.maxToolSteps > 0 && m_toolSteps > m_config.maxToolSteps) {
         Agent::Error error;
@@ -386,6 +404,7 @@ void AgentLoop::processToolCalls() {
 
 void AgentLoop::handleToolOutcome(const Agent::ToolCall &call, const AgentToolResult &result,
                                   bool recordForReuse) {
+    if (!result.data.value(QStringLiteral("reusedRepeat")).toBool()) m_invokedToolThisRound = true;
     Agent::Message toolMessage;
     toolMessage.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     toolMessage.role = Agent::Role::Tool;
@@ -404,14 +423,21 @@ void AgentLoop::handleToolOutcome(const Agent::ToolCall &call, const AgentToolRe
     toolMessage.content = QString::fromUtf8(QJsonDocument(body).toJson(QJsonDocument::Compact));
     m_history.append(toolMessage);
     m_sessionToolCalls += 1;
-    // 记住这次结果：同一签名短时间内再来直接复用（`reuseRepeatedResult`）。只记成功的 ——
-    // 失败的那一次往往就是模型想重试的理由。
-    if (recordForReuse && result.status == AgentToolResult::Status::Ok) {
+    // 失败也占用最近调用窗口，重试时仍走工具执行；只有成功结果可以复用。
+    if (recordForReuse && canReuseResult(call)) {
         m_recentResults.append({callSignature(call), result});
         while (m_recentResults.size() > kRepeatReuseWindow) m_recentResults.removeFirst();
     }
     emit messageAdded(toolMessage);
     emit toolCallFinished(call, result);
+}
+
+bool AgentLoop::canReuseResult(const Agent::ToolCall &call) {
+    const QString name = AgentToolRegistry::internalName(call.name);
+    const AgentToolSpec spec = AgentToolRegistry::find(name);
+    return !spec.name.isEmpty() && spec.risk == AgentRisk::ReadOnly &&
+           !name.startsWith(QStringLiteral("workflow.")) &&
+           name != QStringLiteral("launcher.openPage") && name != QStringLiteral("upgrade.openWizard");
 }
 
 QString AgentLoop::callSignature(const Agent::ToolCall &call) {
@@ -427,9 +453,10 @@ QString AgentLoop::callSignature(const Agent::ToolCall &call) {
 
 bool AgentLoop::reuseRepeatedResult(const Agent::ToolCall &call) {
     const QString signature = callSignature(call);
-    for (const auto &entry : std::as_const(m_recentResults)) {
-        if (entry.first != signature) continue;
-        AgentToolResult reused = entry.second;
+    for (auto entry = m_recentResults.crbegin(); entry != m_recentResults.crend(); ++entry) {
+        if (entry->first != signature) continue;
+        if (entry->second.status != AgentToolResult::Status::Ok) return false;
+        AgentToolResult reused = entry->second;
         reused.summary = tr("与上一次调用参数相同，已复用上次结果（没有重新执行）。") +
                          (reused.summary.isEmpty() ? QString() : QLatin1Char('\n') + reused.summary);
         reused.data.insert(QStringLiteral("reusedRepeat"), true);

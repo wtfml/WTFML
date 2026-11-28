@@ -117,6 +117,11 @@ bool AgentCompositeToolEngine::handles(const QString &internalName) const {
     return findEngine(internalName) != nullptr;
 }
 
+bool AgentCompositeToolEngine::allowsResultReuse(const Agent::ToolCall &call) const {
+    return m_workflow == nullptr || !m_workflow->requiresPlan() ||
+           !m_workflow->stepAllows(AgentToolRegistry::internalName(call.name));
+}
+
 QJsonArray AgentCompositeToolEngine::schemas() const {
     QJsonArray result;
     const AgentSkill skill = m_workflow != nullptr ? m_workflow->skill() : AgentSkill{};
@@ -206,15 +211,18 @@ AgentToolResult AgentCompositeToolEngine::invoke(const Agent::ToolCall &call) {
     const AgentToolResult raw = engine->invoke(routed);
     if (raw.status == AgentToolResult::Status::Pending) return raw;  // 结果从 sink 回来
     if (raw.status == AgentToolResult::Status::ApprovalRequired) {
-        const QString approvalId = raw.approval.value(QStringLiteral("approvalId")).toString();
-        if (!approvalId.isEmpty()) {
-            m_approvalOwner.insert(approvalId, engine);
-            m_approvalCalls.insert(approvalId, routed);
-        }
         // Auto-safe 授权的写/启动工具在这里替用户点"允许"；范围外的仍旧交给 UI。
         const AgentToolResult result = applyAutoSafe(routed, raw, engine);
-        if (result.status == AgentToolResult::Status::ApprovalRequired) return result;
-        if (result.data.value(QStringLiteral("autoSafeDenied")).toBool()) return result;
+        if (result.status == AgentToolResult::Status::ApprovalRequired) {
+            const QString approvalId = result.approval.value(QStringLiteral("approvalId")).toString();
+            if (!approvalId.isEmpty()) {
+                m_approvalOwner.insert(approvalId, engine);
+                m_approvalCalls.insert(approvalId, routed);
+            }
+            return result;
+        }
+        if (result.status == AgentToolResult::Status::Pending ||
+            result.data.value(QStringLiteral("autoSafeDenied")).toBool()) return result;
         if (m_workflow != nullptr && !routed.name.startsWith(QStringLiteral("workflow."))) {
             m_workflow->recordResult(routed, result);
         }

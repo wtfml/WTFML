@@ -12,6 +12,8 @@
 #include <QJsonDocument>
 #include <QUuid>
 
+#include <algorithm>
+
 namespace {
 
 QJsonObject objectSchema(const QStringList &required, const QJsonObject &properties) {
@@ -34,7 +36,7 @@ QList<AgentToolSpec> AgentWorkflowEngine::specs() {
     QList<AgentToolSpec> list;
     list.append(AgentToolSpec{
         QStringLiteral("workflow.submitPlan"), QCoreApplication::translate("AgentWorkflowEngine", "提交修复计划"),
-        QStringLiteral("结构化提交修复计划；每个写步骤都会在执行时单独审批，批准计划不等于批准写入。"),
+        QStringLiteral("Submit a structured repair plan for user approval. Auto-safe can authorize in-scope steps after the plan is approved."),
         AgentRisk::ReadOnly,
         objectSchema({QStringLiteral("goal"), QStringLiteral("steps")},
                      {{QStringLiteral("goal"),
@@ -116,6 +118,24 @@ AgentToolResult AgentWorkflowEngine::handleSubmitPlan(const Agent::ToolCall &cal
         step.verify = object.value(QStringLiteral("verify")).toBool(false);
         steps.append(step);
     }
+    const auto stage = m_workflow->stage();
+    if (m_workflow->planApproved() &&
+        (stage == AgentWorkflowStage::Execute || stage == AgentWorkflowStage::Verify)) {
+        const auto approved = m_workflow->planSteps();
+        const bool sameSteps = std::equal(steps.cbegin(), steps.cend(), approved.cbegin(), approved.cend(),
+            [](const AgentPlanStep &left, const AgentPlanStep &right) {
+                return left.tool == right.tool && left.arguments == right.arguments && left.verify == right.verify;
+            });
+        if (sameSteps) {
+            AgentToolResult result;
+            result.status = AgentToolResult::Status::Ok;
+            result.summary = m_workflow->statusLine();
+            result.data = QJsonObject{{QStringLiteral("plan"), m_workflow->planJson()},
+                                      {QStringLiteral("workflow"), m_workflow->statusJson()},
+                                      {QStringLiteral("reusedRepeat"), true}};
+            return result;
+        }
+    }
     QString problem;
     if (!m_workflow->submitPlan(goal, steps, &problem)) {
         return errorResult(Agent::ErrorKind::ToolError, problem);
@@ -127,7 +147,7 @@ AgentToolResult AgentWorkflowEngine::handleSubmitPlan(const Agent::ToolCall &cal
     QJsonObject request = AgentApprovalPolicy::request(
         call.name, QCoreApplication::translate("AgentWorkflowEngine", "修复计划"), m_workflow->skill().name, goal,
         m_workflow->planPreview(), QString(),
-        QCoreApplication::translate("AgentWorkflowEngine", "批准计划仅表示同意该方案；每个写步骤执行时仍需单独确认。"),
+        QCoreApplication::translate("AgentWorkflowEngine", "开启 Auto-safe 后，授权范围内的步骤自动执行。其他操作仍受权限和审批限制。"),
         planEgress());
     request.insert(QStringLiteral("approvalId"), approvalId);
     request.insert(QStringLiteral("plan"), m_workflow->planJson());
@@ -173,7 +193,7 @@ AgentToolResult AgentWorkflowEngine::resolveApproval(const QString &approvalId, 
     }
     AgentToolResult result;
     result.status = AgentToolResult::Status::Ok;
-    result.summary = QCoreApplication::translate("AgentWorkflowEngine", "计划已批准（%1 步），按顺序执行；每个写步骤仍需单独确认。")
+    result.summary = QCoreApplication::translate("AgentWorkflowEngine", "计划已批准（%1 步），按顺序执行。")
                          .arg(m_workflow->planSteps().size());
     result.data = QJsonObject{{QStringLiteral("plan"), m_workflow->planJson()},
                               {QStringLiteral("stage"), m_workflow->stageName()}};

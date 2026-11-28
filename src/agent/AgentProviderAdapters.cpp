@@ -125,10 +125,15 @@ QJsonArray buildMessages(const AgentProviderProfile &profile, const QList<Agent:
         switch (message.role) {
         case Agent::Role::System:
             break;  // 系统提示由上面的 systemPrompt 统一给，避免重复。
-        case Agent::Role::User:
+        case Agent::Role::User: {
+            QString content = message.content;
+            if (!message.modelContext.isEmpty()) {
+                content += QStringLiteral("\n\n") + message.modelContext;
+            }
             result.append(QJsonObject{{QStringLiteral("role"), QStringLiteral("user")},
-                                      {QStringLiteral("content"), message.content}});
+                                      {QStringLiteral("content"), content}});
             break;
+        }
         case Agent::Role::Assistant: {
             QJsonObject object{{QStringLiteral("role"), QStringLiteral("assistant")},
                                {QStringLiteral("content"), message.content}};
@@ -173,6 +178,12 @@ QJsonObject buildRequest(const AgentProviderProfile &profile, const QList<Agent:
         {QStringLiteral("stream"), profile.stream},
         {profile.maxTokensField, profile.maxOutput},
     };
+    const QUrl endpoint(profile.baseUrl.trimmed());
+    if (profile.stream && endpoint.scheme() == QLatin1String("https") &&
+        endpoint.host() == QLatin1String("api.openai.com")) {
+        payload.insert(QStringLiteral("stream_options"),
+                       QJsonObject{{QStringLiteral("include_usage"), true}});
+    }
     if (profile.sendTemperature) {
         payload.insert(QStringLiteral("temperature"), profile.temperature);
     }

@@ -146,9 +146,9 @@ QList<AgentSkill> AgentSkillRegistry::builtins() {
         QStringLiteral("crash-rescue"), QCoreApplication::translate("AgentSkill", "崩溃急救"),
         QCoreApplication::translate("AgentSkill", "支持诊断、计划、逐步审批修复与验证，每步均可拒绝或回滚。"),
         QStringLiteral("crash_rescue"), true, QStringList(readOnlyTools() + repairTools()), false,
-        true, {QStringLiteral("diagnostics.crash")},
-        QStringLiteral("Plan approved; results for every step; at least one evidence item; verification step completed; report states rollback method and unresolved items."),  // i18n-ignore
-        5));
+         true, {QStringLiteral("diagnostics.crash")},
+         QStringLiteral("Plan approved; results for every step; at least one evidence item; verification step completed; report states rollback method and unresolved items."),  // i18n-ignore
+         6));
 
     list.append(make(
         QStringLiteral("upgrade"), QCoreApplication::translate("AgentSkill", "版本升级 / 移植"),
@@ -163,9 +163,9 @@ QList<AgentSkill> AgentSkillRegistry::builtins() {
         QStringLiteral("mods"), QCoreApplication::translate("AgentSkill", "模组维护"),
         QCoreApplication::translate("AgentSkill", "查看模组清单、解析声明检测兼容与前置、启用/禁用或备份、按平台记录修复文件。"),
         QStringLiteral("mods"), true, QStringList(readOnlyTools() + repairTools()), false, true,
-        {QStringLiteral("mods.list")},
-        QStringLiteral("Mod inventory backed by evidence; outcomes for every change; uncertainties explicitly noted."),  // i18n-ignore
-        6));
+         {QStringLiteral("mods.list")},
+         QStringLiteral("Mod inventory backed by evidence; outcomes for every change; uncertainties explicitly noted."),  // i18n-ignore
+         7));
 
     return list;
 }

@@ -26,6 +26,16 @@ namespace {
 
 int clampTimeout(int seconds) { return qBound(5, seconds, 600); }
 
+Agent::Usage usageFromResponse(const QJsonObject &object) {
+    Agent::Usage usage;
+    usage.promptTokens = object.value(QStringLiteral("prompt_tokens")).toInt();
+    usage.completionTokens = object.value(QStringLiteral("completion_tokens")).toInt();
+    const QJsonObject details = object.value(QStringLiteral("prompt_tokens_details")).toObject();
+    usage.cachedPromptTokens = details.value(QStringLiteral("cached_tokens")).toInt(
+        object.value(QStringLiteral("prompt_cache_hit_tokens")).toInt(-1));
+    return usage;
+}
+
 QString bodySummary(const QByteArray &body) {
     QJsonParseError error;
     const QJsonDocument document = QJsonDocument::fromJson(body.left(8192), &error);
@@ -91,12 +101,21 @@ void OpenAiCompatibleClient::begin(const Agent::ModelRequest &request, bool conn
         m_manager = new QNetworkAccessManager(this);
         m_ownsManager = true;
     }
-    const AgentProviderProfile validationProfile = [&request] {
+    const AgentProviderProfile wireProfile = [&request] {
         AgentProviderProfile profile;
         profile.baseUrl = request.baseUrl;
         profile.model = request.model;
         profile.localHttpAllowed = request.localHttpAllowed;
         profile.authMode = request.authMode;
+        profile.stream = request.stream;
+        profile.contextWindow = request.contextWindow;
+        profile.maxOutput = request.maxOutput;
+        profile.temperature = request.temperature;
+        profile.maxTokensField = request.maxTokensField;
+        profile.systemRole = request.systemRole;
+        profile.reasoningEcho = request.reasoningEcho;
+        profile.sendTemperature = request.sendTemperature;
+        profile.sendToolChoice = request.sendToolChoice;
         return profile;
     }();
     QString problem;
@@ -104,7 +123,7 @@ void OpenAiCompatibleClient::begin(const Agent::ModelRequest &request, bool conn
     if (!AgentProviderAdapters::validateBaseUrl(request.baseUrl, request.localHttpAllowed,
                                                 &loopback, &problem) ||
         (!connectionTest &&
-         !AgentProviderAdapters::validateProfile(validationProfile, &problem))) {
+         !AgentProviderAdapters::validateProfile(wireProfile, &problem))) {
         Agent::Error error;
         error.kind = Agent::ErrorKind::NoConfiguration;
         error.message = problem;
@@ -119,8 +138,8 @@ void OpenAiCompatibleClient::begin(const Agent::ModelRequest &request, bool conn
         return;
     }
 
-    const QString urlText = connectionTest ? AgentProviderAdapters::modelsUrl(validationProfile)
-                                           : AgentProviderAdapters::chatCompletionsUrl(validationProfile);
+    const QString urlText = connectionTest ? AgentProviderAdapters::modelsUrl(wireProfile)
+                                            : AgentProviderAdapters::chatCompletionsUrl(wireProfile);
     QNetworkRequest networkRequest{QUrl(urlText)};
     networkRequest.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
                                QNetworkRequest::ManualRedirectPolicy);
@@ -129,8 +148,8 @@ void OpenAiCompatibleClient::begin(const Agent::ModelRequest &request, bool conn
                                                           : (request.stream
                                                                  ? "text/event-stream"
                                                                  : "application/json"));
-    const QByteArray authName = AgentProviderAdapters::authHeaderName(validationProfile);
-    const QByteArray authValue = AgentProviderAdapters::authHeaderValue(validationProfile, request.apiKey);
+    const QByteArray authName = AgentProviderAdapters::authHeaderName(wireProfile);
+    const QByteArray authValue = AgentProviderAdapters::authHeaderValue(wireProfile, request.apiKey);
     if (!authName.isEmpty() && !authValue.isEmpty()) {
         networkRequest.setRawHeader(authName, authValue);
     }
@@ -150,7 +169,7 @@ void OpenAiCompatibleClient::begin(const Agent::ModelRequest &request, bool conn
         networkRequest.setHeader(QNetworkRequest::ContentTypeHeader,
                                  QStringLiteral("application/json"));
         const QJsonObject payload = AgentProviderAdapters::buildRequest(
-            validationProfile, request.messages, request.systemPrompt, request.tools);
+            wireProfile, request.messages, request.systemPrompt, request.tools);
         reply = m_manager->post(networkRequest,
                                 QJsonDocument(payload).toJson(QJsonDocument::Compact));
     }
@@ -287,12 +306,8 @@ void OpenAiCompatibleClient::processStreamJson(const QString &requestId, ActiveR
         failRequest(requestId, error);
         return;
     }
-    if (object.contains(QStringLiteral("usage"))) {
-        const QJsonObject usage = object.value(QStringLiteral("usage")).toObject();
-        request->usage.promptTokens = usage.value(QStringLiteral("prompt_tokens")).toInt();
-        request->usage.completionTokens = usage.value(QStringLiteral("completion_tokens")).toInt();
-        request->usage.estimated = false;
-    }
+    const QJsonValue usage = object.value(QStringLiteral("usage"));
+    if (usage.isObject()) request->usage = usageFromResponse(usage.toObject());
     const QJsonArray choices = object.value(QStringLiteral("choices")).toArray();
     if (choices.isEmpty()) return;
     const QJsonObject choice = choices.at(0).toObject();
@@ -379,9 +394,7 @@ void OpenAiCompatibleClient::processNonStreamBody(const QString &requestId, Acti
                                   function.value(QStringLiteral("arguments")).toString());
         request->toolCalls.insert(index++, toolCall);
     }
-    const QJsonObject usage = object.value(QStringLiteral("usage")).toObject();
-    request->usage.promptTokens = usage.value(QStringLiteral("prompt_tokens")).toInt();
-    request->usage.completionTokens = usage.value(QStringLiteral("completion_tokens")).toInt();
+    request->usage = usageFromResponse(object.value(QStringLiteral("usage")).toObject());
     request->finishReason = choice.value(QStringLiteral("finish_reason")).toString();
     request->finishedSeen = true;
 }

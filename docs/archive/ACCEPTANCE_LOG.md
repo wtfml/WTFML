@@ -329,3 +329,5 @@ python tools/acceptance_directory_boundary.py --exe <WTFMinecraftLauncher.exe> -
 2026-11-28｜核对 #164 的 AllTheLeaks 1.0.4 文件（CurseForge 文件 6967574）｜ForgeCDN 入口、MCIM 两种编码和 `mediafilez` 的 `%2B` 直连均返回 1,137,043 字节，SHA-1 均为 `4aafc8d482e3da5d9c59029f8614d44c93c6d86f`，与文件接口一致｜`mediafilez` 直连使用裸 `+` 返回 403。实网仅下载单文件，整包安装耗时未测。
 
 2026-11-28｜排查 #162，修复取消测试启动后旧准备回调影响新任务，以及进程退出前销毁 `QProcess`｜修复前取消后立即重启可在 `QFutureWatcher::result()` 处触发 `0xC0000005`，修复后取消重启 15/15、启停模组后游戏替身自行退出 20/20、自动结束 20/20，自动结束无 `QProcess` 析构警告｜原报告的任务栏缩略图发黑未复现，待原实例和现场日志核对。
+
+2026-11-28｜排查 #163 的测试启动进程、相邻模型请求、重复计划与 Auto-safe｜`core-agent` 1600/1600、`main-window-agent` 144/144。Windows 游戏替身在修复前留下子进程，改为创建进程时加入 Job Object 后，子进程创建可见窗口并随测试结束退出 10/10｜相邻请求的前缀和缓存统计用本地 HTTP 夹具验证，原整合包和服务商实际缓存命中率待复验。

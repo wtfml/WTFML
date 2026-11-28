@@ -85,7 +85,8 @@ QList<Agent::Message> AgentContextBuilder::build(const QList<Agent::Message> &hi
     int firstKept = history.size();
     for (int i = history.size() - 1; i >= 0; --i) {
         const double cost = estimateTokens(history.at(i).content) +
-                             estimateTokens(history.at(i).reasoning) + 4;
+                             estimateTokens(history.at(i).reasoning) +
+                             estimateTokens(history.at(i).modelContext) + 4;
         const bool mustKeep = i == history.size() - 1;
         if (!mustKeep && used + cost > result.budgetTokens) {
             break;

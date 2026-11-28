@@ -166,11 +166,13 @@ agent/
 
 内部消息转 OpenAI：system、user/assistant 文本、assistant `tool_calls`、tool 结果带 `tool_call_id`；工具结果是 JSON：`ok`、`summary`、`data`、`error?`，`data.evidence[]` 是证据。
 
+当前工作流状态随新用户消息追加并保存在该消息中。模式、语言和工具定义相同时，预算内的相邻请求沿用旧消息作为前缀。会话统计保存服务商返回的 `cachedPromptTokens`，缺字段表示服务商未报告。
+
 ## 8. 运行时
 
 ### 8.1 状态机
 
-`Idle → Preparing → Requesting → AwaitingApproval / ExecutingTool → Completed / Failed / Cancelled`。同会话不允许并行 send；工具串行；单轮最多 8 步工具。
+`Idle → Preparing → Requesting → AwaitingApproval / ExecutingTool → Completed / Failed / Cancelled`。同会话只运行一轮请求，工具串行。重复提交正在执行的相同计划时返回当前进度。
 
 ### 8.2 一轮的步骤
 
@@ -187,6 +189,8 @@ agent/
 ### 8.5 异步工具
 
 MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，结果通过 `AgentToolSink` 回来，Loop 保持"执行中"继续等，不阻塞 UI、不开嵌套事件循环；取消或换代后迟到的结果丢弃。
+
+Auto-safe 自动批准的异步修复步骤同样等待完成结果，再绑定事务工作区或推进计划。
 
 ### 8.6 任务中心（#130）
 
@@ -513,7 +517,7 @@ Collect → AwaitPlanApproval → Execute*（每步审批）→ Verify → Repor
 | 单次 API 响应 / SSE 单行 | 16 MB / 1 MB |
 | 单条工具参数 / 单条工具内联结果 | 64 KB / 16 KB |
 | 单会话正文 / 消息条数 / 快照 | 8 MB / 2000 条 / 3 份 |
-| 单轮工具步数 / 单会话总数 | **不设上限**（`Config` 里两个字段默认 0 = 不限）；总数跨回合、跨重启按会话累计，只用于显示与审计。同一工具 + 完全相同的参数在最近 3 次里成功过时，第 4 次直接复用上次结果（不消耗往返，`data.reusedRepeat=true`） |
+| 单轮工具步数 / 单会话总数 | **不设上限**（`Config` 里两个字段默认 0 = 不限）；总数跨回合、跨重启按会话累计，只用于显示与审计。同一用户回合内，最近 3 次实际执行的只读工具可按相同参数复用成功结果（`data.reusedRepeat=true`）。写入和测试启动会清除旧结果并实际执行，仍受常规计划与授权约束。连续 3 轮工具请求都只复用旧结果时停止本轮。 |
 | 重试 / 模型请求总时长 | 2 次 / 10 分钟（可取消） |
 | 工具超时 | 文件 30 s、MCP 120 s、命令 60 s、联网 20 s |
 | 测试启动 | 1–600 s，观察 0–60 s，重复 1–3 次；工作区记录/日志在本地 |

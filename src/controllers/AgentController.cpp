@@ -411,6 +411,7 @@ void AgentController::wirePage() {
                         result.data.value(QStringLiteral("autoSafeAudit")).toObject();
                     if (m_autoSafeUserOn || !audit.isEmpty()) {
                         m_autoSafeUserOn = false;
+                        m_repairTools->setAutoSafe(false);
                         if (m_page != nullptr) {
                             m_page->setAutoSafeEnabled(false);
                             m_page->showNotice(
@@ -923,6 +924,11 @@ void AgentController::onSend(const QString &text) {
     user.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     user.role = Agent::Role::User;
     user.content = content;
+    if (m_workflow.active()) {
+        user.modelContext = QStringLiteral("Workflow state at the start of this turn (launcher metadata): %1")
+                                .arg(QString::fromUtf8(QJsonDocument(m_workflow.statusJson())
+                                                           .toJson(QJsonDocument::Compact)));
+    }
     user.status = Agent::MessageStatus::Complete;
     user.createdAt = QDateTime::currentDateTimeUtc();
     m_session.messages.append(user);
@@ -1531,15 +1537,7 @@ void AgentController::applySkillToLoop() {
     AgentLoop::Config config = m_loop->config();
     config.profile = m_profile;
     config.apiKey = currentApiKey();
-    QString prompt = m_workflow.skill().systemPrompt;
-    if (m_workflow.active()) {
-        const QByteArray statusJson =
-            QJsonDocument(m_workflow.statusJson()).toJson(QJsonDocument::Compact);
-        prompt += QStringLiteral(
-                      "\n\nCurrent workflow state (local bookkeeping, do not repeat to the user): %1")
-                      .arg(QString::fromUtf8(statusJson));
-    }
-    config.systemPrompt = prompt;
+    config.systemPrompt = m_workflow.skill().systemPrompt;
     m_loop->setConfig(config);
 }
 
@@ -1631,6 +1629,7 @@ bool AgentController::enableAutoSafeForCurrentSession() {
         return false;
     }
     m_autoSafe.enable(instanceId, m_session.meta.id, QDateTime::currentDateTimeUtc());
+    if (m_workflow.planApproved()) m_autoSafe.bindPlan(m_workflow.planSteps());
     m_autoSafeUserOn = true;
     m_repairTools->setAutoSafe(true);
     syncAutoSafeContext();

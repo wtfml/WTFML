@@ -133,6 +133,11 @@ void Authorizer::note(const QString &text) {
 }
 
 void Authorizer::bindPlan(const QList<AgentPlanStep> &steps) {
+    m_tools.clear();
+    m_paths.clear();
+    m_keys.clear();
+    m_modFiles.clear();
+    m_projectIds.clear();
     for (const AgentPlanStep &step : steps) {
         const QString tool = AgentToolRegistry::internalName(step.tool);
         if (!m_tools.contains(tool)) m_tools.append(tool);

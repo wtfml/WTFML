@@ -73,17 +73,26 @@ public:
             result.status = AgentToolResult::Status::Error;
             return result;
         }
-        m_pending.remove(approvalId);
+        const Agent::ToolCall call = m_pending.take(approvalId);
         ++resolveCalls;
         AgentToolResult result;
+        if (approved && asyncApproval) {
+            asyncCall = call;
+            result.status = AgentToolResult::Status::Pending;
+            return result;
+        }
         result.status = approved ? AgentToolResult::Status::Ok : AgentToolResult::Status::Error;
         result.summary = approved ? QStringLiteral("已执行") : QStringLiteral("被拒");
         result.data = QJsonObject{{QStringLiteral("executed"), approved}};
         return result;
     }
     void cancelPending() override { m_pending.clear(); }
+    void setCompletionSink(AgentToolSink sink) override { completion = std::move(sink); }
 
     int resolveCalls = 0;
+    bool asyncApproval = false;
+    Agent::ToolCall asyncCall;
+    AgentToolSink completion;
     QHash<QString, Agent::ToolCall> m_pending;
 };
 
@@ -393,6 +402,52 @@ void runAgentAutoSafeTests() {
         check(result.data.contains(QStringLiteral("autoSafeAudit")),
               "Auto-safe：事务结束把审计挂进结果");
         check(!authorizer.enabled(), "Auto-safe：事务结束后授权失效");
+    }
+
+    {
+        AgentAutoSafe::Authorizer authorizer;
+        authorizer.enable(QStringLiteral("inst-1"), QStringLiteral("session-1"), baseTime());
+        AgentWorkflow workflow;
+        workflow.setSkill(AgentSkillRegistry::find(QStringLiteral("crash-rescue")));
+        const AgentPlanStep begin = stepFor(QStringLiteral("repair.begin"),
+            {{QStringLiteral("scopes"), QJsonArray{QStringLiteral("mods")}}});
+        AgentPlanStep verify = stepFor(QStringLiteral("instance.testLaunch"));
+        verify.verify = true;
+        QString problem;
+        check(workflow.submitPlan(QStringLiteral("修复并验证"), {begin, verify}, &problem),
+              "#163 异步 Auto-safe 计划有效", problem);
+        workflow.approvePlan(true);
+        authorizer.bindPlan(workflow.planSteps());
+
+        FakeWriteEngine engine;
+        engine.asyncApproval = true;
+        AgentCompositeToolEngine composite;
+        composite.addEngine(&engine);
+        composite.setWorkflow(&workflow);
+        composite.setAutoSafe(&authorizer);
+        composite.setAutoSafeContext(QStringLiteral("session-1"), QStringLiteral("inst-1"));
+        int completions = 0;
+        composite.setCompletionSink([&](const Agent::ToolCall &, const AgentToolResult &) { ++completions; });
+
+        const auto pending = composite.invoke(callFor(begin.tool, begin.arguments));
+        check(pending.status == AgentToolResult::Status::Pending && engine.resolveCalls == 1 &&
+                  workflow.stage() == AgentWorkflowStage::Execute && workflow.nextStepIndex() == 0,
+              "#163 Auto-safe 自动批准异步事务后等待实际结果");
+        AgentToolResult done;
+        done.status = AgentToolResult::Status::Ok;
+        done.data = QJsonObject{{QStringLiteral("transactionId"), QStringLiteral("tx-async")},
+                                {QStringLiteral("workspaceId"), QStringLiteral("ws-async")}};
+        engine.completion(engine.asyncCall, done);
+        check(completions == 1 && workflow.nextStepIndex() == 1 &&
+                  authorizer.workspaceId() == QStringLiteral("ws-async"),
+              "#163 收到事务结果才绑定工作区并推进一步");
+        check(composite.invoke(callFor(verify.tool)).status == AgentToolResult::Status::Pending &&
+                  workflow.nextStepIndex() == 1,
+              "#163 异步测试启动也等实际结果");
+        engine.completion(engine.asyncCall, done);
+        check(completions == 2 && workflow.nextStepIndex() == 2 &&
+                  workflow.stage() == AgentWorkflowStage::Verify,
+              "#163 验证完成后推进到验证阶段");
     }
 
     // ---------------------------------------------------------------- 复合层每次调用前复核

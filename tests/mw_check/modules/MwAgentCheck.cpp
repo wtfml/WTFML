@@ -11,6 +11,7 @@
 #include "AgentSettingsPage.hpp"
 #include "OverlayHost.hpp"
 #include "agent/AgentPaths.hpp"
+#include "agent/AgentProviderAdapters.hpp"
 #include "agent/AgentWorkspaceStore.hpp"
 #include "util/AppPaths.hpp"
 #include "agent/AgentSessionStore.hpp"
@@ -39,6 +40,8 @@
 #include <QThreadPool>
 #include <QTimer>
 #include <QUuid>
+
+#include <algorithm>
 
 namespace {
 
@@ -933,6 +936,32 @@ int MwAgentChecks(QApplication &app) {
         check(store.load(cancelledWorkspace, &cancelled, &problem) &&
                   cancelled.status == QStringLiteral("cancelled"),
               "#162 旧工作区保留取消状态", problem);
+    }
+
+    {
+        controller->chooseSkillForTest(QStringLiteral("crash-rescue"));
+        controller->sendForTest(QStringLiteral("检查崩溃原因"));
+        check(waitFor([&] { return controller->loop()->state() == AgentLoop::State::Completed; }),
+              "#163 崩溃急救首轮请求完成");
+        const auto first = AgentProviderAdapters::buildRequest(
+            profile, fake.lastRequest.messages, fake.lastRequest.systemPrompt, fake.lastRequest.tools);
+
+        controller->workflow()->markFinished();
+        controller->sendForTest(QStringLiteral("继续查看修复结果"));
+        check(waitFor([&] { return controller->loop()->state() == AgentLoop::State::Completed; }),
+              "#163 工作流阶段变化后第二轮请求完成");
+        const auto second = AgentProviderAdapters::buildRequest(
+            profile, fake.lastRequest.messages, fake.lastRequest.systemPrompt, fake.lastRequest.tools);
+        const auto firstMessages = first.value(QStringLiteral("messages")).toArray();
+        const auto secondMessages = second.value(QStringLiteral("messages")).toArray();
+        check(!firstMessages.isEmpty() && secondMessages.size() > firstMessages.size() &&
+                  std::equal(firstMessages.cbegin(), firstMessages.cend(), secondMessages.cbegin()) &&
+                  first.value(QStringLiteral("tools")) == second.value(QStringLiteral("tools")),
+              "#163 工作流变化后，相邻请求的已有消息和工具定义保持稳定");
+        const auto last = secondMessages.at(secondMessages.size() - 1).toObject()
+                              .value(QStringLiteral("content")).toString();
+        check(last.contains(QStringLiteral("\"stage\":\"report\"")),
+              "#163 新消息携带本轮工作流阶段", last);
     }
 
     controller->shutdown();
