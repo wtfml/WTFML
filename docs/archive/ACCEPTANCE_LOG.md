@@ -325,3 +325,5 @@ python tools/acceptance_directory_boundary.py --exe <WTFMinecraftLauncher.exe> -
 2026-11-27｜智能体模型目录、上下文顶满与自动另起一段、思考强度胶囊｜merged origin/dev（#136 实例设置改版等）后 affected 59/59（846 s），`core-agent` 含新增的 128K 不截断 / 32K 报 90% 两条，`ui-agent` 115/115（新增 13 条：目录自检、选厂商填地址、模型清单兜底、选模型填上限、高级默认收起、思考胶囊换档与收起、点思考正文折叠），产品目标严格编译通过，`check-i18n`/`check-doc-links`/`check-repo-layout`/`check-surface-registry` PASS｜厂商目录放 `ui/`（ui 不许 include src）；`GET /models` 拉不到回落内置清单；上一轮上下文 ≥90% 时下一次发送自动另起一段并带一句摘要（不做 LLM 压缩）；首轮并行跑 `core-presets` 的 PL7 因临时目录被占失败过一次，单跑与复跑均通过；订阅制/OAuth 入口记进 ROADMAP 暂不做；真实各厂商列表接口与真机自动切段未验。
 
 2026-11-27｜CurseForge 客户端版本、整合包收尾与续装、Modrinth 回退和版本页重试（#146、#148、#152、#153、#160）｜core-downloads、core-instances、core-resources、window、四项网络测试及国际化、文档链接、仓库布局和表面登记检查通过｜DeceasedCraft 两条服务端包均为 isServerPack: true。SkyFactory 4 的 Integrated Dynamics、Topography 和 ATM9 的 ZeroCore2 经 MCIM 下载后 SHA-1 一致。未测整包安装总耗时。
+
+2026-11-28｜核对 #164 的 AllTheLeaks 1.0.4 文件（CurseForge 文件 6967574）｜ForgeCDN 入口、MCIM 两种编码和 `mediafilez` 的 `%2B` 直连均返回 1,137,043 字节，SHA-1 均为 `4aafc8d482e3da5d9c59029f8614d44c93c6d86f`，与文件接口一致｜`mediafilez` 直连使用裸 `+` 返回 403。实网仅下载单文件，整包安装耗时未测。

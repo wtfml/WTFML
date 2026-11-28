@@ -1584,7 +1584,7 @@ void runLoaderInstallTests() {
                 check(!ok, "V6i 它被判成失败（不是「什么都没发生」）");
                 check(dm.stats().failed == 1, "V6i 失败数记上了",
                       QString::number(dm.stats().failed));
-                check(failure == QStringLiteral("下载节点 127.0.0.1 在 3 秒内未返回数据。"),
+                check(failure == QStringLiteral("下载源 127.0.0.1 在 3 秒内未返回数据。"),
                       "V6i 无数据超时失败原因包含节点和时长", failure);
                 check(!QFile::exists(destPath), "V6i 没有落下半个文件", destPath);
                 check(tookMs >= 2500 && tookMs < 25000,

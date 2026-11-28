@@ -57,13 +57,20 @@ void DownloadManager::startSegmentedDownload(const PendingJob &job) {
     record.expectedSize = job.expectedSize;
     // 已经因为镜像降级改道到官方了，"退回官方"这条退路就用掉了（和 startDownload 同源）。
     record.officialUrl = rerouted ? QString() : job.officialUrl;
-    // 分段途中合计速率持续太慢时，协调器会拿这条退路取一段样本比一比（快得多就整条
-    // 换过去）。口径与 record.officialUrl 一致：没有退路的作业不设，比较不会发生。
-    task->setFallbackUrl(QUrl(record.officialUrl));
+    // 分段速率持续偏低时，协调器用下一下载源的样本比较速率。
+    task->setFallbackUrl(QUrl(job.resourceRoute ? job.resourceRoute->remainingUrls.value(0) : record.officialUrl));
     record.host = QUrl(targetUrl).host();
     record.officialRetried = job.officialRetried;
     record.plainRetried = job.plainRetried;
     record.generation = m_batchGeneration;
+    record.resourceRoute = job.resourceRoute;
+    if (job.resourceRoute) {
+        task->setDeferFallbacks(true);
+        connect(task, &ResumableDownload::probeSourceContacted, this,
+                [route = job.resourceRoute](const QString &host, bool newAttempt) {
+                    route->noteHost(host, newAttempt);
+                });
+    }
     // 先登记、先连信号，再 start()：start() 在本地准备失败时会**同步**发 finished，
     // 晚一步就会漏掉那一次失败（那条作业会永远占着名额）。
     m_segmentJobs.insert(task, record);
@@ -140,9 +147,8 @@ void DownloadManager::finishSegmentedJob(ResumableDownload *task, bool success,
         // 上一批的残留：文件本身照旧落盘，但计数 / 进度 / 完成信号一个字都不碰。
     } else if (success) {
         emit downloadFinished(fileName, true, QString());
-    } else if (!task->networkAttempted() && !record.plainRetried) {
-        // 本地准备失败（路径无效、缓存目录不可写、同一下载的缓存被占用）：这不是源站
-        // 失败，改走普通下载，别把本来能下成的文件判死。
+    } else if ((!task->networkAttempted() || task->singleDownloadNeeded()) && !record.plainRetried) {
+        // 本地准备失败或源站不支持安全分段时，仍从原入口发完整 GET。
         PendingJob retry;
         retry.url = record.url;
         retry.destinationPath = record.destinationPath;
@@ -153,6 +159,14 @@ void DownloadManager::finishSegmentedJob(ResumableDownload *task, bool success,
         retry.segmented = false;
         retry.officialRetried = record.officialRetried;
         retry.plainRetried = true;
+        retry.resourceRoute = record.resourceRoute;
+        requeueDownloadJob(retry);
+        requeued = true;
+    } else if (record.resourceRoute && !record.resourceRoute->remainingUrls.isEmpty()) {
+        const QString url = record.resourceRoute->remainingUrls.takeFirst();
+        PendingJob retry{url, record.destinationPath, record.expectedSha1, record.expectedSize,
+                         {}, QUrl(url).host()};
+        retry.resourceRoute = record.resourceRoute;
         requeueDownloadJob(retry);
         requeued = true;
     } else if (!record.officialUrl.isEmpty() && !record.officialRetried) {
@@ -182,6 +196,10 @@ void DownloadManager::finishSegmentedJob(ResumableDownload *task, bool success,
         failed.officialUrl = record.officialUrl;
         failed.reason = error.isEmpty()
             ? QCoreApplication::translate("DownloadManagerSegmented", "分段下载失败") : error;
+        if (record.resourceRoute) {
+            failed.url = record.resourceRoute->originalUrl;
+            failed.reason = record.resourceRoute->failureReason(failed.reason);
+        }
         m_failedJobInfos.append(failed);
         if (!record.destinationPath.isEmpty() && !m_failedPaths.contains(record.destinationPath)) {
             m_failedPaths << record.destinationPath;

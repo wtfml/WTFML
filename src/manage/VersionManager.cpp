@@ -587,7 +587,7 @@ bool VersionManager::retryDownload(QString *problem) {
         // 校验档一律用 SizeAndSha1：失败的那几个在盘上根本不存在，这个档位只影响
         // fileAlreadyValid() 那一次问话，而那一次必然回 false。真正的判据（sha1 / 字节数）
         // 在收尾那一步，和档位无关（见 onDownloadReplyFinished）。
-        // 清单文件的新一轮重试从原来源重新连接，仍可按需切换备用地址。
+        // 整合包优先按清单重建来源顺序。资源文件的失败记录保留了首次请求地址。
         const auto urls = modpackUrls.constFind(job.destinationPath);
         const bool fromManifest = urls != modpackUrls.cend() && !urls->isEmpty();
         downloadManager->downloadFile(fromManifest ? urls->first() : job.url,
@@ -2273,7 +2273,7 @@ void VersionManager::onAllDownloadsFinished(bool success) {
     } else {
         // 失败清单只列前 10 项，剩下的折成一行 —— 5000 个 asset 全列出来没人看。
         QStringList shown = stats.failedPaths.mid(0, 10);
-        if (m_modpackInstall.phase == ModpackInstall::Phase::DownloadingFiles) {
+        if (m_resourceDownload.running || m_modpackInstall.phase == ModpackInstall::Phase::DownloadingFiles) {
             for (const auto &job : downloadManager->failedJobs()) {
                 const auto index = shown.indexOf(job.destinationPath);
                 if (index >= 0 && !job.reason.isEmpty()) {

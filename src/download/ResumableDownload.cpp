@@ -119,6 +119,7 @@ void ResumableDownload::start(const QUrl &url, const QString &target, const QStr
     m_running = true; m_stage = Stage::Probe;
     m_url = url; m_target = target; m_sha1 = sha1; m_expectedSize = size; m_overwrite = overwrite;
     m_total = -1; m_count = 0; m_complete.clear(); m_live.clear(); m_etag.clear(); m_networkAttempted = false;
+    m_singleDownloadNeeded = false;
     m_partsRetried = false; m_partsRetryPending = false;
     m_rateTimer->stop(); m_rateBytes = 0; m_nextCompareMs = 0; m_compareClock.start();
     m_sample = nullptr;
@@ -266,6 +267,10 @@ void ResumableDownload::probe(int attempt) {
     }
     reply->setReadBufferSize(4096);
     const auto generation = m_generation;
+    emit probeSourceContacted(request.url().host(), true);
+    connect(reply, &QNetworkReply::redirected, this, [this, generation](const QUrl &target) {
+        if (generation == m_generation) emit probeSourceContacted(target.host(), false);
+    });
     connect(reply, &QNetworkReply::metaDataChanged, this, [reply] {
         // 不支持 Range 的服务器可能开始返回几 GB 正文；立即停止探测，不把它读进内存。
         const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
@@ -630,6 +635,10 @@ void ResumableDownload::switchToFallback() {
                                .arg(m_complete.size())
                                .arg(m_count));
     }
+    if (m_deferFallbacks) {
+        finish(false, {});
+        return;
+    }
     // 换的是**入口地址**：备用地址自己也可能 302 到一条很快过期的落点。重新走一遍
     // `probe()` 拿落点和 ETag —— `m_source` 是那一趟的产物，拿入口地址直接去发 Range
     // 会绕过它，签名 URL 那类落点 60 秒就作废了（和 `checkStuck()` 重新探测同一个理由）。
@@ -649,6 +658,11 @@ void ResumableDownload::switchToFallback() {
 }
 
 void ResumableDownload::startSingle() {
+    if (m_deferFallbacks) {
+        m_singleDownloadNeeded = true;
+        finish(false, {});
+        return;
+    }
     if (DownloadDiag::enabled()) {
         DownloadDiag::line(QStringLiteral("resumable -> single (reason in previous probe line) url=%1 target=%2")
                                .arg(DownloadDiag::safeUrl(m_url),

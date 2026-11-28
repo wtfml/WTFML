@@ -232,7 +232,7 @@ bool isForgeCdnRedirect(const QNetworkReply *reply) {
            entry.host() == QLatin1String("edge.forgecdn.net") && landed.host() == QLatin1String("mediafilez.forgecdn.net");
 }
 
-QString resourceCdnFallback(const QUrl &url) {
+QStringList resourceCdnFallbacks(const QUrl &url) {
     if (url.scheme() != QLatin1String("https") || url.port() != -1 ||
         !url.userInfo().isEmpty() || url.hasQuery() || url.hasFragment()) {
         return {};
@@ -244,15 +244,37 @@ QString resourceCdnFallback(const QUrl &url) {
           host == QLatin1String("media.forgecdn.net")) && path.startsWith(QLatin1String("/files/")))) {
         QUrl mirror = url;
         mirror.setHost(QStringLiteral("mod.mcimirror.top"));
-        QString mirrorPath = path;
-        mirrorPath.replace(QLatin1Char('+'), QStringLiteral("%2B"));
-        mirror.setPath(mirrorPath, QUrl::StrictMode);
-        return mirror.toString(QUrl::FullyEncoded);
+        const qsizetype filenameStart = path.lastIndexOf(QLatin1Char('/')) + 1;
+        const QString directory = path.left(filenameStart);
+        QString filename = path.mid(filenameStart);
+        filename.replace(QLatin1String("%2B"), QLatin1String("+"), Qt::CaseInsensitive);
+        mirror.setPath(directory + filename, QUrl::StrictMode);
+        QStringList fallbacks{mirror.toString(QUrl::FullyEncoded)};
+        if (host == QLatin1String("edge.forgecdn.net") || host == QLatin1String("media.forgecdn.net")) {
+            QUrl direct = url;
+            direct.setHost(QStringLiteral("mediafilez.forgecdn.net"));
+            filename.replace(QLatin1String("+"), QLatin1String("%2B"));
+            direct.setPath(directory + filename, QUrl::StrictMode);
+            fallbacks.append(direct.toString(QUrl::FullyEncoded));
+        }
+        return fallbacks;
     }
     return {};
 }
 
 }  // namespace
+
+void DownloadManager::ResourceDownloadRoute::noteHost(const QString &host, bool newAttempt) {
+    if (!host.isEmpty() && (newAttempt || attemptedHosts.isEmpty() || attemptedHosts.last() != host)) {
+        attemptedHosts.append(host);
+    }
+}
+
+QString DownloadManager::ResourceDownloadRoute::failureReason(const QString &reason) const {
+    return reason + QLatin1Char('\n') +
+           DownloadManager::tr("下载入口：%1。尝试顺序：%2。")
+               .arg(QUrl(originalUrl).host(), attemptedHosts.join(QStringLiteral(" → ")));
+}
 
 void DownloadManager::demoteMirrorForSlowDownload(const QString &host) {
     if (host.isEmpty()) {
@@ -500,6 +522,7 @@ DownloadManager::~DownloadManager() {
     // 队列里的作业一个请求都没发出去，abort 那套对它们无效，只能直接丢掉。
     m_pendingJobs.clear();
     m_officialFallbacks.clear();
+    m_resourceRoutes.clear();
     m_stallMeters.clear();
     m_metadataReplies.clear();
     // 限速泵攥着的都是上面刚 abort 过的回复：表本身只是指针，清掉就行（对象都快没了，
@@ -983,12 +1006,6 @@ void DownloadManager::scheduleFile(const QString &url, const QString &destinatio
         const QString domestic = mirrorUrl(url);
         if (domestic != url) job.officialUrl = domestic;
     }
-    // 社区 CDN 只用于有平台哈希的完整文件。清单已提供的备用地址优先。
-    if (expectedSha1.size() == 40 && !range.active() &&
-        (job.officialUrl.isEmpty() || job.officialUrl == url)) {
-        const QString fallback = resourceCdnFallback(QUrl(url));
-        if (!fallback.isEmpty()) job.officialUrl = fallback;
-    }
     job.expectedSize = expectedSize;
     job.mode = mode;
     job.range = range;
@@ -1040,9 +1057,23 @@ void DownloadManager::queueNetworkJob(const QString &url, const QString &destina
     // （所以"只下一两个文件"的那些调用点感觉不到队列存在）。
     const bool segmented = m_segmentEnabled && (!m_checkpoint || !expectedSha1.isEmpty())
         && segmentedEligible(url, expectedSha1, expectedSize, range);
-    m_pendingJobs.enqueue(
-        PendingJob{url, destinationPath, expectedSha1, expectedSize, officialUrl,
-                   QUrl(url).host(), 0, 0, range, segmented});
+    const QUrl source(url);
+    PendingJob job{url, destinationPath, expectedSha1, expectedSize, officialUrl,
+                   source.host(), 0, 0, range, segmented};
+    if (expectedSha1.size() == 40 && !range.active()) {
+        const QStringList fallbacks = resourceCdnFallbacks(source);
+        if (!fallbacks.isEmpty()) {
+            // 旧恢复记录把 MCIM 写进了官方备用地址字段。
+            QString legacyMirror = fallbacks.first();
+            legacyMirror.replace(QLatin1String("+"), QLatin1String("%2B"));
+            if (officialUrl.isEmpty() || QUrl(officialUrl) == source ||
+                QUrl(officialUrl) == QUrl(legacyMirror) || QUrl(officialUrl) == QUrl(fallbacks.first())) {
+                job.officialUrl.clear();
+                job.resourceRoute = ResourceRoute::create(ResourceDownloadRoute{url, fallbacks, {}});
+            }
+        }
+    }
+    m_pendingJobs.enqueue(job);
     if (m_checkpoint) {
         if (!m_checkpointPumpQueued) {
             m_checkpointPumpQueued = true;
@@ -1143,23 +1174,23 @@ void DownloadManager::pumpDownloadQueue() {
         if (segmented) {
             startSegmentedDownload(job);
         } else {
-            startDownload(QUrl(job.url), job.destinationPath, job.expectedSha1, job.expectedSize,
-                          job.officialUrl, job.retryAttempts, job.range);
+            startDownload(job);
         }
     }
 }
 
 void DownloadManager::probeFasterSource(QNetworkReply *source, qint64 currentRate) {
+    const auto route = m_resourceRoutes.value(source);
+    const QString fallback = route ? route->remainingUrls.value(0) : m_officialFallbacks.value(source);
     if (m_speedProbeInFlight || m_clock.elapsed() < m_nextSpeedProbeMs ||
         source->property("wtfmlSpeedProbeAttempted").toBool() ||
-        !m_officialFallbacks.contains(source) || rangeOf(source).active()) return;
+        fallback.isEmpty() || rangeOf(source).active()) return;
     auto lease = RequestBudget::tryAcquire(RequestBudget::Lane::Bulk);
     if (!lease) return;
     source->setProperty("wtfmlSpeedProbeAttempted", true);
     m_speedProbeInFlight = true;
     m_nextSpeedProbeMs = m_clock.elapsed() + 60000;
     const QPointer<QNetworkReply> original(source);
-    const QString fallback = m_officialFallbacks.value(source);
     const auto generation = m_batchGeneration;
     QNetworkRequest request{QUrl(fallback)};
     configureHttp1(request);
@@ -1182,7 +1213,7 @@ void DownloadManager::probeFasterSource(QNetworkReply *source, qint64 currentRat
     });
     QTimer::singleShot(6000, probe, [probe] { if (!probe->isFinished()) probe->abort(); });
     connect(probe, &QNetworkReply::finished, this,
-            [this, probe, original, fallback, generation, currentRate, clock, bytes] {
+            [this, probe, original, route, fallback, generation, currentRate, clock, bytes] {
         m_speedProbeInFlight = false;
         const int status = probe->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         const bool sampled = (status == 200 || status == 206) &&
@@ -1194,11 +1225,16 @@ void DownloadManager::probeFasterSource(QNetworkReply *source, qint64 currentRat
                 .arg(*bytes).arg(clock->elapsed()).arg(currentRate).arg(switchSource));
         probe->deleteLater();
         if (!switchSource || m_shuttingDown || generation != m_batchGeneration ||
-            m_speedBucket->limit > 0 || !original || original->isFinished() ||
-            m_officialFallbacks.value(original) != fallback) return;
+            m_speedBucket->limit > 0 || !original || original->isFinished()) return;
+        const QString nextUrl = route ? route->remainingUrls.value(0) : m_officialFallbacks.value(original);
+        if (nextUrl != fallback) return;
         // The existing fallback path restarts this file and verifies its complete
         // hash/size. Probe bytes are discarded, never appended to another source.
-        original->setProperty("wtfmlRetryAttempts", 1);
+        if (route) {
+            original->setProperty("wtfmlResourceSourceSwitch", true);
+        } else {
+            original->setProperty("wtfmlRetryAttempts", 1);
+        }
         original->abort();
     });
 }
@@ -1257,16 +1293,17 @@ void DownloadManager::noteReplyProtocol(QNetworkReply *reply) {
     }
 }
 
-void DownloadManager::startDownload(const QUrl &url, const QString &destinationPath,
-                                    const QString &expectedSha1, qint64 expectedSize,
-                                    const QString &officialUrl, int retryAttempts, const DownloadRange &range) {
+void DownloadManager::startDownload(const PendingJob &job) {
     auto lease = RequestBudget::tryAcquire(RequestBudget::Lane::Bulk);
     if (!lease) {
-        requeueDownloadJob(PendingJob{url.toString(), destinationPath, expectedSha1,
-                                    expectedSize, officialUrl, url.host(), retryAttempts, 0, range});
+        requeueDownloadJob(job);
         wakeForRequestBudget();
         return;
     }
+    const auto &destinationPath = job.destinationPath;
+    const auto &expectedSha1 = job.expectedSha1;
+    const auto expectedSize = job.expectedSize;
+    const auto &range = job.range;
     // 这条作业的**首选地址那个主机**正被降级、而它还知道备用地址：**直接改道**，别等它慢
     // 10 秒再退。这条判断必须在这里、不能只在"挑地址"的地方：资源对象是几千个一次性排进
     // 队列的，它们身上的镜像地址在排队那一刻就拼好了（见 PendingJob），等它们一个个撞上慢
@@ -1278,11 +1315,11 @@ void DownloadManager::startDownload(const QUrl &url, const QString &destinationP
     // 判据搬进了 effectiveDownloadUrl() —— **发出去的是谁**和
     // pumpDownloadQueue() 那道按主机闸**问的是谁**必须是同一个判断，两处各写一遍就会
     // 漂开（漂开的形状见那个函数上面那段）。这里只把结果取出来用。
-    const QString urlText = url.toString();
+    const QString &urlText = job.url;
     const QString targetText =
-        effectiveDownloadUrl(urlText, officialUrl, mirrorDemotedFor(url.host()));
+        effectiveDownloadUrl(urlText, job.officialUrl, mirrorDemotedFor(job.host));
     const bool rerouted = (targetText != urlText);
-    QString fallback = rerouted ? QString() : officialUrl;  // 改了道就没有"退回官方"这回事
+    const QString fallback = rerouted ? QString() : job.officialUrl;
     // 花括号不是风格：`QNetworkRequest request(QUrl(targetText));` 会被当成一个函数声明
     // （most vexing parse），下一句 setTransferTimeout 直接编不过。
     QNetworkRequest request{QUrl(targetText)};
@@ -1301,7 +1338,11 @@ void DownloadManager::startDownload(const QUrl &url, const QString &destinationP
     // 会禁用按钮，那就从"日志刷屏"变成"永久卡死"，比不加超时更糟。
     request.setTransferTimeout(30000);
     QNetworkReply *reply = networkManager->get(request);
-    reply->setProperty("wtfmlRetryAttempts", retryAttempts);
+    reply->setProperty("wtfmlRetryAttempts", job.retryAttempts);
+    if (job.resourceRoute) {
+        job.resourceRoute->noteHost(request.url().host(), true);
+        m_resourceRoutes.insert(reply, job.resourceRoute);
+    }
     RequestBudget::attach(reply, lease);
     reply->setProperty("wtfmlStartMs", m_clock.elapsed());
     // 把**发出去的那个入口地址**记在回复身上。`reply->url()` 在 302 之后
@@ -1313,7 +1354,7 @@ void DownloadManager::startDownload(const QUrl &url, const QString &destinationP
     // 备用地址（fallback 已清空），所以官方这条再失败就真的失败了；这个属性是
     // noteReroutedReplyOutcome() 唯一能知道"该把谁的降级撤掉"的地方。
     if (rerouted) {
-        reply->setProperty("wtfmlReroutedFromHost", url.host());
+        reply->setProperty("wtfmlReroutedFromHost", job.host);
     }
     reply->setProperty("rangeFirst", range.first);
     reply->setProperty("rangeLast", range.last);
@@ -1335,7 +1376,9 @@ void DownloadManager::startDownload(const QUrl &url, const QString &destinationP
                 // 落点主机记在回复身上：之后每一条明细（停止 / 失败 / 完成）都能说出
                 // "这一条最后是在谁身上出的问题"，不必再从 finalUrl 反推。
                 reply->setProperty("wtfmlLandedHost", target.host());
-                const bool banned =
+                const auto route = m_resourceRoutes.value(reply);
+                if (route) route->noteHost(target.host());
+                const bool banned = !route &&
                     m_deadRedirectHosts.value(authorityKey(target)) > m_clock.elapsed();
                 if (DownloadDiag::enabled()) {
                     // 302 本身就是一条值得单独记的事件：BMCLAPI 的资源每条都转一手，
@@ -1430,7 +1473,7 @@ void DownloadManager::startDownload(const QUrl &url, const QString &destinationP
                                .arg(DownloadDiag::safeUrl(targetText))
                                .arg(QDir::toNativeSeparators(destinationPath))
                                .arg(rangeText)
-                               .arg(retryAttempts)
+                               .arg(job.retryAttempts)
                                .arg(activeDownloads.size())
                                .arg(m_pendingJobs.size())
                                .arg(targetHost)
@@ -1504,6 +1547,11 @@ void DownloadManager::handleDownloadError(QNetworkReply *reply, const QString &e
     failed.expectedSize = expectedSizes.value(reply, -1);
     failed.officialUrl = m_officialFallbacks.value(reply);
     failed.reason = errorMessage;
+    if (const auto route = m_resourceRoutes.value(reply)) {
+        route->noteHost(reply->url().host());
+        failed.url = route->originalUrl;
+        failed.reason = route->failureReason(errorMessage);
+    }
     if (failed.url.isEmpty() && !failed.officialUrl.isEmpty()) {
         failed.url = failed.officialUrl;
     }
@@ -1513,7 +1561,7 @@ void DownloadManager::handleDownloadError(QNetworkReply *reply, const QString &e
     if (!destPath.isEmpty() && !m_failedPaths.contains(destPath)) {
         m_failedPaths << destPath;
     }
-    emit downloadFinished(QFileInfo(destPath).fileName(), false, errorMessage);
+    emit downloadFinished(QFileInfo(destPath).fileName(), false, failed.reason);
 }
 
 void DownloadManager::checkAllDownloadsFinished() {
@@ -2180,7 +2228,9 @@ void DownloadManager::onVersionJsonReplyFinished() {
 
 bool DownloadManager::requeueTransientFailure(QNetworkReply *reply, const QString &destinationPath) {
     if (!replyIsFromCurrentBatch(reply) || m_shuttingDown || m_batchEmitted) return false;
-    if (!DownloadRetryPolicy::transientReply(reply)) return false;
+    const auto route = m_resourceRoutes.value(reply);
+    const bool watchdogTimeout = reply->property("wtfmlResourceTimeoutMs").isValid();
+    if (!watchdogTimeout && !DownloadRetryPolicy::transientReply(reply)) return false;
     // 这一条如果是从镜像降级改道到官方的，"官方连不上"就是撤销降级的证据（见
     // noteReroutedReplyOutcome）；不在这条路上记的话，超时这一档永远进不了那张表。
     noteReroutedReplyOutcome(reply, false);
@@ -2193,7 +2243,8 @@ bool DownloadManager::requeueTransientFailure(QNetworkReply *reply, const QStrin
     const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     const QByteArray retryAfter = reply->rawHeader("Retry-After");
     // 429 走专用退避：通用那条 0.5/1/2 秒比限流窗口还快（见 throttleDelayMs 的注释）。
-    int delay = attempts >= 3 ? -1
+    const int retryLimit = route ? int(QUrl(route->originalUrl) == reply->request().url()) : 3;
+    int delay = attempts >= retryLimit ? -1
                               : (status == 429 ? DownloadRetryPolicy::throttleDelayMs(attempts, retryAfter)
                                                : DownloadRetryPolicy::delayMs(attempts, retryAfter));
     if (status == 429) {
@@ -2206,25 +2257,14 @@ bool DownloadManager::requeueTransientFailure(QNetworkReply *reply, const QStrin
     if (delay < 0) return false;
     const QString url = reply->request().url().toString();
     const qint64 readyAt = m_clock.elapsed() + delay;
-    requeueDownloadJob(PendingJob{url, destinationPath, expectedSha1s.value(reply),
+    PendingJob retry{url, destinationPath, expectedSha1s.value(reply),
         expectedSizes.value(reply, -1), QString(), QUrl(url).host(), attempts + 1, readyAt, rangeOf(reply),
-        m_segmentEnabled && segmentedEligible(url, expectedSha1s.value(reply),
-                                              expectedSizes.value(reply, -1), rangeOf(reply))});
-    const auto generation = m_batchGeneration;
-    // QTimer 与 elapsed() 的取整边界可能不同；提前唤醒不能让队列错过唯一一次泵送。
-    auto *wakeup = new QTimer(this);
-    wakeup->setSingleShot(true);
-    wakeup->setTimerType(Qt::PreciseTimer);
-    connect(wakeup, &QTimer::timeout, this, [this, generation, readyAt, wakeup] {
-        if (generation != m_batchGeneration || m_shuttingDown) { wakeup->deleteLater(); return; }
-        const auto remaining = readyAt - m_clock.elapsed();
-        if (remaining > 0) { wakeup->start(int(remaining)); return; }
-        wakeup->deleteLater();
-        pumpDownloadQueue();
-        checkAllDownloadsFinished();
-    });
-    wakeup->start(delay);
-    qInfo() << "Temporary download failure; retry" << attempts + 1 << "of 3 in" << delay << "ms:"
+        !route && m_segmentEnabled && segmentedEligible(url, expectedSha1s.value(reply),
+                                               expectedSizes.value(reply, -1), rangeOf(reply))};
+    retry.resourceRoute = route;
+    requeueDownloadJob(retry);
+    wakeDownloadQueueAt(readyAt);
+    qInfo() << "Temporary download failure; retry" << attempts + 1 << "of" << retryLimit << "in" << delay << "ms:"
             << downloadTiming(reply, diagElapsedMs(reply, m_clock.elapsed()));
     if (DownloadDiag::enabled()) {
         DownloadDiag::line(QStringLiteral("transient retry dest=%1 attempt=%2 delay=%3ms status=%4 retryAfter=%5 %6")
@@ -2238,6 +2278,39 @@ bool DownloadManager::requeueTransientFailure(QNetworkReply *reply, const QStrin
                                         : QString::fromLatin1(reply->rawHeader("Retry-After")))
                                .arg(diagReplyFacts(reply)));
     }
+    return true;
+}
+
+void DownloadManager::wakeDownloadQueueAt(qint64 readyAt) {
+    const auto generation = m_batchGeneration;
+    // 按单调时钟的入队期限补足提前唤醒的时间。
+    auto *wakeup = new QTimer(this);
+    wakeup->setSingleShot(true);
+    wakeup->setTimerType(Qt::PreciseTimer);
+    connect(wakeup, &QTimer::timeout, this, [this, generation, readyAt, wakeup] {
+        if (generation != m_batchGeneration || m_shuttingDown) { wakeup->deleteLater(); return; }
+        const auto remaining = readyAt - m_clock.elapsed();
+        if (remaining > 0) { wakeup->start(int(remaining)); return; }
+        wakeup->deleteLater();
+        pumpDownloadQueue();
+        checkAllDownloadsFinished();
+    });
+    wakeup->start(int(qMax<qint64>(0, readyAt - m_clock.elapsed())));
+}
+
+bool DownloadManager::requeueResourceFailure(QNetworkReply *reply, const QString &destinationPath) {
+    const auto route = m_resourceRoutes.value(reply);
+    if (!route || m_batchEmitted) return false;
+    route->noteHost(reply->url().host());
+    if (requeueTransientFailure(reply, destinationPath)) return true;
+    if (route->remainingUrls.isEmpty()) return false;
+    const QString url = route->remainingUrls.takeFirst();
+    PendingJob retry{url, destinationPath, expectedSha1s.value(reply), expectedSizes.value(reply, -1),
+                     {}, QUrl(url).host()};
+    retry.resourceRoute = route;
+    requeueDownloadJob(retry);
+    qInfo() << "Resource download is switching sources:" << downloadTiming(reply, diagElapsedMs(reply, m_clock.elapsed()))
+            << "next=" << DownloadDiag::safeUrl(url);
     return true;
 }
 
@@ -2273,16 +2346,21 @@ void DownloadManager::onDownloadReplyFinished() {
     const auto stream = m_streamedFiles.take(reply);
     const auto range = rangeOf(reply);
     const QString rangeError = rangeProblem(reply, range);
+    const QVariant resourceTimeout = reply->property("wtfmlResourceTimeoutMs");
+    const bool timedOut = resourceTimeout.isValid() || reply->error() == QNetworkReply::TimeoutError;
     if (stale) {
         errorMessage = QCoreApplication::translate("DownloadManager", "下载已取消或任务已失效");
     } else if (stream && !stream->error.isEmpty()) {
         errorMessage = stream->error;
     } else if (!rangeError.isEmpty()) {
         errorMessage = rangeError;
-    } else if (reply->error() == QNetworkReply::TimeoutError &&
-               m_stallMeters.value(reply).bytesSeen == 0 && (!stream || stream->bytes == 0)) {
-        errorMessage = tr("下载节点 %1 在 %2 秒内未返回数据。")
-                           .arg(reply->url().host()).arg(reply->request().transferTimeout() / 1000);
+    } else if (timedOut && m_stallMeters.value(reply).bytesSeen == 0 && (!stream || stream->bytes == 0)) {
+        const auto timeoutMs = resourceTimeout.isValid() ? resourceTimeout.toLongLong()
+                                                          : reply->request().transferTimeout();
+        errorMessage = tr("下载源 %1 在 %2 秒内未返回数据。")
+                           .arg(reply->url().host()).arg(timeoutMs / 1000);
+    } else if (resourceTimeout.isValid()) {
+        errorMessage = DownloadRetryPolicy::displayError(QNetworkReply::TimeoutError, {});
     } else if (reply->error() != QNetworkReply::NoError) {
         errorMessage = DownloadRetryPolicy::displayError(reply->error(), reply->errorString());
     } else if (reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() != (range.active() ? 206 : 200)) {
@@ -2349,6 +2427,12 @@ void DownloadManager::onDownloadReplyFinished() {
         if (!stale) {
             emit downloadFinished(QFileInfo(destPath).fileName(), true, QString());
         }
+    } else if (!stale && m_resourceRoutes.contains(reply)) {
+        retryQueued = (!stream || stream->error.isEmpty()) &&
+                      (reply->error() != QNetworkReply::OperationCanceledError || resourceTimeout.isValid() ||
+                       reply->property("wtfmlResourceSourceSwitch").toBool()) &&
+                      requeueResourceFailure(reply, destPath);
+        if (!retryQueued) handleDownloadError(reply, errorMessage);
     } else if (!stale && retryStalledFromMirror(reply, destPath)) {
         // 看门狗 abort 掉的镜像作业（302 转手之后卡住的那一类）：先回**镜像入口**再试
         // 一次 —— 它会重新挑一台落点。直接退官方的话，在官方整条都不通的网络上，
@@ -2379,6 +2463,7 @@ void DownloadManager::onDownloadReplyFinished() {
     // 与"退回官方"那两条支路。
     m_stallMeters.remove(reply);
     m_officialFallbacks.remove(reply);
+    m_resourceRoutes.remove(reply);
     reply->deleteLater();
     // NOTE: 计数只对登记过的 reply 生效，上面两道 early return 挡住了没登记的。
     --pendingDownloads;
@@ -2412,6 +2497,9 @@ void DownloadManager::onStallWatchdogTick() {
     for (auto it = m_stallMeters.begin(); it != m_stallMeters.end(); ++it) {
         QNetworkReply *reply = it.key();
         StallMeter &meter = it.value();
+        const auto route = m_resourceRoutes.value(reply);
+        const bool resourceCanSwitch = route && !route->remainingUrls.isEmpty();
+        const bool resourceAtOrigin = route && QUrl(route->originalUrl) == reply->request().url();
         // (0) 进账从**回复自己**身上取，不信 downloadProgress 的报数时机。
         //
         // Qt 的 downloadProgress 不是"到了字节就报"： 响应头和 body 同一段到达、
@@ -2444,14 +2532,15 @@ void DownloadManager::onStallWatchdogTick() {
         // 有"只补缺的段"那条退路；一条 302 到死落点的分段只有 90 秒那条兜底会动它，
         // 而协调器要等整批收尾才补段 —— 等于整条作业白等一分半。
         if (meter.bytesSeen == 0
-            && (m_officialFallbacks.contains(reply) || rangeOf(reply).active())
+            && (m_officialFallbacks.contains(reply) || rangeOf(reply).active() ||
+                (resourceCanSwitch && resourceAtOrigin))
             && now - meter.lastSignOfLifeMs >
                    (m_metadataReplies.contains(reply)
                         ? qMin(m_noFirstByteGiveUpMs, kMetadataNoFirstByteGiveUpMs)
                         : m_noFirstByteGiveUpMs)) {
             const QUrl landed = reply->url();
             const QUrl entry = reply->request().url();
-            if (!isForgeCdnRedirect(reply)) {
+            if (!route && !isForgeCdnRedirect(reply)) {
                 noteDeadRedirectTarget(landed, entry, m_officialFallbacks.value(reply));
             }
             stalled.append(reply);
@@ -2460,7 +2549,7 @@ void DownloadManager::onStallWatchdogTick() {
         // (1) 卡死兜底。**不看有没有退路** —— 没有退路的回复一旦永远不结束，
         // pendingDownloads 就永远归不了零：整批永不收尾、界面永远停在"下载中"、
         // 连个错误都没有（进度条停在 1%，用户只能重启）。
-        const qint64 giveUpMs = meter.bytesSeen == 0 && isForgeCdnRedirect(reply)
+        const qint64 giveUpMs = meter.bytesSeen == 0 && (route || isForgeCdnRedirect(reply))
             ? qMin<qint64>(m_noProgressGiveUpMs, 30000) : m_noProgressGiveUpMs;
         if (now - meter.lastSignOfLifeMs > giveUpMs) {
             wedged.append({reply, giveUpMs});
@@ -2484,7 +2573,7 @@ void DownloadManager::onStallWatchdogTick() {
         // 整批镜像作业每隔 10 秒就被 abort 一遍（用户看到的形状是"限速一开就疯狂重试、
         // 根本下不完"）。"一个字节都不来"那两条（0b / 1）仍然照旧：那才是真的死了。
         if (m_speedBucket->limit <= 0
-            && (m_officialFallbacks.contains(reply) || rangeOf(reply).active())) {
+            && (m_officialFallbacks.contains(reply) || rangeOf(reply).active() || resourceCanSwitch)) {
             const bool rangePart = rangeOf(reply).active();
             const qint64 minBytes =
                 rangePart ? kStallMinBytesPerTickRange : kStallMinBytesPerTick;
@@ -2541,6 +2630,10 @@ void DownloadManager::onStallWatchdogTick() {
             // （见 retryStalledFromMirror），真退官方是掷完之后还没成的那一次。日志按实际
             // 可能性写，别把"换条路再试"说成"已经决定走官方"。
             // 分段请求（没有备用地址）abort 之后由 ResumableDownload 只补缺的那一段。
+            if (m_resourceRoutes.contains(reply)) {
+                failWedgedDownload(reply, m_noFirstByteGiveUpMs);
+                continue;
+            }
             if (m_officialFallbacks.contains(reply)) {
                 qInfo() << "Aborting a stalled mirror download; the job retries from the mirror entry or the official url:"
                         << jobLabel(reply);
@@ -2613,6 +2706,11 @@ void DownloadManager::failWedgedDownload(QNetworkReply *reply, qint64 giveUpMs) 
     if (destPath.isEmpty()) {
         return;  // 这一条已经结过账了（比如同一跳里被"慢镜像"那段先处理掉了）
     }
+    if (m_resourceRoutes.contains(reply)) {
+        reply->setProperty("wtfmlResourceTimeoutMs", giveUpMs);
+        reply->abort();
+        return;
+    }
     // 90 秒一个字节都没有 = 这条链路根本不通。如果它是降级改道到官方的，这就是
     // "官方也不通"的证据 —— 不管下面走重排还是记失败，都得先把这一笔记上。
     noteReroutedReplyOutcome(reply, false, /*forceUnreachable=*/true);
@@ -2627,34 +2725,20 @@ void DownloadManager::failWedgedDownload(QNetworkReply *reply, qint64 giveUpMs) 
     const bool mirrorJob = m_officialFallbacks.contains(reply);
     const bool retryCdnEntry = wedgedAttempts == 0 && isForgeCdnRedirect(reply) &&
                                m_stallMeters.value(reply).bytesSeen == 0;
-    const bool communityFallback = QUrl(m_officialFallbacks.value(reply)).host() ==
-                                   QLatin1String("mod.mcimirror.top");
-    if (((mirrorJob && !communityFallback) || retryCdnEntry) && !m_shuttingDown &&
+    if ((mirrorJob || retryCdnEntry) && !m_shuttingDown &&
         wedgedDelay >= 0 && replyIsFromCurrentBatch(reply)) {
         updateBatchFileBytes(destPath, 0);
         const QString retryUrl = reply->request().url().toString();
+        const qint64 readyAt = m_clock.elapsed() + wedgedDelay;
         requeueDownloadJob(PendingJob{retryUrl, destPath, expectedSha1s.value(reply),
                                          expectedSizes.value(reply, -1),
                                          m_officialFallbacks.value(reply), QUrl(retryUrl).host(),
-                                         wedgedAttempts + 1, m_clock.elapsed() + wedgedDelay,
+                                          wedgedAttempts + 1, readyAt,
                                          rangeOf(reply),
                                          m_segmentEnabled && segmentedEligible(
                                              retryUrl, expectedSha1s.value(reply),
                                              expectedSizes.value(reply, -1), rangeOf(reply))});
-        const auto generation = m_batchGeneration;
-        auto *wakeup = new QTimer(this);
-        wakeup->setSingleShot(true);
-        wakeup->setTimerType(Qt::PreciseTimer);
-        connect(wakeup, &QTimer::timeout, this, [this, generation, wakeup] {
-            if (generation != m_batchGeneration || m_shuttingDown) {
-                wakeup->deleteLater();
-                return;
-            }
-            wakeup->deleteLater();
-            pumpDownloadQueue();
-            checkAllDownloadsFinished();
-        });
-        wakeup->start(wedgedDelay);
+        wakeDownloadQueueAt(readyAt);
         qWarning() << "No data for" << (giveUpMs / 1000) << "seconds; retrying"
                    << (wedgedAttempts + 1) << "of 3 in" << wedgedDelay << "ms:" << jobLabel(reply);
         if (DownloadDiag::enabled()) {
@@ -2688,15 +2772,10 @@ void DownloadManager::failWedgedDownload(QNetworkReply *reply, qint64 giveUpMs) 
         return;
     }
 
-    if (communityFallback && !m_shuttingDown &&
-        retryWithOfficialUrl(reply, destPath, &DownloadManager::onDownloadReplyFinished)) {
-        return;
-    }
-
     // 顺序不能反：handleDownloadError() 靠 activeDownloads 反查路径来记失败清单，
     // 所以先报错、再摘表。摘完表之后哪怕 abort() 真的憋出一个迟到的 finished，
     // 那两个处理函数开头也会把"没登记的回复"直接忽略掉 —— 不会重复计数。
-    handleDownloadError(reply, tr("下载节点 %1 在 %2 秒内未返回数据。")
+    handleDownloadError(reply, tr("下载源 %1 在 %2 秒内未返回数据。")
                                    .arg(reply->url().host()).arg(giveUpMs / 1000));
     // 问代次**必须在摘表之前**：摘完之后查不到记录，默认值就是"当前这一批"，那就等于没判。
     const bool currentBatch = replyIsFromCurrentBatch(reply);

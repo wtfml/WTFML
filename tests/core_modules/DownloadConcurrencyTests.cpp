@@ -11,33 +11,43 @@
 namespace {
 class ManifestRaceReply final : public QNetworkReply {
 public:
-    ManifestRaceReply(const QNetworkRequest &request, QByteArray body, int delay, QObject *parent)
-        : QNetworkReply(parent), m_body(std::move(body)) {
+    ManifestRaceReply(const QNetworkRequest &request, QByteArray response, int delay, QObject *parent,
+                      std::function<void(QNetworkReply *, bool)> stalled = {})
+        : QNetworkReply(parent) {
         setRequest(request); setUrl(request.url()); open(QIODevice::ReadOnly);
         setAttribute(QNetworkRequest::HttpStatusCodeAttribute, 200);
-        QTimer::singleShot(delay, this, [this] {
+        QTimer::singleShot(delay, this, [this, response = std::move(response), stalled] {
             if (isFinished()) return;
-            if (m_body == QByteArray("NETWORK_FAILURE"))
-                setError(QNetworkReply::UnknownNetworkError, QStringLiteral("controlled failure"));
-            if (m_body == QByteArray("NETWORK_FAILURE") || m_body == QByteArray("NOT_FOUND")) {
-                setAttribute(QNetworkRequest::HttpStatusCodeAttribute,
-                             m_body == QByteArray("NOT_FOUND") ? 404 : 503);
-            }
-            if (m_body == QByteArray("FORGE_REDIRECT_STALL") || m_body == QByteArray("FORGE_REDIRECT_SLOW")) {
-                const bool slow = m_body == QByteArray("FORGE_REDIRECT_SLOW");
-                const QUrl target(QStringLiteral("https://mediafilez.forgecdn.net/files/test"));
-                m_body = slow ? QByteArray("o") : QByteArray();
-                emit redirected(target);
-                setUrl(target);
-                setAttribute(QNetworkRequest::HttpStatusCodeAttribute, slow ? 200 : 302);
-                if (slow) emit readyRead();
+            const bool slow = response == QByteArray("FORGE_REDIRECT_SLOW") || response == QByteArray("SLOW");
+            const bool redirects = response.startsWith("FORGE_REDIRECT_");
+            if (redirects || response == QByteArray("NO_DATA") || slow) {
+                if (redirects) {
+                    QUrl target = this->request().url();
+                    target.setHost(QStringLiteral("mediafilez.forgecdn.net"));
+                    emit redirected(target);
+                    setUrl(target);
+                    setAttribute(QNetworkRequest::HttpStatusCodeAttribute, slow ? 200 : 302);
+                }
+                if (slow) {
+                    m_body = QByteArray("o");
+                    emit readyRead();
+                }
+                if (stalled) stalled(this, slow);
                 return;
             }
-            if (m_body == QByteArray("REDIRECT_DNS_FAILURE")) {
+            if (response == QByteArray("NETWORK_FAILURE")) {
+                setError(QNetworkReply::UnknownNetworkError, QStringLiteral("controlled failure"));
+                setAttribute(QNetworkRequest::HttpStatusCodeAttribute, 503);
+            } else if (response == QByteArray("NOT_FOUND")) {
+                setError(QNetworkReply::ContentNotFoundError, QStringLiteral("controlled 404"));
+                setAttribute(QNetworkRequest::HttpStatusCodeAttribute, 404);
+            } else if (response == QByteArray("REDIRECT_DNS_FAILURE")) {
                 const QUrl target(QStringLiteral("https://mirror-node.invalid/file"));
                 emit redirected(target);
                 setUrl(target);
                 setError(QNetworkReply::HostNotFoundError, QStringLiteral("controlled DNS failure"));
+            } else {
+                m_body = response;
             }
             setFinished(true); emit readyRead(); emit finished();
         });
@@ -64,15 +74,29 @@ public:
     ManifestRaceNetwork(QObject *owner, Response response) : QNetworkAccessManager(owner), response(std::move(response)) {}
     int requests = 0;
     QList<QUrl> urls;
+    std::function<void(QNetworkReply *, bool)> stalled;
 protected:
     QNetworkReply *createRequest(Operation, const QNetworkRequest &request, QIODevice *) override {
         urls.append(request.url());
         const auto reply = response(request.url(), ++requests);
-        return new ManifestRaceReply(request, reply.first, reply.second, this);
+        return new ManifestRaceReply(request, reply.first, reply.second, this, stalled);
     }
 private:
     Response response;
 };
+
+void watchStalledReplies(ManifestRaceNetwork *network, DownloadManager &manager) {
+    network->stalled = [&manager](QNetworkReply *reply, bool slow) {
+        const auto tick = [&manager] { QMetaObject::invokeMethod(&manager, "onStallWatchdogTick"); };
+        if (slow) {
+            // The first sample sees the one delivered byte. A second sample reaches the strike limit.
+            tick();
+            tick();
+        } else {
+            QTimer::singleShot(80, reply, tick);
+        }
+    };
+}
 QByteArray manifestBody(const QByteArray &id) {
     return "{\"versions\":[{\"id\":\"" + id + "\",\"type\":\"release\",\"url\":\"https://example.test/version.json\"}]}";
 }
@@ -254,17 +278,13 @@ void runDownloadConcurrencyTests() {
             });
             return network;
         });
-        manager.setNoProgressGiveUpMs(20);
+        manager.setNoProgressGiveUpMs(40);
+        watchStalledReplies(network, manager);
         const QUrl entry(QStringLiteral("https://edge.forgecdn.net/files/test"));
         bool succeeded = false;
         QEventLoop loop;
         QObject::connect(&manager, &DownloadManager::downloadFinished, &loop,
             [&](const QString &, bool ok, const QString &) { succeeded = ok; loop.quit(); });
-        QTimer watchdog;
-        QObject::connect(&watchdog, &QTimer::timeout, &manager, [&manager] {
-            QMetaObject::invokeMethod(&manager, "onStallWatchdogTick");
-        });
-        watchdog.start(25);
         manager.downloadFile(entry.toString(), directory.filePath(QStringLiteral("download")), {}, 2,
                              VerifyMode::ExistsOnly);
         QTimer::singleShot(2000, &loop, &QEventLoop::quit);
@@ -272,21 +292,26 @@ void runDownloadConcurrencyTests() {
         check(succeeded && network->urls == QList<QUrl>{entry, entry},
               "CurseForge 跳转后未收到正文时从原入口重试");
     }
-    for (int scenario : {0, 1, 2}) {
+    for (int scenario : {0, 1, 2, 3}) {
         const bool startWithProgress = scenario == 2;
-        const bool mirrorOk = scenario != 1;
+        const bool mirrorOk = scenario == 0 || scenario == 2;
+        const bool succeededExpected = scenario != 3;
         QTemporaryDir directory;
-        const QUrl entry(QStringLiteral("https://edge.forgecdn.net/files/123/456/mod+forge.jar"));
-        const QUrl mirror(QStringLiteral("https://mod.mcimirror.top/files/123/456/mod%2Bforge.jar"));
+        const QUrl entry(QStringLiteral("https://edge.forgecdn.net/files/123/456/mod%2Bforge%20file.jar"));
+        const QUrl mirror(QStringLiteral("https://mod.mcimirror.top/files/123/456/mod+forge%20file.jar"));
+        const QUrl direct(QStringLiteral("https://mediafilez.forgecdn.net/files/123/456/mod%2Bforge%20file.jar"));
         ManifestRaceNetwork *network = nullptr;
         DownloadManager manager(nullptr, [&](QObject *owner) {
             network = new ManifestRaceNetwork(owner, [&](const QUrl &url, int) {
-                if (url == mirror) return qMakePair(mirrorOk ? QByteArray("ok") : QByteArray("no"), 5);
+                if (url == mirror) return qMakePair(mirrorOk ? QByteArray("ok") :
+                    (scenario == 1 ? QByteArray("NOT_FOUND") : QByteArray("NO_DATA")), 5);
+                if (url == direct) return qMakePair(succeededExpected ? QByteArray("ok") : QByteArray("no"), 5);
                 return qMakePair(QByteArray(startWithProgress ? "FORGE_REDIRECT_SLOW" : "FORGE_REDIRECT_STALL"), 5);
             });
             return network;
         });
-        manager.setNoProgressGiveUpMs(startWithProgress ? 2000 : 20);
+        manager.setNoProgressGiveUpMs(startWithProgress ? 2000 : 40);
+        watchStalledReplies(network, manager);
         const QString path = directory.filePath(QStringLiteral("mod.jar"));
         const QString sha1 = QString::fromLatin1(QCryptographicHash::hash("ok", QCryptographicHash::Sha1).toHex());
         QEventLoop loop;
@@ -297,18 +322,98 @@ void runDownloadConcurrencyTests() {
             succeeded = ok;
             loop.quit();
         });
-        QTimer watchdog;
-        QObject::connect(&watchdog, &QTimer::timeout, &manager, [&manager] {
-            QMetaObject::invokeMethod(&manager, "onStallWatchdogTick");
-        });
-        watchdog.start(25);
         manager.downloadFile(entry.toString(), path, sha1, 2, VerifyMode::SizeAndSha1);
         QTimer::singleShot(3000, &loop, &QEventLoop::quit);
         loop.exec();
-        check(completions == 1 && network->urls == QList<QUrl>{entry, entry, mirror} &&
-                  succeeded == mirrorOk && QFileInfo::exists(path) == mirrorOk,
+        QList<QUrl> expectedUrls{entry, entry, mirror};
+        if (!mirrorOk) expectedUrls.append(direct);
+        check(completions == 1 && network->urls == expectedUrls &&
+                  succeeded == succeededExpected && QFileInfo::exists(path) == succeededExpected,
               startWithProgress ? "CurseForge 文件开始传输后失速，可切换 MCIM 并完成作业"
-                                : "CurseForge 无数据只重试一次入口，随后切换 MCIM 并验证文件 SHA-1");
+                                : "CurseForge 超时重试一次入口，随后尝试 MCIM 和备用直连并校验 SHA-1");
+        if (!succeededExpected) {
+            const auto jobs = manager.failedJobs();
+            check(jobs.size() == 1 && QUrl(jobs.first().url) == entry &&
+                  jobs.first().reason.contains(QStringLiteral("edge.forgecdn.net → mediafilez.forgecdn.net → "
+                                                             "edge.forgecdn.net → mediafilez.forgecdn.net → "
+                                                             "mod.mcimirror.top → mediafilez.forgecdn.net")),
+                  "资源下载失败保留原始地址及包括重定向的尝试顺序");
+        }
+    }
+
+    for (bool originRecovers : {true, false}) {
+        QTemporaryDir directory;
+        const QUrl origin(QStringLiteral("https://cdn.modrinth.com/data/test/versions/v/mod.jar"));
+        const QUrl sibling = origin.resolved(QUrl(QStringLiteral("other.jar")));
+        const QUrl mirror(QStringLiteral("https://mod.mcimirror.top/data/test/versions/v/mod.jar"));
+        ManifestRaceNetwork *network = nullptr;
+        DownloadManager manager(nullptr, [&](QObject *owner) {
+            network = new ManifestRaceNetwork(owner, [&](const QUrl &url, int attempt) {
+                if (url == sibling || url == mirror || (originRecovers && attempt == 2)) {
+                    return qMakePair(QByteArray("ok"), 5);
+                }
+                return qMakePair(QByteArray(originRecovers ? "NETWORK_FAILURE" : "SLOW"), 5);
+            });
+            return network;
+        });
+        watchStalledReplies(network, manager);
+        const QString sha1 = QString::fromLatin1(QCryptographicHash::hash("ok", QCryptographicHash::Sha1).toHex());
+        QEventLoop loop;
+        bool success = false;
+        QObject::connect(&manager, &DownloadManager::allDownloadsFinished, &loop, [&](bool ok) {
+            success = ok;
+            loop.quit();
+        });
+        manager.downloadFile(origin.toString(), directory.filePath(QStringLiteral("mod.jar")), sha1, 2,
+                             VerifyMode::SizeAndSha1);
+        QTimer::singleShot(3000, &loop, &QEventLoop::quit);
+        loop.exec();
+        const QList<QUrl> expectedUrls = originRecovers ? QList<QUrl>{origin, origin}
+                                                        : QList<QUrl>{origin, origin, mirror};
+        check(success && network->urls == expectedUrls,
+              "Modrinth 瞬时错误先重试原站，持续低速时才切换该文件的下载源");
+        if (!originRecovers) {
+            check(!manager.mirrorDemotedFor(origin.host()), "MCIM 回退不触发官方 CDN 主机降级");
+            success = false;
+            manager.downloadFile(sibling.toString(), directory.filePath(QStringLiteral("other.jar")), sha1, 2,
+                                 VerifyMode::SizeAndSha1);
+            QTimer::singleShot(3000, &loop, &QEventLoop::quit);
+            loop.exec();
+            check(success && network->urls.last() == sibling, "同一 CDN 的后续文件仍从原站下载");
+        }
+    }
+
+    {
+        QTemporaryDir directory;
+        const QUrl origin(QStringLiteral("https://edge.forgecdn.net/files/123/456/large.jar"));
+        const QUrl mirror(QStringLiteral("https://mod.mcimirror.top/files/123/456/large.jar"));
+        const QUrl direct(QStringLiteral("https://mediafilez.forgecdn.net/files/123/456/large.jar"));
+        const QByteArray payload(4 * 1024 * 1024, 'm');
+        const QString sha1 = QString::fromLatin1(QCryptographicHash::hash(payload, QCryptographicHash::Sha1).toHex());
+        QList<QUrl> requests;
+        DownloadManager manager(nullptr, [&](QObject *owner) {
+            return new ManifestRaceNetwork(owner, [&](const QUrl &url, int) {
+                requests.append(url);
+                if (requests.size() == 1) return qMakePair(QByteArray("ok"), 5); // Range unsupported.
+                if (url == origin) return qMakePair(QByteArray("NETWORK_FAILURE"), 5);
+                if (url == mirror) return qMakePair(QByteArray("NOT_FOUND"), 5);
+                return qMakePair(payload, 5);
+            });
+        });
+        manager.setRangeCacheRoot(directory.filePath(QStringLiteral("ranges")));
+        QEventLoop loop;
+        bool success = false;
+        QObject::connect(&manager, &DownloadManager::allDownloadsFinished, &loop, [&](bool ok) {
+            success = ok;
+            loop.quit();
+        });
+        const QString path = directory.filePath(QStringLiteral("large.jar"));
+        manager.downloadFile(origin.toString(), path, sha1, payload.size(), VerifyMode::SizeAndSha1);
+        QTimer::singleShot(5000, &loop, &QEventLoop::quit);
+        loop.exec();
+        check(success && requests == QList<QUrl>{origin, origin, origin, mirror, direct} &&
+              QFileInfo(path).size() == payload.size(),
+              "分段探测不支持 Range 时沿用文件级换源顺序，整个文件只提交一次");
     }
 
     for (int status : {200, 404, 503}) {

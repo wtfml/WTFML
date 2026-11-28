@@ -783,6 +783,17 @@ private:
     /// 安装器下载……）查不到记录，按当前这一批处理 —— 它们本来就各算各的，从来不在批次里。
     bool replyIsFromCurrentBatch(QNetworkReply *reply) const;
 
+    // 社区镜像及 CDN 直连顺序随文件重排保留，独立于按主机降级的官方备用地址。
+    struct ResourceDownloadRoute {
+        QString originalUrl;
+        QStringList remainingUrls;
+        QStringList attemptedHosts;
+
+        void noteHost(const QString &host, bool newAttempt = false);
+        QString failureReason(const QString &reason) const;
+    };
+    using ResourceRoute = QSharedPointer<ResourceDownloadRoute>;
+
     /// 等着发的作业。**每一条下载都从这里过**（资源对象、库、客户端 jar、整合包清单里
     /// 那几百个文件都一样）：一次资源补齐是 3000 多个对象，全塞给 QNetworkAccessManager
     /// 的话 Qt 每个主机只开 6 条连接，其余的在它内部干等，而 30 秒的传输超时**从请求
@@ -824,8 +835,10 @@ private:
         /// 否则会在两条路之间来回打转。
         bool officialRetried = false;
         bool plainRetried = false;
+        ResourceRoute resourceRoute;
     };
     QQueue<PendingJob> m_pendingJobs;
+    QHash<QNetworkReply *, ResourceRoute> m_resourceRoutes;
     bool m_budgetWakePending = false;
     void wakeForRequestBudget();
     void probeFasterSource(QNetworkReply *source, qint64 currentRate);
@@ -914,6 +927,7 @@ private:
         bool officialRetried = false;
         bool plainRetried = false;
         quint64 generation = 0;
+        ResourceRoute resourceRoute;
     };
     QHash<ResumableDownload *, SegmentJob> m_segmentJobs;
 
@@ -1089,11 +1103,10 @@ private:
     bool retryWithOfficialUrl(QNetworkReply *reply, const QString &destinationPath,
                               void (DownloadManager::*finishedSlot)());
 
-    void startDownload(const QUrl &url, const QString &destinationPath,
-                       const QString &expectedSha1 = QString(), qint64 expectedSize = -1,
-                       const QString &officialUrl = QString(), int retryAttempts = 0,
-                       const DownloadRange &range = DownloadRange());
+    void startDownload(const PendingJob &job);
     bool requeueTransientFailure(QNetworkReply *reply, const QString &destinationPath);
+    bool requeueResourceFailure(QNetworkReply *reply, const QString &destinationPath);
+    void wakeDownloadQueueAt(qint64 readyAt);
     /// downloadFile() 的本体：登记进批次、跳过已经下好的、剩下的排进 m_pendingJobs，
     /// 再由 pumpDownloadQueue() 按连接预算发出去。
     void scheduleFile(const QString &url, const QString &destinationPath,

@@ -58,6 +58,10 @@ public:
     /// 本来就直连官方（或者已经因为镜像降级改道过）时没有备用地址：不设 = 不比较。
     void setFallbackUrl(const QUrl &url) { m_fallbackUrl = url; }
 
+    // 已有文件级换源顺序时，由外层负责普通下载和后续来源。
+    void setDeferFallbacks(bool defer) { m_deferFallbacks = defer; }
+    bool singleDownloadNeeded() const { return m_singleDownloadNeeded; }
+
     /// 只给验证工程：把「持续低速」的观察窗口改短（默认
     /// `SlowSourcePolicy::kSustainedWindowMs`）。阈值本身仍只有 `SlowSourcePolicy` 一处。
     /// 传 0 = 恢复默认。产品代码不许调。
@@ -70,6 +74,7 @@ signals:
     void statusChanged(const QString &message);
     void finished(bool success, const QString &error);
     void checkpointSaved(qint64 reusableBytes);
+    void probeSourceContacted(const QString &host, bool newAttempt);
 private:
     std::function<QString()> m_commitGuard;
     enum class Stage { Probe, Prepare, Parts, Switching, Single, Assemble, Done };
@@ -120,6 +125,7 @@ private:
     QSharedPointer<QAtomicInt> m_abort;
     Stage m_stage = Stage::Done;
     bool m_running = false, m_overwrite = true, m_networkAttempted = false;
+    bool m_deferFallbacks = false, m_singleDownloadNeeded = false;
     /// 分段那一轮失败之后**只补缺失分段**的那一次机会用掉了没有（见 .cpp 的失败分支）。
     bool m_partsRetried = false;
     /// 已经发现分段失败、但这一批还有别的分段在飞：等 allDownloadsFinished 再补。
