@@ -7625,6 +7625,10 @@
     <context>
         <name>DownloadManager</name>
         <message>
+            <source>下载入口：%1。尝试顺序：%2。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>无法保存下载恢复记录，未开始写入。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -7653,7 +7657,7 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
-            <source>下载节点 %1 在 %2 秒内未返回数据。</source>
+            <source>下载源 %1 在 %2 秒内未返回数据。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -9796,6 +9800,10 @@ Minecraft：%2%3
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>关闭当前提示后继续整合包导入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>无法解压此压缩包。</source>
             <translation type="unfinished"></translation>
         </message>
@@ -9951,6 +9959,42 @@ Minecraft：%2%3
         </message>
         <message>
             <source>打开所选文件网页</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Java 选择提示未显示。关闭当前提示后重试。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已有未完成的安装</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」里有上一次没有装完的旧版本。
+
+清空后会按当前整合包从头安装，旧半成品中已下载的文件不会保留。也可以换一个实例名称。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>清空并继续</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>已清空未完成的「%1」，按当前整合包重新安装。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>无法清空旧安装</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>「%1」删不掉，可能仍有文件被占用。
+
+请关闭占用它的程序后重试，或换一个实例名称。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>未完成安装的提示已取消</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -15536,6 +15580,14 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>补全「%1」的 %2 个前置模组</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>当前正忙</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>另一个整合包仍在导入，请待其结束后再试。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>

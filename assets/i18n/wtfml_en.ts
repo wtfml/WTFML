@@ -7738,6 +7738,10 @@ Instance is ready; preset partially applied:
     <context>
         <name>DownloadManager</name>
         <message>
+            <source>下载入口：%1。尝试顺序：%2。</source>
+            <translation>Download source: %1. Attempt order: %2.</translation>
+        </message>
+        <message>
             <source>无法保存下载恢复记录，未开始写入。</source>
             <translation>Can't save download recovery record; write didn't start.</translation>
         </message>
@@ -7766,7 +7770,7 @@ Instance is ready; preset partially applied:
             <translation>Download canceled or task expired</translation>
         </message>
         <message>
-            <source>下载节点 %1 在 %2 秒内未返回数据。</source>
+            <source>下载源 %1 在 %2 秒内未返回数据。</source>
             <translation>Download source %1 returned no data within %2 s.</translation>
         </message>
         <message>
@@ -9965,6 +9969,10 @@ Resuming reuses files passing SHA-1 verification and downloads missing ones. Cho
             <translation>Import canceled by user</translation>
         </message>
         <message>
+            <source>关闭当前提示后继续整合包导入。</source>
+            <translation>Continue the modpack import after closing the current prompt.</translation>
+        </message>
+        <message>
             <source>无法解压此压缩包。</source>
             <translation>Can't extract this archive.</translation>
         </message>
@@ -10139,6 +10147,46 @@ Instance folder: %1</translation>
         <message>
             <source>打开所选文件网页</source>
             <translation>Open selected file page</translation>
+        </message>
+        <message>
+            <source>Java 选择提示未显示。关闭当前提示后重试。</source>
+            <translation>The Java selection prompt could not be shown. Close the current prompt and try again.</translation>
+        </message>
+        <message>
+            <source>已有未完成的安装</source>
+            <translation>Unfinished installation exists</translation>
+        </message>
+        <message>
+            <source>「%1」里有上一次没有装完的旧版本。
+
+清空后会按当前整合包从头安装，旧半成品中已下载的文件不会保留。也可以换一个实例名称。</source>
+            <translation>The "%1" folder contains an unfinished installation of an older version.
+
+Clearing it will install the current modpack from scratch. Files already downloaded in the old partial installation will not be kept. You can also choose a different instance name.</translation>
+        </message>
+        <message>
+            <source>清空并继续</source>
+            <translation>Clear and continue</translation>
+        </message>
+        <message>
+            <source>已清空未完成的「%1」，按当前整合包重新安装。</source>
+            <translation>Cleared unfinished "%1"; reinstalling with the current modpack.</translation>
+        </message>
+        <message>
+            <source>无法清空旧安装</source>
+            <translation>Could not clear old installation</translation>
+        </message>
+        <message>
+            <source>「%1」删不掉，可能仍有文件被占用。
+
+请关闭占用它的程序后重试，或换一个实例名称。</source>
+            <translation>"%1" could not be deleted; files may still be in use.
+
+Close the programs using them and try again, or choose a different instance name.</translation>
+        </message>
+        <message>
+            <source>未完成安装的提示已取消</source>
+            <translation>Unfinished installation prompt canceled</translation>
         </message>
         <message>
             <source>%1 中已存在「%2」。
@@ -15890,6 +15938,14 @@ Incompatible files may prevent the game from launching. Install anyway?</transla
         <message>
             <source>补全「%1」的 %2 个前置模组</source>
             <translation>Install %2 dependencies for "%1"</translation>
+        </message>
+        <message>
+            <source>当前正忙</source>
+            <translation>Busy</translation>
+        </message>
+        <message>
+            <source>另一个整合包仍在导入，请待其结束后再试。</source>
+            <translation>Another modpack import is still in progress. Wait for it to finish and try again.</translation>
         </message>
         <message>
             <source>「%1」上次未安装完成，将继续安装，已下载的文件不再重复下载。</source>
