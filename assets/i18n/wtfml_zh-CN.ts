@@ -7493,7 +7493,27 @@
             <translation type="unfinished"></translation>
         </message>
         <message>
+            <source>已有下载或安装任务正在进行，请待其结束后再继续。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
             <source>有游戏、启动或文件操作正在进行，请结束后再继续文件恢复。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>恢复记录暂时读不出来（可能被另一处占用或已损坏），请稍后重试。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>这一项不需要继续安装。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>这一项已经不在可继续的状态。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>这一项正在校验，请稍候再继续。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -9362,6 +9382,14 @@
         </message>
         <message>
             <source>需要 Java 环境</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>关闭当前提示后继续整合包导入。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Java 选择提示未显示。关闭当前提示后重试。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
@@ -16275,6 +16303,14 @@ Minecraft %2 / %3 %4</source>
         </message>
         <message>
             <source>「%1」正在被另一项文件操作占用（复制 / 备份 / 还原 / 安装），请等待任务完成后再修改此文件。</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>暂时无法继续</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>请稍后重试。</source>
             <translation type="unfinished"></translation>
         </message>
         <message>
