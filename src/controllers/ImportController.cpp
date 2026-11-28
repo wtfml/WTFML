@@ -830,34 +830,63 @@ void ImportController::continueOneClickImport(PreparedModpack &prepared,
             finishAbortedImportTask(taskId, false, nameProblem);
             return;
         }
-        QString candidate = ModpackImport::suggestUniqueInstanceName(
-            name.isEmpty() ? prepared.pack.name : name);
-        const QString conflictPrompt =
-            (InstanceFiles::validateDirName(name).isEmpty() && InstanceFiles::isUnfinishedImport(name))
-                ? tr("「%1」中是另一个整合包（或另一版本）未完成的安装，不能安装到同一目录。\n\n请更换实例名称，"
-                     "原有文件不受影响。")
-                      .arg(name)
-                : tr("%1\n\n请输入新的实例名称。").arg(nameProblem);
-        while (true) {
-            bool ok = false;
-            const QString input = InlineMessage::getText(
-                m_owner->m_ui->overlay(), tr("更换名称"), conflictPrompt, candidate, &ok);
-            if (!ok) {
-                finishAbortedImportTask(taskId, true, tr("名称冲突提示已取消"));
+        // 同名目录里是上一次没装完的**另一个版本**。只让用户改名，等于把
+        // “重新安装”这件事彻底堵死；先给一次清空旧半成品的机会，清不掉再走改名。
+        if (InstanceFiles::validateDirName(name).isEmpty() && InstanceFiles::isUnfinishedImport(name)) {
+            const int choice = InlineMessage::ask(
+                m_owner->m_ui->overlay(), MessageKind::Warning, tr("已有未完成的安装"),
+                tr("「%1」里有上一次没有装完的旧版本。\n\n清空后会按当前整合包从头安装，"
+                   "旧半成品中已下载的文件不会保留。也可以换一个实例名称。")
+                    .arg(name),
+                {tr("清空并继续"), tr("更换名称"), tr("取消")},
+                /*defaultIndex=*/-1, /*destructiveIndex=*/0, false);
+            if (choice == 0) {
+                QDir stale(AppPaths::versionDir(name));
+                if (stale.removeRecursively()) {
+                    m_owner->appendLog(tr("已清空未完成的「%1」，按当前整合包重新安装。").arg(name));
+                    verdict = InstanceFiles::ImportNameVerdict::Ok;
+                } else {
+                    InlineMessage::warning(
+                        m_owner->m_ui->overlay(), tr("无法清空旧安装"),
+                        tr("「%1」删不掉，可能仍有文件被占用。\n\n请关闭占用它的程序后重试，"
+                           "或换一个实例名称。")
+                            .arg(name));
+                }
+            } else if (choice == 2 || choice < 0) {
+                finishAbortedImportTask(taskId, true, tr("未完成安装的提示已取消"));
                 return;
             }
-            candidate = input.trimmed();
-            verdict = InstanceFiles::checkImportTargetName(
-                candidate, &nameProblem, prepared.manifestFingerprint);
-            if (verdict != InstanceFiles::ImportNameVerdict::Taken) {
-                name = candidate;
-                break;
-            }
-            InlineMessage::warning(m_owner->m_ui->overlay(), tr("更换名称"), nameProblem);
         }
-        if (taskId != Tasks::invalidTaskId() && m_owner->m_activityCenter != nullptr) {
-            m_owner->m_activityCenter->tasks()->setTitleAndTarget(
-                taskId, tr("安装整合包 %1").arg(name), name);
+        if (verdict == InstanceFiles::ImportNameVerdict::Taken) {
+            QString candidate = ModpackImport::suggestUniqueInstanceName(
+                name.isEmpty() ? prepared.pack.name : name);
+            const QString conflictPrompt =
+                (InstanceFiles::validateDirName(name).isEmpty() && InstanceFiles::isUnfinishedImport(name))
+                    ? tr("「%1」中是另一个整合包（或另一版本）未完成的安装，不能安装到同一目录。\n\n请更换实例名称，"
+                         "原有文件不受影响。")
+                          .arg(name)
+                    : tr("%1\n\n请输入新的实例名称。").arg(nameProblem);
+            while (true) {
+                bool ok = false;
+                const QString input = InlineMessage::getText(
+                    m_owner->m_ui->overlay(), tr("更换名称"), conflictPrompt, candidate, &ok);
+                if (!ok) {
+                    finishAbortedImportTask(taskId, true, tr("名称冲突提示已取消"));
+                    return;
+                }
+                candidate = input.trimmed();
+                verdict = InstanceFiles::checkImportTargetName(
+                    candidate, &nameProblem, prepared.manifestFingerprint);
+                if (verdict != InstanceFiles::ImportNameVerdict::Taken) {
+                    name = candidate;
+                    break;
+                }
+                InlineMessage::warning(m_owner->m_ui->overlay(), tr("更换名称"), nameProblem);
+            }
+            if (taskId != Tasks::invalidTaskId() && m_owner->m_activityCenter != nullptr) {
+                m_owner->m_activityCenter->tasks()->setTitleAndTarget(
+                    taskId, tr("安装整合包 %1").arg(name), name);
+            }
         }
     }
     if (verdict == InstanceFiles::ImportNameVerdict::OkResume) {
