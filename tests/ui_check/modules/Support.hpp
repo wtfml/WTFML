@@ -77,6 +77,7 @@
 #include <QScreen>   // I4：底栏弹层避让那一条要问"这一块屏的可用区域"（offscreen 是 800x600）
 #include <QSet>
 #include <QSettings>     // W7/W8：主题落盘那一趟（读写都在一个各自独立的窝里，见那一段）
+#include <QSlider>       // #74：应用级滚轮规矩也要盖住滑条（文字不透明度、着色强度…）
 #include <QSpinBox>
 #include <QTableWidget>  // U40c：附魔那张表的「和上一行同一件」那一列
 #include <QStackedWidget>

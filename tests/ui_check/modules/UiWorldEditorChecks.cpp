@@ -724,6 +724,10 @@ int UiWorldEditorChecks() {
         spin->setGeometry(10, 60, 140, 32);
         auto *other = new QLineEdit(content);
         other->setGeometry(10, 110, 140, 32);
+        auto *slider = new QSlider(Qt::Horizontal, content);
+        slider->setRange(0, 100);
+        slider->setValue(50);
+        slider->setGeometry(10, 160, 140, 24);
         area->setWidget(content);
         area->resize(240, 160);
         host.resize(240, 160);
@@ -733,8 +737,9 @@ int UiWorldEditorChecks() {
         other->setFocus();
         QApplication::processEvents();
         check((combo->focusPolicy() & Qt::WheelFocus) != Qt::WheelFocus &&
-                  (spin->focusPolicy() & Qt::WheelFocus) != Qt::WheelFocus,
-              "★★ #74 下拉框、数字框的焦点策略里没有 WheelFocus（滚轮抢不到焦点）");
+                  (spin->focusPolicy() & Qt::WheelFocus) != Qt::WheelFocus &&
+                  (slider->focusPolicy() & Qt::WheelFocus) != Qt::WheelFocus,
+              "★★ #74 下拉框、数字框、滑条的焦点策略里没有 WheelFocus（滚轮抢不到焦点）");
         const auto wheel = [](QWidget *target) {
             QWheelEvent event(QPointF(5, 5), target->mapToGlobal(QPointF(5, 5)), QPoint(0, 0),
                               QPoint(0, -120), Qt::NoButton, Qt::NoModifier, Qt::NoScrollPhase,
@@ -750,11 +755,25 @@ int UiWorldEditorChecks() {
               "★★ #74 没有焦点时滚轮不改下拉框、数字框的值，滚轮转给外层滚动区",
               QStringLiteral("下拉框 %1 / 数字框 %2 / 滚动 %3→%4")
                   .arg(combo->currentIndex()).arg(spin->value()).arg(before).arg(bar->value()));
+        // 滑条：设置页那些「着色强度 / 模糊强度 / 文字不透明度」同一个毛病 —— 没焦点滚轮
+        // 不该改值（以前只在几个页面逐个装了 WheelGuard，漏装的那几处就会静默改值）。
+        const int barBeforeSlider = bar->value();
+        wheel(slider);
+        QApplication::processEvents();
+        check(slider->value() == 50 && bar->value() > barBeforeSlider,
+              "★★ #74 没有焦点时滚轮不改滑条的值，滚轮转给外层滚动区",
+              QStringLiteral("滑条 %1 / 滚动 %2→%3")
+                  .arg(slider->value()).arg(barBeforeSlider).arg(bar->value()));
         combo->setFocus();
         QApplication::processEvents();
         wheel(combo);
         check(combo->hasFocus() && combo->currentIndex() != 0,
               "#74 有焦点时滚轮照常改值", QString::number(combo->currentIndex()));
+        slider->setFocus();
+        QApplication::processEvents();
+        wheel(slider);
+        check(slider->hasFocus() && slider->value() != 50,
+              "#74 滑条有焦点时滚轮照常改值", QString::number(slider->value()));
     }
     return 0;
 }
