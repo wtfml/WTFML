@@ -520,6 +520,85 @@ void runCurseForgeTests() {
               "ZG3 答复读不懂：problem 非空（这一档会让整件事停下来）");
     }
 
+    // --- ZG3b. 批量接口漏项时，从公开文件页补文件名和字节数 -----------------
+    {
+        const QByteArray pageJson = R"json({
+            "data": [
+                {"id":7182006,"projectId":238222,"fileName":"newer.jar","fileLength":2048},
+                {"id":7037120,"projectId":238222,
+                 "fileName":"jei-1.20.1-forge-15.20.0.116.jar","fileLength":1387236},
+                {"id":7024690,"projectId":238222,"fileName":"older.jar","fileLength":1024}
+            ],
+            "pagination": {"index":34,"pageSize":50,"totalCount":3943}
+        })json";
+        const auto page = ModpackImport::parseCurseForgeWebFilePage(pageJson);
+        const auto target = std::find_if(page.files.cbegin(), page.files.cend(),
+                                         [](const ModpackImport::CurseForgeWebFile &file) {
+                                             return file.fileId == 7037120;
+                                         });
+        check(page.problem.isEmpty() && page.pageIndex == 34 && page.pageSize == 50 &&
+                  page.totalCount == 3943 && page.files.size() == 3 &&
+                  target != page.files.cend() && target->projectId == 238222 &&
+                  target->size == 1387236 &&
+                  target->fileName == QStringLiteral("jei-1.20.1-forge-15.20.0.116.jar"),
+              "ZG3b 公开文件页读出目标文件名、字节数和分页信息");
+        check(ModpackImport::curseForgeWebFilesUrl(238222, 34) ==
+                  QStringLiteral("https://www.curseforge.com/api/v1/mods/238222/files"
+                                 "?pageIndex=34&pageSize=50") &&
+                  ModpackImport::curseForgeWebFilesUrl(0, 0).isEmpty() &&
+                  ModpackImport::curseForgeWebFilesUrl(238222, -1).isEmpty() &&
+                  ModpackImport::curseForgeWebFilesUrl(238222, 0, 51).isEmpty(),
+              "ZG3b 公开文件页地址只接受正项目号、非负页号和不超过 50 的页大小");
+
+        const auto pageFor = [](int pageIndex) {
+            ModpackImport::CurseForgeWebFilePage out;
+            out.pageIndex = pageIndex;
+            out.pageSize = 50;
+            out.totalCount = 150;
+            if (pageIndex < 0 || pageIndex > 2) {
+                out.problem = QStringLiteral("out of range");
+                return out;
+            }
+            for (int offset = 0; offset < 50; ++offset) {
+                ModpackImport::CurseForgeWebFile file;
+                file.projectId = 7;
+                file.fileId = 1000 - (pageIndex * 50 + offset);
+                file.fileName = QStringLiteral("%1.jar").arg(file.fileId);
+                file.size = 1;
+                out.files.append(file);
+            }
+            return out;
+        };
+        int probes = 0;
+        const auto found = ModpackImport::findCurseForgeWebFile(
+            7, 900, [&](int pageIndex) {
+                ++probes;
+                return pageFor(pageIndex);
+            });
+        check(found.has_value() && found->fileId == 900 && probes == 3,
+              "ZG3b 在倒序公开分页里三次探到目标文件",
+              QStringLiteral("probes %1 / found %2")
+                  .arg(probes)
+                  .arg(found.has_value() ? found->fileId : 0));
+
+        probes = 0;
+        const auto absent = ModpackImport::findCurseForgeWebFile(
+            7, 800, [&](int pageIndex) {
+                ++probes;
+                return pageFor(pageIndex);
+            });
+        check(!absent.has_value() && probes <= 4,
+              "ZG3b 目标不在公开列表时保留缺项，不在页间无限绕");
+
+        ModpackImport::CurseForgeWebFilePage broken;
+        broken.problem = QStringLiteral("network");
+        check(!ModpackImport::findCurseForgeWebFile(7, 900, [&](int) { return broken; })
+                   .has_value() &&
+                  ModpackImport::parseCurseForgeWebFilePage(QByteArrayLiteral("not json"))
+                      .problem.size() > 0,
+              "ZG3b 网络失败或正文读不懂时不猜文件存在");
+    }
+
     // --- ZG4. 落点：哪一类文件进哪个目录 -------------------------------------
     {
         // 判据是**类目号**，不是文件名的后缀（.zip 既可能是资源包也可能是存档，而

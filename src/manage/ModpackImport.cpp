@@ -1505,6 +1505,110 @@ QByteArray curseForgeModsRequestBody(const QList<int> &projectIds) {
     return idListRequestBody(QStringLiteral("modIds"), projectIds);
 }
 
+QString curseForgeWebFilesUrl(int projectId, int pageIndex, int pageSize) {
+    if (projectId <= 0 || pageIndex < 0 || pageSize <= 0 || pageSize > 50) {
+        return {};
+    }
+    return QStringLiteral("https://www.curseforge.com/api/v1/mods/%1/files?pageIndex=%2&pageSize=%3")
+        .arg(projectId)
+        .arg(pageIndex)
+        .arg(pageSize);
+}
+
+CurseForgeWebFilePage parseCurseForgeWebFilePage(const QByteArray &json) {
+    CurseForgeWebFilePage out;
+
+    QJsonParseError parseError;
+    const QJsonDocument doc = QJsonDocument::fromJson(json, &parseError);
+    if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
+        out.problem = QStringLiteral("invalid JSON: %1").arg(parseError.errorString());
+        return out;
+    }
+
+    const QJsonValue data = doc.object().value(QStringLiteral("data"));
+    if (!data.isArray()) {
+        out.problem = QStringLiteral("missing data array");
+        return out;
+    }
+
+    const QJsonObject pagination =
+        doc.object().value(QStringLiteral("pagination")).toObject();
+    out.pageIndex = pagination.value(QStringLiteral("index")).toInt(-1);
+    out.pageSize = pagination.value(QStringLiteral("pageSize")).toInt(0);
+    out.totalCount = pagination.value(QStringLiteral("totalCount")).toInt(0);
+
+    constexpr double kQint64UpperBound = 9223372036854775808.0;
+    for (const QJsonValue &value : data.toArray()) {
+        const QJsonObject entry = value.toObject();
+        CurseForgeWebFile file;
+        file.projectId = entry.value(QStringLiteral("projectId")).toInt(0);
+        file.fileId = entry.value(QStringLiteral("id")).toInt(0);
+        file.fileName = entry.value(QStringLiteral("fileName")).toString();
+        if (file.projectId <= 0 || file.fileId <= 0 || file.fileName.isEmpty() ||
+            !isSafeRelativePath(file.fileName)) {
+            continue;
+        }
+        const QJsonValue length = entry.value(QStringLiteral("fileLength"));
+        if (length.isDouble() && length.toDouble() >= 0.0 &&
+            length.toDouble() < kQint64UpperBound) {
+            file.size = static_cast<qint64>(length.toDouble());
+        }
+        out.files.append(file);
+    }
+    return out;
+}
+
+std::optional<CurseForgeWebFile> findCurseForgeWebFile(
+    int projectId, int fileId, const CurseForgeWebPageLoader &loadPage, int maxProbes) {
+    if (projectId <= 0 || fileId <= 0 || !loadPage || maxProbes <= 0) {
+        return std::nullopt;
+    }
+
+    constexpr int kFallbackPageSize = 50;
+    int low = 0;
+    int high = -1;
+    QSet<int> probedPages;
+    for (int probe = 0; probe < maxProbes; ++probe) {
+        const int pageIndex = high < 0 ? 0 : low + (high - low) / 2;
+        if (probedPages.contains(pageIndex)) {
+            break;
+        }
+        probedPages.insert(pageIndex);
+
+        const CurseForgeWebFilePage page = loadPage(pageIndex);
+        if (!page.problem.isEmpty() || page.files.isEmpty()) {
+            break;
+        }
+        if (high < 0) {
+            const int totalCount = page.totalCount > 0 ? page.totalCount : page.files.size();
+            high = (totalCount - 1) / kFallbackPageSize;
+        }
+
+        for (const CurseForgeWebFile &file : page.files) {
+            if (file.projectId == projectId && file.fileId == fileId) {
+                return file;
+            }
+        }
+
+        const int firstId = page.files.first().fileId;
+        const int lastId = page.files.last().fileId;
+        if (firstId < lastId) {
+            break; // 接口次序变了；二分查找的前提不成立，保留缺项。
+        }
+        if (fileId > firstId) {
+            high = pageIndex - 1;
+        } else if (fileId < lastId) {
+            low = pageIndex + 1;
+        } else {
+            break; // 编号落在这两页之间：公开列表里确实没有这一条。
+        }
+        if (low > high) {
+            break;
+        }
+    }
+    return std::nullopt;
+}
+
 QString curseForgeDownloadUrl(qint64 fileId, const QString &fileName, const QString &declaredUrl) {
     if (!declaredUrl.trimmed().isEmpty()) return declaredUrl;
     if (fileId <= 0 || fileId > 9007199254740991LL || fileName.contains(QLatin1Char('/')) ||

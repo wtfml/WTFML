@@ -24,6 +24,7 @@
 #include <QString>
 #include <QStringList>
 #include <functional>
+#include <optional>
 
 namespace ModpackImport {
 
@@ -331,6 +332,23 @@ struct CurseForgeFile {
     int fileId = 0;
 };
 
+/// CurseForge 公开文件列表里的一页。批量文件接口偶尔漏掉仍能下载的文件
+/// （例如 ATM9 的 JEI 7037120）；这一页只用来补文件名和字节数。
+struct CurseForgeWebFile {
+    int projectId = 0;
+    int fileId = 0;
+    QString fileName;
+    qint64 size = -1;
+};
+
+struct CurseForgeWebFilePage {
+    QList<CurseForgeWebFile> files;
+    int pageIndex = -1;
+    int pageSize = 0;
+    int totalCount = 0;
+    QString problem; ///< 非空 = 这一页没读成
+};
+
 /// 一次批量问号的结果。**四条出路必须分得开**（这和"无可用版本 / 列表没取到"是同一课）：
 /// - `problem` 非空 ⇒ 这一发根本没成（网络、限流、正文读不懂）—— 整件事停下来报错；
 /// - 换到的进 `resolved`；
@@ -357,6 +375,24 @@ struct CurseForgeFiles {
  * 写死路径的情形不同：那边路径是清单作者写的，这边是一个我们控制不了的文件名）。
  */
 CurseForgeFiles parseCurseForgeFileInfo(const QByteArray &json, const QList<PackRef> &asked);
+
+/// CurseForge 网页自己的公开文件列表地址（`pageIndex` 从 0 开始，`pageSize <= 50`）。
+QString curseForgeWebFilesUrl(int projectId, int pageIndex, int pageSize = 50);
+
+/// 解析公开文件列表的一页：只保留编号、文件名、字节数，以及分页信息。
+CurseForgeWebFilePage parseCurseForgeWebFilePage(const QByteArray &json);
+
+using CurseForgeWebPageLoader = std::function<CurseForgeWebFilePage(int pageIndex)>;
+
+/**
+ * @brief 在按文件编号倒序排列的公开分页里二分查找一个文件。
+ *
+ * 批量接口没回来的文件通常很少，按页顺序扫一个大项目会拖到几十发；这里只探
+ * `ceil(log2(页数))` 次。列表不再保持倒序、某一页读取失败或编号位于两页之间时返回空，
+ * 调用方保留原缺项，不把一次猜测当成文件存在。
+ */
+std::optional<CurseForgeWebFile> findCurseForgeWebFile(
+    int projectId, int fileId, const CurseForgeWebPageLoader &loadPage, int maxProbes = 14);
 
 /// API 链接为空时生成官方 CDN 候选；只接受正的文件 ID 和安全的单个文件名。
 /// 候选地址不证明文件可用，也不表示取得再分发许可；下载仍须检查响应与完整性。

@@ -773,6 +773,68 @@ QString VersionManager::resolveCurseForgeFiles(ModpackImport::Pack *pack,
         }
     }
 
+    // ---- 批量接口漏掉、但公开文件页仍在的文件：补文件名、字节数和官方 CDN 地址 ----
+    //
+    // JEI 的 7037120 是真实样本：镜像的批量文件接口不返回它，公开文件页和 CDN 都正常。
+    // 公开文件列表不提供 SHA-1，所以它只回落到「字节数 + 官方 HTTPS」这一档；原接口
+    // 已经给出 SHA-1 的那些文件一个字段都不改。
+    QList<ModpackImport::FileIssue> unresolvedIssues;
+    for (const ModpackImport::FileIssue &issue : files.issues) {
+        const bool metadataMissing = issue.fileName.isEmpty() &&
+                                     issue.ref.projectId > 0 && issue.ref.fileId > 0;
+        if (!metadataMissing) {
+            unresolvedIssues.append(issue);
+            continue;
+        }
+        const int projectId = issue.ref.projectId;
+        const int fileId = issue.ref.fileId;
+        const auto webFile = ModpackImport::findCurseForgeWebFile(
+            projectId, fileId,
+            [&network, projectId](int pageIndex) {
+                ModpackImport::CurseForgeWebFilePage failed;
+                const QString url = ModpackImport::curseForgeWebFilesUrl(
+                    projectId, pageIndex);
+                if (url.isEmpty()) {
+                    failed.problem = QStringLiteral("invalid page");
+                    return failed;
+                }
+                const QList<QPair<QByteArray, QByteArray>> headers = {
+                    {QByteArrayLiteral("Accept"), QByteArrayLiteral("application/json")},
+                    {QByteArrayLiteral("User-Agent"), QByteArrayLiteral("WTFML")},
+                };
+                const HttpClient::Reply reply = HttpClient::send(
+                    &network, QUrl(url), HttpClient::Verb::Get, QByteArray(), QByteArray(),
+                    QByteArray(), 10000, headers);
+                if (!reply.ok()) {
+                    failed.problem = QStringLiteral("HTTP %1").arg(reply.status);
+                    return failed;
+                }
+                return ModpackImport::parseCurseForgeWebFilePage(reply.raw);
+            });
+        if (!webFile.has_value()) {
+            unresolvedIssues.append(issue);
+            continue;
+        }
+        const QString url = ModpackImport::curseForgeDownloadUrl(
+            webFile->fileId, webFile->fileName, QString());
+        if (url.isEmpty()) {
+            unresolvedIssues.append(issue);
+            continue;
+        }
+
+        ModpackImport::CurseForgeFile file;
+        file.file.urls.append(url);
+        file.file.size = webFile->size;
+        file.file.path = webFile->fileName;
+        file.file.curseForgeProjectId = webFile->projectId;
+        file.file.curseForgeFileId = webFile->fileId;
+        file.modId = webFile->projectId;
+        file.fileId = webFile->fileId;
+        files.resolved.append(file);
+        --files.missing;
+    }
+    files.issues = unresolvedIssues;
+
     // ---- 落地：补上目录，写回 pack ----
     const ModpackImport::CurseForgePlacement placement =
         ModpackImport::placeCurseForgeFiles(files.resolved, classIds);
