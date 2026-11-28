@@ -101,6 +101,8 @@ function Get-TestImpact([string[]]$Paths, [bool]$ForceFull = $false) {
         $selected = switch -Regex ($path) {
             '(?i)VersionDeclaration' { @('core','upgrade'); break }
             '(?i)(ResourceSearchController|InstanceUpdateCheckController)' { @('window','mods','resources'); break }
+            '^src/controllers/(ImportController|ResourceInstallController)\.(cpp|hpp)$' { @('core-resources','window','resources','network'); break }
+            '^src/manage/VersionManager\.(cpp|hpp)$' { @('core','window','network','presets'); break }
             '(?i)(InstanceUpdate|InstanceUpgrade|UpgradeAssessment|InstanceTransfer)' { @('upgrade','ui'); break }
             '(?i)(Preset|Modpack)' { @('core','presets','network','mods','ui'); break }
             '(?i)(Theme|ToggleSwitch|MemorySlider|JavaSettings|JavaManage|GlobalJava|EffectiveJava)' { @('core','java','theme','ui','window'); break }

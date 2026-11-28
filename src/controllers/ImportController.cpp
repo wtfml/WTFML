@@ -111,7 +111,7 @@ void ImportController::onImportModpackClicked() {
     }
     // 另一条导入流程还没走完（多半正卡在 CurseForge 预览那一发网络请求上，见
     // `m_importFlow`）：别开第二个文件选择框，直接说清楚。
-    if (m_importFlow) {
+    if (importFlowActive()) {
         m_owner->appendLog(tr("已有导入流程正在进行，请待其结束。"));
         InlineMessage::information(m_owner->m_ui->overlay(), tr("当前正忙"),
                                    tr("另一个整合包仍在导入，请待其结束后再试。"));
@@ -191,6 +191,43 @@ void ImportController::finishAbortedImportTask(Tasks::TaskId taskId, bool cancel
         }
     }
     m_owner->finishTask(taskId, false, reason);
+}
+
+bool ImportController::importTaskPending(Tasks::TaskId taskId) const {
+    if (taskId == Tasks::invalidTaskId() || !m_owner->m_activityCenter) return true;
+    const auto task = m_owner->m_activityCenter->tasks()->snapshot(taskId);
+    return task.id == taskId && !Tasks::isTerminalState(task.state);
+}
+
+bool ImportController::queueImportPrompt(Tasks::TaskId taskId, std::function<void()> resume) {
+    if (!importTaskPending(taskId)) return false;
+    auto *overlay = m_owner->m_ui->overlay();
+    const QPointer<ImportController> guard(this);
+    if (!overlay || !overlay->queueNotification([guard, taskId, resume = std::move(resume)] {
+            if (!guard) return;
+            const auto releaseFolder = qScopeGuard([guard] {
+                if (guard) guard->m_owner->endFolderSwitchHold();
+            });
+            if (taskId != Tasks::invalidTaskId() && guard->m_owner->m_activityCenter &&
+                guard->importTaskPending(taskId)) {
+                auto *tasks = guard->m_owner->m_activityCenter->tasks();
+                tasks->setDetail(taskId, {});
+                tasks->setWaitingUser(taskId, false);
+            }
+            guard->m_importPromptQueued = false;
+            if (guard->importTaskPending(taskId)) resume();
+        })) return false;
+
+    m_importPromptQueued = true;
+    m_owner->beginFolderSwitchHold();
+    const QString detail = tr("关闭当前提示后继续整合包导入。");
+    if (taskId != Tasks::invalidTaskId() && m_owner->m_activityCenter) {
+        auto *tasks = m_owner->m_activityCenter->tasks();
+        tasks->setDetail(taskId, detail);
+        tasks->setWaitingUser(taskId, true);
+    }
+    m_owner->appendLog(detail);
+    return true;
 }
 
 bool ImportController::prepareModpackPackage(const QString &zipPath, PreparedModpack *out) {
@@ -644,6 +681,14 @@ bool ImportController::resolveInstallerJavaForPack(const ModpackImport::Pack &pa
     }
 
     while (true) {
+        auto *overlay = m_owner->m_ui->overlay();
+        if (!overlay || overlay->promptOpen()) {
+            const QString reason = tr("Java 选择提示未显示。关闭当前提示后重试。");
+            if (reasonOut != nullptr) *reasonOut = reason;
+            m_owner->appendLog(reason);
+            InlineMessage::warning(overlay, tr("需要 Java 环境"), reason);
+            return false;
+        }
         const QString downloadText =
             requiredJavaMajor > 0 ? tr("自动下载 Java %1").arg(requiredJavaMajor) : QString();
         QStringList buttons;
@@ -653,7 +698,7 @@ bool ImportController::resolveInstallerJavaForPack(const ModpackImport::Pack &pa
         const int browseIndex = buttons.size();
         buttons << tr("手动选择 java.exe…") << tr("取消");
         const int choice = InlineMessage::ask(
-            m_owner->m_ui->overlay(), MessageKind::Question, tr("需要 Java 环境"),
+            overlay, MessageKind::Question, tr("需要 Java 环境"),
             tr("安装此整合包的加载器需要合适的 Java，但本机未自动找到可用版本。\n\n%1")
                 .arg(javaReason),
             buttons, 0, -1);
@@ -712,12 +757,7 @@ void ImportController::importModpackOneClick(const QString &zipPath,
                                              const QString &confirmedInstanceName,
                                              Tasks::TaskId taskId, bool allowRename, const QString &coverCacheId,
                                              const QString &packTitle) {
-    if (taskId != Tasks::invalidTaskId() && m_owner->m_activityCenter) {
-        const auto task = m_owner->m_activityCenter->tasks()->snapshot(taskId);
-        if (task.id != taskId || Tasks::isTerminalState(task.state)) {
-            return;
-        }
-    }
+    if (!importTaskPending(taskId)) return;
     // 同 importModpackFromFile() 那两道闸（m_downloadInFlight / m_importFlow），见那里。
     if (m_owner->m_downloadInFlight) {
         const QString reason = tr("已有下载或导入任务正在进行，请待其结束后再试。");
@@ -727,7 +767,7 @@ void ImportController::importModpackOneClick(const QString &zipPath,
         InlineMessage::information(m_owner->m_ui->overlay(), tr("当前正忙"), reason);
         return;
     }
-    if (m_importFlow) {
+    if (importFlowActive()) {
         const QString reason = tr("另一个整合包仍在导入，请待其结束后再试。");
         m_owner->appendLog(tr("已有导入流程正在进行，未导入 %1。")
                                .arg(QFileInfo(zipPath).fileName()));
@@ -735,30 +775,9 @@ void ImportController::importModpackOneClick(const QString &zipPath,
         InlineMessage::information(m_owner->m_ui->overlay(), tr("当前正忙"), reason);
         return;
     }
-    const auto deferWhilePromptOpen = [&] {
-        auto *overlay = m_owner->m_ui->overlay();
-        const QPointer<ImportController> guard(this);
-        const bool queued = overlay && overlay->queueNotification(
-            [guard, zipPath, confirmedInstanceName, taskId, allowRename, coverCacheId, packTitle] {
-                if (!guard) return;
-                const auto releaseFolder = qScopeGuard([guard] {
-                    if (guard) guard->m_owner->endFolderSwitchHold();
-                });
-                if (taskId != Tasks::invalidTaskId() && guard->m_owner->m_activityCenter) {
-                    guard->m_owner->m_activityCenter->tasks()->setWaitingUser(taskId, false);
-                }
-                guard->importModpackOneClick(zipPath, confirmedInstanceName, taskId, allowRename, coverCacheId,
-                                             packTitle);
-            });
-        if (queued) {
-            m_owner->beginFolderSwitchHold();
-            if (taskId != Tasks::invalidTaskId() && m_owner->m_activityCenter) {
-                m_owner->m_activityCenter->tasks()->setWaitingUser(taskId, true);
-            }
-        }
-        return queued;
-    };
-    if (deferWhilePromptOpen()) {
+    if (queueImportPrompt(taskId, [this, zipPath, confirmedInstanceName, taskId, allowRename, coverCacheId, packTitle] {
+            importModpackOneClick(zipPath, confirmedInstanceName, taskId, allowRename, coverCacheId, packTitle);
+        })) {
         return;
     }
     const FlowGuard flowGuard(m_importFlow);
@@ -767,25 +786,37 @@ void ImportController::importModpackOneClick(const QString &zipPath,
     m_owner->beginFolderSwitchHold();
     const auto folderHold = qScopeGuard([this] { m_owner->endFolderSwitchHold(); });
 
-    PreparedModpack prepared;
-    if (!prepareModpackPackage(zipPath, &prepared)) {
-        finishAbortedImportTask(taskId, false, prepared.failureSummary);
+    auto prepared = std::make_shared<PreparedModpack>();
+    if (!prepareModpackPackage(zipPath, prepared.get())) {
+        finishAbortedImportTask(taskId, false, prepared->failureSummary);
         return;
     }
 
     QString problem;
-    if (!resolveCurseForgeManifestIfNeeded(&prepared.pack, prepared.layout.format,
-                                           QFileInfo(prepared.effectiveZip).fileName(), &problem)) {
+    if (!resolveCurseForgeManifestIfNeeded(&prepared->pack, prepared->layout.format,
+                                            QFileInfo(prepared->effectiveZip).fileName(), &problem)) {
         finishAbortedImportTask(taskId, false, problem);
         return;
     }
-    if (deferWhilePromptOpen()) {
+    const QString projectName = packTitle.trimmed();
+    if (!projectName.isEmpty()) prepared->pack.name = projectName;
+    if (queueImportPrompt(taskId, [this, prepared, confirmedInstanceName, taskId, allowRename, coverCacheId] {
+            const FlowGuard flowGuard(m_importFlow);
+            continueOneClickImport(*prepared, confirmedInstanceName, taskId, allowRename, coverCacheId);
+        })) return;
+    continueOneClickImport(*prepared, confirmedInstanceName, taskId, allowRename, coverCacheId);
+}
+
+void ImportController::continueOneClickImport(PreparedModpack &prepared,
+                                              const QString &confirmedInstanceName, Tasks::TaskId taskId,
+                                              bool allowRename, const QString &coverCacheId) {
+    if (!importTaskPending(taskId)) return;
+    if (m_owner->m_downloadInFlight) {
+        const QString reason = tr("已有下载或导入任务正在进行，请待其结束后再试。");
+        finishAbortedImportTask(taskId, false, reason);
+        InlineMessage::information(m_owner->m_ui->overlay(), tr("当前正忙"), reason);
         return;
     }
-    if (!packTitle.trimmed().isEmpty()) {
-        prepared.pack.name = packTitle.trimmed();
-    }
-
     QString name = confirmedInstanceName.trimmed();
     QString nameProblem;
     InstanceFiles::ImportNameVerdict verdict =
@@ -835,7 +866,6 @@ void ImportController::importModpackOneClick(const QString &zipPath,
         return;
     }
 
-
     QString installerJava;
     bool javaCancelled = false;
     QString javaReason;
@@ -845,6 +875,7 @@ void ImportController::importModpackOneClick(const QString &zipPath,
         return;
     }
 
+    if (!importTaskPending(taskId)) return;
     if (taskId != Tasks::invalidTaskId() && m_owner->m_activityCenter != nullptr
         && m_owner->m_activityCenter->tasks()->has(taskId)) {
         Tasks::TaskManager *tasks = m_owner->m_activityCenter->tasks();
@@ -897,13 +928,16 @@ void ImportController::importModpackFromFile(const QString &zipPath, const QStri
     // 另一条导入流程还没走完（`m_downloadInFlight` 管不到这一段：CurseForge 预览在
     // 真正开始下载**之前**）。拖放 / 再点一次按钮都会走到这里 —— 两趟同时问名字、
     // 同时写「导入」那一档占用的后果见头文件里 `m_importFlow` 那段。
-    if (m_importFlow) {
+    if (importFlowActive()) {
         m_owner->appendLog(tr("已有导入流程正在进行，未导入 %1。")
                                .arg(QFileInfo(zipPath).fileName()));
         InlineMessage::information(m_owner->m_ui->overlay(), tr("当前正忙"),
                                    tr("另一个整合包仍在导入，请待其结束后再试。"));
         return;
     }
+    if (queueImportPrompt(Tasks::invalidTaskId(), [this, zipPath, namePrefill] {
+            importModpackFromFile(zipPath, namePrefill);
+        })) return;
     const FlowGuard flowGuard(m_importFlow);
 
     // 从这一刻到本函数返回，**游戏文件夹那一列灰着**。
@@ -923,15 +957,20 @@ void ImportController::importModpackFromFile(const QString &zipPath, const QStri
         return;
     }
 
-    PreparedModpack prepared;
-    if (!prepareModpackPackage(zipPath, &prepared)) {
+    auto prepared = std::make_shared<PreparedModpack>();
+    if (!prepareModpackPackage(zipPath, prepared.get())) {
         return;
     }
-    ModpackImport::Pack &pack = prepared.pack;
-    const ModpackImport::Format format = prepared.layout.format;
-    const QString &effectiveZip = prepared.effectiveZip;
-    const QString &sourceZip = prepared.sourceZip;
-    const QString &manifestFingerprint = prepared.manifestFingerprint;
+    if (queueImportPrompt(Tasks::invalidTaskId(), [this, prepared, namePrefill] {
+            const FlowGuard flowGuard(m_importFlow);
+            nameLocalImport(prepared, namePrefill);
+        })) return;
+    nameLocalImport(prepared, namePrefill);
+}
+
+void ImportController::nameLocalImport(const std::shared_ptr<PreparedModpack> &prepared,
+                                       const QString &namePrefill) {
+    ModpackImport::Pack &pack = prepared->pack;
 
     // 名字：先推一个候选（ModpackImport::suggestInstanceName 会把建不出目录的字符换掉、
     // 收长度），用户改不改都行。校验用**数据层那一份**
@@ -957,7 +996,7 @@ void ImportController::importModpackFromFile(const QString &zipPath, const QStri
         // currentId 传空串 = "这是个新实例，盘上没有它"（见 checkImportTargetName）。
         QString problem;
         const InstanceFiles::ImportNameVerdict verdict =
-            InstanceFiles::checkImportTargetName(name, &problem, manifestFingerprint);
+            InstanceFiles::checkImportTargetName(name, &problem, prepared->manifestFingerprint);
         if (verdict == InstanceFiles::ImportNameVerdict::Ok) {
             break;
         }
@@ -978,10 +1017,25 @@ void ImportController::importModpackFromFile(const QString &zipPath, const QStri
         InlineMessage::warning(m_owner->m_ui->overlay(), tr("更换名称"), problem);
     }
 
-    if (!resolveCurseForgeManifestIfNeeded(&pack, format, QFileInfo(effectiveZip).fileName(), nullptr)) {
+    if (!resolveCurseForgeManifestIfNeeded(&pack, prepared->layout.format,
+                                           QFileInfo(prepared->effectiveZip).fileName(), nullptr)) {
         return;
     }
+    if (queueImportPrompt(Tasks::invalidTaskId(), [this, prepared, name] {
+            const FlowGuard flowGuard(m_importFlow);
+            confirmLocalImport(*prepared, name);
+        })) return;
+    confirmLocalImport(*prepared, name);
+}
 
+void ImportController::confirmLocalImport(PreparedModpack &prepared, const QString &name) {
+    if (m_owner->m_downloadInFlight) {
+        const QString reason = tr("已有下载或导入任务正在进行，请待其结束后再试。");
+        m_owner->appendLog(reason);
+        InlineMessage::information(m_owner->m_ui->overlay(), tr("当前正忙"), reason);
+        return;
+    }
+    const auto &pack = prepared.pack;
     // 确认摘要。点下去就是几百 MB 和十几分钟，这是用户**最后**能反悔的地方，
     // 所以四件事都要说全：装的是哪个包、基于哪个版本、带什么加载器、装到哪去。
     VersionManager::LoaderKind loaderKind = VersionManager::LoaderKind::Fabric;
@@ -1028,7 +1082,7 @@ void ImportController::importModpackFromFile(const QString &zipPath, const QStri
     if (!prepared.tempArchive.isEmpty()) {
         m_tempArchives.insert(prepared.tempArchive);
     }
-    const bool started = applyResolvedModpackImport(sourceZip, name, pack, manifestFingerprint);
+    const bool started = applyResolvedModpackImport(prepared.sourceZip, name, pack, prepared.manifestFingerprint);
     if (started && !prepared.tempArchive.isEmpty()) {
         // 壳里那一份解出来的临时包要留到导入结束（数据层还在读它）。
         // 谁删：构造函数里接的 versionDownloadFinished（见 .hpp）。
@@ -1039,7 +1093,7 @@ void ImportController::importModpackFromFile(const QString &zipPath, const QStri
 }
 
 void ImportController::openImportReport(const QString &instanceId) {
-    if (m_importFlow || m_owner->m_downloadInFlight) {
+    if (importFlowActive() || m_owner->m_downloadInFlight) {
         InlineMessage::information(m_owner->m_ui->overlay(), tr("当前正忙"), tr("请待当前导入或下载结束后再补齐文件。"));
         return;
     }
@@ -1205,13 +1259,8 @@ bool ImportController::applyResolvedModpackImport(const QString &zipPath,
         return false;
     }
 
-    // CurseForge 那一档在这里要**再换一次**地址（上面确认框那一步换过一次）。代价是
-    // 一发重复的请求，换来的是和上面那句"同一串字节再解析一遍"一模一样的东西：这一半
-    // 自己手里的那份 `pack` 是完整的，不靠外面传进来的任何解析结果。数据层那边也有
-    // 第二道闸（importModpack 里那句"没换过就报错"），所以这里漏了也不会装出一个空实例。
-    // NOTE: `pendingRefs` 空了（换过了，或者清单本来就是空的）时它一句话不说就返回 ——
-    // 零下载的包走的就是这一档。
-    if (pack.format == ModpackImport::Format::CurseForge) {
+    // 直接从清单进入执行时仍需解析文件编号。交互流程传入已换得地址的包。
+    if (pack.format == ModpackImport::Format::CurseForge && !pack.pendingRefs.isEmpty()) {
         QString problem;
         VersionManager *versions = m_owner->m_versionManager;
         const VersionManager::CurseForgeResolveSettings settings =
@@ -1607,6 +1656,11 @@ void ImportController::handleInstanceSettingsDrop(QWidget *page, const QString &
 }
 
 void ImportController::importDroppedModpack(const QString &zipPath, const QString &namePrefill) {
+    if (importFlowActive()) {
+        InlineMessage::information(m_owner->m_ui->overlay(), tr("当前正忙"),
+                                   tr("另一个整合包仍在导入，请待其结束后再试。"));
+        return;
+    }
     // 用户点名要的第一步：「让用户选择安装的文件夹」。手法和「复制实例」那一处**逐字
     // 相同**（原生目录选择框 —— `ui/` 不碰 AppPaths，"该默认到哪儿"只有这一层知道；
     // 那一处那段 NOTE 就是这条的出处）。
@@ -1639,7 +1693,7 @@ void ImportController::importDroppedModpack(const QString &zipPath, const QStrin
 }
 
 void ImportController::handleWindowDrop(const QStringList &paths) {
-    if (m_importFlow) return;
+    if (importFlowActive()) return;
     QList<DroppedResource::Result> results;
     results.reserve(paths.size());
     for (const QString &path : paths) {

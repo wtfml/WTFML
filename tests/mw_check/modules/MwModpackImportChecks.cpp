@@ -1,5 +1,7 @@
 #include "Support.hpp"
+#include "controllers/ActivityCenterController.hpp"
 #include "controllers/ImportController.hpp"
+#include "controllers/ResourceInstallController.hpp"
 int MwModpackImportChecks(const QDir &versionsDir, MainWindow &window, GlobalJavaSettings * &windowJava, const std::function<void(const QString &)> &pinGlobalJava, const std::function<void()> &unpinGlobalJava) {
     // ------------------------------------------------------------------
     // 这一节驱动的是 MainWindow::applyModpackImport() —— 导入的**执行部分**，
@@ -455,6 +457,55 @@ int MwModpackImportChecks(const QDir &versionsDir, MainWindow &window, GlobalJav
             }
         }
 
+        {
+            FakeNetwork api;
+            QTemporaryDir packDirectory;
+            const QString manifestPath = packDirectory.filePath(QStringLiteral("manifest.json"));
+            const QString archivePath = packDirectory.filePath(QStringLiteral("queued-curseforge.zip"));
+            writeFileAt(manifestPath, QByteArrayLiteral(R"({
+                "manifestVersion":1,"manifestType":"minecraftModpack","name":"Queued pack","version":"1",
+                "minecraft":{"version":"1.20.1","modLoaders":[]},"overrides":"overrides",
+                "files":[{"projectID":238222,"fileID":8971390,"required":true}]
+            })"));
+            QString zipError;
+            const bool ready = api.start() && ZipUtil::createZip(
+                archivePath, {{QStringLiteral("manifest.json"), manifestPath}}, &zipError);
+            check(ready, "AA10 排队续用解析结果的夹具已准备", zipError);
+            if (ready) {
+                QSettings sandbox;
+                const QString baseKey = QStringLiteral("Launcher/CurseForgeApiBase");
+                const QVariant previous = sandbox.value(baseKey);
+                sandbox.setValue(baseKey, api.curseForgeBase());
+                sandbox.sync();
+                MainWindow cfWindow;
+                cfWindow.show();
+                QApplication::processEvents();
+                auto *overlay = cfWindow.ui()->overlay();
+                bool occupiedDuringResolve = false;
+                QObject::connect(&api.server, &QTcpServer::newConnection, &cfWindow, [&] {
+                    if (!occupiedDuringResolve) occupiedDuringResolve = overlay->openPrompt() != nullptr;
+                });
+                QTimer closer;
+                QObject::connect(&closer, &QTimer::timeout, &cfWindow, [] {
+                    if (currentPrompt()) clickPromptButton(2);
+                });
+                closer.start(20);
+                const QString filesApi = QStringLiteral("/v1/mods/files");
+                const bool invoked = QMetaObject::invokeMethod(
+                    &cfWindow, "importModpackOneClick", Qt::DirectConnection,
+                    Q_ARG(QString, archivePath), Q_ARG(QString, QStringLiteral("cf-queued-pack")));
+                check(invoked && occupiedDuringResolve && overlay->promptOpen() && api.count(filesApi) == 1,
+                      "AA10 CurseForge 清单解析期间出现提示，导入进入等待");
+                if (overlay->promptOpen()) overlay->closeOverlay();
+                check(pumpUntil([] { return g_modalTitle == QStringLiteral("有文件需要补齐"); }, 3000) &&
+                      api.count(filesApi) == 1, "AA10 提示关闭后续用已解析的清单，接口只调用一次",
+                      g_modalTitle + QStringLiteral(" / ") + QString::number(api.count(filesApi)));
+                if (previous.isValid()) sandbox.setValue(baseKey, previous);
+                else sandbox.remove(baseKey);
+                sandbox.sync();
+            }
+        }
+
         // ---- AA11 已经有一批下载在跑：这时候**拖一个整合包进来** ----
         //
         // 那颗按钮这时候是灰的，可是窗口的拖放**不经过按钮**（用户从资源管理器里把文件
@@ -614,16 +665,91 @@ int MwModpackImportChecks(const QDir &versionsDir, MainWindow &window, GlobalJav
                 const bool occupied = overlay->openPrompt() != nullptr;
                 check(occupied, "AA14 名称冲突排队前已有提示");
                 if (occupied) {
+                    auto *activity = window.findChild<ActivityCenterController *>();
+                    check(activity != nullptr, "AA14 一键导入的任务中心已连接");
+                    const auto first = activity ? activity->begin(Tasks::TaskKind::Import, QStringLiteral("排队导入"))
+                                                : Tasks::invalidTaskId();
+                    const auto second = activity ? activity->begin(Tasks::TaskKind::Import, QStringLiteral("并发导入"))
+                                                 : Tasks::invalidTaskId();
                     g_modalTitle.clear();
                     const bool invokedQueued = QMetaObject::invokeMethod(
                         &window, "importModpackOneClick", Qt::DirectConnection,
-                        Q_ARG(QString, mrpackPath), Q_ARG(QString, kMismatchId));
+                        Q_ARG(QString, mrpackPath), Q_ARG(QString, kMismatchId), Q_ARG(Tasks::TaskId, first));
                     check(invokedQueued && overlay->promptOpen() && g_modalTitle.isEmpty(),
                           "AA14 已有提示时暂缓导入");
+                    if (activity && invokedQueued) {
+                        const auto waiting = activity->tasks()->snapshot(first);
+                        check(waiting.state == Tasks::TaskState::WaitingUser &&
+                              waiting.detail.contains(QStringLiteral("关闭当前提示")),
+                              "AA14 等待状态展示当前提示占用原因", waiting.detail);
+                        check(QMetaObject::invokeMethod(&window, "importModpackOneClick", Qt::DirectConnection,
+                                  Q_ARG(QString, mrpackPath), Q_ARG(QString, kMismatchId), Q_ARG(Tasks::TaskId, second)) &&
+                                  activity->tasks()->snapshot(second).state == Tasks::TaskState::Failed &&
+                                  activity->tasks()->snapshot(first).state == Tasks::TaskState::WaitingUser,
+                              "AA14 等待中的导入保留入口，第二次导入不能抢占");
+                        activity->markViewed(QString::number(second));
+                    }
+                    QTimer closer;
+                    QStringList shown;
+                    QObject::connect(&closer, &QTimer::timeout, &window, [&] {
+                        if (currentPrompt()) {
+                            clickPromptButton(1);
+                            shown.append(g_modalTitle);
+                        }
+                    });
+                    closer.start(20);
+                    overlay->closeOverlay();
+                    check(pumpUntil([&] { return shown.contains(QStringLiteral("更换名称")) &&
+                                                (!activity || !invokedQueued || Tasks::isTerminalState(activity->tasks()->snapshot(first).state)); }, 3000),
+                          "AA14 原提示关闭后显示更换名称");
+                    check(!activity || !invokedQueued || activity->tasks()->snapshot(first).state == Tasks::TaskState::Cancelled,
+                          "AA14 用户关闭更名提示后任务才记为取消");
+                    pumpUntil([&] { return !overlay->promptOpen(); }, 1000);
+                    closer.stop();
+                }
+
+                const bool localOccupied = overlay->openPrompt() != nullptr;
+                check(localOccupied, "AA14 本地命名排队前已有提示");
+                if (localOccupied) {
+                    g_modalTitle.clear();
+                    const bool invokedLocal = QMetaObject::invokeMethod(
+                        &window, "importModpackFromFile", Qt::DirectConnection,
+                        Q_ARG(QString, mrpackPath), Q_ARG(QString, kResumeId));
+                    check(invokedLocal && g_modalTitle.isEmpty() && overlay->promptOpen(),
+                          "AA14 本地导入的命名提示等待当前提示关闭");
+                    QTimer answer;
+                    QStringList shown;
+                    QObject::connect(&answer, &QTimer::timeout, &window, [&] {
+                        if (currentPrompt()) {
+                            clickPromptButton(shown.isEmpty() ? 0 : 1);
+                            shown.append(g_modalTitle);
+                        }
+                    });
+                    answer.start(20);
+                    overlay->closeOverlay();
+                    check(pumpUntil([&] { return shown.size() >= 3 && !overlay->promptOpen(); }, 3000) &&
+                          shown == QStringList{QStringLiteral("导入整合包"), QStringLiteral("继续上次的导入"),
+                                               QStringLiteral("导入整合包")},
+                          "AA14 本地导入排队后显示命名及续装提示", shown.join(QStringLiteral(" / ")));
+                }
+
+                const bool resourceOccupied = overlay->openPrompt() != nullptr;
+                check(resourceOccupied, "AA14 资源页命名排队前已有提示");
+                if (resourceOccupied) {
+                    ResourceInstallController install(&window);
+                    ResourceCatalog::VersionEntry version;
+                    version.versionNumber = QStringLiteral("1.0");
+                    version.files.append({QStringLiteral("https://example.invalid/fixture.mrpack"),
+                                          QStringLiteral("fixture.mrpack")});
+                    g_modalTitle.clear();
+                    install.install(ResourceCatalog::Kind::Modpack, QStringLiteral("资源页夹具"),
+                                    version, ResourceCatalog::Source::Modrinth);
+                    check(g_modalTitle.isEmpty() && overlay->promptOpen(),
+                          "AA14 资源页安装等待当前提示关闭");
                     dismissNextPrompt();
                     overlay->closeOverlay();
-                    check(pumpUntil([] { return g_modalTitle == QStringLiteral("更换名称"); }, 2000),
-                          "AA14 原提示关闭后显示更换名称");
+                    check(pumpUntil([] { return g_modalTitle == QStringLiteral("安装整合包"); }, 3000),
+                          "AA14 资源页排队后显示命名提示");
                 }
             }
 
@@ -739,9 +865,14 @@ int MwModpackImportChecks(const QDir &versionsDir, MainWindow &window, GlobalJav
 
                 g_modalTitle.clear();
                 g_modalText.clear();
+                auto *overlay = window.ui()->overlay();
+                const bool occupied = overlay->openPrompt() != nullptr;
                 dismissNextPrompt();
                 imports->importModpackOneClick(mrpackPath, kPackInstanceId, taskId, true, QString(),
                                                QStringLiteral("Sodium Plus"));
+                check(occupied && activity->tasks()->snapshot(taskId).state == Tasks::TaskState::WaitingUser,
+                      "AA18 一键导入排队时保留资源页传入的项目名");
+                if (occupied) overlay->closeOverlay();
 
                 QElapsedTimer waitClock;
                 waitClock.start();

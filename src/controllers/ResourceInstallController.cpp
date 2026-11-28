@@ -6,6 +6,7 @@
 #include <QFileDialog>
 #include <QFormLayout>
 #include <QPointer>
+#include <QScopeGuard>
 #include <QScopedValueRollback>
 #include <QScrollArea>
 #include <QSet>
@@ -16,6 +17,7 @@
 #include "MainWindow.hpp"
 #include "controllers/ActivityCenterController.hpp"
 #include "controllers/DownloadTaskLedgerController.hpp"
+#include "controllers/ImportController.hpp"
 #include "controllers/MainWindowViewData.hpp"
 #include "controllers/ResourcePageController.hpp"
 #include "download/ModDependencies.hpp"
@@ -653,15 +655,6 @@ void ResourceInstallController::installNow(ResourceCatalog::Kind kind, const QSt
     // 不另编一套命名。
     const QString modpackPath =
         isModpack ? destinationDir + QLatin1Char('/') + file->filename : QString();
-    owner.appendLog(
-        MainWindow::tr("正在下载 %1（%2）。").arg(label, QDir::toNativeSeparators(destinationDir)));
-    if (!extras.isEmpty() && !dependencyDir.isEmpty()) {
-        // 主文件去的目录和前置去的目录**不是同一个**，日志上要说清 —— 不然用户看到
-        // shaderpacks/ 里多了一个 zip、mods/ 里多了一个 jar，会以为是两回事。
-        owner.appendLog(MainWindow::tr("%1 个前置将作为模组安装到 %2。")
-                            .arg(extras.size())
-                            .arg(QDir::toNativeSeparators(dependencyDir)));
-    }
     // instanceId 传空的有两路：整合包下到缓存里（盘上没有任何实例在被写），以及用户
     // 自己挑了实例之外的目录那一路 —— 两路都不该锁住谁（见上面算落点那一段）。
     //
@@ -695,6 +688,20 @@ void ResourceInstallController::installNow(ResourceCatalog::Kind kind, const QSt
 
     QString confirmedName;
     if (isModpack) {
+        auto *imports = owner.m_importController;
+        if (imports->importFlowActive()) {
+            InlineMessage::information(owner.m_ui->overlay(), MainWindow::tr("当前正忙"),
+                MainWindow::tr("另一个整合包仍在导入，请待其结束后再试。"));
+            return;
+        }
+        const QPointer<ResourceInstallController> guard(this);
+        if (imports->queueImportPrompt(Tasks::invalidTaskId(),
+                [guard, kind, displayTitle, version, extras, target, projectIconId] {
+                    if (guard) guard->installNow(kind, displayTitle, version, extras, target, projectIconId);
+                })) return;
+        const QScopedValueRollback naming(imports->m_importFlow, true);
+        owner.beginFolderSwitchHold();
+        const auto releaseFolder = qScopeGuard([&owner] { owner.endFolderSwitchHold(); });
         const QString titleCopy = displayTitle;
         const ModpackImport::OneClickInstanceName suggested =
             ModpackImport::suggestOneClickInstanceName(titleCopy);
@@ -733,6 +740,13 @@ void ResourceInstallController::installNow(ResourceCatalog::Kind kind, const QSt
         }
     }
 
+    owner.appendLog(
+        MainWindow::tr("正在下载 %1（%2）。").arg(label, QDir::toNativeSeparators(destinationDir)));
+    if (!extras.isEmpty() && !dependencyDir.isEmpty()) {
+        owner.appendLog(MainWindow::tr("%1 个前置将作为模组安装到 %2。")
+                            .arg(extras.size())
+                            .arg(QDir::toNativeSeparators(dependencyDir)));
+    }
     const Tasks::TaskId task =
         isModpack ? owner.beginTask(Tasks::TaskKind::Import,
                                     MainWindow::tr("安装整合包 %1").arg(confirmedName),

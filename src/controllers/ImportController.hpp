@@ -2,6 +2,8 @@
 #include <QHash>
 #include <QObject>
 #include <QSet>
+#include <functional>
+#include <memory>
 #include "download/ResourceCatalog.hpp"
 #include "manage/ModpackImport.hpp"
 #include "operations/OperationReport.hpp"
@@ -28,9 +30,17 @@ public:
     void importDroppedModpack(const QString &zipPath, const QString &namePrefill);
     void handleWindowDrop(const QStringList &paths);
 private:
+    friend class ResourceInstallController;
+    bool importFlowActive() const { return m_importFlow || m_importPromptQueued; }
+    bool queueImportPrompt(Tasks::TaskId taskId, std::function<void()> resume);
+    bool importTaskPending(Tasks::TaskId taskId) const;
     bool copyLocalResourceFile(const QString &versionId, const QString &lockRoot,
                                const QString &dir, const QString &path, QString *problemOut);
     struct PreparedModpack;
+    void continueOneClickImport(PreparedModpack &prepared, const QString &confirmedInstanceName,
+                                Tasks::TaskId taskId, bool allowRename, const QString &coverCacheId);
+    void nameLocalImport(const std::shared_ptr<PreparedModpack> &prepared, const QString &namePrefill);
+    void confirmLocalImport(PreparedModpack &prepared, const QString &name);
     bool prepareModpackPackage(const QString &zipPath, PreparedModpack *out);
     bool resolveCurseForgeManifestIfNeeded(ModpackImport::Pack *pack, ModpackImport::Format format,
                                            const QString &sourceName, QString *problemOut);
@@ -59,6 +69,7 @@ private:
     /// 和拖放**仍然点得动**。没有这道闸的话第二趟会从问名字一路走到
     /// 「导入」那一档占用 = B，两趟同时往 versions 下面写。
     bool m_importFlow = false;
+    bool m_importPromptQueued = false;
     /// PCL 那种"压缩包里套一份 .mrpack"解出来的临时包：实例名 → 临时文件。
     /// 导入真的开始了才登记（提前退出那些路当场就删），结束（`versionDownloadFinished`，
     /// 成功失败都算）时删掉 —— 数据层在整段导入里还要读它。
