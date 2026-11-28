@@ -67,6 +67,19 @@ inline QString resolve(const QString &setting, const QStringList &systemUiLangua
 /// 英文翻译在资源里的路径（构建时编进程序，产品与验证工程同一份）。
 inline QString englishCatalogPath() { return QStringLiteral(":/i18n/wtfml_en.qm"); }
 
+/// 切成 @p setting 之后**要不要重启**才生效。
+///
+/// 盘上的档位和"界面现在到底是哪一份"不是一回事：「跟随系统」与系统语言相同的具体语言
+/// （繁中系统上的「简体中文」、英文系统上的「English」）算出来是同一份，而用户把刚选的
+/// 那一档再选一遍更不用说。这两种情况只需要落盘，弹「重启后生效」等于让用户白重启一次。
+/// @param runningEnglish 当前装上的翻译是不是英文（传 `isEnglish()`）。
+/// @return true = 真要重启才看得见变化。
+inline bool needsRestart(const QString &setting, const QStringList &systemUiLanguages,
+                         bool runningEnglish) {
+    const QString running = runningEnglish ? QStringLiteral("en") : QStringLiteral("zh_CN");
+    return resolve(setting, systemUiLanguages) != running;
+}
+
 /// 当前装上的界面翻译是不是英文（没装翻译 = 中文）。译文里这一条写 "en"。
 ///
 /// 给"按语言换显示单位"这类**代码**分支用：中文有万 / 亿，英文只有 K / M / B，

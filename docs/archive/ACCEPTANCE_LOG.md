@@ -332,3 +332,5 @@ python tools/acceptance_directory_boundary.py --exe <WTFMinecraftLauncher.exe> -
 
 2026-11-28｜排查 #163 的测试启动进程、相邻模型请求、重复计划与 Auto-safe｜`core-agent` 1600/1600、`main-window-agent` 144/144。Windows 游戏替身在修复前留下子进程，改为创建进程时加入 Job Object 后，子进程创建可见窗口并随测试结束退出 10/10｜相邻请求的前缀和缓存统计用本地 HTTP 夹具验证，原整合包和服务商实际缓存命中率待复验。
 2026-11-28｜核对下载失败后「继续未完成操作」没反应与日志里反复出现的版本 json 读取失败｜失败批次收尾时下载器不再攥着恢复记录（修前 `resume()` 在 `DownloadCheckpoint::load()` 处因锁被占返回 false，新用例先红后绿），拒绝时给出原因；父版本缺失的那份 json 每次会话只读一遍、只告警一遍，父版本装好后下一次询问即可见。`mw_check_high_speed_download`、`verify_instances` 新增回归，core-downloads、core-install、core-instances、network、window、workspace、presets、mods 共 13 项通过｜未复跑真机 26.4-pre-2-Fabric 安装（缺当时那条网络失败），英文译文按新增条目补齐。
+
+2026-11-28｜修设置页两处交互：未聚焦的滑条被滚轮改值（文字不透明度、背景图不透明度、预设选项滑条）、切到等效界面语言仍弹重启提示｜应用级 `WheelFocusFilter` 加 `QSlider`（不含滚动条）；`onLanguageChanged()` 按 `UiLanguage::needsRestart()` 比较新档位与当前运行语言，相同只落盘。`ui` 等 30 项测试通过；新增滑条滚轮三条与 `needsRestart` 六条断言，去掉滑条判断时新断言先红（值 47、页面未滚）｜滚动条继续吃滚轮；真机未逐页点验。

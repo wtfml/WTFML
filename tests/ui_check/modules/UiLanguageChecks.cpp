@@ -34,6 +34,24 @@ int UiLanguageChecks(MainWindowUI &ui, QTabWidget *tabs) {
     check(resolve(QStringLiteral("乱写"), {QStringLiteral("en-US")}) == QStringLiteral("en"),
           "认不出来的档位按默认档算：跟随英文系统");
 
+    // ---- 1a. 切成某一档之后要不要重启：算出来和当前跑的一样就不用 ----
+    //
+    // 真机上的毛病：繁中系统上「跟随系统」与「简体中文」是同一份界面，用户在两者之间
+    // 切一下、或者把刚选的那一档再选一遍，原来都会弹「重启后生效」；点「稍后」再选回
+    // 当前语言还是同一句提示。
+    check(!UiLanguage::needsRestart(QStringLiteral("system"), {QStringLiteral("zh-CN")}, false),
+          "跟随系统 + 中文系统，当前就是中文 → 不用重启");
+    check(!UiLanguage::needsRestart(QStringLiteral("zh_CN"), {QStringLiteral("en-US")}, false),
+          "当前中文时再选简体中文 → 不用重启");
+    check(UiLanguage::needsRestart(QStringLiteral("en"), {QStringLiteral("zh-CN")}, false),
+          "当前中文时选 English → 要重启");
+    check(!UiLanguage::needsRestart(QStringLiteral("system"), {QStringLiteral("en-US")}, true),
+          "跟随系统 + 英文系统，当前已经是英文 → 不用重启");
+    check(!UiLanguage::needsRestart(QStringLiteral("en"), {QStringLiteral("zh-CN")}, true),
+          "当前英文时再选 English → 不用重启");
+    check(UiLanguage::needsRestart(QStringLiteral("zh_CN"), {QStringLiteral("en-US")}, true),
+          "当前英文时选简体中文 → 要重启");
+
     // ---- 1b. 首次启动与设置页共用语言默认值 ----
     {
         QSettings probe;

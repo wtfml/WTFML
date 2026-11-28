@@ -22,6 +22,7 @@
 
 #include "..\ui\InlineMessage.hpp"
 #include "..\ui\Theme.hpp"
+#include "..\ui\UiLanguage.hpp"
 #include "auth/SkinApi.hpp"
 #include "controllers/JavaSettingsController.hpp"
 #include "controllers/LauncherPreferencesController.hpp"
@@ -419,7 +420,15 @@ bool relaunchWithSameArguments() {
 }  // namespace
 
 void MainWindow::onLanguageChanged() {
-    m_settings->setLanguage(m_ui->getLanguageCombo()->currentData().toString());
+    const QString setting = m_ui->getLanguageCombo()->currentData().toString();
+    m_settings->setLanguage(setting);
+    // 新档位算出来的语言和**现在跑的这一份**一样就只落盘：「跟随系统」与系统语言相同的具体
+    // 语言之间切换（繁中系统上的「简体中文」、英文系统上的「English」），或者干脆选回当前
+    // 那一档，都不必重启。否则弹一次「重启后生效」，用户点「稍后」后再选回来还是同一句提示。
+    if (!UiLanguage::needsRestart(setting, QLocale::system().uiLanguages(),
+                                  UiLanguage::isEnglish())) {
+        return;
+    }
     const int choice = InlineMessage::ask(m_ui->overlay(), MessageKind::Question, tr("界面语言"),
                                           tr("已保存为当前选择，重启启动器后生效。"),
                                           {tr("立即重启"), tr("稍后")}, 0);
