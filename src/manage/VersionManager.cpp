@@ -779,10 +779,13 @@ QString VersionManager::resolveCurseForgeFiles(ModpackImport::Pack *pack,
     // 公开文件列表不提供 SHA-1，所以它只回落到「字节数 + 官方 HTTPS」这一档；原接口
     // 已经给出 SHA-1 的那些文件一个字段都不改。
     QList<ModpackImport::FileIssue> unresolvedIssues;
+    // 测试/自定义接口地址是替代源，公开网页上的文件页不一定属于同一个目录；
+    // 只在默认 CurseForge 入口上做网页回查，避免把验证用的假接口带进真实网络。
+    const bool allowWebFilesFallback = settings.apiBaseOverride.trimmed().isEmpty();
     for (const ModpackImport::FileIssue &issue : files.issues) {
         const bool metadataMissing = issue.fileName.isEmpty() &&
                                      issue.ref.projectId > 0 && issue.ref.fileId > 0;
-        if (!metadataMissing) {
+        if (!allowWebFilesFallback || !metadataMissing) {
             unresolvedIssues.append(issue);
             continue;
         }
