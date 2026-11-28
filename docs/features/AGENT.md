@@ -280,6 +280,7 @@ MCP、联网、诊断命令是异步的：引擎先返回 `Status::Pending`，�
 | 启动参数 | 复用 `LauncherManager::generateJvmArguments()` 与启动器的资产/库路径；离线、固定测试身份 `WTFML-Test`、不刷新令牌、不连服务器、不下载 Java |
 | 里程碑 | `process_started` / `main_menu` / `world_loaded`；标记在 `assets/agent/knowledge/launch_milestones.json`（读不到时判定一律 false，宁可超时）；另看进程退出码、新崩溃报告与 `hs_err_pid` |
 | 上限 | 超时 1–600 s，观察窗口 0–60 s，重复 1–3 次；每个启动器窗口一次只允许一个测试启动；进程树用 Job Object 清理 |
+| 结束与重试 | 每轮等游戏进程退出后再返回结果或开始下一轮。取消后可以立即发起新的测试，原任务的后台准备结果会被丢弃。 |
 | 只进副本世界 | `quickPlay.world` 只接受工作区 `saves/` 里已有的世界；源存档不参与启动 |
 | 拒绝 | 实例正在运行、缺 Java、`-javaagent`/`-agentlib`/`-Xbootclasspath` 等能加载本地代码的 JVM 参数、工作区路径不匹配 |
 | 结果 | `processStarted`、`exitCode`、`startupPhase`、`milestoneReached`、`crashed`、`timedOut`、`newCrashReport`、`durationMs`、日志引用与证据 id；工作区默认保留，日志留在本地；自动清理尚未实现 |

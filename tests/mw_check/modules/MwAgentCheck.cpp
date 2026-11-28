@@ -11,6 +11,7 @@
 #include "AgentSettingsPage.hpp"
 #include "OverlayHost.hpp"
 #include "agent/AgentPaths.hpp"
+#include "agent/AgentWorkspaceStore.hpp"
 #include "util/AppPaths.hpp"
 #include "agent/AgentSessionStore.hpp"
 #include "controllers/AgentController.hpp"
@@ -24,6 +25,7 @@
 #include "agent/AgentModelClient.hpp"
 
 #include <QCoreApplication>
+#include <QDeadlineTimer>
 #include <QDirIterator>
 #include <QElapsedTimer>
 #include <QDir>
@@ -34,6 +36,7 @@
 #include <QPushButton>
 #include <QTabWidget>
 #include <QThread>
+#include <QThreadPool>
 #include <QTimer>
 #include <QUuid>
 
@@ -881,6 +884,55 @@ int MwAgentChecks(QApplication &app) {
             controller->chooseSkillForTest(QStringLiteral("general"));
         }
         QDir(root).removeRecursively();
+    }
+
+    {
+        const QString instanceId = QStringLiteral("mw-test-launch-restart");
+        const QDir instance(AppPaths::versionDir(instanceId));
+        instance.mkpath(QStringLiteral("."));
+        writeFileAt(instance.filePath(instanceId + QStringLiteral(".json")),
+                    QByteArrayLiteral("{\"id\":\"mw-test-launch-restart\",\"libraries\":[]}"));
+
+        AgentWorkspaceStore store;
+        const auto createEmptyWorkspace = [&] {
+            AgentWorkspaceRecord record;
+            record.id = AgentWorkspaceStore::newId();
+            record.sourceInstanceId = instanceId;
+            record.versionId = AgentWorkspaceStore::newVersionId(record.id);
+            record.rootPath = store.workspaceRoot(record.id);
+            QString problem;
+            check(store.create(record, &problem), "#162 创建测试工作区", problem);
+            return record.id;
+        };
+        const QString cancelledWorkspace = createEmptyWorkspace();
+        const QString replacementWorkspace = createEmptyWorkspace();
+        int cancelledCompletions = 0;
+        QList<AgentTestLaunchSummary> replacementCompletions;
+        AgentLauncherHostImpl host(&window);
+        QString problem;
+        check(host.startTestLaunch(instanceId, cancelledWorkspace, {},
+                                   [&](const AgentTestLaunchSummary &) { ++cancelledCompletions; },
+                                   &problem),
+              "#162 启动第一轮工作区准备", problem);
+        host.cancelTestLaunch();
+        check(host.startTestLaunch(instanceId, replacementWorkspace, {},
+                                   [&](const AgentTestLaunchSummary &summary) {
+                                       replacementCompletions.append(summary);
+                                   }, &problem),
+              "#162 取消后立即启动下一轮工作区准备", problem);
+
+        // 两个准备任务都结束后再处理信号，让旧回调与新回调确定会相遇。工作区缺实例时无需 Java。
+        check(QThreadPool::globalInstance()->waitForDone(QDeadlineTimer(5000)),
+              "#162 两轮工作区准备都已收尾");
+        check(waitFor([&] { return !replacementCompletions.isEmpty(); }) &&
+                  replacementCompletions.size() == 1 && cancelledCompletions == 0 &&
+                  replacementCompletions.first().workspaceId == replacementWorkspace &&
+                  !replacementCompletions.first().ok,
+              "#162 仅新测试返回自己的准备结果");
+        AgentWorkspaceRecord cancelled;
+        check(store.load(cancelledWorkspace, &cancelled, &problem) &&
+                  cancelled.status == QStringLiteral("cancelled"),
+              "#162 旧工作区保留取消状态", problem);
     }
 
     controller->shutdown();

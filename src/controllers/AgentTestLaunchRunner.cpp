@@ -104,7 +104,6 @@ AgentTestLaunchRunner::AgentTestLaunchRunner(MainWindow *owner, QObject *parent)
         evaluate();
         if (m_active && !m_runFinished && m_phase != QStringLiteral("crashed")) {
             m_detail = QStringLiteral("测试启动超时。");  // i18n-ignore
-            killProcessTree();
             finishRun(false, QStringLiteral("timed_out"), m_detail);
         }
     });
@@ -115,16 +114,14 @@ AgentTestLaunchRunner::AgentTestLaunchRunner(MainWindow *owner, QObject *parent)
     connect(m_startTimer, &QTimer::timeout, this, [this] {
         if (!m_active || m_runFinished || m_processStarted) return;
         m_detail = QStringLiteral("java 进程没有在 %1 秒内启动。").arg(kStartTimeoutMs / 1000);  // i18n-ignore
-        killProcessTree();
         finishRun(false, QStringLiteral("not_started"), m_detail);
     });
 }
 
 AgentTestLaunchRunner::~AgentTestLaunchRunner() {
     cancel();
-    if (m_prepareWatcher != nullptr) {
-        m_prepareWatcher->waitForFinished();
-        m_prepareWatcher = nullptr;
+    for (QFutureWatcher<Prepared> *watcher : m_prepareWatchers) {
+        watcher->waitForFinished();
     }
 }
 
@@ -241,7 +238,7 @@ void AgentTestLaunchRunner::onProcessStarted() {
 }
 
 void AgentTestLaunchRunner::beginRun() {
-    if (!m_active || m_cancelled) return;
+    if (!m_active) return;
     m_runFinished = false;
     m_processStarted = false;
     m_crashed = false;
@@ -324,10 +321,10 @@ void AgentTestLaunchRunner::beginRun() {
 
     appendLog(QStringLiteral("启动测试进程：%1\n参数：%2\n").arg(m_javaPath,  // i18n-ignore
                                                               m_args.join(QLatin1Char(' '))));
-    m_process->start();
     m_startTimer->start();
     m_pollTimer->start();
     m_timeoutTimer->start(m_options.timeoutSeconds * 1000);
+    m_process->start();
 }
 
 void AgentTestLaunchRunner::poll() {
@@ -353,7 +350,6 @@ void AgentTestLaunchRunner::evaluate() {
         const qint64 observed = QDateTime::currentMSecsSinceEpoch() - m_reachedAtMs;
         if (!m_options.expectCrash && observed >= qint64(m_options.settleSeconds) * 1000) {
             m_settled = true;
-            killProcessTree();
             finishRun(true, m_options.milestone, QString());
             return;
         }
@@ -363,35 +359,39 @@ void AgentTestLaunchRunner::evaluate() {
         QDateTime::currentMSecsSinceEpoch() - m_runStartMs >=
             qint64(m_options.timeoutSeconds) * 1000) {
         m_detail = QStringLiteral("测试启动超时。");  // i18n-ignore
-        killProcessTree();
         finishRun(false, QStringLiteral("timed_out"), m_detail);
     }
 }
 
-void AgentTestLaunchRunner::killProcessTree() {
+void AgentTestLaunchRunner::stopProcess(const std::function<void()> &done) {
+    QProcess *process = m_process;
+    m_process = nullptr;
+    if (process != nullptr) process->disconnect(this);
 #ifdef Q_OS_WIN
     if (m_jobHandle != nullptr) {
         TerminateJobObject(HANDLE(m_jobHandle), 1);
-        closeJob();
-    }
-#endif
-    if (m_process != nullptr && m_process->state() != QProcess::NotRunning) {
-        m_process->kill();
-    }
-}
-
-void AgentTestLaunchRunner::closeJob() {
-#ifdef Q_OS_WIN
-    if (m_jobHandle != nullptr) {
         CloseHandle(HANDLE(m_jobHandle));
         m_jobHandle = nullptr;
     }
 #endif
+    if (process == nullptr || process->state() == QProcess::NotRunning) {
+        if (process != nullptr) process->deleteLater();
+        if (done) done();
+        return;
+    }
+    // 等系统报告退出再销毁，避免 QProcess 析构在界面线程同步等进程。
+    connect(process, &QProcess::stateChanged, this, [process, done](QProcess::ProcessState state) {
+        if (state != QProcess::NotRunning) return;
+        process->deleteLater();
+        if (done) done();
+    });
+    connect(process, &QProcess::started, process, &QProcess::kill);
+    process->kill();
 }
 
 void AgentTestLaunchRunner::finishRun(bool ok, const QString &phase, const QString &detail) {
     Q_UNUSED(ok);
-    if (m_runFinished) return;
+    if (!m_active || m_runFinished) return;
     m_runFinished = true;
     m_pollTimer->stop();
     m_timeoutTimer->stop();
@@ -402,7 +402,6 @@ void AgentTestLaunchRunner::finishRun(bool ok, const QString &phase, const QStri
     }
     consumeLatestLog();
     checkCrashReports();
-    closeJob();
 
     AgentTestLaunchRunResult run;
     run.processStarted = m_processStarted;
@@ -421,28 +420,26 @@ void AgentTestLaunchRunner::finishRun(bool ok, const QString &phase, const QStri
                    m_launchId + QStringLiteral(".log")};
     m_runs.append(run);
 
-    if (m_process != nullptr) {
-        m_process->disconnect(this);
-        m_process->deleteLater();
-        m_process = nullptr;
-    }
-    if (m_cancelled) return;
-
-    if (m_runs.size() < m_options.repeat) {
-        QTimer::singleShot(250, this, [this] {
+    stopProcess([this, cancelFlag = m_cancelFlag] {
+        if (cancelFlag->load()) return;
+        if (m_runs.size() >= m_options.repeat) {
+            finishAll(QString());
+            return;
+        }
+        QTimer::singleShot(250, this, [this, cancelFlag] {
+            if (cancelFlag->load()) return;
             m_launchId = newLaunchId();
             beginRun();
         });
-        return;
-    }
-    finishAll(QString());
+    });
 }
 
 void AgentTestLaunchRunner::finishAll(const QString &problem) {
     if (!m_active) return;
     if (m_starting) {
-        const QString deferred = problem;
-        QTimer::singleShot(0, this, [this, deferred] { finishAll(deferred); });
+        QTimer::singleShot(0, this, [this, problem, cancelFlag = m_cancelFlag] {
+            if (!cancelFlag->load()) finishAll(problem);
+        });
         return;
     }
     AgentTestLaunchSummary summary;
@@ -490,9 +487,9 @@ bool AgentTestLaunchRunner::start(const QString &instanceId, const QString &work
     m_active = true;
     m_starting = true;
     const auto startingGuard = qScopeGuard([this] { m_starting = false; });
-    m_cancelled = false;
     m_runs.clear();
     m_instanceId = instanceId;
+    m_workspaceId.clear();
     m_options = options;
     m_done = done;
     m_launchId = newLaunchId();
@@ -565,22 +562,17 @@ bool AgentTestLaunchRunner::start(const QString &instanceId, const QString &work
     const EffectiveJavaSettings initialJava = m_javaSettings;
     const std::shared_ptr<std::atomic_bool> cancelFlag = m_cancelFlag;
 
-    m_prepareWatcher = new QFutureWatcher<Prepared>(this);
-    connect(m_prepareWatcher, &QFutureWatcher<Prepared>::finished, this, [this] {
-        QFutureWatcher<Prepared> *watcher = m_prepareWatcher;
-        m_prepareWatcher = nullptr;
-        const Prepared prepared = watcher->result();
+    auto *watcher = new QFutureWatcher<Prepared>(this);
+    m_prepareWatchers.append(watcher);
+    connect(watcher, &QFutureWatcher<Prepared>::finished, this, [this, watcher, cancelFlag] {
+        m_prepareWatchers.removeOne(watcher);
         watcher->deleteLater();
-        if (!m_active) return;
-        onPrepared(prepared);
+        if (!cancelFlag->load()) onPrepared(watcher->result());
     });
-    m_prepareWatcher->setFuture(QtConcurrent::run([=] {
+    watcher->setFuture(QtConcurrent::run([=] {
         Prepared prepared;
         prepared.java = initialJava;
-        if (cancelFlag->load()) {
-            prepared.cancelled = true;
-            return prepared;
-        }
+        if (cancelFlag->load()) return prepared;
         QString prepareProblem;
         if (copyNeeded) {
             qint64 sourceBytes = 0;
@@ -611,10 +603,7 @@ bool AgentTestLaunchRunner::start(const QString &instanceId, const QString &work
             prepared.problem = QStringLiteral("工作区实例目录没有建出来。");  // i18n-ignore
             return prepared;
         }
-        if (cancelFlag->load()) {
-            prepared.cancelled = true;
-            return prepared;
-        }
+        if (cancelFlag->load()) return prepared;
         QString javaProblem;
         if (!javaStore->ensureJavaForVersion(prepared.java, javaMajor, component, true,
                                              &javaProblem, false, false, {}, cancelFlag.get())) {
@@ -622,10 +611,7 @@ bool AgentTestLaunchRunner::start(const QString &instanceId, const QString &work
                                                      : javaProblem;
             return prepared;
         }
-        if (cancelFlag->load()) {
-            prepared.cancelled = true;
-            return prepared;
-        }
+        if (cancelFlag->load()) return prepared;
         prepared.ok = true;
         return prepared;
     }));
@@ -633,7 +619,7 @@ bool AgentTestLaunchRunner::start(const QString &instanceId, const QString &work
 }
 
 void AgentTestLaunchRunner::onPrepared(const Prepared &prepared) {
-    if (!m_active || m_cancelled) return;
+    if (!m_active) return;
     if (!prepared.ok) {
         m_store.updateStatus(m_workspaceId, QStringLiteral("failed"));
         finishAll(prepared.problem);
@@ -691,16 +677,15 @@ void AgentTestLaunchRunner::onPrepared(const Prepared &prepared) {
 }
 
 void AgentTestLaunchRunner::cancel() {
-    if (!m_active && m_process == nullptr && m_prepareWatcher == nullptr) return;
-    m_cancelled = true;
+    if (!m_active) return;
+    m_active = false;
     if (m_cancelFlag) m_cancelFlag->store(true);
     if (m_pollTimer) m_pollTimer->stop();
     if (m_timeoutTimer) m_timeoutTimer->stop();
     if (m_startTimer) m_startTimer->stop();
-    killProcessTree();
+    stopProcess();
     if (!m_workspaceId.isEmpty()) {
         m_store.updateStatus(m_workspaceId, QStringLiteral("cancelled"));
     }
-    m_active = false;
     m_done = {};
 }

@@ -23,6 +23,7 @@
 #include <QStringList>
 
 #include <atomic>
+#include <functional>
 #include <memory>
 
 class MainWindow;
@@ -42,7 +43,6 @@ public:
 private:
     struct Prepared {
         bool ok = false;
-        bool cancelled = false;
         QString problem;
         EffectiveJavaSettings java;
     };
@@ -57,8 +57,7 @@ private:
     void evaluate();
     void finishRun(bool ok, const QString &phase, const QString &detail);
     void finishAll(const QString &problem);
-    void killProcessTree();
-    void closeJob();
+    void stopProcess(const std::function<void()> &done = {});
     void appendLog(const QString &text);
     void feedLine(const QString &line);
     QString workspaceVersionDir() const;
@@ -71,7 +70,6 @@ private:
     bool m_active = false;
     bool m_starting = false;
     bool m_ephemeral = false;
-    bool m_cancelled = false;
     QString m_instanceId;
     QString m_workspaceId;
     QString m_versionId;
@@ -112,5 +110,5 @@ private:
     std::shared_ptr<std::atomic_bool> m_cancelFlag;
     bool m_runFinished = false;
     QString m_logPartial;
-    QFutureWatcher<Prepared> *m_prepareWatcher = nullptr;
+    QList<QFutureWatcher<Prepared> *> m_prepareWatchers;
 };
