@@ -35,5 +35,12 @@ if(MINGW)
 endif()
 if(WTFML_BUILD_TESTS)
     add_test(NAME wtfml.network-diag COMMAND WTFMLNetworkDiag --self-test)
-    set_tests_properties(wtfml.network-diag PROPERTIES RUN_SERIAL TRUE TIMEOUT 45 ENVIRONMENT "QT_QPA_PLATFORM=offscreen" LABELS "network;diagnostics;ci-app")
+    # 顶层 CMakeLists 把测试运行时 PATH 算在父作用域；这里和 tests/ 一样取用，
+    # 否则在没有 Qt bin 的终端里会先报 0xc0000139，根本走不到 --self-test。
+    set(_network_diag_environment "QT_QPA_PLATFORM=offscreen")
+    if(DEFINED WTFML_TEST_RUNTIME_ENVIRONMENT AND NOT WTFML_TEST_RUNTIME_ENVIRONMENT STREQUAL "")
+        list(APPEND _network_diag_environment "${WTFML_TEST_RUNTIME_ENVIRONMENT}")
+    endif()
+    # 子场景在 CI 上会慢；单个 worker 已放宽到 15/30 秒，这里给整组留足时间。
+    set_tests_properties(wtfml.network-diag PROPERTIES RUN_SERIAL TRUE TIMEOUT 120 ENVIRONMENT "${_network_diag_environment}" LABELS "network;diagnostics;ci-app")
 endif()

@@ -754,16 +754,8 @@ set_tests_properties(wtfml.core PROPERTIES
 
 # Windows resolves libstdc++ from PATH.  Developers often have another MinGW
 # installed globally; loading that runtime beside a Qt built with MinGW 13 can
-# crash before a test reaches main().  Prepend the runtime that belongs to the
-# compiler CMake actually selected, and the directory containing Qt6Core.dll.
-get_filename_component(WTFML_TEST_COMPILER_BIN "${CMAKE_CXX_COMPILER}" DIRECTORY)
-get_target_property(WTFML_TEST_QT_CORE Qt6::Core IMPORTED_LOCATION_RELEASE)
-if(NOT WTFML_TEST_QT_CORE)
-    get_target_property(WTFML_TEST_QT_CORE Qt6::Core IMPORTED_LOCATION)
-endif()
-get_filename_component(WTFML_TEST_QT_BIN "${WTFML_TEST_QT_CORE}" DIRECTORY)
-set(WTFML_TEST_PATH "${WTFML_TEST_COMPILER_BIN};${WTFML_TEST_QT_BIN};$ENV{PATH}")
-string(REPLACE ";" "\\;" WTFML_TEST_PATH "${WTFML_TEST_PATH}")
+# crash before a test reaches main().  The top-level CMakeLists computes the
+# same PATH for this directory and tools/network_diag.
 set_property(TEST wtfml.core wtfml.core-bootstrap APPEND PROPERTY
     ENVIRONMENT "PATH=${WTFML_TEST_PATH}"
 )

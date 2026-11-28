@@ -1033,6 +1033,18 @@ if(WIN32)
 endif()
 
 if(WTFML_BUILD_TESTS)
+    # Windows 从 PATH 找 libstdc++/Qt DLL。测试和 tools/network_diag 是兄弟目录，
+    # 这个 PATH 必须在顶层算好再各自取用，不能只在 tests/ 的作用域里设。
+    get_filename_component(WTFML_TEST_COMPILER_BIN "${CMAKE_CXX_COMPILER}" DIRECTORY)
+    get_target_property(WTFML_TEST_QT_CORE Qt6::Core IMPORTED_LOCATION_RELEASE)
+    if(NOT WTFML_TEST_QT_CORE)
+        get_target_property(WTFML_TEST_QT_CORE Qt6::Core IMPORTED_LOCATION)
+    endif()
+    get_filename_component(WTFML_TEST_QT_BIN "${WTFML_TEST_QT_CORE}" DIRECTORY)
+    set(WTFML_TEST_PATH "${WTFML_TEST_COMPILER_BIN};${WTFML_TEST_QT_BIN};$ENV{PATH}")
+    string(REPLACE ";" "\\;" WTFML_TEST_PATH "${WTFML_TEST_PATH}")
+    set(WTFML_TEST_RUNTIME_ENVIRONMENT "PATH=${WTFML_TEST_PATH}")
+
     enable_testing()
     add_subdirectory(tests)
 endif()

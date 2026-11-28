@@ -488,11 +488,22 @@ static int selfTest(QApplication &app) {
             {"size", data.size()}, {"budget", scenario == 4 ? 1024 : 8 * 1024 * 1024}, {"segmented", scenario == 5 || scenario == 7 || scenario == 9}};
         QProcess child; QEventLoop loop; QTimer deadline;
         QByteArray stdoutBytes;
+        QString processError;
+        bool timedOut = false;
+        QElapsedTimer processClock;
+        processClock.start();
         QObject::connect(&child, &QProcess::readyReadStandardOutput, &loop, [&] { stdoutBytes += child.readAllStandardOutput(); });
         QObject::connect(&child, &QProcess::started, &loop, [&] { child.write(QJsonDocument(config).toJson()); child.closeWriteChannel(); });
         QObject::connect(&child, &QProcess::finished, &loop, &QEventLoop::quit);
-        QObject::connect(&deadline, &QTimer::timeout, &loop, [&] { child.kill(); });
-        deadline.setSingleShot(true); deadline.start(10000);
+        QObject::connect(&child, &QProcess::errorOccurred, &loop, [&](QProcess::ProcessError error) {
+            processError = QStringLiteral("process error %1").arg(int(error));
+        });
+        QObject::connect(&deadline, &QTimer::timeout, &loop, [&] { timedOut = true; child.kill(); });
+        // CI 机器上分段下载场景比本机慢；10 秒会把正常的等待误判成超时。
+        // 非分段场景仍留 15 秒，分段下载留 30 秒；总闸由 CTest 的 TIMEOUT 管。
+        const bool segmentedScenario = scenario == 5 || scenario == 7 || scenario == 9;
+        deadline.setSingleShot(true);
+        deadline.start(segmentedScenario ? 30000 : 15000);
         child.start(QCoreApplication::applicationFilePath(), {QStringLiteral("--worker")}); loop.exec();
         stdoutBytes += child.readAllStandardOutput();
         QJsonObject result;
@@ -500,7 +511,18 @@ static int selfTest(QApplication &app) {
             const auto object = QJsonDocument::fromJson(line).object();
             if (object.value("event") == QJsonValue(QStringLiteral("result"))) result = object;
         }
-        check(!result.isEmpty() && result.value("success").toBool() == (scenario != 1 && scenario != 4 && scenario != 6 && scenario != 8), "production worker handles direct/proxy/redirect/deadline/budget/checksum");
+        const bool expectedSuccess = scenario != 1 && scenario != 4 && scenario != 6 && scenario != 8;
+        const bool workerPassed = !result.isEmpty() && result.value("success").toBool() == expectedSuccess;
+        if (!workerPassed) {
+            // 失败时把“哪个场景、怎么退出、有没有被杀、worker 最后说了什么”一起留下；
+            // 只有一句 FAIL 的话，下一次 CI 偶发失败仍然只能猜。
+            std::printf("network-diag scenario %d failed: timedOut=%d exitStatus=%d exitCode=%d elapsed=%lldms processError=%s\n",
+                        scenario, timedOut ? 1 : 0, int(child.exitStatus()), child.exitCode(),
+                        static_cast<long long>(processClock.elapsed()), processError.toUtf8().constData());
+            std::printf("network-diag scenario %d stdout tail: %s\n", scenario,
+                        stdoutBytes.right(2000).constData());
+        }
+        check(workerPassed, "production worker handles direct/proxy/redirect/deadline/budget/checksum");
         if (scenario == 7) check(dispatcherRequests == 1 && result.value("request_count").toInt() >= 3,
                                  "range parts reuse the probed node instead of repeating dispatch");
         // 断言仍然是**严格的两次**（docs/dev/TESTING.md 2026-10-20 那轮明确决定：次数不符但
