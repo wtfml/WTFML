@@ -657,8 +657,9 @@ int MwModpackImportChecks(const QDir &versionsDir, MainWindow &window, GlobalJav
                     &window, "importModpackOneClick", Qt::DirectConnection,
                     Q_ARG(QString, mrpackPath), Q_ARG(QString, kMismatchId));
                 check(invokedMismatch, "AA14 指纹冲突调用接得上");
-                check(g_modalTitle == QStringLiteral("更换名称") && !g_modalWasWarning,
-                      "AA14 指纹冲突时不直接报错失败，而是弹命名框让用户换名",
+                check(g_modalTitle == QStringLiteral("已有未完成的安装") && g_modalWasWarning &&
+                          g_modalText.contains(QStringLiteral("旧版本")),
+                      "AA14 指纹冲突时先给清空旧半成品或改名的选择，不直接报错失败",
                       g_modalTitle + QStringLiteral(" / ") + g_modalText);
 
                 auto *overlay = window.ui()->overlay();
