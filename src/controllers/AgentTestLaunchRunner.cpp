@@ -18,6 +18,8 @@
 #include "settings/LauncherSettings.hpp"
 #include "util/AppPaths.hpp"
 
+#include <QCoreApplication>
+#include <QDebug>
 #include <QDir>
 #include <QDirIterator>
 #include <QFile>
@@ -25,6 +27,7 @@
 #include <QGuiApplication>
 #include <QJsonArray>
 #include <QProcess>
+#include <QPointer>
 #include <QRegularExpression>
 #include <QScreen>
 #include <QStandardPaths>
@@ -230,11 +233,6 @@ void AgentTestLaunchRunner::onProcessStarted() {
     m_processStarted = true;
     m_phase = QStringLiteral("starting");
     appendLog(QStringLiteral("java 进程已启动（PID %1）。\n").arg(m_process->processId()));  // i18n-ignore
-#ifdef Q_OS_WIN
-    if (m_jobHandle != nullptr && m_process != nullptr) {
-        AssignProcessToJobObject(HANDLE(m_jobHandle), HANDLE(m_process->processId()));
-    }
-#endif
 }
 
 void AgentTestLaunchRunner::beginRun() {
@@ -269,12 +267,34 @@ void AgentTestLaunchRunner::beginRun() {
     for (const QString &name : before) m_seenCrashReports.insert(name);
 
 #ifdef Q_OS_WIN
-    m_jobHandle = CreateJobObjectW(nullptr, nullptr);
-    if (m_jobHandle != nullptr) {
-        JOBOBJECT_EXTENDED_LIMIT_INFORMATION info{};
-        info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
-        SetInformationJobObject(HANDLE(m_jobHandle), JobObjectExtendedLimitInformation, &info,
-                                sizeof(info));
+    const auto reportJobFailure = [this] {
+        const DWORD error = GetLastError();
+        qWarning() << "Test launch process job setup failed:" << error;
+        finishRun(false, QStringLiteral("not_started"),
+                  QCoreApplication::translate("AgentTestLaunchRunner", "测试启动的进程清理配置失败。重启启动器后重试。"));
+    };
+    HANDLE job = CreateJobObjectW(nullptr, nullptr);
+    m_jobHandle = job;
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits{};
+    limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+    if (job == nullptr ||
+        !SetInformationJobObject(job, JobObjectExtendedLimitInformation, &limits, sizeof(limits))) {
+        reportJobFailure();
+        return;
+    }
+    SIZE_T attributeBytes = 0;
+    InitializeProcThreadAttributeList(nullptr, 1, 0, &attributeBytes);
+    QByteArray storage(qsizetype(attributeBytes), Qt::Uninitialized);
+    auto *attributes = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(storage.data());
+    if (attributeBytes == 0 || !InitializeProcThreadAttributeList(attributes, 1, 0, &attributeBytes)) {
+        reportJobFailure();
+        return;
+    }
+    const auto releaseAttributes = qScopeGuard([attributes] { DeleteProcThreadAttributeList(attributes); });
+    if (!UpdateProcThreadAttribute(attributes, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, &job,
+                                   sizeof(job), nullptr, nullptr)) {
+        reportJobFailure();
+        return;
     }
 #endif
 
@@ -283,6 +303,17 @@ void AgentTestLaunchRunner::beginRun() {
     m_process->setArguments(m_args);
     m_process->setWorkingDirectory(workspaceVersionDir());
     m_process->setProcessChannelMode(QProcess::SeparateChannels);
+#ifdef Q_OS_WIN
+    // 在 Java 执行任何代码之前加入 Job，覆盖刚启动就创建的子进程。
+    STARTUPINFOEXW startup{};
+    startup.lpAttributeList = attributes;
+    m_process->setCreateProcessArgumentsModifier([&startup](QProcess::CreateProcessArguments *arguments) {
+        startup.StartupInfo = *arguments->startupInfo;
+        startup.StartupInfo.cb = sizeof(startup);
+        arguments->startupInfo = &startup.StartupInfo;
+        arguments->flags |= EXTENDED_STARTUPINFO_PRESENT;
+    });
+#endif
     connect(m_process, &QProcess::started, this, &AgentTestLaunchRunner::onProcessStarted);
     connect(m_process, &QProcess::readyReadStandardOutput, this,
             [this] { onProcessOutput(false); });
@@ -324,7 +355,11 @@ void AgentTestLaunchRunner::beginRun() {
     m_startTimer->start();
     m_pollTimer->start();
     m_timeoutTimer->start(m_options.timeoutSeconds * 1000);
-    m_process->start();
+    QPointer<QProcess> process(m_process);
+    process->start();
+#ifdef Q_OS_WIN
+    if (process != nullptr) process->setCreateProcessArgumentsModifier({});
+#endif
 }
 
 void AgentTestLaunchRunner::poll() {
