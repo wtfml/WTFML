@@ -827,7 +827,7 @@ private:
         QString host;
         int retryAttempts = 0;
         qint64 readyAtMs = 0;
-        DownloadRange range;
+        DownloadRange range{};
         /// 这条作业要不要走安全分段（`scheduleFile()` 按判据置位）。分段作业不占
         /// QNetworkReply，详见 m_segmentJobs 的说明。
         bool segmented = false;
@@ -835,7 +835,7 @@ private:
         /// 否则会在两条路之间来回打转。
         bool officialRetried = false;
         bool plainRetried = false;
-        ResourceRoute resourceRoute;
+        ResourceRoute resourceRoute{};
     };
     QQueue<PendingJob> m_pendingJobs;
     QHash<QNetworkReply *, ResourceRoute> m_resourceRoutes;
