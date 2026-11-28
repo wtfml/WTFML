@@ -202,8 +202,12 @@ bool ImportController::importTaskPending(Tasks::TaskId taskId) const {
 bool ImportController::queueImportPrompt(Tasks::TaskId taskId, std::function<void()> resume) {
     if (!importTaskPending(taskId)) return false;
     auto *overlay = m_owner->m_ui->overlay();
+    // 只有**真的看得见**的提示才值得等。`promptOpen()` 可能是上一轮留下的状态，
+    // 也可能是一条已经收在别的选项卡上的整页提示：按它排队，用户会看到任务一直
+    // 停在“解析清单”，却找不到任何可关的提示。
+    if (!overlay || !overlay->promptVisible()) return false;
     const QPointer<ImportController> guard(this);
-    if (!overlay || !overlay->queueNotification([guard, taskId, resume = std::move(resume)] {
+    if (!overlay->queueNotification([guard, taskId, resume = std::move(resume)] {
             if (!guard) return;
             const auto releaseFolder = qScopeGuard([guard] {
                 if (guard) guard->m_owner->endFolderSwitchHold();

@@ -106,6 +106,11 @@ public:
     bool isOpen() const { return m_mode != Mode::None; }
     bool pageOpen() const { return m_mode == Mode::Page; }
     bool promptOpen() const { return m_mode == Mode::Prompt; }
+    /// 提示不仅"占着状态"，而且真的在屏幕上。任务排队等提示关闭时用这一条：
+    /// 只看 `promptOpen()` 会把已经藏起来 / 换到别的选项卡上的提示当成还挡着路。
+    bool promptVisible() const {
+        return promptOpen() && m_promptCard != nullptr && m_promptCard->isVisibleTo(this);
+    }
 
     /// 整页那一档**收着**了：开着，但用户现在在**别的选项卡**上，所以它不露面。
     /// **收着不是关了** —— 页对象、滚到哪儿、页上那些控件的状态一样不少（见头文件那段）。
